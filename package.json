@@ -1,0 +1,14 @@
+{
+  "name": "darwinia-relay",
+  "version": "1.0.0",
+  "description": "",
+  "main": "",
+  "scripts": {
+    "test-blake2": "truffle test test/TestBlake2b.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "truffle-hdwallet-provider": "^1.0.17"
+  }
+}
