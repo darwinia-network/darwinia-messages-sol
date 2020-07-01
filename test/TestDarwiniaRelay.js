@@ -1,19 +1,35 @@
-const DarwiniaRelay = artifacts.require("DarwiniaRelay");
-const MMRWrapper = artifacts.require('MMRWrapper');
-// const MMR = artifacts.require('MMR');
 
-contract('DarwiniaRelay', (accounts) => {
+const MMRWrapper = artifacts.require('MMRWrapper');
+const DarwiniaRelay = artifacts.require("DarwiniaRelay");
+const MMR = artifacts.require('MMR');
+const Blake2b = artifacts.require("Blake2b");
+
+
+contract('DarwiniaRelay1', (accounts) => {
   let mmrLib;
+  let blake2b;
   let res;
+  let darwiniaRelay;
   before(async () => {
-    // mmrLib = await MMR.new();
-    // await MMRWrapper.link('MMR', mmrLib.address);
-    console.log('MMR Tree : 5 |                             31');
-    console.log('           4 |             15                                 30                                    46');
-    console.log('           3 |      7             14                 22                 29                 38                 45');
-    console.log('           2 |   3      6     10       13       18       21        25       28        34        37       41        44       49');
-    console.log('           1 | 1  2   4  5   8  9    11  12   16  17    19  20   23  24    26  27   32  33    35  36   39  40    42  43   47  48    50');
-    console.log('       width | 1  2   3  4   5  6     7   8    9  10    11  12   13  14    15  16   17  18    19  20   21  22    23  24   25  26    27');
+    // blake2b = await Blake2b.new();
+    // console.log('blake2b:', blake2b)
+    // await MMR.link('Blake2b', blake2b.address);
+
+    mmrLib = await MMR.new();
+    // console.log('mmrLib:', mmrLib)
+    // await MMR.link('Blake2b', blake2b.address);
+
+    // darwiniaRelay = await DarwiniaRelay.deployed();
+    // await DarwiniaRelay.link('MMR', mmrLib.address);
+    // await DarwiniaRelay.link('Blake2b', blake2b.address);
+    
+    await MMRWrapper.link('MMR', mmrLib.address);
+    // console.log('MMR Tree : 5 |                             31');
+    // console.log('           4 |             15                                 30                                    46');
+    // console.log('           3 |      7             14                 22                 29                 38                 45');
+    // console.log('           2 |   3      6     10       13       18       21        25       28        34        37       41        44       49');
+    // console.log('           1 | 1  2   4  5   8  9    11  12   16  17    19  20   23  24    26  27   32  33    35  36   39  40    42  43   47  48    50');
+    // console.log('       width | 1  2   3  4   5  6     7   8    9  10    11  12   13  14    15  16   17  18    19  20   21  22    23  24   25  26    27');
   });
 
   // const aaa = {
@@ -32,26 +48,35 @@ contract('DarwiniaRelay', (accounts) => {
 
   describe('inclusionProof()', async () => {
     before(async () => {
-      // mmr = await MMRWrapper.new();
-      // for (let i = 0; i < 3; i++) {
-      //   await mmr.append('0x0000');
-      // }
+      mmr = await MMRWrapper.new();
+      const data = [
+        '0x34f61bfda344b3fad3c3e38832a91448b3c613b199eb23e5110a635d71c13c65',
+        '0x70d641860d40937920de1eae29530cdc956be830f145128ebb2b496f151c1afb',
+        '0x12e69454d992b9b1e00ea79a7fa1227c889c84d04b7cd47e37938d6f69ece45d',
+        '0x3733bd06905e128d38b9b336207f301133ba1d0a4be8eaaff6810941f0ad3b1a',
+        '0x3d7572be1599b488862a1b35051c3ef081ba334d1686f9957dbc2afd52bd2028',
+        '0x2a04add3ecc3979741afad967dfedf807e07b136e05f9c670a274334d74892cf'
+      ]
+      for (let i = 0; i < data.length; i++) {
+        await mmr.append(data[i], data[i]);
+      }
     });
-    it('should return pass true when it receives a valid merkle proof', async () => {
-      const metaCoinInstance = await DarwiniaRelay.deployed();
-      let input = Buffer.from('0001020304050607000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', 'hex');
-      let ret = await metaCoinInstance.Blake2bHash.call(input, 3);
 
-      assert.equal(ret, '0x3d8c3d594928271f44aad7a04b177154806867bcf918e1549c0bc16f9da2b09b')
+    it('MMRMerge', async () => {
+      /**
+       * ("70d641860d40937920de1eae29530cdc956be830f145128ebb2b496f151c1afb", "3aafcc7fe12cb8fad62c261458f1c19dba0a3756647fa4e8bff6e248883938be")
+       */
+      darwiniaRelay = await DarwiniaRelay.new();
+      let input = Buffer.from('70d641860d40937920de1eae29530cdc956be830f145128ebb2b496f151c1afb3aafcc7fe12cb8fad62c261458f1c19dba0a3756647fa4e8bff6e248883938be', 'hex');
+      let ret = await darwiniaRelay.Blake2bHash.call(input);
+      console.log(ret)
+      // assert.equal(ret, '0xfea52f021bee75845654f1e5e0751cfe81b270cb59624d6c3204eef03db1fab8')
 // return
-      // let index = 2;
-      // res = await mmr.getMerkleProof(index);
-      // console.log(1111, res)
-      // const isInclusionProof = await metaCoinInstance.verifyProof.call(res.root, res.width, index, '0x0000', res.peakBagging, res.siblings);
-      // let input = Buffer.from('0001020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', 'hex');
-      //   let ret = await metaCoinInstance.Blake2bHash.call(input, 3);
-      // console.log(1113, ret)
-      // console.log(1112, isInclusionProof)
+      let index = 2;
+      res = await mmr.getMerkleProof(index);
+      console.log(`proof(${index})`, res);
+
+      // const isInclusionProof = await mmrLib.inclusionProof.call(res.root, res.width, index, '0x70d641860d40937920de1eae29530cdc956be830f145128ebb2b496f151c1afb', res.peakBagging, res.siblings);
       // assert.equal(isInclusionProof, true)
     });
 

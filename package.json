@@ -4,7 +4,8 @@
   "description": "",
   "main": "",
   "scripts": {
-    "test-blake2": "truffle test test/TestBlake2b.js"
+    "test-blake2": "truffle test test/TestBlake2b.js",
+    "test-mmr": "truffle test test/TestDarwiniaRelay.js"
   },
   "author": "",
   "license": "ISC",

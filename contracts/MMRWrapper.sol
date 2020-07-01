@@ -10,8 +10,8 @@ contract MMRWrapper {
 
     }
 
-    function append(bytes memory data) public {
-        mTree.append(data);
+    function append(bytes memory data,  bytes32 leafHash) public {
+        mTree.append(data, leafHash);
     }
 
     function getRoot() public view returns (bytes32) {
@@ -31,4 +31,14 @@ contract MMRWrapper {
     {
         return mTree.getMerkleProof(index);
     }
+
+    // function verifyProof( bytes32 root,
+    //     uint256 width,
+    //     uint256 index,
+    //     bytes memory value,
+    //     bytes32[] memory peaks,
+    //     bytes32[] memory siblings
+    //     ) public view returns (bool){
+    //     return mTree.inclusionProof(width, index, value, peaks, siblings);
+    // }
 }

@@ -33,7 +33,18 @@ library MMR {
         return out;
     }
 
-    function Blake2bHash(bytes memory input) public returns (bytes32) {
+
+    function bytes32Concat(bytes32 b1, bytes32 b2) public pure returns (bytes memory)
+    {
+        bytes memory result = new bytes(64);
+        assembly {
+            mstore(add(result, 32), b1)
+            mstore(add(result, 64), b2)
+        }
+        return result;
+    }
+
+    function Blake2bHash(bytes memory input) view public returns (bytes32) {
       Blake2b.Instance memory instance = Blake2b.init(hex"", 32);
       return bytesToBytes32(instance.finalize(input), 0);
     }
@@ -42,13 +53,13 @@ library MMR {
      * @dev This only stores the hashed value of the leaf.
      *      If you need to retrieve the detail data later, use a map to store them.
      */
-    function append(Tree storage tree, bytes memory data) public {
+    function append(Tree storage tree, bytes memory data, bytes32 leafHash) public {
         // Hash the leaf node first
         bytes32 dataHash = Blake2bHash(data);
         if(Blake2bHash(tree.data[dataHash]) != dataHash) {
             tree.data[dataHash] = data;
         }
-        bytes32 leaf = hashLeaf(tree.size + 1, dataHash);
+        bytes32 leaf = leafHash;
         // Put the hashed leaf to the map
         tree.hashes[tree.size + 1] = leaf;
         tree.width += 1;
@@ -173,7 +184,20 @@ library MMR {
     function peakBagging(uint256 width, bytes32[] memory peaks) public returns (bytes32) {
         uint size = getSize(width);
         require(numOfPeaks(width) == peaks.length, "Received invalid number of peaks");
-        return Blake2bHash(abi.encodePacked(size, Blake2bHash(abi.encodePacked(size, peaks))));
+
+        bytes32 mergeHash = peaks[0];
+        for(uint i = peaks.length-1; i >= 1; i = i - 1) {
+            bytes32 r;
+            if(i == peaks.length-1) {
+                r = peaks[i];
+            } else {
+                r = mergeHash;
+            }
+            bytes32 l = peaks[i-1];
+            mergeHash = hashBranch(0, r, l);
+        }
+
+        return mergeHash;
     }
 
     function peaksToPeakMap(uint width, bytes32[] memory peaks) public pure returns (bytes32[255] memory peakMap) {
@@ -264,7 +288,7 @@ library MMR {
         bytes memory value,
         bytes32[] memory peaks,
         bytes32[] memory siblings
-    ) public returns (bool) {
+    ) view public returns (bool) {
         uint size = getSize(width);
         require(size >= index, "Index is out of range");
         // Check the root equals the peak bagging hash
@@ -330,15 +354,16 @@ library MMR {
      * @dev It returns the hash a parent node with hash(M | Left child | Right child)
      *      M is the index of the node
      */
-    function hashBranch(uint256 index, bytes32 left, bytes32 right) public returns (bytes32) {
-        return Blake2bHash(abi.encodePacked(index, left, right));
+    function hashBranch(uint256 index, bytes32 left, bytes32 right) view public returns (bytes32) {
+        // return Blake2bHash(abi.encodePacked(index, left, right));
+        return Blake2bHash(bytes32Concat(left, right));
     }
 
     /**
      * @dev it returns the hash of a leaf node with hash(M | DATA )
      *      M is the index of the node
      */
-    function hashLeaf(uint256 index, bytes32 dataHash) public returns (bytes32) {
+    function hashLeaf(uint256 index, bytes32 dataHash) view public returns (bytes32) {
         return Blake2bHash(abi.encodePacked(index, dataHash));
     }
 
