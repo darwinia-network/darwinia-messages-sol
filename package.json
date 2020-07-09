@@ -5,11 +5,17 @@
   "main": "",
   "scripts": {
     "test-blake2": "truffle test test/TestBlake2b.js",
-    "test-mmr": "truffle test test/TestDarwiniaRelay.js"
+    "test-mmr": "truffle test test/TestDarwiniaRelay.js",
+    "test-mmrlib": "truffle test test/TestMMRLib.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "truffle-hdwallet-provider": "^1.0.17"
+    "truffle-hdwallet-provider": "^1.0.17",
+    "chai-as-promised": "^7.1.1",
+    "chai": "^4.2.0",
+    "chai-bn": "^0.1.1",
+    "web3": "^1.2.9",
+    "blakejs": "^1.1.0"
   }
 }
