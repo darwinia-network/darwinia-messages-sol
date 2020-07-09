@@ -32,13 +32,15 @@ contract MMRWrapper {
         return mTree.getMerkleProof(index);
     }
 
-    // function verifyProof( bytes32 root,
-    //     uint256 width,
-    //     uint256 index,
-    //     bytes memory value,
-    //     bytes32[] memory peaks,
-    //     bytes32[] memory siblings
-    //     ) public view returns (bool){
-    //     return mTree.inclusionProof(width, index, value, peaks, siblings);
-    // }
+    function inclusionProof(
+        bytes32 root,
+        uint256 width,
+        uint256 index,
+        bytes memory value,
+        bytes32 valueHash,
+        bytes32[] memory peaks,
+        bytes32[] memory siblings
+    ) public returns (bool){
+         return MMR.inclusionProof(root, width, index, value, valueHash, peaks, siblings);
+    }
 }

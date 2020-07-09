@@ -181,7 +181,7 @@ library MMR {
         return peakBagging(tmpWidth, peakMapToPeaks(tmpWidth, tmpPeakMap));
     }
 
-    function peakBagging(uint256 width, bytes32[] memory peaks) public returns (bytes32) {
+    function peakBagging(uint256 width, bytes32[] memory peaks) view public returns (bytes32) {
         uint size = getSize(width);
         require(numOfPeaks(width) == peaks.length, "Received invalid number of peaks");
 
@@ -286,13 +286,14 @@ library MMR {
         uint256 width,
         uint256 index,
         bytes memory value,
+        bytes32 valueHash,
         bytes32[] memory peaks,
         bytes32[] memory siblings
     ) view public returns (bool) {
         uint size = getSize(width);
         require(size >= index, "Index is out of range");
         // Check the root equals the peak bagging hash
-        require(root == Blake2bHash(abi.encodePacked(size, Blake2bHash(abi.encodePacked(size, peaks)))), "Invalid root hash from the peaks");
+        require(root == peakBagging(width, peaks), "Invalid root hash from the peaks");
 
         // Find the mountain where the target index belongs to
         uint256 cursor;
@@ -333,7 +334,8 @@ library MMR {
             cursor = path[height];
             if (height == 0) {
                 // cursor is on the leaf
-                node = hashLeaf(cursor, Blake2bHash(value));
+                // node = hashLeaf(cursor, Blake2bHash(value));
+                node = valueHash;
             } else if (cursor - 1 == path[height - 1]) {
                 // cursor is on a parent and a sibling is on the left
                 node = hashBranch(cursor, siblings[height - 1], node);
@@ -405,9 +407,12 @@ library MMR {
      * @dev It returns the children when it is a parent node
      */
     function getChildren(uint256 index) public pure returns (uint256 left, uint256 right) {
+        left = 0;
+        right = 0;
         left = index - (uint256(1) << (heightAt(index) - 1));
         right = index - 1;
         require(left != right, "Not a parent");
+        return (left, right);
     }
 
     /**
