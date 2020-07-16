@@ -1,1 +1,2 @@
 truffle-flattener ./contracts/MMR.sol --output ./build/MMR.sol
+truffle-flattener ./contracts/MPT.sol --output ./build/MPT.sol
