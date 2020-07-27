@@ -8,6 +8,11 @@ contract RelayerGameWrapper {
 
     RelayerGame.Game public game;
 
+    struct Block {
+        bytes32 parent;
+        bytes data;
+    }
+
     constructor() public {}
 
     function startGame(
@@ -27,18 +32,19 @@ contract RelayerGameWrapper {
         game.setDeadLineStep(step);
     }
 
-    function updateRound(
-        uint256 roundIndex,
-        bytes32 parentProposalHash,
-        bytes32[] memory proposalHash,
-        bytes[] memory proposalValue
-    ) public {
-        game.updateRound(roundIndex, parentProposalHash, proposalHash, proposalValue);
-    }
+    // function updateRound(
+    //     uint256 roundIndex,
+    //     bytes32 parentProposalHash,
+    //     bytes32[] memory proposalHash,
+    //     bytes[] memory proposalValue
+    // ) public {
+    //     game.updateRound(roundIndex, parentProposalHash, proposalHash, proposalValue);
+    // }
 
     function appendProposalByRound(
         /// 0
         uint256 roundIndex,
+        uint256 deadline,
         /// 50
         // uint samples,
         /// H100a
@@ -50,7 +56,13 @@ contract RelayerGameWrapper {
         /// [50b]
         bytes[] memory proposalValue
     ) public {
-        game.appendProposalByRound(roundIndex, parentProposalHash, proposalHash, proposalValue);
+        game.appendProposalByRound(
+            roundIndex,
+            deadline,
+            parentProposalHash,
+            proposalHash,
+            proposalValue
+        );
     }
 
     function getRoundInfo(uint256 index)
@@ -75,7 +87,6 @@ contract RelayerGameWrapper {
         );
     }
 
-
     function getGameInfo()
         public
         view
@@ -92,5 +103,12 @@ contract RelayerGameWrapper {
             game.deadLineStep,
             game.latestRoundIndex
         );
+    }
+
+    function getBlockPool(bytes32 proposalHash) public view returns (
+        bytes32 parent,
+        bytes memory data
+    ){
+        return (game.blockPool[proposalHash].parent, game.blockPool[proposalHash].data);
     }
 }

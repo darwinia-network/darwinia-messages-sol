@@ -20,12 +20,14 @@ library RelayerGame {
 
     struct Round {
         uint256 deadline;
+        //  Included
         uint256 activeProposalStart;
+        //  Include
         uint256 activeProposalEnd;
         /// [H75]
         bytes32[] proposalLeafs;
         uint256[] samples; // [100, 50]
-        bool close;
+        bool isClose;
     }
 
     struct Block {
@@ -108,38 +110,59 @@ library RelayerGame {
         game.rounds[game.rounds.length - 1].proposalLeafs.push(bytes32(0x00));
         game.rounds[game.rounds.length - 1].proposalLeafs.push(proposalHash[0]);
 
-        game.blockPool[proposalHash[0]] = Block(bytes32(0x00), proposalValue[0]);
+        game.blockPool[proposalHash[0]] = Block(
+            bytes32(0x00),
+            proposalValue[0]
+        );
     }
 
-    function updateRound(
+    // function updateRound(
+    //     Game storage game,
+    //     uint256 roundIndex,
+    //     bytes32 parentProposalHash,
+    //     bytes32[] memory proposalHash,
+    //     bytes[] memory proposalValue
+    // ) internal {
+    //     Round storage _round = game.rounds[roundIndex];
+
+    //     //  Last round timed out...
+    //     require(_round.deadline < block.number, "The last round is not over");
+
+    //     _round.activeProposalStart = _round.activeProposalEnd + 1;
+    //     _round.activeProposalEnd = _round.proposalLeafs.length - 1;
+
+    //     //  update deadline + deadLineStep
+    //     updateDeadline(game, _round);
+
+    //     //  TODO _round.deadline + game.deadLineStep < block.number
+
+    //     appendProposalByRound(
+    //         game,
+    //         roundIndex,
+    //         parentProposalHash,
+    //         proposalHash,
+    //         proposalValue
+    //     );
+    // }
+
+    function closeRound(
         Game storage game,
-        uint256 roundIndex,
-        bytes32 parentProposalHash,
-        bytes32[] memory proposalHash,
-        bytes[] memory proposalValue
-    ) internal {
+        uint256 roundIndex
+    ) public {
         Round storage _round = game.rounds[roundIndex];
 
-        //  Last round timed out...
-        require(_round.deadline < block.number, "The last round is not over");
-        //  update deadline + deadLineStep
-        updateDeadline(game, _round);
+        require(!_round.isClose, "round is closed");
+        require(_round.proposalLeafs.length - _round.activeProposalEnd == 2, "here was no decision.");
+        require(round.deadline < block.number, "The game has not reached the end time.");
 
-        //  TODO _round.deadline + game.deadLineStep < block.number
-
-        appendProposalByRound(
-            game,
-            roundIndex,
-            parentProposalHash,
-            proposalHash,
-            proposalValue
-        );
+        _round.close = true;
     }
 
     function appendProposalByRound(
         Game storage game,
         /// 0
         uint256 roundIndex,
+        uint256 deadline,
         /// 50
         // uint samples,
         /// H100a
@@ -155,11 +178,14 @@ library RelayerGame {
             roundIndex >= 0 && roundIndex < game.rounds.length,
             "Invalid round"
         );
-        require(!game.rounds[roundIndex].close, "round is closed");
-        require(
-            block.number <= game.rounds[roundIndex].deadline,
-            "The round has expired"
-        );
+        require(!game.rounds[roundIndex].isClose, "round is closed");
+
+        
+        // require(
+        //     deadline >= game.rounds[roundIndex].deadline,
+        //     "invalid deadline"
+        // );
+
         // appendSamples(game, roundIndex, samples);
 
         // Check the number of hashes
@@ -167,6 +193,27 @@ library RelayerGame {
         // require(checkProposalHash(proposalHash), "Invalid Proposal Hash of the round.");
 
         Round storage _round = game.rounds[roundIndex];
+
+        if (_round.deadline + 1 == deadline) {
+            require(
+                _round.deadline < block.number,
+                "The last round is not over"
+            );
+            //  update deadline + deadLineStep
+            updateDeadline(game, _round);
+            // _round.deadline = _round.deadline + game.deadLineStep;
+
+            //  Last round timed out...
+            require(
+                _round.deadline > block.number,
+                "New round deadline blow block.number"
+            );
+
+            _round.activeProposalStart = _round.activeProposalEnd + 1;
+            _round.activeProposalEnd = _round.proposalLeafs.length - 1;
+        }
+
+        require(block.number <= _round.deadline, "The round has expired");
 
         // check parentProposalHash in [activeProposalStart, activeProposalEnd]
         bool validParentProposalHash;
@@ -229,4 +276,5 @@ library RelayerGame {
     ) internal {
         // check the submisstion follows the samples
     }
+
 }
