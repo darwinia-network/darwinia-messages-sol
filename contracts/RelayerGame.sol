@@ -153,9 +153,9 @@ library RelayerGame {
 
         require(!_round.isClose, "round is closed");
         require(_round.proposalLeafs.length - _round.activeProposalEnd == 2, "here was no decision.");
-        require(round.deadline < block.number, "The game has not reached the end time.");
+        require(_round.deadline < block.number, "The game has not reached the end time.");
 
-        _round.close = true;
+        _round.isClose = true;
     }
 
     function appendProposalByRound(

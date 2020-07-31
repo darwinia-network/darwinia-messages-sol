@@ -83,7 +83,7 @@ contract RelayerGameWrapper {
             game.rounds[index].activeProposalEnd,
             game.rounds[index].proposalLeafs,
             game.rounds[index].samples,
-            game.rounds[index].close
+            game.rounds[index].isClose
         );
     }
 
