@@ -12,8 +12,8 @@
       "istanbulBlock":0
    },
    "alloc":{
-      "0x627306090abab3a6e1400e9345bc60c78a8bef57": { "balance": "0x20000000000000" },
-      "0x0000000000000000000000000000000000000009": { "balance": "0x01" }
+      "0x7118446aEB6d51F05C61741b3044C0ae4C5e7596": { "balance": "0x20000000000000" },
+      "0xE99F3cBb6B550B36313722BA319e56ec251857cd": { "balance": "0x20000000000000" }
    },
    "difficulty":"42",
    "gasLimit":"0x38d7ea4c67fff"
