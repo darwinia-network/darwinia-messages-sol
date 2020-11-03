@@ -3,3 +3,7 @@ build
 .idea
 dataDir
 account*.txt
+
+#Hardhat files
+cache
+artifacts
