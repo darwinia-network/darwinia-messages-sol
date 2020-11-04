@@ -27,8 +27,9 @@ describe('POARelay', () => {
 
   const waitNBlocks = async n => {
     await Promise.all(
-      [...Array(n).keys()].map(async i =>
-         jsonRpcProvider.send('evm_mine', [])
+      [...Array(n).keys()].map(async i => {
+        return await jsonRpcProvider.send('evm_mine', [])
+      }   
       )
     );
   };
@@ -37,27 +38,18 @@ describe('POARelay', () => {
      jsonRpcProvider.send('evm_increaseTime', [n])
   };
 
-  let relayConstructor = [
-    4,
-    '0x488e9565547fec8bd36911dc805a7ed9f3d8d1eacabe429c67c6456933c8e0a6',
-    100,
-    [
-      '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
-    ],
-    [
-      '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-    ]
-  ]
-
-  before(async function() {
-    accounts = await ethers.getSigners();
-    for (const account of accounts) {
-      console.log(account.address);
-    }
-  });
+  let relayConstructor = {};
 
   before(async () => {
     const MMR = await ethers.getContractFactory("MMR");
+    const [owner, addr1] = await ethers.getSigners();
+    accounts = await ethers.getSigners();
+
+    // all test accounts
+    for (const account of accounts) {
+      console.log(account.address);
+    }
+
     mmrLib = await MMR.deploy();
     await mmrLib.deployed();
 
@@ -70,6 +62,14 @@ describe('POARelay', () => {
       }
     );
 
+    relayConstructor = [
+      4,
+      '0x488e9565547fec8bd36911dc805a7ed9f3d8d1eacabe429c67c6456933c8e0a6',
+      100,
+      [await owner.getAddress()],
+      [await addr1.getAddress()]
+    ]
+    
     relay = await POARelay.deploy(...relayConstructor);
     await relay.deployed();
   });
@@ -152,9 +152,18 @@ describe('POARelay', () => {
   })
 
   describe('updateRoot', async () => {
+
+
     it('append mmr root', async () => {
+      const [owner, addr1] = await ethers.getSigners();
+
+      // Use a non-relayer account to append root
+      await expect(relay.connect(addr1).appendRoot(7, '0x2dee5b87a481a9105cb4b2db212a1d8031d65e9e6e68dc5859bef5e0fdd934b2')).to.be.revertedWith("POARelay: caller is not the relayer or owner");
+
       result = await relay.appendRoot(7, '0x2dee5b87a481a9105cb4b2db212a1d8031d65e9e6e68dc5859bef5e0fdd934b2');
       const mmr = await relay.getMMRRoot(7);
+
+      // The root with width = 7 is in the candidate stage
       expect(mmr).that.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
 
       const candidateRoot = await relay.candidateRoot.call();
@@ -170,48 +179,67 @@ describe('POARelay', () => {
     });
 
     it('updateRoot same width', async () => {
-      // await time.advanceBlock()
-      // let blocknumber = await provider.getBlockNumber();
-      // console.log(blocknumber)
-      // await waitNTime(100);
-      // blocknumber = await provider.getBlockNumber();
-      // console.log(blocknumber);
-      await waitNTime(10000);
-      await waitNBlocks(2);
-      await waitNTime(10000);
-      await relay.appendRoot(0, '0x0000000000000000000000000000000000000000000000000000000000000001');
-      // await(relay.appendRoot(0, '0x0000000000000000000000000000000000000000000000000000000000000001')).should.be.rejected;
-      await waitNTime(10000);
-      // await relay.appendRoot(8, '0x54be644b5b3291dd9ae9598b49d1f986e4ebd8171d5e89561b2a921764c7b17c');
-      // await(relay.appendRoot(8, '0x54be644b5b3291dd9ae9598b49d1f986e4ebd8171d5e89561b2a921764c7b17c')).should.be.rejected;
-      // await expectRevert(
-      //   relay.appendRoot(0, '0x0000000000000000000000000000000000000000000000000000000000000001'),
-      //   'POARelay: The previous one is still pending or no dispute1',
-      // );
+      //  The last round of elections did not end
+      await expect(relay.appendRoot(10, '0x0000000000000000000000000000000000000000000000000000000000000001')).to.eventually.be.rejectedWith("POARelay: The previous one is still pending or no dispute");
+      await waitNTime(101);
+      await expect(relay.appendRoot(7, '0x0000000000000000000000000000000000000000000000000000000000000001')).to.eventually.be.rejectedWith("POARelay: A higher block has been confirmed");
+
+      await relay.appendRoot(10, '0xa94bf2a4e0437c236c68675403d980697cf7c9b0f818a622cb40199db5e12cf8');
+
+      const candidateRoot = await relay.candidateRoot.call();
+      expect(candidateRoot.width).that.equal(10);
+      expect(candidateRoot.data).that.equal('0xa94bf2a4e0437c236c68675403d980697cf7c9b0f818a622cb40199db5e12cf8');
+      expect(candidateRoot.dispute).that.equal(false);
+
+      const mmr = await relay.getMMRRoot(7);
+      expect(mmr).that.equal('0x2dee5b87a481a9105cb4b2db212a1d8031d65e9e6e68dc5859bef5e0fdd934b2');
+
+      const width = await relay.latestWidth.call();
+      expect(width).that.equal(7);
+
     });
+
+    it('dispute root', async () => {
+      const [owner, addr1, addr2] = await ethers.getSigners();
+      await expect(relay.connect(addr2).disputeRoot()).to.be.revertedWith('POARelay: caller is not the supervisor or owner');
+
+      await relay.connect(addr1).disputeRoot();
+
+      let candidateRoot = await relay.candidateRoot.call();
+      expect(candidateRoot.dispute).that.equal(true);
+
+      await relay.appendRoot(11, '0x587f0b5d3ec8e256320bacd96900d0e484883c7778ca49e05c65c546c31e3aa3');
+      candidateRoot = await relay.candidateRoot.call();
+      expect(candidateRoot.width).that.equal(11);
+      expect(candidateRoot.data).that.equal('0x587f0b5d3ec8e256320bacd96900d0e484883c7778ca49e05c65c546c31e3aa3');
+      expect(candidateRoot.dispute).that.equal(false);
+
+      const width = await relay.latestWidth.call();
+      expect(width).that.equal(7);
+
+      const mmr = await relay.getMMRRoot(width);
+      expect(mmr).that.equal('0x2dee5b87a481a9105cb4b2db212a1d8031d65e9e6e68dc5859bef5e0fdd934b2');
+
+      await waitNTime(101);
+    })
   })
 
-  // describe('resetRoot', async () => {
-  //   it('reset mmr root', async () => {
-  //     await relay.updateRoot(5, '0x0000000000000000000000000000000000000000000000000000000000000005');
-  //     await relay.updateRoot(6, '0x0000000000000000000000000000000000000000000000000000000000000006');
-  //     await relay.resetRoot(5, '0x0000000000000000000000000000000000000000000000000000000000000055');
-  //     expect(await relay.getMMR.call(5)).to.be.equal(
-  //       '0x0000000000000000000000000000000000000000000000000000000000000055',
-  //     );
-  //   });
+  describe('resetRoot', async () => {
+    it('reset mmr root', async () => {
+      await relay.resetRoot(5, '0x0000000000000000000000000000000000000000000000000000000000000005');
+      expect(await relay.getMMRRoot(5)).that.equal(
+        '0x0000000000000000000000000000000000000000000000000000000000000005',
+      );
+    });
 
-  //   it('paused status', async () => {
-  //     await expectRevert(relay.updateRoot(7, '0x0000000000000000000000000000000000000000000000000000000000000007'),
-  //       'Pausable: paused.',
-  //     );
-  //   });
+    it('paused status', async () => {
+      await relay.pause();
+      await expect(relay.appendRoot(12, '0x0000000000000000000000000000000000000000000000000000000000000012')).to.be.revertedWith('Pausable: paused');
+    });
 
-  //   it('unpaused status', async () => {
-  //     await relay.unpause();
-  //     await relay.updateRoot(8, '0x0000000000000000000000000000000000000000000000000000000000000008');
-  //     const mmr = await relay.getMMR.call(8);
-  //     assert.equal(mmr, '0x0000000000000000000000000000000000000000000000000000000000000008');
-  //   });
-  // })
+    it('unpaused status', async () => {
+      await relay.unpause();
+      await relay.appendRoot(12, '0x0000000000000000000000000000000000000000000000000000000000000012')
+    });
+  })
 });

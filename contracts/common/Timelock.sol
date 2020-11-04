@@ -3,6 +3,8 @@
 
 pragma solidity >=0.5.0 <0.6.0;
 
+import "hardhat/console.sol";
+
 contract Timelock {
   uint256 private _minDelay;
 
@@ -18,11 +20,13 @@ contract Timelock {
   }
 
   function isOperationPending(uint256 timestamps) public view returns (bool pending) {
+    console.log("isOperationDone:: timestamps:'%s', now: '%s'", timestamps, now);
     require(timestamps > now, "TimeLock: Time is greater than the blockchain timestamp");
     return (timestamps - now) < getMinDelay();
   }
 
   function isOperationDone(uint256 timestamps) public view returns (bool pending) {
+    console.log("isOperationDone:: timestamps:'%s', now: '%s'", timestamps, now);
     require(timestamps < now, "TimeLock: Time is greater than the blockchain timestamp");
     return (now - timestamps) > getMinDelay();
   }
