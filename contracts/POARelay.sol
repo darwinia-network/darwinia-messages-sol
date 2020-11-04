@@ -7,7 +7,6 @@ import "./common/Ownable.sol";
 import "./common/Timelock.sol";
 import "./common/Pausable.sol";
 
-
 import "./MMR.sol";
 
 contract POARelay is Ownable, Pausable, Timelock {
@@ -73,6 +72,7 @@ contract POARelay is Ownable, Pausable, Timelock {
     function _removeSupervisor(address account) internal { supervisor[account] = false; }
 
     function _setCandidateRoot(uint256 width, uint256 time, bytes32 data) internal {
+        require(latestWidth < width, "POARelay: A higher block has been confirmed");
         candidateRoot.width = width;
         candidateRoot.time = time;
         candidateRoot.data = data;
@@ -164,12 +164,9 @@ contract POARelay is Ownable, Pausable, Timelock {
 
     function appendRoot(uint256 width, bytes32 root) public isRelayer whenNotPaused {
         bool isDone = isOperationDone(candidateRoot.time);
-        // console.log("candidateRoot.time: '%s'", candidateRoot.time);
-        console.log("block.time: '%s'", block.timestamp);
         require(isDone || candidateRoot.dispute , "POARelay: The previous one is still pending or no dispute");
 
         // A valid candidate root should submit to the root pool
-        
         if(isDone && !candidateRoot.dispute && getMMRRoot(candidateRoot.width) == bytes32(0) && candidateRoot.time != uint256(0)) {
             _appendRoot(candidateRoot.width, candidateRoot.data);
         }
