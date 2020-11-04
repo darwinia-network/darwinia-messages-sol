@@ -55,12 +55,7 @@ library MMR {
     }
 
     function peakBagging(uint256 width, bytes32[] memory peaks) view public returns (bytes32) {
-        // uint size = getSize(width);
-        // require(width == 7, "Received invalid number of peaks");
-        // require(peaks[0] == 0x488e9565547fec8bd36911dc805a7ed9f3d8d1eacabe429c67c6456933c8e0a6, "peaks 0 error");
-        // require(peaks[1] == 0x50371e8a99e6c118a0719d96185b92c8943db374143f0d8f2df55d4571316cbe, "peaks 1 error");
-        // require(peaks[2] == 0xc58e247ea35c51586de2ea40ac6daf90eac7ac7b2f5c88bbc7829280db7890f1, "peaks 2 error");
-
+        // peaks may be merged
         // require(numOfPeaks(width) == peaks.length, "Received invalid number of peaks");
         bytes32 mergeHash = peaks[0];
         for(uint i = peaks.length-1; i >= 1; i = i - 1) {
@@ -182,110 +177,6 @@ library MMR {
         return true;
     }
 
-    /**
-     * @dev It returns true when the given params verifies that the given value exists in the tree or reverts the transaction.
-     */
-    function verifyProof(
-        bytes32 root,
-        uint256 width,
-        uint256 index,
-        bytes memory value,
-        bytes32 valueHash,
-        bytes32[] memory peaks,
-        bytes32[] memory siblings
-    ) view public returns (uint8) {
-        uint size = getSize(width);
-        if(size < index) {
-            return 5;
-        }
-   
-        // Check the root equals the peak bagging hash
-        // if(root != peakBagging(width, peaks)) {
-        //     return 4;
-        // }
-
-        // Find the mountain where the target index belongs to
-        uint256 cursor;
-        bytes32 targetPeak;
-        uint256[] memory peakIndexes = getPeakIndexes(width);
-        for (uint i = 0; i < peakIndexes.length; i++) {
-             console.log(peakIndexes[i]);
-            if (peakIndexes[i] >= index) {
-                targetPeak = peaks[i];
-                cursor = peakIndexes[i];
-                break;
-            }
-        }
-        console.log(cursor);
-        if(targetPeak == bytes32(0)) {
-            return 3;
-        }
-        console.logBytes32(targetPeak);
-        // Find the path climbing down
-        uint256[] memory path = new uint256[](siblings.length + 1);
-        uint256 left;
-        uint256 right;
-        uint8 height = uint8(siblings.length) + 1;
-        console.log(siblings.length);
-        console.log(uint256(height));
-        while (height > 0) {
-            // Record the current cursor and climb down
-            path[--height] = cursor;
-            if (cursor == index) {
-                // On the leaf node. Stop climbing down
-                break;
-            } else {
-                // On the parent node. Go left or right
-                (left, right) = getChildren(cursor);
-                cursor = index > left ? right : left;
-                continue;
-            }
-        }
-        console.log("path0: '%s'", path[0]);
-        console.log("path1: '%s'", path[1]);
-        console.log("path2: '%s'", path[2]);
-        console.log(uint(height));
-        console.log(path.length);
-        // Calculate the summit hash climbing up again
-        bytes32 node;
-        while (height < path.length) {
-            // Move cursor
-            cursor = path[height];
-            console.log("height: '%s'", uint(height));
-            console.log("path.length: '%s'", path.length);
-            console.log("cursor: '%s'", cursor);
-            if (height == 0) {
-                // cursor is on the leaf
-                node = hashLeaf(value);
-                // if(node == valueHash) {
-                //     return 7;
-                // }
-                // node = valueHash;
-            } else if (cursor - 1 == path[height - 1]) {
-                console.log("hash1 '%s'", cursor);
-                console.logBytes32(siblings[height - 1]);
-                console.logBytes32(node);
-                // cursor is on a parent and a sibling is on the left
-                node = hashBranch(cursor, siblings[height - 1], node);
-            } else {
-                console.log("hash2 '%s'", cursor);
-                console.logBytes32(node);
-                console.logBytes32(siblings[height - 1]);
-                // cursor is on a parent and a sibling is on the right
-                node = hashBranch(cursor, node, siblings[height - 1]);
-            }
-            // Climb up
-            height++;
-        }
-
-        console.logBytes32(node);
-        console.logBytes32(targetPeak);
-        // Computed hash value of the summit should equal to the target peak hash
-        if(node != targetPeak) {
-            return 2;
-        }
-        return 0;
-    }
 
     /**
      * @dev It returns the hash a parent node with hash(M | Left child | Right child)
