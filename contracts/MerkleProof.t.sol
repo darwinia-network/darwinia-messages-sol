@@ -17,7 +17,6 @@ contract MerkleProofTest is MerkleProof, DSTest {
     }
 
     function testSimplePairVerifyProof() public returns(bool) {
-
         bytes32 root = hex"36d59226dcf98198b07207ee154ebea246a687d8c11191f35b475e7a63f9e5b4";
         bytes[] memory proof = new bytes[](1);
         proof[0] = hex"44646f00";
@@ -30,7 +29,6 @@ contract MerkleProofTest is MerkleProof, DSTest {
     }
 
     function testPairVerifyProof() public returns(bool) {
-
         bytes32 root = hex"e24f300814d2ddbb2a6ba465cdc2d31004aee7741d0a4964b879f25053b2ed48";
         bytes[] memory merkleProof = new bytes[](3);
         merkleProof[0] = hex"c4646f4000107665726200";
@@ -46,7 +44,7 @@ contract MerkleProofTest is MerkleProof, DSTest {
     }
 
     function testPairsVerifyProofBlake2b() public returns(bool) {
-
+        //blake2b
         bytes32 root = hex"8b5b6ad240751b4af62bf0e939731564bfb41b9bfbe01e32e00154eae31cfe43";
         bytes[] memory merkleProof = new bytes[](1);
         merkleProof[0] = hex"810006000c420200144203080405";
@@ -77,7 +75,6 @@ contract MerkleProofTest is MerkleProof, DSTest {
     // }
 
     function testPairsVerifyProof() public returns(bool) {
-
         bytes32 root = hex"493825321d9ad0c473bbf85e1a08c742b4a0b75414f890745368b8953b873017";
         bytes[] memory merkleProof = new bytes[](5);
         merkleProof[0] = hex"810616010018487261766f00007c8306f7240030447365207374616c6c696f6e30447365206275696c64696e67";
@@ -129,9 +126,7 @@ contract MerkleProofTest is MerkleProof, DSTest {
     }
 
     function test_decode_branch() public returns(bool) {
-
-            bytes memory proof
-         = hex"c10740001470757070798083809f19c0b956a97fc0175e6717d289bb0f890a67a953eb0874f89244314b34";
+        bytes memory proof = hex"c10740001470757070798083809f19c0b956a97fc0175e6717d289bb0f890a67a953eb0874f89244314b34";
         Input.Data memory data = Input.from(proof);
         uint8 header = data.decodeU8();
         Node.Branch memory b = Node.decodeBranch(data, header);
@@ -141,9 +136,7 @@ contract MerkleProofTest is MerkleProof, DSTest {
     }
 
     function test_encode_branch() public returns(bool) {
-
-            bytes memory proof
-         = hex"c10740001470757070798083809f19c0b956a97fc0175e6717d289bb0f890a67a953eb0874f89244314b34";
+        bytes memory proof = hex"c10740001470757070798083809f19c0b956a97fc0175e6717d289bb0f890a67a953eb0874f89244314b34";
         Input.Data memory data = Input.from(proof);
         uint8 header = data.decodeU8();
         Node.Branch memory b = Node.decodeBranch(data, header);
