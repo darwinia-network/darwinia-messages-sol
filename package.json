@@ -7,7 +7,8 @@
     "test-blake2": "truffle test test/TestBlake2b.js",
     "test-mmr": "truffle test test/TestDarwiniaRelay.js",
     "test-mmrlib": "truffle test test/TestMMRLib.js",
-    "test-relayergame": "truffle test test/TestRelayerGame.js"
+    "test-relayergame": "truffle test test/TestRelayerGame.js",
+    "test-mp": "truffle test test/TestMerkleProof.js"
   },
   "author": "",
   "license": "ISC",
