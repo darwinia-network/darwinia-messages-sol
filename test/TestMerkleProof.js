@@ -1,11 +1,14 @@
-const MerkleProofTest = artifacts.require('MerkleProofTest');
+
+const { expect } = require("chai");
 
 describe('MerkleProofTest', function (accounts) {
 
     before(async () => {
+        MerkleProofTest = await ethers.getContractFactory("MerkleProofTest");
 
+        contract = await MerkleProofTest.deploy();
+        await contract.deployed();
     });
-
     // it('MerkleProof test', async () => {
     //     let contract = await MerkleProofTest.new()
     //     let ret = await contract.testSimplePairVerifyProof()
@@ -13,11 +16,10 @@ describe('MerkleProofTest', function (accounts) {
     // }).timeout(200000);
 
     it('MerkleProof testPairsVerifyProofBlake2b', async () => {
-        let contract = await MerkleProofTest.new()
-        assert(await contract.testPairsVerifyProofBlake2b(), true);
-        assert(await contract.test_decode_leaf(), true);
-        assert(await contract.test_encode_leaf(), true);
-        assert(await contract.test_decode_branch(), true);
-        assert(await contract.test_decode_branch(), true);
+        // await contract.testPairsVerifyProofBlake2b();
+        await contract.test_decode_leaf();
+        await contract.test_encode_leaf();
+        await contract.test_decode_branch();
+        await contract.test_decode_branch();
     }).timeout(200000);
 });
