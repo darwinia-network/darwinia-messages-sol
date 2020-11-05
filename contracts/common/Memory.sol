@@ -3,7 +3,29 @@ pragma solidity >=0.5.0 <0.6.0;
 library Memory {
 
     uint internal constant WORD_SIZE = 32;
-	
+
+	// Compares the 'len' bytes starting at address 'addr' in memory with the 'len'
+    // bytes starting at 'addr2'.
+    // Returns 'true' if the bytes are the same, otherwise 'false'.
+    function equals(uint addr, uint addr2, uint len) internal pure returns (bool equal) {
+        assembly {
+            equal := eq(keccak256(addr, len), keccak256(addr2, len))
+        }
+    }
+
+    // Compares the 'len' bytes starting at address 'addr' in memory with the bytes stored in
+    // 'bts'. It is allowed to set 'len' to a lower value then 'bts.length', in which case only
+    // the first 'len' bytes will be compared.
+    // Requires that 'bts.length >= len'
+
+    function equals(uint addr, uint len, bytes memory bts) internal pure returns (bool equal) {
+        require(bts.length >= len);
+        uint addr2;
+        assembly {
+            addr2 := add(bts, /*BYTES_HEADER_SIZE*/32)
+        }
+        return equals(addr, addr2, len);
+    }
 	// Returns a memory pointer to the data portion of the provided bytes array.
 	function dataPtr(bytes memory bts) internal pure returns (uint addr) {
 		assembly {

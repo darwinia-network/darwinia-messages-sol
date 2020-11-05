@@ -1,4 +1,5 @@
-const MerkleProofTest = artifacts.require('MerkleProofTest');
+const CompactMerkleProofTest = artifacts.require('CompactMerkleProofTest');
+const SimpleMerkleProofTest = artifacts.require('SimpleMerkleProofTest');
 
 describe('MerkleProofTest', function (accounts) {
 
@@ -6,18 +7,20 @@ describe('MerkleProofTest', function (accounts) {
 
     });
 
-    // it('MerkleProof test', async () => {
-    //     let contract = await MerkleProofTest.new()
-    //     let ret = await contract.testSimplePairVerifyProof()
-    //     assert(ret, true);
-    // }).timeout(200000);
+    it('CompactMerkleProofTest testCompactMerkleProofTest', async () => {
+        let contract = await CompactMerkleProofTest.new()
+        assert(await contract.testSimplePairVerifyProof(), true);
+        assert(await contract.testPairVerifyProof(), true);
+        assert(await contract.testPairsVerifyProof(), true);
 
-    it('MerkleProof testPairsVerifyProofBlake2b', async () => {
-        let contract = await MerkleProofTest.new()
-        assert(await contract.testPairsVerifyProofBlake2b(), true);
         assert(await contract.test_decode_leaf(), true);
         assert(await contract.test_encode_leaf(), true);
         assert(await contract.test_decode_branch(), true);
-        assert(await contract.test_decode_branch(), true);
+        assert(await contract.test_encode_branch(), true);
+    }).timeout(200000);
+
+    it('SimpleMerkleProof testSimpleMerkleProof', async () => {
+        let contract = await SimpleMerkleProofTest.new()
+        assert(await contract.testNonCompactMerkleProof(), true);
     }).timeout(200000);
 });

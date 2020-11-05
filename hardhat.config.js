@@ -1,4 +1,5 @@
 require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-truffle5");
 const mnemonic = "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
 
 // This is a sample Hardhat task. To learn how to create your own go to

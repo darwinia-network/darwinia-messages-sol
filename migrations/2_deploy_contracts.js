@@ -5,7 +5,9 @@ const Memory = artifacts.require("Memory");
 const Nibble = artifacts.require("Nibble");
 const Node = artifacts.require("Node");
 const Scale = artifacts.require("Scale");
-const MPTest = artifacts.require("MerkleProofTest");
+const CMPTest = artifacts.require("CompactMerkleProofTest");
+const SMPTest = artifacts.require("SimpleMerkleProofTest");
+
 
 module.exports = function(deployer) {
   deployer.deploy(Bytes);
@@ -16,12 +18,21 @@ module.exports = function(deployer) {
   deployer.deploy(Node);
   deployer.deploy(Scale);
 
-  deployer.link(Bytes, MPTest);
-  deployer.link(Hash, MPTest);
-  deployer.link(Input, MPTest);
-  deployer.link(Memory, MPTest);
-  deployer.link(Nibble, MPTest);
-  deployer.link(Node, MPTest);
-  deployer.link(Scale, MPTest);
-  deployer.deploy(MPTest);
+  deployer.link(Bytes, CMPTest);
+  deployer.link(Bytes, SMPTest);
+  deployer.link(Hash, CMPTest);
+  deployer.link(Hash, SMPTest);
+  deployer.link(Input, CMPTest);
+  deployer.link(Input, SMPTest);
+  deployer.link(Memory, CMPTest);
+  deployer.link(Memory, SMPTest);
+  deployer.link(Nibble, CMPTest);
+  deployer.link(Nibble, SMPTest);
+  deployer.link(Node, CMPTest);
+  deployer.link(Node, SMPTest);
+  deployer.link(Scale, CMPTest);
+  deployer.link(Scale, SMPTest);
+
+  deployer.deploy(CMPTest);
+  deployer.deploy(SMPTest);
 };
