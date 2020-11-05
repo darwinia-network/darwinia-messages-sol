@@ -5,8 +5,8 @@ blake2b需要使用go-ethereum客户端，javascript vm 执行会得到错误的
 
 * 安装[go-ethereum](https://geth.ethereum.org/docs/install-and-build/installing-geth)
 
-
 * 创建初始用户
+>  需要提前新建./passwd.txt，用于存放Keystore密码
 ```
 ➜  mkdir dataDir
 ➜  geth --datadir=./dataDir --password ./passwd.txt account new > account1.txt
@@ -38,18 +38,17 @@ true
 > personal.unlockAccount("0xe99f3cbb6b550b36313722ba319e56ec251857cd","hello")
 true
 ```
+* [hardhat]介绍(https://hardhat.org/getting-started/#quick-start)
+* ~~安装[truffle](https://www.trufflesuite.com/docs/truffle/getting-started/installation)~~
 
-* 安装[truffle](https://www.trufflesuite.com/docs/truffle/getting-started/installation)
-
-* 部署合约
-
+* 安装node依赖
 ```
-➜ truffle migrate
+➜ yarn
 ```
 
 * 运行测试 
 ```
-➜ yarn test-mmrlib
+➜ npx hardhat test test/TestMMRLib.js
 ```
 
 
