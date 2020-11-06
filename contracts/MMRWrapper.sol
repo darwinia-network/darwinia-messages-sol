@@ -4,9 +4,8 @@ import "./MMR.sol";
 import "hardhat/console.sol";
 
 contract MMRWrapper {
-    uint public test;
+    bool public result;
     constructor() public {
-
     }
 
     function verifyProof(
@@ -18,6 +17,10 @@ contract MMRWrapper {
         bytes32[] memory peaks,
         bytes32[] memory siblings
     ) public returns (uint8){
-        return MMR.verifyProof(root, width, index, value, valueHash, peaks, siblings);
+        result = MMR.inclusionProof(root, width, index, value, valueHash, peaks, siblings);
+    }
+
+    function getResult() public view returns (bool) {
+        return result;
     }
 }

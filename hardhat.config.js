@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-truffle5");
 const mnemonic = "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
+// const mnemonic = "";
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -23,18 +24,22 @@ module.exports = {
     timeout: 100000
   },
   solidity: "0.5.16",
-    // defaultNetwork: 'dev',
+    // defaultNetwork: 'geth',
     networks: {
       hardhat: {
       },
       dev: {
+        url: 'http://127.0.0.1:8545/',
+        network_id: "*",
+        gasPrice: 1000000000,
+      },
+      geth: {
         url: 'http://127.0.0.1:8543/',
         network_id: "*",
         gasPrice: 1000000000,
-        accounts: {
-          mnemonic: mnemonic,
-
-        }
+        // accounts: {
+        //   mnemonic: mnemonic,
+        // }
       }
     }
 };
