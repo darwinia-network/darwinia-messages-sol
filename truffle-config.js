@@ -1,4 +1,7 @@
 module.exports = {
+  mocha: {
+    enableTimeouts: false
+  },
 
   networks: {
 
@@ -6,6 +9,8 @@ module.exports = {
      host: "127.0.0.1",     // Localhost (default: none)
      port: 8543,            // Standard Ethereum port (default: none)
      network_id: "*",       // Any network (default: none)
+     before_timeout: 200000,          //  <=== NEW
+     test_timeout: 300000             //  <=== NEW
     },
 
   },

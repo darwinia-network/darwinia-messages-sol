@@ -5,6 +5,24 @@ import {Memory} from "./Memory.sol";
 library Bytes {
     uint256 internal constant BYTES_HEADER_SIZE = 32;
 
+    // Checks if two `bytes memory` variables are equal. This is done using hashing,
+    // which is much more gas efficient then comparing each byte individually.
+    // Equality means that:
+    //  - 'self.length == other.length'
+    //  - For 'n' in '[0, self.length)', 'self[n] == other[n]'
+    function equals(bytes memory self, bytes memory other) internal pure returns (bool equal) {
+        if (self.length != other.length) {
+            return false;
+        }
+        uint addr;
+        uint addr2;
+        assembly {
+            addr := add(self, /*BYTES_HEADER_SIZE*/32)
+            addr2 := add(other, /*BYTES_HEADER_SIZE*/32)
+        }
+        equal = Memory.equals(addr, addr2, self.length);
+    }
+
     // Copies a section of 'self' into a new array, starting at the provided 'startIndex'.
     // Returns the new copy.
     // Requires that 'startIndex <= self.length'

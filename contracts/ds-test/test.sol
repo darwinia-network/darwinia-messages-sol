@@ -33,7 +33,8 @@ contract DSTest {
     }
 
     function fail() internal {
-        failed = true;
+        // failed = true;
+        revert();
     }
 
     function expectEventsExact(address target) internal {
