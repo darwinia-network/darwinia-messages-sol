@@ -1,9 +1,37 @@
 pragma solidity >=0.5.0 <0.6.0;
 
 import "./Input.sol";
+import "hardhat/console.sol";
 
 library Scale {
     using Input for Input.Data;
+
+    // decodeReceiptProof receives Scale Codec of Vec<Vec<Bytes>, Vec<Bytes>> structure, 
+    // the first Vec<Bytes> is the proofs of mpt, and the second is the keys
+    function decodeReceiptProof(Input.Data memory data) 
+        internal
+        pure
+        returns (bytes[] memory proofs, bytes[] memory keys) 
+    {
+        decodeU32(data);
+        proofs = decodeVecBytesArray(data);
+        keys = decodeVecBytesArray(data);
+    }
+
+    // decodeVecBytesArray accepts a Scale Codec of type Vec<Bytes> and returns an array of Bytes
+    function decodeVecBytesArray(Input.Data memory data)
+        internal
+        pure
+        returns (bytes[] memory v) 
+    {
+        uint32 vecLenght = decodeU32(data);
+        v = new bytes[](vecLenght);
+        for(uint i = 0; i < vecLenght; i++) {
+            uint len = decodeU32(data);
+            v[i] = data.decodeBytesN(len);
+        }
+        return v;
+    }
 
     // decodeByteArray accepts a byte array representing a SCALE encoded byte array and performs SCALE decoding
     // of the byte array

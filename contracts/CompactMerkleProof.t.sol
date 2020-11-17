@@ -5,7 +5,7 @@ import "./ds-test/test.sol";
 import "./CompactMerkleProof.sol";
 pragma experimental ABIEncoderV2;
 
-contract CompactMerkleProofTest is CompactMerkleProof, DSTest {
+contract CompactMerkleProofTest is DSTest {
     function setUp() public {}
 
     function testFail_basic_sanity() public {

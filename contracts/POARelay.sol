@@ -8,6 +8,10 @@ import "./common/Timelock.sol";
 import "./common/Pausable.sol";
 
 import "./MMR.sol";
+import "./SimpleMerkleProof.sol";
+
+pragma experimental ABIEncoderV2;
+
 
 contract POARelay is Ownable, Pausable, Timelock {
     event InsertRootEvent(address relayer, bytes32 root, uint256 width);
@@ -158,8 +162,15 @@ contract POARelay is Ownable, Pausable, Timelock {
             );
     }
 
-    function verifyReceiptProof() public view whenNotPaused returns (bool) {
-        return true;
+    function getReceipt(
+        bytes32 root,
+        bytes memory proofs
+    ) public view whenNotPaused returns (bytes memory) {
+        Input.Data memory data = Input.from(proofs);
+
+        (bytes[] memory proofs, bytes[] memory keys) = Scale.decodeReceiptProof(data);
+        bytes[] memory result = SimpleMerkleProof.verify(root, proofs, keys);
+        return result[0];
     }
 
     function appendRoot(uint256 width, bytes32 root) public isRelayer whenNotPaused {

@@ -1,5 +1,6 @@
 const CompactMerkleProofTest = artifacts.require('CompactMerkleProofTest');
 const SimpleMerkleProofTest = artifacts.require('SimpleMerkleProofTest');
+const ScaleTest = artifacts.require('ScaleTest');
 
 describe('MerkleProofTest', function (accounts) {
 
@@ -7,7 +8,12 @@ describe('MerkleProofTest', function (accounts) {
 
     });
 
-    it('CompactMerkleProofTest testCompactMerkleProofTest', async () => {
+    it('ScaleTest', async() => {
+        let contract = await ScaleTest.new();
+        assert(await contract.testDecodeReceiptProof(), true);
+    }).timeout(200000);
+
+    it.skip('CompactMerkleProofTest testCompactMerkleProofTest', async () => {
         let contract = await CompactMerkleProofTest.new()
         assert(await contract.testSimplePairVerifyProof(), true);
         assert(await contract.testPairVerifyProof(), true);
@@ -19,7 +25,7 @@ describe('MerkleProofTest', function (accounts) {
         assert(await contract.test_encode_branch(), true);
     }).timeout(200000);
 
-    it('SimpleMerkleProof testSimpleMerkleProof', async () => {
+    it.skip('SimpleMerkleProof testSimpleMerkleProof', async () => {
         let contract = await SimpleMerkleProofTest.new()
         assert(await contract.testNonCompactMerkleProof(), true);
     }).timeout(200000);

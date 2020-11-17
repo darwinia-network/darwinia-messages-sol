@@ -7,6 +7,7 @@ const Node = artifacts.require("Node");
 const Scale = artifacts.require("Scale");
 const CMPTest = artifacts.require("CompactMerkleProofTest");
 const SMPTest = artifacts.require("SimpleMerkleProofTest");
+const ScaleTest = artifacts.require("ScaleTest");
 
 
 module.exports = function(deployer) {
@@ -20,10 +21,12 @@ module.exports = function(deployer) {
 
   deployer.link(Bytes, CMPTest);
   deployer.link(Bytes, SMPTest);
+  deployer.link(Bytes, ScaleTest);
   deployer.link(Hash, CMPTest);
   deployer.link(Hash, SMPTest);
   deployer.link(Input, CMPTest);
   deployer.link(Input, SMPTest);
+  deployer.link(Input, ScaleTest);
   deployer.link(Memory, CMPTest);
   deployer.link(Memory, SMPTest);
   deployer.link(Nibble, CMPTest);
@@ -32,7 +35,9 @@ module.exports = function(deployer) {
   deployer.link(Node, SMPTest);
   deployer.link(Scale, CMPTest);
   deployer.link(Scale, SMPTest);
+  deployer.link(Scale, ScaleTest);
 
   deployer.deploy(CMPTest);
   deployer.deploy(SMPTest);
+  deployer.deploy(ScaleTest);
 };
