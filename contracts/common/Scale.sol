@@ -1,10 +1,76 @@
 pragma solidity >=0.5.0 <0.6.0;
 
 import "./Input.sol";
+import "./Bytes.sol";
+
 import "hardhat/console.sol";
 
 library Scale {
     using Input for Input.Data;
+    using Bytes for bytes;
+    
+    struct LockEvent {
+        bytes2 index;
+        bytes32 sender;
+        address recipient;
+        uint8 token;
+        uint128 value;
+    }
+
+    // Vec<Event>    Event = <index, Data>   Data = {accountId, EthereumAddress, types, Balance}
+    // bytes memory hexData = hex"102403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec700000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec70100e40b5402000000000000000000000024038eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050000d0b72b6a000000000000000000000024048eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050100c817a8040000000000000000000000";
+    function decodeLockEvents(Input.Data memory data)
+        internal
+        view
+        returns (LockEvent[] memory)
+    {
+        uint32 len = decodeU32(data);
+        LockEvent[] memory events = new LockEvent[](len);
+
+          for(uint i = 0; i < len; i++) {
+            events[i] = LockEvent({
+                index: data.decodeBytesN(2).toBytes2(0),
+                sender: decodeAccountId(data),
+                recipient: decodeEthereumAddress(data),
+                token: data.decodeU8(),
+                value: decodeBalance(data)
+            });
+          }
+
+        return events;
+    }
+
+    // decode Balance
+    function decodeEthereumAddress(Input.Data memory data) 
+        internal
+        pure
+        returns (address addr) 
+    {
+        bytes memory bys = data.decodeBytesN(20);
+        assembly {
+            addr := mload(add(bys,20))
+        } 
+    }
+
+    // decode Balance
+    function decodeBalance(Input.Data memory data) 
+        internal
+        pure
+        returns (uint128) 
+    {
+        bytes memory accountId = data.decodeBytesN(16);
+        return uint128(reverseBytes16(accountId.toBytes16(0)));
+    }
+
+    // decode darwinia network account Id
+    function decodeAccountId(Input.Data memory data) 
+        internal
+        pure
+        returns (bytes32) 
+    {
+        bytes memory accountId = data.decodeBytesN(32);
+        return accountId.toBytes32(0);
+    }
 
     // decodeReceiptProof receives Scale Codec of Vec<Vec<Bytes>, Vec<Bytes>> structure, 
     // the first Vec<Bytes> is the proofs of mpt, and the second is the keys
@@ -116,5 +182,25 @@ library Scale {
         } else {
             revert("scale encode not support");
         }
+    }
+
+    // convert BigEndian to LittleEndian 
+    function reverseBytes16(bytes16 input) internal pure returns (bytes16 v) {
+        v = input;
+
+        // swap bytes
+        v = ((v & 0xFF00FF00FF00FF00FF00FF00FF00FF00) >> 8) |
+            ((v & 0x00FF00FF00FF00FF00FF00FF00FF00FF) << 8);
+
+        // swap 2-byte long pairs
+        v = ((v & 0xFFFF0000FFFF0000FFFF0000FFFF0000) >> 16) |
+            ((v & 0x0000FFFF0000FFFF0000FFFF0000FFFF) << 16);
+
+        // swap 4-byte long pairs
+        v = ((v & 0xFFFFFFFF00000000FFFFFFFF00000000) >> 32) |
+            ((v & 0x00000000FFFFFFFF00000000FFFFFFFF) << 32);
+
+        // swap 8-byte long pairs
+        v = (v >> 64) | (v << 64);
     }
 }

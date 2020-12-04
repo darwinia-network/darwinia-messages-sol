@@ -79,4 +79,43 @@ library Bytes {
         Memory.copy(src2, dest2, src2Len);
         return ret;
     }
+
+    function toBytes32(bytes memory self, uint256 offset)
+        internal
+        pure
+        returns (bytes32)
+    {
+        bytes32 out;
+
+        for (uint256 i = 0; i < 32; i++) {
+            out |= bytes32(self[offset + i] & 0xFF) >> (i * 8);
+        }
+        return out;
+    }
+
+    function toBytes16(bytes memory self, uint256 offset)
+        internal
+        pure
+        returns (bytes16)
+    {
+        bytes16 out;
+
+        for (uint256 i = 0; i < 16; i++) {
+            out |= bytes16(self[offset + i] & 0xFF) >> (i * 8);
+        }
+        return out;
+    }
+
+    function toBytes2(bytes memory self, uint256 offset)
+        internal
+        pure
+        returns (bytes2)
+    {
+        bytes2 out;
+
+        for (uint256 i = 0; i < 2; i++) {
+            out |= bytes2(self[offset + i] & 0xFF) >> (i * 8);
+        }
+        return out;
+    }
 }
