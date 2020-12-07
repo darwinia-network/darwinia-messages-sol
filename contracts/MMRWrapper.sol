@@ -13,11 +13,10 @@ contract MMRWrapper {
         uint256 width,
         uint256 index,
         bytes memory value,
-        bytes32 valueHash,
         bytes32[] memory peaks,
         bytes32[] memory siblings
     ) public returns (uint8){
-        result = MMR.inclusionProof(root, width, index, value, valueHash, peaks, siblings);
+        result = MMR.inclusionProof(root, width, index, value, peaks, siblings);
     }
 
     function getResult() public view returns (bool) {

@@ -21,13 +21,13 @@ library Scale {
     // bytes memory hexData = hex"102403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec700000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec70100e40b5402000000000000000000000024038eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050000d0b72b6a000000000000000000000024048eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050100c817a8040000000000000000000000";
     function decodeLockEvents(Input.Data memory data)
         internal
-        view
+        pure
         returns (LockEvent[] memory)
     {
         uint32 len = decodeU32(data);
         LockEvent[] memory events = new LockEvent[](len);
 
-          for(uint i = 0; i < len; i++) {
+        for(uint i = 0; i < len; i++) {
             events[i] = LockEvent({
                 index: data.decodeBytesN(2).toBytes2(0),
                 sender: decodeAccountId(data),
@@ -35,9 +35,63 @@ library Scale {
                 token: data.decodeU8(),
                 value: decodeBalance(data)
             });
-          }
+        }
 
         return events;
+    }
+
+    function decodeStateRootFromBlockHeader(
+        bytes memory header
+    ) public pure returns (bytes32 root) {
+        uint8 offset = decodeCompactU8aOffset(header[32]);
+        assembly {
+            root := mload(add(add(header, 0x40), offset))
+        }
+        return root;
+    }
+
+    // little endian
+    function decodeMMRRoot(Input.Data memory data) 
+        internal
+        pure
+        returns (uint32 width, bytes32 root)
+    {
+        bytes memory widthData = data.decodeBytesN(4);
+        bytes memory rootData = data.decodeBytesN(32);
+
+        width = uint32(widthData.toBytes4(0));
+        root = rootData.toBytes32(0);
+    }
+
+    function decodeAuthorities(Input.Data memory data)
+        internal
+        view
+        returns (uint32 nonce, address[] memory authorities)
+    {
+        uint256 len = data.raw.length;
+        
+        // nonce length is 4, ethereum address length is 20 bytes
+        require(len >= 24, "Scale: Authorities length mismatch");
+        require((len - 4) % 20 == 0, "Scale: Authorities length mismatch");
+
+        uint authoritiesLength = (len - 4) / 20;
+        console.log(authoritiesLength);
+        nonce = decodeAuthoritiesNonce(data);
+        authorities = new address[](authoritiesLength);
+        for(uint i = 0; i < authoritiesLength; i++) {
+            authorities[i] = decodeEthereumAddress(data);
+        }
+    }
+
+    // decode authorities nonce
+    // little endian
+    function decodeAuthoritiesNonce(Input.Data memory data) 
+        internal
+        pure
+        returns (uint32) 
+    {
+        bytes memory nonce = data.decodeBytesN(4);
+        return uint32(nonce.toBytes4(0));
     }
 
     // decode Balance
@@ -74,14 +128,13 @@ library Scale {
 
     // decodeReceiptProof receives Scale Codec of Vec<Vec<Bytes>, Vec<Bytes>> structure, 
     // the first Vec<Bytes> is the proofs of mpt, and the second is the keys
+    // returns (bytes[] memory proofs, bytes[] memory keys)
     function decodeReceiptProof(Input.Data memory data) 
         internal
         pure
-        returns (bytes[] memory proofs, bytes[] memory keys) 
+        returns (bytes[] memory proofs) 
     {
-        decodeU32(data);
         proofs = decodeVecBytesArray(data);
-        keys = decodeVecBytesArray(data);
     }
 
     // decodeVecBytesArray accepts a Scale Codec of type Vec<Bytes> and returns an array of Bytes
@@ -202,5 +255,18 @@ library Scale {
 
         // swap 8-byte long pairs
         v = (v >> 64) | (v << 64);
+    }
+
+    function decodeCompactU8aOffset(bytes1 input0) public pure returns (uint8) {
+        bytes1 flag = input0 & bytes1(hex"03");
+        if (flag == hex"00") {
+            return 1;
+        } else if (flag == hex"01") {
+            return 2;
+        } else if (flag == hex"02") {
+            return 4;
+        }
+        uint8 offset = (uint8(input0) >> 2) + 4 + 1;
+        return offset;
     }
 }

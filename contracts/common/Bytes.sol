@@ -106,6 +106,19 @@ library Bytes {
         return out;
     }
 
+    function toBytes4(bytes memory self, uint256 offset)
+        internal
+        pure
+        returns (bytes4)
+    {
+        bytes4 out;
+
+        for (uint256 i = 0; i < 4; i++) {
+            out |= bytes4(self[offset + i] & 0xFF) >> (i * 8);
+        }
+        return out;
+    }
+
     function toBytes2(bytes memory self, uint256 offset)
         internal
         pure

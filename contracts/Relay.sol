@@ -7,6 +7,9 @@ import "./common/Ownable.sol";
 import "./common/Timelock.sol";
 import "./common/Pausable.sol";
 import "./common/ECDSA.sol";
+import "./common/Hash.sol";
+import "./common/SafeMath.sol";
+import "./common/Input.sol";
 
 import "./MMR.sol";
 import "./SimpleMerkleProof.sol";
@@ -19,232 +22,239 @@ contract Relay is Ownable, Pausable, Timelock {
     event ResetRootEvent(address owner, bytes32 root, uint256 width);
     event ResetLatestWidthEvent(address owner, uint256 width);
 
-    using Blake2b for Blake2b.Instance;
-
-    struct CandidateRoot {
-        uint256 width;
-        uint256 time;
-        bytes32 data;
-        bool dispute;
+    struct Relayers {
+        // Each time the relay set is updated, the nonce is incremented
+        uint32 nonce;
+        // mapping(address => bool) member;
+        address[] member;
+        uint16 count;
+        uint8 limit;
     }
 
-    mapping(uint256 => bytes32) public mmrRootPool;
+    Relayers relayers;
+
+    mapping(uint32 => bytes32) public mmrRootPool;
 
     mapping(address => bool) public relayer;
     mapping(address => bool) public supervisor;
 
-    CandidateRoot public candidateRoot;
-
     // uint256 public latestBlockNumber;
-    uint256 public latestWidth;
+    uint32 public latestWidth;
 
     constructor(
-        uint256 _width,
+        uint32 _width,
         bytes32 _genesisMMRRoot,
-        address[] memory _relayer
+        address[] memory _relayers,
+        uint32 _nonce,
+        uint8 _relayerLimit
     ) public {
         _appendRoot(_width, _genesisMMRRoot);
-
-        for (uint256 i = 0; i < _relayer.length; ++i) {
-            _setRelayer(_relayer[i]);
-        }
+        _setRelayer(_nonce, _relayers);
+        relayers.limit = _relayerLimit;
     }
 
-    modifier isRelayer() {
-        require(
-            relayer[_msgSender()] || owner() == _msgSender(),
-            "Relay: caller is not the relayer or owner"
-        );
-        _;
+    // modifier isRelayer() {
+    //     bool isRelayer;
+    //     for(uint i = 0; i < relayers.member; i++) {
+    //       if(_msgSender() == relayers.member) {
+    //         return true;
+    //       }
+    //     }
+    //     return false;
+    //     // require(
+    //     //     relayers.member[_msgSender()] || owner() == _msgSender(),
+    //     //     "Relay: caller is not the relayer or owner"
+    //     // );
+    //     _;
+    // }
+
+    function _setRelayer(uint32 nonce, address[] memory accounts) internal {
+        require(accounts.length > 0, "Relay: accounts is empty");
+        relayers.member = accounts;
+        relayers.nonce = nonce;
+        // if(!_isRelayer(account)) {
+        //     relayers.member[account] = true;
+        //     require(relayers.count < 65535, "Relay: overflow");
+        //     relayers.count++;
+        // }
     }
 
-    function _setRelayer(address account) internal {
-        relayer[account] = true;
-    }
+    // function _removeRelayer(address account) internal {
+    //     if(_isRelayer(account)) {
+    //         delete relayers.member[account];
+    //         require(relayers.count > 0, "Relay: overflow");
+    //         relayers.count--;
+    //     }
+    // }
 
-    function _removeRelayer(address account) internal {
-        relayer[account] = false;
-    }
-
-    function _appendRoot(uint256 width, bytes32 root) internal {
-        require(
-            mmrRootPool[width] == bytes32(0),
-            "Relay: Width has been set"
-        );
-        require(
-            latestWidth < width,
-            "Relay: There are already higher blocks"
-        );
+    function _appendRoot(uint32 width, bytes32 root) internal {
+        require(mmrRootPool[width] == bytes32(0), "Relay: Width has been set");
+        require(latestWidth < width, "Relay: There are already higher blocks");
 
         _setRoot(width, root);
         _setLatestWidth(width);
     }
 
-    function _setRoot(uint256 width, bytes32 root) internal {
+    function _setRoot(uint32 width, bytes32 root) internal {
         mmrRootPool[width] = root;
         emit SetRootEvent(_msgSender(), root, width);
     }
 
-    function _setLatestWidth(uint256 width) internal {
+    function _setLatestWidth(uint32 width) internal {
         latestWidth = width;
     }
 
-    // TODO: 
-    function _checkRelayerSignature(bytes32 hash, bytes memory payload, bytes[] memory signatures)
-        internal
-        returns (bool)
-    {
-        require(keccak256(payload) == hash, "Relay: The payload does not match the hash");
-
-        for(uint i = 0; i < signatures.length; i++) {
-            address signer = ECDSA.recover(hash, signatures[i]);
-        }
-
-        
-        
-        return true;
+    function _getRelayerCount() internal view returns (uint16) {
+        return relayers.count;
     }
 
-    function verify(
-        bytes32 root,
-        uint256 width,
-        uint256 index,
-        bytes memory value,
-        bytes32 valueHash,
-        bytes32[] memory peaks,
-        bytes32[] memory siblings
-    ) public view {
-        require(
-            verifyBlockProof(
-                root,
-                width,
-                index,
-                value,
-                valueHash,
-                peaks,
-                siblings
-            ),
-            "Relay: Block header proof varification failed"
-        );
+    function _getRelayerLimit() internal view returns (uint8) {
+        return relayers.limit;
     }
 
-    function getMMRRoot(uint256 width) public view returns (bytes32) {
+
+    function _getMMRRoot(uint32 width) internal view returns (bytes32) {
         return mmrRootPool[width];
     }
 
-    function Blake2bHash(bytes memory input) private view returns (bytes32) {
-        Blake2b.Instance memory instance = Blake2b.init(hex"", 32);
-        return bytesToBytes32(instance.finalize(input), 0);
-    }
-
-    function bytesToBytes32(bytes memory b, uint256 offset)
-        private
-        pure
-        returns (bytes32)
-    {
-        bytes32 out;
-
-        for (uint256 i = 0; i < 32; i++) {
-            out |= bytes32(b[offset + i] & 0xFF) >> (i * 8);
+    function _isRelayer(address addr) internal view returns (bool) {
+        for (uint256 i = 0; i < relayers.member.length; i++) {
+            if (addr == relayers.member[i]) {
+                return true;
+            }
         }
-        return out;
+        return false;
     }
 
-    function verifyBlockProof(
-        bytes32 root,
-        uint256 width,
-        uint256 index,
-        bytes memory value,
-        bytes32 valueHash,
-        bytes32[] memory peaks,
-        bytes32[] memory siblings
-    ) public view whenNotPaused returns (bool) {
-        require(
-            getMMRRoot(width) == bytes32(0),
-            "Relay: Not registered under this width"
-        );
-        require(
-            getMMRRoot(width) == root,
-            "Relay: Root is different from the root pool"
-        );
-
-        return
-            MMR.inclusionProof(
-                root,
-                width,
-                index,
-                value,
-                valueHash,
-                peaks,
-                siblings
-            );
-    }
-
-    function getReceipt(bytes32 root, bytes memory proofs)
-        public
-        view
-        whenNotPaused
-        returns (bytes memory)
-    {
-        Input.Data memory data = Input.from(proofs);
-
-        (bytes[] memory proofs, bytes[] memory keys) = Scale.decodeReceiptProof(
-            data
-        );
-        bytes[] memory result = SimpleMerkleProof.verify(root, proofs, keys);
-        return result[0];
-    }
-
-    function appendRoot(
-        uint256 width,
-        bytes32 root,
-        bytes32 hash, 
+    function _checkSignature(
+        bytes32 hash,
         bytes memory payload,
-        bytes[] memory signature
-    ) public whenNotPaused {
+        bytes[] memory signatures
+    ) internal view returns (bool) {
         require(
-            _checkRelayerSignature(hash, payload, signature),
+            keccak256(payload) == hash,
+            "Relay: The payload does not match the hash"
+        );
+        require(signatures.length < 0xffffff, "Relay: overflow");
+
+        uint16 count;
+        for (uint16 i = 0; i < signatures.length; i++) {
+            address signer = ECDSA.recover(hash, signatures[i]);
+
+            if (_isRelayer(signer)) {
+                count++;
+            }
+        }
+
+        uint8 limit = uint8(
+            SafeMath.div(SafeMath.mul(uint256(count), 100), _getRelayerCount())
+        );
+
+        return limit > _getRelayerLimit();
+    }
+
+    function updateRelayer(
+        bytes32 hash,
+        bytes memory payload,
+        bytes[] memory signatures
+    ) public {
+        // verify hash, signatures (The number of signers must be greater than 2/3 of the total)
+        require(
+            _checkSignature(hash, payload, signatures),
             "Relay: Bad relayer signature"
         );
 
-        _appendRoot(candidateRoot.width, candidateRoot.data);
+        // decode payload, check nonce and relayer
+        Input.Data memory data = Input.from(payload);
+        (uint32 nonce, address[] memory authorities) = Scale.decodeAuthorities(
+            data
+        );
+
+        // update nonce,relayer
+        _setRelayer(nonce, authorities);
     }
-    
-    function resetRoot(uint256 width, bytes32 root) public onlyOwner {
+
+    function appendRoot(
+        bytes32 hash,
+        bytes memory payload,
+        bytes[] memory signatures
+    ) public whenNotPaused {
+        // verify hash, signatures
+        require(
+            _checkSignature(hash, payload, signatures),
+            "Relay: Bad relayer signature"
+        );
+
+        // decode payload, check nonce and relayer
+        Input.Data memory data = Input.from(payload);
+        (uint32 width, bytes32 root) = Scale.decodeMMRRoot(data);
+
+        // append width,root
+        _appendRoot(width, root);
+    }
+
+    function resetRoot(uint32 width, bytes32 root) public onlyOwner {
         _setRoot(width, root);
         emit ResetRootEvent(_msgSender(), root, width);
     }
 
-    function resetLatestWidth(uint256 width) public onlyOwner {
+    function verify(
+        bytes32 root,
+        uint32 width,
+        uint256 index,
+        bytes memory value,
+        bytes32[] memory peaks,
+        bytes32[] memory siblings
+    ) public view {
+        // verify block proof
+        require(
+            verifyBlockProof(root, width, index, value, peaks, siblings),
+            "Relay: Block header proof varification failed"
+        );
+
+        // get state root
+        bytes32 stateRoot = Scale.decodeStateRootFromBlockHeader(value);
+        // getReceipt();
+    }
+
+    function verifyBlockProof(
+        bytes32 root,
+        uint32 width,
+        uint256 index,
+        bytes memory value,
+        bytes32[] memory peaks,
+        bytes32[] memory siblings
+    ) public view whenNotPaused returns (bool) {
+        require(
+            _getMMRRoot(width) != bytes32(0),
+            "Relay: Not registered under this width"
+        );
+        require(
+            _getMMRRoot(width) == root,
+            "Relay: Root is different from the root pool"
+        );
+
+        return MMR.inclusionProof(root, width, index, value, peaks, siblings);
+    }
+
+    // function getLockTokenReceipt(bytes32 root, bytes memory proofstr)
+    //     public
+    //     view
+    //     whenNotPaused
+    //     returns (bytes memory)
+    // {
+    //     Input.Data memory data = Input.from(proofstr);
+
+    //     bytes[] memory proofs = Scale.decodeReceiptProof(
+    //         data
+    //     );
+    //     bytes[] memory result = SimpleMerkleProof.getEvents(root, proofs, keys);
+    //     return result[0];
+    // }
+
+    function resetLatestWidth(uint32 width) public onlyOwner {
         _setLatestWidth(width);
         emit ResetLatestWidthEvent(_msgSender(), width);
-    }
-
-    function decodeCompactU8aOffset(bytes1 input0) public pure returns (uint8) {
-        bytes1 flag = input0 & bytes1(hex"03");
-        if (flag == hex"00") {
-            return 1;
-        } else if (flag == hex"01") {
-            return 2;
-        } else if (flag == hex"02") {
-            return 4;
-        }
-        uint8 offset = (uint8(input0) >> 2) + 4 + 1;
-        return offset;
-    }
-
-    function getStateRootFromBlockHeader(
-        uint256 width,
-        bytes memory encodedHeader
-    ) public pure returns (bytes32) {
-        // require(mmrRootPool[width] != bytes32(0x0), "Invalid width");
-        // bytes32 inputHash = Blake2bHash(encodedHeader);
-        bytes32 state_root;
-        uint8 offset = decodeCompactU8aOffset(encodedHeader[32]);
-        assembly {
-            state_root := mload(add(add(encodedHeader, 0x40), offset))
-        }
-        return state_root;
     }
 
     function unpause() public onlyOwner {

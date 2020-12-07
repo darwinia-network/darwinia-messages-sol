@@ -56,7 +56,7 @@ library MMR {
 
     function peakBagging(uint256 width, bytes32[] memory peaks) view public returns (bytes32) {
         // peaks may be merged
-        // require(numOfPeaks(width) == peaks.length, "Received invalid number of peaks");
+        require(numOfPeaks(width) == peaks.length, "Received invalid number of peaks");
         bytes32 mergeHash = peaks[0];
         for(uint i = peaks.length-1; i >= 1; i = i - 1) {
             bytes32 r;
@@ -111,7 +111,6 @@ library MMR {
         uint256 width,
         uint256 index,
         bytes memory value,
-        bytes32 valueHash,
         bytes32[] memory peaks,
         bytes32[] memory siblings
     ) view public returns (bool) {
