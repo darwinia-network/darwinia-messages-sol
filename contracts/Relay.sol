@@ -16,11 +16,18 @@ import "./SimpleMerkleProof.sol";
 
 pragma experimental ABIEncoderV2;
 
-contract Relay is Ownable, Pausable, Timelock {
-    event InsertRootEvent(address relayer, bytes32 root, uint256 width);
-    event SetRootEvent(address relayer, bytes32 root, uint256 width);
-    event ResetRootEvent(address owner, bytes32 root, uint256 width);
-    event ResetLatestWidthEvent(address owner, uint256 width);
+contract Relay is Ownable, Pausable {
+    event SetRootEvent(address relayer, bytes32 root, uint256 index);
+    event ResetRootEvent(address owner, bytes32 root, uint256 index);
+    event ResetLatestIndexEvent(address owner, uint256 index);
+
+    ///
+    /// Backing.sol
+    ///
+
+    event MintRingEvent(address recipient, uint256 value, bytes32 accountId);
+    event MintKtonEvent(address recipient, uint256 value, bytes32 accountId);
+
 
     struct Relayers {
         // Each time the relay set is updated, the nonce is incremented
@@ -28,93 +35,76 @@ contract Relay is Ownable, Pausable, Timelock {
         // mapping(address => bool) member;
         address[] member;
         uint16 count;
-        uint8 limit;
+        uint8 threshold;
     }
 
     Relayers relayers;
 
+    // 'crab', 'darwinia'
+    bytes private networkPrefix;
+
+    // index => mmr root
+    // In the Darwin Network, the mmr root of block 1000 
+    // needs to be queried in Log-Other of block 1001.
     mapping(uint32 => bytes32) public mmrRootPool;
 
-    mapping(address => bool) public relayer;
-    mapping(address => bool) public supervisor;
-
-    // uint256 public latestBlockNumber;
-    uint32 public latestWidth;
+    uint32 public latestIndex;
 
     constructor(
-        uint32 _width,
+        uint32 _MMRIndex,
         bytes32 _genesisMMRRoot,
         address[] memory _relayers,
         uint32 _nonce,
-        uint8 _relayerLimit
+        uint8 _threshold,
+        bytes memory _prefix
     ) public {
-        _appendRoot(_width, _genesisMMRRoot);
+        _appendRoot(_MMRIndex, _genesisMMRRoot);
         _setRelayer(_nonce, _relayers);
-        relayers.limit = _relayerLimit;
+        _setNetworkPrefix(_prefix);
+        relayers.threshold = _threshold;
     }
-
-    // modifier isRelayer() {
-    //     bool isRelayer;
-    //     for(uint i = 0; i < relayers.member; i++) {
-    //       if(_msgSender() == relayers.member) {
-    //         return true;
-    //       }
-    //     }
-    //     return false;
-    //     // require(
-    //     //     relayers.member[_msgSender()] || owner() == _msgSender(),
-    //     //     "Relay: caller is not the relayer or owner"
-    //     // );
-    //     _;
-    // }
 
     function _setRelayer(uint32 nonce, address[] memory accounts) internal {
         require(accounts.length > 0, "Relay: accounts is empty");
         relayers.member = accounts;
         relayers.nonce = nonce;
-        // if(!_isRelayer(account)) {
-        //     relayers.member[account] = true;
-        //     require(relayers.count < 65535, "Relay: overflow");
-        //     relayers.count++;
-        // }
     }
 
-    // function _removeRelayer(address account) internal {
-    //     if(_isRelayer(account)) {
-    //         delete relayers.member[account];
-    //         require(relayers.count > 0, "Relay: overflow");
-    //         relayers.count--;
-    //     }
-    // }
+    function _appendRoot(uint32 index, bytes32 root) internal {
+        require(mmrRootPool[index] == bytes32(0), "Relay: Index has been set");
+        require(latestIndex < index, "Relay: There are already higher blocks");
 
-    function _appendRoot(uint32 width, bytes32 root) internal {
-        require(mmrRootPool[width] == bytes32(0), "Relay: Width has been set");
-        require(latestWidth < width, "Relay: There are already higher blocks");
-
-        _setRoot(width, root);
-        _setLatestWidth(width);
+        _setRoot(index, root);
+        _setLatestIndex(index);
     }
 
-    function _setRoot(uint32 width, bytes32 root) internal {
-        mmrRootPool[width] = root;
-        emit SetRootEvent(_msgSender(), root, width);
+    function _setRoot(uint32 index, bytes32 root) internal {
+        mmrRootPool[index] = root;
+        emit SetRootEvent(_msgSender(), root, index);
     }
 
-    function _setLatestWidth(uint32 width) internal {
-        latestWidth = width;
+    function _setLatestIndex(uint32 index) internal {
+        latestIndex = index;
+    }
+
+    function _setNetworkPrefix(bytes memory prefix) internal {
+        networkPrefix = prefix;
     }
 
     function _getRelayerCount() internal view returns (uint16) {
         return relayers.count;
     }
 
-    function _getRelayerLimit() internal view returns (uint8) {
-        return relayers.limit;
+    function _getNetworkPrefix() internal view returns (bytes memory) {
+        return networkPrefix;
     }
 
+    function _getRelayerThreshold() internal view returns (uint8) {
+        return relayers.threshold;
+    }
 
-    function _getMMRRoot(uint32 width) internal view returns (bytes32) {
-        return mmrRootPool[width];
+    function _getMMRRoot(uint32 index) public view returns (bytes32) {
+        return mmrRootPool[index];
     }
 
     function _isRelayer(address addr) internal view returns (bool) {
@@ -126,16 +116,22 @@ contract Relay is Ownable, Pausable, Timelock {
         return false;
     }
 
+    // This method verifies the content of msg by verifying the existing authority collection in the contract. 
+    // Ecdsa.recover can recover the signer’s address. 
+    // If the signer is matched "isRelayer", it will be counted as a valid signature 
+    // and all signatures will be restored. 
+    // If the number of qualified signers is greater than Equal to threshold, 
+    // the verification is considered successful, otherwise it fails
     function _checkSignature(
         bytes32 hash,
-        bytes memory payload,
+        bytes memory message,
         bytes[] memory signatures
     ) internal view returns (bool) {
         require(
-            keccak256(payload) == hash,
-            "Relay: The payload does not match the hash"
+            keccak256(message) == hash,
+            "Relay: The message does not match the hash"
         );
-        require(signatures.length < 0xffffff, "Relay: overflow");
+        require(signatures.length < 0xffffffff, "Relay: overflow");
 
         uint16 count;
         for (uint16 i = 0; i < signatures.length; i++) {
@@ -146,29 +142,35 @@ contract Relay is Ownable, Pausable, Timelock {
             }
         }
 
-        uint8 limit = uint8(
+        uint8 threshold = uint8(
             SafeMath.div(SafeMath.mul(uint256(count), 100), _getRelayerCount())
         );
 
-        return limit > _getRelayerLimit();
+        return threshold >= _getRelayerThreshold();
+    }
+
+    function _checkNetworkPrefix(bytes memory prefix) view public returns (bool) {
+      return assertBytesEq(_getNetworkPrefix(), prefix);
     }
 
     function updateRelayer(
         bytes32 hash,
-        bytes memory payload,
+        bytes memory message,
         bytes[] memory signatures
     ) public {
         // verify hash, signatures (The number of signers must be greater than 2/3 of the total)
         require(
-            _checkSignature(hash, payload, signatures),
+            _checkSignature(hash, message, signatures),
             "Relay: Bad relayer signature"
         );
 
-        // decode payload, check nonce and relayer
-        Input.Data memory data = Input.from(payload);
-        (uint32 nonce, address[] memory authorities) = Scale.decodeAuthorities(
+        // decode message, check nonce and relayer
+        Input.Data memory data = Input.from(message);
+        (bytes memory prefix, uint32 nonce, address[] memory authorities) = Scale.decodeAuthorities(
             data
         );
+
+        require(_checkNetworkPrefix(prefix), "Relay: Bad network prefix");
 
         // update nonce,relayer
         _setRelayer(nonce, authorities);
@@ -176,85 +178,89 @@ contract Relay is Ownable, Pausable, Timelock {
 
     function appendRoot(
         bytes32 hash,
-        bytes memory payload,
+        bytes memory message,
         bytes[] memory signatures
     ) public whenNotPaused {
         // verify hash, signatures
         require(
-            _checkSignature(hash, payload, signatures),
+            _checkSignature(hash, message, signatures),
             "Relay: Bad relayer signature"
         );
 
-        // decode payload, check nonce and relayer
-        Input.Data memory data = Input.from(payload);
-        (uint32 width, bytes32 root) = Scale.decodeMMRRoot(data);
+        // decode message, check nonce and relayer
+        Input.Data memory data = Input.from(message);
+        (bytes memory prefix, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
 
-        // append width,root
-        _appendRoot(width, root);
+        require(_checkNetworkPrefix(prefix), "Relay: Bad network prefix");
+
+        // append index, root
+        _appendRoot(index, root);
     }
 
-    function resetRoot(uint32 width, bytes32 root) public onlyOwner {
-        _setRoot(width, root);
-        emit ResetRootEvent(_msgSender(), root, width);
+    function resetRoot(uint32 index, bytes32 root) public onlyOwner {
+        _setRoot(index, root);
+        emit ResetRootEvent(_msgSender(), root, index);
     }
 
-    function verify(
+    function verifyAndDecodeReceipt(
         bytes32 root,
-        uint32 width,
-        uint256 index,
-        bytes memory value,
+        uint32 MMRIndex,
+        uint32 blockNumber,
+        bytes memory blockHeader,
         bytes32[] memory peaks,
-        bytes32[] memory siblings
-    ) public view {
+        bytes32[] memory siblings,
+        bytes memory proofstr,
+        bytes memory key
+    ) public view returns (bytes memory){
         // verify block proof
         require(
-            verifyBlockProof(root, width, index, value, peaks, siblings),
+            verifyBlockProof(root, MMRIndex, blockNumber, blockHeader, peaks, siblings),
             "Relay: Block header proof varification failed"
         );
 
         // get state root
-        bytes32 stateRoot = Scale.decodeStateRootFromBlockHeader(value);
-        // getReceipt();
+        bytes32 stateRoot = Scale.decodeStateRootFromBlockHeader(blockHeader);
+
+        return getLockTokenReceipt(stateRoot, proofstr, key);
     }
 
     function verifyBlockProof(
         bytes32 root,
-        uint32 width,
-        uint256 index,
-        bytes memory value,
+        uint32 MMRIndex,
+        uint32 index,
+        bytes memory blockHeader,
         bytes32[] memory peaks,
         bytes32[] memory siblings
     ) public view whenNotPaused returns (bool) {
         require(
-            _getMMRRoot(width) != bytes32(0),
-            "Relay: Not registered under this width"
+            _getMMRRoot(MMRIndex) != bytes32(0),
+            "Relay: Not registered under this index"
         );
         require(
-            _getMMRRoot(width) == root,
+            _getMMRRoot(MMRIndex) == root,
             "Relay: Root is different from the root pool"
         );
 
-        return MMR.inclusionProof(root, width, index, value, peaks, siblings);
+        return MMR.inclusionProof(root, MMRIndex + 1, index + 1, blockHeader, peaks, siblings);
     }
 
-    // function getLockTokenReceipt(bytes32 root, bytes memory proofstr)
-    //     public
-    //     view
-    //     whenNotPaused
-    //     returns (bytes memory)
-    // {
-    //     Input.Data memory data = Input.from(proofstr);
+    function getLockTokenReceipt(bytes32 root, bytes memory proofstr, bytes memory key)
+        public
+        view
+        whenNotPaused
+        returns (bytes memory)
+    {
+        Input.Data memory data = Input.from(proofstr);
 
-    //     bytes[] memory proofs = Scale.decodeReceiptProof(
-    //         data
-    //     );
-    //     bytes[] memory result = SimpleMerkleProof.getEvents(root, proofs, keys);
-    //     return result[0];
-    // }
+        bytes[] memory proofs = Scale.decodeReceiptProof(data);
+        bytes memory result = SimpleMerkleProof.getEvents(root, key, proofs);
+        
+        return result;
+    }
 
-    function resetLatestWidth(uint32 width) public onlyOwner {
-        _setLatestWidth(width);
-        emit ResetLatestWidthEvent(_msgSender(), width);
+    function resetLatestIndex(uint32 index) public onlyOwner {
+        _setLatestIndex(index);
+        emit ResetLatestIndexEvent(_msgSender(), index);
     }
 
     function unpause() public onlyOwner {
@@ -263,5 +269,58 @@ contract Relay is Ownable, Pausable, Timelock {
 
     function pause() public onlyOwner {
         _pause();
+    }
+
+    function assertBytesEq(bytes memory a, bytes memory b) internal pure returns (bool){
+        bool ok = true;
+
+        if (a.length == b.length) {
+            for (uint i = 0; i < a.length; i++) {
+                if (a[i] != b[i]) {
+                    ok = false;
+                }
+            }
+        } else {
+            ok = false;
+        }
+
+        return ok;
+    }
+
+    ///
+    /// Backing.sol
+    ///
+
+    function verifyProof(
+        bytes32 root,
+        uint32 MMRIndex,
+        uint32 blockNumber,
+        bytes memory blockHeader,
+        bytes32[] memory peaks,
+        bytes32[] memory siblings,
+        bytes memory proofstr,
+        bytes memory key
+    ) 
+      public
+      returns (bool)
+    {
+        bytes memory eventsData = verifyAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, proofstr, key);
+        Input.Data memory data = Input.from(eventsData);
+        
+        Scale.LockEvent[] memory events = Scale.decodeLockEvents(data);
+
+        uint256 len = events.length;
+
+        for( uint i = 0; i < len; i++ ) {
+          Scale.LockEvent memory item = events[i];
+          if(item.token == 0) {
+            emit MintRingEvent(item.recipient, item.value, item.sender);
+          }
+
+          if (item.token == 1) {
+            emit MintKtonEvent(item.recipient, item.value, item.sender);
+          }
+        } 
+        return false;
     }
 }

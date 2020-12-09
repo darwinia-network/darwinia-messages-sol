@@ -31,7 +31,7 @@ contract ScaleTest is DSTest {
         //     ]
         // }
 
-        // Encode Vec<Vec<proofs>, Vec<keys>>
+        // Encode Vec<u8>
 
         bytes memory hexData = hex"1081035f00d41e5e16056765bc8461851072c9d735031400000000000000608796090000000002000000010000001702e096b1496b056d5e1ee8e9ef272ff74f05e50884a52318adde16b3b5c6655c3f22aaaaf10536d812c7e097f59e7b769e24341830d42d4551a5c0369a588e4e4000e40b54020000000000000000000000000001000000200600c4192700000000000000000000000000000100000017040f99850f381fdfb5b965617619e59ed082a4515c22967c9c1c94621969362aba0071c6090000000000000000000000000000010000000000401b5f1300000000000000c10680ffb9805626b5eeb95364cd35028f6c2e9502e6763c35b49146c3e06eb0fb0c8437e2f5807d6bd45dc0de8a9d3c09ed996173e3228aa1f0c14343e3613600679837c0459e80a1aec849f3a38d7d135fb693c8ea2d30ce711f9de4d6216df3c1a9a1fed7652480f4aa779b91c9584e64e8f414a45415633ddab553b733a8f053ea281665f6e2798037521b6b221966c2e46dadb5ec9f5dd9955bfb6ddc80b7fd2426c8a80b715742807dfc144d3b4073275b82f6e907ec3a2e23734838c9dfd21815d40813f1037bc980257276b52625f532a5b3415084fb91ded52ba117e97209555a8c05054ce5310d80e9e915eca5fb72b66cf72c2e7726f366889ee12e459bb8e4c8db0db83b5b408f80f39c11c55a33b88d079ac377e5fddee82d1c9471f66fb6a28bd3ad96446c983680df791956f0167fb9bed6c0e9fee9de3d6babf3d1152f5deca446dc29a9e9c9fe80d0b26d2c3777a1ff46e46dab9260a54906108d698aa87d6e4a5ebd0d9d9dd416800d5ead5e5c3f67b600edee6ff127a9cdb90fa28f06bc4804ce6dc639c887360b8004815669f5ffdf790a76a75b3b40f700e8bf7d73eb084aaf9dd793eeda3d525269039eaa394eea5630e07c48ae0c9558cef7298d585f0a98fdbe9ce6c55837576c60c7af3850100500000080798651e0861e900ea90d37dbeea088da90fe28b729ad85b33daa3e3b3dcc9c514c5f0684a022a34dd8bfa2baaf44f172b710040180ebbd938d8e0afb593ff42ca3bc9f58af377da287c9f7c380aa508fa6da70e15580ced43296cd3920efab18447ae4ba50dcc5e87a8db36593ee92756cdd9f36b7598082a75959f024cac266849285f69c1ac49da16ee7801ff4f93fd3cfd3563a47bc605f09cce9c888469bb1a0dceaa129672ef8187010437261622503804b0c80feecb9b8cd91aca389352bb80a01c989ade193be7b6361af47238c2974617a1c808294a7635adce51c7ce4f1faa73c37b02852af44ddea9f79eedfea377ce12711801941a755228dfeade556d93ca6af552ca8974fef5d59b56e6ed0083814201fd0800c8012fed6518393bda3231cc9bc889428748a0c4f6e4c832a632469630e203180d80ae17a3fa70e1addb66fd67ff84d2d84c290c73ef9d15d1d748a134d79b15580f732747b5206732f92adaf4f143693558e5cff9d78ae1b2b40040fdcbef859b2";
         Input.Data memory data = Input.from(hexData);
@@ -156,33 +156,59 @@ contract ScaleTest is DSTest {
 
     function testDecodeAuthorities() public {
 
-        //nonce u32 
-        //little 
-        bytes memory hexData = hex"00020304b20bd5d04be54f870d5c0d3ca85d82b34b83640585520f613021e5db2afb40cb91ef066ccf212111";
+        // let str = api.createType('{"prefix": "Vec<u8>", "nonce": "Compact<u32>", "authorities": "Vec<EthereumAddress>"}', {
+        // prefix: 'crab',
+        // nonce: 100,
+        // authorities: ['0x9f284e1337a815fe77d2ff4ae46544645b20c5ff','0x9469d013805bffb7d3debe5e7839237e535ec483']
+        // })
+        // console.log(str)
+        // console.log(str.toHex())
+
+        // {prefix: 0x63726162, nonce: 100, authorities: [0x9F284E1337A815fe77D2Ff4aE46544645B20c5ff, 0x9469d013805bffb7d3debe5e7839237e535ec483]}
+        // 10637261629101089f284e1337a815fe77d2ff4ae46544645b20c5ff9469d013805bffb7d3debe5e7839237e535ec483
+
+        bytes memory hexData = hex"10637261629101089f284e1337a815fe77d2ff4ae46544645b20c5ff9469d013805bffb7d3debe5e7839237e535ec483";
         Input.Data memory data = Input.from(hexData);
 
-        (uint32 nonce, address[] memory authorities) = Scale.decodeAuthorities(data);
+        (bytes memory prefix, uint32 nonce, address[] memory authorities) = Scale.decodeAuthorities(data);
 
         console.log(uint256(nonce));
         console.log(authorities.length);
         console.logAddress(authorities[0]);
+        console.logAddress(authorities[1]);
+        console.logBytes(prefix);
 
-        assertEq(uint256(nonce), 131844);
-        assertEq(authorities[0], 0xB20bd5D04BE54f870D5C0d3cA85d82b34B836405);
-        assertEq(authorities[1], 0x85520f613021E5dB2Afb40cb91EF066CCF212111);
-
+        assertEq0(prefix, hex"63726162");
+        assertEq(uint256(nonce), 100);
+        assertEq(authorities[0], 0x9F284E1337A815fe77D2Ff4aE46544645B20c5ff);
+        assertEq(authorities[1], 0x9469D013805bFfB7D3DEBe5E7839237e535ec483);
     }
 
     function testDecodeMMRRoot() public {
-        bytes memory hexData = hex"000001020102000000000000000000000000000000000000000000000000000000000009";
+        // let str = api.createType('{"prefix": "Vec<u8>", "index": "Compact<u32>", "root": "H256"}', new Uint8Array([16, 68, 82, 77, 76, 85, 12, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4]))
+        // console.log(str)
+        // console.log(str.toHex())
+
+        // {prefix: 0x44524d4c, index: 789, root: 0x0001020304050607080901020304050607080901020304050607080901020304}
+        // 0x1044524d4c550c0001020304050607080901020304050607080901020304050607080901020304
+
+        bytes memory hexData = hex"1044524d4c550c0001020304050607080901020304050607080901020304050607080901020304";
         Input.Data memory data = Input.from(hexData);
 
-        (uint32 width, bytes32 root) = Scale.decodeMMRRoot(data);
+        (bytes memory prefix, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
 
-        console.log(width);
+        console.logBytes(prefix);
+        console.log(index);
         console.logBytes32(root);
 
-        assertEq(uint256(width), 258);
-        assertEq(root, bytes32(hex"0102000000000000000000000000000000000000000000000000000000000009"));
+        assertEq0(prefix, hex"44524d4c");
+        assertEq(uint256(index), 789);
+        assertEq(root, bytes32(hex"0001020304050607080901020304050607080901020304050607080901020304"));
+    }
+
+    function testDecodeStateRootFromBlockHeader() public {
+        bytes32 root = Scale.decodeStateRootFromBlockHeader(hex"b20ea574de7640b8b6f84312c90a40cd123c1be7cc1655edb4713e61f97fd3ae8991eb3811bb17fe224d59847a47ae0bdd2b2663b1e422c3473638227f86dec82818e7d09cdbf8205034542f4a0116aa07ce96efe63cd2255895acd0474e28d7587f1006424142453402000000003f08f80f000000000466726f6e8801673d4723721b48cef07ce4c4208f4ac233734d7e58cc6ab27f8452bc238cb8df0000904d4d5252b5d7c88ac37e4f91f481e642f87d111e4b2a3b7e791697950139000e4eef094705424142450101b82ad773a86ff32162375e8e6bb455043db376439a90dbc530967f3f2d47184a4610bd6e231b4a5256df1d751c05dffa4d3869c74209b9bf0be55548850f1286");
+        console.logBytes32(root);
+        assertEq(root, bytes32(hex"eb3811bb17fe224d59847a47ae0bdd2b2663b1e422c3473638227f86dec82818"));
     }
 }

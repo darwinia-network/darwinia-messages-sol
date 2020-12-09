@@ -1,165 +1,233 @@
-// const { expectRevert, time } = require('@openzeppelin/test-helpers');
+const { expectRevert, time } = require('@openzeppelin/test-helpers');
 
-// const {expect, use, should} = require('chai');
-// const { solidity }  = require("ethereum-waffle");
-// const pify = require('pify')
-// const Web3 = require('web3');
-// use(solidity);
+const {expect, use, should} = require('chai');
+const { solidity }  = require("ethereum-waffle");
+const pify = require('pify')
+const Web3 = require('web3');
+use(solidity);
 
-// // const Web3Utils = require("web3-utils");
-// // const BigNumber = web3.BigNumber;
+// const Web3Utils = require("web3-utils");
+// const BigNumber = web3.BigNumber;
 
-// // const web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:8545/"));
-// var jsonRpcProvider = new ethers.providers.JsonRpcProvider();
-// const provider = ethers.getDefaultProvider('http://127.0.0.1:8545/');
-// require("chai")
-//   .use(require("chai-as-promised"))
-//   // .use(require("chai-bignumber")(BigNumber))
-//   .should();
+// const web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:8545/"));
+var jsonRpcProvider = new ethers.providers.JsonRpcProvider();
+const provider = ethers.getDefaultProvider('http://127.0.0.1:8545/');
+require("chai")
+  .use(require("chai-as-promised"))
+  // .use(require("chai-bignumber")(BigNumber))
+  .should();
 
-// describe('POARelay', () => {
-//   let mmrLib;
-//   let relay;
-//   let blake2b;
-//   let res;
-//   let darwiniaRelay;
-//   let accounts;
+  // devnet
 
-//   const waitNBlocks = async n => {
-//     await Promise.all(
-//       [...Array(n).keys()].map(async i => {
-//         return await jsonRpcProvider.send('evm_mine', [])
-//       }   
-//       )
-//     );
-//   };
+  // Locked 123 RING, 20 KTON
 
-//   const waitNTime =  n => {
-//      jsonRpcProvider.send('evm_increaseTime', [n])
-//   };
+  // blocknumber 9314
+  // blockhash 0xb821babd95f01467e9ab889e5e03d42030e5db9c7027954223991239c8e0e4ac
+  // blockheader 0xb20ea574de7640b8b6f84312c90a40cd123c1be7cc1655edb4713e61f97fd3ae8991eb3811bb17fe224d59847a47ae0bdd2b2663b1e422c3473638227f86dec82818e7d09cdbf8205034542f4a0116aa07ce96efe63cd2255895acd0474e28d7587f1006424142453402000000003f08f80f000000000466726f6e8801673d4723721b48cef07ce4c4208f4ac233734d7e58cc6ab27f8452bc238cb8df0000904d4d5252b5d7c88ac37e4f91f481e642f87d111e4b2a3b7e791697950139000e4eef094705424142450101b82ad773a86ff32162375e8e6bb455043db376439a90dbc530967f3f2d47184a4610bd6e231b4a5256df1d751c05dffa4d3869c74209b9bf0be55548850f1286
+  // mmr 0xb5d7c88ac37e4f91f481e642f87d111e4b2a3b7e791697950139000e4eef0947
 
-//   let relayConstructor = {};
+  // storage_key 0xf8860dda3d08046cf2706b92bf7202eaae7a79191c90e76297e0895605b8b457
+  // state_root 0xeb3811bb17fe224d59847a47ae0bdd2b2663b1e422c3473638227f86dec82818
+  // rpc state.getReadProof
+  // {
+  //   at: 0xb821babd95f01467e9ab889e5e03d42030e5db9c7027954223991239c8e0e4ac,
+  //   proof: [
+  //     0x5f0e7a79191c90e76297e0895605b8b4573d02082403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb9226600000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb922660100c817a8040000000000000000000000,
+  //     0x807fb980b6e1c772a600a844f50a096c8ece7c17ba3897424e9b2c4c628c9dbfbcb67b1180a1cbea221dc71ebd79d899ff50968a589cd5841bdd2bf6ea1eec40e9a02312c88008d8c6bfac6a63ef239d1d263897e322d5f5cff900439d8be2f9ffe536cfc6a780945fd7ca814966d58e83678f656dd4091ea35d8a1264b0555a67a3a27d8a03818038a4dad4200861e593e8d60b8eead8bbe3df94173b1f073eb0049a0371d822808083fe283f390223d4986264faf72bdbc0e147b52d3967876e0a3b90d589564f5480eeeba3be5735ffab390c56824467c3ea8a35bdd3bd267a2dbee0a75013c91d7b80eb96b92133be69af0b427d0457762cee9836003b9b09e9da247907a7b850f79280dbeb12984b545e2760b9cc11bc64c07b5106c5c0504f64e91cdb071081d775f080bd72408dd9809d3ac3875a56e858563a51fd0257d4cefa21486aea4f9ac251a7804144c4c32418317dfe8ac2429fb859dcc924620b2b6dfde736de89331830bf2e8000ad313b9727685624be3c71895bb435eaab6c023ac95938be0381947670d322,
+  //     0x9e860dda3d08046cf2706b92bf7202ea120d808d9379a2f152a490b6f4eaf9b3b15dc4fdf5c40db04d1027c096f460f6a8325d80e3c1a4bc53f79d38ece4b23b636d88697deeed63410fc26e85d8baa2d39dde568019e0d8e940b47b8f7e291d08c882bb0ccc4599a1ed5229a9b41403dd57f685c58054fa566867bf20c6cad36d14786d19b415f7d99b4592850593168d7aa78cb448805eebc21f9bf3cb232ed1097ff90a4975f025a5f7d91691639272527c9794e246,
+  //     0x80450180cadab1e024b52fa549e97b73e004a41a66934b4cbd2dcdb8d6074412b5e61eaa8042ecc1701d89c0574ab923be5da376c04ea0bb25c5c1e09c068ae1db4703fc0b80ef50809ca9c02fd313cbf878155b3ee608c543784d0aa5e440a50fd4fe3950ae80b11ce23fad848e1f49ec34917483ecf7aff0ade3295988f94a881f3cd491641f
+  //   ]
+  // }
 
-//   before(async () => {
-//     const MMR = await ethers.getContractFactory("MMR");
-//     const SimpleMerkleProof = await ethers.getContractFactory("SimpleMerkleProof");
-//     const [owner, addr1] = await ethers.getSigners();
-//     accounts = await ethers.getSigners();
+  // let proofs = api.createType('Vec<proof>', [...proofs])
+  // console.log(proofs.toHex())
+  // result: 0x1089025f0e7a79191c90e76297e0895605b8b4573d02082403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb9226600000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb922660100c817a80400000000000000000000003d06807fb980b6e1c772a600a844f50a096c8ece7c17ba3897424e9b2c4c628c9dbfbcb67b1180a1cbea221dc71ebd79d899ff50968a589cd5841bdd2bf6ea1eec40e9a02312c88008d8c6bfac6a63ef239d1d263897e322d5f5cff900439d8be2f9ffe536cfc6a780945fd7ca814966d58e83678f656dd4091ea35d8a1264b0555a67a3a27d8a03818038a4dad4200861e593e8d60b8eead8bbe3df94173b1f073eb0049a0371d822808083fe283f390223d4986264faf72bdbc0e147b52d3967876e0a3b90d589564f5480eeeba3be5735ffab390c56824467c3ea8a35bdd3bd267a2dbee0a75013c91d7b80eb96b92133be69af0b427d0457762cee9836003b9b09e9da247907a7b850f79280dbeb12984b545e2760b9cc11bc64c07b5106c5c0504f64e91cdb071081d775f080bd72408dd9809d3ac3875a56e858563a51fd0257d4cefa21486aea4f9ac251a7804144c4c32418317dfe8ac2429fb859dcc924620b2b6dfde736de89331830bf2e8000ad313b9727685624be3c71895bb435eaab6c023ac95938be0381947670d322dd029e860dda3d08046cf2706b92bf7202ea120d808d9379a2f152a490b6f4eaf9b3b15dc4fdf5c40db04d1027c096f460f6a8325d80e3c1a4bc53f79d38ece4b23b636d88697deeed63410fc26e85d8baa2d39dde568019e0d8e940b47b8f7e291d08c882bb0ccc4599a1ed5229a9b41403dd57f685c58054fa566867bf20c6cad36d14786d19b415f7d99b4592850593168d7aa78cb448805eebc21f9bf3cb232ed1097ff90a4975f025a5f7d91691639272527c9794e2461d0280450180cadab1e024b52fa549e97b73e004a41a66934b4cbd2dcdb8d6074412b5e61eaa8042ecc1701d89c0574ab923be5da376c04ea0bb25c5c1e09c068ae1db4703fc0b80ef50809ca9c02fd313cbf878155b3ee608c543784d0aa5e440a50fd4fe3950ae80b11ce23fad848e1f49ec34917483ecf7aff0ade3295988f94a881f3cd491641f
 
-//     // all test accounts
-//     for (const account of accounts) {
-//       console.log(account.address);
-//     }
+  // blocknumber 9315
+  // mmr 0x7f175625e6e00b1504c2ae1ec4669257cbadc50193fe73cb3e7a9abc69ebe090
 
-//     mmrLib = await MMR.deploy();
-//     simpleMerkleProof = await SimpleMerkleProof.deploy();
-//     await mmrLib.deployed();
-//     await simpleMerkleProof.deployed();
+describe('Relay', () => {
+  let mmrLib;
+  let relay;
+  let blake2b;
+  let res;
+  let darwiniaRelay;
+  let accounts;
 
-//     POARelay = await ethers.getContractFactory(
-//       'POARelay',
-//       {
-//         libraries: {
-//           MMR: mmrLib.address,
-//           SimpleMerkleProof: simpleMerkleProof.address
-//         }
-//       }
-//     );
+  const waitNBlocks = async n => {
+    await Promise.all(
+      [...Array(n).keys()].map(async i => {
+        return await jsonRpcProvider.send('evm_mine', [])
+      }   
+      )
+    );
+  };
 
-//     relayConstructor = [
-//       4,
-//       '0x488e9565547fec8bd36911dc805a7ed9f3d8d1eacabe429c67c6456933c8e0a6',
-//       100,
-//       [await owner.getAddress()],
-//       [await addr1.getAddress()]
-//     ]
+  const waitNTime =  n => {
+     jsonRpcProvider.send('evm_increaseTime', [n])
+  };
+
+  let relayConstructor = {};
+
+  const proof = {
+    root: '0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff653550dc',
+    MMRIndex: 11309,
+    blockNumber: 18623,
+    blockHeader: '0xb20ea574de7640b8b6f84312c90a40cd123c1be7cc1655edb4713e61f97fd3ae8991eb3811bb17fe224d59847a47ae0bdd2b2663b1e422c3473638227f86dec82818e7d09cdbf8205034542f4a0116aa07ce96efe63cd2255895acd0474e28d7587f1006424142453402000000003f08f80f000000000466726f6e8801673d4723721b48cef07ce4c4208f4ac233734d7e58cc6ab27f8452bc238cb8df0000904d4d5252b5d7c88ac37e4f91f481e642f87d111e4b2a3b7e791697950139000e4eef094705424142450101b82ad773a86ff32162375e8e6bb455043db376439a90dbc530967f3f2d47184a4610bd6e231b4a5256df1d751c05dffa4d3869c74209b9bf0be55548850f1286',
+    siblings: [
+      '0x84632d50d72a1f57a17c7c146ff5b8312dc2bb1a816c54a5fdeb88eaf49e4aaa', 
+      '0x12a555f1cd033f0b245715e56ba8d0b08e127cb49fc0a7aa5a0ee7a02f937fd5', 
+      '0xdbe301b15d93fa0954d364fe246a0569c9c8fdcd59e057730db78c4c6306af4e', 
+      '0x397e09fef9a8debe96d506924c675f3388a43306b2ef35a2bc7c3523d2a2cd02', 
+      '0x6417c9e10ab9182e7f0905fe654741322b3a06b29cd8f156653e02ac727d805a', 
+      '0x90c457a898830fff9c2d1888a9fbd9e9d6cf0992b483ec4da6763d83e9932e11', 
+      '0x583034854f823b781cd5d4e81b195d30e6515f0f951c8d45eefc4ff25f7db0bc', 
+      '0x4da01f2f4f1e057c1dabc187b8dffdfac1d77b171c252b3e719b9df9123e0e39', 
+      '0xce0ef0402153f498c058b136f6d6059691f096713baddd028b9f98371ff43171', 
+      '0x06da5271cd0e93becabbf662240934d84657ea5c1023cdd3c02773486e6f8b8d', 
+      '0x705f11146a3cb90288827e1e23150aee8b89fc06c3dbc9360e2b8b45d121a5c5'
+    ],
+    peaks: [
+      '0xab8bfa22aa826d1fba75fef2d6697942c3b6da1aa0c1b8a8ac3f0ff4e2c768ac',
+      '0x3a8cfe61f1a38facf433a0ac89ecfd3556bad4ed4eeab3cb8a628eff72f67236',
+      '0x9e5868fbe37c4a08230b4ef3eff56107a8c96171f8d3d72d152bbcb5fda90bc7'
+    ],
+    proofstr: '0x1089025f0e7a79191c90e76297e0895605b8b4573d02082403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb9226600000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb922660100c817a80400000000000000000000003d06807fb980b6e1c772a600a844f50a096c8ece7c17ba3897424e9b2c4c628c9dbfbcb67b1180a1cbea221dc71ebd79d899ff50968a589cd5841bdd2bf6ea1eec40e9a02312c88008d8c6bfac6a63ef239d1d263897e322d5f5cff900439d8be2f9ffe536cfc6a780945fd7ca814966d58e83678f656dd4091ea35d8a1264b0555a67a3a27d8a03818038a4dad4200861e593e8d60b8eead8bbe3df94173b1f073eb0049a0371d822808083fe283f390223d4986264faf72bdbc0e147b52d3967876e0a3b90d589564f5480eeeba3be5735ffab390c56824467c3ea8a35bdd3bd267a2dbee0a75013c91d7b80eb96b92133be69af0b427d0457762cee9836003b9b09e9da247907a7b850f79280dbeb12984b545e2760b9cc11bc64c07b5106c5c0504f64e91cdb071081d775f080bd72408dd9809d3ac3875a56e858563a51fd0257d4cefa21486aea4f9ac251a7804144c4c32418317dfe8ac2429fb859dcc924620b2b6dfde736de89331830bf2e8000ad313b9727685624be3c71895bb435eaab6c023ac95938be0381947670d322dd029e860dda3d08046cf2706b92bf7202ea120d808d9379a2f152a490b6f4eaf9b3b15dc4fdf5c40db04d1027c096f460f6a8325d80e3c1a4bc53f79d38ece4b23b636d88697deeed63410fc26e85d8baa2d39dde568019e0d8e940b47b8f7e291d08c882bb0ccc4599a1ed5229a9b41403dd57f685c58054fa566867bf20c6cad36d14786d19b415f7d99b4592850593168d7aa78cb448805eebc21f9bf3cb232ed1097ff90a4975f025a5f7d91691639272527c9794e2461d0280450180cadab1e024b52fa549e97b73e004a41a66934b4cbd2dcdb8d6074412b5e61eaa8042ecc1701d89c0574ab923be5da376c04ea0bb25c5c1e09c068ae1db4703fc0b80ef50809ca9c02fd313cbf878155b3ee608c543784d0aa5e440a50fd4fe3950ae80b11ce23fad848e1f49ec34917483ecf7aff0ade3295988f94a881f3cd491641f',
+    storageKey: '0xf8860dda3d08046cf2706b92bf7202eaae7a79191c90e76297e0895605b8b457'
+  };
+
+  before(async () => {
+    const MMR = await ethers.getContractFactory("MMR");
+    const Scale = await ethers.getContractFactory("Scale");
+    const SimpleMerkleProof = await ethers.getContractFactory("SimpleMerkleProof");
+
+    const [owner, addr1, addr2] = await ethers.getSigners();
+    accounts = await ethers.getSigners();
+
+    // all test accounts
+    for (const account of accounts) {
+      console.log(account.address);
+    }
+
+    mmrLib = await MMR.deploy();
+    scale = await Scale.deploy();
+    simpleMerkleProof = await SimpleMerkleProof.deploy();
+
+    await mmrLib.deployed();
+    await scale.deployed();
+    await simpleMerkleProof.deployed();
+
+    Relay = await ethers.getContractFactory(
+      'Relay',
+      {
+        libraries: {
+          MMR: mmrLib.address,
+          SimpleMerkleProof: simpleMerkleProof.address,
+          Scale: scale.address
+        }
+      }
+    );
+
+    // uint32 _index,
+    // bytes32 _genesisMMRRoot,
+    // address[] memory _relayers,
+    // uint32 _nonce,
+    // uint8 _threshold,
+    // bytes memory _prefix
+
+    relayConstructor = [
+      11309,
+      '0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff653550dc',
+      [
+        await owner.getAddress(),
+        await addr1.getAddress(),
+        await addr2.getAddress(),
+      ],
+      0,
+      60,
+      0x43726162
+    ]
     
-//     relay = await POARelay.deploy(...relayConstructor);
-//     await relay.deployed();
-//   });
+    relay = await Relay.deploy(...relayConstructor);
+    await relay.deployed();
+  });
 
-//   describe('utils', async () => {
-//     before(async () => {
-//       const proof = {
-//         root: '0xfa36bb3176772b05ba22963825abbfb14379fe87b9a18449ec8175096c345d93',
-//         width: 7,
-//         peakBagging: [
-//           "0x53beeed16718d356e5494ef52332b50d16cf8588f36dd19f29f7d4c404d860be",
-//           "0xa7df2cb3ecdca703b0471f655de3cefc7ebf943b4d94303c317b06a9dcc6ddcb",
-//           "0xc58e247ea35c51586de2ea40ac6daf90eac7ac7b2f5c88bbc7829280db7890f1"
-//         ],
-//         siblings: [
-//           '0x70d641860d40937920de1eae29530cdc956be830f145128ebb2b496f151c1afb',
-//           '0xdfafd69d36c0d7d6cd07bfce7bcf93c5221e9f2fe11ea9df8ff79e1a4750295b'
-//         ]
-//       }
+  describe('utils', async () => {
+    before(async () => {
+      
+    });
 
-//       // const isValid = await relay.inclusionProof.call(proof.root, proof.width, 1, '0x00', '0x34f61bfda344b3fad3c3e38832a91448b3c613b199eb23e5110a635d71c13c65', proof.peakBagging, proof.siblings)
-//       // console.log(isValid)
-//     });
+    it('_getMMRRoot', async () => {
+      let result = await relay._getMMRRoot(11309);
+      expect(result).that.equal('0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff653550dc');
+    });
 
-//     it('getReceipt', async () => {
-//       let result = await relay.getReceipt('0x0d30059ba03a56080d9e46f5452e3a9a8b21fd37c02223284e386f967b88c194', '0x081081035f00d41e5e16056765bc8461851072c9d735031400000000000000608796090000000002000000010000001702e096b1496b056d5e1ee8e9ef272ff74f05e50884a52318adde16b3b5c6655c3f22aaaaf10536d812c7e097f59e7b769e24341830d42d4551a5c0369a588e4e4000e40b54020000000000000000000000000001000000200600c4192700000000000000000000000000000100000017040f99850f381fdfb5b965617619e59ed082a4515c22967c9c1c94621969362aba0071c6090000000000000000000000000000010000000000401b5f1300000000000000c10680ffb9805626b5eeb95364cd35028f6c2e9502e6763c35b49146c3e06eb0fb0c8437e2f5807d6bd45dc0de8a9d3c09ed996173e3228aa1f0c14343e3613600679837c0459e80a1aec849f3a38d7d135fb693c8ea2d30ce711f9de4d6216df3c1a9a1fed7652480f4aa779b91c9584e64e8f414a45415633ddab553b733a8f053ea281665f6e2798037521b6b221966c2e46dadb5ec9f5dd9955bfb6ddc80b7fd2426c8a80b715742807dfc144d3b4073275b82f6e907ec3a2e23734838c9dfd21815d40813f1037bc980257276b52625f532a5b3415084fb91ded52ba117e97209555a8c05054ce5310d80e9e915eca5fb72b66cf72c2e7726f366889ee12e459bb8e4c8db0db83b5b408f80f39c11c55a33b88d079ac377e5fddee82d1c9471f66fb6a28bd3ad96446c983680df791956f0167fb9bed6c0e9fee9de3d6babf3d1152f5deca446dc29a9e9c9fe80d0b26d2c3777a1ff46e46dab9260a54906108d698aa87d6e4a5ebd0d9d9dd416800d5ead5e5c3f67b600edee6ff127a9cdb90fa28f06bc4804ce6dc639c887360b8004815669f5ffdf790a76a75b3b40f700e8bf7d73eb084aaf9dd793eeda3d525269039eaa394eea5630e07c48ae0c9558cef7298d585f0a98fdbe9ce6c55837576c60c7af3850100500000080798651e0861e900ea90d37dbeea088da90fe28b729ad85b33daa3e3b3dcc9c514c5f0684a022a34dd8bfa2baaf44f172b710040180ebbd938d8e0afb593ff42ca3bc9f58af377da287c9f7c380aa508fa6da70e15580ced43296cd3920efab18447ae4ba50dcc5e87a8db36593ee92756cdd9f36b7598082a75959f024cac266849285f69c1ac49da16ee7801ff4f93fd3cfd3563a47bc605f09cce9c888469bb1a0dceaa129672ef8187010437261622503804b0c80feecb9b8cd91aca389352bb80a01c989ade193be7b6361af47238c2974617a1c808294a7635adce51c7ce4f1faa73c37b02852af44ddea9f79eedfea377ce12711801941a755228dfeade556d93ca6af552ca8974fef5d59b56e6ed0083814201fd0800c8012fed6518393bda3231cc9bc889428748a0c4f6e4c832a632469630e203180d80ae17a3fa70e1addb66fd67ff84d2d84c290c73ef9d15d1d748a134d79b15580f732747b5206732f92adaf4f143693558e5cff9d78ae1b2b40040fdcbef859b2048026aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7');
-//       expect(result).that.equal('0x1400000000000000608796090000000002000000010000001702e096b1496b056d5e1ee8e9ef272ff74f05e50884a52318adde16b3b5c6655c3f22aaaaf10536d812c7e097f59e7b769e24341830d42d4551a5c0369a588e4e4000e40b54020000000000000000000000000001000000200600c4192700000000000000000000000000000100000017040f99850f381fdfb5b965617619e59ed082a4515c22967c9c1c94621969362aba0071c6090000000000000000000000000000010000000000401b5f1300000000000000');
-//     });
+    it('_checkNetworkPrefix', async () => {
+      let result = await relay._checkNetworkPrefix(0x43726162);
+      expect(result).that.equal(true);
+    });
 
+    it('verifyBlockProof', async () => {
+      let result = await relay.verifyBlockProof(
+        proof.root,
+        proof.MMRIndex,
+        proof.blockNumber,
+        proof.blockHeader,
+        proof.peaks,
+        proof.siblings,
 
-//     it('decodeCompactU8a 63', async () => {
-//       let result = await relay.decodeCompactU8aOffset('0xfc');
-//       expect(result).that.equal(1);
-//     });
-
-//     it('decodeCompactU8a 511', async () => {
-//       let result = await relay.decodeCompactU8aOffset('0xFD');
-//       expect(result).that.equal(2);
-//     });
-
-//     it('decodeCompactU8a 0xffff', async () => {
-//       let result = await relay.decodeCompactU8aOffset('0xFE');
-//       expect(result).that.equal(4);
-//     });
-
-//     it('decodeCompactU8a 0xfffffff9', async () => {
-//       let result = await relay.decodeCompactU8aOffset('0x03');
-//       expect(result).that.equal(5);
-//     });
-
-//     it('decodeCompactU8a 1556177', async () => {
-//       let result = await relay.decodeCompactU8aOffset('0x46');
-//       expect(result).that.equal(4);;
-//     });
-
-//     it('block 1', async () => {
-//       let result = await relay.getStateRootFromBlockHeader(0, '0x00000000000000000000000000000000000000000000000000000000000000000034d4cabbcdf7ad81f7966f17f08608a6dfb87fcd2ec60ee4a14a5e13223c110f03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c11131400');
-//       expect(result).that.equal('0x34d4cabbcdf7ad81f7966f17f08608a6dfb87fcd2ec60ee4a14a5e13223c110f');
-//     });
-
-//     it('block 1556177', async () => {
-//       result = await relay.getStateRootFromBlockHeader(0, '0xb0209dd32ae874b32f152fc6fe2db8239b661746f010a82aa3389f57a33c659c46fb5e003a95a548cc56b60091f835b0d467bdd0bfff9f1cf5414ae6628f03ce0166ef3580f3f8edfbc56eed5c09443c4a82551a4d312df46208d7664d096001464192de0c0642414245340203000000c032e10f0000000000904d4d52524c7943e36016e64c2c125bb69292e6e2aad9b413149b4d82f5ae5a50bd5d84c5054241424501016aa6ace563323fc7f8a3899d38cb3d821ec079e61befb4d05045fb847eb8b517623dfde6c34ed431bbc9860ac4836164c655d65696126d61c10c47050b47f387');
-//       expect(result).that.equal('0x3a95a548cc56b60091f835b0d467bdd0bfff9f1cf5414ae6628f03ce0166ef35');
-//     });
-
-//     //mock
-//     it('block 1073741824', async () => {
-//       result = await relay.getStateRootFromBlockHeader(0, '0xb0209dd32ae874b32f152fc6fe2db8239b661746f010a82aa3389f57a33c659c03000000403a95a548cc56b60091f835b0d467bdd0bfff9f1cf5414ae6628f03ce0166ef3580f3f8edfbc56eed5c09443c4a82551a4d312df46208d7664d096001464192de00');
-//       expect(result).that.equal('0x3a95a548cc56b60091f835b0d467bdd0bfff9f1cf5414ae6628f03ce0166ef35');
-//     });
-//   });
-
-//   describe('getRoot', async () => {
-//     it('get empty mmr root', async () => {
-//       const mmr = await relay.getMMRRoot(0);
-//       expect(mmr).that.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
-//     });
-//     it(`get mmr root of width is ${relayConstructor[0]}`, async () => {
-//       const mmr = await relay.getMMRRoot(relayConstructor[0]);
-//       expect(mmr).that.equal(relayConstructor[1]);
-//     });
-//     it(`get mmr root of width`, async () => {
-//       const width = await relay.latestWidth.call();
-//       expect(width).that.equal(relayConstructor[0]);
-//     });
-//   })
+      );
+      expect(result).that.equal(true);
+    });
 
 
-// });
+    it('verifyAndDecodeReceipt', async () => {
+      let result = await relay.verifyAndDecodeReceipt(
+        proof.root,
+        proof.MMRIndex,
+        proof.blockNumber,
+        proof.blockHeader,
+        proof.peaks,
+        proof.siblings,
+        proof.proofstr,
+        proof.storageKey
+      );
+      expect(result).that.equal('0x082403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb9226600000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb922660100c817a8040000000000000000000000');
+    });
+
+    it.only('verifyProof', async () => {
+      let result = await relay.verifyProof(
+        proof.root,
+        proof.MMRIndex,
+        proof.blockNumber,
+        proof.blockHeader,
+        proof.peaks,
+        proof.siblings,
+        proof.proofstr,
+        proof.storageKey
+      );
+      rsp = await result.wait();
+
+      // console.log("result:", rsp);
+
+      // gasUsed: 486694
+      console.log('gasUsed:', rsp.gasUsed.toString());
+      rsp.events.forEach(event => {
+        console.log('event:', event.eventSignature);
+        console.log('data:', JSON.stringify(event.decode(event.data), null, 2));
+      });
+     
+      let event0 = rsp.events[0];
+      expect(event0.eventSignature).that.equal('MintRingEvent(address,uint256,bytes32)');
+      expect(event0.decode(event0.data)[0]).that.equal('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
+      expect(event0.decode(event0.data)[1].toString()).that.equal('123000000000');
+      expect(event0.decode(event0.data)[2]).that.equal('0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d');
+
+      let event1 = rsp.events[1];
+      expect(event1.eventSignature).that.equal('MintKtonEvent(address,uint256,bytes32)');
+      expect(event1.decode(event1.data)[0]).that.equal('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
+      expect(event1.decode(event1.data)[1].toString()).that.equal('20000000000');
+      expect(event1.decode(event1.data)[2]).that.equal('0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d');
+    });
+  });
+});

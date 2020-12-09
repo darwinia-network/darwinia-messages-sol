@@ -14,7 +14,17 @@ describe('MerkleProofTest', function (accounts) {
     before(async () => {
         SimpleMerkleProof = await ethers.getContractFactory("SimpleMerkleProof");
         CompactMerkleProofTest = await ethers.getContractFactory("CompactMerkleProofTest");
-        ScaleTest = await ethers.getContractFactory("ScaleTest");
+        Scale = await ethers.getContractFactory("Scale");
+
+        scale = await Scale.deploy();
+        await scale.deployed();
+
+        ScaleTest = await ethers.getContractFactory("ScaleTest",
+        {
+          libraries: {
+            Scale: scale.address
+          }
+        });
 
         compactMerkleProofTest = await CompactMerkleProofTest.deploy();
         await compactMerkleProofTest.deployed();
@@ -38,7 +48,7 @@ describe('MerkleProofTest', function (accounts) {
         await simpleMerkleProofTest.deployed()
     });
 
-    it.only('ScaleTest', async() => {
+    it('ScaleTest', async() => {
         await scaleTest.testDecodeReceiptProof()
     })
 
@@ -52,6 +62,7 @@ describe('MerkleProofTest', function (accounts) {
       // await scaleTest.testDecodeAuthoritiesNonce();
       // await scaleTest.testDecodeAuthorities();
       // await scaleTest.testDecodeMMRRoot();
+      await scaleTest.testDecodeStateRootFromBlockHeader()
     })
 
     it('CompactMerkleProofTest testCompactMerkleProofTest', async () => {
@@ -79,5 +90,17 @@ describe('MerkleProofTest', function (accounts) {
         expect(res).that.equal('0x102403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec700000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec70100e40b5402000000000000000000000024038eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050000d0b72b6a000000000000000000000024048eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050100c817a8040000000000000000000000')
     })
 
+    it('SimpleMerkleProof testGetEvents', async () => {
+      res = await simpleMerkleProofTest.testGetEvents()
+      console.log(res)
 
+      expect(res).that.equal('0x102403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec700000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec70100e40b5402000000000000000000000024038eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050000d0b72b6a000000000000000000000024048eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050100c817a8040000000000000000000000')
+    })
+
+    it.only('SimpleMerkleProof testGetEvents1', async () => {
+      res = await simpleMerkleProofTest.testGetEvents1()
+      console.log(res)
+
+      expect(res).that.equal('0x082403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb9226600000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb922660100c817a8040000000000000000000000')
+    })
 });

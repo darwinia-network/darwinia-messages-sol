@@ -45,25 +45,26 @@ library SimpleMerkleProof {
         return verify_proof(root, keys, db);
     }
 
-        /**
+    /**
      * @dev Returns `values` if `keys` can be proved to be a part of a Merkle tree
      * defined by `root`. For this, a `proof` must be provided, is a sequence of the subset
      * of nodes in the trie traversed while performing lookups on all keys.
      */
     function getEvents(
         bytes32 root,
-        bytes[] memory proof,
-        bytes[] memory keys
-    ) public view returns (bytes[] memory) {
-        require(proof.length > 0, "no proof");
-        require(keys.length > 0, "no keys");
+        bytes memory key,
+        bytes[] memory proof
+    ) public view returns (bytes memory value) {
+        bytes memory k = Nibble.keyToNibbles(key);
+
         Item[] memory db = new Item[](proof.length);
         for (uint256 i = 0; i < proof.length; i++) {
             bytes memory v = proof[i];
             Item memory item = Item({key: Hash.hash32(v), value: v});
             db[i] = item;
         }
-        return verify_proof(root, keys, db);
+
+        value = lookUp(root, k, db);
     }
 
     function verify_proof(

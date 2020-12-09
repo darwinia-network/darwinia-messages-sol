@@ -13,6 +13,7 @@ library Scale {
         bytes2 index;
         bytes32 sender;
         address recipient;
+        // 0 -> ring, 1 -> kton
         uint8 token;
         uint128 value;
     }
@@ -54,33 +55,38 @@ library Scale {
     function decodeMMRRoot(Input.Data memory data) 
         internal
         pure
-        returns (uint32 width, bytes32 root)
+        returns (bytes memory prefix, uint32 width, bytes32 root)
     {
-        bytes memory widthData = data.decodeBytesN(4);
+        prefix = decodePrefix(data);
+        width = decodeU32(data);
         bytes memory rootData = data.decodeBytesN(32);
-
-        width = uint32(widthData.toBytes4(0));
         root = rootData.toBytes32(0);
     }
 
     function decodeAuthorities(Input.Data memory data)
         internal
-        view
-        returns (uint32 nonce, address[] memory authorities)
+        pure
+        returns (bytes memory prefix, uint32 nonce, address[] memory authorities)
     {
-        uint256 len = data.raw.length;
-        
-        // nonce length is 4, ethereum address length is 20 bytes
-        require(len >= 24, "Scale: Authorities length mismatch");
-        require((len - 4) % 20 == 0, "Scale: Authorities length mismatch");
+        prefix = decodePrefix(data);
+        nonce = decodeU32(data);
 
-        uint authoritiesLength = (len - 4) / 20;
-        console.log(authoritiesLength);
-        nonce = decodeAuthoritiesNonce(data);
+        uint authoritiesLength = decodeU32(data);
+
         authorities = new address[](authoritiesLength);
         for(uint i = 0; i < authoritiesLength; i++) {
             authorities[i] = decodeEthereumAddress(data);
         }
+    }
+
+    // decode authorities prefix
+    // (crab, darwinia)
+    function decodePrefix(Input.Data memory data) 
+        internal
+        pure
+        returns (bytes memory prefix) 
+    {
+        prefix = decodeByteArray(data);
     }
 
     // decode authorities nonce
@@ -94,7 +100,7 @@ library Scale {
         return uint32(nonce.toBytes4(0));
     }
 
-    // decode Balance
+    // decode Ethereum address
     function decodeEthereumAddress(Input.Data memory data) 
         internal
         pure
@@ -126,9 +132,9 @@ library Scale {
         return accountId.toBytes32(0);
     }
 
-    // decodeReceiptProof receives Scale Codec of Vec<Vec<Bytes>, Vec<Bytes>> structure, 
-    // the first Vec<Bytes> is the proofs of mpt, and the second is the keys
-    // returns (bytes[] memory proofs, bytes[] memory keys)
+    // decodeReceiptProof receives Scale Codec of Vec<Vec<u8>> structure, 
+    // the Vec<u8> is the proofs of mpt
+    // returns (bytes[] memory proofs)
     function decodeReceiptProof(Input.Data memory data) 
         internal
         pure
