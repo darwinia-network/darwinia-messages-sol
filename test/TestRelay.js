@@ -117,6 +117,12 @@ describe('Relay', () => {
     await scale.deployed();
     await simpleMerkleProof.deployed();
 
+    const TokenBacking = await ethers.getContractFactory("TokenBacking", {
+      libraries: {
+        // Scale: scale.address,
+      }
+    });
+
     Relay = await ethers.getContractFactory(
       'Relay',
       {
@@ -146,10 +152,19 @@ describe('Relay', () => {
       0,
       60,
       0x43726162
-    ]
+    ];
     
     relay = await Relay.deploy(...relayConstructor);
     await relay.deployed();
+
+    const backingConstructor = [
+      "0x0000000000000000000000000000000000000000",
+      relay.address
+    ]
+
+    backing = await TokenBacking.deploy();
+    await backing.deployed();
+    await backing.initializeContract(...backingConstructor);
   });
 
   describe('utils', async () => {
@@ -195,8 +210,8 @@ describe('Relay', () => {
       expect(result).that.equal('0x082403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb9226600000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb922660100c817a8040000000000000000000000');
     });
 
-    it.only('verifyProof', async () => {
-      let result = await relay.verifyProof(
+    it('verifyProof', async () => {
+      let result = await backing.verifyProof(
         proof.root,
         proof.MMRIndex,
         proof.blockNumber,
@@ -205,7 +220,9 @@ describe('Relay', () => {
         proof.siblings,
         proof.proofstr,
         proof.storageKey
-      );
+      , {
+        gasLimit: 10000000
+      });
       rsp = await result.wait();
 
       // console.log("result:", rsp);
@@ -229,5 +246,25 @@ describe('Relay', () => {
       expect(event1.decode(event1.data)[1].toString()).that.equal('20000000000');
       expect(event1.decode(event1.data)[2]).that.equal('0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d');
     });
+
+
+    it('verifyProof', async () => {
+      let result = await backing.verifyProof(
+        proof.root,
+        proof.MMRIndex,
+        proof.blockNumber,
+        proof.blockHeader,
+        proof.peaks,
+        proof.siblings,
+        proof.proofstr,
+        proof.storageKey
+      , {
+        gasLimit: 10000000
+      });
+      rsp = await result.wait();
+
+      console.log("result:", rsp);
+    });
+
   });
 });

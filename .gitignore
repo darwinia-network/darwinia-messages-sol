@@ -3,7 +3,9 @@ build
 .idea
 dataDir
 account*.txt
-
+.vscode
 #Hardhat files
 cache
 artifacts
+hardhat.config.js
+

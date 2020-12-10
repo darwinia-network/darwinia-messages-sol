@@ -4,7 +4,6 @@ import "./Blake2b.sol";
 import "hardhat/console.sol";
 
 /**
- * @author Wanseob Lim <email@wanseob.com>
  * @title Merkle Mountain Range solidity library
  *
  * @dev The index of this MMR implementation starts from 1 not 0.

@@ -4,7 +4,6 @@ pragma solidity >=0.5.0 <0.6.0;
 
 import "./Blake2b.sol";
 import "./common/Ownable.sol";
-import "./common/Timelock.sol";
 import "./common/Pausable.sol";
 import "./common/ECDSA.sol";
 import "./common/Hash.sol";
@@ -18,16 +17,9 @@ pragma experimental ABIEncoderV2;
 
 contract Relay is Ownable, Pausable {
     event SetRootEvent(address relayer, bytes32 root, uint256 index);
+    event SetRelayersEvent(uint32 nonce, address[] relayers, bytes32 benifit);
     event ResetRootEvent(address owner, bytes32 root, uint256 index);
     event ResetLatestIndexEvent(address owner, uint256 index);
-
-    ///
-    /// Backing.sol
-    ///
-
-    event MintRingEvent(address recipient, uint256 value, bytes32 accountId);
-    event MintKtonEvent(address recipient, uint256 value, bytes32 accountId);
-
 
     struct Relayers {
         // Each time the relay set is updated, the nonce is incremented
@@ -59,15 +51,17 @@ contract Relay is Ownable, Pausable {
         bytes memory _prefix
     ) public {
         _appendRoot(_MMRIndex, _genesisMMRRoot);
-        _setRelayer(_nonce, _relayers);
+        _setRelayer(_nonce, _relayers, bytes32(0));
         _setNetworkPrefix(_prefix);
         relayers.threshold = _threshold;
     }
 
-    function _setRelayer(uint32 nonce, address[] memory accounts) internal {
+    function _setRelayer(uint32 nonce, address[] memory accounts, bytes32 benifit) internal {
         require(accounts.length > 0, "Relay: accounts is empty");
         relayers.member = accounts;
         relayers.nonce = nonce;
+
+        emit SetRelayersEvent(nonce, accounts, benifit);
     }
 
     function _appendRoot(uint32 index, bytes32 root) internal {
@@ -156,8 +150,9 @@ contract Relay is Ownable, Pausable {
     function updateRelayer(
         bytes32 hash,
         bytes memory message,
-        bytes[] memory signatures
-    ) public {
+        bytes[] memory signatures,
+        bytes32 benefit
+    ) public whenNotPaused {
         // verify hash, signatures (The number of signers must be greater than 2/3 of the total)
         require(
             _checkSignature(hash, message, signatures),
@@ -173,7 +168,7 @@ contract Relay is Ownable, Pausable {
         require(_checkNetworkPrefix(prefix), "Relay: Bad network prefix");
 
         // update nonce,relayer
-        _setRelayer(nonce, authorities);
+        _setRelayer(nonce, authorities, benefit);
     }
 
     function appendRoot(
@@ -211,7 +206,7 @@ contract Relay is Ownable, Pausable {
         bytes32[] memory siblings,
         bytes memory proofstr,
         bytes memory key
-    ) public view returns (bytes memory){
+    ) public view whenNotPaused returns (bytes memory){
         // verify block proof
         require(
             verifyBlockProof(root, MMRIndex, blockNumber, blockHeader, peaks, siblings),
@@ -227,7 +222,7 @@ contract Relay is Ownable, Pausable {
     function verifyBlockProof(
         bytes32 root,
         uint32 MMRIndex,
-        uint32 index,
+        uint32 blockNumber,
         bytes memory blockHeader,
         bytes32[] memory peaks,
         bytes32[] memory siblings
@@ -241,7 +236,7 @@ contract Relay is Ownable, Pausable {
             "Relay: Root is different from the root pool"
         );
 
-        return MMR.inclusionProof(root, MMRIndex + 1, index + 1, blockHeader, peaks, siblings);
+        return MMR.inclusionProof(root, MMRIndex + 1, blockNumber + 1, blockHeader, peaks, siblings);
     }
 
     function getLockTokenReceipt(bytes32 root, bytes memory proofstr, bytes memory key)
@@ -285,42 +280,5 @@ contract Relay is Ownable, Pausable {
         }
 
         return ok;
-    }
-
-    ///
-    /// Backing.sol
-    ///
-
-    function verifyProof(
-        bytes32 root,
-        uint32 MMRIndex,
-        uint32 blockNumber,
-        bytes memory blockHeader,
-        bytes32[] memory peaks,
-        bytes32[] memory siblings,
-        bytes memory proofstr,
-        bytes memory key
-    ) 
-      public
-      returns (bool)
-    {
-        bytes memory eventsData = verifyAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, proofstr, key);
-        Input.Data memory data = Input.from(eventsData);
-        
-        Scale.LockEvent[] memory events = Scale.decodeLockEvents(data);
-
-        uint256 len = events.length;
-
-        for( uint i = 0; i < len; i++ ) {
-          Scale.LockEvent memory item = events[i];
-          if(item.token == 0) {
-            emit MintRingEvent(item.recipient, item.value, item.sender);
-          }
-
-          if (item.token == 1) {
-            emit MintKtonEvent(item.recipient, item.value, item.sender);
-          }
-        } 
-        return false;
     }
 }
