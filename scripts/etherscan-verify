@@ -1,9 +1,6 @@
 npx hardhat verify --network ropsten 0x41d4BA84474Cb76429132f64e9368AF7457DaEd3 --constructor-args scripts/greeter.argu.js
 
-
-
-npx hardhat verify --network kovan 0x26e920e571943c6d4789ad7b75967f9842cdc83e --constructor-args scripts/relay.argu.js
+npx hardhat verify --network ropsten 0xeb931f1a197f3a230d2dfe220ac6674880f827d6 --constructor-args scripts/relay.argu.js
 npx hardhat verify --network kovan 0xC7A1f71c22c031305B0956E898838E839aAfba62
-
 
 npx hardhat verify --network kovan 0x2f0454C05591bb36d00e85b005BB2AE18C620011

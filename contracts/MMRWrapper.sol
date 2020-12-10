@@ -1,7 +1,6 @@
 pragma solidity >=0.4.21 <0.6.0;
 
 import "./MMR.sol";
-import "hardhat/console.sol";
 
 contract MMRWrapper {
     bool public result;

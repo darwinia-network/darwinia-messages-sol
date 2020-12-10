@@ -2,34 +2,26 @@ pragma solidity >=0.5.0 <0.6.0;
 
 import "./Input.sol";
 import "./Bytes.sol";
+import { ScaleStruct } from "./Scale.struct.sol";
 
-import "hardhat/console.sol";
+pragma experimental ABIEncoderV2;
 
 library Scale {
     using Input for Input.Data;
     using Bytes for bytes;
-    
-    struct LockEvent {
-        bytes2 index;
-        bytes32 sender;
-        address recipient;
-        // 0 -> ring, 1 -> kton
-        uint8 token;
-        uint128 value;
-    }
 
     // Vec<Event>    Event = <index, Data>   Data = {accountId, EthereumAddress, types, Balance}
     // bytes memory hexData = hex"102403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec700000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec70100e40b5402000000000000000000000024038eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050000d0b72b6a000000000000000000000024048eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050100c817a8040000000000000000000000";
     function decodeLockEvents(Input.Data memory data)
-        internal
+        public
         pure
-        returns (LockEvent[] memory)
+        returns (ScaleStruct.LockEvent[] memory)
     {
         uint32 len = decodeU32(data);
-        LockEvent[] memory events = new LockEvent[](len);
+        ScaleStruct.LockEvent[] memory events = new ScaleStruct.LockEvent[](len);
 
         for(uint i = 0; i < len; i++) {
-            events[i] = LockEvent({
+            events[i] = ScaleStruct.LockEvent({
                 index: data.decodeBytesN(2).toBytes2(0),
                 sender: decodeAccountId(data),
                 recipient: decodeEthereumAddress(data),
@@ -53,7 +45,7 @@ library Scale {
 
     // little endian
     function decodeMMRRoot(Input.Data memory data) 
-        internal
+        public
         pure
         returns (bytes memory prefix, uint32 width, bytes32 root)
     {
@@ -64,7 +56,7 @@ library Scale {
     }
 
     function decodeAuthorities(Input.Data memory data)
-        internal
+        public
         pure
         returns (bytes memory prefix, uint32 nonce, address[] memory authorities)
     {
@@ -136,7 +128,7 @@ library Scale {
     // the Vec<u8> is the proofs of mpt
     // returns (bytes[] memory proofs)
     function decodeReceiptProof(Input.Data memory data) 
-        internal
+        public
         pure
         returns (bytes[] memory proofs) 
     {

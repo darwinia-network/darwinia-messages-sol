@@ -2,7 +2,6 @@ pragma solidity ^0.5.0;
 pragma experimental ABIEncoderV2;
 
 import "./Blake2b.sol";
-import "hardhat/console.sol";
 
 contract Blake2bTest {
     using Blake2b for Blake2b.Instance;

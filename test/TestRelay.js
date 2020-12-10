@@ -119,7 +119,7 @@ describe('Relay', () => {
 
     const TokenBacking = await ethers.getContractFactory("TokenBacking", {
       libraries: {
-        // Scale: scale.address,
+        Scale: scale.address,
       }
     });
 
@@ -167,7 +167,7 @@ describe('Relay', () => {
     await backing.initializeContract(...backingConstructor);
   });
 
-  describe('utils', async () => {
+  describe('Relay', async () => {
     before(async () => {
       
     });
@@ -218,8 +218,7 @@ describe('Relay', () => {
         proof.blockHeader,
         proof.peaks,
         proof.siblings,
-        proof.proofstr,
-        proof.storageKey
+        proof.proofstr
       , {
         gasLimit: 10000000
       });
@@ -249,22 +248,48 @@ describe('Relay', () => {
 
 
     it('verifyProof', async () => {
-      let result = await backing.verifyProof(
+      expect(backing.verifyProof(
         proof.root,
         proof.MMRIndex,
         proof.blockNumber,
         proof.blockHeader,
         proof.peaks,
         proof.siblings,
-        proof.proofstr,
-        proof.storageKey
+        proof.proofstr
       , {
         gasLimit: 10000000
-      });
-      rsp = await result.wait();
-
-      console.log("result:", rsp);
+      })).to.be.reverted;
     });
 
+    it('resetRoot', async () => {
+      await relay.resetRoot(100, "0x3031303200000000000000000000000000000000000000000000000000000000");
+      const root = await relay._getMMRRoot(100);
+      expect(root).that.equal("0x3031303200000000000000000000000000000000000000000000000000000000");
+    });
+
+    it.only('appendRoot', async () => {
+      const [owner, addr1, addr2] = await ethers.getSigners();
+      const signatures = [];
+      
+      // {prefix: 0x43726162, index: 20000, root: 0x5fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2}
+      const msg = "0x1043726162823801005fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2";
+      const hash = ethers.utils.keccak256(msg);
+
+      signatures.push(await owner.signMessage(msg));
+      signatures.push(await addr1.signMessage(msg));
+      // signatures.push(await addr2.signMessage(msg));
+      console.log('signatures::', signatures);
+
+      // console.log(ethers.utils.recoverAddress(msg, signatures[0]));
+      // signatures.forEach((item, index) => {
+      //   expect(ethers.utils.recoverAddress(msg, item)).that.equal([owner, addr1, addr2][index]);
+      // })
+
+      const appendRoot = await relay.appendRoot(hash, msg, signatures);
+      await appendRoot.wait();
+
+      const root = await relay._getMMRRoot(20000);
+      expect(root).that.equal("0x5fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2");
+    });
   });
 });

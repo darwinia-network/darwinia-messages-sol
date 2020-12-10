@@ -13,8 +13,6 @@ contract Greeter {
   }
 
   function setGreeting(string memory _greeting) public {
-    uint uint_test = 12341234;
-    bytes32 bytes_test = keccak256("fun(uint256)");
     greeting = _greeting;
   }
 }

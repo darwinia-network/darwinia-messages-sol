@@ -11,7 +11,9 @@ import "./common/SafeMath.sol";
 import "./common/Input.sol";
 
 import "./MMR.sol";
+import "./common/Scale.sol";
 import "./SimpleMerkleProof.sol";
+
 
 pragma experimental ABIEncoderV2;
 
@@ -26,7 +28,6 @@ contract Relay is Ownable, Pausable {
         uint32 nonce;
         // mapping(address => bool) member;
         address[] member;
-        uint16 count;
         uint8 threshold;
     }
 
@@ -65,7 +66,7 @@ contract Relay is Ownable, Pausable {
     }
 
     function _appendRoot(uint32 index, bytes32 root) internal {
-        require(mmrRootPool[index] == bytes32(0), "Relay: Index has been set");
+        require(_getMMRRoot(index) == bytes32(0), "Relay: Index has been set");
         require(latestIndex < index, "Relay: There are already higher blocks");
 
         _setRoot(index, root);
@@ -85,8 +86,8 @@ contract Relay is Ownable, Pausable {
         networkPrefix = prefix;
     }
 
-    function _getRelayerCount() internal view returns (uint16) {
-        return relayers.count;
+    function _getRelayerCount() internal view returns (uint256) {
+        return relayers.member.length;
     }
 
     function _getNetworkPrefix() internal view returns (bytes memory) {
@@ -130,7 +131,6 @@ contract Relay is Ownable, Pausable {
         uint16 count;
         for (uint16 i = 0; i < signatures.length; i++) {
             address signer = ECDSA.recover(hash, signatures[i]);
-
             if (_isRelayer(signer)) {
                 count++;
             }

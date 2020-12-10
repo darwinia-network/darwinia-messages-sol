@@ -3,6 +3,7 @@ import "../ds-test/test.sol";
 
 import "./Input.sol";
 import "./Scale.sol";
+import { ScaleStruct } from "./Scale.struct.sol";
 import "hardhat/console.sol";
 
 pragma experimental ABIEncoderV2;
@@ -88,7 +89,7 @@ contract ScaleTest is DSTest {
         // Vec<Event>    Event = <index, Data>   Data = {accountId, EthereumAddress, types, Balance}
         bytes memory hexData = hex"102403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec700000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec70100e40b5402000000000000000000000024038eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050000d0b72b6a000000000000000000000024048eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050100c817a8040000000000000000000000";
         Input.Data memory data = Input.from(hexData);
-        Scale.LockEvent[] memory eventData = Scale.decodeLockEvents(data);
+        ScaleStruct.LockEvent[] memory eventData = Scale.decodeLockEvents(data);
 
         console.log(eventData.length);
 

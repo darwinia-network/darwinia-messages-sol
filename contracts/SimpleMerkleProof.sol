@@ -39,7 +39,7 @@ library SimpleMerkleProof {
         Item[] memory db = new Item[](proof.length);
         for (uint256 i = 0; i < proof.length; i++) {
             bytes memory v = proof[i];
-            Item memory item = Item({key: Hash.hash32(v), value: v});
+            Item memory item = Item({key: Hash.blake2bHash(v), value: v});
             db[i] = item;
         }
         return verify_proof(root, keys, db);
@@ -60,7 +60,7 @@ library SimpleMerkleProof {
         Item[] memory db = new Item[](proof.length);
         for (uint256 i = 0; i < proof.length; i++) {
             bytes memory v = proof[i];
-            Item memory item = Item({key: Hash.hash32(v), value: v});
+            Item memory item = Item({key: Hash.blake2bHash(v), value: v});
             db[i] = item;
         }
 

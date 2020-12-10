@@ -2,7 +2,6 @@ pragma solidity ^0.5.16;
 import "./ds-test/test.sol";
 
 import "./SimpleMerkleProof.sol";
-import "hardhat/console.sol";
 
 pragma experimental ABIEncoderV2;
 
