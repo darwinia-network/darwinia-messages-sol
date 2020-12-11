@@ -182,7 +182,7 @@ library Scale {
             uint8 b3 = data.decodeU8();
             uint32 v = uint32(b0) |
                 (uint32(b1) << 8) |
-                (uint32(b2) << 18) |
+                (uint32(b2) << 16) |
                 (uint32(b3) << 24);
             return v >> 2;
         }

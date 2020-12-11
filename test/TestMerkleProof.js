@@ -13,7 +13,7 @@ describe('MerkleProofTest', function (accounts) {
 
     before(async () => {
         SimpleMerkleProof = await ethers.getContractFactory("SimpleMerkleProof");
-        CompactMerkleProofTest = await ethers.getContractFactory("CompactMerkleProofTest");
+        // CompactMerkleProofTest = await ethers.getContractFactory("CompactMerkleProofTest");
         Scale = await ethers.getContractFactory("Scale");
 
         scale = await Scale.deploy();
@@ -26,8 +26,8 @@ describe('MerkleProofTest', function (accounts) {
           }
         });
 
-        compactMerkleProofTest = await CompactMerkleProofTest.deploy();
-        await compactMerkleProofTest.deployed();
+        // compactMerkleProofTest = await CompactMerkleProofTest.deploy();
+        // await compactMerkleProofTest.deployed();
 
         scaleTest = await ScaleTest.deploy();
         await scaleTest.deployed();
@@ -52,29 +52,30 @@ describe('MerkleProofTest', function (accounts) {
         await scaleTest.testDecodeReceiptProof()
     })
 
-    it('ScaleTest decodeVec', async () => {
-      // await scaleTest.testDecodeVec()
-      // await scaleTest.testDecodeAccountId();
-      // await scaleTest.testDecodeAccountId2();
-      // await scaleTest.testDecodeBalance();
-      // await scaleTest.testDecodeLockEvents();
-      // await scaleTest.testDecodeEthereumAddress();
-      // await scaleTest.testDecodeAuthoritiesNonce();
-      // await scaleTest.testDecodeAuthorities();
-      // await scaleTest.testDecodeMMRRoot();
+    it.only('ScaleTest decodeVec', async () => {
+      await scaleTest.testDecodeU32();
+      await scaleTest.testDecodeVec()
+      await scaleTest.testDecodeAccountId();
+      await scaleTest.testDecodeAccountId2();
+      await scaleTest.testDecodeBalance();
+      await scaleTest.testDecodeLockEvents();
+      await scaleTest.testDecodeEthereumAddress();
+      await scaleTest.testDecodeAuthoritiesNonce();
+      await scaleTest.testDecodeAuthorities();
+      await scaleTest.testDecodeMMRRoot();
       await scaleTest.testDecodeStateRootFromBlockHeader()
     })
 
-    it('CompactMerkleProofTest testCompactMerkleProofTest', async () => {
-        await compactMerkleProofTest.testSimplePairVerifyProof()
-        await compactMerkleProofTest.testPairVerifyProof()
-        await compactMerkleProofTest.testPairsVerifyProof()
+    // it('CompactMerkleProofTest testCompactMerkleProofTest', async () => {
+    //     await compactMerkleProofTest.testSimplePairVerifyProof()
+    //     await compactMerkleProofTest.testPairVerifyProof()
+    //     await compactMerkleProofTest.testPairsVerifyProof()
 
-        await compactMerkleProofTest.test_decode_leaf()
-        await compactMerkleProofTest.test_encode_leaf()
-        await compactMerkleProofTest.test_decode_branch()
-        await compactMerkleProofTest.test_encode_branch()
-    })
+    //     await compactMerkleProofTest.test_decode_leaf()
+    //     await compactMerkleProofTest.test_encode_leaf()
+    //     await compactMerkleProofTest.test_decode_branch()
+    //     await compactMerkleProofTest.test_encode_branch()
+    // })
 
     it('SimpleMerkleProof testSimpleMerkleProof1', async () => {
         res = await simpleMerkleProofTest.testNonCompactMerkleProof1()
@@ -97,7 +98,7 @@ describe('MerkleProofTest', function (accounts) {
       expect(res).that.equal('0x102403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec700000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec70100e40b5402000000000000000000000024038eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050000d0b72b6a000000000000000000000024048eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050100c817a8040000000000000000000000')
     })
 
-    it.only('SimpleMerkleProof testGetEvents1', async () => {
+    it('SimpleMerkleProof testGetEvents1', async () => {
       res = await simpleMerkleProofTest.testGetEvents1()
       console.log(res)
 

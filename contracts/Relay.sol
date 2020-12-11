@@ -130,7 +130,7 @@ contract Relay is Ownable, Pausable {
 
         uint16 count;
         for (uint16 i = 0; i < signatures.length; i++) {
-            address signer = ECDSA.recover(hash, signatures[i]);
+            address signer = ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signatures[i]);
             if (_isRelayer(signer)) {
                 count++;
             }

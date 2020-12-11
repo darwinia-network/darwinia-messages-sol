@@ -273,19 +273,25 @@ describe('Relay', () => {
       
       // {prefix: 0x43726162, index: 20000, root: 0x5fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2}
       const msg = "0x1043726162823801005fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2";
-      const hash = ethers.utils.keccak256(msg);
+      const bytesMsg = ethers.utils.arrayify(msg)
 
-      signatures.push(await owner.signMessage(msg));
-      signatures.push(await addr1.signMessage(msg));
+      const hash = ethers.utils.keccak256(bytesMsg);
+      const bytesHash = ethers.utils.arrayify(hash);
+
+      signatures.push(await owner.signMessage(bytesHash));
+      signatures.push(await addr1.signMessage(bytesHash));
       // signatures.push(await addr2.signMessage(msg));
-      console.log('signatures::', signatures);
+      console.log('signatures:', signatures);
+      console.log('hash:', hash);
 
-      // console.log(ethers.utils.recoverAddress(msg, signatures[0]));
+      console.log(111, ethers.utils.verifyMessage(bytesHash, signatures[0]));
       // signatures.forEach((item, index) => {
       //   expect(ethers.utils.recoverAddress(msg, item)).that.equal([owner, addr1, addr2][index]);
       // })
 
-      const appendRoot = await relay.appendRoot(hash, msg, signatures);
+      const appendRoot = await relay.appendRoot(hash, msg, signatures, {
+        gasLimit: 9500000
+      });
       await appendRoot.wait();
 
       const root = await relay._getMMRRoot(20000);

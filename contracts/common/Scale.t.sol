@@ -21,6 +21,17 @@ contract ScaleTest is DSTest {
         assertTrue(true);
     }
 
+    function testDecodeU32() public {
+        uint32 index = Scale.decodeU32(Input.from(hex"02000100"));
+        assertEq(uint256(index), 16384);
+
+        index = Scale.decodeU32(Input.from(hex"fdff"));
+        assertEq(uint256(index), 16383);
+
+        index = Scale.decodeU32(Input.from(hex"feffffff"));
+        assertEq(uint256(index), 1073741823);
+    }
+
     function testDecodeReceiptProof() public {
         // {
         //     at: 0x1408715bbfa970e0a698a495c5f51ce88a27c23efa20fd66550777e388033836,
@@ -190,21 +201,19 @@ contract ScaleTest is DSTest {
         // console.log(str)
         // console.log(str.toHex())
 
-        // {prefix: 0x44524d4c, index: 789, root: 0x0001020304050607080901020304050607080901020304050607080901020304}
-        // 0x1044524d4c550c0001020304050607080901020304050607080901020304050607080901020304
+        // {prefix: Crab, index: 16384, root: 0x5fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2}
+        // 1043726162020001005fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2
 
-        bytes memory hexData = hex"1044524d4c550c0001020304050607080901020304050607080901020304050607080901020304";
+        bytes memory hexData = hex"1043726162020001005fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2";
         Input.Data memory data = Input.from(hexData);
 
         (bytes memory prefix, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
 
-        console.logBytes(prefix);
-        console.log(index);
-        console.logBytes32(root);
+        assertEq0(prefix, hex"43726162");
+        assertEq(uint256(index), 16384);
+        assertEq(root, bytes32(hex"5fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2"));
 
-        assertEq0(prefix, hex"44524d4c");
-        assertEq(uint256(index), 789);
-        assertEq(root, bytes32(hex"0001020304050607080901020304050607080901020304050607080901020304"));
+
     }
 
     function testDecodeStateRootFromBlockHeader() public {
