@@ -64,11 +64,12 @@ async function main() {
     0x43726162
   ];
   
-  relay = await Relay.deploy(...relayConstructor);
+  relay = await Relay.deploy();
+  await relay.relayConstructor(...relayConstructor);
   await relay.deployed();
 
 
-  const TokenBacking = await ethers.getContractFactory("TokenBacking", {
+  const TokenIssuing = await ethers.getContractFactory("TokenIssuing", {
     libraries: {
       Scale: scale.address,
     }
@@ -80,9 +81,9 @@ async function main() {
     "0x26e920e571943C6D4789aD7b75967f9842cdc83e"
   ]
 
-  backing = await TokenBacking.deploy();
+  backing = await TokenIssuing.deploy();
   await backing.deployed();
-  await backing.initializeContract(...backingConstructor);
+  await backing.tokenIssuingConstructor(...backingConstructor);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

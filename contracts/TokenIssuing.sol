@@ -4,6 +4,7 @@ pragma solidity >=0.5.0 <0.6.0;
 
 import "./common/Ownable.sol";
 import "./common/Pausable.sol";
+import "./common/SingletonLock.sol";
 import "./interfaces/IRelay.sol";
 import "./interfaces/IERC20.sol";
 import "./interfaces/ISettingsRegistry.sol";
@@ -14,7 +15,7 @@ import "./common/SafeMath.sol";
 
 pragma experimental ABIEncoderV2;
 
-contract TokenBacking is Ownable, Pausable {
+contract TokenIssuing is Ownable, Pausable, SingletonLock {
 
     event MintRingEvent(address recipient, uint256 value, bytes32 accountId);
     event MintKtonEvent(address recipient, uint256 value, bytes32 accountId);
@@ -24,21 +25,15 @@ contract TokenBacking is Ownable, Pausable {
 
     ISettingsRegistry public registry;
     IRelay public relay;
-    IERC20 public ring;
-    IERC20 public kton;
 
     // Record the block height that has been verified
     mapping(uint32 => bool) history;
 
-    function initializeContract(address _registry, address _relay) public onlyOwner {
+    function tokenIssuingConstructor(address _registry, address _relay) public singletonLockCall {
+        ownableConstructor();
+
         relay = IRelay(_relay);
         registry = ISettingsRegistry(_registry);
-
-        // bytes32 CONTRACT_RING_ERC20_TOKEN = 0x434f4e54524143545f52494e475f45524332305f544f4b454e00000000000000;
-        // bytes32 CONTRACT_KTON_ERC20_TOKEN = 0x434f4e54524143545f4b544f4e5f45524332305f544f4b454e00000000000000;
-
-        // ring = IERC20(registry.addressOf(CONTRACT_RING_ERC20_TOKEN));
-        // kton = IERC20(registry.addressOf(CONTRACT_KTON_ERC20_TOKEN));
     }
 
     function appendRootAndVerifyProof(
@@ -77,24 +72,29 @@ contract TokenBacking is Ownable, Pausable {
       public
       whenNotPaused
     {
-        require(!history[blockNumber], "TokenBacking:: verifyProof:  The block has been verifiee");
+        require(!history[blockNumber], "TokenIssuing:: verifyProof:  The block has been verifiee");
 
-        bytes memory eventsData = relay.verifyAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, proofstr, storageKey);
+        IRelay relayContract = IRelay(relay);
+
+        bytes memory eventsData = relayContract.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, proofstr, storageKey);
         Input.Data memory data = Input.from(eventsData);
         
         ScaleStruct.LockEvent[] memory events = Scale.decodeLockEvents(data);
 
         uint256 len = events.length;
 
+        IERC20 ringContract = IERC20(registry.addressOf(bytes32("CONTRACT_RING_ERC20_TOKEN")));
+        IERC20 ktonContract = IERC20(registry.addressOf(bytes32("CONTRACT_KTON_ERC20_TOKEN")));
+
         for( uint i = 0; i < len; i++ ) {
           ScaleStruct.LockEvent memory item = events[i];
           if(item.token == 0) {
-            // ring.mint(item.recipient, decimalsConverter(item.value));
+            ringContract.mint(item.recipient, decimalsConverter(item.value));
             emit MintRingEvent(item.recipient, item.value, item.sender);
           }
 
           if (item.token == 1) {
-            // kton.mint(item.recipient, decimalsConverter(item.value));
+            ktonContract.mint(item.recipient, decimalsConverter(item.value));
             emit MintKtonEvent(item.recipient, item.value, item.sender);
           }
         }
@@ -102,7 +102,7 @@ contract TokenBacking is Ownable, Pausable {
         history[blockNumber] = true;
     }
 
-    // The token decimals in Crab, Darwinia Netowrk is 9, Ethereum is 18.
+    // The token decimals in Crab, Darwinia Netowrk is 9, in Ethereum Network is 18.
     function decimalsConverter(uint256 darwiniaValue) public pure returns (uint256) {
       return SafeMath.mul(darwiniaValue, 1000000000);
     }

@@ -117,7 +117,7 @@ describe('Relay', () => {
     await scale.deployed();
     await simpleMerkleProof.deployed();
 
-    const TokenBacking = await ethers.getContractFactory("TokenBacking", {
+    const TokenIssuing = await ethers.getContractFactory("TokenIssuing", {
       libraries: {
         Scale: scale.address,
       }
@@ -154,7 +154,8 @@ describe('Relay', () => {
       0x43726162
     ];
     
-    relay = await Relay.deploy(...relayConstructor);
+    relay = await Relay.deploy();
+    await relay.relayConstructor(...relayConstructor);
     await relay.deployed();
 
     const backingConstructor = [
@@ -162,9 +163,9 @@ describe('Relay', () => {
       relay.address
     ]
 
-    backing = await TokenBacking.deploy();
+    backing = await TokenIssuing.deploy();
     await backing.deployed();
-    await backing.initializeContract(...backingConstructor);
+    await backing.tokenIssuingConstructor(...backingConstructor);
   });
 
   describe('Relay', async () => {
@@ -196,8 +197,8 @@ describe('Relay', () => {
     });
 
 
-    it('verifyAndDecodeReceipt', async () => {
-      let result = await relay.verifyAndDecodeReceipt(
+    it('verifyRootAndDecodeReceipt', async () => {
+      let result = await relay.verifyRootAndDecodeReceipt(
         proof.root,
         proof.MMRIndex,
         proof.blockNumber,
@@ -246,7 +247,6 @@ describe('Relay', () => {
       expect(event1.decode(event1.data)[2]).that.equal('0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d');
     });
 
-
     it('verifyProof', async () => {
       expect(backing.verifyProof(
         proof.root,
@@ -284,7 +284,7 @@ describe('Relay', () => {
       console.log('signatures:', signatures);
       console.log('hash:', hash);
 
-      console.log(111, ethers.utils.verifyMessage(bytesHash, signatures[0]));
+      console.log('ethers verifyMessage check: ', ethers.utils.verifyMessage(bytesHash, signatures[0]));
       // signatures.forEach((item, index) => {
       //   expect(ethers.utils.recoverAddress(msg, item)).that.equal([owner, addr1, addr2][index]);
       // })

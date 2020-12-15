@@ -9,6 +9,7 @@ import "./common/ECDSA.sol";
 import "./common/Hash.sol";
 import "./common/SafeMath.sol";
 import "./common/Input.sol";
+import "./common/SingletonLock.sol";
 
 import "./MMR.sol";
 import "./common/Scale.sol";
@@ -17,9 +18,9 @@ import "./SimpleMerkleProof.sol";
 
 pragma experimental ABIEncoderV2;
 
-contract Relay is Ownable, Pausable {
+contract Relay is Ownable, Pausable, SingletonLock {
     event SetRootEvent(address relayer, bytes32 root, uint256 index);
-    event SetRelayersEvent(uint32 nonce, address[] relayers, bytes32 benifit);
+    event SetAuthritiesEvent(uint32 nonce, address[] authorities, bytes32 benifit);
     event ResetRootEvent(address owner, bytes32 root, uint256 index);
     event ResetLatestIndexEvent(address owner, uint256 index);
 
@@ -34,23 +35,25 @@ contract Relay is Ownable, Pausable {
     Relayers relayers;
 
     // 'crab', 'darwinia'
-    bytes private networkPrefix;
+    bytes public networkPrefix;
 
     // index => mmr root
-    // In the Darwin Network, the mmr root of block 1000 
+    // In the Darwinia Network, the mmr root of block 1000 
     // needs to be queried in Log-Other of block 1001.
     mapping(uint32 => bytes32) public mmrRootPool;
 
     uint32 public latestIndex;
 
-    constructor(
+    function relayConstructor(
         uint32 _MMRIndex,
         bytes32 _genesisMMRRoot,
         address[] memory _relayers,
         uint32 _nonce,
         uint8 _threshold,
         bytes memory _prefix
-    ) public {
+    ) public singletonLockCall {
+        ownableConstructor();
+
         _appendRoot(_MMRIndex, _genesisMMRRoot);
         _setRelayer(_nonce, _relayers, bytes32(0));
         _setNetworkPrefix(_prefix);
@@ -62,7 +65,7 @@ contract Relay is Ownable, Pausable {
         relayers.member = accounts;
         relayers.nonce = nonce;
 
-        emit SetRelayersEvent(nonce, accounts, benifit);
+        emit SetAuthritiesEvent(nonce, accounts, benifit);
     }
 
     function _appendRoot(uint32 index, bytes32 root) internal {
@@ -197,7 +200,7 @@ contract Relay is Ownable, Pausable {
         emit ResetRootEvent(_msgSender(), root, index);
     }
 
-    function verifyAndDecodeReceipt(
+    function verifyRootAndDecodeReceipt(
         bytes32 root,
         uint32 MMRIndex,
         uint32 blockNumber,
