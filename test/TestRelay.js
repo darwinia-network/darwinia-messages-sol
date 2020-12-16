@@ -155,17 +155,17 @@ describe('Relay', () => {
     ];
     
     relay = await Relay.deploy();
-    await relay.relayConstructor(...relayConstructor);
     await relay.deployed();
+    await relay.relayConstructor(...relayConstructor);
 
-    const backingConstructor = [
+    const issuingConstructor = [
       "0x0000000000000000000000000000000000000000",
       relay.address
     ]
 
-    backing = await TokenIssuing.deploy();
-    await backing.deployed();
-    await backing.tokenIssuingConstructor(...backingConstructor);
+    issuing = await TokenIssuing.deploy();
+    await issuing.deployed();
+    await issuing.tokenIssuingConstructor(...issuingConstructor);
   });
 
   describe('Relay', async () => {
@@ -212,7 +212,7 @@ describe('Relay', () => {
     });
 
     it('verifyProof', async () => {
-      let result = await backing.verifyProof(
+      let result = await issuing.verifyProof(
         proof.root,
         proof.MMRIndex,
         proof.blockNumber,
@@ -247,8 +247,8 @@ describe('Relay', () => {
       expect(event1.decode(event1.data)[2]).that.equal('0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d');
     });
 
-    it('verifyProof', async () => {
-      expect(backing.verifyProof(
+    it('Repeated verification of the same block will be reverted', async () => {
+      expect(issuing.verifyProof(
         proof.root,
         proof.MMRIndex,
         proof.blockNumber,
@@ -258,13 +258,15 @@ describe('Relay', () => {
         proof.proofstr
       , {
         gasLimit: 10000000
-      })).to.be.reverted;
+      })).be.reverted;
     });
 
     it('resetRoot', async () => {
-      await relay.resetRoot(100, "0x3031303200000000000000000000000000000000000000000000000000000000");
-      const root = await relay._getMMRRoot(100);
-      expect(root).that.equal("0x3031303200000000000000000000000000000000000000000000000000000000");
+      const res = await relay.resetRoot(2000, "0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff65355000");
+      await res.wait();
+      const root = await relay._getMMRRoot(2000);
+      console.log(111, root)
+      expect(root).that.equal("0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff65355000");
     });
 
     it.only('appendRoot', async () => {

@@ -52,9 +52,8 @@ describe('MerkleProofTest', function (accounts) {
         await scaleTest.testDecodeReceiptProof()
     })
 
-    it.only('ScaleTest decodeVec', async () => {
+    it('ScaleTest decodeVec', async () => {
       await scaleTest.testDecodeU32();
-      await scaleTest.testDecodeVec()
       await scaleTest.testDecodeAccountId();
       await scaleTest.testDecodeAccountId2();
       await scaleTest.testDecodeBalance();
