@@ -1,4 +1,6 @@
-pragma solidity >=0.4.21 <0.6.0;
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.6.12;
 
 import "./MMR.sol";
 
@@ -12,6 +14,7 @@ contract MMRWrapper {
         uint256 width,
         uint256 index,
         bytes memory value,
+        bytes32 valueHash,
         bytes32[] memory peaks,
         bytes32[] memory siblings
     ) public returns (uint8){

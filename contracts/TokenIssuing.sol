@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.5.0 <0.6.0;
+pragma solidity ^0.6.12;
 
 import "./common/Ownable.sol";
 import "./common/Pausable.sol";
@@ -83,18 +83,18 @@ contract TokenIssuing is Ownable, Pausable, SingletonLock {
 
         uint256 len = events.length;
 
-        IERC20 ringContract = IERC20(registry.addressOf(bytes32("CONTRACT_RING_ERC20_TOKEN")));
-        IERC20 ktonContract = IERC20(registry.addressOf(bytes32("CONTRACT_KTON_ERC20_TOKEN")));
+        // IERC20 ringContract = IERC20(registry.addressOf(bytes32("CONTRACT_RING_ERC20_TOKEN")));
+        // IERC20 ktonContract = IERC20(registry.addressOf(bytes32("CONTRACT_KTON_ERC20_TOKEN")));
 
         for( uint i = 0; i < len; i++ ) {
           ScaleStruct.LockEvent memory item = events[i];
           if(item.token == 0) {
-            ringContract.mint(item.recipient, decimalsConverter(item.value));
+            // ringContract.mint(item.recipient, decimalsConverter(item.value));
             emit MintRingEvent(item.recipient, item.value, item.sender);
           }
 
           if (item.token == 1) {
-            ktonContract.mint(item.recipient, decimalsConverter(item.value));
+            // ktonContract.mint(item.recipient, decimalsConverter(item.value));
             emit MintKtonEvent(item.recipient, item.value, item.sender);
           }
         }
