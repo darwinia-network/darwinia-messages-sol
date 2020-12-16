@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.12;
+pragma solidity >=0.6.0 <0.7.0;
+
+import "@openzeppelin/contracts/proxy/Initializable.sol";
 
 import "./Blake2b.sol";
 import "./common/Ownable.sol";
@@ -9,16 +11,13 @@ import "./common/ECDSA.sol";
 import "./common/Hash.sol";
 import "./common/SafeMath.sol";
 import "./common/Input.sol";
-import "./common/SingletonLock.sol";
-
 import "./MMR.sol";
 import "./common/Scale.sol";
 import "./SimpleMerkleProof.sol";
 
-
 pragma experimental ABIEncoderV2;
 
-contract Relay is Ownable, Pausable, SingletonLock {
+contract Relay is Ownable, Pausable, Initializable {
     event SetRootEvent(address relayer, bytes32 root, uint256 index);
     event SetAuthritiesEvent(uint32 nonce, address[] authorities, bytes32 benifit);
     event ResetRootEvent(address owner, bytes32 root, uint256 index);
@@ -44,16 +43,17 @@ contract Relay is Ownable, Pausable, SingletonLock {
 
     uint32 public latestIndex;
 
-    function relayConstructor(
+    function initialize(
         uint32 _MMRIndex,
         bytes32 _genesisMMRRoot,
         address[] memory _relayers,
         uint32 _nonce,
         uint8 _threshold,
         bytes memory _prefix
-    ) public singletonLockCall {
+    ) public initializer {
         ownableConstructor();
-
+        pausableConstructor();
+        
         _appendRoot(_MMRIndex, _genesisMMRRoot);
         _setRelayer(_nonce, _relayers, bytes32(0));
         _setNetworkPrefix(_prefix);

@@ -4,7 +4,10 @@
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
+const Util = require("./utils");
+
 const ethers = hre.ethers;
+const upgrades = hre.upgrades;
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -15,38 +18,62 @@ async function main() {
   await hre.run('compile');
 
   const [owner, addr1, addr2] = await ethers.getSigners();
+  const network = await ethers.provider.getNetwork()
+  console.log('Network: ', network.name);
 
   // We get the contract to deploy
 
-  const MMR = await ethers.getContractFactory("MMR");
-  mmrLib = await MMR.deploy();
-  await mmrLib.deployed();
-  console.log("MMR deployed to:", mmrLib.address);
+  // const MMR = await ethers.getContractFactory("MMR");
+  // mmrLib = await MMR.deploy();
+  // await mmrLib.deployed();
+  // console.log("MMR deployed to:", mmrLib.address);
 
-  const Scale = await ethers.getContractFactory("Scale");
-  scale = await Scale.deploy();
-  await scale.deployed();
-  console.log("Scale deployed to:", scale.address);
+  // const Scale = await ethers.getContractFactory("Scale");
+  // scale = await Scale.deploy();
+  // await scale.deployed();
+  // console.log("Scale deployed to:", scale.address);
 
-  const SimpleMerkleProof = await ethers.getContractFactory("SimpleMerkleProof");
-  simpleMerkleProof = await SimpleMerkleProof.deploy();
-  await simpleMerkleProof.deployed();
-  console.log("SimpleMerkleProof deployed to:", simpleMerkleProof.address);
+  // const SimpleMerkleProof = await ethers.getContractFactory("SimpleMerkleProof");
+  // simpleMerkleProof = await SimpleMerkleProof.deploy();
+  // await simpleMerkleProof.deployed();
+  // console.log("SimpleMerkleProof deployed to:", simpleMerkleProof.address);
 
   // MMR deployed to: 0x8C66aebC119a98Bbc521d192CD976E500f64a73a
   // Scale deployed to: 0xa4D869e3Eea8Ba408740779a00aFe1dd59f4993f
   // SimpleMerkleProof deployed to: 0xacfeDAf15495b430155C8554e6e3678F938B5784
 
+  // const ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
+  // proxyAdmin = await ProxyAdmin.deploy();
+  // await proxyAdmin.deployed();
+  // console.log("ProxyAdmin deployed to:", proxyAdmin.address);
+
+  const proxyAdminAddress = {
+    'kovan': '0x239c672bB2De2516a165c1d901335b4A8530A680',
+    'dev': '0x0000000000000000000000000000000000000000',
+    'ropsten': '0x0000000000000000000000000000000000000000',
+    'mainnet': '0x0000000000000000000000000000000000000000'
+  }
+
+  const registryAddress = {
+    'kovan': '0x0000000000000000000000000000000000000000',
+    'dev': '0x0000000000000000000000000000000000000000',
+    'ropsten': '0x0000000000000000000000000000000000000000',
+    'mainnet': '0x0000000000000000000000000000000000000000',
+  }
+
+
+
+  // Get contract artifacts
+  const TransparentUpgradeableProxy = await ethers.getContractFactory("TransparentUpgradeableProxy");
+
   const Relay = await ethers.getContractFactory(
     'Relay',
     {
       libraries: {
-        MMR: mmrLib.address,
-        SimpleMerkleProof: simpleMerkleProof.address,
-        Scale: scale.address
-        // MMR: '0x2f0454C05591bb36d00e85b005BB2AE18C620011',
-        // SimpleMerkleProof: '0x8b447F883B9f0FDfAdCDA7D0151405Fa98e63D73',
-        // Scale: '0xBdD57AC8b86C14F00576BBC7788bB5b22F0723fd'
+        // if the type of function change to "public"
+        // MMR: mmrLib.address,
+        // SimpleMerkleProof: simpleMerkleProof.address,
+        // Scale: scale.address
       }
     }
   );
@@ -63,27 +90,61 @@ async function main() {
     60,
     0x43726162
   ];
-  
-  relay = await Relay.deploy();
-  await relay.relayConstructor(...relayConstructor);
-  await relay.deployed();
 
+  // Build Relay.sol Logic
+  relay = await Relay.deploy();
+  await relay.deployed();
+  console.log("Relay logic deployed to:", relay.address);
+
+  // Build Relay.sol Proxy
+  const relayDataTransparentUpgradeableProxy = Util.getInitializerData(Relay, relayConstructor);
+  
+  const relayProxyConstructor = [relay.address, proxyAdminAddress[network.name], relayDataTransparentUpgradeableProxy];
+  relayTransparentUpgradeableProxy = await TransparentUpgradeableProxy.deploy(...relayProxyConstructor);
+
+  Util.writeFile('./scripts/argu/relayproxy.js', Util.convertArguText(
+    JSON.stringify(relayProxyConstructor, null, 2)
+    ),
+  );
+
+  await relayTransparentUpgradeableProxy.deployed();
+  console.log("Relay proxy deployed to:", relayTransparentUpgradeableProxy.address);
+
+  // Non-proxy deploy
+  // await relay.initialize(...relayConstructor);
+  // relay = await upgrades.deployProxy(Relay, relayConstructor, { unsafeAllowCustomTypes: true });
+  // console.log("Relay Proxy deployed to:", relay.address);
 
   const TokenIssuing = await ethers.getContractFactory("TokenIssuing", {
     libraries: {
-      Scale: scale.address,
+      // Scale: scale.address,
     }
   });
 
-  const backingConstructor = [
+  const issuingConstructor = [
     "0x0000000000000000000000000000000000000000",
     // relay.address
-    "0x26e920e571943C6D4789aD7b75967f9842cdc83e"
+    relayTransparentUpgradeableProxy.address
   ]
+  
+  // Build TokenIssuing.sol Logic
+  issuing = await TokenIssuing.deploy();
+  await issuing.deployed();
 
-  backing = await TokenIssuing.deploy();
-  await backing.deployed();
-  await backing.tokenIssuingConstructor(...backingConstructor);
+  // Non-proxy deploy
+  // await issuing.initialize(...issuingConstructor);
+  // issuing = await upgrades.deployProxy(TokenIssuing, issuingConstructor, { unsafeAllowCustomTypes: true });
+
+  // Build TokenIssuing.sol Proxy
+  const issuingDataTransparentUpgradeableProxy = Util.getInitializerData(TokenIssuing, issuingConstructor);
+  Util.writeFile('./scripts/argu/tokenbackingproxy.js', Util.convertArguText(
+      JSON.stringify([relay.address, proxyAdminAddress[network.name], issuingDataTransparentUpgradeableProxy], null, 2)
+      ),
+    );
+
+  relayTransparentUpgradeableProxy = await TransparentUpgradeableProxy.deploy(relay.address, proxyAdminAddress[network.name], issuingDataTransparentUpgradeableProxy);
+  await relayTransparentUpgradeableProxy.deployed();
+  console.log("Relay proxy deployed to:", relayTransparentUpgradeableProxy.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

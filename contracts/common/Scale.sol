@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.12;
+pragma solidity >=0.6.0 <0.7.0;
 
 import "./Input.sol";
 import "./Bytes.sol";
@@ -15,7 +15,7 @@ library Scale {
     // Vec<Event>    Event = <index, Data>   Data = {accountId, EthereumAddress, types, Balance}
     // bytes memory hexData = hex"102403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec700000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec70100e40b5402000000000000000000000024038eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050000d0b72b6a000000000000000000000024048eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050100c817a8040000000000000000000000";
     function decodeLockEvents(Input.Data memory data)
-        public
+        internal
         pure
         returns (ScaleStruct.LockEvent[] memory)
     {
@@ -37,7 +37,7 @@ library Scale {
 
     function decodeStateRootFromBlockHeader(
         bytes memory header
-    ) public pure returns (bytes32 root) {
+    ) internal pure returns (bytes32 root) {
         uint8 offset = decodeCompactU8aOffset(header[32]);
         assembly {
             root := mload(add(add(header, 0x40), offset))
@@ -47,7 +47,7 @@ library Scale {
 
     // little endian
     function decodeMMRRoot(Input.Data memory data) 
-        public
+        internal
         pure
         returns (bytes memory prefix, uint32 width, bytes32 root)
     {
@@ -58,7 +58,7 @@ library Scale {
     }
 
     function decodeAuthorities(Input.Data memory data)
-        public
+        internal
         pure
         returns (bytes memory prefix, uint32 nonce, address[] memory authorities)
     {
@@ -130,7 +130,7 @@ library Scale {
     // the Vec<u8> is the proofs of mpt
     // returns (bytes[] memory proofs)
     function decodeReceiptProof(Input.Data memory data) 
-        public
+        internal
         pure
         returns (bytes[] memory proofs) 
     {

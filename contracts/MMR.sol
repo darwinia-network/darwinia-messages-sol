@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.12;
+pragma solidity >=0.6.0 <0.7.0;
 
 import { Hash } from "./common/Hash.sol";
 
@@ -106,7 +106,7 @@ library MMR {
         bytes memory value,
         bytes32[] memory peaks,
         bytes32[] memory siblings
-    ) view public returns (bool) {
+    ) view internal returns (bool) {
         uint size = getSize(width);
         require(size >= index, "Index is out of range");
         // Check the root equals the peak bagging hash

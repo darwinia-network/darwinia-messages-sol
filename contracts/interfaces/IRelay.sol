@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.12;
+pragma solidity >=0.6.0 <0.7.0;
 
 pragma experimental ABIEncoderV2;
 
@@ -9,17 +9,17 @@ interface IRelay {
         bytes32 root,
         uint32 MMRIndex,
         uint32 blockNumber,
-        bytes memory blockHeader,
-        bytes32[] memory peaks,
-        bytes32[] memory siblings,
-        bytes memory proofstr,
-        bytes memory key
+        bytes calldata blockHeader,
+        bytes32[] calldata peaks,
+        bytes32[] calldata siblings,
+        bytes calldata proofstr,
+        bytes calldata key
     ) external view returns (bytes memory);
 
      function appendRoot(
         bytes32 hash,
-        bytes memory message,
-        bytes[] memory signatures
+        bytes calldata message,
+        bytes[] calldata signatures
     ) external;
 
     function _getMMRRoot(uint32 index) external view returns (bytes32);

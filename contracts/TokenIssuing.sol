@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.12;
+pragma solidity >=0.6.0 <0.7.0;
+
+import "@openzeppelin/contracts/proxy/Initializable.sol";
 
 import "./common/Ownable.sol";
 import "./common/Pausable.sol";
-import "./common/SingletonLock.sol";
 import "./interfaces/IRelay.sol";
 import "./interfaces/IERC20.sol";
 import "./interfaces/ISettingsRegistry.sol";
@@ -13,15 +14,16 @@ import { ScaleStruct } from "./common/Scale.struct.sol";
 import "./common/Scale.sol";
 import "./common/SafeMath.sol";
 
+
 pragma experimental ABIEncoderV2;
 
-contract TokenIssuing is Ownable, Pausable, SingletonLock {
+contract TokenIssuing is Ownable, Pausable, Initializable {
 
     event MintRingEvent(address recipient, uint256 value, bytes32 accountId);
     event MintKtonEvent(address recipient, uint256 value, bytes32 accountId);
     event MintTokenEvent(address token, address recipient, uint256 value, bytes32 accountId);
 
-    bytes storageKey = hex"f8860dda3d08046cf2706b92bf7202eaae7a79191c90e76297e0895605b8b457";
+    bytes public storageKey;
 
     ISettingsRegistry public registry;
     IRelay public relay;
@@ -29,11 +31,14 @@ contract TokenIssuing is Ownable, Pausable, SingletonLock {
     // Record the block height that has been verified
     mapping(uint32 => bool) history;
 
-    function tokenIssuingConstructor(address _registry, address _relay) public singletonLockCall {
+    function initialize(address _registry, address _relay, bytes memory _key) public initializer {
         ownableConstructor();
+        pausableConstructor();
 
         relay = IRelay(_relay);
         registry = ISettingsRegistry(_registry);
+
+        storageKey = _key;
     }
 
     function appendRootAndVerifyProof(
@@ -88,14 +93,15 @@ contract TokenIssuing is Ownable, Pausable, SingletonLock {
 
         for( uint i = 0; i < len; i++ ) {
           ScaleStruct.LockEvent memory item = events[i];
+          uint256 value = decimalsConverter(item.value);
           if(item.token == 0) {
-            // ringContract.mint(item.recipient, decimalsConverter(item.value));
-            emit MintRingEvent(item.recipient, item.value, item.sender);
+            // ringContract.mint(item.recipient, value);
+            emit MintRingEvent(item.recipient, value, item.sender);
           }
 
           if (item.token == 1) {
-            // ktonContract.mint(item.recipient, decimalsConverter(item.value));
-            emit MintKtonEvent(item.recipient, item.value, item.sender);
+            // ktonContract.mint(item.recipient, value);
+            emit MintKtonEvent(item.recipient, value, item.sender);
           }
         }
 

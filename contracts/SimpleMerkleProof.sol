@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.12;
+pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "./common/Input.sol";
@@ -35,7 +35,7 @@ library SimpleMerkleProof {
         bytes32 root,
         bytes[] memory proof,
         bytes[] memory keys
-    ) public view returns (bytes[] memory) {
+    ) internal view returns (bytes[] memory) {
         require(proof.length > 0, "no proof");
         require(keys.length > 0, "no keys");
         Item[] memory db = new Item[](proof.length);
@@ -56,7 +56,7 @@ library SimpleMerkleProof {
         bytes32 root,
         bytes memory key,
         bytes[] memory proof
-    ) public view returns (bytes memory value) {
+    ) internal view returns (bytes memory value) {
         bytes memory k = Nibble.keyToNibbles(key);
 
         Item[] memory db = new Item[](proof.length);

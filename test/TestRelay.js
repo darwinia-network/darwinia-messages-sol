@@ -97,9 +97,17 @@ describe('Relay', () => {
   };
 
   before(async () => {
-    const MMR = await ethers.getContractFactory("MMR");
-    const Scale = await ethers.getContractFactory("Scale");
-    const SimpleMerkleProof = await ethers.getContractFactory("SimpleMerkleProof");
+    // const MMR = await ethers.getContractFactory("MMR");
+    // const Scale = await ethers.getContractFactory("Scale");
+    // const SimpleMerkleProof = await ethers.getContractFactory("SimpleMerkleProof");
+
+    // mmrLib = await MMR.deploy();
+    // scale = await Scale.deploy();
+    // simpleMerkleProof = await SimpleMerkleProof.deploy();
+
+    // await mmrLib.deployed();
+    // await scale.deployed();
+    // await simpleMerkleProof.deployed();
 
     const [owner, addr1, addr2] = await ethers.getSigners();
     accounts = await ethers.getSigners();
@@ -109,17 +117,9 @@ describe('Relay', () => {
       console.log(account.address);
     }
 
-    mmrLib = await MMR.deploy();
-    scale = await Scale.deploy();
-    simpleMerkleProof = await SimpleMerkleProof.deploy();
-
-    await mmrLib.deployed();
-    await scale.deployed();
-    await simpleMerkleProof.deployed();
-
     const TokenIssuing = await ethers.getContractFactory("TokenIssuing", {
       libraries: {
-        Scale: scale.address,
+        // Scale: scale.address,
       }
     });
 
@@ -127,9 +127,9 @@ describe('Relay', () => {
       'Relay',
       {
         libraries: {
-          MMR: mmrLib.address,
-          SimpleMerkleProof: simpleMerkleProof.address,
-          Scale: scale.address
+          // MMR: mmrLib.address,
+          // SimpleMerkleProof: simpleMerkleProof.address,
+          // Scale: scale.address
         }
       }
     );
@@ -145,27 +145,35 @@ describe('Relay', () => {
       11309,
       '0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff653550dc',
       [
+        // '0x6aA70f55E5D770898Dd45aa1b7078b8A80AAbD6C'
         await owner.getAddress(),
-        await addr1.getAddress(),
-        await addr2.getAddress(),
+        // await addr1.getAddress(),
+        // await addr2.getAddress(),
       ],
       0,
       60,
-      0x43726162
+      "0x43726162"
+      // "0x50616e676f6c696e"
     ];
     
     relay = await Relay.deploy();
     await relay.deployed();
-    await relay.relayConstructor(...relayConstructor);
+    await relay.initialize(...relayConstructor);
+
+    // const relay = await upgrades.deployProxy(Relay, relayConstructor, { unsafeAllowCustomTypes: true });
+    // console.log(relay.address);
 
     const issuingConstructor = [
       "0x0000000000000000000000000000000000000000",
-      relay.address
+      relay.address,
+      "0xf8860dda3d08046cf2706b92bf7202eaae7a79191c90e76297e0895605b8b457"
     ]
 
     issuing = await TokenIssuing.deploy();
     await issuing.deployed();
-    await issuing.tokenIssuingConstructor(...issuingConstructor);
+    await issuing.initialize(...issuingConstructor);
+
+    // issuing = await upgrades.deployProxy(TokenIssuing, issuingConstructor, { unsafeAllowCustomTypes: true });
   });
 
   describe('Relay', async () => {
@@ -211,7 +219,7 @@ describe('Relay', () => {
       expect(result).that.equal('0x082403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb9226600000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb922660100c817a8040000000000000000000000');
     });
 
-    it('verifyProof', async () => {
+    it.only('verifyProof', async () => {
       let result = await issuing.verifyProof(
         proof.root,
         proof.MMRIndex,
@@ -269,7 +277,7 @@ describe('Relay', () => {
       expect(root).that.equal("0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff65355000");
     });
 
-    it.only('appendRoot', async () => {
+    it('appendRoot', async () => {
       const [owner, addr1, addr2] = await ethers.getSigners();
       const signatures = [];
       
