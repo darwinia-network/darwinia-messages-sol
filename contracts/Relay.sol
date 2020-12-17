@@ -65,6 +65,10 @@ contract Relay is Ownable, Pausable, Initializable {
         return relayers.member.length;
     }
 
+    function getRelayerNonce() public view returns (uint32) {
+        return relayers.nonce;
+    }
+
     function getRelayer() public view returns (address[] memory) {
         return relayers.member;
     }
@@ -108,6 +112,9 @@ contract Relay is Ownable, Pausable, Initializable {
       return assertBytesEq(getNetworkPrefix(), prefix);
     }
 
+    function checkRelayerNonce(uint32 nonce) view public returns (bool) {
+      return nonce == getRelayerNonce() + 1;
+    }
 
     /// ==== Setters ==== 
     function updateRelayer(
@@ -129,6 +136,7 @@ contract Relay is Ownable, Pausable, Initializable {
         );
 
         require(checkNetworkPrefix(prefix), "Relay: Bad network prefix");
+        require(checkRelayerNonce(nonce), "Relay: Bad relayer set nonce");
 
         // update nonce,relayer
         _setRelayer(nonce, authorities, benefit);
