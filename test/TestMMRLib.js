@@ -39,7 +39,7 @@ describe('MerkleMountainRange', (accounts) => {
       'MMRWrapper',
       {
         libraries: {
-          MMR: mmrLib.address
+          // MMR: mmrLib.address
         }
       }
     );
@@ -75,6 +75,10 @@ describe('MerkleMountainRange', (accounts) => {
         await mmrLib.getChildren(1).should.be.rejected;
         await mmrLib.getChildren(2).should.be.rejected;
         await mmrLib.getChildren(4).should.be.rejected;
+      });
+      it('get size', async () => {
+        res = await mmrLib.getSize(9314);
+        expect(res.toString()).that.equals('18623');
       });
     });
     describe('getPeakIndexes()', async () => {
@@ -245,7 +249,7 @@ describe('MerkleMountainRange', (accounts) => {
 
   context('Verify mmr proof', async () => {
     describe('inclusionProof()', async () => {
-      it('should return pass true when it receives a valid merkle proof (1-7)', async () => {
+      it('should return pass true when it receives a valid merkle proof (0-7)', async () => {
         // bytes32 root,
         // uint256 width,
         // uint256 index,
@@ -255,7 +259,7 @@ describe('MerkleMountainRange', (accounts) => {
         expect(await mmrLib.inclusionProof(
           '0x2dee5b87a481a9105cb4b2db212a1d8031d65e9e6e68dc5859bef5e0fdd934b2',
           7,
-          1,
+          0,
           '0x00000000000000000000000000000000000000000000000000000000000000000034d4cabbcdf7ad81f7966f17f08608a6dfb87fcd2ec60ee4a14a5e13223c110f03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c11131400',
           [
             '0x488e9565547fec8bd36911dc805a7ed9f3d8d1eacabe429c67c6456933c8e0a6',
@@ -268,11 +272,11 @@ describe('MerkleMountainRange', (accounts) => {
         )).that.equals(true);
       })
 
-      it('should return pass true when it receives a valid merkle proof (7000-10000)', async () => {
+      it('should return pass true when it receives a valid merkle proof (6999-10000)', async () => {
         expect(await mmrLib.inclusionProof(
           '0x04c012d3f663112b7990c75f5aa85686a988b4e921c9f228755eb0494bd62f56',
           10000,
-          13990,
+          6999,
           '0x7e97f120b837fc887b63dd3015282a81e24982f1c5df7fadb12a478571d8fce25d6d3840f3944fed0116d96585aa8a94d185d1d247348bdb3745c18a638a129051b86878eb8241dd215f7b8880446d9b811999e69390748cc29dec75397b27d4e29e0c0642414245340200000000f0fcc80f0000000000904d4d5252d98e7727f55fc0b166e5991afe4eb8f990b94edb094cf0c329f1c5399bef2a1805424142450101c0f30a70aaaeb8469be059be3aa52eeb88aa2307bdf7a48f71b193a2d79aba0da0e04bda9c00dd7439ecad3ed428bf6f2f0482bea69bf78a3e06544bb0c3298d',
           [
             '0x30f3e4a3960d9ead43c1ea633525f093f3df91579ee4c05e6d9e1561eeb893a5',
@@ -296,13 +300,13 @@ describe('MerkleMountainRange', (accounts) => {
         )).that.equals(true);
       })
 
-      it('should return pass true when it receives a valid merkle proof (71-101)', async () => {
-        // 71 -> https://crab.subscan.io/block/71
+      it('should return pass true when it receives a valid merkle proof (70-101)', async () => {
+        // 70 -> https://crab.subscan.io/block/70
         // 101 -> https://crab.subscan.io/block/101?tab=log Other - mmr_root
         (await mmrLib.inclusionProof(
           '0x29ed180cb4c8428168685508c427038f76cd2b4b9c8898d105e196b0b1ac3595',
           101,
-          138,
+          70,
           '0xd3ac39be1d49a3975f7181b72d86acb895d31acfeb4ec9de3fd042aafd519df0190159e2b914d1d39676807d517871a879ebe92e1e8c2223b7eb68111f42c382d422b552da17c652552ed67c8cb6baebc71e8e34b13a20250134d965a1c9f83ce1bb0c0642414245340201000000dfe1c80f0000000000904d4d525262a835c90ac47b16f27beff0324704cfd488a08e9bc5c9ccfb09f0e7446adcd805424142450101300c71278534877ad6a95ecfc6929bdb12483dbaf5cfc667d120a014a0b5e94be5d23c38c06336921fe771a1fdee96bde254decf102a039408df0867757a7488',
           [
             '0x8c45c0b7b305a8ed920299b75ddc3eb7f407f5c144963411b078853948004415',
@@ -319,11 +323,11 @@ describe('MerkleMountainRange', (accounts) => {
         )).should.be.that.equals(true);
       })
 
-      it('should return pass true when it receives a valid merkle proof (5-7)', async () => {
+      it('should return pass true when it receives a valid merkle proof (3-7)', async () => {
         expect(await mmrLib.inclusionProof(
           '0x2dee5b87a481a9105cb4b2db212a1d8031d65e9e6e68dc5859bef5e0fdd934b2',
           7,
-          5,
+          3,
           '0x12e69454d992b9b1e00ea79a7fa1227c889c84d04b7cd47e37938d6f69ece45d0c8eef02cec7ce250f8db3770d55181acae6cde8867ce27a0aabc6c2c97d804a832b1f64326f48c9d3f7e6b1f1c90c26020be3fc7fb39e35f7f8b4696c46c5ba1f0c0642414245b50101000000009ce1c80f000000005aa4784476c13899938c32660fe820d6fa69333ed946f7a0b0d24d06a97c8e52c10e2ec216f4c52042696b2f4e4ba6d1e1b5431fdddb6d4007a38445f47e900960de4cf4d407991ddff04ff65a0edca39360c478ef2b3afb76d760a4d0fef50600904d4d52527ddf10d67045173e3a59efafb304495d9a7c84b84f0bc0235470a5345e32535d054241424501018a516c436e6e82690d4bd6a8075563c29a6ad1489445ef50e675bd57ce92b34943bcc2b8008d8c4e6452e136d00d4dc7cadc5a675cd18a589e6b4d3415965b82',
           [
             '0x488e9565547fec8bd36911dc805a7ed9f3d8d1eacabe429c67c6456933c8e0a6',

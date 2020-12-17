@@ -102,13 +102,13 @@ library MMR {
     function inclusionProof(
         bytes32 root,
         uint256 width,
-        uint256 index,
+        uint256 blockNumber,
         bytes memory value,
         bytes32[] memory peaks,
         bytes32[] memory siblings
     ) view internal returns (bool) {
-        uint size = getSize(width);
-        require(size >= index, "Index is out of range");
+        require(width >= blockNumber + 1, "blockNumber is out of range");
+        uint index = getSize(blockNumber) + 1;
         // Check the root equals the peak bagging hash
         require(root == peakBagging(width, peaks), "Invalid root hash from the peaks");
 

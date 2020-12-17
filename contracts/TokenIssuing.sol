@@ -14,7 +14,6 @@ import { ScaleStruct } from "./common/Scale.struct.sol";
 import "./common/Scale.sol";
 import "./common/SafeMath.sol";
 
-
 pragma experimental ABIEncoderV2;
 
 contract TokenIssuing is Ownable, Pausable, Initializable {
@@ -58,7 +57,7 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
     {
       // If the root of this index already exists in the mmr root pool, 
       // skip append root to save gas
-      if(relay._getMMRRoot(MMRIndex) == bytes32(0)) {
+      if(relay.getMMRRoot(MMRIndex) == bytes32(0)) {
         relay.appendRoot(hash, message, signatures);
       }
 
@@ -86,21 +85,21 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
         
         ScaleStruct.LockEvent[] memory events = Scale.decodeLockEvents(data);
 
-        uint256 len = events.length;
+        IERC20 ringContract = IERC20(registry.addressOf(bytes32("CONTRACT_RING_ERC20_TOKEN")));
+        IERC20 ktonContract = IERC20(registry.addressOf(bytes32("CONTRACT_KTON_ERC20_TOKEN")));
 
-        // IERC20 ringContract = IERC20(registry.addressOf(bytes32("CONTRACT_RING_ERC20_TOKEN")));
-        // IERC20 ktonContract = IERC20(registry.addressOf(bytes32("CONTRACT_KTON_ERC20_TOKEN")));
+        uint256 len = events.length;
 
         for( uint i = 0; i < len; i++ ) {
           ScaleStruct.LockEvent memory item = events[i];
           uint256 value = decimalsConverter(item.value);
           if(item.token == 0) {
-            // ringContract.mint(item.recipient, value);
+            ringContract.mint(item.recipient, value);
             emit MintRingEvent(item.recipient, value, item.sender);
           }
 
           if (item.token == 1) {
-            // ktonContract.mint(item.recipient, value);
+            ktonContract.mint(item.recipient, value);
             emit MintKtonEvent(item.recipient, value, item.sender);
           }
         }

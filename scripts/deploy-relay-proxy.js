@@ -29,14 +29,14 @@ async function main() {
   const proxyAdminAddress = {
     'kovan': '0x239c672bB2De2516a165c1d901335b4A8530A680',
     'unknown': '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
-    'ropsten': '0x0000000000000000000000000000000000000000',
+    'ropsten': '0x197Ab983234DF1ba0c0129d665d44bDaa933d7ba',
     'mainnet': '0x0000000000000000000000000000000000000000'
   }
 
   const registryAddress = {
     'kovan': '0x0000000000000000000000000000000000000000',
     'unknown': '0x0000000000000000000000000000000000000000',
-    'ropsten': '0x0000000000000000000000000000000000000000',
+    'ropsten': '0x6982702995b053A21389219c1BFc0b188eB5a372',
     'mainnet': '0x0000000000000000000000000000000000000000',
   }
 
@@ -82,7 +82,7 @@ async function main() {
 
   const issuingConstructor = [
     // registry.address
-    "0x0000000000000000000000000000000000000000",
+    registryAddress[network.name],
     // relay.address
     relayProxy.address,
     // storage_key

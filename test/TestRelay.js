@@ -72,7 +72,7 @@ describe('Relay', () => {
   const proof = {
     root: '0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff653550dc',
     MMRIndex: 11309,
-    blockNumber: 18623,
+    blockNumber: 9314,
     blockHeader: '0xb20ea574de7640b8b6f84312c90a40cd123c1be7cc1655edb4713e61f97fd3ae8991eb3811bb17fe224d59847a47ae0bdd2b2663b1e422c3473638227f86dec82818e7d09cdbf8205034542f4a0116aa07ce96efe63cd2255895acd0474e28d7587f1006424142453402000000003f08f80f000000000466726f6e8801673d4723721b48cef07ce4c4208f4ac233734d7e58cc6ab27f8452bc238cb8df0000904d4d5252b5d7c88ac37e4f91f481e642f87d111e4b2a3b7e791697950139000e4eef094705424142450101b82ad773a86ff32162375e8e6bb455043db376439a90dbc530967f3f2d47184a4610bd6e231b4a5256df1d751c05dffa4d3869c74209b9bf0be55548850f1286',
     siblings: [
       '0x84632d50d72a1f57a17c7c146ff5b8312dc2bb1a816c54a5fdeb88eaf49e4aaa', 
@@ -181,13 +181,13 @@ describe('Relay', () => {
       
     });
 
-    it('_getMMRRoot', async () => {
-      let result = await relay._getMMRRoot(11309);
+    it('getMMRRoot', async () => {
+      let result = await relay.getMMRRoot(11309);
       expect(result).that.equal('0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff653550dc');
     });
 
-    it('_checkNetworkPrefix', async () => {
-      let result = await relay._checkNetworkPrefix(0x43726162);
+    it('checkNetworkPrefix', async () => {
+      let result = await relay.checkNetworkPrefix(0x43726162);
       expect(result).that.equal(true);
     });
 
@@ -219,7 +219,7 @@ describe('Relay', () => {
       expect(result).that.equal('0x082403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb9226600000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27df39fd6e51aad88f6f4ce6ab8827279cfffb922660100c817a8040000000000000000000000');
     });
 
-    it.only('verifyProof', async () => {
+    it('verifyProof', async () => {
       let result = await issuing.verifyProof(
         proof.root,
         proof.MMRIndex,
@@ -245,13 +245,13 @@ describe('Relay', () => {
       let event0 = rsp.events[0];
       expect(event0.eventSignature).that.equal('MintRingEvent(address,uint256,bytes32)');
       expect(event0.decode(event0.data)[0]).that.equal('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
-      expect(event0.decode(event0.data)[1].toString()).that.equal('123000000000');
+      expect(event0.decode(event0.data)[1].toString()).that.equal('123000000000000000000');
       expect(event0.decode(event0.data)[2]).that.equal('0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d');
 
       let event1 = rsp.events[1];
       expect(event1.eventSignature).that.equal('MintKtonEvent(address,uint256,bytes32)');
       expect(event1.decode(event1.data)[0]).that.equal('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
-      expect(event1.decode(event1.data)[1].toString()).that.equal('20000000000');
+      expect(event1.decode(event1.data)[1].toString()).that.equal('20000000000000000000');
       expect(event1.decode(event1.data)[2]).that.equal('0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d');
     });
 
@@ -272,8 +272,7 @@ describe('Relay', () => {
     it('resetRoot', async () => {
       const res = await relay.resetRoot(2000, "0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff65355000");
       await res.wait();
-      const root = await relay._getMMRRoot(2000);
-      console.log(111, root)
+      const root = await relay.getMMRRoot(2000);
       expect(root).that.equal("0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff65355000");
     });
 
@@ -304,7 +303,7 @@ describe('Relay', () => {
       });
       await appendRoot.wait();
 
-      const root = await relay._getMMRRoot(20000);
+      const root = await relay.getMMRRoot(20000);
       expect(root).that.equal("0x5fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2");
     });
   });

@@ -33,8 +33,8 @@ contract Relay is Ownable, Pausable, Initializable {
 
     Relayers relayers;
 
-    // 'crab', 'darwinia'
-    bytes public networkPrefix;
+    // 'Crab', 'Darwinia', 'Pangolin'
+    bytes private networkPrefix;
 
     // index => mmr root
     // In the Darwinia Network, the mmr root of block 1000 
@@ -60,52 +60,42 @@ contract Relay is Ownable, Pausable, Initializable {
         relayers.threshold = _threshold;
     }
 
-    function _setRelayer(uint32 nonce, address[] memory accounts, bytes32 benifit) internal {
-        require(accounts.length > 0, "Relay: accounts is empty");
-        relayers.member = accounts;
-        relayers.nonce = nonce;
-
-        emit SetAuthritiesEvent(nonce, accounts, benifit);
-    }
-
-    function _appendRoot(uint32 index, bytes32 root) internal {
-        require(_getMMRRoot(index) == bytes32(0), "Relay: Index has been set");
-        require(latestIndex < index, "Relay: There are already higher blocks");
-
-        _setRoot(index, root);
-        _setLatestIndex(index);
-    }
-
-    function _setRoot(uint32 index, bytes32 root) internal {
-        mmrRootPool[index] = root;
-        emit SetRootEvent(_msgSender(), root, index);
-    }
-
-    function _setLatestIndex(uint32 index) internal {
-        latestIndex = index;
-    }
-
-    function _setNetworkPrefix(bytes memory prefix) internal {
-        networkPrefix = prefix;
-    }
-
-    function _getRelayerCount() internal view returns (uint256) {
+    /// ==== Getters ==== 
+    function getRelayerCount() public view returns (uint256) {
         return relayers.member.length;
     }
 
-    function _getNetworkPrefix() internal view returns (bytes memory) {
+    function getRelayer() public view returns (address[] memory) {
+        return relayers.member;
+    }
+
+    function getNetworkPrefix() public view returns (bytes memory) {
         return networkPrefix;
     }
 
-    function _getRelayerThreshold() internal view returns (uint8) {
+    function getRelayerThreshold() public view returns (uint8) {
         return relayers.threshold;
     }
 
-    function _getMMRRoot(uint32 index) public view returns (bytes32) {
+    function getMMRRoot(uint32 index) public view returns (bytes32) {
         return mmrRootPool[index];
     }
 
-    function _isRelayer(address addr) internal view returns (bool) {
+    function getLockTokenReceipt(bytes32 root, bytes memory proofstr, bytes memory key)
+        public
+        view
+        whenNotPaused
+        returns (bytes memory)
+    {
+        Input.Data memory data = Input.from(proofstr);
+
+        bytes[] memory proofs = Scale.decodeReceiptProof(data);
+        bytes memory result = SimpleMerkleProof.getEvents(root, key, proofs);
+        
+        return result;
+    }
+
+    function isRelayer(address addr) public view returns (bool) {
         for (uint256 i = 0; i < relayers.member.length; i++) {
             if (addr == relayers.member[i]) {
                 return true;
@@ -114,42 +104,12 @@ contract Relay is Ownable, Pausable, Initializable {
         return false;
     }
 
-    // This method verifies the content of msg by verifying the existing authority collection in the contract. 
-    // Ecdsa.recover can recover the signer’s address. 
-    // If the signer is matched "isRelayer", it will be counted as a valid signature 
-    // and all signatures will be restored. 
-    // If the number of qualified signers is greater than Equal to threshold, 
-    // the verification is considered successful, otherwise it fails
-    function _checkSignature(
-        bytes32 hash,
-        bytes memory message,
-        bytes[] memory signatures
-    ) internal view returns (bool) {
-        require(
-            keccak256(message) == hash,
-            "Relay: The message does not match the hash"
-        );
-        require(signatures.length < 0xffffffff, "Relay: overflow");
-
-        uint16 count;
-        for (uint16 i = 0; i < signatures.length; i++) {
-            address signer = ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signatures[i]);
-            if (_isRelayer(signer)) {
-                count++;
-            }
-        }
-
-        uint8 threshold = uint8(
-            SafeMath.div(SafeMath.mul(uint256(count), 100), _getRelayerCount())
-        );
-
-        return threshold >= _getRelayerThreshold();
+    function checkNetworkPrefix(bytes memory prefix) view public returns (bool) {
+      return assertBytesEq(getNetworkPrefix(), prefix);
     }
 
-    function _checkNetworkPrefix(bytes memory prefix) view public returns (bool) {
-      return assertBytesEq(_getNetworkPrefix(), prefix);
-    }
 
+    /// ==== Setters ==== 
     function updateRelayer(
         bytes32 hash,
         bytes memory message,
@@ -168,7 +128,7 @@ contract Relay is Ownable, Pausable, Initializable {
             data
         );
 
-        require(_checkNetworkPrefix(prefix), "Relay: Bad network prefix");
+        require(checkNetworkPrefix(prefix), "Relay: Bad network prefix");
 
         // update nonce,relayer
         _setRelayer(nonce, authorities, benefit);
@@ -189,15 +149,10 @@ contract Relay is Ownable, Pausable, Initializable {
         Input.Data memory data = Input.from(message);
         (bytes memory prefix, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
 
-        require(_checkNetworkPrefix(prefix), "Relay: Bad network prefix");
+        require(checkNetworkPrefix(prefix), "Relay: Bad network prefix");
 
         // append index, root
         _appendRoot(index, root);
-    }
-
-    function resetRoot(uint32 index, bytes32 root) public onlyOwner {
-        _setRoot(index, root);
-        emit ResetRootEvent(_msgSender(), root, index);
     }
 
     function verifyRootAndDecodeReceipt(
@@ -231,29 +186,22 @@ contract Relay is Ownable, Pausable, Initializable {
         bytes32[] memory siblings
     ) public view whenNotPaused returns (bool) {
         require(
-            _getMMRRoot(MMRIndex) != bytes32(0),
+            getMMRRoot(MMRIndex) != bytes32(0),
             "Relay: Not registered under this index"
         );
         require(
-            _getMMRRoot(MMRIndex) == root,
+            getMMRRoot(MMRIndex) == root,
             "Relay: Root is different from the root pool"
         );
 
-        return MMR.inclusionProof(root, MMRIndex + 1, blockNumber + 1, blockHeader, peaks, siblings);
+        return MMR.inclusionProof(root, MMRIndex + 1, blockNumber, blockHeader, peaks, siblings);
     }
 
-    function getLockTokenReceipt(bytes32 root, bytes memory proofstr, bytes memory key)
-        public
-        view
-        whenNotPaused
-        returns (bytes memory)
-    {
-        Input.Data memory data = Input.from(proofstr);
 
-        bytes[] memory proofs = Scale.decodeReceiptProof(data);
-        bytes memory result = SimpleMerkleProof.getEvents(root, key, proofs);
-        
-        return result;
+    /// ==== onlyOwner ==== 
+    function resetRoot(uint32 index, bytes32 root) public onlyOwner {
+        _setRoot(index, root);
+        emit ResetRootEvent(_msgSender(), root, index);
     }
 
     function resetLatestIndex(uint32 index) public onlyOwner {
@@ -267,6 +215,77 @@ contract Relay is Ownable, Pausable, Initializable {
 
     function pause() public onlyOwner {
         _pause();
+    }
+
+    function setNetworkPrefix(bytes memory _prefix) public onlyOwner {
+        _setNetworkPrefix(_prefix);
+    }
+
+    function setRelayer(uint32 nonce, address[] memory accounts) public onlyOwner {
+        _setRelayer(nonce, accounts, bytes32(0));
+    }
+
+
+    /// ==== Internal ==== 
+    function _setRelayer(uint32 nonce, address[] memory accounts, bytes32 benifit) internal {
+        require(accounts.length > 0, "Relay: accounts is empty");
+        relayers.member = accounts;
+        relayers.nonce = nonce;
+
+        emit SetAuthritiesEvent(nonce, accounts, benifit);
+    }
+
+    function _appendRoot(uint32 index, bytes32 root) internal {
+        require(getMMRRoot(index) == bytes32(0), "Relay: Index has been set");
+        require(latestIndex < index, "Relay: There are already higher blocks");
+
+        _setRoot(index, root);
+        _setLatestIndex(index);
+    }
+
+    function _setRoot(uint32 index, bytes32 root) internal {
+        mmrRootPool[index] = root;
+        emit SetRootEvent(_msgSender(), root, index);
+    }
+
+    function _setLatestIndex(uint32 index) internal {
+        latestIndex = index;
+    }
+
+    function _setNetworkPrefix(bytes memory prefix) internal {
+        networkPrefix = prefix;
+    }
+
+    // This method verifies the content of msg by verifying the existing authority collection in the contract. 
+    // Ecdsa.recover can recover the signer’s address. 
+    // If the signer is matched "isRelayer", it will be counted as a valid signature 
+    // and all signatures will be restored. 
+    // If the number of qualified signers is greater than Equal to threshold, 
+    // the verification is considered successful, otherwise it fails
+    function _checkSignature(
+        bytes32 hash,
+        bytes memory message,
+        bytes[] memory signatures
+    ) internal view returns (bool) {
+        require(
+            keccak256(message) == hash,
+            "Relay: The message does not match the hash"
+        );
+        require(signatures.length < 0xffffffff, "Relay: overflow");
+
+        uint16 count;
+        for (uint16 i = 0; i < signatures.length; i++) {
+            address signer = ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signatures[i]);
+            if (isRelayer(signer)) {
+                count++;
+            }
+        }
+
+        uint8 threshold = uint8(
+            SafeMath.div(SafeMath.mul(uint256(count), 100), getRelayerCount())
+        );
+
+        return threshold >= getRelayerThreshold();
     }
 
     function assertBytesEq(bytes memory a, bytes memory b) internal pure returns (bool){

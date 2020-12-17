@@ -22,5 +22,5 @@ interface IRelay {
         bytes[] calldata signatures
     ) external;
 
-    function _getMMRRoot(uint32 index) external view returns (bytes32);
+    function getMMRRoot(uint32 index) external view returns (bytes32);
 }
