@@ -76,7 +76,7 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
       public
       whenNotPaused
     {
-        require(!history[blockNumber], "TokenIssuing:: verifyProof:  The block has been verifiee");
+        require(!history[blockNumber], "TokenIssuing:: verifyProof:  The block has been verified");
 
         IRelay relayContract = IRelay(relay);
 
