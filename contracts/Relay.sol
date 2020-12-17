@@ -113,7 +113,7 @@ contract Relay is Ownable, Pausable, Initializable {
     }
 
     function checkRelayerNonce(uint32 nonce) view public returns (bool) {
-      return nonce == getRelayerNonce() + 1;
+      return nonce == getRelayerNonce();
     }
 
     /// ==== Setters ==== 
@@ -139,7 +139,7 @@ contract Relay is Ownable, Pausable, Initializable {
         require(checkRelayerNonce(nonce), "Relay: Bad relayer set nonce");
 
         // update nonce,relayer
-        _setRelayer(nonce, authorities, benefit);
+        _setRelayer(nonce + 1, authorities, benefit);
     }
 
     function appendRoot(
@@ -225,14 +225,13 @@ contract Relay is Ownable, Pausable, Initializable {
         _pause();
     }
 
-    function setNetworkPrefix(bytes memory _prefix) public onlyOwner {
+    function resetNetworkPrefix(bytes memory _prefix) public onlyOwner {
         _setNetworkPrefix(_prefix);
     }
 
-    function setRelayer(uint32 nonce, address[] memory accounts) public onlyOwner {
+    function resetRelayer(uint32 nonce, address[] memory accounts) public onlyOwner {
         _setRelayer(nonce, accounts, bytes32(0));
     }
-
 
     /// ==== Internal ==== 
     function _setRelayer(uint32 nonce, address[] memory accounts, bytes32 benifit) internal {
