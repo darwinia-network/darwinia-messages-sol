@@ -40,8 +40,18 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
         storageKey = _key;
     }
 
+    // The last step of the cross-chain of darwinia to ethereum, the user needs to collect some signatures and proofs after the darwinia network lock token.
+    // This call will append mmr root and verify mmr proot, events proof, and mint token by decoding events. If this mmr root is already included in the relay contract, the contract will skip verifying mmr root msg, saving gas.
+
+    // message - bytes4 prefix + uint32 mmr-index + bytes32 mmr-root
+    // signatures - the signatures for mmr-root msg
+    // root, MMRIndex - mmr root for the block
+    // blockNumber, blockHeader - The block where the lock token event occurred in darwinia network
+    // can be fetched by api.rpc.chain.getHeader('block hash') 
+    // peaks, siblings - mmr proof for the blockNumber
+    // eventsProofStr - mpt proof for events
+    // Vec<Vec<u8>> encoded by Scale codec
     function appendRootAndVerifyProof(
-        bytes32 hash,
         bytes memory message,
         bytes[] memory signatures,
         bytes32 root,
@@ -50,7 +60,7 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
         bytes memory blockHeader,
         bytes32[] memory peaks,
         bytes32[] memory siblings,
-        bytes memory proofstr
+        bytes memory eventsProofStr
     )
       public
       whenNotPaused
@@ -58,10 +68,10 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
       // If the root of this index already exists in the mmr root pool, 
       // skip append root to save gas
       if(relay.getMMRRoot(MMRIndex) == bytes32(0)) {
-        relay.appendRoot(hash, message, signatures);
+        relay.appendRoot(message, signatures);
       }
 
-      verifyProof(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, proofstr);
+      verifyProof(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr);
     }
 
     function verifyProof(
@@ -71,7 +81,7 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
         bytes memory blockHeader,
         bytes32[] memory peaks,
         bytes32[] memory siblings,
-        bytes memory proofstr
+        bytes memory eventsProofStr
     ) 
       public
       whenNotPaused
@@ -80,7 +90,7 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
 
         IRelay relayContract = IRelay(relay);
 
-        bytes memory eventsData = relayContract.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, proofstr, storageKey);
+        bytes memory eventsData = relayContract.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, storageKey);
         Input.Data memory data = Input.from(eventsData);
         
         ScaleStruct.LockEvent[] memory events = Scale.decodeLockEvents(data);

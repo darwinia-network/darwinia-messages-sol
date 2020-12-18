@@ -17,7 +17,6 @@ interface IRelay {
     ) external view returns (bytes memory);
 
      function appendRoot(
-        bytes32 hash,
         bytes calldata message,
         bytes[] calldata signatures
     ) external;

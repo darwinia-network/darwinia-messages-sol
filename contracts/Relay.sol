@@ -21,7 +21,6 @@ contract Relay is Ownable, Pausable, Initializable {
     event SetRootEvent(address relayer, bytes32 root, uint256 index);
     event SetAuthritiesEvent(uint32 nonce, address[] authorities, bytes32 benifit);
     event ResetRootEvent(address owner, bytes32 root, uint256 index);
-    event ResetLatestIndexEvent(address owner, uint256 index);
 
     struct Relayers {
         // Each time the relay set is updated, the nonce is incremented
@@ -41,8 +40,12 @@ contract Relay is Ownable, Pausable, Initializable {
     // needs to be queried in Log-Other of block 1001.
     mapping(uint32 => bytes32) public mmrRootPool;
 
-    uint32 public latestIndex;
-
+    // _MMRIndex - mmr index or block number corresponding to mmr root
+    // _genesisMMRRoot - mmr root
+    // _relayers - Keep the same as the "ethereumRelayAuthorities" module in darwinia network
+    // _nonce - To prevent replay attacks
+    // _threshold - The threshold for a given level can be set to any number from 0-100. This threshold is the amount of signature weight required to authorize an operation at that level.
+    // _prefix - The known values are: "Pangolin", "Crab", "Darwinia"
     function initialize(
         uint32 _MMRIndex,
         bytes32 _genesisMMRRoot,
@@ -85,13 +88,13 @@ contract Relay is Ownable, Pausable, Initializable {
         return mmrRootPool[index];
     }
 
-    function getLockTokenReceipt(bytes32 root, bytes memory proofstr, bytes memory key)
+    function getLockTokenReceipt(bytes32 root, bytes memory eventsProofStr, bytes memory key)
         public
         view
         whenNotPaused
         returns (bytes memory)
     {
-        Input.Data memory data = Input.from(proofstr);
+        Input.Data memory data = Input.from(eventsProofStr);
 
         bytes[] memory proofs = Scale.decodeReceiptProof(data);
         bytes memory result = SimpleMerkleProof.getEvents(root, key, proofs);
@@ -117,15 +120,20 @@ contract Relay is Ownable, Pausable, Initializable {
     }
 
     /// ==== Setters ==== 
+
+    // When the darwinia network authorities set is updated, bridger or other users need to submit the new authorities set to the reporter contract by calling this method.
+    // message - prefix + nonce + [...relayers]
+    // struct{vec<u8>, u32, vec<EthereumAddress>}
+    // signatures - signed by personal_sign
+    // benefit - Keeping the authorities set up-to-date is advocated between the relay contract contract and the darwinia network, and the darwinia network will give partial rewards to the benifit account. benifit is the public key of a darwinia network account
     function updateRelayer(
-        bytes32 hash,
         bytes memory message,
         bytes[] memory signatures,
         bytes32 benefit
     ) public whenNotPaused {
-        // verify hash, signatures (The number of signers must be greater than 2/3 of the total)
+        // verify hash, signatures (The number of signers must be greater than _threshold)
         require(
-            _checkSignature(hash, message, signatures),
+            _checkSignature(message, signatures),
             "Relay: Bad relayer signature"
         );
 
@@ -142,14 +150,19 @@ contract Relay is Ownable, Pausable, Initializable {
         _setRelayer(nonce + 1, authorities, benefit);
     }
 
+    // Add a mmr root to the mmr root pool
+    // message - bytes4 prefix + uint32 mmr-index + bytes32 mmr-root
+    // struct{vec<u8>, u32, H256}
+    // encode by scale codec
+    // signatures - The signature for message
+    // https://github.com/darwinia-network/darwinia-common/pull/381
     function appendRoot(
-        bytes32 hash,
         bytes memory message,
         bytes[] memory signatures
     ) public whenNotPaused {
         // verify hash, signatures
         require(
-            _checkSignature(hash, message, signatures),
+            _checkSignature(message, signatures),
             "Relay: Bad relayer signature"
         );
 
@@ -170,7 +183,7 @@ contract Relay is Ownable, Pausable, Initializable {
         bytes memory blockHeader,
         bytes32[] memory peaks,
         bytes32[] memory siblings,
-        bytes memory proofstr,
+        bytes memory eventsProofStr,
         bytes memory key
     ) public view whenNotPaused returns (bytes memory){
         // verify block proof
@@ -182,7 +195,7 @@ contract Relay is Ownable, Pausable, Initializable {
         // get state root
         bytes32 stateRoot = Scale.decodeStateRootFromBlockHeader(blockHeader);
 
-        return getLockTokenReceipt(stateRoot, proofstr, key);
+        return getLockTokenReceipt(stateRoot, eventsProofStr, key);
     }
 
     function verifyBlockProof(
@@ -212,11 +225,6 @@ contract Relay is Ownable, Pausable, Initializable {
         emit ResetRootEvent(_msgSender(), root, index);
     }
 
-    function resetLatestIndex(uint32 index) public onlyOwner {
-        _setLatestIndex(index);
-        emit ResetLatestIndexEvent(_msgSender(), index);
-    }
-
     function unpause() public onlyOwner {
         _unpause();
     }
@@ -244,19 +252,13 @@ contract Relay is Ownable, Pausable, Initializable {
 
     function _appendRoot(uint32 index, bytes32 root) internal {
         require(getMMRRoot(index) == bytes32(0), "Relay: Index has been set");
-        require(latestIndex < index, "Relay: There are already higher blocks");
 
         _setRoot(index, root);
-        _setLatestIndex(index);
     }
 
     function _setRoot(uint32 index, bytes32 root) internal {
         mmrRootPool[index] = root;
         emit SetRootEvent(_msgSender(), root, index);
-    }
-
-    function _setLatestIndex(uint32 index) internal {
-        latestIndex = index;
     }
 
     function _setNetworkPrefix(bytes memory prefix) internal {
@@ -270,14 +272,10 @@ contract Relay is Ownable, Pausable, Initializable {
     // If the number of qualified signers is greater than Equal to threshold, 
     // the verification is considered successful, otherwise it fails
     function _checkSignature(
-        bytes32 hash,
         bytes memory message,
         bytes[] memory signatures
     ) internal view returns (bool) {
-        require(
-            keccak256(message) == hash,
-            "Relay: The message does not match the hash"
-        );
+        bytes32 hash = keccak256(message);
         require(signatures.length < 0xffffffff, "Relay: overflow");
 
         uint16 count;

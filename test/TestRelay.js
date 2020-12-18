@@ -298,7 +298,7 @@ describe('Relay', () => {
       //   expect(ethers.utils.recoverAddress(msg, item)).that.equal([owner, addr1, addr2][index]);
       // })
 
-      const appendRoot = await relay.appendRoot(hash, msg, signatures, {
+      const appendRoot = await relay.appendRoot(msg, signatures, {
         gasLimit: 9500000
       });
       await appendRoot.wait();
