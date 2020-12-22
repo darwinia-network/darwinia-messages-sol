@@ -60,7 +60,7 @@ contract Relay is Ownable, Pausable, Initializable {
         _appendRoot(_MMRIndex, _genesisMMRRoot);
         _setRelayer(_nonce, _relayers, bytes32(0));
         _setNetworkPrefix(_prefix);
-        relayers.threshold = _threshold;
+        _setRelayThreshold(_threshold);
     }
 
     /// ==== Getters ==== 
@@ -237,6 +237,10 @@ contract Relay is Ownable, Pausable, Initializable {
         _setNetworkPrefix(_prefix);
     }
 
+    function resetRelayerThreshold(uint8 _threshold) public onlyOwner {
+        _setRelayThreshold(_threshold);
+    }
+
     function resetRelayer(uint32 nonce, address[] memory accounts) public onlyOwner {
         _setRelayer(nonce, accounts, bytes32(0));
     }
@@ -263,6 +267,10 @@ contract Relay is Ownable, Pausable, Initializable {
 
     function _setNetworkPrefix(bytes memory prefix) internal {
         networkPrefix = prefix;
+    }
+
+    function _setRelayThreshold(uint8 _threshold) internal {
+        relayers.threshold = _threshold;
     }
 
     // This method verifies the content of msg by verifying the existing authority collection in the contract. 
