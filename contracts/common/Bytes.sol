@@ -82,30 +82,25 @@ library Bytes {
         return ret;
     }
 
-    function toBytes32(bytes memory self, uint256 offset)
+    function toBytes32(bytes memory self)
         internal
         pure
-        returns (bytes32)
+        returns (bytes32 out)
     {
-        bytes32 out;
-
-        for (uint256 i = 0; i < 32; i++) {
-            out |= bytes32(self[offset + i] & 0xFF) >> (i * 8);
+        require(self.length >= 32, "Bytes:: toBytes32: data is to short.");
+        assembly {
+            out := mload(add(self, 32))
         }
-        return out;
     }
 
     function toBytes16(bytes memory self, uint256 offset)
         internal
         pure
-        returns (bytes16)
+        returns (bytes16 out)
     {
-        bytes16 out;
-
-        for (uint256 i = 0; i < 16; i++) {
-            out |= bytes16(self[offset + i] & 0xFF) >> (i * 8);
+        for (uint i = 0; i < 16; i++) {
+            out |= bytes16(byte(self[offset + i]) & 0xFF) >> (i * 8);
         }
-        return out;
     }
 
     function toBytes4(bytes memory self, uint256 offset)

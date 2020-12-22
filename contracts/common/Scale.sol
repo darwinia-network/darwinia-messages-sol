@@ -53,8 +53,7 @@ library Scale {
     {
         prefix = decodePrefix(data);
         width = decodeU32(data);
-        bytes memory rootData = data.decodeBytesN(32);
-        root = rootData.toBytes32(0);
+        root = data.decodeBytes32();
     }
 
     function decodeAuthorities(Input.Data memory data)
@@ -120,10 +119,9 @@ library Scale {
     function decodeAccountId(Input.Data memory data) 
         internal
         pure
-        returns (bytes32) 
+        returns (bytes32 accountId) 
     {
-        bytes memory accountId = data.decodeBytesN(32);
-        return accountId.toBytes32(0);
+        accountId = data.decodeBytes32();
     }
 
     // decodeReceiptProof receives Scale Codec of Vec<Vec<u8>> structure, 
