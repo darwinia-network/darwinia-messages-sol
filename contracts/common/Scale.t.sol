@@ -100,53 +100,53 @@ contract ScaleTest is DSTest {
 
     function testDecodeLockEvents() public {
         // Vec<Event>    Event = <index, Data>   Data = {accountId, EthereumAddress, types, Balance}
-        bytes memory hexData = hex"102403d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec700000e5fa31c00000000000000000000002404d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27ddac17f958d2ee523a2206206994597c13d831ec70100e40b5402000000000000000000000024038eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050000d0b72b6a000000000000000000000024048eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48b20bd5d04be54f870d5c0d3ca85d82b34b8364050100c817a8040000000000000000000000";
+        bytes memory hexData = hex"082403e44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318cc5e48beb33b83b8bd0d9d9a85a8f6a27c51f5c5b52fbe2b925ab79a821b261c82c5ba0814aaa5e000ca9a3b0000000000000000000000002404e44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318cc5e48beb33b83b8bd0d9d9a85a8f6a27c51f5c51994100c58753793d52c6f457f189aa3ce9cee9400943577000000000000000000000000";
         Input.Data memory data = Input.from(hexData);
         ScaleStruct.LockEvent[] memory eventData = Scale.decodeLockEvents(data);
 
         console.log(eventData.length);
 
-        assertEq(eventData.length, 4);
+        assertEq(eventData.length, 2);
 
-        assertEq32(eventData[0].sender, hex"d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
-        assertEq(eventData[0].recipient, 0xdAC17F958D2ee523a2206206994597C13D831ec7);
-        assertEq(uint(eventData[0].token), 0);
-        assertEq(uint(eventData[0].value), 123000000000);
+        assertEq32(eventData[0].sender, hex"e44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318");
+        assertEq(eventData[0].recipient, 0xcC5E48BEb33b83b8bD0D9d9A85A8F6a27C51F5C5);
+        assertEq(eventData[0].token, 0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0);
+        assertEq(uint(eventData[0].value), 1000000000);
 
-        assertEq32(eventData[1].sender, hex"d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
-        assertEq(eventData[1].recipient, 0xdAC17F958D2ee523a2206206994597C13D831ec7);
-        assertEq(uint(eventData[1].token), 1);
-        assertEq(uint(eventData[1].value), 10000000000);
+        assertEq32(eventData[1].sender, hex"e44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318");
+        assertEq(eventData[1].recipient, 0xcC5E48BEb33b83b8bD0D9d9A85A8F6a27C51F5C5);
+        assertEq(eventData[1].token, 0x1994100c58753793D52c6f457f189aa3ce9cEe94);
+        assertEq(uint(eventData[1].value), 2000000000);
 
-        assertEq32(eventData[2].sender, hex"8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48");
-        assertEq(eventData[2].recipient, 0xB20bd5D04BE54f870D5C0d3cA85d82b34B836405);
-        assertEq(uint(eventData[2].token), 0);
-        assertEq(uint(eventData[2].value), 456000000000);
+        // assertEq32(eventData[2].sender, hex"8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48");
+        // assertEq(eventData[2].recipient, 0xB20bd5D04BE54f870D5C0d3cA85d82b34B836405);
+        // assertEq(uint(eventData[2].token), 0);
+        // assertEq(uint(eventData[2].value), 456000000000);
 
-        assertEq32(eventData[3].sender, hex"8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48");
-        assertEq(eventData[3].recipient, 0xB20bd5D04BE54f870D5C0d3cA85d82b34B836405);
-        assertEq(uint(eventData[3].token), 1);
-        assertEq(uint(eventData[3].value), 20000000000);
+        // assertEq32(eventData[3].sender, hex"8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48");
+        // assertEq(eventData[3].recipient, 0xB20bd5D04BE54f870D5C0d3cA85d82b34B836405);
+        // assertEq(uint(eventData[3].token), 1);
+        // assertEq(uint(eventData[3].value), 20000000000);
 
         console.logBytes32(eventData[0].sender);
         console.logAddress(eventData[0].recipient);
-        console.log(uint(eventData[0].token));
+        console.logAddress(eventData[0].token);
         console.log(uint(eventData[0].value));
 
         console.logBytes32(eventData[1].sender);
         console.logAddress(eventData[1].recipient);
-        console.log(uint(eventData[1].token));
+        console.logAddress(eventData[1].token);
         console.log(uint(eventData[1].value));
 
-        console.logBytes32(eventData[2].sender);
-        console.logAddress(eventData[2].recipient);
-        console.log(uint(eventData[2].token));
-        console.log(uint(eventData[2].value));
+        // console.logBytes32(eventData[2].sender);
+        // console.logAddress(eventData[2].recipient);
+        // console.log(uint(eventData[2].token));
+        // console.log(uint(eventData[2].value));
 
-        console.logBytes32(eventData[3].sender);
-        console.logAddress(eventData[3].recipient);
-        console.log(uint(eventData[3].token));
-        console.log(uint(eventData[3].value));
+        // console.logBytes32(eventData[3].sender);
+        // console.logAddress(eventData[3].recipient);
+        // console.log(uint(eventData[3].token));
+        // console.log(uint(eventData[3].value));
 
     }
 

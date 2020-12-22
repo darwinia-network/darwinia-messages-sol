@@ -88,28 +88,25 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
     {
         require(!history[blockNumber], "TokenIssuing:: verifyProof:  The block has been verified");
 
-        IRelay relayContract = IRelay(relay);
-
-        bytes memory eventsData = relayContract.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, storageKey);
-        Input.Data memory data = Input.from(eventsData);
+        Input.Data memory data = Input.from(IRelay(relay).verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, storageKey));
         
         ScaleStruct.LockEvent[] memory events = Scale.decodeLockEvents(data);
 
-        IERC20 ringContract = IERC20(registry.addressOf(bytes32("CONTRACT_RING_ERC20_TOKEN")));
-        IERC20 ktonContract = IERC20(registry.addressOf(bytes32("CONTRACT_KTON_ERC20_TOKEN")));
+        address ring = registry.addressOf(bytes32("CONTRACT_RING_ERC20_TOKEN"));
+        address kton = registry.addressOf(bytes32("CONTRACT_KTON_ERC20_TOKEN"));
 
         uint256 len = events.length;
 
         for( uint i = 0; i < len; i++ ) {
           ScaleStruct.LockEvent memory item = events[i];
           uint256 value = decimalsConverter(item.value);
-          if(item.token == 0) {
-            ringContract.mint(item.recipient, value);
+          if(item.token == ring) {
+            IERC20(ring).mint(item.recipient, value);
             emit MintRingEvent(item.recipient, value, item.sender);
           }
 
-          if (item.token == 1) {
-            ktonContract.mint(item.recipient, value);
+          if (item.token == kton) {
+            IERC20(kton).mint(item.recipient, value);
             emit MintKtonEvent(item.recipient, value, item.sender);
           }
         }

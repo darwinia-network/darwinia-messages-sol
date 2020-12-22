@@ -27,7 +27,7 @@ library Scale {
                 index: data.decodeBytesN(2).toBytes2(0),
                 sender: decodeAccountId(data),
                 recipient: decodeEthereumAddress(data),
-                token: data.decodeU8(),
+                token: decodeEthereumAddress(data),
                 value: decodeBalance(data)
             });
         }

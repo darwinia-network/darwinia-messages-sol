@@ -7,8 +7,7 @@ library ScaleStruct {
         bytes2 index;
         bytes32 sender;
         address recipient;
-        // 0 -> ring, 1 -> kton
-        uint8 token;
+        address token;
         uint128 value;
     }
 }
