@@ -1,0 +1,85 @@
+{
+  "manifestVersion": "3.1",
+  "impls": {
+    "c681a5ff0ea5dd9cd840b2a30aa031850cc808d085cb23bfaa4e664ac60f54e0": {
+      "address": "0xe319ABBf51E73E0DE41f8A84446eE37c750E86Ba",
+      "txHash": "0xec0cd8bc2b90b04b26a8e92d59957ad6bc518f494c403b724f2f4f26fa89b524",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Ownable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "contracts/common/Ownable.sol:19"
+          },
+          {
+            "contract": "Pausable",
+            "label": "_paused",
+            "type": "t_bool",
+            "src": "contracts/common/Pausable.sol:27"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "Relay",
+            "label": "relayers",
+            "type": "t_struct(Relayers)2431_storage",
+            "src": "contracts/Relay.sol:34"
+          },
+          {
+            "contract": "Relay",
+            "label": "networkPrefix",
+            "type": "t_bytes_storage",
+            "src": "contracts/Relay.sol:37"
+          },
+          {
+            "contract": "Relay",
+            "label": "mmrRootPool",
+            "type": "t_mapping(t_uint32,t_bytes32)",
+            "src": "contracts/Relay.sol:42"
+          },
+          {
+            "contract": "Relay",
+            "label": "latestIndex",
+            "type": "t_uint32",
+            "src": "contracts/Relay.sol:44"
+          }
+        ],
+        "types": {
+          "t_struct(Relayers)2431_storage": {
+            "label": "struct Relay.Relayers"
+          },
+          "t_bytes_storage": {
+            "label": "bytes"
+          },
+          "t_mapping(t_uint32,t_bytes32)": {
+            "label": "mapping(uint32 => bytes32)"
+          },
+          "t_uint32": {
+            "label": "uint32"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_address": {
+            "label": "address"
+          }
+        }
+      }
+    }
+  },
+  "admin": {
+    "address": "0xcEfc4721472339Ef50751aaB577e203856222B2E",
+    "txHash": "0x61c5091dbc4dc017d5c4da459edabe8a3a2ac36af905e052176f341b1dcb7be9"
+  }
+}

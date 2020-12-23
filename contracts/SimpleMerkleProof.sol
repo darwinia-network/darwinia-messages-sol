@@ -1,4 +1,6 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: MIT
+
+pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "./common/Input.sol";
@@ -10,7 +12,7 @@ import "./common/Node.sol";
 /**
  * @dev Simple Verification of compact proofs for Modified Merkle-Patricia tries.
  */
-contract SimpleMerkleProof {
+library SimpleMerkleProof {
     using Bytes for bytes;
     using Input for Input.Data;
 
@@ -33,16 +35,38 @@ contract SimpleMerkleProof {
         bytes32 root,
         bytes[] memory proof,
         bytes[] memory keys
-    ) public view returns (bytes[] memory) {
+    ) internal view returns (bytes[] memory) {
         require(proof.length > 0, "no proof");
         require(keys.length > 0, "no keys");
         Item[] memory db = new Item[](proof.length);
         for (uint256 i = 0; i < proof.length; i++) {
             bytes memory v = proof[i];
-            Item memory item = Item({key: Hash.hash32(v), value: v});
+            Item memory item = Item({key: Hash.blake2bHash(v), value: v});
             db[i] = item;
         }
         return verify_proof(root, keys, db);
+    }
+
+    /**
+     * @dev Returns `values` if `keys` can be proved to be a part of a Merkle tree
+     * defined by `root`. For this, a `proof` must be provided, is a sequence of the subset
+     * of nodes in the trie traversed while performing lookups on all keys.
+     */
+    function getEvents(
+        bytes32 root,
+        bytes memory key,
+        bytes[] memory proof
+    ) internal view returns (bytes memory value) {
+        bytes memory k = Nibble.keyToNibbles(key);
+
+        Item[] memory db = new Item[](proof.length);
+        for (uint256 i = 0; i < proof.length; i++) {
+            bytes memory v = proof[i];
+            Item memory item = Item({key: Hash.blake2bHash(v), value: v});
+            db[i] = item;
+        }
+
+        value = lookUp(root, k, db);
     }
 
     function verify_proof(
@@ -124,7 +148,7 @@ contract SimpleMerkleProof {
 
     function getNodeData(bytes32 hash, Item[] memory db)
         internal
-        view
+        pure
         returns (bytes memory)
     {
         for (uint256 i = 0; i < db.length; i++) {

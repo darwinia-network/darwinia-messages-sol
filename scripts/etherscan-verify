@@ -1,0 +1,13 @@
+npx hardhat verify --network ropsten 0x41d4BA84474Cb76429132f64e9368AF7457DaEd3 --constructor-args scripts/greeter.argu.js
+
+npx hardhat verify --network ropsten 0xeb931f1a197f3a230d2dfe220ac6674880f827d6 --constructor-args scripts/relay.argu.js
+npx hardhat verify --network kovan 0xC7A1f71c22c031305B0956E898838E839aAfba62
+
+npx hardhat verify --network kovan 0x2f0454C05591bb36d00e85b005BB2AE18C620011
+
+
+npx hardhat verify --network ropsten 0xf90925F66Eb1fF6a1928538e54fE10774E4C4ceC --constructor-args scripts/argu/Relay.js
+npx hardhat verify --network ropsten 0xBA17272cd31fA0fDbd031350E804De38b710c880 --constructor-args scripts/argu/Relay.proxy.js
+
+npx hardhat verify --network ropsten 0x08bE7553c57bFA7DF3E008c0Aece841019331311 --constructor-args scripts/argu/TokenIssuing.js
+npx hardhat verify --network ropsten 0x8B31888487877d97052f1736CC63842baAB45FA1 --constructor-args scripts/argu/TokenIssuing.proxy.js

@@ -1,18 +1,16 @@
-pragma solidity >=0.4.21 <0.6.0;
+// SPDX-License-Identifier: MIT
 
-import "./Blake2b.sol";
-import "hardhat/console.sol";
+pragma solidity >=0.6.0 <0.7.0;
+
+import { Hash } from "./common/Hash.sol";
 
 /**
- * @author Wanseob Lim <email@wanseob.com>
  * @title Merkle Mountain Range solidity library
  *
  * @dev The index of this MMR implementation starts from 1 not 0.
  *      And it uses Blake2bHash for its hash function instead of blake2b
  */
 library MMR {
-    using Blake2b for Blake2b.Instance;
-
     function bytesToBytes32(bytes memory b, uint256 offset)
         private
         pure
@@ -35,11 +33,6 @@ library MMR {
             mstore(add(result, 64), b2)
         }
         return result;
-    }
-
-    function Blake2bHash(bytes memory input) view public returns (bytes32) {
-      Blake2b.Instance memory instance = Blake2b.init(hex"", 32);
-      return bytesToBytes32(instance.finalize(input), 0);
     }
 
     function getLeafIndex(uint width) public pure returns (uint) {
@@ -66,7 +59,7 @@ library MMR {
                 r = mergeHash;
             }
             bytes32 l = peaks[i-1];
-            mergeHash = hashBranch(0, r, l);
+            mergeHash = hashBranch(r, l);
         }
 
         return mergeHash;
@@ -109,14 +102,13 @@ library MMR {
     function inclusionProof(
         bytes32 root,
         uint256 width,
-        uint256 index,
+        uint256 blockNumber,
         bytes memory value,
-        bytes32 valueHash,
         bytes32[] memory peaks,
         bytes32[] memory siblings
-    ) view public returns (bool) {
-        uint size = getSize(width);
-        require(size >= index, "Index is out of range");
+    ) view internal returns (bool) {
+        require(width >= blockNumber + 1, "blockNumber is out of range");
+        uint index = getSize(blockNumber) + 1;
         // Check the root equals the peak bagging hash
         require(root == peakBagging(width, peaks), "Invalid root hash from the peaks");
 
@@ -163,10 +155,10 @@ library MMR {
                 // node = valueHash;
             } else if (cursor - 1 == path[height - 1]) {
                 // cursor is on a parent and a sibling is on the left
-                node = hashBranch(cursor, siblings[height - 1], node);
+                node = hashBranch(siblings[height - 1], node);
             } else {
                 // cursor is on a parent and a sibling is on the right
-                node = hashBranch(cursor, node, siblings[height - 1]);
+                node = hashBranch(node, siblings[height - 1]);
             }
             // Climb up
             height++;
@@ -182,9 +174,9 @@ library MMR {
      * @dev It returns the hash a parent node with hash(M | Left child | Right child)
      *      M is the index of the node
      */
-    function hashBranch(uint256 index, bytes32 left, bytes32 right) view public returns (bytes32) {
+    function hashBranch(bytes32 left, bytes32 right) view public returns (bytes32) {
         // return Blake2bHash(abi.encodePacked(index, left, right));
-        return Blake2bHash(bytes32Concat(left, right));
+        return Hash.blake2bHash(bytes32Concat(left, right));
     }
 
     /**
@@ -192,7 +184,7 @@ library MMR {
      *      M is the index of the node
      */
     function hashLeaf(bytes memory data) view public returns (bytes32) {
-        return Blake2bHash(data);
+        return Hash.blake2bHash(data);
         // return Blake2bHash(abi.encodePacked(index, dataHash));
     }
 

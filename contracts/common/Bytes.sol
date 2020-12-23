@@ -1,4 +1,6 @@
-pragma solidity >=0.5.0 <0.6.0;
+// SPDX-License-Identifier: MIT
+
+pragma solidity >=0.6.0 <0.7.0;
 
 import {Memory} from "./Memory.sol";
 
@@ -78,5 +80,52 @@ library Bytes {
         Memory.copy(src, dest, srcLen);
         Memory.copy(src2, dest2, src2Len);
         return ret;
+    }
+
+    function toBytes32(bytes memory self)
+        internal
+        pure
+        returns (bytes32 out)
+    {
+        require(self.length >= 32, "Bytes:: toBytes32: data is to short.");
+        assembly {
+            out := mload(add(self, 32))
+        }
+    }
+
+    function toBytes16(bytes memory self, uint256 offset)
+        internal
+        pure
+        returns (bytes16 out)
+    {
+        for (uint i = 0; i < 16; i++) {
+            out |= bytes16(byte(self[offset + i]) & 0xFF) >> (i * 8);
+        }
+    }
+
+    function toBytes4(bytes memory self, uint256 offset)
+        internal
+        pure
+        returns (bytes4)
+    {
+        bytes4 out;
+
+        for (uint256 i = 0; i < 4; i++) {
+            out |= bytes4(self[offset + i] & 0xFF) >> (i * 8);
+        }
+        return out;
+    }
+
+    function toBytes2(bytes memory self, uint256 offset)
+        internal
+        pure
+        returns (bytes2)
+    {
+        bytes2 out;
+
+        for (uint256 i = 0; i < 2; i++) {
+            out |= bytes2(self[offset + i] & 0xFF) >> (i * 8);
+        }
+        return out;
     }
 }
