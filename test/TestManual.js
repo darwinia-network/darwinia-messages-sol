@@ -97,11 +97,11 @@ describe('Relay', () => {
   };
 
   const address = {
-    relayLogic: '0x9013EF56A4CA9C37fe0340929516059c1aac8ce6',
-    relayProxy: '0x7e25Ced0F83156b77897618bE0bC88AAd4C372E6',
+    relayLogic: '0x83bCf76C6e96A3AA50Ded5F1298917614CcDb182',
+    relayProxy: '0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85',
 
-    tokenBackingLogic: '0xEd71b4177C19006A0044CD95e8256dCB3cE982ff',
-    tokenBackingProxy: '0xFFBA45b4695745598bc0132F05b4E5CeC10545d9',
+    tokenIssuingLogic: '0xc1f804012Ffb67426EB308274E905CFcC7Cc7B17',
+    tokenIssuingProxy: '0x214c2B7E9D20b6BeB9F5cE503Fd010Bc716a9AD2',
   }
 
   before(async () => {
@@ -164,7 +164,7 @@ describe('Relay', () => {
       "0xf8860dda3d08046cf2706b92bf7202eaae7a79191c90e76297e0895605b8b457"
     ]
 
-    issuing = await TokenIssuing.attach(address.tokenBackingProxy);
+    issuing = await TokenIssuing.attach(address.tokenIssuingProxy);
   });
 
   describe('Call', async () => {
@@ -212,7 +212,14 @@ describe('Relay', () => {
   });
 
   describe("Tx", async () => {
-    it('resetRelayer', async () => {
+    it('resetNetworkPrefix', async () => {
+      // Pangolin 0x50616e676f6c696e
+      // Crab 0x43726162
+      const res = await relay.resetNetworkPrefix('0x50616e676f6c696e');
+      await res.wait();
+    });
+
+    it.only('resetRelayer', async () => {
       const res = await relay.resetRelayer(0, ['0x6aa70f55e5d770898dd45aa1b7078b8a80aabd6c']);
       await res.wait();
 
@@ -222,11 +229,10 @@ describe('Relay', () => {
       expect(nonce).that.equal(0);
     });
 
-    it.only('updateRelayer', async () => {
+    it('updateRelayer', async () => {
       const res = await relay.updateRelayer(
-        "0x60875d98a322d9014d736c22f7676c427f85b28fdec30bde4d4cb5e1f00e6b20",
-        "0x96a09466adda89c1e60c252592cdc10e19f85093a87617b57a44392fd377148b",
-        ["0xf85a9f521f5849a386c25a330a369fa2a0b26ea88aa5aeb13e4fbafba4785b57747db86bc13085b3524b9f72d0ebd445c4447a332427ab3df1de8cfd365bf6d81c"],
+        "0x2050616e676f6c696e00086aa70f55e5d770898dd45aa1b7078b8a80aabd6cb34ca61ce3202315aae32e70f0101d938c0bd13d",
+        ["0x7e0555ce6f0c7ce237d51b53ddacde421e7ee6076ab180ae6d31bc0a2a91008906735a86119618620a271fdf008b5328340a7c3f4834ebc99ecfcec495c8b4c01b"],
         "0x129f002b1c0787ea72c31b2dc986e66911fe1b4d6dc16f83a1127f33e5a74c7d",
         {
           gasLimit: 8000000
@@ -265,7 +271,7 @@ describe('Relay', () => {
       const signatures = [];
       
       // {prefix: 0x43726162, index: 20000, root: 0x5fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2}
-      const msg = "0x96a09466adda89c1e60c252592cdc10e19f85093a87617b57a44392fd377148b";
+      const msg = "0x1043726162823801005fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2";
       const bytesMsg = ethers.utils.arrayify(msg)
 
       const hash = ethers.utils.keccak256(bytesMsg);
@@ -282,7 +288,7 @@ describe('Relay', () => {
       //   expect(ethers.utils.recoverAddress(msg, item)).that.equal([owner, addr1, addr2][index]);
       // })
 
-      // const appendRoot = await relay.appendRoot(hash, msg, signatures, {
+      // const appendRoot = await relay.appendRoot(msg, signatures, {
       //   gasLimit: 9500000
       // });
       // await appendRoot.wait();
@@ -311,10 +317,10 @@ describe('Relay', () => {
       // gasUsed: 486694
       console.log('gasUsed:', rsp.gasUsed.toString());
       console.log(rsp.events)
-      rsp.events.forEach(event => {
-        console.log('event:', event.eventSignature);
-        console.log('data:', JSON.stringify(event.decode(event.data), null, 2));
-      });
+      // rsp.events.forEach(event => {
+      //   console.log('event:', event.eventSignature);
+      //   console.log('data:', JSON.stringify(event.decode(event.data), null, 2));
+      // });
      
       let event0 = rsp.events[0];
       expect(event0.eventSignature).that.equal('MintRingEvent(address,uint256,bytes32)');

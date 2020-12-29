@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.6.0 <0.7.0;
-
+import "./ds-test/test.sol";
 import "./MMR.sol";
 
-contract MMRWrapper {
+contract MMRWrapper is DSTest {
     bool public result;
     constructor() public {
     }
@@ -23,5 +23,9 @@ contract MMRWrapper {
 
     function getResult() public view returns (bool) {
         return result;
+    }
+
+    function testMountainHeight(uint256 size) public logs_gas{
+       MMR.mountainHeight(size);
     }
 }

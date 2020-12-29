@@ -55,6 +55,8 @@ async function main() {
     }
   );
 
+  // Pangolin 0x50616e676f6c696e
+  // Crab 0x43726162
   const relayConstructor = [
     11309,
     '0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff653550dc',
@@ -65,13 +67,29 @@ async function main() {
     ],
     0,
     60,
-    '0x43726162'
+    '0x50616e676f6c696e'
   ];
 
+  const TokenIssuing = await ethers.getContractFactory("TokenIssuing", {
+    libraries: {
+      // Scale: scale.address,
+    }
+  });
   const adminContract = await ProxyAdmin.attach(proxyAdminAddress[network.name]);
-  const relayLogic = await Util.upgradeProxy("Relay", Relay, TransparentUpgradeableProxy, '0x7e25Ced0F83156b77897618bE0bC88AAd4C372E6', adminContract);
 
-  return
+  async function upgradeRelay() {
+    const relayLogic = await Util.upgradeProxy("Relay", Relay, TransparentUpgradeableProxy, '0xf106a8A1C0aA10EB6E7EA7595A6E63ac6AcBdEe8', adminContract);
+  }
+
+  async function upgradeTokenIssuing() {
+      const tokenIssuingLogic = await Util.upgradeProxy("TokenIssuing", TokenIssuing, TransparentUpgradeableProxy, '0x214c2B7E9D20b6BeB9F5cE503Fd010Bc716a9AD2', adminContract);
+  }
+
+  await upgradeTokenIssuing();
+
+  // const relayLogic = await Util.upgradeProxy("Relay", Relay, TransparentUpgradeableProxy, '0x7e25Ced0F83156b77897618bE0bC88AAd4C372E6', adminContract);
+  // const tokenIssuingLogic = await Util.upgradeProxy("TokenIssuing", TokenIssuing, TransparentUpgradeableProxy, '0xbf2941547bCd039D941b21C81bcEbA1aF77b2253', adminContract);
+  // return
   // const [relayLogic, relayProxy] = await Util.deployTransparentUpgradeableProxy("Relay", Relay, TransparentUpgradeableProxy, proxyAdminAddress[network.name], relayConstructor);
   // const proxyAdmin = ProxyAdmin.attach(proxyAdminAddress[network.name]);
   // const proxyAdminAddr = await proxyAdmin.getProxyAdmin(relayProxy.address);

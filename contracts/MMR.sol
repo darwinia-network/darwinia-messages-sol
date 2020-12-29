@@ -11,20 +11,6 @@ import { Hash } from "./common/Hash.sol";
  *      And it uses Blake2bHash for its hash function instead of blake2b
  */
 library MMR {
-    function bytesToBytes32(bytes memory b, uint256 offset)
-        private
-        pure
-        returns (bytes32)
-    {
-        bytes32 out;
-
-        for (uint256 i = 0; i < 32; i++) {
-            out |= bytes32(b[offset + i] & 0xFF) >> (i * 8);
-        }
-        return out;
-    }
-
-
     function bytes32Concat(bytes32 b1, bytes32 b2) public pure returns (bytes memory)
     {
         bytes memory result = new bytes(64);
@@ -33,14 +19,6 @@ library MMR {
             mstore(add(result, 64), b2)
         }
         return result;
-    }
-
-    function getLeafIndex(uint width) public pure returns (uint) {
-        if(width % 2 == 1) {
-            return getSize(width);
-        } else {
-            return getSize(width - 1) + 1;
-        }
     }
 
     function getSize(uint width) public pure returns (uint256) {
@@ -63,35 +41,6 @@ library MMR {
         }
 
         return mergeHash;
-    }
-
-    function peaksToPeakMap(uint width, bytes32[] memory peaks) public pure returns (bytes32[255] memory peakMap) {
-        uint bitIndex;
-        uint peakRef;
-        uint count = peaks.length;
-        for(uint height = 1; height <= 255; height++) {
-            // Index starts from the right most bit
-            bitIndex = 255 - height;
-            peakRef = 1 << (height - 1);
-            if((width & peakRef) != 0) {
-                peakMap[bitIndex] = peaks[--count];
-            } else {
-                peakMap[bitIndex] = bytes32(0);
-            }
-        }
-        require(count == 0, "Invalid number of peaks");
-    }
-
-    function peakMapToPeaks(uint width, bytes32[255] memory peakMap) public pure returns (bytes32[] memory peaks) {
-        uint arrLength = numOfPeaks(width);
-        peaks = new bytes32[](arrLength);
-        uint count = 0;
-        for(uint i = 0; i < 255; i++) {
-            if(peakMap[i] != bytes32(0)) {
-                peaks[count++] = peakMap[i];
-            }
-        }
-        require(count == arrLength, "Invalid number of peaks");
     }
 
     /** Pure functions */
@@ -191,7 +140,7 @@ library MMR {
     /**
      * @dev It returns the height of the highest peak
      */
-    function mountainHeight(uint256 size) public pure returns (uint8) {
+    function mountainHeight(uint256 size) internal pure returns (uint8) {
         uint8 height = 1;
         while (uint256(1) << height <= size + height) {
             height++;
@@ -213,13 +162,6 @@ library MMR {
         }
         // Index is on the right slope
         height = height - uint8((peakIndex - reducedIndex));
-    }
-
-    /**
-     * @dev It returns whether the index is the leaf node or not
-     */
-    function isLeaf(uint256 index) public pure returns (bool) {
-        return heightAt(index) == 1;
     }
 
     /**

@@ -19,7 +19,7 @@ pragma experimental ABIEncoderV2;
 
 contract Relay is Ownable, Pausable, Initializable {
     event SetRootEvent(address relayer, bytes32 root, uint256 index);
-    event SetAuthritiesEvent(uint32 nonce, address[] authorities, bytes32 benifit);
+    event SetAuthoritiesEvent(uint32 nonce, address[] authorities, bytes32 beneficiary);
     event ResetRootEvent(address owner, bytes32 root, uint256 index);
 
     struct Relayers {
@@ -125,11 +125,11 @@ contract Relay is Ownable, Pausable, Initializable {
     // message - prefix + nonce + [...relayers]
     // struct{vec<u8>, u32, vec<EthereumAddress>}
     // signatures - signed by personal_sign
-    // benefit - Keeping the authorities set up-to-date is advocated between the relay contract contract and the darwinia network, and the darwinia network will give partial rewards to the benifit account. benifit is the public key of a darwinia network account
+    // beneficiary - Keeping the authorities set up-to-date is advocated between the relay contract contract and the darwinia network, and the darwinia network will give partial rewards to the benifit account. benifit is the public key of a darwinia network account
     function updateRelayer(
         bytes memory message,
         bytes[] memory signatures,
-        bytes32 benefit
+        bytes32 beneficiary
     ) public whenNotPaused {
         // verify hash, signatures (The number of signers must be greater than _threshold)
         require(
@@ -147,7 +147,7 @@ contract Relay is Ownable, Pausable, Initializable {
         require(checkRelayerNonce(nonce), "Relay: Bad relayer set nonce");
 
         // update nonce,relayer
-        _setRelayer(nonce + 1, authorities, benefit);
+        _setRelayer(nonce + 1, authorities, beneficiary);
     }
 
     // Add a mmr root to the mmr root pool
@@ -246,12 +246,12 @@ contract Relay is Ownable, Pausable, Initializable {
     }
 
     /// ==== Internal ==== 
-    function _setRelayer(uint32 nonce, address[] memory accounts, bytes32 benifit) internal {
+    function _setRelayer(uint32 nonce, address[] memory accounts, bytes32 beneficiary) internal {
         require(accounts.length > 0, "Relay: accounts is empty");
         relayers.member = accounts;
         relayers.nonce = nonce;
 
-        emit SetAuthritiesEvent(nonce, accounts, benifit);
+        emit SetAuthoritiesEvent(nonce, accounts, beneficiary);
     }
 
     function _appendRoot(uint32 index, bytes32 root) internal {

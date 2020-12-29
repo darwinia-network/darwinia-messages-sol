@@ -176,6 +176,17 @@ describe('MerkleMountainRange', (accounts) => {
   });
 
   context('Gas usage test', async () => {
+    it.only('testMountainHeight', async() => {
+      await mmrWrapper.testMountainHeight(1);
+      await mmrWrapper.testMountainHeight(10);
+      await mmrWrapper.testMountainHeight(100);
+      await mmrWrapper.testMountainHeight(1000);
+      await mmrWrapper.testMountainHeight(10000);
+      await mmrWrapper.testMountainHeight(100000);
+      await mmrWrapper.testMountainHeight(1000000);
+      await mmrWrapper.testMountainHeight(10000000);
+    })
+
     it(`Gas usage test`, async () => {
 
       //       verify 1-7 used 85949 gas
