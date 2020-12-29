@@ -24,8 +24,7 @@ async function main() {
   // We get the contract to deploy
 
   const ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
-  // const proxyAdmin = await Util.deployContract("ProxyAdmin", ProxyAdmin);
-
+  
   const proxyAdminAddress = {
     'kovan': '0x239c672bB2De2516a165c1d901335b4A8530A680',
     'unknown': '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
@@ -60,36 +59,49 @@ async function main() {
     '0xe1fe85d768c17641379ef6dfdf50bdcabf6dd83ec325506dc82bf3ff653550dc',
     [
       await owner.getAddress(),
-      await addr1.getAddress(),
-      await addr2.getAddress(),
+      // await addr1.getAddress(),
+      // await addr2.getAddress(),
     ],
     0,
     60,
     '0x43726162'
   ];
   
-  const [relayLogic, relayProxy] = await Util.deployTransparentUpgradeableProxy("Relay", Relay, TransparentUpgradeableProxy, proxyAdminAddress[network.name], relayConstructor);
-  const proxyAdmin = ProxyAdmin.attach(proxyAdminAddress[network.name]);
-  const proxyAdminAddr = await proxyAdmin.getProxyAdmin(relayProxy.address);
+  async function relay() {
+    const [relayLogic, relayProxy] = await Util.deployTransparentUpgradeableProxy("Relay", Relay, TransparentUpgradeableProxy, proxyAdminAddress[network.name], relayConstructor);
+    const proxyAdmin = ProxyAdmin.attach(proxyAdminAddress[network.name]);
+    const proxyAdminAddr = await proxyAdmin.getProxyAdmin(relayProxy.address);
+  
+    console.log('check proxy admin: ', proxyAdminAddr);
+  }
 
-  console.log('check proxy admin: ', proxyAdminAddr);
+  async function deployProxyAdmin() {
+      const proxyAdmin = await Util.deployContract("ProxyAdmin", ProxyAdmin);
+  }
+ 
+  async function tokenIssuing() {
 
-  const TokenIssuing = await ethers.getContractFactory("TokenIssuing", {
-    libraries: {
-      // Scale: scale.address,
-    }
-  });
+    const TokenIssuing = await ethers.getContractFactory("TokenIssuing", {
+      libraries: {
+        // Scale: scale.address,
+      }
+    });
+  
+    const issuingConstructor = [
+      // registry.address
+      registryAddress[network.name],
+      // relay.address
+      // relayProxy.address,
+      '0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85',
+      // storage_key
+      "0xf8860dda3d08046cf2706b92bf7202eaae7a79191c90e76297e0895605b8b457"
+    ]
+  
+    const [issuingLogic, issuingProxy] = await Util.deployTransparentUpgradeableProxy("TokenIssuing", TokenIssuing, TransparentUpgradeableProxy, proxyAdminAddress[network.name], issuingConstructor);
+  }
 
-  const issuingConstructor = [
-    // registry.address
-    registryAddress[network.name],
-    // relay.address
-    relayProxy.address,
-    // storage_key
-    "0xf8860dda3d08046cf2706b92bf7202eaae7a79191c90e76297e0895605b8b457"
-  ]
-
-  const [issuingLogic, issuingProxy] = await Util.deployTransparentUpgradeableProxy("TokenIssuing", TokenIssuing, TransparentUpgradeableProxy, proxyAdminAddress[network.name], issuingConstructor);
+  await tokenIssuing();
+  
 }
 
 // We recommend this pattern to be able to use async/await everywhere

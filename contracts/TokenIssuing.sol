@@ -21,6 +21,7 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
     event MintRingEvent(address recipient, uint256 value, bytes32 accountId);
     event MintKtonEvent(address recipient, uint256 value, bytes32 accountId);
     event MintTokenEvent(address token, address recipient, uint256 value, bytes32 accountId);
+    event VerifyProof(uint32 darwiniaBlockNumber);
 
     bytes public storageKey;
 
@@ -112,6 +113,7 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
         }
 
         history[blockNumber] = true;
+        emit VerifyProof(blockNumber);
     }
 
     // The token decimals in Crab, Darwinia Netowrk is 9, in Ethereum Network is 18.

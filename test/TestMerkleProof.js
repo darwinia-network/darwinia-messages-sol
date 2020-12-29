@@ -22,7 +22,7 @@ describe('MerkleProofTest', function (accounts) {
         ScaleTest = await ethers.getContractFactory("ScaleTest",
         {
           libraries: {
-            Scale: scale.address
+            // Scale: scale.address
           }
         });
 
@@ -39,7 +39,7 @@ describe('MerkleProofTest', function (accounts) {
             'SimpleMerkleProofTest',
             {
               libraries: {
-                SimpleMerkleProof: simpleMerkleProof.address
+                // SimpleMerkleProof: simpleMerkleProof.address
               }
             }
           );
