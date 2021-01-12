@@ -132,7 +132,7 @@ contract Relay is Ownable, Pausable, Initializable {
         bytes32 beneficiary
     ) public whenNotPaused {
         // verify hash, signatures (The number of signers must be greater than _threshold)
-        require(
+        require( 
             _checkSignature(message, signatures),
             "Relay: Bad relayer signature"
         );
@@ -270,6 +270,7 @@ contract Relay is Ownable, Pausable, Initializable {
     }
 
     function _setRelayThreshold(uint8 _threshold) internal {
+        require(_threshold > 0, "Relay:: _setRelayThreshold: _threshold equal to 0");
         relayers.threshold = _threshold;
     }
 
@@ -283,37 +284,61 @@ contract Relay is Ownable, Pausable, Initializable {
         bytes memory message,
         bytes[] memory signatures
     ) internal view returns (bool) {
+        require(signatures.length != 0, "Relay:: _checkSignature: signatures is empty");
         bytes32 hash = keccak256(message);
-        require(signatures.length < 0xffffffff, "Relay: overflow");
+        uint256 count;
+        address[] memory signers = new address[](signatures.length);
+        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(hash);
 
-        uint16 count;
-        for (uint16 i = 0; i < signatures.length; i++) {
-            address signer = ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signatures[i]);
-            if (isRelayer(signer)) {
-                count++;
-            }
+        for (uint256 i = 0; i < signatures.length; i++) {
+            address signer = ECDSA.recover(ethSignedMessageHash, signatures[i]);
+            signers[i] = signer;
         }
 
+        require(!hasDuplicate(signers), "Relay:: hasDuplicate: Duplicate entries in list");
+        
+        for (uint256 i = 0; i < signatures.length; i++) {
+            if (isRelayer(signers[i])) {
+               count++;
+            }
+        }
+        
         uint8 threshold = uint8(
-            SafeMath.div(SafeMath.mul(uint256(count), 100), getRelayerCount())
+            SafeMath.div(SafeMath.mul(count, 100), getRelayerCount())
         );
 
         return threshold >= getRelayerThreshold();
     }
 
     function assertBytesEq(bytes memory a, bytes memory b) internal pure returns (bool){
-        bool ok = true;
-
         if (a.length == b.length) {
             for (uint i = 0; i < a.length; i++) {
                 if (a[i] != b[i]) {
-                    ok = false;
+                    return false;
                 }
             }
         } else {
-            ok = false;
+            return false;
         }
+        return true;
+    }
 
-        return ok;
+    /**
+    * Returns whether or not there's a duplicate. Runs in O(n^2).
+    * @param A Array to search
+    * @return Returns true if duplicate, false otherwise
+    */
+    function hasDuplicate(address[] memory A) internal pure returns (bool) {
+        if (A.length == 0) {
+            return false;
+        }
+        for (uint256 i = 0; i < A.length - 1; i++) {
+            for (uint256 j = i + 1; j < A.length; j++) {
+                if (A[i] == A[j]) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
