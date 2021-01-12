@@ -295,8 +295,8 @@ contract Relay is Ownable, Pausable, Initializable {
             signers[i] = signer;
         }
 
-        checkDuplicates(signers);
-
+        require(!hasDuplicate(signers), "Relay:: hasDuplicate: Duplicate entries in list");
+        
         for (uint256 i = 0; i < signatures.length; i++) {
             if (isRelayer(signers[i])) {
                count++;
@@ -311,28 +311,34 @@ contract Relay is Ownable, Pausable, Initializable {
     }
 
     function assertBytesEq(bytes memory a, bytes memory b) internal pure returns (bool){
-        bool ok = true;
-
         if (a.length == b.length) {
             for (uint i = 0; i < a.length; i++) {
                 if (a[i] != b[i]) {
-                    ok = false;
+                    return false;
                 }
             }
         } else {
-            ok = false;
+            return false;
         }
-
-        return ok;
+        return true;
     }
-  
-    function checkDuplicates(address[] memory list) internal pure returns (bool){
-        for (uint index = 0; index < list.length; index++) {
-            for (uint k = index + 1; k < list.length; k++) {
-                if(list[index] == list[k]) {
-                    revert('Relay:: checkDuplicates: Duplicate entries in list');
+
+    /**
+    * Returns whether or not there's a duplicate. Runs in O(n^2).
+    * @param A Array to search
+    * @return Returns true if duplicate, false otherwise
+    */
+    function hasDuplicate(address[] memory A) internal pure returns (bool) {
+        if (A.length == 0) {
+            return false;
+        }
+        for (uint256 i = 0; i < A.length - 1; i++) {
+            for (uint256 j = i + 1; j < A.length; j++) {
+                if (A[i] == A[j]) {
+                    return true;
                 }
             }
         }
+        return false;
     }
 }
