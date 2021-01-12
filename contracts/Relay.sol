@@ -21,9 +21,12 @@ contract Relay is Ownable, Pausable, Initializable {
     event SetRootEvent(address relayer, bytes32 root, uint256 index);
     event SetAuthoritiesEvent(uint32 nonce, address[] authorities, bytes32 beneficiary);
     event ResetRootEvent(address owner, bytes32 root, uint256 index);
+    event ResetAuthoritiesEvent(uint32 nonce, address[] authorities);
 
     struct Relayers {
         // Each time the relay set is updated, the nonce is incremented
+        // After the first "updateRelayer" call, the nonce value is equal to 1, 
+        // which is different from the field "Term" at the node.
         uint32 nonce;
         // mapping(address => bool) member;
         address[] member;
@@ -58,7 +61,7 @@ contract Relay is Ownable, Pausable, Initializable {
         pausableConstructor();
         
         _appendRoot(_MMRIndex, _genesisMMRRoot);
-        _setRelayer(_nonce, _relayers, bytes32(0));
+        _resetRelayer(_nonce, _relayers);
         _setNetworkPrefix(_prefix);
         _setRelayThreshold(_threshold);
     }
@@ -147,7 +150,7 @@ contract Relay is Ownable, Pausable, Initializable {
         require(checkRelayerNonce(nonce), "Relay: Bad relayer set nonce");
 
         // update nonce,relayer
-        _setRelayer(nonce + 1, authorities, beneficiary);
+        _updateRelayer(nonce, authorities, beneficiary);
     }
 
     // Add a mmr root to the mmr root pool
@@ -242,16 +245,25 @@ contract Relay is Ownable, Pausable, Initializable {
     }
 
     function resetRelayer(uint32 nonce, address[] memory accounts) public onlyOwner {
-        _setRelayer(nonce, accounts, bytes32(0));
+        _resetRelayer(nonce, accounts);
     }
 
     /// ==== Internal ==== 
-    function _setRelayer(uint32 nonce, address[] memory accounts, bytes32 beneficiary) internal {
+    function _updateRelayer(uint32 nonce, address[] memory accounts, bytes32 beneficiary) internal {
+        require(accounts.length > 0, "Relay: accounts is empty");
+
+        emit SetAuthoritiesEvent(nonce, accounts, beneficiary);
+
+        relayers.member = accounts;
+        relayers.nonce = getRelayerNonce() + 1;    
+    }
+
+    function _resetRelayer(uint32 nonce, address[] memory accounts) internal {
         require(accounts.length > 0, "Relay: accounts is empty");
         relayers.member = accounts;
         relayers.nonce = nonce;
 
-        emit SetAuthoritiesEvent(nonce, accounts, beneficiary);
+        emit ResetAuthoritiesEvent(nonce, accounts);
     }
 
     function _appendRoot(uint32 index, bytes32 root) internal {
