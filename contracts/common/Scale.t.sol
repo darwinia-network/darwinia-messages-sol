@@ -90,12 +90,39 @@ contract ScaleTest is DSTest {
     }
 
     function testDecodeBalance() public {
-        bytes memory hexData = hex"00e87648170000000000000000000000";
+        bytes memory hexData = hex"00000000000000000000000000000000";
         Input.Data memory data = Input.from(hexData);
 
         uint128 balance = Scale.decodeBalance(data);
         console.log(balance);
-        assertEq(uint256(balance), uint256(100000000000));
+        assertEq(uint256(balance), uint256(0));
+    }
+
+    function testDecodeBalance1() public {
+        bytes memory hexData = hex"01000000000000000000000000000000";
+        Input.Data memory data = Input.from(hexData);
+
+        uint128 balance = Scale.decodeBalance(data);
+        console.log(balance);
+        assertEq(uint256(balance), uint256(1));
+    }
+
+    function testDecodeBalance2() public {
+        bytes memory hexData = hex"01000000e88f872b824dc77261421300";
+        Input.Data memory data = Input.from(hexData);
+
+        uint128 balance = Scale.decodeBalance(data);
+        console.log(balance);
+        assertEq(uint256(balance), uint256(100000000000000000000000000000000001));
+    }
+
+    function testDecodeBalance3() public {
+        bytes memory hexData = hex"ffffffffffffffffffffffffffffffff";
+        Input.Data memory data = Input.from(hexData);
+
+        uint128 balance = Scale.decodeBalance(data);
+        console.log(balance);
+        assertEq(uint256(balance), uint256(340282366920938463463374607431768211455));
     }
 
     function testDecodeLockEvents() public {
@@ -159,15 +186,6 @@ contract ScaleTest is DSTest {
         assertEq(addr, 0xB20bd5D04BE54f870D5C0d3cA85d82b34B836405);
     }
 
-    function testDecodeAuthoritiesNonce() public {
-        bytes memory hexData = hex"b20bb20bd5d04be54f870d5c0d3ca85d82b34b83640501020304";
-        Input.Data memory data = Input.from(hexData);
-
-        uint32 nonce = Scale.decodeAuthoritiesNonce(data);
-        console.log(uint256(nonce));
-        assertEq(uint256(nonce), 0xb20bb20b);
-    }
-
     function testDecodeAuthorities() public {
 
         // let str = api.createType('{"prefix": "Vec<u8>", "nonce": "Compact<u32>", "authorities": "Vec<EthereumAddress>"}', {
@@ -214,13 +232,30 @@ contract ScaleTest is DSTest {
         assertEq0(prefix, hex"43726162");
         assertEq(uint256(index), 16384);
         assertEq(root, bytes32(hex"5fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2"));
-
-
     }
 
     function testDecodeStateRootFromBlockHeader() public {
         bytes32 root = Scale.decodeStateRootFromBlockHeader(hex"b20ea574de7640b8b6f84312c90a40cd123c1be7cc1655edb4713e61f97fd3ae8991eb3811bb17fe224d59847a47ae0bdd2b2663b1e422c3473638227f86dec82818e7d09cdbf8205034542f4a0116aa07ce96efe63cd2255895acd0474e28d7587f1006424142453402000000003f08f80f000000000466726f6e8801673d4723721b48cef07ce4c4208f4ac233734d7e58cc6ab27f8452bc238cb8df0000904d4d5252b5d7c88ac37e4f91f481e642f87d111e4b2a3b7e791697950139000e4eef094705424142450101b82ad773a86ff32162375e8e6bb455043db376439a90dbc530967f3f2d47184a4610bd6e231b4a5256df1d751c05dffa4d3869c74209b9bf0be55548850f1286");
         console.logBytes32(root);
         assertEq(root, bytes32(hex"eb3811bb17fe224d59847a47ae0bdd2b2663b1e422c3473638227f86dec82818"));
+    }
+
+    function testHackDecodeMMRRootAndDecodeAuthorities() public {
+        
+        // let str = api.createType('{"prefix": "Vec<u8>", "index": "Compact<u32>", "root": "H256"}', new Uint8Array([16, 68, 82, 77, 76, 85, 12, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4]))
+        // console.log(str)
+        // console.log(str.toHex())
+
+        // {prefix: Crab, index: 16384, root: 0x5fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2}
+        // 1043726162020001005fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2
+
+        // Scale.DecodeAuthorities Scale.DecodeMMRRoot use
+        bytes memory hexData = hex"10637261629101089f284e1337a815fe77d2ff4ae46544645b20c5ff9469d013805bffb7d3debe5e7839237e535ec483";
+        Input.Data memory data = Input.from(hexData);
+
+        (bytes memory prefix, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
+        assertEq0(prefix, hex"63726162");
+        assertEq(uint256(index), 100);
+        assertEq(root, bytes32(hex"089f284e1337a815fe77d2ff4ae46544645b20c5ff9469d013805bffb7d3debe"));
     }
 }
