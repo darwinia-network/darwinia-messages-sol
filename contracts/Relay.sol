@@ -11,13 +11,17 @@ import "./common/ECDSA.sol";
 import "./common/Hash.sol";
 import "./common/SafeMath.sol";
 import "./common/Input.sol";
+import "./common/Bytes.sol";
 import "./MMR.sol";
 import "./common/Scale.sol";
 import "./SimpleMerkleProof.sol";
 
+
 pragma experimental ABIEncoderV2;
 
 contract Relay is Ownable, Pausable, Initializable {
+    using Bytes for bytes;
+
     event SetRootEvent(address relayer, bytes32 root, uint256 index);
     event SetAuthoritiesEvent(uint32 nonce, address[] authorities, bytes32 beneficiary);
     event ResetRootEvent(address owner, bytes32 root, uint256 index);
@@ -122,7 +126,7 @@ contract Relay is Ownable, Pausable, Initializable {
     }
 
     function checkNetworkPrefix(bytes memory prefix) view public returns (bool) {
-      return assertBytesEq(getNetworkPrefix(), prefix);
+        return getNetworkPrefix().equals(prefix);
     }
 
     function checkRelayerNonce(uint32 nonce) view public returns (bool) {
@@ -327,19 +331,6 @@ contract Relay is Ownable, Pausable, Initializable {
         );
 
         return threshold >= getRelayerThreshold();
-    }
-
-    function assertBytesEq(bytes memory a, bytes memory b) internal pure returns (bool){
-        if (a.length == b.length) {
-            for (uint i = 0; i < a.length; i++) {
-                if (a[i] != b[i]) {
-                    return false;
-                }
-            }
-        } else {
-            return false;
-        }
-        return true;
     }
 
     /**
