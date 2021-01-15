@@ -23,13 +23,20 @@ contract Relay is Ownable, Pausable, Initializable {
     event ResetRootEvent(address owner, bytes32 root, uint256 index);
     event ResetAuthoritiesEvent(uint32 nonce, address[] authorities);
 
+    ///
+    /// Function: updateRelayer(bytes message, bytes[] signatures, bytes32 benefit)
+    /// MethodID: 0xb4bcf497
+    ///
+    /// Function: appendRoot(bytes memory message,bytes[] memory signatures)
+    /// MethodID: 0x479fbdf9
+    /// 
+
     struct Relayers {
         // Each time the relay set is updated, the nonce is incremented
         // After the first "updateRelayer" call, the nonce value is equal to 1, 
         // which is different from the field "Term" at the node.
-        uint32 nonce;
-        // mapping(address => bool) member;
         address[] member;
+        uint32 nonce;
         uint8 threshold;
     }
 
