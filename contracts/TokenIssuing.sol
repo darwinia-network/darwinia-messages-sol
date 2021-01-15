@@ -90,7 +90,7 @@ contract TokenIssuing is DailyLimit, Ownable, Pausable, Initializable {
     {
         require(!history[blockNumber], "TokenIssuing:: verifyProof:  The block has been verified");
 
-        Input.Data memory data = Input.from(IRelay(relay).verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, storageKey));
+        Input.Data memory data = Input.from(relay.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, storageKey));
         
         ScaleStruct.LockEvent[] memory events = Scale.decodeLockEvents(data);
 
