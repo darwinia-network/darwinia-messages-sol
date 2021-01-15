@@ -188,27 +188,29 @@ contract ScaleTest is DSTest {
 
     function testDecodeAuthorities() public {
 
-        // let str = api.createType('{"prefix": "Vec<u8>", "nonce": "Compact<u32>", "authorities": "Vec<EthereumAddress>"}', {
+        // let str = api.createType('{"prefix": "Vec<u8>", "methodID": "[u8; 4]" "nonce": "Compact<u32>", "authorities": "Vec<EthereumAddress>"}', {
         // prefix: 'crab',
+        // methodID: 'b4bcf497',
         // nonce: 100,
         // authorities: ['0x9f284e1337a815fe77d2ff4ae46544645b20c5ff','0x9469d013805bffb7d3debe5e7839237e535ec483']
         // })
         // console.log(str)
         // console.log(str.toHex())
 
-        // {prefix: 0x63726162, nonce: 100, authorities: [0x9F284E1337A815fe77D2Ff4aE46544645B20c5ff, 0x9469d013805bffb7d3debe5e7839237e535ec483]}
-        // 10637261629101089f284e1337a815fe77d2ff4ae46544645b20c5ff9469d013805bffb7d3debe5e7839237e535ec483
+        // {prefix: 0x63726162, methodID:0xb4bcf497, nonce: 100, authorities: [0x9F284E1337A815fe77D2Ff4aE46544645B20c5ff, 0x9469d013805bffb7d3debe5e7839237e535ec483]}
+        // 1063726162b4bcf4979101089f284e1337a815fe77d2ff4ae46544645b20c5ff9469d013805bffb7d3debe5e7839237e535ec483
 
-        bytes memory hexData = hex"10637261629101089f284e1337a815fe77d2ff4ae46544645b20c5ff9469d013805bffb7d3debe5e7839237e535ec483";
+        bytes memory hexData = hex"1063726162b4bcf4979101089f284e1337a815fe77d2ff4ae46544645b20c5ff9469d013805bffb7d3debe5e7839237e535ec483";
         Input.Data memory data = Input.from(hexData);
 
-        (bytes memory prefix, uint32 nonce, address[] memory authorities) = Scale.decodeAuthorities(data);
+        (bytes memory prefix, bytes4 methodID, uint32 nonce, address[] memory authorities) = Scale.decodeAuthorities(data);
 
         console.log(uint256(nonce));
         console.log(authorities.length);
         console.logAddress(authorities[0]);
         console.logAddress(authorities[1]);
         console.logBytes(prefix);
+        console.logBytes4(methodID);
 
         assertEq0(prefix, hex"63726162");
         assertEq(uint256(nonce), 100);
@@ -221,14 +223,19 @@ contract ScaleTest is DSTest {
         // console.log(str)
         // console.log(str.toHex())
 
-        // {prefix: Crab, index: 16384, root: 0x5fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2}
-        // 1043726162020001005fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2
+        // {prefix: Crab, methodID: 0x479fbdf9, index: 16384, root: 0x5fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2}
+        // 1043726162479fbdf9020001005fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2
 
-        bytes memory hexData = hex"1043726162020001005fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2";
+        bytes memory hexData = hex"1043726162479fbdf9020001005fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2";
         Input.Data memory data = Input.from(hexData);
 
-        (bytes memory prefix, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
-
+        (bytes memory prefix, bytes4 methodID, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
+    
+        console.log(uint256(index));
+        console.logBytes32(root);
+        console.logBytes(prefix);
+        console.logBytes4(methodID);
+        
         assertEq0(prefix, hex"43726162");
         assertEq(uint256(index), 16384);
         assertEq(root, bytes32(hex"5fe7f977e71dba2ea1a68e21057beebb9be2ac30c6410aa38d4f3fbe41dcffd2"));
@@ -253,7 +260,8 @@ contract ScaleTest is DSTest {
         bytes memory hexData = hex"10637261629101089f284e1337a815fe77d2ff4ae46544645b20c5ff9469d013805bffb7d3debe5e7839237e535ec483";
         Input.Data memory data = Input.from(hexData);
 
-        (bytes memory prefix, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
+        (bytes memory prefix, bytes4 methodID, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
+
         assertEq0(prefix, hex"63726162");
         assertEq(uint256(index), 100);
         assertEq(root, bytes32(hex"089f284e1337a815fe77d2ff4ae46544645b20c5ff9469d013805bffb7d3debe"));

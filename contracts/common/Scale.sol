@@ -49,9 +49,10 @@ library Scale {
     function decodeMMRRoot(Input.Data memory data) 
         internal
         pure
-        returns (bytes memory prefix, uint32 width, bytes32 root)
+        returns (bytes memory prefix, bytes4 methodID, uint32 width, bytes32 root)
     {
         prefix = decodePrefix(data);
+        methodID = data.decodeBytes4();
         width = decodeU32(data);
         root = data.decodeBytes32();
     }
@@ -59,9 +60,10 @@ library Scale {
     function decodeAuthorities(Input.Data memory data)
         internal
         pure
-        returns (bytes memory prefix, uint32 nonce, address[] memory authorities)
+        returns (bytes memory prefix, bytes4 methodID, uint32 nonce, address[] memory authorities)
     {
         prefix = decodePrefix(data);
+        methodID = data.decodeBytes4();
         nonce = decodeU32(data);
 
         uint authoritiesLength = decodeU32(data);

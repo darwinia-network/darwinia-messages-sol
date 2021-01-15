@@ -153,11 +153,12 @@ contract Relay is Ownable, Pausable, Initializable {
 
         // decode message, check nonce and relayer
         Input.Data memory data = Input.from(message);
-        (bytes memory prefix, uint32 nonce, address[] memory authorities) = Scale.decodeAuthorities(
+        (bytes memory prefix, bytes4 methodID, uint32 nonce, address[] memory authorities) = Scale.decodeAuthorities(
             data
         );
-
+        
         require(checkNetworkPrefix(prefix), "Relay: Bad network prefix");
+        require(methodID == hex"b4bcf497", "Relay: Bad method ID");
         require(checkRelayerNonce(nonce), "Relay: Bad relayer set nonce");
 
         // update nonce,relayer
@@ -182,9 +183,10 @@ contract Relay is Ownable, Pausable, Initializable {
 
         // decode message, check nonce and relayer
         Input.Data memory data = Input.from(message);
-        (bytes memory prefix, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
+        (bytes memory prefix, bytes4 methodID, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
 
         require(checkNetworkPrefix(prefix), "Relay: Bad network prefix");
+        require(methodID == hex"479fbdf9", "Relay: Bad method ID");
 
         // append index, root
         _appendRoot(index, root);
