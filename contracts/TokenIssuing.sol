@@ -42,6 +42,10 @@ contract TokenIssuing is DailyLimit, Ownable, Pausable, Initializable {
         storageKey = _key;
     }
 
+    function getHistory(uint32 blockNumber) public view returns (bool) {
+      return history[blockNumber];
+    }
+
     // The last step of the cross-chain of darwinia to ethereum, the user needs to collect some signatures and proofs after the darwinia network lock token.
     // This call will append mmr root and verify mmr proot, events proof, and mint token by decoding events. If this mmr root is already included in the relay contract, the contract will skip verifying mmr root msg, saving gas.
 
