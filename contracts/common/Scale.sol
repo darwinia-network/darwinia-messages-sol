@@ -49,9 +49,10 @@ library Scale {
     function decodeMMRRoot(Input.Data memory data) 
         internal
         pure
-        returns (bytes memory prefix, uint32 width, bytes32 root)
+        returns (bytes memory prefix, bytes4 methodID, uint32 width, bytes32 root)
     {
         prefix = decodePrefix(data);
+        methodID = data.decodeBytes4();
         width = decodeU32(data);
         root = data.decodeBytes32();
     }
@@ -59,9 +60,10 @@ library Scale {
     function decodeAuthorities(Input.Data memory data)
         internal
         pure
-        returns (bytes memory prefix, uint32 nonce, address[] memory authorities)
+        returns (bytes memory prefix, bytes4 methodID, uint32 nonce, address[] memory authorities)
     {
         prefix = decodePrefix(data);
+        methodID = data.decodeBytes4();
         nonce = decodeU32(data);
 
         uint authoritiesLength = decodeU32(data);
@@ -82,17 +84,6 @@ library Scale {
         prefix = decodeByteArray(data);
     }
 
-    // decode authorities nonce
-    // little endian
-    function decodeAuthoritiesNonce(Input.Data memory data) 
-        internal
-        pure
-        returns (uint32) 
-    {
-        bytes memory nonce = data.decodeBytesN(4);
-        return uint32(nonce.toBytes4(0));
-    }
-
     // decode Ethereum address
     function decodeEthereumAddress(Input.Data memory data) 
         internal
@@ -111,8 +102,8 @@ library Scale {
         pure
         returns (uint128) 
     {
-        bytes memory accountId = data.decodeBytesN(16);
-        return uint128(reverseBytes16(accountId.toBytes16(0)));
+        bytes memory balance = data.decodeBytesN(16);
+        return uint128(reverseBytes16(balance.toBytes16(0)));
     }
 
     // decode darwinia network account Id

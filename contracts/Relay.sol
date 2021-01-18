@@ -11,25 +11,36 @@ import "./common/ECDSA.sol";
 import "./common/Hash.sol";
 import "./common/SafeMath.sol";
 import "./common/Input.sol";
+import "./common/Bytes.sol";
 import "./MMR.sol";
 import "./common/Scale.sol";
 import "./SimpleMerkleProof.sol";
 
+
 pragma experimental ABIEncoderV2;
 
 contract Relay is Ownable, Pausable, Initializable {
+    using Bytes for bytes;
+
     event SetRootEvent(address relayer, bytes32 root, uint256 index);
     event SetAuthoritiesEvent(uint32 nonce, address[] authorities, bytes32 beneficiary);
     event ResetRootEvent(address owner, bytes32 root, uint256 index);
     event ResetAuthoritiesEvent(uint32 nonce, address[] authorities);
 
+    ///
+    /// Function: updateRelayer(bytes message, bytes[] signatures, bytes32 benefit)
+    /// MethodID: 0xb4bcf497
+    ///
+    /// Function: appendRoot(bytes memory message,bytes[] memory signatures)
+    /// MethodID: 0x479fbdf9
+    /// 
+
     struct Relayers {
         // Each time the relay set is updated, the nonce is incremented
         // After the first "updateRelayer" call, the nonce value is equal to 1, 
         // which is different from the field "Term" at the node.
-        uint32 nonce;
-        // mapping(address => bool) member;
         address[] member;
+        uint32 nonce;
         uint8 threshold;
     }
 
@@ -115,7 +126,7 @@ contract Relay is Ownable, Pausable, Initializable {
     }
 
     function checkNetworkPrefix(bytes memory prefix) view public returns (bool) {
-      return assertBytesEq(getNetworkPrefix(), prefix);
+        return getNetworkPrefix().equals(prefix);
     }
 
     function checkRelayerNonce(uint32 nonce) view public returns (bool) {
@@ -142,11 +153,12 @@ contract Relay is Ownable, Pausable, Initializable {
 
         // decode message, check nonce and relayer
         Input.Data memory data = Input.from(message);
-        (bytes memory prefix, uint32 nonce, address[] memory authorities) = Scale.decodeAuthorities(
+        (bytes memory prefix, bytes4 methodID, uint32 nonce, address[] memory authorities) = Scale.decodeAuthorities(
             data
         );
-
+        
         require(checkNetworkPrefix(prefix), "Relay: Bad network prefix");
+        require(methodID == hex"b4bcf497", "Relay: Bad method ID");
         require(checkRelayerNonce(nonce), "Relay: Bad relayer set nonce");
 
         // update nonce,relayer
@@ -171,9 +183,10 @@ contract Relay is Ownable, Pausable, Initializable {
 
         // decode message, check nonce and relayer
         Input.Data memory data = Input.from(message);
-        (bytes memory prefix, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
+        (bytes memory prefix, bytes4 methodID, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
 
         require(checkNetworkPrefix(prefix), "Relay: Bad network prefix");
+        require(methodID == hex"479fbdf9", "Relay: Bad method ID");
 
         // append index, root
         _appendRoot(index, root);
@@ -320,19 +333,6 @@ contract Relay is Ownable, Pausable, Initializable {
         );
 
         return threshold >= getRelayerThreshold();
-    }
-
-    function assertBytesEq(bytes memory a, bytes memory b) internal pure returns (bool){
-        if (a.length == b.length) {
-            for (uint i = 0; i < a.length; i++) {
-                if (a[i] != b[i]) {
-                    return false;
-                }
-            }
-        } else {
-            return false;
-        }
-        return true;
     }
 
     /**

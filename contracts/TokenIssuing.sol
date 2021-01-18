@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 
 import "./common/Ownable.sol";
 import "./common/Pausable.sol";
+import "./common/DailyLimit.sol";
 import "./interfaces/IRelay.sol";
 import "./interfaces/IERC20.sol";
 import "./interfaces/ISettingsRegistry.sol";
@@ -16,7 +17,7 @@ import "./common/SafeMath.sol";
 
 pragma experimental ABIEncoderV2;
 
-contract TokenIssuing is Ownable, Pausable, Initializable {
+contract TokenIssuing is DailyLimit, Ownable, Pausable, Initializable {
 
     event MintRingEvent(address recipient, uint256 value, bytes32 accountId);
     event MintKtonEvent(address recipient, uint256 value, bytes32 accountId);
@@ -39,6 +40,10 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
         registry = ISettingsRegistry(_registry);
 
         storageKey = _key;
+    }
+
+    function getHistory(uint32 blockNumber) public view returns (bool) {
+      return history[blockNumber];
     }
 
     // The last step of the cross-chain of darwinia to ethereum, the user needs to collect some signatures and proofs after the darwinia network lock token.
@@ -89,7 +94,7 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
     {
         require(!history[blockNumber], "TokenIssuing:: verifyProof:  The block has been verified");
 
-        Input.Data memory data = Input.from(IRelay(relay).verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, storageKey));
+        Input.Data memory data = Input.from(relay.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, storageKey));
         
         ScaleStruct.LockEvent[] memory events = Scale.decodeLockEvents(data);
 
@@ -102,12 +107,16 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
           ScaleStruct.LockEvent memory item = events[i];
           uint256 value = decimalsConverter(item.value);
           if(item.token == ring) {
+            expendDailyLimit(ring, value);
             IERC20(ring).mint(item.recipient, value);
+
             emit MintRingEvent(item.recipient, value, item.sender);
           }
 
           if (item.token == kton) {
+            expendDailyLimit(kton, value);
             IERC20(kton).mint(item.recipient, value);
+
             emit MintKtonEvent(item.recipient, value, item.sender);
           }
         }
@@ -121,6 +130,7 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
       return SafeMath.mul(darwiniaValue, 1000000000);
     }
 
+    /// ==== onlyOwner ==== 
     function setStorageKey(bytes memory key) public onlyOwner {
       storageKey = key;
     } 
@@ -131,5 +141,13 @@ contract TokenIssuing is Ownable, Pausable, Initializable {
 
     function pause() public onlyOwner {
         _pause();
+    }
+
+    function setDailyLimit(address token, uint amount) public onlyOwner  {
+        _setDailyLimit(token, amount);
+    }
+
+    function changeDailyLimit(address token, uint amount) public onlyOwner  {
+        _changeDailyLimit(token, amount);
     }
 }

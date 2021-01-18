@@ -58,6 +58,15 @@ library Input {
         value = data.raw.substr(data.offset, N);
     }
 
+    function decodeBytes4(Data memory data) internal pure shift(data, 4) returns(bytes4 value) {
+        bytes memory raw = data.raw;
+        uint256 offset = data.offset;
+
+        assembly {
+            value := mload(add(add(raw, 32), offset))
+        }
+    }
+
     function decodeBytes32(Data memory data) internal pure shift(data, 32) returns(bytes32 value) {
         bytes memory raw = data.raw;
         uint256 offset = data.offset;
