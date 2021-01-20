@@ -247,6 +247,12 @@ contract ScaleTest is DSTest {
         assertEq(root, bytes32(hex"eb3811bb17fe224d59847a47ae0bdd2b2663b1e422c3473638227f86dec82818"));
     }
 
+    function testDecodeBlockNumberFromBlockHeader() public {
+        uint32 blocknumber = Scale.decodeBlockNumberFromBlockHeader(hex"3d92b814cb5f05b1f33aeeb4ebead80ed7b5e7eb21838c546acbbb1a585f04d4deb2da003536ace91a15febf2fb1f3b26399915c6756b497c01a53be21a92c8d0ed56a470b8d75c63be1924db8b654d30968ca1e9d0658258fda8e7028e2cfa432a21c080c0642414245340219000000aed900100000000000904d4d525233e62b9e4a7770773c4e8a021d6ce0701537c9f80a4a6d129528165ec0e5af4705424142450101702886fa858cdc9c8bb61cce6228d143c60b9b6d1ae1e729d48a4de8fa87c42575346a4a0da449b5c41d2a5eb71b09e355c0a787738ac2683066430d312ba687");
+        console.log(blocknumber);
+        assertEq(uint256(blocknumber), 3583159);
+    }
+
     function testHackDecodeMMRRootAndDecodeAuthorities() public {
         
         // let str = api.createType('{"prefix": "Vec<u8>", "index": "Compact<u32>", "root": "H256"}', new Uint8Array([16, 68, 82, 77, 76, 85, 12, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4]))

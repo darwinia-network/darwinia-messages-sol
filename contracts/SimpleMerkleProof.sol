@@ -73,7 +73,7 @@ library SimpleMerkleProof {
         bytes32 root,
         bytes[] memory keys,
         Item[] memory db
-    ) internal view returns (bytes[] memory values) {
+    ) internal pure returns (bytes[] memory values) {
         values = new bytes[](keys.length);
         for (uint256 i = 0; i < keys.length; i++) {
             bytes memory k = Nibble.keyToNibbles(keys[i]);
@@ -88,7 +88,7 @@ library SimpleMerkleProof {
         bytes32 root,
         bytes memory key,
         Item[] memory db
-    ) internal view returns (bytes memory v) {
+    ) internal pure returns (bytes memory v) {
         bytes32 hash = root;
         bytes memory partialKey = key;
         while (true) {

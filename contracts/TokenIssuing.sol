@@ -62,7 +62,6 @@ contract TokenIssuing is DailyLimit, Ownable, Pausable, Initializable {
         bytes[] memory signatures,
         bytes32 root,
         uint32 MMRIndex,
-        uint32 blockNumber,
         bytes memory blockHeader,
         bytes32[] memory peaks,
         bytes32[] memory siblings,
@@ -77,13 +76,12 @@ contract TokenIssuing is DailyLimit, Ownable, Pausable, Initializable {
         relay.appendRoot(message, signatures);
       }
 
-      verifyProof(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr);
+      verifyProof(root, MMRIndex, blockHeader, peaks, siblings, eventsProofStr);
     }
 
     function verifyProof(
         bytes32 root,
         uint32 MMRIndex,
-        uint32 blockNumber,
         bytes memory blockHeader,
         bytes32[] memory peaks,
         bytes32[] memory siblings,
@@ -92,6 +90,8 @@ contract TokenIssuing is DailyLimit, Ownable, Pausable, Initializable {
       public
       whenNotPaused
     {
+        uint32 blockNumber = Scale.decodeBlockNumberFromBlockHeader(blockHeader);
+
         require(!history[blockNumber], "TokenIssuing:: verifyProof:  The block has been verified");
 
         Input.Data memory data = Input.from(relay.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, storageKey));

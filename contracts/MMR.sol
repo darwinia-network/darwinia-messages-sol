@@ -25,7 +25,7 @@ library MMR {
         return (width << 1) - numOfPeaks(width);
     }
 
-    function peakBagging(uint256 width, bytes32[] memory peaks) view public returns (bytes32) {
+    function peakBagging(bytes32[] memory peaks) view public returns (bytes32) {
         // peaks may be merged
         // require(numOfPeaks(width) == peaks.length, "Received invalid number of peaks");
         bytes32 mergeHash = peaks[0];
@@ -59,7 +59,7 @@ library MMR {
         require(width >= blockNumber + 1, "blockNumber is out of range");
         uint index = getSize(blockNumber) + 1;
         // Check the root equals the peak bagging hash
-        require(root == peakBagging(width, peaks), "Invalid root hash from the peaks");
+        require(root == peakBagging(peaks), "Invalid root hash from the peaks");
 
         // Find the mountain where the target index belongs to
         uint256 cursor;
