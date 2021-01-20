@@ -22,6 +22,11 @@ library Input {
         data.offset += size;
     }
 
+    function shiftBytes(Data memory data, uint256 size) internal pure {
+        require(data.raw.length >= data.offset + size, "Input: Out of range");
+        data.offset += size;
+    }
+
     function finished(Data memory data) internal pure returns (bool) {
         return data.offset == data.raw.length;
     }

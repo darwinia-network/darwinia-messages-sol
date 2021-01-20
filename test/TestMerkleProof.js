@@ -52,17 +52,22 @@ describe('MerkleProofTest', function (accounts) {
         await scaleTest.testDecodeReceiptProof()
     })
 
-    it('ScaleTest decodeVec', async () => {
+    it.only('ScaleTest decodeVec', async () => {
       await scaleTest.testDecodeU32();
       await scaleTest.testDecodeAccountId();
       await scaleTest.testDecodeAccountId2();
       await scaleTest.testDecodeBalance();
+      await scaleTest.testDecodeBalance1();
+      await scaleTest.testDecodeBalance2();
+      await scaleTest.testDecodeBalance3();
       await scaleTest.testDecodeLockEvents();
       await scaleTest.testDecodeEthereumAddress();
-      await scaleTest.testDecodeAuthoritiesNonce();
       await scaleTest.testDecodeAuthorities();
       await scaleTest.testDecodeMMRRoot();
-      await scaleTest.testDecodeStateRootFromBlockHeader()
+      await scaleTest.testDecodeStateRootFromBlockHeader();
+      await scaleTest.testDecodeBlockNumberFromBlockHeader();
+      await scaleTest.testHackDecodeMMRRootAndDecodeAuthorities();
+      
     })
 
     // it('CompactMerkleProofTest testCompactMerkleProofTest', async () => {

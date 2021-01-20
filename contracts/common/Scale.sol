@@ -35,6 +35,14 @@ library Scale {
         return events;
     }
 
+    /** Header */
+    // export interface Header extends Struct {
+    //     readonly parentHash: Hash;
+    //     readonly number: Compact<BlockNumber>;
+    //     readonly stateRoot: Hash;
+    //     readonly extrinsicsRoot: Hash;
+    //     readonly digest: Digest;
+    // }
     function decodeStateRootFromBlockHeader(
         bytes memory header
     ) internal pure returns (bytes32 root) {
@@ -43,6 +51,17 @@ library Scale {
             root := mload(add(add(header, 0x40), offset))
         }
         return root;
+    }
+
+    function decodeBlockNumberFromBlockHeader(
+        bytes memory header
+    ) internal pure returns (uint32 blockNumber) {
+        Input.Data memory data = Input.from(header);
+        
+        // skip parentHash(Hash)
+        data.shiftBytes(32);
+
+        blockNumber = decodeU32(data);
     }
 
     // little endian
