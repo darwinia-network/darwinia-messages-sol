@@ -35,16 +35,16 @@ library Scale {
         return events;
     }
 
-    function decodeTokenBurnEvent(Input.Data memory data)
+    function decodeIssuingEvent(Input.Data memory data)
         internal
         pure
-        returns (ScaleStruct.TokenBurnEvent[] memory)
+        returns (ScaleStruct.IssuingEvent[] memory)
     {
         uint32 len = decodeU32(data);
-        ScaleStruct.TokenBurnEvent[] memory events = new ScaleStruct.TokenBurnEvent[](len);
+        ScaleStruct.IssuingEvent[] memory events = new ScaleStruct.IssuingEvent[](len);
 
         for(uint i = 0; i < len; i++) {
-            events[i] = ScaleStruct.TokenBurnEvent({
+            events[i] = ScaleStruct.IssuingEvent({
                 index: data.decodeBytesN(2).toBytes2(0),
                 sender: decodeEthereumAddress(data),
                 recipient: decodeEthereumAddress(data),

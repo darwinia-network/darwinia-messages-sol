@@ -4,7 +4,6 @@ pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/proxy/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./common/Scale.sol";
@@ -100,11 +99,11 @@ contract Backing is Initializable, Ownable {
 
         Input.Data memory data = Input.from(relay.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, storageKey));
         
-        ScaleStruct.TokenBurnEvent[] memory events = Scale.decodeTokenBurnEvent(data);
+        ScaleStruct.IssuingEvent[] memory events = Scale.decodeIssuingEvent(data);
 
         uint256 len = events.length;
         for( uint i = 0; i < len; i++ ) {
-          ScaleStruct.TokenBurnEvent memory item = events[i];
+          ScaleStruct.IssuingEvent memory item = events[i];
           if (item.eventType == 1) {
               processRedeemEvent(item);
           } else if (item.eventType == 0) {
@@ -116,7 +115,7 @@ contract Backing is Initializable, Ownable {
         emit VerifyProof(blockNumber);
     }
 
-    function processRedeemEvent(ScaleStruct.TokenBurnEvent memory item) internal {
+    function processRedeemEvent(ScaleStruct.IssuingEvent memory item) internal {
         uint256 value = item.value;
         address token = item.token;
         address target = item.target;
@@ -132,7 +131,7 @@ contract Backing is Initializable, Ownable {
         }
     }
 
-    function processRegisterResponse(ScaleStruct.TokenBurnEvent memory item) internal {
+    function processRegisterResponse(ScaleStruct.IssuingEvent memory item) internal {
         address token = item.token;
         require(assets[token].timestamp != 0, "asset is not existed");
         require(assets[token].target == address(0), "asset has been responsed");

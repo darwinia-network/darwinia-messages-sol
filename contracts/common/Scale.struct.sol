@@ -11,7 +11,7 @@ library ScaleStruct {
         uint128 value;
     }
 
-    struct TokenBurnEvent {
+    struct IssuingEvent {
         bytes2 index;
         address sender;
         address payable recipient;
