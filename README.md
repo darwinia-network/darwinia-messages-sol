@@ -51,6 +51,20 @@ true
 ➜ npx hardhat test test/TestMMRLib.js
 ```
 
+# Addresses On Mainnet
+
+```bash
+"ring": "0x9469d013805bffb7d3debe5e7839237e535ec483", 
+"kton": "0x9f284e1337a815fe77d2ff4ae46544645b20c5ff",
+"gold": "0x358dba28848cca268ba8a76b65e5b3ef9ef92238",
+```
+
+# Addresses On Ropsten
+
+```bash
+"ring": "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0", 
+"kton": "0x1994100c58753793D52c6f457f189aa3ce9cEe94",
+```
 
 ### 计划
 - [x] Merkle Mountain Range
