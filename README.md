@@ -56,7 +56,6 @@ true
 ```bash
 "ring": "0x9469d013805bffb7d3debe5e7839237e535ec483", 
 "kton": "0x9f284e1337a815fe77d2ff4ae46544645b20c5ff",
-"gold": "0x358dba28848cca268ba8a76b65e5b3ef9ef92238",
 ```
 
 # Addresses On Ropsten
