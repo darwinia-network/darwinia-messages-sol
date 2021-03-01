@@ -35,6 +35,30 @@ library Scale {
         return events;
     }
 
+    function decodeTokenBurnEvent(Input.Data memory data)
+        internal
+        pure
+        returns (ScaleStruct.TokenBurnEvent[] memory)
+    {
+        uint32 len = decodeU32(data);
+        ScaleStruct.TokenBurnEvent[] memory events = new ScaleStruct.TokenBurnEvent[](len);
+
+        for(uint i = 0; i < len; i++) {
+            events[i] = ScaleStruct.TokenBurnEvent({
+                index: data.decodeBytesN(2).toBytes2(0),
+                sender: decodeEthereumAddress(data),
+                recipient: decodeEthereumAddress(data),
+                token: decodeEthereumAddress(data),
+                target: decodeEthereumAddress(data),
+                value: decodeBalance(data),
+                eventType: data.decodeU8(),
+                assetType: data.decodeU8()
+            });
+        }
+
+        return events;
+    }
+
     /** Header */
     // export interface Header extends Struct {
     //     readonly parentHash: Hash;
@@ -107,7 +131,7 @@ library Scale {
     function decodeEthereumAddress(Input.Data memory data) 
         internal
         pure
-        returns (address addr) 
+        returns (address payable addr) 
     {
         bytes memory bys = data.decodeBytesN(20);
         assembly {

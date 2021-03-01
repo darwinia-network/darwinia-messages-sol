@@ -10,4 +10,15 @@ library ScaleStruct {
         address token;
         uint128 value;
     }
+
+    struct TokenBurnEvent {
+        bytes2 index;
+        address sender;
+        address payable recipient;
+        address token;
+        address target;
+        uint128 value;
+        uint8 eventType;
+        uint8 assetType;
+    }
 }
