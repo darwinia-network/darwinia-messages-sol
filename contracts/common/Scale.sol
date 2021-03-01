@@ -44,16 +44,32 @@ library Scale {
         ScaleStruct.IssuingEvent[] memory events = new ScaleStruct.IssuingEvent[](len);
 
         for(uint i = 0; i < len; i++) {
-            events[i] = ScaleStruct.IssuingEvent({
-                index: data.decodeBytesN(2).toBytes2(0),
-                sender: decodeEthereumAddress(data),
-                recipient: decodeEthereumAddress(data),
-                token: decodeEthereumAddress(data),
-                target: decodeEthereumAddress(data),
-                value: decodeBalance(data),
-                eventType: data.decodeU8(),
-                assetType: data.decodeU8()
-            });
+            bytes2 index = data.decodeBytesN(2).toBytes2(0);
+            uint8 eventType = data.decodeU8();
+
+            if (eventType == 0) {
+                events[i] = ScaleStruct.IssuingEvent({
+                    index: index,
+                    eventType: eventType,
+                    sender: decodeEthereumAddress(data),
+                    token: decodeEthereumAddress(data),
+                    target: decodeEthereumAddress(data),
+                    assetType: 0,
+                    recipient: address(0),
+                    value: 0
+                });
+            } else if (eventType == 1) {
+                events[i] = ScaleStruct.IssuingEvent({
+                    index: index,
+                    eventType: eventType,
+                    assetType: data.decodeU8(),
+                    sender: decodeEthereumAddress(data),
+                    recipient: decodeEthereumAddress(data),
+                    token: decodeEthereumAddress(data),
+                    target: decodeEthereumAddress(data),
+                    value: decodeBalance(data)
+                });
+            }
         }
 
         return events;
