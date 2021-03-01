@@ -35,17 +35,17 @@ contract WKTON is ERC223 {
     mapping (address => mapping (address => uint)) public allowance;
 
     function deposit(address from, uint256 value) public {
-	    require(msg.sender == KTON_PRECOMPILE, "WKTON: PERMISSION");
-	    totalSupply += value;
+        require(msg.sender == KTON_PRECOMPILE, "WKTON: PERMISSION");
+        totalSupply += value;
         balanceOf[from] += value;
         emit Deposit(from, value);
     }
     function withdraw(bytes32 to, uint wad) public {
         require(balanceOf[msg.sender] >= wad);
-	    totalSupply -= wad;
+        totalSupply -= wad;
         balanceOf[msg.sender] -= wad;
-	    bool success = KTON_PRECOMPILE.call(bytes4(keccak256("withdraw(bytes32,uint256)")), to, wad);
-	    require(success, "WKTON: WITHDRAW_FAILED");
+        bool success = KTON_PRECOMPILE.call(bytes4(keccak256("withdraw(bytes32,uint256)")), to, wad);
+        require(success, "WKTON: WITHDRAW_FAILED");
         emit Withdrawal(to, wad);
     }
 
