@@ -38,6 +38,7 @@ contract WKTON is ERC223 {
         require(msg.sender == KTON_PRECOMPILE, "WKTON: PERMISSION");
         totalSupply += value;
         balanceOf[from] += value;
+        emit Transfer(address(0), from, value);
         emit Deposit(from, value);
     }
     function withdraw(bytes32 to, uint wad) public {
@@ -46,6 +47,7 @@ contract WKTON is ERC223 {
         balanceOf[msg.sender] -= wad;
         bool success = KTON_PRECOMPILE.call(bytes4(keccak256("withdraw(bytes32,uint256)")), to, wad);
         require(success, "WKTON: WITHDRAW_FAILED");
+        emit Transfer(msg.sender, address(0), wad);
         emit Withdrawal(to, wad);
     }
 
