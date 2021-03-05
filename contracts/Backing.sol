@@ -33,7 +33,7 @@ contract Backing is Initializable, Ownable {
     mapping(address => BridgerInfo) private assets;
     mapping(uint32 => address) public history;
 
-    event NewTokenRegisted(address indexed token, uint256 timestamp);
+    event NewTokenRegisted(address indexed token, string name, string symbol, uint8 decimals);
     event BackingLock(address indexed token, uint256 amount, address receiver);
     event VerifyProof(uint32 blocknumber);
     event RegistCompleted(address sender, address token, address target);
@@ -49,10 +49,15 @@ contract Backing is Initializable, Ownable {
         storageKey = key;
     }
 
-    function registerToken(address token) external {
+    function registerToken(address token, string memory name, string memory symbol, uint8 decimals) external {
         require(assets[token].timestamp == 0, "asset has been registed");
         assets[token] = BridgerInfo(address(0), block.timestamp);
-        emit NewTokenRegisted(token, block.timestamp);
+        emit NewTokenRegisted(
+            token,
+            name,
+            symbol,
+            decimals
+        );
     }
 
     function crossSendToken(address token, address recipient, uint256 amount) external {
