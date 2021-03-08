@@ -34,7 +34,7 @@ contract Backing is Initializable, Ownable {
     mapping(uint32 => address) public history;
 
     event NewTokenRegisted(address indexed token, string name, string symbol, uint8 decimals);
-    event BackingLock(address indexed token, uint256 amount, address receiver);
+    event BackingLock(address indexed token, address target, uint256 amount, address receiver);
     event VerifyProof(uint32 blocknumber);
     event RegistCompleted(address sender, address token, address target);
     event RedeemTokenEvent(address sender, address token, address target, address receipt, uint256 amount);
@@ -64,14 +64,14 @@ contract Backing is Initializable, Ownable {
         require(amount > 0, "balance is zero");
         require(assets[token].target != address(0), "asset has not been registed");
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        emit BackingLock(token, amount, recipient);
+        emit BackingLock(token, assets[token].target, amount, recipient);
     }
 
     function crossSendETH(address recipient) external payable {
         require(msg.value > 0, "balance cannot be zero");
         require(assets[weth].target != address(0), "weth has not been registed");
         IWETH(weth).deposit{value: msg.value}();
-        emit BackingLock(weth, msg.value, recipient);
+        emit BackingLock(weth, assets[weth].target, msg.value, recipient);
     }
 
     function crossChainSync(
