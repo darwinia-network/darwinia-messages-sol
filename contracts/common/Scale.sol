@@ -54,7 +54,6 @@ library Scale {
                     backing: decodeEthereumAddress(data),
                     token: decodeEthereumAddress(data),
                     target: decodeEthereumAddress(data),
-                    assetType: 0,
                     recipient: address(0),
                     value: 0
                 });
@@ -62,7 +61,6 @@ library Scale {
                 events[i] = ScaleStruct.IssuingEvent({
                     index: index,
                     eventType: eventType,
-                    assetType: data.decodeU8(),
                     backing: decodeEthereumAddress(data),
                     recipient: decodeEthereumAddress(data),
                     token: decodeEthereumAddress(data),

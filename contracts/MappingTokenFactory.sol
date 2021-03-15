@@ -4,12 +4,18 @@ pragma solidity ^0.6.0;
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
 import "./common/Ownable.sol";
+import "./interfaces/IERC20.sol";
 
 contract MappingTokenFactory is Initializable, Ownable {
-    address public constant REGISTER_PRECOMPILE = 0x0000000000000000000000000000000000000016;
+    address public constant ISSUING_PRECOMPILE = 0x0000000000000000000000000000000000000016;
+    struct TokenInfo {
+        address backing;
+        address source;
+    }
     address public admin;
     address[] public allTokens;
     mapping(bytes32 => address payable) public tokenMap;
+    mapping(address => TokenInfo) public tokenToInfo;
     mapping(string => address) public logic;
 
     string constant LOGIC_ERC20 = "erc20";
@@ -49,18 +55,17 @@ contract MappingTokenFactory is Initializable, Ownable {
         require(tokenMap[salt] == address(0), "contract has been deployed");
         bytes memory bytecode = type(TransparentUpgradeableProxy).creationCode;
         bytes memory erc20initdata = 
-            abi.encodeWithSignature("initialize(string,string,uint8,address,address)",
+            abi.encodeWithSignature("initialize(string,string,uint8)",
                                     name,
                                     symbol,
-                                    decimals,
-                                    backing,
-                                    source);
+                                    decimals);
         bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(logic[LOGIC_ERC20], admin, erc20initdata));
         token = deploy(salt, bytecodeWithInitdata);
-        Ownable(token).transferOwnership(msg.sender);
         tokenMap[salt] = token;
         allTokens.push(token);
-        (bool success, ) = REGISTER_PRECOMPILE.call(abi.encode(backing, source, token));
+        tokenToInfo[token] = TokenInfo(backing, source);
+
+        (bool success, ) = ISSUING_PRECOMPILE.call(abi.encode(backing, source, token));
         require(success, "create: call create erc20 precompile failed");
         emit IssuingERC20Created(msg.sender, backing, source, token);
     }
@@ -72,6 +77,15 @@ contract MappingTokenFactory is Initializable, Ownable {
     function mappingToken(address backing, address source) public view returns (address) {
         bytes32 salt = keccak256(abi.encodePacked(backing, source));
         return tokenMap[salt];
+    }
+
+    function crossTransfer(address token, address recipient, uint256 amount) external {
+        require(amount > 0, "can not transfer amount zero");
+        TokenInfo memory info = tokenToInfo[token];
+        require(info.source != address(0), "token is not created by factory");
+        IERC20(token).burn(msg.sender, amount);
+        (bool success, ) = ISSUING_PRECOMPILE.call(abi.encode(info.backing, info.source, recipient, amount));
+        require(success, "burn: call burn precompile failed");
     }
 }
 

@@ -13,7 +13,6 @@ contract MappingERC20 is IERC20, Ownable, Initializable {
 
     string private constant namePrefix = "darwnia ";
     string private constant symbolPrefix = "d";
-    address public constant BURN_PRECOMPILE = 0x0000000000000000000000000000000000000016;
     mapping (address => uint256) private _balances;
 
     mapping (address => mapping (address => uint256)) private _allowances;
@@ -23,24 +22,18 @@ contract MappingERC20 is IERC20, Ownable, Initializable {
     string private _name;
     string private _symbol;
     uint8 private _decimals;
-    address private _backing;
-    address private _source;
 
     event Burn(address indexed recipient, uint256 amount);
 
     function initialize (
         string memory name,
         string memory symbol,
-        uint8 decimals,
-        address backing,
-        address source
+        uint8 decimals
     ) public initializer {
         ownableConstructor();
         _name = string(abi.encodePacked(namePrefix, name));
         _symbol = string(abi.encodePacked(symbolPrefix, symbol));
         _decimals = decimals;
-        _backing = backing;
-        _source = source;
     }
 
     function name() public view returns (string memory) {
@@ -53,14 +46,6 @@ contract MappingERC20 is IERC20, Ownable, Initializable {
 
     function decimals() public view returns (uint8) {
         return _decimals;
-    }
-
-    function backing() public view returns (address) {
-        return _backing;
-    }
-
-    function source() public view returns (address) {
-        return _source;
     }
 
     function totalSupply() public view override returns (uint256) {
@@ -112,16 +97,14 @@ contract MappingERC20 is IERC20, Ownable, Initializable {
         emit Transfer(sender, recipient, amount);
     }
 
+    // only factory contract can mint with the lock proof from ethereum
     function mint(address account, uint256 amount) external onlyOwner {
         _mint(account, amount);
     }
 
-    function transferToSource(address recipient, uint256 amount, bool is_native) external {
-        require(amount > 0, "can not transfer amount zero");
-        _burn(msg.sender, amount);
-        (bool success, ) = BURN_PRECOMPILE.call(abi.encode(_backing, _source, recipient, amount, is_native));
-        require(success, "burn: call burn precompile failed");
-        emit Burn(recipient, amount);
+    // only factory contract can burn with the authority from users
+    function burn(address account, uint256 amount) external onlyOwner {
+        _burn(account, amount);
     }
 
     function _mint(address account, uint256 amount) internal virtual {
