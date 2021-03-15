@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./common/Scale.sol";
 import "./common/Ownable.sol";
 import { ScaleStruct } from "./common/Scale.struct.sol";
-import "./interfaces/IWETH.sol";
 import "./interfaces/IRelay.sol";
 import "./interfaces/IERC20Option.sol";
 
@@ -92,11 +91,11 @@ contract Backing is Initializable, Ownable {
         bytes32[] memory peaks,
         bytes32[] memory siblings,
         bytes memory eventsProofStr
-    ) public {
+    ) public returns(ScaleStruct.IssuingEvent[] memory) {
         if(relay.getMMRRoot(MMRIndex) == bytes32(0)) {
             relay.appendRoot(message, signatures);
         }
-        verifyProof(root, MMRIndex, blockHeader, peaks, siblings, eventsProofStr);
+        return verifyProof(root, MMRIndex, blockHeader, peaks, siblings, eventsProofStr);
     }
 
     // This function is called by crossChainSync
@@ -108,7 +107,7 @@ contract Backing is Initializable, Ownable {
         bytes32[] memory peaks,
         bytes32[] memory siblings,
         bytes memory eventsProofStr
-    ) public {
+    ) public returns(ScaleStruct.IssuingEvent[] memory) {
         uint32 blockNumber = Scale.decodeBlockNumberFromBlockHeader(blockHeader);
 
         require(history[blockNumber] == address(0), "TokenBacking:: verifyProof:  The block has been verified");
@@ -137,8 +136,9 @@ contract Backing is Initializable, Ownable {
         address target = item.target;
         require(assets[token].target == target, "the mapped address uncorrect");
         require(item.backing == address(this), "not the expected backing");
-        IERC20(token).safeTransfer(item.recipient, value);
-        emit RedeemTokenEvent(token, target, item.recipient, value);
+        address receiver = (item.delegator == address(0) ? item.recipient : item.delegator);
+        IERC20(token).safeTransfer(receiver, value);
+        emit RedeemTokenEvent(token, target, receiver, value);
     }
 
     function processRegisterResponse(ScaleStruct.IssuingEvent memory item) internal {

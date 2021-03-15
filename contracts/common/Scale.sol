@@ -55,6 +55,7 @@ library Scale {
                     token: decodeEthereumAddress(data),
                     target: decodeEthereumAddress(data),
                     recipient: address(0),
+                    delegator: address(0),
                     value: 0
                 });
             } else if (eventType == 1) {
@@ -63,6 +64,7 @@ library Scale {
                     eventType: eventType,
                     backing: decodeEthereumAddress(data),
                     recipient: decodeEthereumAddress(data),
+                    delegator: decodeEthereumAddress(data),
                     token: decodeEthereumAddress(data),
                     target: decodeEthereumAddress(data),
                     value: decodeBalance(data)
