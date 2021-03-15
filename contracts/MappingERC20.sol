@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "./common/Ownable.sol";
 
-contract IssuingERC20 is IERC20, Ownable, Initializable {
+contract MappingERC20 is IERC20, Ownable, Initializable {
     using SafeMath for uint256;
     using Address for address;
 
