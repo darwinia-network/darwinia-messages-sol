@@ -29,12 +29,12 @@ contract Backing is Initializable, Ownable {
     //uint256 public registerFee = 0;
     IRelay public relay;
     address public weth;
-    bytes public storageKey;
+    bytes public substrateEventStorageKey;
 
     mapping(address => BridgerInfo) public assets;
     mapping(uint32 => address) public history;
 
-    event NewTokenRegisted(address indexed token, string name, string symbol, uint8 decimals);
+    event NewTokenRegistered(address indexed token, string name, string symbol, uint8 decimals);
     event BackingLock(address indexed token, address target, uint256 amount, address receiver);
     event VerifyProof(uint32 blocknumber);
     event RegistCompleted(address token, address target);
@@ -47,17 +47,17 @@ contract Backing is Initializable, Ownable {
     }
 
     function setStorageKey(bytes memory key) external onlyOwner {
-        storageKey = key;
+        substrateEventStorageKey = key;
     }
 
     function registerToken(address token) external {
-        require(assets[token].timestamp == 0, "asset has been registed");
+        require(assets[token].timestamp == 0, "asset has been registered");
         assets[token] = BridgerInfo(address(0), block.timestamp);
 
         string memory name = IERC20Option(token).name();
         string memory symbol = IERC20Option(token).symbol();
         uint8 decimals = IERC20Option(token).decimals();
-        emit NewTokenRegisted(
+        emit NewTokenRegistered(
             token,
             name,
             symbol,
@@ -67,14 +67,14 @@ contract Backing is Initializable, Ownable {
 
     function crossSendToken(address token, address recipient, uint256 amount) external {
         require(amount > 0, "balance is zero");
-        require(assets[token].target != address(0), "asset has not been registed");
+        require(assets[token].target != address(0), "asset has not been registered");
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         emit BackingLock(token, assets[token].target, amount, recipient);
     }
 
     function crossSendETH(address recipient) external payable {
         require(msg.value > 0, "balance cannot be zero");
-        require(assets[weth].target != address(0), "weth has not been registed");
+        require(assets[weth].target != address(0), "weth has not been registered");
         IWETH(weth).deposit{value: msg.value}();
         emit BackingLock(weth, assets[weth].target, msg.value, recipient);
     }
@@ -107,7 +107,7 @@ contract Backing is Initializable, Ownable {
 
         require(history[blockNumber] == address(0), "TokenBacking:: verifyProof:  The block has been verified");
 
-        Input.Data memory data = Input.from(relay.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, storageKey));
+        Input.Data memory data = Input.from(relay.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, substrateEventStorageKey));
         
         ScaleStruct.IssuingEvent[] memory events = Scale.decodeIssuingEvent(data);
 
