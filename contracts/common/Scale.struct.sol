@@ -13,12 +13,12 @@ library ScaleStruct {
 
     struct IssuingEvent {
         bytes2 index;
+        uint8 eventType;
+        uint8 assetType;
         address sender;
         address payable recipient;
         address token;
         address target;
         uint128 value;
-        uint8 eventType;
-        uint8 assetType;
     }
 }
