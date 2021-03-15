@@ -11,6 +11,7 @@ import "./common/Ownable.sol";
 import { ScaleStruct } from "./common/Scale.struct.sol";
 import "./interfaces/IWETH.sol";
 import "./interfaces/IRelay.sol";
+import "./interfaces/IERC20Option.sol";
 
 contract Backing is Initializable, Ownable {
     using SafeMath for uint256;
@@ -30,14 +31,14 @@ contract Backing is Initializable, Ownable {
     address public weth;
     bytes public storageKey;
 
-    mapping(address => BridgerInfo) private assets;
+    mapping(address => BridgerInfo) public assets;
     mapping(uint32 => address) public history;
 
     event NewTokenRegisted(address indexed token, string name, string symbol, uint8 decimals);
     event BackingLock(address indexed token, address target, uint256 amount, address receiver);
     event VerifyProof(uint32 blocknumber);
-    event RegistCompleted(address sender, address token, address target);
-    event RedeemTokenEvent(address sender, address token, address target, address receipt, uint256 amount);
+    event RegistCompleted(address token, address target);
+    event RedeemTokenEvent(address token, address target, address receipt, uint256 amount);
 
     function initialize(address _relay, address _weth) public initializer {
         ownableConstructor();
@@ -49,9 +50,13 @@ contract Backing is Initializable, Ownable {
         storageKey = key;
     }
 
-    function registerToken(address token, string memory name, string memory symbol, uint8 decimals) external {
+    function registerToken(address token) external {
         require(assets[token].timestamp == 0, "asset has been registed");
         assets[token] = BridgerInfo(address(0), block.timestamp);
+
+        string memory name = IERC20Option(token).name();
+        string memory symbol = IERC20Option(token).symbol();
+        uint8 decimals = IERC20Option(token).decimals();
         emit NewTokenRegisted(
             token,
             name,
@@ -124,25 +129,26 @@ contract Backing is Initializable, Ownable {
         uint256 value = item.value;
         address token = item.token;
         address target = item.target;
-        if (assets[token].target == target) {
-            // assetType == 0: native, 1: token
-            if (token == weth && item.assetType == 0) {
-                IWETH(weth).withdraw(value);
-                item.recipient.transfer(value);
-            } else {
-                IERC20(token).safeTransfer(item.recipient, value);
-            }
-            emit RedeemTokenEvent(item.sender, token, target, item.recipient, value);
+        require(assets[token].target == target, "the mapped address uncorrect");
+        require(item.backing == address(this), "not the expected backing");
+        // assetType == 0: native, 1: token
+        if (token == weth && item.assetType == 0) {
+            IWETH(weth).withdraw(value);
+            item.recipient.transfer(value);
+        } else {
+            IERC20(token).safeTransfer(item.recipient, value);
         }
+        emit RedeemTokenEvent(token, target, item.recipient, value);
     }
 
     function processRegisterResponse(ScaleStruct.IssuingEvent memory item) internal {
         address token = item.token;
         require(assets[token].timestamp != 0, "asset is not existed");
         require(assets[token].target == address(0), "asset has been responsed");
+        require(item.backing == address(this), "not the expected backing");
         address target = item.target;
         assets[token].target = target;
-        emit RegistCompleted(item.sender, token, target);
+        emit RegistCompleted(token, target);
     }
 }
 
