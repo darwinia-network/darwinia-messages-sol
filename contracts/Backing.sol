@@ -22,13 +22,8 @@ contract Backing is Initializable, Ownable {
         uint256 timestamp;
     }
 
-    receive() external payable {
-        assert(msg.sender == weth);
-    }
-
     //uint256 public registerFee = 0;
     IRelay public relay;
-    address public weth;
     bytes public substrateEventStorageKey;
 
     mapping(address => BridgerInfo) public assets;
@@ -40,10 +35,9 @@ contract Backing is Initializable, Ownable {
     event RegistCompleted(address token, address target);
     event RedeemTokenEvent(address token, address target, address receipt, uint256 amount);
 
-    function initialize(address _relay, address _weth) public initializer {
+    function initialize(address _relay) public initializer {
         ownableConstructor();
         relay = IRelay(_relay);
-        weth = _weth;
     }
 
     function setStorageKey(bytes memory key) external onlyOwner {
@@ -72,13 +66,23 @@ contract Backing is Initializable, Ownable {
         emit BackingLock(token, assets[token].target, amount, recipient);
     }
 
-    function crossSendETH(address recipient) external payable {
-        require(msg.value > 0, "balance cannot be zero");
-        require(assets[weth].target != address(0), "weth has not been registered");
-        IWETH(weth).deposit{value: msg.value}();
-        emit BackingLock(weth, assets[weth].target, msg.value, recipient);
-    }
+    // This function receives two kind of event proof from darwinia
+    // One is token register response proof, and use it to confirm the mapped contract address on darwinia
+    // the other is token burn event proof from darwinia, and use it to redeem asset locked on ethereum
+    // it use relay contract to proof the event and it's block. 
+    // So if the mmr root has not been appended to relay. we must append it first.
+    // Once the event is proved valid. We decode it and `save the mapped address`/`unlock users token`
 
+    // params:
+    // message - bytes3 prefix + uint32 mmr-index + bytes32 mmr-root
+    // signatures - the signatures for mmr-root message
+    // root - mmr root for the block
+    // MMRIndex - mmr index of the block
+    // blockNumber, blockHeader - The block where the event occured on darwinia network
+    // can be fetched by api.rpc.chain.getHeader('block hash') 
+    // peaks, siblings - mmr proof for the blockNumber, like a merkle proof
+    // eventsProofStr - mpt proof for events Vec<Vec<u8>> encoded by Scale codec
+    // Notes: params can be getted by bridger's[https://github.com/darwinia-network/bridger] command `info-d2e`
     function crossChainSync(
         bytes memory message,
         bytes[] memory signatures,
@@ -95,6 +99,8 @@ contract Backing is Initializable, Ownable {
         verifyProof(root, MMRIndex, blockHeader, peaks, siblings, eventsProofStr);
     }
 
+    // This function is called by crossChainSync
+    // or you can call it directly if the mmr root has been appended to relay
     function verifyProof(
         bytes32 root,
         uint32 MMRIndex,
@@ -131,13 +137,7 @@ contract Backing is Initializable, Ownable {
         address target = item.target;
         require(assets[token].target == target, "the mapped address uncorrect");
         require(item.backing == address(this), "not the expected backing");
-        // assetType == 0: native, 1: token
-        if (token == weth && item.assetType == 0) {
-            IWETH(weth).withdraw(value);
-            item.recipient.transfer(value);
-        } else {
-            IERC20(token).safeTransfer(item.recipient, value);
-        }
+        IERC20(token).safeTransfer(item.recipient, value);
         emit RedeemTokenEvent(token, target, item.recipient, value);
     }
 
