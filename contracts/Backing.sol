@@ -21,7 +21,9 @@ contract Backing is Initializable, Ownable {
         uint256 timestamp;
     }
 
-    //uint256 public registerFee = 0;
+    uint256 public registerFee = 0;
+    uint256 public feeReserved = 0;
+    address feeToken;
     IRelay public relay;
     bytes public substrateEventStorageKey;
 
@@ -34,9 +36,10 @@ contract Backing is Initializable, Ownable {
     event RegistCompleted(address token, address target);
     event RedeemTokenEvent(address token, address target, address receipt, uint256 amount);
 
-    function initialize(address _relay) public initializer {
+    function initialize(address _relay, address _feeToken) public initializer {
         ownableConstructor();
         relay = IRelay(_relay);
+        feeToken = _feeToken;
     }
 
     function setStorageKey(bytes memory key) external onlyOwner {
@@ -45,6 +48,10 @@ contract Backing is Initializable, Ownable {
 
     function registerToken(address token) external {
         require(assets[token].timestamp == 0, "asset has been registered");
+        if (registerFee > 0) {
+            IERC20(feeToken).safeTransferFrom(msg.sender, address(this), registerFee);
+            feeReserved += registerFee;
+        }
         assets[token] = BridgerInfo(address(0), block.timestamp);
 
         string memory name = IERC20Option(token).name();
@@ -128,6 +135,7 @@ contract Backing is Initializable, Ownable {
 
         history[blockNumber] = msg.sender;
         emit VerifyProof(blockNumber);
+        return events;
     }
 
     function processRedeemEvent(ScaleStruct.IssuingEvent memory item) internal {
@@ -149,6 +157,17 @@ contract Backing is Initializable, Ownable {
         address target = item.target;
         assets[token].target = target;
         emit RegistCompleted(token, target);
+    }
+
+    function setRegisterFee(uint256 fee) external onlyOwner {
+        registerFee = fee;
+    }
+
+    function claimFee() external onlyOwner {
+        uint256 balance = IERC20(feeToken).balanceOf(address(this));
+        require(balance >= feeReserved && feeReserved > 0, "balance invalid");
+        IERC20(feeToken).safeTransfer(msg.sender, feeReserved);
+        feeReserved = 0;
     }
 }
 

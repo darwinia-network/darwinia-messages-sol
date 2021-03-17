@@ -79,12 +79,19 @@ contract MappingTokenFactory is Initializable, Ownable {
         return tokenMap[salt];
     }
 
-    function crossTransfer(address token, address recipient, uint256 amount) external {
+    function crossReceive(address token, address recipient, uint256 amount) external onlyOwner {
+        require(amount > 0, "can not receive amount zero");
+        TokenInfo memory info = tokenToInfo[token];
+        require(info.source != address(0), "token is not created by factory");
+        IERC20(token).mint(recipient, amount);
+    }
+
+    function crossTransfer(address token, address recipient, address delegator, uint256 amount) external {
         require(amount > 0, "can not transfer amount zero");
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
         IERC20(token).burn(msg.sender, amount);
-        (bool success, ) = ISSUING_PRECOMPILE.call(abi.encode(info.backing, info.source, recipient, amount));
+        (bool success, ) = ISSUING_PRECOMPILE.call(abi.encode(info.backing, info.source, recipient, delegator, amount));
         require(success, "burn: call burn precompile failed");
     }
 }
