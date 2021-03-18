@@ -67,7 +67,7 @@ library Scale {
                     delegator: decodeEthereumAddress(data),
                     token: decodeEthereumAddress(data),
                     target: decodeEthereumAddress(data),
-                    value: decodeBalance(data)
+                    value: decode256Balance(data)
                 });
             }
         }
@@ -163,6 +163,23 @@ library Scale {
     {
         bytes memory balance = data.decodeBytesN(16);
         return uint128(reverseBytes16(balance.toBytes16(0)));
+    }
+
+    // decode 256bit Balance
+    function decode256Balance(Input.Data memory data)
+        internal
+        pure
+        returns (uint256)
+    {
+        bytes32 v = data.decodeBytes32();
+        bytes16[2] memory split = [bytes16(0), 0];
+        assembly {
+            mstore(split, v)
+            mstore(add(split, 16), v)
+        }
+        uint256 heigh = uint256(uint128(reverseBytes16(split[1]))) << 128;
+        uint256 low = uint256(uint128(reverseBytes16(split[0])));
+        return heigh + low;
     }
 
     // decode darwinia network account Id

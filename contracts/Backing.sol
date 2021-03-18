@@ -119,9 +119,7 @@ contract Backing is Initializable, Ownable {
 
         require(history[blockNumber] == address(0), "TokenBacking:: verifyProof:  The block has been verified");
 
-        Input.Data memory data = Input.from(relay.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, substrateEventStorageKey));
-        
-        ScaleStruct.IssuingEvent[] memory events = Scale.decodeIssuingEvent(data);
+        ScaleStruct.IssuingEvent[] memory events = getIssuingEvent(root, MMRIndex, blockHeader, peaks, siblings, eventsProofStr, blockNumber);
 
         uint256 len = events.length;
         for( uint i = 0; i < len; i++ ) {
@@ -136,6 +134,19 @@ contract Backing is Initializable, Ownable {
         history[blockNumber] = msg.sender;
         emit VerifyProof(blockNumber);
         return events;
+    }
+
+    function getIssuingEvent(
+        bytes32 root,
+        uint32 MMRIndex,
+        bytes memory blockHeader,
+        bytes32[] memory peaks,
+        bytes32[] memory siblings,
+        bytes memory eventsProofStr,
+        uint32 blockNumber
+    ) public view returns(ScaleStruct.IssuingEvent[] memory) {
+        Input.Data memory data = Input.from(relay.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, substrateEventStorageKey));
+        return Scale.decodeIssuingEvent(data);
     }
 
     function processRedeemEvent(ScaleStruct.IssuingEvent memory item) internal {

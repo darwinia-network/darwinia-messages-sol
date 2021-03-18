@@ -4,6 +4,7 @@ pragma solidity ^0.6.0;
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./interfaces/IWETH.sol";
+import "./common/Scale.sol";
 import { ScaleStruct } from "./common/Scale.struct.sol";
 
 pragma experimental ABIEncoderV2;
@@ -23,6 +24,16 @@ interface IBacking {
         address token,
         address recipient,
         uint256 amount) external;
+    function history(uint32 blockNumber) external returns(address);
+    function getIssuingEvent(
+        bytes32 root,
+        uint32 MMRIndex,
+        bytes memory blockHeader,
+        bytes32[] memory peaks,
+        bytes32[] memory siblings,
+        bytes memory eventsProofStr,
+        uint32 blockNumber
+    ) external view returns(ScaleStruct.IssuingEvent[] memory);
 }
 
 contract BackingHelper {
@@ -31,6 +42,7 @@ contract BackingHelper {
 
     address public weth;
     address public backing;
+    mapping(uint32 => address) public history;
 
     event RedeemTokenEvent(address token, address recipient, uint256 value);
 
@@ -46,6 +58,10 @@ contract BackingHelper {
     function crossSendETH(address recipient) external payable {
         require(msg.value > 0, "balance cannot be zero");
         IWETH(weth).deposit{value: msg.value}();
+        uint256 approved = IWETH(weth).allowance(address(this), backing);
+        if (approved <= 0) {
+            IWETH(weth).approve(backing, uint256(-1));
+        }
         IBacking(backing).crossSendToken(weth, recipient, msg.value);
     }
 
@@ -59,15 +75,23 @@ contract BackingHelper {
         bytes32[] memory siblings,
         bytes memory eventsProofStr
     ) external {
-        ScaleStruct.IssuingEvent[] memory events = IBacking(backing).crossChainSync(
-            message,
-            signatures,
-            root,
-            MMRIndex,
-            blockHeader,
-            peaks,
-            siblings,
-            eventsProofStr);
+        uint32 blockNumber = Scale.decodeBlockNumberFromBlockHeader(blockHeader);
+        require(history[blockNumber] == address(0), "BackingHelper::redeem: The block has been redeemed");
+        address sender = IBacking(backing).history(blockNumber);
+        ScaleStruct.IssuingEvent[] memory events;
+        if (sender != address(0)) {
+            events = IBacking(backing).getIssuingEvent(root, MMRIndex, blockHeader, peaks, siblings, eventsProofStr, blockNumber);
+        } else {
+            events = IBacking(backing).crossChainSync(
+                message,
+                signatures,
+                root,
+                MMRIndex,
+                blockHeader,
+                peaks,
+                siblings,
+                eventsProofStr);
+        }
         uint256 len = events.length;
         for( uint i = 0; i < len; i++) {
             ScaleStruct.IssuingEvent memory item = events[i];
@@ -81,6 +105,7 @@ contract BackingHelper {
                 emit RedeemTokenEvent(item.token, item.recipient, item.value);
             }
         }
+        history[blockNumber] = msg.sender;
     }
 }
  

@@ -19,6 +19,6 @@ library ScaleStruct {
         address payable delegator;
         address token;
         address target;
-        uint128 value;
+        uint256 value;
     }
 }
