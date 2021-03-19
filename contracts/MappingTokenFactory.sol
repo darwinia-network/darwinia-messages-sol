@@ -7,7 +7,7 @@ import "./common/Ownable.sol";
 import "./interfaces/IERC20.sol";
 
 contract MappingTokenFactory is Initializable, Ownable {
-    address public constant ISSUING_PRECOMPILE = 0x0000000000000000000000000000000000000016;
+    address public constant ISSUING_PRECOMPILE = 0x0000000000000000000000000000000000000017;
     struct TokenInfo {
         address backing;
         address source;
