@@ -9,6 +9,11 @@ import { ScaleStruct } from "./common/Scale.struct.sol";
 
 pragma experimental ABIEncoderV2;
 
+struct Fee {
+    address token;
+    uint256 fee;
+}
+
 interface IBacking {
     function crossChainSync(
         bytes memory message,
@@ -34,6 +39,7 @@ interface IBacking {
         bytes memory eventsProofStr,
         uint32 blockNumber
     ) external view returns(ScaleStruct.IssuingEvent[] memory);
+    function transferFee() external view returns(Fee memory);
 }
 
 contract BackingHelper {
@@ -49,18 +55,25 @@ contract BackingHelper {
     constructor (address _weth, address _backing) public {
         weth = _weth;
         backing = _backing;
+        increaseAllowance();
     }
 
     receive() external payable {
         assert(msg.sender == weth);
     }
 
+    function increaseAllowance() public {
+        IWETH(weth).approve(backing, uint256(-1));
+        Fee memory fee = IBacking(backing).transferFee();
+        IERC20(fee.token).approve(backing, uint256(-1));
+    }
+
     function crossSendETH(address recipient) external payable {
         require(msg.value > 0, "balance cannot be zero");
         IWETH(weth).deposit{value: msg.value}();
-        uint256 approved = IWETH(weth).allowance(address(this), backing);
-        if (approved <= 0) {
-            IWETH(weth).approve(backing, uint256(-1));
+        Fee memory fee = IBacking(backing).transferFee();
+        if (fee.fee > 0) {
+            IERC20(fee.token).safeTransferFrom(msg.sender, address(this), fee.fee);
         }
         IBacking(backing).crossSendToken(weth, recipient, msg.value);
     }
