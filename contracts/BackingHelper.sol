@@ -3,6 +3,7 @@ pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./WETH.sol";
 import "./interfaces/IWETH.sol";
 import "./common/Scale.sol";
 import { ScaleStruct } from "./common/Scale.struct.sol";
@@ -42,40 +43,34 @@ interface IBacking {
     function transferFee() external view returns(Fee memory);
 }
 
-contract BackingHelper {
+contract BackingHelper is WETH9 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    address public weth;
     address public backing;
     mapping(uint32 => address) public history;
 
     event RedeemTokenEvent(address token, address recipient, uint256 value);
 
-    constructor (address _weth, address _backing) public {
-        weth = _weth;
+    constructor (address _backing) public {
         backing = _backing;
         increaseAllowance();
     }
 
-    receive() external payable {
-        assert(msg.sender == weth);
-    }
-
     function increaseAllowance() public {
-        IWETH(weth).approve(backing, uint256(-1));
+        allowance[address(this)][backing] = uint256(-1);
         Fee memory fee = IBacking(backing).transferFee();
         IERC20(fee.token).approve(backing, uint256(-1));
     }
 
     function crossSendETH(address recipient) external payable {
         require(msg.value > 0, "balance cannot be zero");
-        IWETH(weth).deposit{value: msg.value}();
+        balanceOf[address(this)] += msg.value;
         Fee memory fee = IBacking(backing).transferFee();
         if (fee.fee > 0) {
             IERC20(fee.token).safeTransferFrom(msg.sender, address(this), fee.fee);
         }
-        IBacking(backing).crossSendToken(weth, recipient, msg.value);
+        IBacking(backing).crossSendToken(address(this), recipient, msg.value);
     }
 
     function redeem(
@@ -108,12 +103,11 @@ contract BackingHelper {
         uint256 len = events.length;
         for( uint i = 0; i < len; i++) {
             ScaleStruct.IssuingEvent memory item = events[i];
-            if (item.eventType == 1 && item.delegator == address(this)) {
-                if (item.token == weth) {
-                    IWETH(weth).withdraw(item.value);
+            if (item.eventType == 1) {
+                if (item.token == address(this)) {
+                    require(balanceOf[item.recipient] >= item.value);
+                    balanceOf[item.recipient] -= item.value;
                     item.recipient.transfer(item.value);
-                } else {
-                    IERC20(item.token).safeTransfer(item.recipient, item.value);
                 }
                 emit RedeemTokenEvent(item.token, item.recipient, item.value);
             }

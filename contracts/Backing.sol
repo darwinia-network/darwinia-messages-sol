@@ -173,9 +173,8 @@ contract Backing is Initializable, Ownable {
         address target = item.target;
         require(assets[token].target == target, "the mapped address uncorrect");
         require(item.backing == address(this), "not the expected backing");
-        address receiver = (item.delegator == address(0) ? item.recipient : item.delegator);
-        IERC20(token).safeTransfer(receiver, value);
-        emit RedeemTokenEvent(token, target, receiver, value);
+        IERC20(token).safeTransfer(item.recipient, value);
+        emit RedeemTokenEvent(token, target, item.recipient, value);
     }
 
     function processRegisterResponse(ScaleStruct.IssuingEvent memory item) internal {
