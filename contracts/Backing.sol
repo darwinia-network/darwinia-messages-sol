@@ -64,7 +64,8 @@ contract Backing is Initializable, Ownable {
     function registerToken(address token) external {
         require(assets[token].timestamp == 0, "asset has been registered");
         if (registerFee.fee > 0) {
-            IERC20Option(registerFee.token).burn(msg.sender, registerFee.fee);
+            IERC20(registerFee.token).safeTransferFrom(msg.sender, address(this), registerFee.fee);
+            IERC20Option(registerFee.token).burn(address(this), registerFee.fee);
         }
         assets[token] = BridgerInfo(address(0), block.timestamp);
 
@@ -85,7 +86,8 @@ contract Backing is Initializable, Ownable {
         require(assets[token].target != address(0), "asset has not been registered");
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         if (transferFee.fee > 0) {
-            IERC20Option(transferFee.token).burn(msg.sender, transferFee.fee);
+            IERC20(transferFee.token).safeTransferFrom(msg.sender, address(this), transferFee.fee);
+            IERC20Option(transferFee.token).burn(address(this), transferFee.fee);
         }
         emit BackingLock(token, assets[token].target, amount, recipient, transferFee.fee);
     }
