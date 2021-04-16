@@ -35,6 +35,44 @@ library Scale {
         return events;
     }
 
+    function decodeIssuingEvent(Input.Data memory data)
+        internal
+        pure
+        returns (ScaleStruct.IssuingEvent[] memory)
+    {
+        uint32 len = decodeU32(data);
+        ScaleStruct.IssuingEvent[] memory events = new ScaleStruct.IssuingEvent[](len);
+
+        for(uint i = 0; i < len; i++) {
+            bytes2 index = data.decodeBytesN(2).toBytes2(0);
+            uint8 eventType = data.decodeU8();
+
+            if (eventType == 0) {
+                events[i] = ScaleStruct.IssuingEvent({
+                    index: index,
+                    eventType: eventType,
+                    backing: decodeEthereumAddress(data),
+                    token: decodeEthereumAddress(data),
+                    target: decodeEthereumAddress(data),
+                    recipient: address(0),
+                    value: 0
+                });
+            } else if (eventType == 1) {
+                events[i] = ScaleStruct.IssuingEvent({
+                    index: index,
+                    eventType: eventType,
+                    backing: decodeEthereumAddress(data),
+                    recipient: decodeEthereumAddress(data),
+                    token: decodeEthereumAddress(data),
+                    target: decodeEthereumAddress(data),
+                    value: decode256Balance(data)
+                });
+            }
+        }
+
+        return events;
+    }
+
     /** Header */
     // export interface Header extends Struct {
     //     readonly parentHash: Hash;
@@ -107,7 +145,7 @@ library Scale {
     function decodeEthereumAddress(Input.Data memory data) 
         internal
         pure
-        returns (address addr) 
+        returns (address payable addr) 
     {
         bytes memory bys = data.decodeBytesN(20);
         assembly {
@@ -123,6 +161,23 @@ library Scale {
     {
         bytes memory balance = data.decodeBytesN(16);
         return uint128(reverseBytes16(balance.toBytes16(0)));
+    }
+
+    // decode 256bit Balance
+    function decode256Balance(Input.Data memory data)
+        internal
+        pure
+        returns (uint256)
+    {
+        bytes32 v = data.decodeBytes32();
+        bytes16[2] memory split = [bytes16(0), 0];
+        assembly {
+            mstore(split, v)
+            mstore(add(split, 16), v)
+        }
+        uint256 heigh = uint256(uint128(reverseBytes16(split[1]))) << 128;
+        uint256 low = uint256(uint128(reverseBytes16(split[0])));
+        return heigh + low;
     }
 
     // decode darwinia network account Id
