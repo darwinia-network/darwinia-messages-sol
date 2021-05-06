@@ -11,8 +11,9 @@ import "./common/Ownable.sol";
 import { ScaleStruct } from "./common/Scale.struct.sol";
 import "./interfaces/IRelay.sol";
 import "./interfaces/IERC20Option.sol";
+import "./interfaces/IERC20Bytes32Option.sol";
 
-contract Backing is Initializable, Ownable {
+contract Ethereum2DarwiniaBacking is Initializable, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -67,14 +68,7 @@ contract Backing is Initializable, Ownable {
     }
 
     function registerToken(address token) external {
-        require(assets[token].timestamp == 0, "asset has been registered");
-        if (registerFee.fee > 0) {
-            IERC20(registerFee.token).safeTransferFrom(msg.sender, address(this), registerFee.fee);
-            IERC20Option(registerFee.token).burn(address(this), registerFee.fee);
-        }
-        assets[token] = BridgerInfo(address(0), block.timestamp);
-        allAssets.push(token);
-
+        register(token);
         string memory name = IERC20Option(token).name();
         string memory symbol = IERC20Option(token).symbol();
         uint8 decimals = IERC20Option(token).decimals();
@@ -85,6 +79,41 @@ contract Backing is Initializable, Ownable {
             decimals,
             registerFee.fee
         );
+    }
+
+    function registerTokenBytes32(address token) external {
+        register(token);
+        string memory name = string(abi.encodePacked(IERC20Bytes32Option(token).name()));
+        string memory symbol = string(abi.encodePacked(IERC20Bytes32Option(token).symbol()));
+        uint8 decimals = IERC20Option(token).decimals();
+        emit NewTokenRegistered(
+            token,
+            name,
+            symbol,
+            decimals,
+            registerFee.fee
+        );
+    }
+
+    function registerTokenWithName(address token, string memory name, string memory symbol, uint8 decimals) external onlyOwner {
+        register(token);
+        emit NewTokenRegistered(
+            token,
+            name,
+            symbol,
+            decimals,
+            registerFee.fee
+        );
+    }
+
+    function register(address token) internal {
+        require(assets[token].timestamp == 0, "asset has been registered");
+        if (registerFee.fee > 0) {
+            IERC20(registerFee.token).safeTransferFrom(msg.sender, address(this), registerFee.fee);
+            IERC20Option(registerFee.token).burn(address(this), registerFee.fee);
+        }
+        assets[token] = BridgerInfo(address(0), block.timestamp);
+        allAssets.push(token);
     }
 
     function crossSendToken(address token, address recipient, uint256 amount) external {

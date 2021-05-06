@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
 import "./common/Ownable.sol";
 import "./interfaces/IERC20.sol";
 
-contract MappingTokenFactory is Initializable, Ownable {
+contract Ethereum2DarwiniaMappingTokenFactory is Initializable, Ownable {
     address public constant ISSUING_PRECOMPILE = 0x0000000000000000000000000000000000000017;
     struct TokenInfo {
         address backing;
