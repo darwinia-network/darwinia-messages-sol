@@ -27,6 +27,14 @@ contract MappingTokenFactory is Initializable, Ownable {
         ownableConstructor();
     }
 
+    /**
+     * @dev Throws if called by any account other than the system account defined by 0x0 address.
+     */
+    modifier onlySystem() {
+        require(address(0) == msg.sender, "System: caller is not the system account");
+        _;
+    }
+
     function setAdmin(address _admin) external onlyOwner {
         admin = _admin;
     }
@@ -50,7 +58,7 @@ contract MappingTokenFactory is Initializable, Ownable {
         uint8 decimals,
         address backing,
         address source
-    ) external onlyOwner returns (address payable token) {
+    ) external onlySystem returns (address payable token) {
         bytes32 salt = keccak256(abi.encodePacked(backing, source));
         require(tokenMap[salt] == address(0), "contract has been deployed");
         bytes memory bytecode = type(TransparentUpgradeableProxy).creationCode;
@@ -79,7 +87,7 @@ contract MappingTokenFactory is Initializable, Ownable {
         return tokenMap[salt];
     }
 
-    function crossReceive(address token, address recipient, uint256 amount) external onlyOwner {
+    function crossReceive(address token, address recipient, uint256 amount) external onlySystem {
         require(amount > 0, "can not receive amount zero");
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
@@ -91,7 +99,7 @@ contract MappingTokenFactory is Initializable, Ownable {
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
         IERC20(token).burn(msg.sender, amount);
-        (bool success, ) = ISSUING_PRECOMPILE.call(abi.encode(info.backing, info.source, msg.sender, recipient, amount));
+        (bool success, ) = ISSUING_PRECOMPILE.call(abi.encode(info.backing, info.source, recipient, amount));
         require(success, "burn: call burn precompile failed");
     }
 }
