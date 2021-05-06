@@ -24,15 +24,16 @@ contract Backing is Initializable, Ownable {
     IRelay public relay;
     bytes public substrateEventStorageKey;
 
-    mapping(address => BridgerInfo) public assets;
-    mapping(uint32 => address) public history;
-
     struct Fee {
         address token;
         uint256 fee;
     }
     Fee public registerFee;
     Fee public transferFee;
+
+    mapping(address => BridgerInfo) public assets;
+    mapping(uint32 => address) public history;
+    address[] public allAssets;
 
     event NewTokenRegistered(address indexed token, string name, string symbol, uint8 decimals, uint256 fee);
     event BackingLock(address indexed token, address target, uint256 amount, address receiver, uint256 fee);
@@ -61,6 +62,10 @@ contract Backing is Initializable, Ownable {
         transferFee.fee = fee;
     }
 
+    function assetLength() external view returns (uint) {
+        return allAssets.length;
+    }
+
     function registerToken(address token) external {
         require(assets[token].timestamp == 0, "asset has been registered");
         if (registerFee.fee > 0) {
@@ -68,6 +73,7 @@ contract Backing is Initializable, Ownable {
             IERC20Option(registerFee.token).burn(address(this), registerFee.fee);
         }
         assets[token] = BridgerInfo(address(0), block.timestamp);
+        allAssets.push(token);
 
         string memory name = IERC20Option(token).name();
         string memory symbol = IERC20Option(token).symbol();
