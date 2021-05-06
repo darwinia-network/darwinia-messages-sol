@@ -15,6 +15,7 @@ library ScaleStruct {
         bytes2 index;
         uint8 eventType;
         address backing;
+        address sender;
         address payable recipient;
         address token;
         address target;
