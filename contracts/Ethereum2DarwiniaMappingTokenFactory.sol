@@ -99,7 +99,7 @@ contract Ethereum2DarwiniaMappingTokenFactory is Initializable, Ownable {
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
         IERC20(token).burn(msg.sender, amount);
-        (bool success, ) = ISSUING_PRECOMPILE.call(abi.encode(info.backing, info.source, recipient, amount));
+        (bool success, ) = ISSUING_PRECOMPILE.call(abi.encode(info.backing, msg.sender, info.source, recipient, amount));
         require(success, "burn: call burn precompile failed");
     }
 }
