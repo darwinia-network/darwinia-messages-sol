@@ -37,7 +37,7 @@ contract Ethereum2DarwiniaBacking is Initializable, Ownable {
     address[] public allAssets;
 
     event NewTokenRegistered(address indexed token, string name, string symbol, uint8 decimals, uint256 fee);
-    event BackingLock(address indexed sender, address target, uint256 amount, address receiver, uint256 fee);
+    event BackingLock(address indexed sender, address source, address target, uint256 amount, address receiver, uint256 fee);
     event VerifyProof(uint32 blocknumber);
     event RegistCompleted(address token, address target);
     event RedeemTokenEvent(address token, address target, address receipt, uint256 amount);
@@ -124,7 +124,7 @@ contract Ethereum2DarwiniaBacking is Initializable, Ownable {
             IERC20(transferFee.token).safeTransferFrom(msg.sender, address(this), transferFee.fee);
             IERC20Option(transferFee.token).burn(address(this), transferFee.fee);
         }
-        emit BackingLock(msg.sender, assets[token].target, amount, recipient, transferFee.fee);
+        emit BackingLock(msg.sender, token, assets[token].target, amount, recipient, transferFee.fee);
     }
 
     // This function receives two kind of event proof from darwinia
