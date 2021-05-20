@@ -11,8 +11,9 @@ import "./common/Ownable.sol";
 import { ScaleStruct } from "./common/Scale.struct.sol";
 import "./interfaces/IRelay.sol";
 import "./interfaces/IERC20Option.sol";
+import "./interfaces/IERC20Bytes32Option.sol";
 
-contract Backing is Initializable, Ownable {
+contract Ethereum2DarwiniaBacking is Initializable, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -24,9 +25,6 @@ contract Backing is Initializable, Ownable {
     IRelay public relay;
     bytes public substrateEventStorageKey;
 
-    mapping(address => BridgerInfo) public assets;
-    mapping(uint32 => address) public history;
-
     struct Fee {
         address token;
         uint256 fee;
@@ -34,8 +32,12 @@ contract Backing is Initializable, Ownable {
     Fee public registerFee;
     Fee public transferFee;
 
+    mapping(address => BridgerInfo) public assets;
+    mapping(uint32 => address) public history;
+    address[] public allAssets;
+
     event NewTokenRegistered(address indexed token, string name, string symbol, uint8 decimals, uint256 fee);
-    event BackingLock(address indexed token, address target, uint256 amount, address receiver, uint256 fee);
+    event BackingLock(address indexed sender, address source, address target, uint256 amount, address receiver, uint256 fee);
     event VerifyProof(uint32 blocknumber);
     event RegistCompleted(address token, address target);
     event RedeemTokenEvent(address token, address target, address receipt, uint256 amount);
@@ -61,14 +63,12 @@ contract Backing is Initializable, Ownable {
         transferFee.fee = fee;
     }
 
-    function registerToken(address token) external {
-        require(assets[token].timestamp == 0, "asset has been registered");
-        if (registerFee.fee > 0) {
-            IERC20(registerFee.token).safeTransferFrom(msg.sender, address(this), registerFee.fee);
-            IERC20Option(registerFee.token).burn(address(this), registerFee.fee);
-        }
-        assets[token] = BridgerInfo(address(0), block.timestamp);
+    function assetLength() external view returns (uint) {
+        return allAssets.length;
+    }
 
+    function registerToken(address token) external {
+        register(token);
         string memory name = IERC20Option(token).name();
         string memory symbol = IERC20Option(token).symbol();
         uint8 decimals = IERC20Option(token).decimals();
@@ -81,6 +81,41 @@ contract Backing is Initializable, Ownable {
         );
     }
 
+    function registerTokenBytes32(address token) external {
+        register(token);
+        string memory name = string(abi.encodePacked(IERC20Bytes32Option(token).name()));
+        string memory symbol = string(abi.encodePacked(IERC20Bytes32Option(token).symbol()));
+        uint8 decimals = IERC20Option(token).decimals();
+        emit NewTokenRegistered(
+            token,
+            name,
+            symbol,
+            decimals,
+            registerFee.fee
+        );
+    }
+
+    function registerTokenWithName(address token, string memory name, string memory symbol, uint8 decimals) external onlyOwner {
+        register(token);
+        emit NewTokenRegistered(
+            token,
+            name,
+            symbol,
+            decimals,
+            registerFee.fee
+        );
+    }
+
+    function register(address token) internal {
+        require(assets[token].timestamp == 0, "asset has been registered");
+        if (registerFee.fee > 0) {
+            IERC20(registerFee.token).safeTransferFrom(msg.sender, address(this), registerFee.fee);
+            IERC20Option(registerFee.token).burn(address(this), registerFee.fee);
+        }
+        assets[token] = BridgerInfo(address(0), block.timestamp);
+        allAssets.push(token);
+    }
+
     function crossSendToken(address token, address recipient, uint256 amount) external {
         require(amount > 0, "balance is zero");
         require(assets[token].target != address(0), "asset has not been registered");
@@ -89,7 +124,7 @@ contract Backing is Initializable, Ownable {
             IERC20(transferFee.token).safeTransferFrom(msg.sender, address(this), transferFee.fee);
             IERC20Option(transferFee.token).burn(address(this), transferFee.fee);
         }
-        emit BackingLock(token, assets[token].target, amount, recipient, transferFee.fee);
+        emit BackingLock(msg.sender, token, assets[token].target, amount, recipient, transferFee.fee);
     }
 
     // This function receives two kind of event proof from darwinia
