@@ -1,11 +1,8 @@
 {
-  "private": true,
-  "name": "@darwinia/bridge",
-  "workspaces": [
-    "packages/*",
-    "contracts/*"
-  ],
+  "name": "@darwinia/contracts-utils",
   "version": "1.0.0",
+  "description": "Smart contract utils of darwinia",
+  "main": "index.js",
   "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
   "author": "Darwinia dev",
   "license": "MIT"

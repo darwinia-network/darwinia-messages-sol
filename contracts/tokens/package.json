@@ -1,11 +1,8 @@
 {
-  "private": true,
-  "name": "@darwinia/bridge",
-  "workspaces": [
-    "packages/*",
-    "contracts/*"
-  ],
+  "name": "@darwinia/contracts-tokens",
   "version": "1.0.0",
+  "description": "Token contracts used by darwinia",
+  "main": "index.js",
   "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
   "author": "Darwinia dev",
   "license": "MIT"

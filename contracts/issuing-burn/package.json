@@ -1,11 +1,7 @@
 {
-  "private": true,
-  "name": "@darwinia/bridge",
-  "workspaces": [
-    "packages/*",
-    "contracts/*"
-  ],
+  "name": "@darwinia/contracts-issuing-burn",
   "version": "1.0.0",
+  "main": "index.js",
   "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
   "author": "Darwinia dev",
   "license": "MIT"
