@@ -3,10 +3,10 @@ build
 dataDir
 account*.txt
 .vscode
+
 #Hardhat files
 cache
 artifacts
-
 abi
 .DS_Store
 
