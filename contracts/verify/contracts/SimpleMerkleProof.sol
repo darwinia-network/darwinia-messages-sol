@@ -3,11 +3,11 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "./common/Input.sol";
-import "./common/Bytes.sol";
-import "./common/Hash.sol";
-import "./common/Nibble.sol";
-import "./common/Node.sol";
+import "@darwinia/contracts-utils/contracts/Input.sol";
+import "@darwinia/contracts-utils/contracts/Bytes.sol";
+import "@darwinia/contracts-utils/contracts/Hash.sol";
+import "@darwinia/contracts-utils/contracts/Nibble.sol";
+import "@darwinia/contracts-utils/contracts/Node.sol";
 
 /**
  * @dev Simple Verification of compact proofs for Modified Merkle-Patricia tries.

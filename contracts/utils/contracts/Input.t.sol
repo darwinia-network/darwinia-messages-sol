@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.6.0 <0.7.0;
-import "../ds-test/test.sol";
+import "./ds-test/test.sol";
 
 import "./Bytes.sol";
 import "./Input.sol";
@@ -38,6 +38,6 @@ contract InputTest is DSTest {
 
     function testToBytes32Revert() public logs_gas{
         Input.Data memory data = Input.from(hex"0000");
-        bytes32 res = data.decodeBytes32();
+        data.decodeBytes32();
     }
 }

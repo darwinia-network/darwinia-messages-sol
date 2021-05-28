@@ -32,7 +32,7 @@ contract DSTest {
         IS_TEST = true;
     }
 
-    function fail() internal {
+    function fail() internal pure {
         // failed = true;
         revert();
     }

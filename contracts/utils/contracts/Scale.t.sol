@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.6.0 <0.7.0;
-import "../ds-test/test.sol";
+import "./ds-test/test.sol";
 
 import "./Input.sol";
 import "./Scale.sol";
@@ -266,7 +266,7 @@ contract ScaleTest is DSTest {
         bytes memory hexData = hex"10637261629101089f284e1337a815fe77d2ff4ae46544645b20c5ff9469d013805bffb7d3debe5e7839237e535ec483";
         Input.Data memory data = Input.from(hexData);
 
-        (bytes memory prefix, bytes4 methodID, uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
+        (bytes memory prefix, , uint32 index, bytes32 root) = Scale.decodeMMRRoot(data);
 
         assertEq0(prefix, hex"63726162");
         assertEq(uint256(index), 100);

@@ -13,7 +13,7 @@ contract Blake2bTest {
       return bytesToBytes32(instance.finalize(input), 0);
     }
 
-    function getSlice(uint256 begin, uint256 end, bytes memory text) public returns (bytes memory) {
+    function getSlice(uint256 begin, uint256 end, bytes memory text) public pure returns (bytes memory) {
         bytes memory temp = new bytes(end-begin+1);
         for(uint i=0; i <= end-begin; i++){
             temp[i] = text[i+begin];

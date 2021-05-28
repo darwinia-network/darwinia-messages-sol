@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.6.0 <0.7.0;
-import "./ds-test/test.sol";
+import "@darwinia/contracts-utils/contracts/ds-test/test.sol";
 
 import "./SimpleMerkleProof.sol";
 
@@ -44,7 +44,7 @@ contract SimpleMerkleProofTest is DSTest {
 
         bytes[] memory keys = new bytes[](1);
         keys[0] = hex"f8860dda3d08046cf2706b92bf7202eaae7a79191c90e76297e0895605b8b457";
-        bytes[] memory values = new bytes[](1);
+        // bytes[] memory values = new bytes[](1);
         bytes[] memory res = SimpleMerkleProof.verify(root, merkleProof, keys);
         return res[0];
     }

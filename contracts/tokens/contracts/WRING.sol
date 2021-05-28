@@ -15,9 +15,9 @@
 
 pragma solidity >=0.4.23;
 
-import "../interfaces/ApproveAndCallFallBack.sol";
-import "../interfaces/ERC223ReceivingContract.sol";
-import "../interfaces/ERC223.sol";
+import 'evolutionlandcommon/contracts/interfaces/ApproveAndCallFallBack.sol';
+import 'evolutionlandcommon/contracts/interfaces/ERC223ReceivingContract.sol';
+import 'evolutionlandcommon/contracts/interfaces/ERC223.sol';
 
 contract WRING is ERC223 {
     string public name     = "Wrapped RING";

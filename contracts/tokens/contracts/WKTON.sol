@@ -15,14 +15,14 @@
 
 pragma solidity >=0.4.23;
 
-import "../interfaces/ApproveAndCallFallBack.sol";
-import "../interfaces/ERC223ReceivingContract.sol";
-import "../interfaces/ERC223.sol";
+import 'evolutionlandcommon/contracts/interfaces/ApproveAndCallFallBack.sol';
+import 'evolutionlandcommon/contracts/interfaces/ERC223ReceivingContract.sol';
+import 'evolutionlandcommon/contracts/interfaces/ERC223.sol';
 
 contract WKTON is ERC223 {
     string  public name            = "Wrapped KTON";
     string  public symbol          = "WKTON";
-    uint8   public decimals        = 9;
+    uint8   public decimals        = 18;
     address public KTON_PRECOMPILE = 0x0000000000000000000000000000000000000016;
 
     event  Approval(address indexed src, address indexed guy, uint wad);

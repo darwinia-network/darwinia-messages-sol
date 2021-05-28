@@ -24,7 +24,7 @@ contract Issuing is PausableDSAuth {
 
     mapping(address => bool) public supportedTokens;
 
-    constructor(address _registry) {
+    constructor(address _registry) public {
         registry = ISettingsRegistry(_registry);
     }
 

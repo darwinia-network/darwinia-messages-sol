@@ -8,5 +8,21 @@
   "version": "1.0.0",
   "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
   "author": "Darwinia dev",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "wsrun": "wsrun",
+    "build": "wsrun -r --stages --fast-exit --exclude-missing -p $PKG -c build",
+    "build:contracts": "wsrun -p ${npm_package_config_contractsPackages} --fast-exit -r --stages --exclude-missing -c build",
+    "clean": "wsrun --fast-exit -r --parallel --exclude-missing -p $PKG -c clean",
+    "clean:contracts": "wsrun --fast-exit -r --parallel --exclude-missing -p ${npm_package_config_contractsPackages} -c clean",
+    "rebuild": "run-s clean build"
+  },
+  "config": {
+    "contractsPackages": "@darwinia/contracts-bridge @darwinia/contracts-issuing-build @darwinia/contracts-mapping-token @darwinia/contracts-tokens @darwinia/contracts-util @darwinia/contracts-verify",
+    "nonContractsPackages": "@darwinia/addresses @darwinia/assets"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5",
+    "wsrun": "^5.2.4"
+  }
 }

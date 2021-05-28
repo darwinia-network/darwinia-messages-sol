@@ -3,18 +3,17 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts/proxy/Initializable.sol";
-
-import "./Blake2b.sol";
-import "./common/Ownable.sol";
-import "./common/Pausable.sol";
-import "./common/ECDSA.sol";
-import "./common/Hash.sol";
-import "./common/SafeMath.sol";
-import "./common/Input.sol";
-import "./common/Bytes.sol";
-import "./MMR.sol";
-import "./common/Scale.sol";
-import "./SimpleMerkleProof.sol";
+import "@darwinia/contracts-utils/contracts/Blake2b.sol";
+import "@darwinia/contracts-utils/contracts/Ownable.sol";
+import "@darwinia/contracts-utils/contracts/Pausable.sol";
+import "@darwinia/contracts-utils/contracts/ECDSA.sol";
+import "@darwinia/contracts-utils/contracts/Hash.sol";
+import "@darwinia/contracts-utils/contracts/SafeMath.sol";
+import "@darwinia/contracts-utils/contracts/Input.sol";
+import "@darwinia/contracts-utils/contracts/Bytes.sol";
+import "@darwinia/contracts-verify/contracts/MMR.sol";
+import "@darwinia/contracts-utils/contracts/Scale.sol";
+import "@darwinia/contracts-verify/contracts/SimpleMerkleProof.sol";
 
 
 pragma experimental ABIEncoderV2;

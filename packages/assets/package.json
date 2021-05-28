@@ -4,5 +4,9 @@
   "main": "index.js",
   "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
   "author": "Darwinia dev",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "build": "echo 0",
+    "clean": "echo 0"
+  }
 }

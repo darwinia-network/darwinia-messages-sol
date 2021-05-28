@@ -1,11 +1,11 @@
 pragma solidity ^0.4.23;
 
-import "ds-token/token.sol";
-import '../node_modules/evolutionlandcommon/contracts/interfaces/ERC223ReceivingContract.sol';
-import '../node_modules/evolutionlandcommon/contracts/interfaces/TokenController.sol';
-import '../node_modules/evolutionlandcommon/contracts/interfaces/ApproveAndCallFallBack.sol';
-import '../node_modules/evolutionlandcommon/contracts/interfaces/ERC223.sol';
-import '../node_modules/evolutionlandcommon/contracts/interfaces/ISmartToken.sol';
+import "./ds-token/token.sol";
+import 'evolutionlandcommon/contracts/interfaces/ERC223ReceivingContract.sol';
+import 'evolutionlandcommon/contracts/interfaces/TokenController.sol';
+import 'evolutionlandcommon/contracts/interfaces/ApproveAndCallFallBack.sol';
+import 'evolutionlandcommon/contracts/interfaces/ERC223.sol';
+import 'evolutionlandcommon/contracts/interfaces/ISmartToken.sol';
 
 contract RING is DSToken("RING"), ERC223, ISmartToken {
     address public newOwner;
@@ -22,7 +22,7 @@ contract RING is DSToken("RING"), ERC223, ISmartToken {
     }
 
     constructor() public {
-        setName("Evolution Land Global Token");
+        setName("Darwinia Network Native Token");
         controller = msg.sender;
     }
 

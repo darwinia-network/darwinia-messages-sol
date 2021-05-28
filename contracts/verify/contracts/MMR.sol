@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import { Hash } from "./common/Hash.sol";
+import { Hash } from "@darwinia/contracts-utils/contracts/Hash.sol";
 
 /**
  * @title Merkle Mountain Range solidity library

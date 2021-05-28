@@ -3,7 +3,7 @@ pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
-import "./common/Ownable.sol";
+import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "./interfaces/IERC20.sol";
 
 contract Ethereum2DarwiniaMappingTokenFactory is Initializable, Ownable {

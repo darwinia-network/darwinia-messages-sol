@@ -6,7 +6,6 @@ account*.txt
 #Hardhat files
 cache
 artifacts
-hardhat.config.js
 
 abi
 .DS_Store

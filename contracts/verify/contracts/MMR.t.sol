@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.6.0 <0.7.0;
-import "./ds-test/test.sol";
+import "@darwinia/contracts-utils/contracts/ds-test/test.sol";
 import "./MMR.sol";
 
 contract MMRWrapper is DSTest {
@@ -14,7 +14,7 @@ contract MMRWrapper is DSTest {
         uint256 width,
         uint256 blockNumber,
         bytes memory value,
-        bytes32 valueHash,
+        bytes32 /*valueHash*/,
         bytes32[] memory peaks,
         bytes32[] memory siblings
     ) public returns (uint8){

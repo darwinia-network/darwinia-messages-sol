@@ -3,7 +3,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 // import "./Memory.sol";
-import "../Blake2b.sol";
+import "./Blake2b.sol";
 
 library Hash {
 
