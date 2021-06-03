@@ -1,0 +1,12 @@
+{
+  "name": "@darwinia/assets",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
+  "author": "Darwinia dev",
+  "license": "MIT",
+  "scripts": {
+    "build": "echo 0",
+    "clean": "echo 0"
+  }
+}

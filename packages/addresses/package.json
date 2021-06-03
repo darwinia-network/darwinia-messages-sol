@@ -1,0 +1,13 @@
+{
+  "name": "@darwinia/addresses",
+  "version": "1.0.0",
+  "description": "Get addresses of deployed darwinia contracts",
+  "main": "index.js",
+  "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
+  "author": "Darwinia dev",
+  "license": "MIT",
+  "scripts": {
+    "build": "echo 0",
+    "clean": "echo 0"
+  }
+}

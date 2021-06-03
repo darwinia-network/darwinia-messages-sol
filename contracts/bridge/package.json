@@ -1,0 +1,30 @@
+{
+  "name": "@darwinia/contracts-bridge",
+  "version": "1.0.0",
+  "description": "Darwinia bridge core contract",
+  "main": "",
+  "scripts": {
+    "test-blake2": "truffle test test/TestBlake2b.js",
+    "test-mmr": "truffle test test/TestDarwiniaRelay.js",
+    "test-mmrlib": "truffle test test/TestMMRLib.js",
+    "test-relayergame": "truffle test test/TestRelayerGame.js",
+    "test-mp": "truffle test test/TestMerkleProof.js"
+  },
+  "author": "Darwinia dev",
+  "license": "MIT",
+  "scripts": {
+    "build": "hardhat compile",
+    "clean": "shx rm -rf cache artifacts abi"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-etherscan": "^2.1.2",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "dotenv": "^10.0.0",
+    "ethereum-waffle": "^3.0.0",
+    "ethers": "^5.0.0",
+    "hardhat": "^2.3.0",
+    "hardhat-abi-exporter": "^2.2.1",
+    "shx": "^0.3.3"
+  }
+}
