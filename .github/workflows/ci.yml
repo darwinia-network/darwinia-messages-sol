@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: setup-nvm
+        uses: dcodeIO/setup-node-nvm@master
+        with:
+          node-version: v16.0.0
+
+      - name: setup-yarn
+        run: |
+          npm i -g yarn@1.22.10
+          yarn --version
+
+      - name: build
+        run: |
+          yarn install
+          yarn build
+          yarn build:contracts
