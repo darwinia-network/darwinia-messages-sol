@@ -1,4 +1,4 @@
-// "SPDX-License-Identifier: Apache-2.0"
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity >=0.6.0 <0.7.0;
 
 import "./Bits.sol";
@@ -36,7 +36,7 @@ library Bitfield {
         uint256 seed,
         uint256[] memory prior,
         uint256 n
-    ) public pure returns (uint256[] memory bitfield) {
+    ) internal pure returns (uint256[] memory bitfield) {
         require(
             n <= countSetBits(prior),
             "`n` must be <= number of set bits in `prior`"
@@ -73,7 +73,7 @@ library Bitfield {
      * The alogrithm below is implemented after https://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation.
      * Further improvements are possible, see the article above.
      */
-    function countSetBits(uint256[] memory self) public pure returns (uint256) {
+    function countSetBits(uint256[] memory self) internal pure returns (uint256) {
         uint256 count = 0;
         for (uint256 i = 0; i < self.length; i++) {
             uint256 x = self[i];

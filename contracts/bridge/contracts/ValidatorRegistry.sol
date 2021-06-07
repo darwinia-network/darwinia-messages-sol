@@ -22,10 +22,10 @@ contract ValidatorRegistry is Ownable {
     bytes32 public root;
     uint256 public numOfValidators;
 
-    constructor(bytes32 _root, uint256 _numOfValidators) public {
-        root = _root;
-        numOfValidators = _numOfValidators;
-    }
+    // constructor(bytes32 _root, uint256 _numOfValidators) public {
+    //     root = _root;
+    //     numOfValidators = _numOfValidators;
+    // }
 
     /**
      * @notice Updates the validator registry and number of validators
@@ -33,6 +33,10 @@ contract ValidatorRegistry is Ownable {
      * @param _numOfValidators The new number of validators
      */
     function update(bytes32 _root, uint256 _numOfValidators) public onlyOwner {
+        _update(_root, _numOfValidators);
+    }
+
+    function _update(bytes32 _root, uint256 _numOfValidators) internal {
         root = _root;
         numOfValidators = _numOfValidators;
         emit ValidatorRegistryUpdated(_root, _numOfValidators);

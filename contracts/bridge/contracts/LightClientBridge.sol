@@ -9,12 +9,14 @@ import "@darwinia/contracts-utils/contracts/ECDSA.sol";
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
 import "@darwinia/contracts-utils/contracts/Bits.sol";
 import "@darwinia/contracts-utils/contracts/Bitfield.sol";
+import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "./ValidatorRegistry.sol";
 
 contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
     using SafeMath for uint256;
     using Bits for uint256;
     using Bitfield for uint256[];
+    using ScaleCodec for uint64;
 
     /* Events */
 
@@ -53,8 +55,8 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
 
     struct Commitment {
         bytes32 payload;
-        uint256 blockNumber;
-        uint256 validatorSetId;
+        uint64 blockNumber;
+        uint64 validatorSetId;
     }
 
     struct ValidationData {
@@ -82,9 +84,15 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
      * @param _validatorSetRoot initial validator set merkle tree root
      * @param _numOfValidators number of initial validator set
      */
-    constructor(bytes32 _validatorSetRoot, uint256 _numOfValidators)
+    function initialize(bytes32 _validatorSetRoot, uint256 _numOfValidators)
         public
-        ValidatorRegistry(_validatorSetRoot, _numOfValidators) {}
+        initializer
+    {
+        ownableConstructor();
+        pausableConstructor();
+
+        _update(_validatorSetRoot, _numOfValidators);
+    }
 
     /* Public Functions */
 
@@ -101,12 +109,12 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
      */
     function newSignatureCommitment(
         bytes32 commitmentHash,
-        uint256[] calldata validatorClaimsBitfield,
-        bytes calldata validatorSignature,
+        uint256[] memory validatorClaimsBitfield,
+        bytes memory validatorSignature,
         uint256 validatorPosition,
         address validatorPublicKey,
-        bytes32[] calldata validatorPublicKeyMerkleProof
-    ) external payable {
+        bytes32[] memory validatorPublicKeyMerkleProof
+    ) public payable whenNotPaused {
         /**
          * @dev Check if validatorPublicKeyMerkleProof is valid based on ValidatorRegistry merkle root
          */
@@ -116,7 +124,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
                 validatorPosition,
                 validatorPublicKeyMerkleProof
             ),
-            "Error: Sender must be in validator set at correct position"
+            "Error: Validator must be in validator set at correct position"
         );
 
         /**
@@ -167,21 +175,39 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
      */
     function completeSignatureCommitment(
         uint256 id,
-        Commitment calldata commitment,
-        bytes[] calldata signatures,
-        uint256[] calldata validatorPositions,
-        address[] calldata validatorPublicKeys,
-        bytes32[][] calldata validatorPublicKeyMerkleProofs
-    ) external {
+        Commitment memory commitment,
+        bytes[] memory signatures,
+        uint256[] memory validatorPositions,
+        address[] memory validatorPublicKeys,
+        bytes32[][] memory validatorPublicKeyMerkleProofs
+    ) public whenNotPaused {
         ValidationData storage data = validationData[id];
 
         /**
-         * @dev verify that block wait period has passed
+         * verify that block wait period has passed
          */
         require(
             block.number >= data.blockNumber.add(BLOCK_WAIT_PERIOD),
             "Error: Block wait period not over"
         );
+
+        /**
+         * Encode and hash the commitment
+         */
+        bytes32 commitmentHash =
+            keccak256(
+                abi.encodePacked(
+                    commitment.payload,
+                    commitment.blockNumber.encode64(),
+                    commitment.validatorSetId.encode64()
+                )
+            );
+
+        require(
+            commitmentHash == data.commitmentHash,
+            "Error: Commitment must match commitment hash"
+        );
+
 
         /**
          * @dev verify that sender is the same as in `newSignatureCommitment`
@@ -191,6 +217,35 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         //     "Error: Sender address does not match original validation data"
         // );
 
+        verifySigatures(commitmentHash, data.blockNumber, data.validatorClaimsBitfield, signatures, validatorPositions, validatorPublicKeys, validatorPublicKeyMerkleProofs);
+
+        /**
+         * @follow-up Do we need a try-catch block here?
+         */
+        processPayload(commitment.payload, commitment.blockNumber);
+
+        emit FinalVerificationSuccessful(msg.sender, commitmentHash, id);
+
+        /**
+         * @dev We no longer need the data held in state, so delete it for a gas refund
+         */
+        delete validationData[id];
+    }
+
+    /* Private Functions */
+
+    function verifySigatures(
+        bytes32 commitmentHash,
+        uint256 blockNumber,
+        uint256[] memory validatorClaimsBitfield,
+        bytes[] memory signatures,
+        uint256[] memory validatorPositions,
+        address[] memory validatorPublicKeys,
+        bytes32[][] memory validatorPublicKeyMerkleProofs
+    ) 
+        private
+        view
+    {
         uint256 requiredNumOfSignatures =
             (numOfValidators * PICK_NUMERATOR) /
                 THRESHOLD_DENOMINATOR;
@@ -221,27 +276,10 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
          */
         uint256[] memory randomBitfield =
             Bitfield.randomNBitsFromPrior(
-                getSeed(data),
-                data.validatorClaimsBitfield,
+                getSeed(blockNumber),
+                validatorClaimsBitfield,
                 requiredNumOfSignatures
             );
-
-        /**
-         * @dev Encode and hash the commitment
-         */
-        bytes32 commitmentHash =
-            keccak256(
-                abi.encodePacked(
-                    commitment.payload,
-                    commitment.blockNumber,
-                    commitment.validatorSetId
-                )
-            );
-
-        require(
-            commitmentHash == data.commitmentHash,
-            "Error: Commitment must match commitment hash"
-        );
 
         /**
          *  @dev For each randomSignature, do:
@@ -281,21 +319,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
                 "Error: Invalid Signature"
             );
         }
-
-        /**
-         * @follow-up Do we need a try-catch block here?
-         */
-        processPayload(commitment.payload, commitment.blockNumber);
-
-        emit FinalVerificationSuccessful(msg.sender, commitmentHash, id);
-
-        /**
-         * @dev We no longer need the data held in state, so delete it for a gas refund
-         */
-        delete validationData[id];
     }
-
-    /* Private Functions */
 
     /**
      * @notice Deterministically generates a seed from the block hash at the block number of creation of the validation
@@ -303,16 +327,15 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
      * @dev Note that `blockhash(blockNum)` will only work for the 256 most recent blocks. If
      * `completeSignatureCommitment` is called too late, a new call to `newSignatureCommitment` is necessary to reset
      * validation data's block number
-     * @param data a storage reference to the validationData struct
+     * @param blockNumber block number
      * @return onChainRandNums an array storing the random numbers generated inside this function
      */
-    function getSeed(ValidationData storage data)
+    function getSeed(uint256 blockNumber)
         private
         view
         returns (uint256)
     {
-        // @note Get payload.blocknumber, add BLOCK_WAIT_PERIOD
-        uint256 randomSeedBlockNum = data.blockNumber.add(BLOCK_WAIT_PERIOD);
+        uint256 randomSeedBlockNum = blockNumber.add(BLOCK_WAIT_PERIOD);
         // @note Create a hash seed from the block number
         bytes32 randomSeedBlockHash = blockhash(randomSeedBlockNum);
 
@@ -327,6 +350,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         // Check the payload is newer than the latest
         // Check that payload.leaf.block_number is > last_known_block_number;
 
+        require(blockNumber > latestBlockNumber, "Error: Import old block");
         latestMMRRoot = payload;
         latestBlockNumber = blockNumber;
         emit NewMMRRoot(latestMMRRoot, blockNumber);
