@@ -53,8 +53,14 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
 
     /* Types */
 
+    struct Payload {
+        bytes32 mmr;
+        bytes32 nextValidatorSetRoot;
+        uint256 nextNumOfValidatorSet;
+    }
+
     struct Commitment {
-        bytes32 payload;
+        Payload payload;
         uint64 blockNumber;
         uint64 validatorSetId;
     }
@@ -81,17 +87,18 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
 
     /**
      * @notice Deploys the LightClientBridge contract
+     * @param _validatorSetId initial validator set id
      * @param _validatorSetRoot initial validator set merkle tree root
      * @param _numOfValidators number of initial validator set
      */
-    function initialize(bytes32 _validatorSetRoot, uint256 _numOfValidators)
+    function initialize(uint256 _validatorSetId, bytes32 _validatorSetRoot, uint256 _numOfValidators)
         public
         initializer
     {
         ownableConstructor();
         pausableConstructor();
 
-        _update(_validatorSetRoot, _numOfValidators);
+        _update(_validatorSetId, _validatorSetRoot, _numOfValidators);
     }
 
     /* Public Functions */
@@ -197,7 +204,11 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         bytes32 commitmentHash =
             keccak256(
                 abi.encodePacked(
-                    commitment.payload,
+                    abi.encodePacked(
+                        commitment.payload.mmr,
+                        commitment.payload.nextValidatorSetRoot,
+                        commitment.payload.nextNumOfValidatorSet
+                    ),
                     commitment.blockNumber.encode64(),
                     commitment.validatorSetId.encode64()
                 )
@@ -222,7 +233,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         /**
          * @follow-up Do we need a try-catch block here?
          */
-        processPayload(commitment.payload, commitment.blockNumber);
+        processPayload(commitment.validatorSetId, commitment.payload, commitment.blockNumber);
 
         emit FinalVerificationSuccessful(msg.sender, commitmentHash, id);
 
@@ -346,42 +357,27 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
      * @notice Perform some operation[s] using the payload
      * @param payload The payload variable passed in via the initial function
      */
-    function processPayload(bytes32 payload, uint256 blockNumber) private {
+    function processPayload(uint256 nextValidatorSetId, Payload memory payload, uint256 blockNumber) private {
         // Check the payload is newer than the latest
         // Check that payload.leaf.block_number is > last_known_block_number;
 
         require(blockNumber > latestBlockNumber, "Error: Import old block");
-        latestMMRRoot = payload;
+        latestMMRRoot = payload.mmr;
         latestBlockNumber = blockNumber;
         emit NewMMRRoot(latestMMRRoot, blockNumber);
 
         // if payload is in next epoch, then apply validatorset changes
         // if payload is not in current or next epoch, reject
-
-        applyValidatorSetChanges(payload);
+        if (nextValidatorSetId > validatorSetId) {
+            applyValidatorSetChanges(nextValidatorSetId, payload.nextValidatorSetRoot, payload.nextNumOfValidatorSet);
+        }
     }
 
     /**
      * @notice Check if the payload includes a new validator set,
      * and if it does then update the new validator set
-     * @dev This function should call out to the validator registry contract
-     * @param payload The value to check if changes are required
      */
-    function applyValidatorSetChanges(bytes32 payload) private {
-        // @todo Implement this function
-        // payload should contain a new root AND a MMR proof to the newest leaf
-        // check proof is for the newest leaf and is valid
-        // in the new leaf we should have
-        /*
-        MmrLeaf {
-            block_number: int
-			parent_hash: frame_system::Module::<T>::leaf_data(),
-			parachain_heads: Module::<T>::parachain_heads_merkle_root(),
-			beefy_authority_set: Module::<T>::beefy_authority_set_merkle_root(),
-		}
-        */
-        // get beefy_authority_set from newest leaf
-        // update authority set
-        // updateValidatorSet(payload);
+    function applyValidatorSetChanges(uint256 nextValidatorSetId, bytes32 nextValidatorSetRoot, uint256 numOfValidators) private {
+        _update(nextValidatorSetId, nextValidatorSetRoot, numOfValidators);
     }
 }

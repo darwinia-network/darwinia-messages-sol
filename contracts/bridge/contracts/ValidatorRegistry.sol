@@ -20,6 +20,7 @@ contract ValidatorRegistry is Ownable {
     /* State */
 
     bytes32 public root;
+    uint256 public validatorSetId;
     uint256 public numOfValidators;
 
     // constructor(bytes32 _root, uint256 _numOfValidators) public {
@@ -32,11 +33,8 @@ contract ValidatorRegistry is Ownable {
      * @param _root The new root
      * @param _numOfValidators The new number of validators
      */
-    function update(bytes32 _root, uint256 _numOfValidators) public onlyOwner {
-        _update(_root, _numOfValidators);
-    }
-
-    function _update(bytes32 _root, uint256 _numOfValidators) internal {
+    function _update(uint256 _validatorSetId, bytes32 _root, uint256 _numOfValidators) internal {
+        require(_validatorSetId == validatorSetId + 1, "Error: Invalid validator set id");
         root = _root;
         numOfValidators = _numOfValidators;
         emit ValidatorRegistryUpdated(_root, _numOfValidators);
