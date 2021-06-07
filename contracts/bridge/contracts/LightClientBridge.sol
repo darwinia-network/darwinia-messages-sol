@@ -10,6 +10,8 @@ import "@darwinia/contracts-utils/contracts/SafeMath.sol";
 import "@darwinia/contracts-utils/contracts/Bits.sol";
 import "@darwinia/contracts-utils/contracts/Bitfield.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
+import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
+import "@darwinia/contracts-verify/contracts/MMR.sol";
 import "./ValidatorRegistry.sol";
 
 contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
@@ -102,6 +104,32 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
     }
 
     /* Public Functions */
+
+    /**
+     * @notice Executed by the apps in order to verify commitment
+     * @param MMRLeafIndex contains the merkle leaf index
+     * @param blockNumber contains the merkle leaf block number
+     * @param blockHeader contains the merkle leaf block header
+     * @param peaks contains the merkle maintain range peaks
+     * @param siblings contains the merkle maintain range siblings
+     */
+    function verifyMerkleLeaf(
+        uint256 MMRLeafIndex,
+        uint256 blockNumber,
+        bytes calldata blockHeader,
+        bytes32[] calldata peaks,
+        bytes32[] calldata siblings 
+    ) external view returns (bool) {
+        return
+            MMR.inclusionProof(
+                latestMMRRoot,
+                MMRLeafIndex + 1,
+                blockNumber,
+                blockHeader,
+                peaks,
+                siblings
+            );
+    }
 
     /**
      * @notice Executed by the prover in order to begin the process of block
