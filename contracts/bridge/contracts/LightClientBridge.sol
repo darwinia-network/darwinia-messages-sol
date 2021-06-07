@@ -388,7 +388,6 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
     function processPayload(uint256 nextValidatorSetId, Payload memory payload, uint256 blockNumber) private {
         // Check the payload is newer than the latest
         // Check that payload.leaf.block_number is > last_known_block_number;
-
         require(blockNumber > latestBlockNumber, "Error: Import old block");
         latestMMRRoot = payload.mmr;
         latestBlockNumber = blockNumber;
@@ -396,16 +395,10 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
 
         // if payload is in next epoch, then apply validatorset changes
         // if payload is not in current or next epoch, reject
-        if (nextValidatorSetId > validatorSetId) {
-            applyValidatorSetChanges(nextValidatorSetId, payload.nextValidatorSetRoot, payload.nextNumOfValidatorSet);
+        require(nextValidatorSetId == validatorSetId || nextValidatorSetId == validatorSetId + 1, "Invalid validator set id");
+        if (nextValidatorSetId == validatorSetId + 1) {
+            _update(nextValidatorSetId, nextValidatorSetRoot, numOfValidators);
         }
     }
 
-    /**
-     * @notice Check if the payload includes a new validator set,
-     * and if it does then update the new validator set
-     */
-    function applyValidatorSetChanges(uint256 nextValidatorSetId, bytes32 nextValidatorSetRoot, uint256 numOfValidators) private {
-        _update(nextValidatorSetId, nextValidatorSetRoot, numOfValidators);
-    }
 }

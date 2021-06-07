@@ -34,7 +34,6 @@ contract ValidatorRegistry is Ownable {
      * @param _numOfValidators The new number of validators
      */
     function _update(uint256 _validatorSetId, bytes32 _root, uint256 _numOfValidators) internal {
-        require(_validatorSetId == validatorSetId + 1, "Error: Invalid validator set id");
         root = _root;
         numOfValidators = _numOfValidators;
         emit ValidatorRegistryUpdated(_root, _numOfValidators);
