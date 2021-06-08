@@ -55,10 +55,15 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
 
     /* Types */
 
+    struct NextValidatorSet {
+        bytes32 root;
+        uint64 id;
+        uint64 len; 
+    }
+
     struct Payload {
         bytes32 mmr;
-        bytes32 nextValidatorSetRoot;
-        uint256 nextNumOfValidatorSet;
+        NextValidatorSet nextValidatorSet; 
     }
 
     struct Commitment {
@@ -216,6 +221,9 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         address[] memory validatorPublicKeys,
         bytes32[][] memory validatorPublicKeyMerkleProofs
     ) public whenNotPaused {
+        // only current epoch
+        require(commitment.validatorSetId == validatorSetId, "Error: Invalid validator set id");
+
         ValidationData storage data = validationData[id];
 
         /**
@@ -234,8 +242,11 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
                 abi.encodePacked(
                     abi.encodePacked(
                         commitment.payload.mmr,
-                        commitment.payload.nextValidatorSetRoot,
-                        commitment.payload.nextNumOfValidatorSet
+                            abi.encodePacked(
+                                commitment.payload.nextValidatorSet.root,
+                                commitment.payload.nextValidatorSet.id.encode64(),
+                                commitment.payload.nextValidatorSet.len.encode64()
+                            )
                     ),
                     commitment.blockNumber.encode64(),
                     commitment.validatorSetId.encode64()
@@ -261,7 +272,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         /**
          * @follow-up Do we need a try-catch block here?
          */
-        processPayload(commitment.validatorSetId, commitment.payload, commitment.blockNumber);
+        processPayload(commitment.payload, commitment.blockNumber);
 
         emit FinalVerificationSuccessful(msg.sender, commitmentHash, id);
 
@@ -384,8 +395,9 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
     /**
      * @notice Perform some operation[s] using the payload
      * @param payload The payload variable passed in via the initial function
+     * @param blockNumber The blockNumber variable passed in via the initial function
      */
-    function processPayload(uint256 nextValidatorSetId, Payload memory payload, uint256 blockNumber) private {
+    function processPayload(Payload memory payload, uint256 blockNumber) private {
         // Check the payload is newer than the latest
         // Check that payload.leaf.block_number is > last_known_block_number;
         require(blockNumber > latestBlockNumber, "Error: Import old block");
@@ -395,9 +407,10 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
 
         // if payload is in next epoch, then apply validatorset changes
         // if payload is not in current or next epoch, reject
-        require(nextValidatorSetId == validatorSetId || nextValidatorSetId == validatorSetId + 1, "Invalid validator set id");
-        if (nextValidatorSetId == validatorSetId + 1) {
-            _update(nextValidatorSetId, nextValidatorSetRoot, numOfValidators);
+        // TODO: check nextValidatorSet can null or not
+        require(payload.nextValidatorSet.id == 0 || payload.nextValidatorSet.id == validatorSetId + 1, "Invalid next validator set id");
+        if (payload.nextValidatorSet.id == validatorSetId + 1) {
+            _update(payload.nextValidatorSet.id, payload.nextValidatorSet.root, payload.nextValidatorSet.len);
         }
     }
 
