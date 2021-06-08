@@ -10,6 +10,10 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
     address public constant DISPATCH_PRECOMPILE = 0x0000000000000000000000000000000000000018;
     struct TokenInfo {
         bytes4 eventReceiver;
+        // 0 - Erc20Token
+        // 1 - NativeToken
+        // ...
+        uint32  tokenType;
         address backing;
         address source;
     }
@@ -55,6 +59,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
 
     function createERC20Contract(
         bytes4 eventReceiver,
+        uint32 tokenType,
         string memory name,
         string memory symbol,
         uint8 decimals,
@@ -73,7 +78,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         token = deploy(salt, bytecodeWithInitdata);
         tokenMap[salt] = token;
         allTokens.push(token);
-        tokenToInfo[token] = TokenInfo(eventReceiver, backing, source);
+        tokenToInfo[token] = TokenInfo(eventReceiver, tokenType, backing, source);
 
         (bool success, ) = DISPATCH_PRECOMPILE.call(
             abi.encodePacked(eventReceiver, bytes4(keccak256("registered(address,address,address)")),
@@ -98,14 +103,16 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         IERC20(token).mint(recipient, amount);
     }
 
-    function crossTransfer(address token, bytes memory recipient, uint256 amount) external {
+    function crossTransfer(uint32 specVersion, address token, bytes memory recipient, uint256 amount) external {
         require(amount > 0, "can not transfer amount zero");
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
         IERC20(token).burn(msg.sender, amount);
         (bool success, ) = DISPATCH_PRECOMPILE.call(
             abi.encodePacked(info.eventReceiver, bytes4(keccak256("burned(address,address,address,address,uint256)")),
-                           abi.encode(info.backing, 
+                           abi.encode(specVersion,
+                                      info.tokenType,
+                                      info.backing,
                                       msg.sender, 
                                       info.source, 
                                       recipient, 
