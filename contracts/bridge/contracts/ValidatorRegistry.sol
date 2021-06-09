@@ -9,36 +9,29 @@ import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 /**
  * @title A contract storing state on the current validator set
  * @dev Stores the validator set as a Merkle root
- * @dev Inherits `Ownable` to ensure it can only be callable by the
- * instantiating contract account (which is the LightClientBridge contract)
  */
 contract ValidatorRegistry is Ownable {
     /* Events */
 
-    event ValidatorRegistryUpdated(bytes32 root, uint256 numOfValidators);
+    event ValidatorRegistryUpdated(bytes32 validatorSetRoot, uint256 numOfValidators);
 
     /* State */
 
-    bytes32 public root;
+    bytes32 public validatorSetRoot;
     uint256 public validatorSetId;
     uint256 public numOfValidators;
 
-    // constructor(bytes32 _root, uint256 _numOfValidators) public {
-    //     root = _root;
-    //     numOfValidators = _numOfValidators;
-    // }
-
     /**
-     * @notice Updates the validator registry and number of validators
-     * @param _root The new root
-     * @param _validatorSetId The new validators id
-     * @param _numOfValidators The new number of validators
+     * @notice Updates the validator set
+     * @param _validatorSetRoot The new validator set root
+     * @param _validatorSetId The new validator set id
+     * @param _numOfValidators The new number of validator set
      */
-    function _update(bytes32 _root, uint256 _validatorSetId, uint256 _numOfValidators) internal {
-        root = _root;
+    function _update(bytes32 _validatorSetRoot, uint256 _validatorSetId, uint256 _numOfValidators) internal {
+        validatorSetRoot = _validatorSetRoot;
         validatorSetId = _validatorSetId;
         numOfValidators = _numOfValidators;
-        emit ValidatorRegistryUpdated(_root, _numOfValidators);
+        emit ValidatorRegistryUpdated(_validatorSetRoot, _numOfValidators);
     }
 
     /**
@@ -56,7 +49,7 @@ contract ValidatorRegistry is Ownable {
         bytes32 hashedLeaf = keccak256(abi.encodePacked(addr));
         return
             MerkleProof.verifyMerkleLeafAtPosition(
-                root,
+                validatorSetRoot,
                 hashedLeaf,
                 pos,
                 numOfValidators,
