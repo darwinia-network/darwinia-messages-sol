@@ -98,14 +98,14 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
      * @param _validatorSetRoot initial validator set merkle tree root
      * @param _numOfValidators number of initial validator set
      */
-    function initialize(uint256 _validatorSetId, bytes32 _validatorSetRoot, uint256 _numOfValidators)
+    function initialize(bytes32 _validatorSetRoot, uint256 _validatorSetId, uint256 _numOfValidators)
         public
         initializer
     {
         ownableConstructor();
         pausableConstructor();
 
-        _update(_validatorSetId, _validatorSetRoot, _numOfValidators);
+        _update(_validatorSetRoot, _validatorSetId, _numOfValidators);
     }
 
     /* Public Functions */
@@ -267,7 +267,15 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         //     "Error: Sender address does not match original validation data"
         // );
 
-        verifySigatures(commitmentHash, data.blockNumber, data.validatorClaimsBitfield, signatures, validatorPositions, validatorPublicKeys, validatorPublicKeyMerkleProofs);
+        verifySigatures(
+            commitmentHash,
+            data.blockNumber,
+            data.validatorClaimsBitfield,
+            signatures,
+            validatorPositions,
+            validatorPublicKeys,
+            validatorPublicKeyMerkleProofs
+        );
 
         /**
          * @follow-up Do we need a try-catch block here?
@@ -410,7 +418,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         // TODO: check nextValidatorSet can null or not
         require(payload.nextValidatorSet.id == 0 || payload.nextValidatorSet.id == validatorSetId + 1, "Invalid next validator set id");
         if (payload.nextValidatorSet.id == validatorSetId + 1) {
-            _update(payload.nextValidatorSet.id, payload.nextValidatorSet.root, payload.nextValidatorSet.len);
+            _update(payload.nextValidatorSet.root, payload.nextValidatorSet.id, payload.nextValidatorSet.len);
         }
     }
 

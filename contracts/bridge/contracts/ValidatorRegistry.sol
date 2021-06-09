@@ -31,10 +31,12 @@ contract ValidatorRegistry is Ownable {
     /**
      * @notice Updates the validator registry and number of validators
      * @param _root The new root
+     * @param _validatorSetId The new validators id
      * @param _numOfValidators The new number of validators
      */
-    function _update(uint256 _validatorSetId, bytes32 _root, uint256 _numOfValidators) internal {
+    function _update(bytes32 _root, uint256 _validatorSetId, uint256 _numOfValidators) internal {
         root = _root;
+        validatorSetId = _validatorSetId;
         numOfValidators = _numOfValidators;
         emit ValidatorRegistryUpdated(_root, _numOfValidators);
     }
