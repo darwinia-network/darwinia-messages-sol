@@ -7,7 +7,8 @@ import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "./interfaces/IERC20.sol";
 
 contract DarwiniaMappingTokenFactory is Initializable, Ownable {
-    address public constant DISPATCH_PRECOMPILE = 0x0000000000000000000000000000000000000018;
+    address public constant DISPATCH_ENCODER = 0x0000000000000000000000000000000000000018;
+    address public constant DISPATCH         = 0x0000000000000000000000000000000000000019;
     struct TokenInfo {
         bytes4 eventReceiver;
         // 0 - Erc20Token
@@ -80,9 +81,12 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         allTokens.push(token);
         tokenToInfo[token] = TokenInfo(eventReceiver, tokenType, backing, source);
 
-        (bool success, ) = DISPATCH_PRECOMPILE.call(
+        (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
             abi.encodePacked(eventReceiver, bytes4(keccak256("registered(address,address,address)")),
                              abi.encode(backing, source, token)));
+        require(encodeSuccess, "create: encode dispatch failed");
+
+        (bool success, ) = DISPATCH.call(encoded);
         require(success, "create: call create erc20 precompile failed");
         emit IssuingERC20Created(msg.sender, backing, source, token);
     }
@@ -108,7 +112,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
         IERC20(token).burn(msg.sender, amount);
-        (bool success, ) = DISPATCH_PRECOMPILE.call(
+        (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
             abi.encodePacked(info.eventReceiver, bytes4(keccak256("burned(address,address,address,address,uint256)")),
                            abi.encode(specVersion,
                                       info.tokenType,
@@ -117,6 +121,8 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
                                       info.source, 
                                       recipient, 
                                       amount)));
+        require(encodeSuccess, "burn: encode dispatch failed");
+        (bool success, ) = DISPATCH.call(encoded);
         require(success, "burn: call burn precompile failed");
     }
 }
