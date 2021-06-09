@@ -110,27 +110,31 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
 
     /* Public Functions */
 
+    function getFinalizedBlockNumber() external view returns (uint256) {
+        return latestBlockNumber;
+    }
+
     /**
      * @notice Executed by the apps in order to verify commitment
-     * @param MMRLeafIndex contains the merkle leaf index
-     * @param blockNumber contains the merkle leaf block number
-     * @param blockHeader contains the merkle leaf block header
+     * @param beefyMMRLeaf contains the merkle leaf
+     * @param beefyMMRLeafIndex contains the merkle leaf index
+     * @param beefyMMRLeafCount contains the merkle leaf count
      * @param peaks contains the merkle maintain range peaks
      * @param siblings contains the merkle maintain range siblings
      */
-    function verifyMerkleLeaf(
-        uint256 MMRLeafIndex,
-        uint256 blockNumber,
-        bytes calldata blockHeader,
+    function verifyBeefyMerkleLeaf(
+        bytes calldata beefyMMRLeaf,
+        uint256 beefyMMRLeafIndex,
+        uint256 beefyMMRLeafCount,
         bytes32[] calldata peaks,
         bytes32[] calldata siblings 
     ) external view returns (bool) {
         return
             MMR.inclusionProof(
                 latestMMRRoot,
-                MMRLeafIndex + 1,
-                blockNumber,
-                blockHeader,
+                beefyMMRLeafCount,
+                beefyMMRLeafIndex,
+                beefyMMRLeaf,
                 peaks,
                 siblings
             );
