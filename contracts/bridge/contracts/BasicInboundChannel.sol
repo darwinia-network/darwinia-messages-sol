@@ -4,6 +4,8 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
+import "@darwinia/contracts-utils/contracts/Scale.sol";
+import "@darwinia/contracts-utils/contracts/Hash.sol";
 import "./interfaces/ILightClientBridge.sol";
 
 contract BasicInboundChannel {
@@ -16,11 +18,6 @@ contract BasicInboundChannel {
         uint64 nonce;
         bytes payload;
     }
-
-    // struct MMRLeaf {
-    //     bytes32 blockHash;
-    //     bytes32 beefyNextAuthoritySetRoot;
-    // }
 
     event MessageDispatched(uint64 nonce, bool result);
 
@@ -35,6 +32,7 @@ contract BasicInboundChannel {
     function submit(
         Message[] memory messages,
         bytes memory beefyMMRLeaf,
+        bytes memory blockHeader,
         uint256 beefyMMRLeafIndex,
         uint256 beefyMMRLeafCount,
         bytes32[] memory peaks,
@@ -50,37 +48,35 @@ contract BasicInboundChannel {
             ),
             "Invalid proof"
         );
-        verifyMessages(messages, beefyMMRLeaf);
+        verifyMessages(messages, beefyMMRLeaf, blockHeader);
         processMessages(messages);
     }
 
-    // struct BlockHeader {
-    //     parentHash bytes32;
-    //     number uint64;
-    //     stateRoot bytes32;
-    //     extrinsicsRoot bytes32;
-    //     digest bytes;
-    //     messagesRoot bytes32;
-    // }
     //TODO: verifyMessages should accept all needed proofs
-    function verifyMessages(Message[] memory messages, bytes memory /*beefyMMRLeaf*/)
+    function verifyMessages(Message[] memory messages, bytes memory beefyMMRLeaf, bytes memory blockHeader)
         internal
         view
         returns (bool success)
     {
 
-        // Scale.decodeBeefyMMRLeaf(beefyMMRLeaf)
-        // Scale.decodeBlockHeader(beefyMMRLeaf.BlockHeader)
-        // require(
-        //     blockHeader.BlockNumber <= lightClientBridge.getFinalizedBlockNumber(),
-        //     "block not finalized"
-        // )
+        // struct MMRLeaf {
+        //     bytes32 blockHash;
+        //     bytes32 beefyNextAuthoritySetRoot;
+        // }
+        (bytes32 blockHash,) = abi.decode(beefyMMRLeaf, (bytes32,bytes32));
+        require(blockHash == Hash.blake2bHash(blockHeader), "invalid block header");
+        uint32 blockNumber = Scale.decodeBlockNumberFromBlockHeader(blockHeader);
+        require(
+            blockNumber <= lightClientBridge.getFinalizedBlockNumber(),
+            "block not finalized"
+        );
+        bytes32 messagesRoot = Scale.decodeMessagesRootFromBlockHeader(blockHeader);
 
         // Validate that the commitment matches the commitment contents
-        // require(
-        //     validateMessagesMatchCommitment(messages, blockHeader.messageRoot),
-        //     "invalid messages"
-        // );
+        require(
+            validateMessagesMatchRoot(messages, messagesRoot),
+            "invalid messages"
+        );
 
         // Require there is enough gas to play all messages
         require(
@@ -108,10 +104,10 @@ contract BasicInboundChannel {
         }
     }
 
-    function validateMessagesMatchCommitment(
+    function validateMessagesMatchRoot(
         Message[] memory messages,
-        bytes32 commitment
+        bytes32 root
     ) internal pure returns (bool) {
-        return keccak256(abi.encode(messages)) == commitment;
+        return keccak256(abi.encode(messages)) == root;
     }
 }

@@ -11,7 +11,7 @@ import "@darwinia/contracts-utils/contracts/Bits.sol";
 import "@darwinia/contracts-utils/contracts/Bitfield.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
-import "@darwinia/contracts-verify/contracts/MMR.sol";
+import "@darwinia/contracts-verify/contracts/KeccakMMR.sol";
 import "./ValidatorRegistry.sol";
 
 contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
@@ -130,7 +130,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         bytes32[] calldata siblings 
     ) external view returns (bool) {
         return
-            MMR.inclusionProof(
+            KeccakMMR.inclusionProof(
                 latestMMRRoot,
                 beefyMMRLeafCount,
                 beefyMMRLeafIndex,
