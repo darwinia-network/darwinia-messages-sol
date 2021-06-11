@@ -13,25 +13,25 @@ import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 contract ValidatorRegistry is Ownable {
     /* Events */
 
-    event ValidatorRegistryUpdated(bytes32 validatorSetRoot, uint256 numOfValidators);
+    event ValidatorRegistryUpdated(uint256 id, uint256 len, bytes32 root);
 
     /* State */
 
-    bytes32 public validatorSetRoot;
     uint256 public validatorSetId;
     uint256 public numOfValidators;
+    bytes32 public validatorSetRoot;
 
     /**
      * @notice Updates the validator set
-     * @param _validatorSetRoot The new validator set root
      * @param _validatorSetId The new validator set id
      * @param _numOfValidators The new number of validator set
+     * @param _validatorSetRoot The new validator set root
      */
-    function _update(bytes32 _validatorSetRoot, uint256 _validatorSetId, uint256 _numOfValidators) internal {
-        validatorSetRoot = _validatorSetRoot;
+    function _update(uint256 _validatorSetId, uint256 _numOfValidators, bytes32 _validatorSetRoot) internal {
         validatorSetId = _validatorSetId;
         numOfValidators = _numOfValidators;
-        emit ValidatorRegistryUpdated(_validatorSetRoot, _numOfValidators);
+        validatorSetRoot = _validatorSetRoot;
+        emit ValidatorRegistryUpdated(_validatorSetId, _numOfValidators, validatorSetRoot);
     }
 
     /**

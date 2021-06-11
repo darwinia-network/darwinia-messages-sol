@@ -19,6 +19,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
     using Bits for uint256;
     using Bitfield for uint256[];
     using ScaleCodec for uint64;
+    using ScaleCodec for uint32;
 
     /* Events */
 
@@ -56,9 +57,9 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
     /* Types */
 
     struct NextValidatorSet {
-        bytes32 root;
         uint64 id;
-        uint64 len; 
+        uint32 len; 
+        bytes32 root;
     }
 
     struct Payload {
@@ -68,7 +69,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
 
     struct Commitment {
         Payload payload;
-        uint64 blockNumber;
+        uint32 blockNumber;
         uint64 validatorSetId;
     }
 
@@ -95,17 +96,17 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
     /**
      * @notice Deploys the LightClientBridge contract
      * @param _validatorSetId initial validator set id
-     * @param _validatorSetRoot initial validator set merkle tree root
      * @param _numOfValidators number of initial validator set
+     * @param _validatorSetRoot initial validator set merkle tree root
      */
-    function initialize(bytes32 _validatorSetRoot, uint256 _validatorSetId, uint256 _numOfValidators)
+    function initialize(uint256 _validatorSetId, uint256 _numOfValidators, bytes32 _validatorSetRoot)
         public
         initializer
     {
         ownableConstructor();
         pausableConstructor();
 
-        _update(_validatorSetRoot, _validatorSetId, _numOfValidators);
+        _update(_validatorSetId, _numOfValidators, _validatorSetRoot);
     }
 
     /* Public Functions */
@@ -247,12 +248,12 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
                     abi.encodePacked(
                         commitment.payload.mmr,
                             abi.encodePacked(
-                                commitment.payload.nextValidatorSet.root,
                                 commitment.payload.nextValidatorSet.id.encode64(),
-                                commitment.payload.nextValidatorSet.len.encode64()
+                                commitment.payload.nextValidatorSet.len.encode32(),
+                                commitment.payload.nextValidatorSet.root
                             )
                     ),
-                    commitment.blockNumber.encode64(),
+                    commitment.blockNumber.encode32(),
                     commitment.validatorSetId.encode64()
                 )
             );
@@ -422,7 +423,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         // TODO: check nextValidatorSet can null or not
         require(payload.nextValidatorSet.id == 0 || payload.nextValidatorSet.id == validatorSetId + 1, "Invalid next validator set id");
         if (payload.nextValidatorSet.id == validatorSetId + 1) {
-            _update(payload.nextValidatorSet.root, payload.nextValidatorSet.id, payload.nextValidatorSet.len);
+            _update(payload.nextValidatorSet.id, payload.nextValidatorSet.len, payload.nextValidatorSet.root);
         }
     }
 

@@ -60,10 +60,12 @@ contract BasicInboundChannel {
     {
 
         // struct MMRLeaf {
-        //     bytes32 blockHash;
-        //     bytes32 beefyNextAuthoritySetRoot;
+        //     bytes32 currentblockHash;
+        //     uint32  parentBlockNumber;
+        //     bytes32 parentBlockHash;
+        //     BeefyNextAuthoritySet beefyNextAuthoritySetRoot;
         // }
-        (bytes32 blockHash,) = abi.decode(beefyMMRLeaf, (bytes32,bytes32));
+        bytes32 blockHash = Scale.decodeBlockHashFromBeefyMMRLeaf(beefyMMRLeaf);
         require(blockHash == Hash.blake2bHash(blockHeader), "invalid block header");
         uint32 blockNumber = Scale.decodeBlockNumberFromBlockHeader(blockHeader);
         require(

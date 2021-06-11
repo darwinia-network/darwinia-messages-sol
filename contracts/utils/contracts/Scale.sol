@@ -104,6 +104,12 @@ library Scale {
         blockNumber = decodeU32(data);
     }
 
+    function decodeBlockHashFromBeefyMMRLeaf(
+        bytes memory leaf
+    ) internal pure returns (bytes32) {
+        Input.Data memory data = Input.from(leaf);
+        return data.decodeBytes32();
+    }
 
     function decodeMessagesRootFromBlockHeader(
         bytes memory header
