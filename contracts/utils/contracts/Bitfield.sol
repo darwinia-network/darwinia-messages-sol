@@ -32,7 +32,7 @@ library Bitfield {
      * @notice Draws a random number, derives an index in the bitfield, and sets the bit if it is in the `prior` and not
      * yet set. Repeats that `n` times.
      */
-    function randomNBitsFromPrior(
+    function randomNBitsWithPriorCheck(
         uint256 seed,
         uint256[] memory prior,
         uint256 n
@@ -55,7 +55,7 @@ library Bitfield {
                 continue;
             }
 
-            // require a not yet sit (new) bit to be set
+            // require a not yet set (new) bit to be set
             if (isSet(bitfield, index)) {
                 continue;
             }

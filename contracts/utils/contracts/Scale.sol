@@ -104,6 +104,12 @@ library Scale {
         blockNumber = decodeU32(data);
     }
 
+    // struct MMRLeaf {
+    //     bytes32 currentblockHash;
+    //     uint32  parentBlockNumber;
+    //     bytes32 parentBlockHash;
+    //     BeefyNextAuthoritySet beefyNextAuthoritySetRoot;
+    // }
     function decodeBlockHashFromBeefyMMRLeaf(
         bytes memory leaf
     ) internal pure returns (bytes32) {
