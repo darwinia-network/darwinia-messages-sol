@@ -46,7 +46,7 @@ contract BasicInboundChannel {
                 peaks,
                 siblings
             ),
-            "Invalid proof"
+            "Channel: Invalid proof"
         );
         verifyMessages(messages, beefyMMRLeaf, blockHeader);
         processMessages(messages);
@@ -58,32 +58,25 @@ contract BasicInboundChannel {
         view
         returns (bool success)
     {
-
-        // struct MMRLeaf {
-        //     bytes32 currentblockHash;
-        //     uint32  parentBlockNumber;
-        //     bytes32 parentBlockHash;
-        //     BeefyNextAuthoritySet beefyNextAuthoritySetRoot;
-        // }
         bytes32 blockHash = Scale.decodeBlockHashFromBeefyMMRLeaf(beefyMMRLeaf);
-        require(blockHash == Hash.blake2bHash(blockHeader), "invalid block header");
+        require(blockHash == Hash.blake2bHash(blockHeader), "Channel: invalid block header");
         uint32 blockNumber = Scale.decodeBlockNumberFromBlockHeader(blockHeader);
         require(
             blockNumber <= lightClientBridge.getFinalizedBlockNumber(),
-            "block not finalized"
+            "Channel: block not finalized"
         );
         bytes32 messagesRoot = Scale.decodeMessagesRootFromBlockHeader(blockHeader);
 
         // Validate that the commitment matches the commitment contents
         require(
             validateMessagesMatchRoot(messages, messagesRoot),
-            "invalid messages"
+            "Channel: invalid messages"
         );
 
         // Require there is enough gas to play all messages
         require(
             gasleft() >= messages.length * MAX_GAS_PER_MESSAGE,
-            "insufficient gas for delivery of all messages"
+            "Channel: insufficient gas for delivery of all messages"
         );
 
         return true;
@@ -92,7 +85,7 @@ contract BasicInboundChannel {
     function processMessages(Message[] memory messages) internal {
         for (uint256 i = 0; i < messages.length; i++) {
             // Check message nonce is correct and increment nonce for replay protection
-            require(messages[i].nonce == nonce + 1, "invalid nonce");
+            require(messages[i].nonce == nonce + 1, "Channel: invalid nonce");
 
             nonce = nonce + 1;
 
