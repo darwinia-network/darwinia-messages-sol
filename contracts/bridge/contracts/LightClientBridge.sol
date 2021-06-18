@@ -9,7 +9,6 @@ import "@darwinia/contracts-utils/contracts/ECDSA.sol";
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
 import "@darwinia/contracts-utils/contracts/Bits.sol";
 import "@darwinia/contracts-utils/contracts/Bitfield.sol";
-import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "@darwinia/contracts-verify/contracts/KeccakMMR.sol";
 import "./ValidatorRegistry.sol";
@@ -18,8 +17,6 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
     using SafeMath for uint256;
     using Bits for uint256;
     using Bitfield for uint256[];
-    using ScaleCodec for uint64;
-    using ScaleCodec for uint32;
 
     /* Events */
 
@@ -191,10 +188,10 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         );
 
         /**
-         * @dev Check that the bitfield actually contains enough claims to be succesful, ie, >= 2/3
+         * @dev Check that the bitfield actually contains enough claims to be succesful, ie, > 2/3
          */
         require(
-            validatorClaimsBitfield.countSetBits() >=
+            validatorClaimsBitfield.countSetBits() >
                 (numOfValidators * THRESHOLD_NUMERATOR) /
                     THRESHOLD_DENOMINATOR,
             "Bridge: Bitfield not enough validators"
@@ -256,13 +253,13 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
                     abi.encodePacked(
                         commitment.payload.mmr,
                             abi.encodePacked(
-                                commitment.payload.nextValidatorSet.id.encode64(),
-                                commitment.payload.nextValidatorSet.len.encode32(),
+                                commitment.payload.nextValidatorSet.id,
+                                commitment.payload.nextValidatorSet.len,
                                 commitment.payload.nextValidatorSet.root
                             )
                     ),
-                    commitment.blockNumber.encode32(),
-                    commitment.validatorSetId.encode64()
+                    commitment.blockNumber,
+                    commitment.validatorSetId
                 )
             );
 

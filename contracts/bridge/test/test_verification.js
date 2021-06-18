@@ -22,8 +22,8 @@ describe("Verification tests", () => {
   })
 
   const beefyValidatorAddresses = [
-    "0xE04CC55ebEE1cBCE552f250e85c57B70B2E2625b",
-    "0x25451A4de12dcCc2D166922fA938E900fCc4ED24",
+    "0xB13f16A6772C5A0b37d353C07068CA7B46297c43",
+    "0xcC5E48BEb33b83b8bD0D9d9A85A8F6a27C51F5C5",
   ]
   const [owner, userOne, userTwo, userThree] = provider.getWallets()
   let lightClientBridge
