@@ -1,5 +1,5 @@
 {
-  "commitmentHash": "0x12eaf73e5881c40748a34786ebfc79daef0ab4b8108b0da9fbed2168f81e8574",
+  "commitmentHash": "0x927d1947c20d4b90965610ae35ace4e3fc6fb4a024f8391a1b95de42096a7a4d",
   "commitment": {
     "payload": {
       "mmr": "0xfab049d511b54f8d1169f85fe8add36c54a76c36d20737a80b1f0e72179b7d5f",
@@ -12,14 +12,8 @@
     "blockNumber": 12,
     "validatorSetId": 0
   },
-  "signature0": "0xf5aca779c28ccf34cd66c6cee059e52d64aafd7f4c42ad4bb3c0d30e8e4a4d8b4285d639eaae75281c7f42beda75d3d19e8517ecf53cd26aec560ce47f5f578001",
-  "signature1": "0x1b7059633cd0ce53607a91f864929e26a7a9c986f6d0e93ab265ed4c271e88147b00ff58e423df58c71f2938f1c67780ffe569ec6a60fe875242f66f120554f400",
-  "bitfield": [3],
-  "proofs": [
-    "0xd2c83375e5b21c7800af4959a04246f338c5fdaa1a82a6c5eedd668ad8a17770",
-    "0xb3e7dfbc7feae8b58ba3f6a8f76101a5ce745bda1bcaa8ee3b7396566dad56bb"
-  ],
-  "leaf": "0xec98912f89f30da25512fcfed10132411caa230b71b47e66769228b946dee6ba",
-  "leafIndex": 12,
-  "leafCount": 13
+  "signature0": "0x4d7de713576a8a7c0378a8a990628baad85bacf529c6d87a93f24c80d8eb9ec03ce55515d1ae836f5ed1c3d509834632bfb5d85130f8c47e88021cf863a4f4fe1c",
+  "signature1": "0x103e05eab86186f2778d0a59ffab3037021898baa2047ccbc8d4b1d17c41014c05f5163ce198ba8504d6548ad6e826433680eb0d054cd0e654d49af6eb8aad8b1c",
+  "signature2": "0x624a65790e629fc66c8d2c09d03e910761e8d1bec118ceb2acd15df8827745f26866836cde0e85b8888772c86dc5d55e35148aa9c096b161ecb884efa055a0c71c",
+  "bitfield": [7]
 }

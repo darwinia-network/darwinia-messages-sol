@@ -120,6 +120,33 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         return validationData[id].validatorClaimsBitfield; 
     }
 
+    function requiredNumberOfSignatures() public view returns (uint256) {
+        return (numOfValidators * PICK_NUMERATOR) / THRESHOLD_DENOMINATOR;
+    }
+
+    function createRandomBitfield(uint256 id)
+        public
+        view
+        returns (uint256[] memory)
+    {
+        ValidationData storage data = validationData[id];
+
+        /**
+         * @dev verify that block wait period has passed
+         */
+        require(
+            block.number >= data.blockNumber.add(BLOCK_WAIT_PERIOD),
+            "Bridge: Block wait period not over"
+        );
+
+        return
+            Bitfield.randomNBitsWithPriorCheck(
+                getSeed(data.blockNumber),
+                data.validatorClaimsBitfield,
+                requiredNumberOfSignatures()
+            );
+    }
+
     /**
      * @notice Executed by the apps in order to verify commitment
      * @param beefyMMRLeaf contains the merkle leaf
@@ -314,9 +341,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         private
         view
     {
-        uint256 requiredNumOfSignatures =
-            (numOfValidators * PICK_NUMERATOR) /
-                THRESHOLD_DENOMINATOR;
+        uint256 requiredNumOfSignatures = requiredNumberOfSignatures();
 
         /**
          * @dev verify that required number of signatures, positions, public keys and merkle proofs are

@@ -24,7 +24,9 @@ describe("Verification tests", () => {
   const beefyValidatorAddresses = [
     "0xB13f16A6772C5A0b37d353C07068CA7B46297c43",
     "0xcC5E48BEb33b83b8bD0D9d9A85A8F6a27C51F5C5",
+    "0x00a1537d251a6a4c4effAb76948899061FeA47b9",
   ]
+  const sigs = [BeefyFixture.signature0, BeefyFixture.signature1, BeefyFixture.signature2]
   const [owner, userOne, userTwo, userThree] = provider.getWallets()
   let lightClientBridge
 
@@ -33,10 +35,13 @@ describe("Verification tests", () => {
     const validatorsMerkleTree = createMerkleTree(beefyValidatorAddresses);
     const validatorsLeaf0 = validatorsMerkleTree.getHexLeaves()[0];
     const validatorsLeaf1 = validatorsMerkleTree.getHexLeaves()[1];
+    const validatorsLeaf2 = validatorsMerkleTree.getHexLeaves()[2];
     const validator0PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf0);
     const validator1PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf1);
+    const validator2PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf2);
+    const proofs = [validator0PubKeyMerkleProof, validator1PubKeyMerkleProof, validator2PubKeyMerkleProof]
     const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
-    MerkleTree.print(validatorsMerkleTree)
+    // MerkleTree.print(validatorsMerkleTree)
     lightClientBridge = await LightClientBridge.deploy(
       0,
       validatorsMerkleTree.getLeaves().length,
@@ -47,7 +52,7 @@ describe("Verification tests", () => {
     const newCommitment = lightClientBridge.newSignatureCommitment(
       BeefyFixture.commitmentHash,
       BeefyFixture.bitfield,
-      signatureSubstrateToEthereum(BeefyFixture.signature0),
+      BeefyFixture.signature0,
       0,
       beefyValidatorAddresses[0],
       validator0PubKeyMerkleProof
@@ -62,71 +67,34 @@ describe("Verification tests", () => {
     const lastId = currentId.sub(1);
 
     const validata = await lightClientBridge.validatorBitfield(lastId);
-    expect(printBitfield(validata)).to.eq('11')
+    expect(printBitfield(validata)).to.eq('111')
 
-    const completeCommitmentTooEarly = lightClientBridge.completeSignatureCommitment(
-      lastId,
-      BeefyFixture.commitment,
-      [signatureSubstrateToEthereum(BeefyFixture.signature1)],
-      [1],
-      beefyValidatorAddresses,
-      [validator0PubKeyMerkleProof, validator1PubKeyMerkleProof]
-    );
-    await catchRevert(completeCommitmentTooEarly, 'Bridge: Block wait period not over');
+    await catchRevert(lightClientBridge.createRandomBitfield(lastId), 'Bridge: Block wait period not over');
     await mine(45);
+
+    const randomBitfield = (await lightClientBridge.createRandomBitfield(lastId)); 
+    const addrIndex = firstBit(randomBitfield) - 1;
+    const bitfield = parseInt(randomBitfield.toString(), 10)
 
     const completeCommitment = lightClientBridge.completeSignatureCommitment(
       lastId,
       BeefyFixture.commitment,
-      [signatureSubstrateToEthereum(BeefyFixture.signature1)],
-      [1],
-      beefyValidatorAddresses,
-      [validator0PubKeyMerkleProof, validator1PubKeyMerkleProof]
+      [sigs[addrIndex]],
+      [addrIndex],
+      [beefyValidatorAddresses[addrIndex]],
+      [proofs[addrIndex]]
     );
-    console.log(await completeCommitment)
     expect(completeCommitment) 
       .to.emit(lightClientBridge, "FinalVerificationSuccessful")
       .withArgs((await completeCommitment).from, BeefyFixture.commitmentHash, lastId)
-    console.log(await lightClientBridge.latestMMRRoot());
-
-    // this.channel = await BasicInboundChannel.new(this.lightClientBridge.address,
-    //   { from: owner }
-    // );
-    // this.app = await MockApp.new();
+    const latestMMRRoot = await lightClientBridge.latestMMRRoot();
+    expect(latestMMRRoot).to.eq(BeefyFixture.commitment.payload.mmr)
   });
 
   it("should successfully verify a commitment", async () => {
     // // TODO finish this test
     // return
 
-    // const abi = this.app.abi;
-    // const iChannel = new ethers.utils.Interface(abi);
-    // const polkadotSender = ethers.utils.formatBytes32String('fake-polkadot-address');
-    // const unlockFragment = iChannel.functions['unlock(bytes32,address,uint256)'];
-    // const payloadOne = iChannel.encodeFunctionData(unlockFragment, [polkadotSender, userTwo, 2]);
-    // const messageOne = {
-    //   target: this.ethApp.address,
-    //   nonce: 1,
-    //   payload: payloadOne
-    // };
-    // const payloadTwo = iChannel.encodeFunctionData(unlockFragment, [polkadotSender, userThree, 5]);
-    // const messageTwo = {
-    //   target: this.ethApp.address,
-    //   nonce: 2,
-    //   payload: payloadTwo
-    // };
-    // const messages = [messageOne, messageTwo];
-    // const commitment = buildCommitment(messages);
-    // const tx = await this.inbound.submit(
-    //   messages,
-    //   commitment,
-    //   fixture.leaf,
-    //   fixture.leafIndex,
-    //   fixture.leafCount,
-    //   fixture.proofs,
-    //   { from: userOne }
-    // );
-    // console.log(tx);
   });
 });
 
@@ -136,4 +104,10 @@ function parseBitfield(s) {
 
 function printBitfield(s) {
   return parseInt(s.toString(), 10).toString(2)
+}
+
+function firstBit(x) {
+    return Math.floor(
+        Math.log(x | 0) / Math.log(2)
+    ) + 1;
 }
