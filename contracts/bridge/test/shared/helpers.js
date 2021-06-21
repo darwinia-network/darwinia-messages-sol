@@ -3,6 +3,10 @@ const assert = require('assert');
 const MerkleTree = require("merkletreejs").MerkleTree;
 const rlp = require("rlp");
 
+function buildCommitment(msgs) {
+  return ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["(address,uint64,bytes)[]"], [ msgs ]))
+}
+
 function signatureSubstrateToEthereum(sig) {
   const recoveryId0 = ethers.BigNumber.from(`0x${sig.slice(130)}`);
   const newRecoveryId0 = ethers.utils.hexlify(recoveryId0.add(27));
@@ -55,6 +59,7 @@ async function tryCatch(promise, type, message) {
 };
 
 module.exports = {
+  buildCommitment,
   createMerkleTree,
   signatureSubstrateToEthereum,
   mine,

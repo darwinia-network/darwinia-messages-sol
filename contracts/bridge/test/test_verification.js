@@ -6,7 +6,7 @@ const {
   buildCommitment,
   createMerkleTree, mine, catchRevert
 } = require("./shared/helpers");
-const { BeefyFixture } = require('./shared/fixtures.js');
+const { BeefyFixture, MessageFixture } = require('./shared/fixtures.js');
 const chai = require("chai");
 const MerkleTree = require("merkletreejs").MerkleTree;
 
@@ -29,6 +29,8 @@ describe("Verification tests", () => {
   const sigs = [BeefyFixture.signature0, BeefyFixture.signature1, BeefyFixture.signature2]
   const [owner, userOne, userTwo, userThree] = provider.getWallets()
   let lightClientBridge
+  let inbound
+  let app
 
   beforeEach(async () => {
 
@@ -89,12 +91,37 @@ describe("Verification tests", () => {
       .withArgs((await completeCommitment).from, BeefyFixture.commitmentHash, lastId)
     const latestMMRRoot = await lightClientBridge.latestMMRRoot();
     expect(latestMMRRoot).to.eq(BeefyFixture.commitment.payload.mmr)
+
+    inbound = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(lightClientBridge.address);
+    app = await (await ethers.getContractFactory("MockApp")).deploy();
   });
 
   it("should successfully verify a commitment", async () => {
-    // // TODO finish this test
-    // return
-
+    const polkadotSender = ethers.utils.formatBytes32String('fake-polkadot-address');
+    const payloadOne = app.interface.encodeFunctionData("unlock", [polkadotSender, userOne.address, ethers.utils.parseEther("2")]);
+    const messageOne = [
+      app.address,
+      1,
+      payloadOne
+    ];
+    const payloadTwo = app.interface.encodeFunctionData("unlock", [polkadotSender, userTwo.address, ethers.utils.parseEther("5")]);
+    const messageTwo = [
+      app.address,
+      2,
+      payloadTwo
+    ];
+    const messages = [messageOne, messageTwo];
+    const messagesHash = buildCommitment(messages);
+    // const tx = await inbound.submit(
+    //   messages,
+    //   MessageFixture.mmrLeaf,
+    //   MessageFixture.blockHeader,
+    //   MessageFixture.mmrLeafIndex,
+    //   MessageFixture.mmrLeafCount,
+    //   MessageFixture.mmrProofs.peaks,
+    //   MessageFixture.mmrProofs.siblings
+    // );
+    // console.log(tx);
   });
 });
 
