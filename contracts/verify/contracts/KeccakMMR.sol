@@ -141,7 +141,7 @@ library KeccakMMR {
     /**
      * @dev It returns the height of the highest peak
      */
-    function mountainHeight(uint256 size) internal pure returns (uint8) {
+    function mountainHeight(uint256 size) public pure returns (uint8) {
         uint8 height = 1;
         while (uint256(1) << height <= size + height) {
             height++;

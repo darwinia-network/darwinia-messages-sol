@@ -56,7 +56,7 @@ module.exports = {
     cache: "./cache",
     artifacts: "./artifacts"
   },
-  defaultNetwork: 'ropsten',
+  defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
     },
