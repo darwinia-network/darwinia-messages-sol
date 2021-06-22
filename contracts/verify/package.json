@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "npx hardhat compile",
-    "test": "npx hardhat test test/test_keccak_mmr.js",
+    "test": "npx hardhat test",
     "clean": "shx rm -rf cache artifacts abi"
   },
   "devDependencies": {
