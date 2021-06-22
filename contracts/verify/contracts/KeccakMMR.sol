@@ -14,7 +14,7 @@ import "@darwinia/contracts-utils/contracts/Keccak.sol";
 library KeccakMMR {
     using Keccak for bytes;
 
-    function bytes32Concat(bytes32 b1, bytes32 b2) public pure returns (bytes memory)
+    function bytes32Concat(bytes32 b1, bytes32 b2) internal pure returns (bytes memory)
     {
         bytes memory result = new bytes(64);
         assembly {
@@ -24,11 +24,11 @@ library KeccakMMR {
         return result;
     }
 
-    function getSize(uint width) public pure returns (uint256) {
+    function getSize(uint width) internal pure returns (uint256) {
         return (width << 1) - numOfPeaks(width);
     }
 
-    function peakBagging(bytes32[] memory peaks) pure public returns (bytes32) {
+    function peakBagging(bytes32[] memory peaks) pure internal returns (bytes32) {
         // peaks may be merged
         // require(numOfPeaks(width) == peaks.length, "Received invalid number of peaks");
         bytes32 mergeHash = peaks[0];
@@ -126,7 +126,7 @@ library KeccakMMR {
      * @dev It returns the hash a parent node with hash(M | Left child | Right child)
      *      M is the index of the node
      */
-    function hashBranch(bytes32 left, bytes32 right) pure public returns (bytes32) {
+    function hashBranch(bytes32 left, bytes32 right) pure internal returns (bytes32) {
         return (bytes32Concat(left, right)).hash();
     }
 
@@ -134,14 +134,14 @@ library KeccakMMR {
      * @dev it returns the hash of a leaf node with hash(M | DATA )
      *      M is the index of the node
      */
-    function hashLeaf(bytes memory data) pure public returns (bytes32) {
+    function hashLeaf(bytes memory data) pure internal returns (bytes32) {
         return data.hash();
     }
 
     /**
      * @dev It returns the height of the highest peak
      */
-    function mountainHeight(uint256 size) public pure returns (uint8) {
+    function mountainHeight(uint256 size) internal pure returns (uint8) {
         uint8 height = 1;
         while (uint256(1) << height <= size + height) {
             height++;
@@ -152,7 +152,7 @@ library KeccakMMR {
     /**
      * @dev It returns the height of the index
      */
-    function heightAt(uint256 index) public pure returns (uint8 height) {
+    function heightAt(uint256 index) internal pure returns (uint8 height) {
         uint256 reducedIndex = index;
         uint256 peakIndex;
         // If an index has a left mountain subtract the mountain
@@ -168,7 +168,7 @@ library KeccakMMR {
     /**
      * @dev It returns the children when it is a parent node
      */
-    function getChildren(uint256 index) public pure returns (uint256 left, uint256 right) {
+    function getChildren(uint256 index) internal pure returns (uint256 left, uint256 right) {
         left = 0;
         right = 0;
         left = index - (uint256(1) << (heightAt(index) - 1));
@@ -181,7 +181,7 @@ library KeccakMMR {
      * @dev It returns all peaks of the smallest merkle mountain range tree which includes
      *      the given index(size)
      */
-    function getPeakIndexes(uint256 width) public pure returns (uint256[] memory peakIndexes) {
+    function getPeakIndexes(uint256 width) internal pure returns (uint256[] memory peakIndexes) {
         peakIndexes = new uint256[](numOfPeaks(width));
         uint count;
         uint size;
@@ -195,7 +195,7 @@ library KeccakMMR {
         require(count == peakIndexes.length, "Invalid bit calculation");
     }
 
-    function numOfPeaks(uint256 width) public pure returns (uint num) {
+    function numOfPeaks(uint256 width) internal pure returns (uint num) {
         uint256 bits = width;
         while(bits > 0) {
             if(bits % 2 == 1) num++;

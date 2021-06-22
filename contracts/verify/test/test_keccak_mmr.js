@@ -19,11 +19,10 @@ const leafHashs = [
  */
 describe('MerkleMountainRange', () => {
   let mmrLib;
-  let mmrWrapper;
   let res;
 
   before(async () => {
-    const MMR = await ethers.getContractFactory("KeccakMMR");
+    const MMR = await ethers.getContractFactory("KeccakMMRWrapper");
     mmrLib = await MMR.deploy();
     await mmrLib.deployed();
 
@@ -52,9 +51,9 @@ describe('MerkleMountainRange', () => {
         expect(res.right.toString()).that.equals('29');
       });
       it('should be reverted for leaves like 1,2,4 (only reverted in javascript evm)', async () => {
-       await expect(mmrLib.getChildren(1)).to.revertedWith("Transaction reverted: library was called directly");
-       await expect(mmrLib.getChildren(2)).to.revertedWith("Transaction reverted: library was called directly");
-       await expect(mmrLib.getChildren(4)).to.revertedWith("Transaction reverted: library was called directly");
+       await expect(mmrLib.getChildren(1)).to.revertedWith("VM Exception while processing transaction: revert Not a parent");
+       await expect(mmrLib.getChildren(2)).to.revertedWith("VM Exception while processing transaction: revert Not a parent");
+       await expect(mmrLib.getChildren(4)).to.revertedWith("VM Exception while processing transaction: revert Not a parent");
       });
       it('get size', async () => {
         res = await mmrLib.getSize(9314);
@@ -157,14 +156,14 @@ describe('MerkleMountainRange', () => {
 
   context('Gas usage test', async () => {
     it('testMountainHeight', async() => {
-      // await mmrWrapper.testMountainHeight(1);
-      // await mmrWrapper.testMountainHeight(10);
-      // await mmrWrapper.testMountainHeight(100);
-      // await mmrWrapper.testMountainHeight(1000);
-      // await mmrWrapper.testMountainHeight(10000);
-      // await mmrWrapper.testMountainHeight(100000);
-      // await mmrWrapper.testMountainHeight(1000000);
-      // await mmrWrapper.testMountainHeight(10000000);
+      await mmrLib.testMountainHeight(1);
+      await mmrLib.testMountainHeight(10);
+      await mmrLib.testMountainHeight(100);
+      await mmrLib.testMountainHeight(1000);
+      await mmrLib.testMountainHeight(10000);
+      await mmrLib.testMountainHeight(100000);
+      await mmrLib.testMountainHeight(1000000);
+      await mmrLib.testMountainHeight(10000000);
     })
 
     it(`Gas usage test`, async () => {
