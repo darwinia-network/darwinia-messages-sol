@@ -111,7 +111,9 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         require(amount > 0, "can not transfer amount zero");
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
-        IERC20(token).burn(msg.sender, amount);
+        require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer token failed");
+        IERC20(token).burn(address(this), amount);
+
         (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
             abi.encodePacked(info.eventReceiver, bytes4(keccak256("burned(address,address,address,address,uint256)")),
                            abi.encode(specVersion,
