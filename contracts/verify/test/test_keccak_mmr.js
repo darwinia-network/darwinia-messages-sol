@@ -239,7 +239,7 @@ describe('MerkleMountainRange', () => {
 
   context('Verify mmr proof', async () => {
     describe('inclusionProof()', async () => {
-      it('should return pass true when it receives a valid merkle proof (0-7)', async () => {
+      it.skip('should return pass true when it receives a valid merkle proof (0-7)', async () => {
         // bytes32 root,
         // uint256 width,
         // uint256 index,
@@ -262,7 +262,7 @@ describe('MerkleMountainRange', () => {
         )).that.equals(true);
       })
 
-      it('should return pass true when it receives a valid merkle proof (6999-10000)', async () => {
+      it.skip('should return pass true when it receives a valid merkle proof (6999-10000)', async () => {
         expect(await mmrLib.inclusionProof(
           '0x04c012d3f663112b7990c75f5aa85686a988b4e921c9f228755eb0494bd62f56',
           10000,
@@ -290,7 +290,7 @@ describe('MerkleMountainRange', () => {
         )).that.equals(true);
       })
 
-      it('should return pass true when it receives a valid merkle proof (70-101)', async () => {
+      it.skip('should return pass true when it receives a valid merkle proof (70-101)', async () => {
         // 70 -> https://crab.subscan.io/block/70
         // 101 -> https://crab.subscan.io/block/101?tab=log Other - mmr_root
         (await mmrLib.inclusionProof(
@@ -313,7 +313,7 @@ describe('MerkleMountainRange', () => {
         )).should.be.that.equals(true);
       })
 
-      it('should return pass true when it receives a valid merkle proof (3-7)', async () => {
+      it.skip('should return pass true when it receives a valid merkle proof (3-7)', async () => {
         expect(await mmrLib.inclusionProof(
           '0x2dee5b87a481a9105cb4b2db212a1d8031d65e9e6e68dc5859bef5e0fdd934b2',
           7,
@@ -330,7 +330,7 @@ describe('MerkleMountainRange', () => {
         )).that.equals(true);
       })
 
-      it('should be rejected', async () => {
+      it.skip('should be rejected', async () => {
         expect(mmrLib.inclusionProof(
           '0x2dee5b87a481a9105cb4b2db212a1d8031d65e9e6e68dc5859bef5e0fdd934b2',
           7,
