@@ -1,9 +1,9 @@
 const {expect, use} = require('chai');
 const { solidity }  = require("ethereum-waffle");
 const { keccak, keccakFromString } = require("ethereumjs-util")
-const { buf2hex, getMerkleRoot, hex2buf } = require("./shared/utils.js")
+const { buf2hex, getMerkleRoot, hex2buf } = require("../src/utils/utils")
 const { MerkleTree } = require("merkletreejs")
-const generateSampleData = require("./shared/sampleData")
+const generateSampleData = require("../src/utils/sampleData")
 
 use(solidity);
 
@@ -44,7 +44,7 @@ describe('MerkleProofTest', function () {
 
     it("Should verify message array unpacked", async function () {
       const commitment = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["bytes32[]"], [ hexData ]))
-      const result = await verification.verifyMessagesArrayUnpacked(hexData, commitment)
+      const result = await verification.verifyMessageArrayUnpacked(hexData, commitment)
       expect(result).to.be.true
     })
   })

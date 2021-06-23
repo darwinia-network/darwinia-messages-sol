@@ -8,7 +8,7 @@ const { keccakFromString } = require("ethereumjs-util")
  * an array of length 60000
  */
 function* generateSampleData(length) {
-  let initial = "snowfork"
+  let initial = "darwinia"
   for (let i = 0; i < length; i++) {
     initial = keccakFromString(initial).toString("hex")
     yield initial

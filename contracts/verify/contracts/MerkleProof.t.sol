@@ -53,7 +53,7 @@ contract MerkleProofTest is DSTest {
         return commitment == _commitment;
     }
 
-    function verifyMessagesArrayUnpacked(bytes32[] calldata messages, bytes32 _commitment) external pure returns (bool) {
+    function verifyMessageArrayUnpacked(bytes32[] calldata messages, bytes32 _commitment) external pure returns (bool) {
         return keccak256(abi.encode(messages)) == _commitment;
     }
 
