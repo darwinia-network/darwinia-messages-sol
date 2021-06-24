@@ -29,6 +29,9 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
     event NewLogicSetted(string name, address addr);
     event IssuingERC20Created(address indexed sender, address backing, address source, address token);
 
+    receive() external payable {
+    }
+
     function initialize() public initializer {
         ownableConstructor();
     }
@@ -107,7 +110,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         IERC20(token).mint(recipient, amount);
     }
 
-    function crossTransfer(uint32 specVersion, address token, bytes memory recipient, uint256 amount) external {
+    function crossTransfer(uint32 specVersion, address token, bytes memory recipient, uint256 amount) external payable {
         require(amount > 0, "can not transfer amount zero");
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
@@ -122,7 +125,8 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
                                       msg.sender, 
                                       info.source, 
                                       recipient, 
-                                      amount)));
+                                      amount,
+                                      msg.value)));
         require(encodeSuccess, "burn: encode dispatch failed");
         (bool success, ) = DISPATCH.call(encoded);
         require(success, "burn: call burn precompile failed");
