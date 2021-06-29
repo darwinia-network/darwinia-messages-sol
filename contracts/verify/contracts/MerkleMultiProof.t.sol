@@ -11,7 +11,7 @@ contract MerkleMultiProofTest is DSTest {
         bool[] memory proofFlag
     )
         public 
-        pure
+        logs_gas 
         returns (bool)
     {
         return MerkleMultiProof.verifyMultiProof(root, leafs, proofs, proofFlag);

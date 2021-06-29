@@ -9,7 +9,8 @@
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
     "gas": "npx hardhat gasUsage",
-    "benchmark": "npx hardhat test test/test_merkle_proof.js test/test_compact_merkle_proof.js",
+    "benchmark:single": "npx hardhat test test/test_merkle_proof.js test/test_compact_merkle_proof.js",
+    "benchmark:multi": "npx hardhat test test/test_merkle_multi_proof.js test/test_compact_merkle_proof.js",
     "clean": "shx rm -rf cache artifacts abi"
   },
   "devDependencies": {
