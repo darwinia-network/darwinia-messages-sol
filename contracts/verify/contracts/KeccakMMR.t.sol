@@ -13,7 +13,7 @@ contract KeccakMMRWrapper is DSTest {
         bytes memory value,
         bytes32[] memory peaks,
         bytes32[] memory siblings
-    ) public pure returns (bool){
+    ) public logs_gas returns (bool){
         return KeccakMMR.inclusionProof(root, width, blockNumber, value, peaks, siblings);
     }
 

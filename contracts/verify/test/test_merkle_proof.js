@@ -1,7 +1,7 @@
 const {expect, use} = require('chai');
 const { solidity }  = require("ethereum-waffle");
 const { keccakFromHexString, keccak } = require("ethereumjs-util");
-const MerkleTree = require("merkletreejs").MerkleTree;
+const { MerkleTree } = require("merkletreejs");
 const largeValidatorAddresses = require("./data/large-validator-data")
 
 use(solidity);

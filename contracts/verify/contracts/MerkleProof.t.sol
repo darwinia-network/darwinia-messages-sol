@@ -113,4 +113,5 @@ contract MerkleProofTest is DSTest {
 
         return computedHash == root;
     }
+
 }

@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require('hardhat-abi-exporter');
+require("hardhat-gas-reporter");
 
 require('dotenv').config({ path: '../../.env' })
 
