@@ -127,13 +127,14 @@ library Scale {
         for (uint256 i = 0; i < len; i++) {
             uint8 b = data.decodeU8();
             if (b == 0) /*Other*/ {
-                data.decodeU32();
+                decodeU32(data);
+                data.shiftBytes(36);
                 return data.decodeBytes32();
             } else if (b == 2) /*ChangesTrieRoot*/ {
                 data.shiftBytes(32);
             } else if (b == 4 || b == 5 || b == 6) /*Consensus, Seal, PreRuntime*/ {
                 data.shiftBytes(4);
-                data.shiftBytes(data.decodeU32());
+                data.shiftBytes(decodeU32(data));
             } else if (b == 7) /*ChangesTrieSignal*/ {
                 uint8 tag = data.decodeU8();
                 if (tag == 0) {

@@ -43,7 +43,6 @@ describe("Verification tests", () => {
     const validator2PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf2);
     const proofs = [validator0PubKeyMerkleProof, validator1PubKeyMerkleProof, validator2PubKeyMerkleProof]
     const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
-    // MerkleTree.print(validatorsMerkleTree)
     lightClientBridge = await LightClientBridge.deploy(
       0,
       validatorsMerkleTree.getLeaves().length,
@@ -112,16 +111,27 @@ describe("Verification tests", () => {
     ];
     const messages = [messageOne, messageTwo];
     const messagesHash = buildCommitment(messages);
-    // const tx = await inbound.submit(
-    //   messages,
-    //   MessageFixture.mmrLeaf,
-    //   MessageFixture.blockHeader,
-    //   MessageFixture.mmrLeafIndex,
-    //   MessageFixture.mmrLeafCount,
-    //   MessageFixture.mmrProofs.peaks,
-    //   MessageFixture.mmrProofs.siblings
-    // );
-    // console.log(tx);
+    const tx = await inbound.submit(
+      messages,
+      MessageFixture.mmrLeaf,
+      MessageFixture.blockHeader,
+      MessageFixture.mmrLeafIndex,
+      MessageFixture.mmrLeafCount,
+      MessageFixture.mmrProofs.peaks,
+      MessageFixture.mmrProofs.siblings
+    );
+    expect(tx)
+      .to.emit(inbound, "MessageDispatched")
+      .withArgs(1, true)
+    expect(tx)
+      .to.emit(inbound, "MessageDispatched")
+      .withArgs(2, true)
+    expect(tx)
+      .to.emit(app, "Unlocked")
+      .withArgs(polkadotSender, userOne.address, ethers.utils.parseEther("2"))
+    expect(tx)
+      .to.emit(app, "Unlocked")
+      .withArgs(polkadotSender, userTwo.address, ethers.utils.parseEther("5"))
   });
 });
 

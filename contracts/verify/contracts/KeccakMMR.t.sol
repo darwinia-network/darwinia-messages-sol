@@ -13,11 +13,11 @@ contract KeccakMMRWrapper is DSTest {
         bytes memory value,
         bytes32[] memory peaks,
         bytes32[] memory siblings
-    ) public logs_gas returns (bool){
+    ) public pure returns (bool){
         return KeccakMMR.inclusionProof(root, width, blockNumber, value, peaks, siblings);
     }
 
-    function testMountainHeight(uint256 size) public logs_gas{
+    function testMountainHeight(uint256 size) public logs_gas {
        KeccakMMR.mountainHeight(size);
     }
 

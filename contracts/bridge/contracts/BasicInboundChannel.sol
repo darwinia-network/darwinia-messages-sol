@@ -59,7 +59,7 @@ contract BasicInboundChannel {
         returns (bool success)
     {
         bytes32 blockHash = Scale.decodeBlockHashFromBeefyMMRLeaf(beefyMMRLeaf);
-        require(blockHash == Hash.blake2bHash(blockHeader), "Channel: invalid block header");
+        require(blockHash == keccak256(blockHeader), "Channel: invalid block header");
         uint32 blockNumber = Scale.decodeBlockNumberFromBlockHeader(blockHeader);
         require(
             blockNumber <= lightClientBridge.getFinalizedBlockNumber(),

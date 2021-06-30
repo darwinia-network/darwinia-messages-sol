@@ -24,14 +24,9 @@ const hashBranch = (index, left, right) => {
 }
 
 const leaves = [
-   // '0x34f61bfda344b3fad3c3e38832a91448b3c613b199eb23e5110a635d71c13c65',
-   // '0x70d641860d40937920de1eae29530cdc956be830f145128ebb2b496f151c1afb',
-   // '0x12e69454d992b9b1e00ea79a7fa1227c889c84d04b7cd47e37938d6f69ece45d',
-   // '0x3733bd06905e128d38b9b336207f301133ba1d0a4be8eaaff6810941f0ad3b1a',
-   // '0x3d7572be1599b488862a1b35051c3ef081ba334d1686f9957dbc2afd52bd2028',
    '0x2a04add3ecc3979741afad967dfedf807e07b136e05f9c670a274334d74892cf',
+   '0xa87c7fc44bb09f89934d8798eb000020c6cf32630c64f6b09d81bdd280f42db1',
    '0xc58e247ea35c51586de2ea40ac6daf90eac7ac7b2f5c88bbc7829280db7890f1',
-   '0x235577d14798bbc7662e07f53282ebb1ed6de071c54a07f1bd670493b80fab85',
 ]
 
 /**
@@ -47,12 +42,12 @@ describe('MerkleMountainRange', () => {
     mmrLib = await MMR.deploy();
     await mmrLib.deployed();
 
-    // console.log('MMR Tree : 5 |                             31');
-    // console.log('           4 |             15                                 30                                    46');
-    // console.log('           3 |      7             14                 22                 29                 38                 45');
-    // console.log('           2 |   3      6     10       13       18       21        25       28        34        37       41        44       49');
-    // console.log('           1 | 1  2   4  5   8  9    11  12   16  17    19  20   23  24    26  27   32  33    35  36   39  40    42  43   47  48    50');
-    // console.log('       width | 1  2   3  4   5  6     7   8    9  10    11  12   13  14    15  16   17  18    19  20   21  22    23  24   25  26    27');
+    console.log('MMR Tree : 5 |                             31');
+    console.log('           4 |             15                                 30                                    46');
+    console.log('           3 |      7             14                 22                 29                 38                 45');
+    console.log('           2 |   3      6     10       13       18       21        25       28        34        37       41        44       49');
+    console.log('           1 | 1  2   4  5   8  9    11  12   16  17    19  20   23  24    26  27   32  33    35  36   39  40    42  43   47  48    50');
+    console.log('       width | 1  2   3  4   5  6     7   8    9  10    11  12   13  14    15  16   17  18    19  20   21  22    23  24   25  26    27');
   });
   context('Test pure functions', async () => {
     describe('getChildren()', async () => {
@@ -187,7 +182,7 @@ describe('MerkleMountainRange', () => {
       await mmrLib.testMountainHeight(10000000);
     })
 
-    it(`Gas usage test`, async () => {
+    it('MMR verification', async () => {
       const tree = new MerkleMountainRange(keccak256, leaves, hashLeaf, peakBagging, hashBranch)
       const root = tree.getHexRoot()
       const index = 2
@@ -203,17 +198,7 @@ describe('MerkleMountainRange', () => {
         proof.peakBagging,
         proof.siblings
       ) 
-      // expect(ret).to.be.true
-      // block 0: 0x34f61bfda344b3fad3c3e38832a91448b3c613b199eb23e5110a635d71c13c65
-      // block 1: 0x70d641860d40937920de1eae29530cdc956be830f145128ebb2b496f151c1afb
-      // block 2: 0x12e69454d992b9b1e00ea79a7fa1227c889c84d04b7cd47e37938d6f69ece45d
-      // block 3: 0x3733bd06905e128d38b9b336207f301133ba1d0a4be8eaaff6810941f0ad3b1a
-      // block 4: 0x3d7572be1599b488862a1b35051c3ef081ba334d1686f9957dbc2afd52bd2028
-      // block 5: 0x2a04add3ecc3979741afad967dfedf807e07b136e05f9c670a274334d74892cf
-      // block 6: 0xc58e247ea35c51586de2ea40ac6daf90eac7ac7b2f5c88bbc7829280db7890f1
-      // block 7: 0x2cf0262f0a8b00cad22afa04d70fb0c1dbb2eb4a783beb7c5e27bd89015ff573
-      // block 7': 0x235577d14798bbc7662e07f53282ebb1ed6de071c54a07f1bd670493b80fab85
-      //0xa1bae689272b8f9ce4f96aa59c2b02c1bc235a196736dce14ce5ef6ac89ac802ceb86801d56984e1c93333f5e4ef653faaec150772471344244a8cba1149c53aabc5301390c6c9648faab03e43e102a163a56e808e142ccbbc6d75e9182ec8594b11e8d310064241424534020a000000b9a42410000000000466726f6e8801452d45807faaa88df671caab064c72dce0f3ee8ece2bb8527dadb8a28a427c2e000011014d4d5252f87caba54b9460e494a03688bc960b34d89e760522103aa5afe61652e20992a66af84df8eeeda60497b4a6f2a259a38b5c0f7a725502cf081d9a51b7a363d33005424142450101123ccb7775e4f252a0fb5032bcdc5d4f52d1b4e9395a61f7d21195de3a50b9709aa0381598980dccc06a2c8c144feb04a202bdb65f6544a01c32bf5992980b8c
+      expect(ret).to.be.true
     });
   });
 });

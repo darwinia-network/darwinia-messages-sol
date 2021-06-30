@@ -38,7 +38,7 @@ describe('MerkleMultiProofTest', function () {
       let leafs = ['a', 'b', 'c', 'd'].map(x => keccak(Buffer.from(x)))
       leafs = leafs.sort(Buffer.compare)
       const tree = new MerkleTree(leafs, keccak)
-      tree.print()
+      // tree.print()
       const root = tree.getRoot()
       const treeFlat = tree.getLayersFlat()
       // console.log(treeFlat.map(x => x.toString('hex')))
@@ -125,17 +125,17 @@ describe('MerkleMultiProofTest', function () {
 
       const leavesHashed = beefyValidatorPubKey.map(leaf => keccakFromHexString(leaf)).sort(Buffer.compare);
       const tree = new MerkleTree(leavesHashed, keccak);
-      tree.print()
+      // tree.print()
       const root = tree.getRoot()
-      console.log(root.toString('hex'))
+      // console.log(root.toString('hex'))
       const treeFlat = tree.getLayersFlat()
       const depth = tree.getDepth()
       const indices = [8 , 7,  6,  5,  4,  1]
       const leaves = indices.map(i => leavesHashed[i])
-      console.log(leaves.map(x => x.toString('hex')))
+      // console.log(leaves.map(x => x.toString('hex')))
       let proof = tree.getHexMultiProof(treeFlat, indices)
       // proof.push(treeFlat[3])
-      console.log(proof.map(x => x.toString('hex')))
+      // console.log(proof.map(x => x.toString('hex')))
       const verified = tree.verifyMultiProof(root, indices, leaves, depth, proof)
       expect(verified).to.equal(true)
 
