@@ -185,7 +185,7 @@ describe('MerkleMountainRange', () => {
       await mmrLib.testMountainHeight(10000000);
     })
 
-    it.only('MMR verification', async () => {
+    it('MMR verification', async () => {
       const tree = new MerkleMountainRange(hashFn, leaves, hashLeaf, peakBagging, hashBranch)
       const root = tree.getHexRoot()
       const index = 2
