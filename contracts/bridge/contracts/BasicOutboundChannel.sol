@@ -18,7 +18,7 @@ contract BasicOutboundChannel is IOutboundChannel {
     /**
      * @dev Sends a message across the channel
      */
-    function submit(address, bytes calldata payload) external override {
+    function submit(bytes calldata payload) external override {
         nonce = nonce + 1;
         emit Message(msg.sender, nonce, payload);
     }

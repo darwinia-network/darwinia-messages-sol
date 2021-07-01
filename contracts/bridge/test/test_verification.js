@@ -26,14 +26,15 @@ describe("Verification tests", () => {
     "0xcC5E48BEb33b83b8bD0D9d9A85A8F6a27C51F5C5",
     "0x00a1537d251a6a4c4effAb76948899061FeA47b9",
   ]
-  const sigs = [BeefyFixture.signature0, BeefyFixture.signature1, BeefyFixture.signature2]
   const [owner, userOne, userTwo, userThree] = provider.getWallets()
+  const testPayload = ethers.utils.formatBytes32String("arbitrary-payload");
+  const sigs = [BeefyFixture.signature0, BeefyFixture.signature1, BeefyFixture.signature2]
   let lightClientBridge
   let inbound
+  let outbound
   let app
 
-  beforeEach(async () => {
-
+  before(async () => {
     const validatorsMerkleTree = createMerkleTree(beefyValidatorAddresses);
     const validatorsLeaf0 = validatorsMerkleTree.getHexLeaves()[0];
     const validatorsLeaf1 = validatorsMerkleTree.getHexLeaves()[1];
@@ -93,6 +94,7 @@ describe("Verification tests", () => {
 
     inbound = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(lightClientBridge.address);
     app = await (await ethers.getContractFactory("MockApp")).deploy();
+    outbound = await (await ethers.getContractFactory("BasicOutboundChannel")).deploy();
   });
 
   it("should successfully verify a commitment", async () => {
@@ -132,6 +134,47 @@ describe("Verification tests", () => {
     expect(tx)
       .to.emit(app, "Unlocked")
       .withArgs(polkadotSender, userTwo.address, ethers.utils.parseEther("5"))
+
+    const agian = inbound.submit(
+          messages,
+          MessageFixture.mmrLeaf,
+          MessageFixture.blockHeader,
+          MessageFixture.mmrLeafIndex,
+          MessageFixture.mmrLeafCount,
+          MessageFixture.mmrProofs.peaks,
+          MessageFixture.mmrProofs.siblings
+      )
+
+    await catchRevert(agian, 'Channel: invalid nonce');
+  });
+
+  it("should send messages out with the correct event and fields", async function () {
+    const tx = await outbound.submit(
+      testPayload
+    );
+
+    expect(tx)
+      .to.emit(outbound, "Message")
+      .withArgs(tx.from, 1, testPayload)
+  });
+
+  it("should increment nonces correctly", async function () {
+    const tx = await outbound.submit(
+      testPayload
+    );
+    console.log(tx)
+
+    const tx2 = await outbound.submit(
+      testPayload
+    );
+
+    const tx3 = await outbound.submit(
+      testPayload
+    );
+
+    expect(tx3)
+      .to.emit(outbound, "Message")
+      .withArgs(tx.from, 4, testPayload)
   });
 });
 
