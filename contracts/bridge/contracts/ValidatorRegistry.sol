@@ -3,14 +3,13 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 
 /**
  * @title A contract storing state on the current validator set
  * @dev Stores the validator set as a Merkle root
  */
-contract ValidatorRegistry is Ownable {
+contract ValidatorRegistry {
     /* Events */
 
     event ValidatorRegistryUpdated(uint256 id, uint256 len, bytes32 root);

@@ -4,17 +4,14 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/proxy/Initializable.sol";
-import "@darwinia/contracts-utils/contracts/Pausable.sol";
 import "@darwinia/contracts-utils/contracts/ECDSA.sol";
-import "@darwinia/contracts-utils/contracts/SafeMath.sol";
 import "@darwinia/contracts-utils/contracts/Bits.sol";
 import "@darwinia/contracts-utils/contracts/Bitfield.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "@darwinia/contracts-verify/contracts/KeccakMMR.sol";
 import "./ValidatorRegistry.sol";
 
-contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
-    using SafeMath for uint256;
+contract LightClientBridge is Initializable, ValidatorRegistry {
     using Bits for uint256;
     using Bitfield for uint256[];
 
@@ -40,12 +37,10 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
      * @notice Notifies an observer that the complete verification process has
      *  finished successfuly and the new commitmentHash will be accepted
      * @param prover The address of the successful prover
-     * @param commitmentHash the commitmentHash which was approved for inclusion
      * @param id the identifier used
      */
     event FinalVerificationSuccessful(
         address prover,
-        bytes32 commitmentHash,
         uint256 id
     );
 
@@ -64,13 +59,46 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         NextValidatorSet nextValidatorSet; 
     }
 
+    /**
+     * The Commitment, with its payload, is the core thing we are trying to verify with this contract.
+     * It contains a next validator set or not and a MMR root that commits to the darwinia history,
+     * including past blocks and can be used to verify darwinia blocks. 
+     * @param payload the payload of the new commitment in beefy justifications (in
+     * our case, this is a next validator set and a new MMR root for all past darwinia blocks)
+     * @param blockNumber block number for the given commitment
+     * @param validatorSetId validator set id that signed the given commitment
+     */
     struct Commitment {
         Payload payload;
         uint32 blockNumber;
         uint64 validatorSetId;
     }
 
+    /**
+     * The ValidatorProof is a collection of proofs used to verify the signatures from the validators signing
+     * each new justification.
+     * @param signatures an array of signatures from the randomly chosen validators
+     * @param positions an array of the positions of the randomly chosen validators
+     * @param publicKeys an array of the public key of each signer
+     * @param publicKeyMerkleProofs an array of merkle proofs from the chosen validators proving that their public
+     * keys are in the validator set
+     */
+    struct ValidatorProof {
+        bytes[] signatures;
+        uint256[] positions;
+        address[] publicKeys;
+        bytes32[][] publicKeyMerkleProofs;
+    }
+
+    /**
+     * The ValidationData is the set of data used to link each pair of initial and complete verification transactions.
+     * @param senderAddress the sender of the initial transaction
+     * @param commitmentHash the hash of the commitment they are claiming has been signed
+     * @param blockNumber the block number for this commitment
+     * @param validatorClaimsBitfield a bitfield signalling which validators they claim have signed
+     */
     struct ValidationData {
+        address senderAddress;
         bytes32 commitmentHash;
         uint256 blockNumber;
         uint256[] validatorClaimsBitfield;
@@ -90,24 +118,28 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
     uint256 public constant THRESHOLD_DENOMINATOR = 3;
     uint256 public constant BLOCK_WAIT_PERIOD = 12;
 
+    // We must ensure at least one block is processed every session,
+    // so these constants are checked to enforce a maximum gap between commitments.
+    uint64 public constant NUMBER_OF_BLOCKS_PER_SESSION = 100;
+    uint64 public constant ERROR_AND_SAFETY_BUFFER = 10;
+    uint64 public constant MAXIMUM_BLOCK_GAP =
+        NUMBER_OF_BLOCKS_PER_SESSION - ERROR_AND_SAFETY_BUFFER;
+
     /**
      * @notice Deploys the LightClientBridge contract
-     * @param _validatorSetId initial validator set id
-     * @param _numOfValidators number of initial validator set
-     * @param _validatorSetRoot initial validator set merkle tree root
+     * @param validatorSetId initial validator set id
+     * @param numOfValidators number of initial validator set
+     * @param validatorSetRoot initial validator set merkle tree root
      */
-    // function initialize(uint256 _validatorSetId, uint256 _numOfValidators, bytes32 _validatorSetRoot)
+    // function initialize(uint256 validatorSetId, uint256 numOfValidators, bytes32 validatorSetRoot)
     //     public
     //     initializer
     // {
-        // ownableConstructor();
-        // pausableConstructor();
-
-        // _update(_validatorSetId, _numOfValidators, _validatorSetRoot);
+    //     _update(_validatorSetId, numOfValidators, validatorSetRoot);
     // }
 
-    constructor(uint256 _validatorSetId, uint256 _numOfValidators, bytes32 _validatorSetRoot) public {
-        _update(_validatorSetId, _numOfValidators, _validatorSetRoot);
+    constructor(uint256 validatorSetId, uint256 numOfValidators, bytes32 validatorSetRoot) public {
+        _update(validatorSetId, numOfValidators, validatorSetRoot);
     }
 
     /* Public Functions */
@@ -131,11 +163,13 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
     {
         ValidationData storage data = validationData[id];
 
+        require(data.blockNumber > 0, "Bridge: invalid id");
+
         /**
          * @dev verify that block wait period has passed
          */
         require(
-            block.number >= data.blockNumber.add(BLOCK_WAIT_PERIOD),
+            block.number >= data.blockNumber + BLOCK_WAIT_PERIOD,
             "Bridge: Block wait period not over"
         );
 
@@ -143,7 +177,40 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
             Bitfield.randomNBitsWithPriorCheck(
                 getSeed(data.blockNumber),
                 data.validatorClaimsBitfield,
-                requiredNumberOfSignatures()
+                requiredNumberOfSignatures(),
+                numOfValidators
+            );
+    }
+
+    function createInitialBitfield(uint256[] calldata bitsToSet, uint256 length)
+        external
+        pure
+        returns (uint256[] memory)
+    {
+        return Bitfield.createBitfield(bitsToSet, length);
+    }
+
+    function createCommitmentHash(Commitment memory commitment)
+        public
+        pure 
+        returns (bytes32)
+    {
+        /**
+         * Encode and hash the commitment
+         */
+       return keccak256(
+                abi.encodePacked(
+                    abi.encodePacked(
+                        commitment.payload.mmr,
+                            abi.encodePacked(
+                                commitment.payload.nextValidatorSet.id,
+                                commitment.payload.nextValidatorSet.len,
+                                commitment.payload.nextValidatorSet.root
+                            )
+                    ),
+                    commitment.blockNumber,
+                    commitment.validatorSetId
+                )
             );
     }
 
@@ -191,29 +258,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         uint256 validatorPosition,
         address validatorPublicKey,
         bytes32[] memory validatorPublicKeyMerkleProof
-    ) public payable whenNotPaused {
-        /**
-         * @dev Check if validatorPublicKeyMerkleProof is valid based on ValidatorRegistry merkle root
-         */
-        require(
-            checkValidatorInSet(
-                validatorPublicKey,
-                validatorPosition,
-                validatorPublicKeyMerkleProof
-            ),
-            "Bridge: Validator must be in validator set at correct position"
-        );
-
-        /**
-         * @dev Check if validatorSignature is correct, ie. check if it matches
-         * the signature of senderPublicKey on the commitmentHash
-         */
-        require(
-            ECDSA.recover(commitmentHash, validatorSignature) ==
-                validatorPublicKey,
-            "Bridge: Invalid Signature"
-        );
-
+    ) public payable {
         /**
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, > 2/3
          */
@@ -224,6 +269,14 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
             "Bridge: Bitfield not enough validators"
         );
 
+        verifyValidatorSignature(
+            validatorSignature,
+            validatorPosition,
+            validatorPublicKey,
+            validatorPublicKeyMerkleProof,
+            commitmentHash
+        );
+
         /**
          * @todo Lock up the sender stake as collateral
          */
@@ -231,6 +284,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
 
         // Accept and save the commitment
         validationData[currentId] = ValidationData(
+            msg.sender,
             commitmentHash,
             block.number,
             validatorClaimsBitfield
@@ -238,88 +292,28 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
 
         emit InitialVerificationSuccessful(msg.sender, block.number, currentId);
 
-        currentId = currentId.add(1);
+        currentId = currentId + 1;
     }
 
     /**
      * @notice Performs the second step in the validation logic
      * @param id an identifying value generated in the previous transaction
      * @param commitment contains the full commitment that was used for the commitmentHash
-     * @param signatures an array of signatures from the randomly chosen validators
-     * @param validatorPositions an array of bitfields from the chosen validators
-     * @param validatorPublicKeys an array of the public key of each signer
-     * @param validatorPublicKeyMerkleProofs an array of merkle proofs from the chosen validators
+     * @param validatorProof a struct containing the data needed to verify all validator signatures
      */
     function completeSignatureCommitment(
         uint256 id,
         Commitment memory commitment,
-        bytes[] memory signatures,
-        uint256[] memory validatorPositions,
-        address[] memory validatorPublicKeys,
-        bytes32[][] memory validatorPublicKeyMerkleProofs
-    ) public whenNotPaused {
+        ValidatorProof memory validatorProof
+    ) public {
         // only current epoch
         require(commitment.validatorSetId == validatorSetId, "Bridge: Invalid validator set id");
 
-        ValidationData storage data = validationData[id];
+        verifyCommitment(id, commitment, validatorProof);
 
-        /**
-         * verify that block wait period has passed
-         */
-        require(
-            block.number >= data.blockNumber.add(BLOCK_WAIT_PERIOD),
-            "Bridge: Block wait period not over"
-        );
-
-        /**
-         * Encode and hash the commitment
-         */
-        bytes32 commitmentHash =
-            keccak256(
-                abi.encodePacked(
-                    abi.encodePacked(
-                        commitment.payload.mmr,
-                            abi.encodePacked(
-                                commitment.payload.nextValidatorSet.id,
-                                commitment.payload.nextValidatorSet.len,
-                                commitment.payload.nextValidatorSet.root
-                            )
-                    ),
-                    commitment.blockNumber,
-                    commitment.validatorSetId
-                )
-            );
-
-        require(
-            commitmentHash == data.commitmentHash,
-            "Bridge: Commitment must match commitment hash"
-        );
-
-
-        /**
-         * @dev verify that sender is the same as in `newSignatureCommitment`
-         */
-        // require(
-        //     msg.sender == data.senderAddress,
-        //     "Bridge: Sender address does not match original validation data"
-        // );
-
-        verifySigatures(
-            commitmentHash,
-            data.blockNumber,
-            data.validatorClaimsBitfield,
-            signatures,
-            validatorPositions,
-            validatorPublicKeys,
-            validatorPublicKeyMerkleProofs
-        );
-
-        /**
-         * @follow-up Do we need a try-catch block here?
-         */
         processPayload(commitment.payload, commitment.blockNumber);
 
-        emit FinalVerificationSuccessful(msg.sender, commitmentHash, id);
+        emit FinalVerificationSuccessful(msg.sender, id);
 
         /**
          * @dev We no longer need the data held in state, so delete it for a gas refund
@@ -329,89 +323,144 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
 
     /* Private Functions */
 
-    function verifySigatures(
-        bytes32 commitmentHash,
-        uint256 blockNumber,
-        uint256[] memory validatorClaimsBitfield,
-        bytes[] memory signatures,
-        uint256[] memory validatorPositions,
-        address[] memory validatorPublicKeys,
-        bytes32[][] memory validatorPublicKeyMerkleProofs
-    ) 
-        private
-        view
-    {
+    function verifyCommitment(
+        uint256 id,
+        Commitment memory commitment,
+        ValidatorProof memory proof
+    ) private view {
+        ValidationData storage data = validationData[id];
+
+        /**
+         * @dev verify that sender is the same as in `newSignatureCommitment`
+         */
+        require(
+            msg.sender == data.senderAddress,
+            "Bridge: Sender address does not match original validation data"
+        );
+
+        /**
+         * verify that block wait period has passed
+         */
+        require(
+            block.number >= data.blockNumber + BLOCK_WAIT_PERIOD,
+            "Bridge: Block wait period not over"
+        );
+
         uint256 requiredNumOfSignatures = requiredNumberOfSignatures();
 
-        /**
-         * @dev verify that required number of signatures, positions, public keys and merkle proofs are
-         * submitted
-         */
-        require(
-            signatures.length == requiredNumOfSignatures,
-            "Bridge: Number of signatures does not match required"
-        );
-        require(
-            validatorPositions.length == requiredNumOfSignatures,
-            "Bridge: Number of validator positions does not match required"
-        );
-        require(
-            validatorPublicKeys.length == requiredNumOfSignatures,
-            "Bridge: Number of validator public keys does not match required"
-        );
-        require(
-            validatorPublicKeyMerkleProofs.length == requiredNumOfSignatures,
-            "Bridge: Number of validator public keys does not match required"
+        uint256[] memory randomBitfield = Bitfield.randomNBitsWithPriorCheck(
+            getSeed(data.blockNumber),
+            data.validatorClaimsBitfield,
+            requiredNumOfSignatures,
+            numOfValidators
         );
 
-        /**
-         * @dev Generate an array of numbers
-         */
-        uint256[] memory randomBitfield =
-            Bitfield.randomNBitsWithPriorCheck(
-                getSeed(blockNumber),
-                validatorClaimsBitfield,
-                requiredNumOfSignatures
-            );
+        // Encode and hash the commitment
+        bytes32 commitmentHash = createCommitmentHash(commitment);
+
+        require(
+            commitmentHash == data.commitmentHash,
+            "Bridge: Commitment must match commitment hash"
+        );
+
+        verifyValidatorProofSignatures(
+            randomBitfield,
+            proof,
+            requiredNumOfSignatures,
+            commitmentHash
+        );
+    }
+
+    function verifyValidatorProofSignatures(
+        uint256[] memory randomBitfield,
+        ValidatorProof memory proof,
+        uint256 requiredNumOfSignatures,
+        bytes32 commitmentHash
+    ) private view {
+
+        verifyValidatorProofLengths(requiredNumOfSignatures, proof);
 
         /**
          *  @dev For each randomSignature, do:
          */
         for (uint256 i = 0; i < requiredNumOfSignatures; i++) {
+            uint256 pos = proof.positions[i];
             /**
              * @dev Check if validator in randomBitfield
              */
             require(
-                randomBitfield.isSet(validatorPositions[i]),
+                randomBitfield.isSet(pos),
                 "Bridge: Validator must be once in bitfield"
             );
 
             /**
              * @dev Remove validator from randomBitfield such that no validator can appear twice in signatures
              */
-            randomBitfield.clear(validatorPositions[i]);
+            randomBitfield.clear(pos);
 
-            /**
-             * @dev Check if merkle proof is valid
-             */
-            require(
-                checkValidatorInSet(
-                    validatorPublicKeys[i],
-                    validatorPositions[i],
-                    validatorPublicKeyMerkleProofs[i]
-                ),
-                "Bridge: Validator must be in validator set at correct position"
-            );
-
-            /**
-             * @dev Check if signature is correct
-             */
-            require(
-                ECDSA.recover(commitmentHash, signatures[i]) ==
-                    validatorPublicKeys[i],
-                "Bridge: Invalid Signature"
+            verifyValidatorSignature(
+                proof.signatures[i],
+                pos,
+                proof.publicKeys[i],
+                proof.publicKeyMerkleProofs[i],
+                commitmentHash
             );
         }
+    }
+
+    function verifyValidatorProofLengths(
+        uint256 requiredNumOfSignatures,
+        ValidatorProof memory proof
+    ) private pure {
+        /**
+         * @dev verify that required number of signatures, positions, public keys and merkle proofs are
+         * submitted
+         */
+        require(
+            proof.signatures.length == requiredNumOfSignatures,
+            "Bridge: Number of signatures does not match required"
+        );
+        require(
+            proof.positions.length == requiredNumOfSignatures,
+            "Bridge: Number of validator positions does not match required"
+        );
+        require(
+            proof.publicKeys.length == requiredNumOfSignatures,
+            "Bridge: Number of validator public keys does not match required"
+        );
+        require(
+            proof.publicKeyMerkleProofs.length == requiredNumOfSignatures,
+            "Bridge: Number of validator public keys does not match required"
+        );
+    }
+
+    function verifyValidatorSignature(
+        bytes memory signature,
+        uint256 position,
+        address publicKey,
+        bytes32[] memory publicKeyMerkleProof,
+        bytes32 commitmentHash
+    ) private view {
+
+        /**
+         * @dev Check if merkle proof is valid
+         */
+        require(
+            checkValidatorInSet(
+                publicKey,
+                position,
+                publicKeyMerkleProof
+            ),
+            "Bridge: Validator must be in validator set at correct position"
+        );
+
+        /**
+         * @dev Check if signature is correct
+         */
+        require(
+            ECDSA.recover(commitmentHash, signature) == publicKey,
+            "Bridge: Invalid Signature"
+        );
     }
 
     /**
@@ -428,7 +477,7 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         view
         returns (uint256)
     {
-        uint256 randomSeedBlockNum = blockNumber.add(BLOCK_WAIT_PERIOD);
+        uint256 randomSeedBlockNum = blockNumber + BLOCK_WAIT_PERIOD;
         // @note Create a hash seed from the block number
         bytes32 randomSeedBlockHash = blockhash(randomSeedBlockNum);
 
@@ -444,16 +493,46 @@ contract LightClientBridge is Pausable, Initializable, ValidatorRegistry {
         // Check the payload is newer than the latest
         // Check that payload.leaf.block_number is > last_known_block_number;
         require(blockNumber > latestBlockNumber, "Bridge: Import old block");
+
+        // Check that payload is within the current or next session
+        // to ensure we get at least one payload each session
+        require(
+            blockNumber < latestBlockNumber + MAXIMUM_BLOCK_GAP,
+            "Bridge: blocknumber is too new"
+        );
+
         latestMMRRoot = payload.mmr;
         latestBlockNumber = blockNumber;
         emit NewMMRRoot(latestMMRRoot, blockNumber);
 
-        // if payload is in next epoch, then apply validatorset changes
-        // if payload is not in current or next epoch, reject
+        applyValidatorSetChanges(
+            payload.nextValidatorSet.id,
+            payload.nextValidatorSet.len,
+            payload.nextValidatorSet.root
+        );
+    }
+
+    /**
+     * @notice Check if the payload includes a new validator set,
+     * and if it does then update the new validator set
+     * @dev This function should call out to the validator registry contract
+     * @param nextValidatorSetId The id of the next validator set
+     * @param nextValidatorSetLen The number of validators in the next validator set
+     * @param nextValidatorSetRoot The merkle root of the merkle tree of the next validators
+     */
+    function applyValidatorSetChanges(
+        uint64 nextValidatorSetId,
+        uint32 nextValidatorSetLen,
+        bytes32 nextValidatorSetRoot
+    ) private {
         // TODO: check nextValidatorSet can null or not
-        require(payload.nextValidatorSet.id == 0 || payload.nextValidatorSet.id == validatorSetId + 1, "Bridge: Invalid next validator set id");
-        if (payload.nextValidatorSet.id == validatorSetId + 1) {
-            _update(payload.nextValidatorSet.id, payload.nextValidatorSet.len, payload.nextValidatorSet.root);
+        require(nextValidatorSetId == 0 || nextValidatorSetId == validatorSetId + 1, "Bridge: Invalid next validator set id");
+        if (nextValidatorSetId == validatorSetId + 1) {
+            _update(
+                nextValidatorSetId,
+                nextValidatorSetLen,
+                nextValidatorSetRoot
+            );
         }
     }
 

@@ -78,17 +78,20 @@ describe("Verification tests", () => {
     const addrIndex = firstBit(randomBitfield) - 1;
     const bitfield = parseInt(randomBitfield.toString(), 10)
 
+    const proof = {
+      "signatures": [sigs[addrIndex]],
+      "positions": [addrIndex],  
+      "publicKeys": [beefyValidatorAddresses[addrIndex]],
+      "publicKeyMerkleProofs": [proofs[addrIndex]]
+    }
     const completeCommitment = lightClientBridge.completeSignatureCommitment(
       lastId,
       BeefyFixture.commitment,
-      [sigs[addrIndex]],
-      [addrIndex],
-      [beefyValidatorAddresses[addrIndex]],
-      [proofs[addrIndex]]
+      proof
     );
     expect(completeCommitment) 
       .to.emit(lightClientBridge, "FinalVerificationSuccessful")
-      .withArgs((await completeCommitment).from, BeefyFixture.commitmentHash, lastId)
+      .withArgs((await completeCommitment).from, lastId)
     const latestMMRRoot = await lightClientBridge.latestMMRRoot();
     expect(latestMMRRoot).to.eq(BeefyFixture.commitment.payload.mmr)
 
