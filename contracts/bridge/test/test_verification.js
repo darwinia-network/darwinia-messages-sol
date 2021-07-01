@@ -165,7 +165,6 @@ describe("Verification tests", () => {
     const tx = await outbound.submit(
       testPayload
     );
-    console.log(tx)
 
     const tx2 = await outbound.submit(
       testPayload

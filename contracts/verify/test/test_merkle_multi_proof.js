@@ -82,7 +82,7 @@ describe('MerkleMultiProofTest', function () {
       // console.log(indices)
       // console.log(leafs.map(x => x.toString('hex')))
       const leaves = indices.map(i => leafs[i])
-      console.log(leaves.map(x => x.toString('hex')))
+      // console.log(leaves.map(x => x.toString('hex')))
       const proof = tree.getMultiProof(treeFlat, indices)
       // console.log(tree.getHexMultiProof(treeFlat, indices))
       // const proofFlags = tree.getProofFlags(leaves, proof)
