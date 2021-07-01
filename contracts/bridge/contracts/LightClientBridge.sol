@@ -3,16 +3,13 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@darwinia/contracts-utils/contracts/ECDSA.sol";
-import "@darwinia/contracts-utils/contracts/Bits.sol";
 import "@darwinia/contracts-utils/contracts/Bitfield.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "@darwinia/contracts-verify/contracts/KeccakMMR.sol";
 import "./ValidatorRegistry.sol";
 
-contract LightClientBridge is Initializable, ValidatorRegistry {
-    using Bits for uint256;
+contract LightClientBridge is ValidatorRegistry {
     using Bitfield for uint256[];
 
     /* Events */
@@ -124,13 +121,6 @@ contract LightClientBridge is Initializable, ValidatorRegistry {
      * @param numOfValidators number of initial validator set
      * @param validatorSetRoot initial validator set merkle tree root
      */
-    // function initialize(uint256 validatorSetId, uint256 numOfValidators, bytes32 validatorSetRoot)
-    //     public
-    //     initializer
-    // {
-    //     _update(_validatorSetId, numOfValidators, validatorSetRoot);
-    // }
-
     constructor(uint256 validatorSetId, uint256 numOfValidators, bytes32 validatorSetRoot) public {
         _update(validatorSetId, numOfValidators, validatorSetRoot);
     }
