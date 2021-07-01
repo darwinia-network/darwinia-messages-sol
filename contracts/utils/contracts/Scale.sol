@@ -104,55 +104,6 @@ library Scale {
         blockNumber = decodeU32(data);
     }
 
-    // struct MMRLeaf {
-    //     bytes32 currentblockHash;
-    //     uint32  parentBlockNumber;
-    //     bytes32 parentBlockHash;
-    //     BeefyNextAuthoritySet beefyNextAuthoritySetRoot;
-    // }
-    function decodeBlockHashFromBeefyMMRLeaf(
-        bytes memory leaf
-    ) internal pure returns (bytes32) {
-        Input.Data memory data = Input.from(leaf);
-        return data.decodeBytes32();
-    }
-
-    function decodeMessagesRootFromBlockHeader(
-        bytes memory header
-    ) internal pure returns (bytes32 messagesRoot) {
-        uint256 digestOffset = 32 + decodeCompactU8aOffset(header[32]) + 32 + 32;
-        Input.Data memory data = Input.from(header);
-        data.shiftBytes(digestOffset);
-        uint32 len = decodeU32(data);
-        for (uint256 i = 0; i < len; i++) {
-            uint8 b = data.decodeU8();
-            if (b == 0) /*Other*/ {
-                decodeU32(data);
-                data.shiftBytes(36);
-                return data.decodeBytes32();
-            } else if (b == 2) /*ChangesTrieRoot*/ {
-                data.shiftBytes(32);
-            } else if (b == 4 || b == 5 || b == 6) /*Consensus, Seal, PreRuntime*/ {
-                data.shiftBytes(4);
-                data.shiftBytes(decodeU32(data));
-            } else if (b == 7) /*ChangesTrieSignal*/ {
-                uint8 tag = data.decodeU8();
-                if (tag == 0) {
-                    uint8 option = data.decodeU8();
-                    if (option == 0) {
-                        continue; 
-                    } else if (option == 1) {
-                        data.shiftBytes(8);
-                    }
-                } else {
-                    revert("not support ChangesTrieSignal type");
-                }
-            } else {
-                revert("not support digest type");
-            }
-        }
-    }
-
     // little endian
     function decodeMMRRoot(Input.Data memory data) 
         internal

@@ -4,7 +4,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
-import "@darwinia/contracts-utils/contracts/Scale.sol";
+import "@darwinia/contracts-utils/contracts/ScaleHeader.sol";
 import "@darwinia/contracts-utils/contracts/Hash.sol";
 import "./interfaces/ILightClientBridge.sol";
 
@@ -72,12 +72,12 @@ contract BasicInboundChannel {
         // }
         bytes32 blockHash = abi.decode(beefyMMRLeaf, (bytes32));
         require(blockHash == keccak256(blockHeader), "Channel: invalid block header");
-        uint32 blockNumber = Scale.decodeBlockNumberFromBlockHeader(blockHeader);
+        uint32 blockNumber = ScaleHeader.decodeBlockNumberFromBlockHeader(blockHeader);
         require(
             blockNumber <= lightClientBridge.getFinalizedBlockNumber(),
             "Channel: block not finalized"
         );
-        bytes32 messagesRoot = Scale.decodeMessagesRootFromBlockHeader(blockHeader);
+        bytes32 messagesRoot = ScaleHeader.decodeMessagesRootFromBlockHeader(blockHeader);
 
         // Validate that the commitment matches the commitment contents
         require(
