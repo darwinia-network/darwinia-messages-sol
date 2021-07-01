@@ -199,14 +199,14 @@ contract LightClientBridge is ValidatorRegistry {
 
     /**
      * @notice Executed by the apps in order to verify commitment
-     * @param beefyMMRLeaf contains the merkle leaf
+     * @param beefyMMRLeafHash contains the merkle leaf hash
      * @param beefyMMRLeafIndex contains the merkle leaf index
      * @param beefyMMRLeafCount contains the merkle leaf count
      * @param peaks contains the merkle maintain range peaks
      * @param siblings contains the merkle maintain range siblings
      */
     function verifyBeefyMerkleLeaf(
-        bytes calldata beefyMMRLeaf,
+        bytes32 beefyMMRLeafHash,
         uint256 beefyMMRLeafIndex,
         uint256 beefyMMRLeafCount,
         bytes32[] calldata peaks,
@@ -217,7 +217,7 @@ contract LightClientBridge is ValidatorRegistry {
                 latestMMRRoot,
                 beefyMMRLeafCount,
                 beefyMMRLeafIndex,
-                beefyMMRLeaf,
+                beefyMMRLeafHash,
                 peaks,
                 siblings
             );

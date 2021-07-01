@@ -38,9 +38,10 @@ contract BasicInboundChannel {
         bytes32[] memory peaks,
         bytes32[] memory siblings 
     ) public {
+        bytes32 beefyMMRLeafHash = keccak256(beefyMMRLeaf);
         require(
             lightClientBridge.verifyBeefyMerkleLeaf(
-                beefyMMRLeaf,
+                beefyMMRLeafHash,
                 beefyMMRLeafIndex,
                 beefyMMRLeafCount,
                 peaks,
@@ -58,7 +59,18 @@ contract BasicInboundChannel {
         view
         returns (bool success)
     {
-        bytes32 blockHash = Scale.decodeBlockHashFromBeefyMMRLeaf(beefyMMRLeaf);
+        // struct BeefyMMRLeaf {
+        //     uint32 parentNumber;
+        //     bytes32 parentHash;
+        //     bytes32 parachainHeadsRoot;
+        //     uint64 nextAuthoritySetId;
+        //     uint32 nextAuthoritySetLen;
+        //     bytes32 nextAuthoritySetRoot;
+        // }
+        // struct MMRLeaf {
+        //     bytes32 parentHash;
+        // }
+        bytes32 blockHash = abi.decode(beefyMMRLeaf, (bytes32));
         require(blockHash == keccak256(blockHeader), "Channel: invalid block header");
         uint32 blockNumber = Scale.decodeBlockNumberFromBlockHeader(blockHeader);
         require(

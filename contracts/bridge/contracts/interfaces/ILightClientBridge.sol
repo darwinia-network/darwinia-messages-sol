@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 interface ILightClientBridge {
     function verifyBeefyMerkleLeaf(
-        bytes calldata beefyMMRLeaf,
+        bytes32 beefyMMRLeafHash,
         uint256 beefyMMRLeafIndex,
         uint256 beefyMMRLeafCount,
         bytes32[] calldata peaks,

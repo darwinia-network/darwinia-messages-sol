@@ -120,7 +120,7 @@ describe("Verification tests", () => {
       messages,
       MessageFixture.mmrLeaf,
       MessageFixture.blockHeader,
-      MessageFixture.mmrLeafIndex,
+      MessageFixture.mmrLeafIndex, // blockNumber + 1
       MessageFixture.mmrLeafCount,
       MessageFixture.mmrProofs.peaks,
       MessageFixture.mmrProofs.siblings
@@ -142,7 +142,7 @@ describe("Verification tests", () => {
           messages,
           MessageFixture.mmrLeaf,
           MessageFixture.blockHeader,
-          MessageFixture.mmrLeafIndex,
+          MessageFixture.mmrLeafIndex, 
           MessageFixture.mmrLeafCount,
           MessageFixture.mmrProofs.peaks,
           MessageFixture.mmrProofs.siblings

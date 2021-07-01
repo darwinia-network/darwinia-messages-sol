@@ -9,12 +9,12 @@ contract KeccakMMRWrapper is DSTest {
     function verifyProof(
         bytes32 root,
         uint256 width,
-        uint256 blockNumber,
-        bytes memory value,
+        uint256 index,
+        bytes32 value,
         bytes32[] memory peaks,
         bytes32[] memory siblings
     ) public pure returns (bool){
-        return KeccakMMR.inclusionProof(root, width, blockNumber, value, peaks, siblings);
+        return KeccakMMR.inclusionProof(root, width, index, value, peaks, siblings);
     }
 
     function testMountainHeight(uint256 size) public logs_gas {
@@ -37,7 +37,7 @@ contract KeccakMMRWrapper is DSTest {
         return KeccakMMR.hashBranch(left, right);
     }
 
-    function hashLeaf(bytes memory data) pure public returns (bytes32) {
+    function hashLeaf(bytes32 data) pure public returns (bytes32) {
         return KeccakMMR.hashLeaf(data);
     }
 

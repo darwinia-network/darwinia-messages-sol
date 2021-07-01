@@ -54,13 +54,13 @@ library KeccakMMR {
     function inclusionProof(
         bytes32 root,
         uint256 width,
-        uint256 blockNumber,
-        bytes memory value,
+        uint256 index,
+        bytes32 value,
         bytes32[] memory peaks,
         bytes32[] memory siblings
     ) pure internal returns (bool) {
-        require(width >= blockNumber + 1, "blockNumber is out of range");
-        uint index = getSize(blockNumber) + 1;
+        uint size = getSize(width);
+        require(size >= index, "index is out of range");
         // Check the root equals the peak bagging hash
         require(root == peakBagging(peaks), "Invalid root hash from the peaks");
 
@@ -134,8 +134,8 @@ library KeccakMMR {
      * @dev it returns the hash of a leaf node with hash(M | DATA )
      *      M is the index of the node
      */
-    function hashLeaf(bytes memory data) pure internal returns (bytes32) {
-        return data.hash();
+    function hashLeaf(bytes32 dataHash) pure internal returns (bytes32) {
+        return dataHash;
     }
 
     /**

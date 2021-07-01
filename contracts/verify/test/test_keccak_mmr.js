@@ -1,9 +1,12 @@
 const { expect, use } = require('chai');
 const { solidity } = require("ethereum-waffle");
-const { keccak256 } = require("ethereumjs-util");
+const { keccakFromHexString, keccak256 } = require("ethereumjs-util");
 const { MerkleMountainRange } = require("merkletreejs")
 
 use(solidity);
+
+const hashFn = (x) => { return x }
+
 
 const hashLeaf = (index, dataHash) => {
   return dataHash
@@ -25,7 +28,7 @@ const hashBranch = (index, left, right) => {
 
 const leaves = [
    '0x2a04add3ecc3979741afad967dfedf807e07b136e05f9c670a274334d74892cf',
-   '0xa87c7fc44bb09f89934d8798eb000020c6cf32630c64f6b09d81bdd280f42db1',
+   '0x46bd20aadd3f873b2bced9f08b5661edfac9e764aec39fb55b52de17d5680df5',
    '0xc58e247ea35c51586de2ea40ac6daf90eac7ac7b2f5c88bbc7829280db7890f1',
 ]
 
@@ -97,7 +100,7 @@ describe('MerkleMountainRange', () => {
     });
 
     describe('hashBranch()', async () => {
-      it('should return blake2b(left,right)', async () => {
+      it('should return keccak256(left,right)', async () => {
         let left = '0x34f61bfda344b3fad3c3e38832a91448b3c613b199eb23e5110a635d71c13c65';
         let right = '0x70d641860d40937920de1eae29530cdc956be830f145128ebb2b496f151c1afb';
         // The index in the parameter is unused
@@ -107,9 +110,9 @@ describe('MerkleMountainRange', () => {
     });
 
     describe('hashLeaf()', async () => {
-      it('should return blake2b(data)', async () => {
-        res = await mmrLib.hashLeaf('0x70d641860d40937920de1eae29530cdc956be830f145128ebb2b496f151c1afb70d641860d40937920de1eae29530cdc956be830f145128ebb2b496f151c1afb');
-        expect(res).to.eq('0xacbc20f33b2152670ab4054dccc6bb2b24a01c3656004493c03c3ae0fecba3d8');
+      it('should return (data)', async () => {
+        res = await mmrLib.hashLeaf(keccakFromHexString("0x70d641860d40937920de1eae29530cdc956be830f145128ebb2b496f151c1afb70d641860d40937920de1eae29530cdc956be830f145128ebb2b496f151c1afb"));
+        expect(res).to.eq("0xacbc20f33b2152670ab4054dccc6bb2b24a01c3656004493c03c3ae0fecba3d8");
       });
     });
 
@@ -182,8 +185,8 @@ describe('MerkleMountainRange', () => {
       await mmrLib.testMountainHeight(10000000);
     })
 
-    it('MMR verification', async () => {
-      const tree = new MerkleMountainRange(keccak256, leaves, hashLeaf, peakBagging, hashBranch)
+    it.only('MMR verification', async () => {
+      const tree = new MerkleMountainRange(hashFn, leaves, hashLeaf, peakBagging, hashBranch)
       const root = tree.getHexRoot()
       const index = 2
       const proof = tree.getMerkleProof(index)
@@ -193,7 +196,7 @@ describe('MerkleMountainRange', () => {
       const ret = await mmrLib.verifyProof(
         proof.root,
         proof.width,
-        index-1,
+        index,
         leaf,
         proof.peakBagging,
         proof.siblings
