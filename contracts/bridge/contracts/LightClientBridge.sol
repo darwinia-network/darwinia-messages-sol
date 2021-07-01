@@ -118,13 +118,6 @@ contract LightClientBridge is Initializable, ValidatorRegistry {
     uint256 public constant THRESHOLD_DENOMINATOR = 3;
     uint256 public constant BLOCK_WAIT_PERIOD = 12;
 
-    // We must ensure at least one block is processed every session,
-    // so these constants are checked to enforce a maximum gap between commitments.
-    uint64 public constant NUMBER_OF_BLOCKS_PER_SESSION = 100;
-    uint64 public constant ERROR_AND_SAFETY_BUFFER = 10;
-    uint64 public constant MAXIMUM_BLOCK_GAP =
-        NUMBER_OF_BLOCKS_PER_SESSION - ERROR_AND_SAFETY_BUFFER;
-
     /**
      * @notice Deploys the LightClientBridge contract
      * @param validatorSetId initial validator set id
@@ -493,13 +486,6 @@ contract LightClientBridge is Initializable, ValidatorRegistry {
         // Check the payload is newer than the latest
         // Check that payload.leaf.block_number is > last_known_block_number;
         require(blockNumber > latestBlockNumber, "Bridge: Import old block");
-
-        // Check that payload is within the current or next session
-        // to ensure we get at least one payload each session
-        require(
-            blockNumber < latestBlockNumber + MAXIMUM_BLOCK_GAP,
-            "Bridge: blocknumber is too new"
-        );
 
         latestMMRRoot = payload.mmr;
         latestBlockNumber = blockNumber;
