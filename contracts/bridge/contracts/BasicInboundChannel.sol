@@ -5,7 +5,6 @@ pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
 import "@darwinia/contracts-utils/contracts/ScaleHeader.sol";
-import "@darwinia/contracts-utils/contracts/Hash.sol";
 import "./interfaces/ILightClientBridge.sol";
 
 contract BasicInboundChannel {
