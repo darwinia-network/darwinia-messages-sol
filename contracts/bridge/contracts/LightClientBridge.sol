@@ -292,12 +292,12 @@ contract LightClientBridge is ValidatorRegistry {
 
         processPayload(commitment.payload, commitment.blockNumber);
 
-        emit FinalVerificationSuccessful(msg.sender, id);
-
         /**
          * @dev We no longer need the data held in state, so delete it for a gas refund
          */
         delete validationData[id];
+
+        emit FinalVerificationSuccessful(msg.sender, id);
     }
 
     /* Private Functions */

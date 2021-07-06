@@ -63,7 +63,6 @@ contract BasicInboundChannel {
     function verifyMessages(Message[] memory messages, BeefyMMRLeaf memory leaf)
         internal
         view
-        returns (bool success)
     {
         require(
             leaf.blockNumber <= lightClientBridge.getFinalizedBlockNumber(),
@@ -80,8 +79,6 @@ contract BasicInboundChannel {
             gasleft() >= messages.length * MAX_GAS_PER_MESSAGE,
             "Channel: insufficient gas for delivery of all messages"
         );
-
-        return true;
     }
 
     function processMessages(Message[] memory messages) internal {
