@@ -181,16 +181,12 @@ contract LightClientBridge is ValidatorRegistry {
         /**
          * Encode and hash the commitment
          */
-       return keccak256(
+        return keccak256(
                 abi.encodePacked(
-                    abi.encodePacked(
-                        commitment.payload.mmr,
-                            abi.encodePacked(
-                                commitment.payload.nextValidatorSet.id,
-                                commitment.payload.nextValidatorSet.len,
-                                commitment.payload.nextValidatorSet.root
-                            )
-                    ),
+                    commitment.payload.mmr,
+                    commitment.payload.nextValidatorSet.id,
+                    commitment.payload.nextValidatorSet.len,
+                    commitment.payload.nextValidatorSet.root,
                     commitment.blockNumber,
                     commitment.validatorSetId
                 )
