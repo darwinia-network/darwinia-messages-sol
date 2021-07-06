@@ -2,7 +2,6 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@darwinia/contracts-utils/contracts/Hash.sol";
 import "@darwinia/contracts-utils/contracts/Keccak.sol";
 
 /**
