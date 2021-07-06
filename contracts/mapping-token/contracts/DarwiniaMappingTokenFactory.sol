@@ -110,7 +110,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         IERC20(token).mint(recipient, amount);
     }
 
-    function crossTransfer(uint32 specVersion, address token, bytes memory recipient, uint256 amount) external payable {
+    function crossTransfer(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
         require(amount > 0, "can not transfer amount zero");
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
@@ -120,6 +120,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
             abi.encodePacked(info.eventReceiver, bytes4(keccak256("burned(address,address,address,address,uint256)")),
                            abi.encode(specVersion,
+                                      weight,
                                       info.tokenType,
                                       info.backing,
                                       msg.sender, 
