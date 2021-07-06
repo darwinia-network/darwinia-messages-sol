@@ -11,8 +11,6 @@ import "./interfaces/ILightClientBridge.sol";
 contract BasicInboundChannel {
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
 
-    uint64 public nonce;
-
     struct Message {
         address target;
         uint64 nonce;
@@ -21,6 +19,7 @@ contract BasicInboundChannel {
 
     event MessageDispatched(uint64 nonce, bool result);
 
+    uint64 public nonce;
     ILightClientBridge public lightClientBridge;
 
     constructor(ILightClientBridge _lightClientBridge) public {
