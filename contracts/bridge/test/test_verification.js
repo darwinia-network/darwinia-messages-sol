@@ -119,7 +119,6 @@ describe("Verification tests", () => {
     const tx = await inbound.submit(
       messages,
       MessageFixture.mmrLeaf,
-      MessageFixture.blockHeader,
       MessageFixture.mmrLeafIndex, // blockNumber + 1
       MessageFixture.mmrLeafCount,
       MessageFixture.mmrProofs.peaks,
@@ -141,7 +140,6 @@ describe("Verification tests", () => {
     const agian = inbound.submit(
           messages,
           MessageFixture.mmrLeaf,
-          MessageFixture.blockHeader,
           MessageFixture.mmrLeafIndex, 
           MessageFixture.mmrLeafCount,
           MessageFixture.mmrProofs.peaks,

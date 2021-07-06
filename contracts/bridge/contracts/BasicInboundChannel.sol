@@ -16,6 +16,18 @@ contract BasicInboundChannel {
         bytes payload;
     }
 
+    /**
+     * The BeefyMMRLeaf is the structure of each leaf in each MMR that each commitment's payload commits to.
+     * @param parentHash parent hash of the block this leaf describes
+     * @param messagesRoot root hash of messages
+     * @param blockNumber block number for the block this leaf describes
+     */
+    struct BeefyMMRLeaf {
+        bytes32 parentHash;
+        bytes32 messagesRoot;
+        uint32 blockNumber;
+    }
+
     event MessageDispatched(uint64 nonce, bool result);
 
     uint64 public nonce;
@@ -26,17 +38,15 @@ contract BasicInboundChannel {
         lightClientBridge = _lightClientBridge;
     }
 
-    // TODO: Submit should take in all inputs required for verification,
     function submit(
         Message[] memory messages,
-        bytes memory beefyMMRLeaf,
-        bytes memory blockHeader,
+        BeefyMMRLeaf memory beefyMMRLeaf,
         uint256 beefyMMRLeafIndex,
         uint256 beefyMMRLeafCount,
         bytes32[] memory peaks,
         bytes32[] memory siblings 
     ) public {
-        bytes32 beefyMMRLeafHash = keccak256(beefyMMRLeaf);
+        bytes32 beefyMMRLeafHash = hashMMRLeaf(beefyMMRLeaf);
         require(
             lightClientBridge.verifyBeefyMerkleLeaf(
                 beefyMMRLeafHash,
@@ -47,39 +57,22 @@ contract BasicInboundChannel {
             ),
             "Channel: Invalid proof"
         );
-        verifyMessages(messages, beefyMMRLeaf, blockHeader);
+        verifyMessages(messages, beefyMMRLeaf);
         processMessages(messages);
     }
 
-    //TODO: verifyMessages should accept all needed proofs
-    function verifyMessages(Message[] memory messages, bytes memory beefyMMRLeaf, bytes memory blockHeader)
+    function verifyMessages(Message[] memory messages, BeefyMMRLeaf memory leaf)
         internal
         view
         returns (bool success)
     {
-        // struct BeefyMMRLeaf {
-        //     uint32 parentNumber;
-        //     bytes32 parentHash;
-        //     bytes32 parachainHeadsRoot;
-        //     uint64 nextAuthoritySetId;
-        //     uint32 nextAuthoritySetLen;
-        //     bytes32 nextAuthoritySetRoot;
-        // }
-        // struct MMRLeaf {
-        //     bytes32 parentHash;
-        // }
-        bytes32 blockHash = abi.decode(beefyMMRLeaf, (bytes32));
-        require(blockHash == keccak256(blockHeader), "Channel: invalid block header");
-        uint32 blockNumber = ScaleHeader.decodeBlockNumberFromBlockHeader(blockHeader);
         require(
-            blockNumber <= lightClientBridge.getFinalizedBlockNumber(),
+            leaf.blockNumber <= lightClientBridge.getFinalizedBlockNumber(),
             "Channel: block not finalized"
         );
-        bytes32 messagesRoot = ScaleHeader.decodeMessagesRootFromBlockHeader(blockHeader);
-
         // Validate that the commitment matches the commitment contents
         require(
-            validateMessagesMatchRoot(messages, messagesRoot),
+            validateMessagesMatchRoot(messages, leaf.messagesRoot),
             "Channel: invalid messages"
         );
 
@@ -114,5 +107,19 @@ contract BasicInboundChannel {
         bytes32 root
     ) internal pure returns (bool) {
         return keccak256(abi.encode(messages)) == root;
+    }
+
+    function hashMMRLeaf(BeefyMMRLeaf memory leaf)
+        internal
+        pure
+        returns (bytes32) 
+    {
+        return keccak256(
+                abi.encodePacked(
+                    leaf.parentHash,
+                    leaf.messagesRoot,
+                    leaf.blockNumber
+                )
+            );
     }
 }
