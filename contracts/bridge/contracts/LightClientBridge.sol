@@ -444,7 +444,6 @@ contract LightClientBridge is ValidatorRegistry {
 
     /**
      * @notice Deterministically generates a seed from the block hash at the block number of creation of the validation
-     * data plus MAXIMUM_NUM_SIGNERS
      * @dev Note that `blockhash(blockNum)` will only work for the 256 most recent blocks. If
      * `completeSignatureCommitment` is called too late, a new call to `newSignatureCommitment` is necessary to reset
      * validation data's block number
@@ -475,13 +474,13 @@ contract LightClientBridge is ValidatorRegistry {
 
         latestMMRRoot = payload.mmr;
         latestBlockNumber = blockNumber;
-        emit NewMMRRoot(latestMMRRoot, blockNumber);
 
         applyValidatorSetChanges(
             payload.nextValidatorSet.id,
             payload.nextValidatorSet.len,
             payload.nextValidatorSet.root
         );
+        emit NewMMRRoot(latestMMRRoot, blockNumber);
     }
 
     /**

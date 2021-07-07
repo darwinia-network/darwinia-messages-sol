@@ -113,20 +113,20 @@ library Bitfield {
         pure
         returns (bool)
     {
-        uint256 element = index / 256;
-        uint8 within = uint8(index % 256);
+        uint256 element = index >> 8;
+        uint8 within = uint8(index & 255);
         return self[element].bit(within) == 1;
     }
 
     function set(uint256[] memory self, uint256 index) internal pure {
-        uint256 element = index / 256;
-        uint8 within = uint8(index % 256);
+        uint256 element = index >> 8;
+        uint8 within = uint8(index & 255);
         self[element] = self[element].setBit(within);
     }
 
     function clear(uint256[] memory self, uint256 index) internal pure {
-        uint256 element = index / 256;
-        uint8 within = uint8(index % 256);
+        uint256 element = index >> 8;
+        uint8 within = uint8(index & 255);
         self[element] = self[element].clearBit(within);
     }
 }
