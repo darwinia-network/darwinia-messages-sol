@@ -89,7 +89,6 @@ contract BasicInboundChannel {
             nonce = nonce + 1;
 
             // Deliver the message to the target
-            // TODO: how to try catch this
             (bool success, ) =
                 messages[i].target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(
                     messages[i].payload
