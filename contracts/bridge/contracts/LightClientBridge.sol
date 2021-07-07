@@ -9,8 +9,7 @@ import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "@darwinia/contracts-verify/contracts/KeccakMMR.sol";
 import "./ValidatorRegistry.sol";
 
-contract LightClientBridge is ValidatorRegistry {
-    using Bitfield for uint256[];
+contract LightClientBridge is Bitfield, ValidatorRegistry {
 
     /* Events */
 
@@ -157,7 +156,7 @@ contract LightClientBridge is ValidatorRegistry {
         );
 
         return
-            Bitfield.randomNBitsWithPriorCheck(
+            randomNBitsWithPriorCheck(
                 getSeed(data.blockNumber),
                 data.validatorClaimsBitfield,
                 requiredNumberOfSignatures(),
@@ -170,7 +169,7 @@ contract LightClientBridge is ValidatorRegistry {
         pure
         returns (uint256[] memory)
     {
-        return Bitfield.createBitfield(bitsToSet, length);
+        return createBitfield(bitsToSet, length);
     }
 
     function createCommitmentHash(Commitment memory commitment)
@@ -242,7 +241,7 @@ contract LightClientBridge is ValidatorRegistry {
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, > 2/3
          */
         require(
-            validatorClaimsBitfield.countSetBits() >
+            countSetBits(validatorClaimsBitfield) >
                 (numOfValidators * THRESHOLD_NUMERATOR) /
                     THRESHOLD_DENOMINATOR,
             "Bridge: Bitfield not enough validators"
@@ -327,7 +326,7 @@ contract LightClientBridge is ValidatorRegistry {
 
         uint256 requiredNumOfSignatures = requiredNumberOfSignatures();
 
-        uint256[] memory randomBitfield = Bitfield.randomNBitsWithPriorCheck(
+        uint256[] memory randomBitfield = randomNBitsWithPriorCheck(
             getSeed(data.blockNumber),
             data.validatorClaimsBitfield,
             requiredNumOfSignatures,
@@ -368,14 +367,14 @@ contract LightClientBridge is ValidatorRegistry {
              * @dev Check if validator in randomBitfield
              */
             require(
-                randomBitfield.isSet(pos),
+                isSet(randomBitfield, pos),
                 "Bridge: Validator must be once in bitfield"
             );
 
             /**
              * @dev Remove validator from randomBitfield such that no validator can appear twice in signatures
              */
-            randomBitfield.clear(pos);
+            clear(randomBitfield, pos);
 
             verifyValidatorSignature(
                 proof.signatures[i],
