@@ -236,7 +236,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
         uint256 validatorPosition,
         address validatorPublicKey,
         bytes32[] memory validatorPublicKeyMerkleProof
-    ) public payable {
+    ) public returns (uint256) {
         /**
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, > 2/3
          */
@@ -271,6 +271,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
         emit InitialVerificationSuccessful(msg.sender, block.number, currentId);
 
         currentId = currentId + 1;
+        return currentId;
     }
 
     /**
