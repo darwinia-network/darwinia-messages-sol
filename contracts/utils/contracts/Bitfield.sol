@@ -56,10 +56,24 @@ contract Bitfield {
         bitfield = new uint256[](prior.length);
         uint256 prime = BIG_PRIME[seed%20];
         uint256 begin = uint256(keccak256(abi.encode(seed))) % 1000000 + 1;
+        uint256 found = 0;
 
-        for (uint256 i = 0; i < n; i++) {
+        for (uint256 i = 0; found < n; i++) {
             uint256 index = (prime * (begin + i)) % length;
+
+           // require randomly seclected bit to be set in prior
+            if (!isSet(prior, index)) {
+                continue;
+            }
+
+            // require a not yet set (new) bit to be set
+            if (isSet(bitfield, index)) {
+                continue;
+            }
+
             set(bitfield, index);
+
+            found++;
         }
 
         return bitfield;
