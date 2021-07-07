@@ -75,15 +75,15 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
      * each new justification.
      * @param signatures an array of signatures from the randomly chosen validators
      * @param positions an array of the positions of the randomly chosen validators
-     * @param publicKeys an array of the public key of each signer
-     * @param publicKeyMerkleProofs an array of merkle proofs from the chosen validators proving that their public
-     * keys are in the validator set
+     * @param signers an array of the address of each signer
+     * @param signerProofs an array of merkle proofs from the chosen validators proving that their addresses
+     * are in the validator set
      */
     struct ValidatorProof {
         bytes[] signatures;
         uint256[] positions;
-        address[] publicKeys;
-        bytes32[][] publicKeyMerkleProofs;
+        address[] signers;
+        bytes32[][] signerProofs;
     }
 
     /**
@@ -226,16 +226,16 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
      * validator who has claimed to have signed the commitmentHash
      * @param validatorSignature the signature of one validator
      * @param validatorPosition the position of the validator, index starting at 0
-     * @param validatorPublicKey the public key of the validator
-     * @param validatorPublicKeyMerkleProof proof required for validation of the public key in the validator merkle tree
+     * @param validatorAddress the public key of the validator
+     * @param validatorAddressMerkleProof proof required for validation of the public key in the validator merkle tree
      */
     function newSignatureCommitment(
         bytes32 commitmentHash,
         uint256[] memory validatorClaimsBitfield,
         bytes memory validatorSignature,
         uint256 validatorPosition,
-        address validatorPublicKey,
-        bytes32[] memory validatorPublicKeyMerkleProof
+        address validatorAddress,
+        bytes32[] memory validatorAddressMerkleProof
     ) public returns (uint256) {
         /**
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, > 2/3
@@ -250,8 +250,8 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
         verifyValidatorSignature(
             validatorSignature,
             validatorPosition,
-            validatorPublicKey,
-            validatorPublicKeyMerkleProof,
+            validatorAddress,
+            validatorAddressMerkleProof,
             commitmentHash
         );
 
@@ -380,8 +380,8 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
             verifyValidatorSignature(
                 proof.signatures[i],
                 pos,
-                proof.publicKeys[i],
-                proof.publicKeyMerkleProofs[i],
+                proof.signers[i],
+                proof.signerProofs[i],
                 commitmentHash
             );
         }
@@ -404,11 +404,11 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
             "Bridge: Number of validator positions does not match required"
         );
         require(
-            proof.publicKeys.length == requiredNumOfSignatures,
+            proof.signers.length == requiredNumOfSignatures,
             "Bridge: Number of validator public keys does not match required"
         );
         require(
-            proof.publicKeyMerkleProofs.length == requiredNumOfSignatures,
+            proof.signerProofs.length == requiredNumOfSignatures,
             "Bridge: Number of validator public keys does not match required"
         );
     }
@@ -416,8 +416,8 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
     function verifyValidatorSignature(
         bytes memory signature,
         uint256 position,
-        address publicKey,
-        bytes32[] memory publicKeyMerkleProof,
+        address signer,
+        bytes32[] memory addrMerkleProof,
         bytes32 commitmentHash
     ) private view {
 
@@ -426,9 +426,9 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
          */
         require(
             checkValidatorInSet(
-                publicKey,
+                signer,
                 position,
-                publicKeyMerkleProof
+                addrMerkleProof
             ),
             "Bridge: Validator must be in validator set at correct position"
         );
@@ -437,7 +437,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
          * @dev Check if signature is correct
          */
         require(
-            ECDSA.recover(commitmentHash, signature) == publicKey,
+            ECDSA.recover(commitmentHash, signature) == signer,
             "Bridge: Invalid Signature"
         );
     }

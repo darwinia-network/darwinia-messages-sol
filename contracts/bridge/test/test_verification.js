@@ -81,8 +81,8 @@ describe("Verification tests", () => {
     const proof = {
       "signatures": [sigs[addrIndex]],
       "positions": [addrIndex],  
-      "publicKeys": [beefyValidatorAddresses[addrIndex]],
-      "publicKeyMerkleProofs": [proofs[addrIndex]]
+      "signers": [beefyValidatorAddresses[addrIndex]],
+      "signerProofs": [proofs[addrIndex]]
     }
     const completeCommitment = lightClientBridge.completeSignatureCommitment(
       lastId,
