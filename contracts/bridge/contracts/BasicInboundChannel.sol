@@ -9,21 +9,27 @@ import "./interfaces/ILightClientBridge.sol";
 contract BasicInboundChannel {
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
 
-    uint64 public nonce;
-
     struct Message {
         address target;
         uint64 nonce;
         bytes payload;
     }
 
-    // struct MMRLeaf {
-    //     bytes32 blockHash;
-    //     bytes32 beefyNextAuthoritySetRoot;
-    // }
+    /**
+     * The BeefyMMRLeaf is the structure of each leaf in each MMR that each commitment's payload commits to.
+     * @param parentHash parent hash of the block this leaf describes
+     * @param messagesRoot root hash of messages
+     * @param blockNumber block number for the block this leaf describes
+     */
+    struct BeefyMMRLeaf {
+        bytes32 parentHash;
+        bytes32 messagesRoot;
+        uint32 blockNumber;
+    }
 
     event MessageDispatched(uint64 nonce, bool result);
 
+    uint64 public nonce;
     ILightClientBridge public lightClientBridge;
 
     constructor(ILightClientBridge _lightClientBridge) public {
@@ -31,70 +37,54 @@ contract BasicInboundChannel {
         lightClientBridge = _lightClientBridge;
     }
 
-    // TODO: Submit should take in all inputs required for verification,
     function submit(
         Message[] memory messages,
-        bytes memory beefyMMRLeaf,
+        BeefyMMRLeaf memory beefyMMRLeaf,
         uint256 beefyMMRLeafIndex,
         uint256 beefyMMRLeafCount,
         bytes32[] memory peaks,
         bytes32[] memory siblings 
     ) public {
+        bytes32 beefyMMRLeafHash = hashMMRLeaf(beefyMMRLeaf);
         require(
             lightClientBridge.verifyBeefyMerkleLeaf(
-                beefyMMRLeaf,
+                beefyMMRLeafHash,
                 beefyMMRLeafIndex,
                 beefyMMRLeafCount,
                 peaks,
                 siblings
             ),
-            "Invalid proof"
+            "Channel: Invalid proof"
         );
         verifyMessages(messages, beefyMMRLeaf);
         processMessages(messages);
     }
 
-    // struct BlockHeader {
-    //     parentHash bytes32;
-    //     number uint64;
-    //     stateRoot bytes32;
-    //     extrinsicsRoot bytes32;
-    //     digest bytes;
-    //     messagesRoot bytes32;
-    // }
-    //TODO: verifyMessages should accept all needed proofs
-    function verifyMessages(Message[] memory messages, bytes memory /*beefyMMRLeaf*/)
+    function verifyMessages(Message[] memory messages, BeefyMMRLeaf memory leaf)
         internal
         view
-        returns (bool success)
     {
-
-        // Scale.decodeBeefyMMRLeaf(beefyMMRLeaf)
-        // Scale.decodeBlockHeader(beefyMMRLeaf.BlockHeader)
-        // require(
-        //     blockHeader.BlockNumber <= lightClientBridge.getFinalizedBlockNumber(),
-        //     "block not finalized"
-        // )
-
+        require(
+            leaf.blockNumber <= lightClientBridge.getFinalizedBlockNumber(),
+            "Channel: block not finalized"
+        );
         // Validate that the commitment matches the commitment contents
-        // require(
-        //     validateMessagesMatchCommitment(messages, blockHeader.messageRoot),
-        //     "invalid messages"
-        // );
+        require(
+            validateMessagesMatchRoot(messages, leaf.messagesRoot),
+            "Channel: invalid messages"
+        );
 
         // Require there is enough gas to play all messages
         require(
             gasleft() >= messages.length * MAX_GAS_PER_MESSAGE,
-            "insufficient gas for delivery of all messages"
+            "Channel: insufficient gas for delivery of all messages"
         );
-
-        return true;
     }
 
     function processMessages(Message[] memory messages) internal {
         for (uint256 i = 0; i < messages.length; i++) {
             // Check message nonce is correct and increment nonce for replay protection
-            require(messages[i].nonce == nonce + 1, "invalid nonce");
+            require(messages[i].nonce == nonce + 1, "Channel: invalid nonce");
 
             nonce = nonce + 1;
 
@@ -108,10 +98,24 @@ contract BasicInboundChannel {
         }
     }
 
-    function validateMessagesMatchCommitment(
+    function validateMessagesMatchRoot(
         Message[] memory messages,
-        bytes32 commitment
+        bytes32 root
     ) internal pure returns (bool) {
-        return keccak256(abi.encode(messages)) == commitment;
+        return keccak256(abi.encode(messages)) == root;
+    }
+
+    function hashMMRLeaf(BeefyMMRLeaf memory leaf)
+        internal
+        pure
+        returns (bytes32) 
+    {
+        return keccak256(
+                abi.encodePacked(
+                    leaf.parentHash,
+                    leaf.messagesRoot,
+                    leaf.blockNumber
+                )
+            );
     }
 }

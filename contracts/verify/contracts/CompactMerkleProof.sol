@@ -35,7 +35,7 @@ import "@darwinia/contracts-utils/contracts/Node.sol";
 /**
  * @dev Verification of compact proofs for Modified Merkle-Patricia tries.
  */
-contract CompactMerkleProof {
+library CompactMerkleProof {
     using Bytes for bytes;
     using Keccak for bytes;
     using Input for Input.Data;
@@ -84,7 +84,7 @@ contract CompactMerkleProof {
         bytes[] memory proof,
         bytes[] memory keys,
         bytes[] memory values
-    ) public pure returns (bool) {
+    ) internal pure returns (bool) {
         require(proof.length > 0, "no proof");
         require(keys.length > 0, "no keys");
         require(keys.length == values.length, "invalid pair");

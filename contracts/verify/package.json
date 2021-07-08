@@ -6,18 +6,26 @@
   "author": "Darwinia dev",
   "license": "MIT",
   "scripts": {
-    "build": "hardhat compile",
+    "build": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "gas": "npx hardhat gasUsage",
+    "benchmark:single": "npx hardhat test test/test_merkle_proof.js test/test_compact_merkle_proof.js",
+    "benchmark:multi": "npx hardhat test test/test_merkle_multi_proof.js test/test_compact_merkle_multi_proof.js",
     "clean": "shx rm -rf cache artifacts abi"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^2.1.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "chai": "^4.3.4",
     "dotenv": "^10.0.0",
     "ethereum-waffle": "^3.0.0",
+    "ethereumjs-util": "^7.0.10",
     "ethers": "^5.0.0",
     "hardhat": "^2.3.0",
     "hardhat-abi-exporter": "^2.2.1",
+    "hardhat-gas-reporter": "^1.0.4",
+    "merkletreejs": "^0.2.18",
     "shx": "^0.3.3"
   }
 }

@@ -8,6 +8,7 @@
   "license": "MIT",
   "scripts": {
     "build": "hardhat compile",
+    "test": "npx hardhat test",
     "clean": "shx rm -rf cache artifacts abi"
   },
   "devDependencies": {

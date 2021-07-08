@@ -1,0 +1,19 @@
+{
+  "commitmentHash": "0x358dcac66d5d9e26632e318c9018718fcc9abe88f4ac25039b0a7f895cfbe415",
+  "commitment": {
+    "payload": {
+      "mmr": "0x7ed7485ab2520a165816e82b778b62e65b2d21da3d0dbf98493869287b386607",
+      "nextValidatorSet": {
+        "id": 1,
+        "len": 3,
+        "root": "0x92622f8520ac4c57e72783387099b2bc696523782c5e5fae137faff102268e07"
+      }
+    }, 
+    "blockNumber": 12,
+    "validatorSetId": 0
+  },
+  "signature0": "0x1d039bb1df54aed4643083d149edd24f04bfe00f06f57473e290d843e9bd54956383c153c3cb16690042e6a176032ad04a8702995a4459f90d669f05741d48121c",
+  "signature1": "0x47d15493a89183ddd3f22af4990a1df690597eb13569150feeb046e46fad3a232e15481916d6a482f3f533b8bf24e544bf5d6a13aff7704d95aff96c69bb9ba11b",
+  "signature2": "0xd68324c37e3ac7a174a091d17de15d706d98be41e11b7156d415eca03a0ad4966a6e16cb3ef9c856d3b9e40d07ec43413c05632116745ec78ff72194dba209531c",
+  "bitfield": [7]
+}

@@ -3,7 +3,9 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "./Bits.sol";
 
-library Bitfield {
+contract Bitfield {
+    using Bits for uint256;
+
     /**
      * @dev Constants used to efficiently calculate the hamming weight of a bitfield. See
      * https://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation for an explanation of those constants.
@@ -26,36 +28,45 @@ library Bitfield {
         0x00000000000000000000000000000000ffffffffffffffffffffffffffffffff;
 
     uint256 internal constant ONE = uint256(1);
-    using Bits for uint256;
+
+    uint256[20] internal BIG_PRIME = [
+        1000003,1000033,1000037,1000039,1000081,1000099,1000117,1000121,1000133,1000151,
+        1000159,1000171,1000183,1000187,1000193,1000199,1000211,1000213,1000231,1000249
+    ];
 
     /**
      * @notice Draws a random number, derives an index in the bitfield, and sets the bit if it is in the `prior` and not
      * yet set. Repeats that `n` times.
      */
-    function randomNBitsFromPrior(
+    function randomNBitsWithPriorCheck(
         uint256 seed,
         uint256[] memory prior,
-        uint256 n
-    ) internal pure returns (uint256[] memory bitfield) {
+        uint256 n,
+        uint256 length
+    ) internal view returns (uint256[] memory bitfield) {
         require(
             n <= countSetBits(prior),
             "`n` must be <= number of set bits in `prior`"
         );
+        require(
+            length < 1000000,
+            "length too large"
+        );
 
         bitfield = new uint256[](prior.length);
+        uint256 prime = BIG_PRIME[seed%20];
+        uint256 begin = uint256(keccak256(abi.encode(seed))) % 1000000 + 1;
         uint256 found = 0;
-        uint256 length = prior.length * 256;
 
         for (uint256 i = 0; found < n; i++) {
-            bytes32 randomness = keccak256(abi.encode(seed + i));
-            uint256 index = uint256(randomness) % length;
+            uint256 index = (prime * (begin + i)) % length;
 
-            // require randomly seclected bit to be set in prior
+           // require randomly seclected bit to be set in prior
             if (!isSet(prior, index)) {
                 continue;
             }
 
-            // require a not yet sit (new) bit to be set
+            // require a not yet set (new) bit to be set
             if (isSet(bitfield, index)) {
                 continue;
             }
@@ -63,6 +74,23 @@ library Bitfield {
             set(bitfield, index);
 
             found++;
+        }
+
+        return bitfield;
+    }
+
+    function createBitfield(uint256[] memory bitsToSet, uint256 length)
+        internal 
+        pure
+        returns (uint256[] memory bitfield)
+    {
+        // Calculate length of uint256 array based on rounding up to number of uint256 needed
+        uint256 arrayLength = (length + 255) / 256;
+
+        bitfield = new uint256[](arrayLength);
+
+        for (uint256 i = 0; i < bitsToSet.length; i++) {
+            set(bitfield, bitsToSet[i]);
         }
 
         return bitfield;
@@ -96,20 +124,20 @@ library Bitfield {
         pure
         returns (bool)
     {
-        uint256 element = index / 256;
-        uint8 within = uint8(index % 256);
+        uint256 element = index >> 8;
+        uint8 within = uint8(index & 255);
         return self[element].bit(within) == 1;
     }
 
     function set(uint256[] memory self, uint256 index) internal pure {
-        uint256 element = index / 256;
-        uint8 within = uint8(index % 256);
+        uint256 element = index >> 8;
+        uint8 within = uint8(index & 255);
         self[element] = self[element].setBit(within);
     }
 
     function clear(uint256[] memory self, uint256 index) internal pure {
-        uint256 element = index / 256;
-        uint8 within = uint8(index % 256);
+        uint256 element = index >> 8;
+        uint8 within = uint8(index & 255);
         self[element] = self[element].clearBit(within);
     }
 }

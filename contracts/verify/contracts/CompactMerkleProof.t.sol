@@ -1,10 +1,15 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 import "@darwinia/contracts-utils/contracts/ds-test/test.sol";
+import "@darwinia/contracts-utils/contracts/Bytes.sol";
+import "@darwinia/contracts-utils/contracts/Input.sol";
 import "./CompactMerkleProof.sol";
 pragma experimental ABIEncoderV2;
 
-contract CompactMerkleProofTest is CompactMerkleProof, DSTest {
+contract CompactMerkleProofTest is DSTest {
+    using Bytes for bytes;
+    using Input for Input.Data;
+
     function setUp() public {}
 
     function testFail_basic_sanity() public {
@@ -15,6 +20,31 @@ contract CompactMerkleProofTest is CompactMerkleProof, DSTest {
         assertTrue(true);
     }
 
+    function testCompactVerify(
+        bytes32 root,
+        bytes[] memory proof,
+        bytes[] memory keys,
+        bytes[] memory values
+    ) public logs_gas returns (bool) {
+        bool res = CompactMerkleProof.verify(root, proof, keys, values);
+        assertTrue(res);
+        return res;
+    }
+
+    function testAuthorySetVerifyProof() public returns (bool) {
+        bytes32 root = hex"0cd6a3836ec1fff4784c938237a77474e6742aef338c736f75ea57721f39b4ae";
+        bytes[] memory proof = new bytes[](2);
+        proof[0] = hex"8100110100800c851a81b2d4d5bb0bb959dbfeb21cf3f475ac5be781caed6fe7fc73723b69dc800c851a81b2d4d5bb0bb959dbfeb21cf3f475ac5be781caed6fe7fc73723b69dc";
+        proof[1] = hex"4000";
+        bytes[] memory keys = new bytes[](1);
+        keys[0] = hex"00";
+        bytes[] memory values = new bytes[](1);
+        values[0] = hex"049346ec0021405ec103c2baac8feff9d6fb75851318fb03781edf29f05f2ffeb794c7f5140cce7745a91d45027df5b421342bc2446f39beaf65f705ef864841ed";
+        bool res = CompactMerkleProof.verify(root, proof, keys, values);
+        assertTrue(res);
+        return res;
+    }
+
     function testSimplePairVerifyProof() public returns (bool) {
         bytes32 root = hex"36d59226dcf98198b07207ee154ebea246a687d8c11191f35b475e7a63f9e5b4";
         bytes[] memory proof = new bytes[](1);
@@ -23,7 +53,7 @@ contract CompactMerkleProofTest is CompactMerkleProof, DSTest {
         keys[0] = hex"646f";
         bytes[] memory values = new bytes[](1);
         values[0] = hex"76657262";
-        bool res = verify(root, proof, keys, values);
+        bool res = CompactMerkleProof.verify(root, proof, keys, values);
         assertTrue(res);
 		return res;
     }
@@ -39,7 +69,7 @@ contract CompactMerkleProofTest is CompactMerkleProof, DSTest {
         keys[0] = hex"646f6765";
         bytes[] memory values = new bytes[](1);
         values[0] = hex"0000000000000000000000000000000000000000000000000000000000000000";
-        bool res = verify(root, merkleProof, keys, values);
+        bool res = CompactMerkleProof.verify(root, merkleProof, keys, values);
         assertTrue(res);
 		return res;
     }
@@ -53,7 +83,7 @@ contract CompactMerkleProofTest is CompactMerkleProof, DSTest {
         keys[0] = hex"0102";
         bytes[] memory values = new bytes[](1);
         values[0] = hex"01";
-        bool res = verify(root, merkleProof, keys, values);
+        bool res = CompactMerkleProof.verify(root, merkleProof, keys, values);
         assertTrue(res);
 		return res;
     }
@@ -87,7 +117,7 @@ contract CompactMerkleProofTest is CompactMerkleProof, DSTest {
         values[5] = hex"7075707079";
         values[6] = hex"0000000000000000000000000000000000000000000000000000000000000000";
         values[7] = hex"";
-        bool res = verify(root, merkleProof, keys, values);
+        bool res = CompactMerkleProof.verify(root, merkleProof, keys, values);
         assertTrue(res);
 		return res;
     }

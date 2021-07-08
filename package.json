@@ -12,6 +12,7 @@
   "scripts": {
     "wsrun": "wsrun",
     "build": "wsrun -r --stages --fast-exit --exclude-missing -p $PKG -c build",
+    "test": "wsrun -r --stages --fast-exit --exclude-missing -p $PKG -c test",
     "build:contracts": "wsrun -p ${npm_package_config_contractsPackages} --fast-exit -r --stages --exclude-missing -c build",
     "clean": "wsrun --fast-exit -r --parallel --exclude-missing -p $PKG -c clean",
     "clean:contracts": "wsrun --fast-exit -r --parallel --exclude-missing -p ${npm_package_config_contractsPackages} -c clean",

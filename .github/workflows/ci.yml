@@ -40,3 +40,4 @@ jobs:
           yarn install
           yarn build
           yarn build:contracts
+          yarn test
