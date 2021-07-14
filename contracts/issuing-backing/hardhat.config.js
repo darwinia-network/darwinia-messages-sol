@@ -24,6 +24,31 @@ module.exports = {
   solidity: {
     compilers: [
       {
+        version: "0.6.9",
+        settings: {
+          evmVersion: "istanbul",
+          optimizer: {
+            enabled: true,
+            runs: 999999
+          },
+          outputSelection: {
+            "*": {
+              "*": [
+                "abi",
+                "devdoc",
+                "metadata",
+                "evm.bytecode.object",
+                "evm.bytecode.sourceMap",
+                "evm.deployedBytecode.object",
+                "evm.deployedBytecode.sourceMap",
+                "evm.methodIdentifiers"
+              ],
+              "": ["ast"]
+            }
+          }
+        }
+      },
+      {
         version: "0.4.24",
         settings: {
           evmVersion: "byzantium",

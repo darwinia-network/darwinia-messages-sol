@@ -1,5 +1,5 @@
 {
-  "name": "@darwinia/contracts-issuing-burn",
+  "name": "@darwinia/contracts-issuing-backing",
   "version": "1.0.0",
   "main": "index.js",
   "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",

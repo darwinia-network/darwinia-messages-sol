@@ -3,17 +3,15 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts/proxy/Initializable.sol";
-
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/Pausable.sol";
 import "@darwinia/contracts-utils/contracts/DailyLimit.sol";
-import "./interfaces/IRelay.sol";
-import "./interfaces/IERC20.sol";
-import "./interfaces/ISettingsRegistry.sol";
-import { ScaleStruct } from "@darwinia/contracts-utils/contracts/Scale.struct.sol";
-
+import "@darwinia/contracts-bridge/contracts/interfaces/IRelay.sol";
 import "@darwinia/contracts-utils/contracts/Scale.sol";
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
+import { ScaleStruct } from "@darwinia/contracts-utils/contracts/Scale.struct.sol";
+import "../interfaces/IERC20.sol";
+import "../interfaces/ISettingsRegistry.sol";
 
 pragma experimental ABIEncoderV2;
 

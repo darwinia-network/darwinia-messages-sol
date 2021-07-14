@@ -2,25 +2,42 @@ pragma solidity ^0.4.24;
 
 import "./DSAuth.sol";
 import "./ERC20/ERC20.sol";
-import "./interfaces/IBurnableERC20.sol";
-import "./interfaces/ISettingsRegistry.sol";
+import "../interfaces/IBurnableERC20.sol";
+import "../interfaces/ISettingsRegistry.sol";
 import "./SettingIds.sol";
 
-contract TokenBurnDrop is DSAuth, SettingIds {
+contract TokenBuildInGenesis is DSAuth, SettingIds {
     // claimedToken event
     event ClaimedTokens(address indexed token, address indexed owner, uint amount);
 
     // burndropTokens event
-    event RingBurndropTokens(address indexed token, address indexed owner, uint amount, bytes data);
+    event RingBuildInEvent(address indexed token, address indexed owner, uint amount, bytes data);
 
-    event KtonBurndropTokens(address indexed token, address indexed owner, uint amount, bytes data);
+    event KtonBuildInEvent(address indexed token, address indexed owner, uint amount, bytes data);
+
+    event SetStatus(bool status);
 
     ISettingsRegistry public registry;
 
-    byte public SS58_PREFIX_DARWINIA = 0x2a;
+    bool public paused = false;
 
-    function initializeContract(address _registry) public onlyOwner{
+    bool private singletonLock = false;
+
+    modifier singletonLockCall() {
+        require(!singletonLock, "Only can call once");
+        _;
+        singletonLock = true;
+    }
+
+    modifier isWork() {
+        require(!paused, "Not started");
+        _;
+    }
+
+    function initializeContract(address _registry, bool _status) public singletonLockCall{
         registry = ISettingsRegistry(_registry);
+        paused = _status;
+        owner = msg.sender;
     }
 
     /**
@@ -29,13 +46,13 @@ contract TokenBurnDrop is DSAuth, SettingIds {
     * @param _amount - amount of token.
     * @param _data - data which indicate the operations.
     */
-    function tokenFallback(address _from, uint256 _amount, bytes _data) public {
+    function tokenFallback(address _from, uint256 _amount, bytes _data) public isWork{
         bytes32 darwiniaAddress;
 
         assembly {
             let ptr := mload(0x40)
             calldatacopy(ptr, 0, calldatasize)
-            darwiniaAddress := mload(add(ptr, 133))
+            darwiniaAddress := mload(add(ptr, 132))
         }
 
         address ring = registry.addressOf(SettingIds.CONTRACT_RING_ERC20_TOKEN);
@@ -43,20 +60,19 @@ contract TokenBurnDrop is DSAuth, SettingIds {
 
         require((msg.sender == ring) || (msg.sender == kryptonite), "Permission denied");
 
-        require(_data.length == 33, "The address (Darwinia Network) must be in a 33 bytes hexadecimal format");
-        require(byte(_data[0]) == SS58_PREFIX_DARWINIA, "Darwinia Network Address ss58 prefix is 42");
+        require(_data.length == 32, "The address (Darwinia Network) must be in a 32 bytes hexadecimal format");
         require(darwiniaAddress != bytes32(0x0), "Darwinia Network Address can't be empty");
 
         //  burndrop ring
         if(ring == msg.sender) {
             IBurnableERC20(ring).burn(address(this), _amount);
-            emit RingBurndropTokens(msg.sender, _from, _amount, _data);
+            emit RingBuildInEvent(msg.sender, _from, _amount, _data);
         }
 
         //  burndrop kton
         if (kryptonite == msg.sender) {
             IBurnableERC20(kryptonite).burn(address(this), _amount);
-            emit KtonBurndropTokens(msg.sender, _from, _amount, _data);
+            emit KtonBuildInEvent(msg.sender, _from, _amount, _data);
         }
     }
 
@@ -74,5 +90,17 @@ contract TokenBurnDrop is DSAuth, SettingIds {
         token.transfer(owner, balance);
 
         emit ClaimedTokens(_token, owner, balance);
+    }
+
+    function setPaused(bool _status) public auth {
+        paused = _status;
+    }
+
+    function togglePaused() public auth {
+        paused = !paused;
+    }
+
+    function setRegistry(address _registry) public auth {
+        registry = ISettingsRegistry(_registry);
     }
 }

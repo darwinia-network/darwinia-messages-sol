@@ -11,8 +11,8 @@ import "@darwinia/contracts-utils/contracts/Hash.sol";
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
 import "@darwinia/contracts-utils/contracts/Input.sol";
 import "@darwinia/contracts-utils/contracts/Bytes.sol";
-import "@darwinia/contracts-verify/contracts/MMR.sol";
 import "@darwinia/contracts-utils/contracts/Scale.sol";
+import "@darwinia/contracts-verify/contracts/MMR.sol";
 import "@darwinia/contracts-verify/contracts/SimpleMerkleProof.sol";
 
 

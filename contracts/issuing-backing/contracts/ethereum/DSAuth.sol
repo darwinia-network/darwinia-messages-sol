@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import './interfaces/IAuthority.sol';
+import '../interfaces/IAuthority.sol';
 
 contract DSAuthEvents {
     event LogSetAuthority (address indexed authority);

@@ -4,7 +4,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
-import "./interfaces/ILightClientBridge.sol";
+import "../interfaces/ILightClientBridge.sol";
 
 contract BasicInboundChannel {
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;

@@ -4,11 +4,17 @@ pragma solidity ^0.6.0;
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
-import "./interfaces/IERC20.sol";
+import "../interfaces/IERC20.sol";
 
-contract Ethereum2DarwiniaMappingTokenFactory is Initializable, Ownable {
-    address public constant ISSUING_PRECOMPILE = 0x0000000000000000000000000000000000000017;
+contract DarwiniaMappingTokenFactory is Initializable, Ownable {
+    address public constant DISPATCH_ENCODER = 0x0000000000000000000000000000000000000018;
+    address public constant DISPATCH         = 0x0000000000000000000000000000000000000019;
     struct TokenInfo {
+        bytes4 eventReceiver;
+        // 0 - Erc20Token
+        // 1 - NativeToken
+        // ...
+        uint32  tokenType;
         address backing;
         address source;
     }
@@ -22,6 +28,9 @@ contract Ethereum2DarwiniaMappingTokenFactory is Initializable, Ownable {
 
     event NewLogicSetted(string name, address addr);
     event IssuingERC20Created(address indexed sender, address backing, address source, address token);
+
+    receive() external payable {
+    }
 
     function initialize() public initializer {
         ownableConstructor();
@@ -53,6 +62,8 @@ contract Ethereum2DarwiniaMappingTokenFactory is Initializable, Ownable {
     }
 
     function createERC20Contract(
+        bytes4 eventReceiver,
+        uint32 tokenType,
         string memory name,
         string memory symbol,
         uint8 decimals,
@@ -71,9 +82,14 @@ contract Ethereum2DarwiniaMappingTokenFactory is Initializable, Ownable {
         token = deploy(salt, bytecodeWithInitdata);
         tokenMap[salt] = token;
         allTokens.push(token);
-        tokenToInfo[token] = TokenInfo(backing, source);
+        tokenToInfo[token] = TokenInfo(eventReceiver, tokenType, backing, source);
 
-        (bool success, ) = ISSUING_PRECOMPILE.call(abi.encode(backing, source, token));
+        (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
+            abi.encodePacked(eventReceiver, bytes4(keccak256("registered(address,address,address)")),
+                             abi.encode(backing, source, token)));
+        require(encodeSuccess, "create: encode dispatch failed");
+
+        (bool success, ) = DISPATCH.call(encoded);
         require(success, "create: call create erc20 precompile failed");
         emit IssuingERC20Created(msg.sender, backing, source, token);
     }
@@ -94,12 +110,26 @@ contract Ethereum2DarwiniaMappingTokenFactory is Initializable, Ownable {
         IERC20(token).mint(recipient, amount);
     }
 
-    function crossTransfer(address token, address recipient, uint256 amount) external {
+    function crossTransfer(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
         require(amount > 0, "can not transfer amount zero");
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
-        IERC20(token).burn(msg.sender, amount);
-        (bool success, ) = ISSUING_PRECOMPILE.call(abi.encode(info.backing, msg.sender, info.source, recipient, amount));
+        require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer token failed");
+        IERC20(token).burn(address(this), amount);
+
+        (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
+            abi.encodePacked(info.eventReceiver, bytes4(keccak256("burned(address,address,address,address,uint256)")),
+                           abi.encode(specVersion,
+                                      weight,
+                                      info.tokenType,
+                                      info.backing,
+                                      msg.sender, 
+                                      info.source, 
+                                      recipient, 
+                                      amount,
+                                      msg.value)));
+        require(encodeSuccess, "burn: encode dispatch failed");
+        (bool success, ) = DISPATCH.call(encoded);
         require(success, "burn: call burn precompile failed");
     }
 }

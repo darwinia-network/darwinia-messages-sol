@@ -2,7 +2,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "./interfaces/IOutboundChannel.sol";
+import "../interfaces/IOutboundChannel.sol";
 
 // BasicOutboundChannel is a basic channel that just sends messages with a nonce.
 contract BasicOutboundChannel is IOutboundChannel {

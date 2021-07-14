@@ -9,9 +9,9 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@darwinia/contracts-utils/contracts/Scale.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import { ScaleStruct } from "@darwinia/contracts-utils/contracts/Scale.struct.sol";
-import "./interfaces/IRelay.sol";
-import "./interfaces/IERC20Option.sol";
-import "./interfaces/IERC20Bytes32Option.sol";
+import "../interfaces/IRelay.sol";
+import "../interfaces/IERC20Option.sol";
+import "../interfaces/IERC20Bytes32Option.sol";
 
 contract Ethereum2DarwiniaBacking is Initializable, Ownable {
     using SafeMath for uint256;

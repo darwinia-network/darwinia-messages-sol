@@ -4,7 +4,7 @@ pragma solidity ^0.6.0;
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./WETH.sol";
-import "./interfaces/IWETH.sol";
+import "../interfaces/IWETH.sol";
 import "@darwinia/contracts-utils/contracts/Scale.sol";
 import { ScaleStruct } from "@darwinia/contracts-utils/contracts/Scale.struct.sol";
 

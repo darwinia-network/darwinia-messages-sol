@@ -2,8 +2,8 @@ pragma solidity ^0.4.24;
 
 import "./PausableDSAuth.sol";
 import "./ERC20/ERC20.sol";
-import "./interfaces/IBurnableERC20.sol";
-import "./interfaces/ISettingsRegistry.sol";
+import "../interfaces/IBurnableERC20.sol";
+import "../interfaces/ISettingsRegistry.sol";
 
 contract Issuing is PausableDSAuth {
     // claimedToken event
