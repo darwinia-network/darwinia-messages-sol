@@ -1,12 +1,8 @@
-const { expect, use, should } = require('chai');
+const { expect } = require("chai");
 const { solidity } = require("ethereum-waffle");
-const BigNumber = web3.BigNumber;
+const chai = require("chai");
 
-use(solidity);
-require("chai")
-  .use(require("chai-as-promised"))
-  .use(require("chai-bignumber")(BigNumber))
-  .should();
+chai.use(solidity);
 
 describe('inputTest', function (accounts) {
 

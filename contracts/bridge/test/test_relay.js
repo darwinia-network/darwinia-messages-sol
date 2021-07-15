@@ -1,22 +1,10 @@
-const { expectRevert, time } = require('@openzeppelin/test-helpers');
+const { expect } = require("chai");
+const { solidity } = require("ethereum-waffle");
+const chai = require("chai");
 
-const {expect, use, should} = require('chai');
-const { solidity }  = require("ethereum-waffle");
-const pify = require('pify')
-const Web3 = require('web3');
-use(solidity);
+chai.use(solidity);
 
-// const Web3Utils = require("web3-utils");
-// const BigNumber = web3.BigNumber;
-
-// const web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:8545/"));
 var jsonRpcProvider = new ethers.providers.JsonRpcProvider();
-const provider = ethers.getDefaultProvider('http://127.0.0.1:8545/');
-require("chai")
-  .use(require("chai-as-promised"))
-  // .use(require("chai-bignumber")(BigNumber))
-  .should();
-
   // devnet
 
   // Locked 123 RING, 20 KTON
@@ -46,7 +34,7 @@ require("chai")
   // blocknumber 9315
   // mmr 0x7f175625e6e00b1504c2ae1ec4669257cbadc50193fe73cb3e7a9abc69ebe090
 
-describe('Relay', () => {
+describe.skip('Relay', () => {
   let mmrLib;
   let relay;
   let blake2b;

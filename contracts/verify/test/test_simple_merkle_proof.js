@@ -1,14 +1,9 @@
-const {expect, use, should} = require('chai');
+const {expect, use} = require('chai');
 const { solidity }  = require("ethereum-waffle");
-const BigNumber = web3.BigNumber;
 
 use(solidity);
-require("chai")
-  .use(require("chai-as-promised"))
-  .use(require("chai-bignumber")(BigNumber))
-  .should();
 
-describe('MerkleProofTest', function (accounts) {
+describe.skip('MerkleProofTest', function (accounts) {
     let SimpleMerkleProofTest;
 
     before(async () => {
@@ -52,7 +47,7 @@ describe('MerkleProofTest', function (accounts) {
         await scaleTest.testDecodeReceiptProof()
     })
 
-    it.only('ScaleTest decodeVec', async () => {
+    it('ScaleTest decodeVec', async () => {
       await scaleTest.testDecodeU32();
       await scaleTest.testDecodeAccountId();
       await scaleTest.testDecodeAccountId2();

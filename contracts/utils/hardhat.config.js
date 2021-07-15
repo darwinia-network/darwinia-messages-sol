@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require('hardhat-abi-exporter');
+require("hardhat-gas-reporter");
 
 require('dotenv').config({ path: '../../.env' })
 
@@ -24,7 +25,7 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.6.0",
+        version: "0.6.9",
         settings: {
           evmVersion: "istanbul",
           optimizer: {
@@ -56,7 +57,7 @@ module.exports = {
     cache: "./cache",
     artifacts: "./artifacts"
   },
-  defaultNetwork: 'ropsten',
+  defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
     },
