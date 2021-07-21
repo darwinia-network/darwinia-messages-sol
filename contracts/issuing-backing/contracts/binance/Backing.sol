@@ -50,7 +50,6 @@ contract Backing is Initializable, Ownable {
 
     event NewTokenRegistered(address indexed token, string name, string symbol, uint8 decimals, uint256 fee);
     event BackingLock(address indexed sender, address source, address target, uint256 amount, address receiver, uint256 fee);
-    event VerifyProof(uint32 blocknumber);
     event RegistCompleted(address token, address target);
     event RedeemTokenEvent(address token, address target, address receipt, uint256 amount);
 
@@ -106,17 +105,10 @@ contract Backing is Initializable, Ownable {
 
     function encodeRegistryAndSubmit(
         address _token,
-        string _name,
-        string _symbol,
+        string memory _name,
+        string memory _symbol,
         uint8 _decimals
     ) internal {
-
-        bytes memory fillCalldata = abi.encodeWithSelector(
-            fillFunctionSelector,
-            order,
-            takerAssetFillAmount,
-            signature
-        );
         bytes memory call = abi.encodeWithSelector(REGISTRY_CALL, _token, _name, _symbol, _decimals);
         IOutboundChannel(outbound).submit(call);
     }
@@ -147,7 +139,7 @@ contract Backing is Initializable, Ownable {
     function registerTokenBytes32(address token) external register(token) {
         string memory name = string(abi.encodePacked(IERC20Bytes32Option(token).name()));
         string memory symbol = string(abi.encodePacked(IERC20Bytes32Option(token).symbol()));
-        uint8 decimals = IERC20Option(token).decimals();
+        uint8 decimals = uint8(IERC20Bytes32Option(token).decimals());
         encodeRegistryAndSubmit(token, name, symbol, decimals);
         emit NewTokenRegistered(
             token,
@@ -158,7 +150,7 @@ contract Backing is Initializable, Ownable {
         );
     }
 
-    function registerTokenWithName(address token, string memory name, string memory symbol, uint8 decimals) external onlyOwner register(token) {
+    function registerTokenWithName(address token, string memory name, string memory symbol, uint8 decimals) public onlyOwner register(token) {
         encodeRegistryAndSubmit(token, name, symbol, decimals);
         emit NewTokenRegistered(
             token,
@@ -196,7 +188,7 @@ contract Backing is Initializable, Ownable {
         require(backing == address(this), "not the expected backing");
         if (token == ETHAddress) {
             IWETH(WETH).withdraw(value);
-            safeTransferETH.safeTransferETH(recipient, value);
+            safeTransferETH(recipient, value);
         } else {
             IERC20(token).safeTransfer(recipient, value);
         }
