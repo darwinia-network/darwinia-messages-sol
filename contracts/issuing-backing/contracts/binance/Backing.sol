@@ -33,11 +33,6 @@ contract Backing is Initializable, Ownable {
     // bytes4(keccak256('mint(address,address,uint256)')) == 0xc6c3bbe6
     bytes4 public constant MINT_CALL = 0xc6c3bbe6;
 
-    address public constant ETHAddress = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    string public constant ETHName = "Binance native token";
-    string public constant ETHSymbol = "BNB";
-    uint8 public constant ETHDecimals = 18;
-
     address public inbound;
     address public outbound;
     address public WETH;
@@ -76,12 +71,6 @@ contract Backing is Initializable, Ownable {
         WETH = _WETH;
         registerFee = Fee(_registerFeeToken, 0);
         transferFee = Fee(_transferFeeToken, 0);
-
-        _registerETH();
-    }
-
-    function _registerETH() internal {
-        registerTokenWithName(ETHAddress, ETHName, ETHSymbol, ETHDecimals);
     }
 
     function setChannel(address _inbound, address _outbound) external onlyOwner {
@@ -168,30 +157,15 @@ contract Backing is Initializable, Ownable {
             IERC20(transferFee.token).safeTransferFrom(msg.sender, address(this), transferFee.fee);
             IERC20Option(transferFee.token).burn(address(this), transferFee.fee);
         }
-        if (token == ETHAddress) {
-            require(msg.value >= amount, "msg.value not enough");
-            IWETH(WETH).deposit{value: amount}();
-        } else {
-            IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        }
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         encodeMintAndSubmit(token, recipient, amount);
         emit BackingLock(msg.sender, token, assets[token].target, amount, recipient, transferFee.fee);
-    }
-
-    function safeTransferETH(address to, uint256 value) internal {
-        (bool success, ) = to.call{value: value}(new bytes(0));
-        require(success, 'ETH transfer failed');
     }
 
     function redeem(address backing, address token, address target, address payable recipient, uint256 value) external onlyInbound() {
         require(assets[token].target == target, "the mapped address uncorrect");
         require(backing == address(this), "not the expected backing");
-        if (token == ETHAddress) {
-            IWETH(WETH).withdraw(value);
-            safeTransferETH(recipient, value);
-        } else {
-            IERC20(token).safeTransfer(recipient, value);
-        }
+        IERC20(token).safeTransfer(recipient, value);
         emit RedeemTokenEvent(token, target, recipient, value);
     }
 
