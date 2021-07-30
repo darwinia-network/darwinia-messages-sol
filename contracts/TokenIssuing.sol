@@ -32,6 +32,10 @@ contract TokenIssuing is DailyLimit, Ownable, Pausable, Initializable {
     // Record the block height that has been verified
     mapping(uint32 => bool) history;
 
+    // mainnet init data
+    // darwiniaLockEventsStorageKeys ['0xf8860dda3d08046cf2706b92bf7202eaae7a79191c90e76297e0895605b8b457', '0x50ea63d9616704561328b9e0febe21cfae7a79191c90e76297e0895605b8b457']
+    // darwiniaUpgradeBlockNumber [0, 4344275]
+    // 4344275 (include) is the first block number of the storagekey upgraded.
     bytes[] public darwiniaLockEventsStorageKeys;
     uint32[] public darwiniaUpgradeBlockNumber;
 
