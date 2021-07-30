@@ -32,6 +32,9 @@ contract TokenIssuing is DailyLimit, Ownable, Pausable, Initializable {
     // Record the block height that has been verified
     mapping(uint32 => bool) history;
 
+    bytes[] public darwiniaLockEventsStorageKeys;
+    uint32[] public darwiniaUpgradeBlockNumber;
+
     function initialize(address _registry, address _relay, bytes memory _key) public initializer {
         ownableConstructor();
         pausableConstructor();
@@ -94,7 +97,9 @@ contract TokenIssuing is DailyLimit, Ownable, Pausable, Initializable {
 
         require(!history[blockNumber], "TokenIssuing:: verifyProof:  The block has been verified");
 
-        Input.Data memory data = Input.from(relay.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, storageKey));
+        bytes memory matchedStorageKey = getMatchedStorageKey(blockNumber);
+
+        Input.Data memory data = Input.from(relay.verifyRootAndDecodeReceipt(root, MMRIndex, blockNumber, blockHeader, peaks, siblings, eventsProofStr, matchedStorageKey));
         
         ScaleStruct.LockEvent[] memory events = Scale.decodeLockEvents(data);
 
@@ -125,6 +130,14 @@ contract TokenIssuing is DailyLimit, Ownable, Pausable, Initializable {
         emit VerifyProof(blockNumber);
     }
 
+    function getMatchedStorageKey(uint32 blockNumber) public view returns (bytes memory) {
+      for( uint i = darwiniaUpgradeBlockNumber.length - 1; i >= 0; i-- ) {
+        if(darwiniaUpgradeBlockNumber[i] <= blockNumber) {
+          return darwiniaLockEventsStorageKeys[i];
+        }
+      }
+    }
+
     // The token decimals in Crab, Darwinia Netowrk is 9, in Ethereum Network is 18.
     function decimalsConverter(uint256 darwiniaValue) public pure returns (uint256) {
       return SafeMath.mul(darwiniaValue, 1000000000);
@@ -149,5 +162,15 @@ contract TokenIssuing is DailyLimit, Ownable, Pausable, Initializable {
 
     function changeDailyLimit(address token, uint amount) public onlyOwner  {
         _changeDailyLimit(token, amount);
+    }
+
+    function appendDarwiniaUpgradeBlockNumber(uint32 upgradeBlockNumber, bytes memory key) public onlyOwner {
+      darwiniaLockEventsStorageKeys.push(key);
+      darwiniaUpgradeBlockNumber.push(upgradeBlockNumber);
+    }
+    
+    function resetDarwiniaUpgradeBlockNumber(uint256 index, uint32 upgradeBlockNumber, bytes memory key) public onlyOwner {
+      darwiniaLockEventsStorageKeys[index] = key;
+      darwiniaUpgradeBlockNumber[index] = upgradeBlockNumber;
     }
 }
