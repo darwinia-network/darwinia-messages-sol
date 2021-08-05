@@ -85,7 +85,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         tokenToInfo[token] = TokenInfo(eventReceiver, tokenType, backing, source);
 
         (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
-            abi.encodePacked(eventReceiver, bytes4(keccak256("registered(address,address,address)")),
+            abi.encodePacked(eventReceiver, bytes4(keccak256("registered(bytes4,uint32,string,string,uint8,address,address)")),
                              abi.encode(backing, source, token)));
         require(encodeSuccess, "create: encode dispatch failed");
 
@@ -118,7 +118,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         IERC20(token).burn(address(this), amount);
 
         (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
-            abi.encodePacked(info.eventReceiver, bytes4(keccak256("burned(address,address,address,address,uint256)")),
+            abi.encodePacked(info.eventReceiver, bytes4(keccak256("burned(uint32,uint64,address,address,uint256)")),
                            abi.encode(specVersion,
                                       weight,
                                       info.tokenType,
