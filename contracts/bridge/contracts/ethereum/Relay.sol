@@ -138,7 +138,7 @@ contract Relay is Ownable, Pausable, Initializable {
     // message - prefix + nonce + [...relayers]
     // struct{vec<u8>, u32, vec<EthereumAddress>}
     // signatures - signed by personal_sign
-    // beneficiary - Keeping the authorities set up-to-date is advocated between the relay contract contract and the darwinia network, and the darwinia network will give partial rewards to the benifit account. benifit is the public key of a darwinia network account
+    // beneficiary - Keeping the authorities set up-to-date is advocated between the relay contract contract and the darwinia network, and the darwinia network will give partial rewards to the benefit account. benefit is the public key of a darwinia network account
     function updateRelayer(
         bytes memory message,
         bytes[] memory signatures,
