@@ -5,14 +5,17 @@ pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
 import "../interfaces/ILightClientBridge.sol";
+import "../interfaces/ICrossChainFilter.sol";
 
 contract BasicInboundChannel {
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
 
     struct Message {
+        address origin;
         address target;
-        uint64 nonce;
-        bytes payload;
+        bytes4 sig;
+        uint256 nonce;
+        bytes params;
     }
 
     /**
@@ -27,7 +30,7 @@ contract BasicInboundChannel {
         uint32 blockNumber;
     }
 
-    event MessageDispatched(uint64 nonce, bool result);
+    event MessageDispatched(uint256 nonce, bool result, bytes returndata);
 
     uint64 public nonce;
     ILightClientBridge public lightClientBridge;
@@ -83,18 +86,27 @@ contract BasicInboundChannel {
 
     function processMessages(Message[] memory messages) internal {
         for (uint256 i = 0; i < messages.length; i++) {
+            Message memory message = messages[i];
             // Check message nonce is correct and increment nonce for replay protection
-            require(messages[i].nonce == nonce + 1, "Channel: invalid nonce");
+            require(message.nonce == nonce + 1, "Channel: invalid nonce");
 
             nonce = nonce + 1;
 
-            // Deliver the message to the target
-            (bool success, ) =
-                messages[i].target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(
-                    messages[i].payload
-                );
-
-            emit MessageDispatched(messages[i].nonce, success);
+            try ICrossChainFilter(message.target).filter(message.origin, message.target, message.sig) 
+                returns (bool ok) 
+            {
+                if (ok) {
+                    // Deliver the message to the target
+                    bytes memory payload = abi.encodePacked(message.sig, message.params);
+                    (bool success, bytes memory returndata) =
+                        message.target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload);
+                    emit MessageDispatched(message.nonce, success, returndata);
+                } else {
+                    emit MessageDispatched(message.nonce, false, "Channel: filter failed");
+                }
+            } catch (bytes memory reason) {
+                emit MessageDispatched(message.nonce, false, reason);
+            }
         }
     }
 
