@@ -4,6 +4,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
+import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "../interfaces/ILightClientBridge.sol";
 import "../interfaces/ICrossChainFilter.sol";
 
@@ -11,8 +12,9 @@ contract BasicInboundChannel {
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
 
     struct Message {
-        address sourceAccount; 
+        address sourceAccount;
         address targetContract;
+        address laneContract;
         uint256 nonce;
         bytes payload; /*abi.encodePacked(SELECTOR, PARAMS)*/
     }
@@ -31,16 +33,20 @@ contract BasicInboundChannel {
 
     event MessageDispatched(uint256 nonce, bool result, bytes returndata);
 
-    uint64 public nonce;
+    uint256 public laneId;
+    uint256 public nonce;
     ILightClientBridge public lightClientBridge;
 
-    constructor(ILightClientBridge _lightClientBridge) public {
+    constructor(uint256 _landId, ILightClientBridge _lightClientBridge) public {
         nonce = 0;
+        laneId = _landId;
         lightClientBridge = _lightClientBridge;
     }
 
     function submit(
         Message[] memory messages,
+        uint256 numOfLanes,
+        bytes32[] memory proof,
         BeefyMMRLeaf memory beefyMMRLeaf,
         uint256 beefyMMRLeafIndex,
         uint256 beefyMMRLeafCount,
@@ -58,11 +64,16 @@ contract BasicInboundChannel {
             ),
             "Channel: Invalid proof"
         );
-        verifyMessages(messages, beefyMMRLeaf);
+        verifyMessages(messages, beefyMMRLeaf, numOfLanes, proof);
         processMessages(messages);
     }
 
-    function verifyMessages(Message[] memory messages, BeefyMMRLeaf memory leaf)
+    function verifyMessages(
+        Message[] memory messages,
+        BeefyMMRLeaf memory leaf,
+        uint256 numOfLanes,
+        bytes32[] memory proof
+    )
         internal
         view
     {
@@ -72,7 +83,7 @@ contract BasicInboundChannel {
         );
         // Validate that the commitment matches the commitment contents
         require(
-            validateMessagesMatchRoot(messages, leaf.messagesRoot),
+            validateMessagesMatchRoot(messages, leaf.messagesRoot, numOfLanes, proof),
             "Channel: invalid messages"
         );
 
@@ -88,6 +99,7 @@ contract BasicInboundChannel {
             Message memory message = messages[i];
             // Check message nonce is correct and increment nonce for replay protection
             require(message.nonce == nonce + 1, "Channel: invalid nonce");
+            require(message.laneContract == address(this), "Channel: invalid lane contract");
 
             nonce = nonce + 1;
 
@@ -112,9 +124,19 @@ contract BasicInboundChannel {
 
     function validateMessagesMatchRoot(
         Message[] memory messages,
-        bytes32 root
-    ) internal pure returns (bool) {
-        return keccak256(abi.encode(messages)) == root;
+        bytes32 root,
+        uint256 numOfLanes,
+        bytes32[] memory proof
+    ) internal view returns (bool) {
+        bytes32 hash = keccak256(abi.encode(messages));
+        return
+            MerkleProof.verifyMerkleLeafAtPosition(
+                root,
+                hash,
+                laneId,
+                numOfLanes,
+                proof
+            );
     }
 
     function hashMMRLeaf(BeefyMMRLeaf memory leaf)
