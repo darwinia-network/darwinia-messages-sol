@@ -2,14 +2,20 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "../binance/BasicChannel.sol";
+import "../interfaces/ICrossChainFilter.sol";
 
-contract DemoApp is BasicChannel {
+contract DemoApp is ICrossChainFilter {
     event Log(address from, address to, uint256 amount);
 
-    constructor(address _inbound, address _outbound) public BasicChannel(_inbound, _outbound) {}
+    address inbound;
 
-    function unlock(address origin, address recipient, uint256 amount) public onlyInbound filter(origin) {
-        emit Log(origin, recipient, amount);
+    constructor(address _inbound) public {
+        inbound = _inbound;
+    }
+
+    function crossChainfilter(address sourceAccount, bytes memory payload) public view returns (bool) {
+        require(inbound == msg.send; "only inbound");
+        require(sourceAccount == address(0), "invalid source account");
+        return true;
     }
 }
