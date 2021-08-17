@@ -91,13 +91,13 @@ contract BasicInboundChannel {
 
             nonce = nonce + 1;
 
-            try ICrossChainFilter(message.target).crossChainfilter(message.sourceAccount, message.payload) 
+            try ICrossChainFilter(message.targetContract).crossChainfilter(message.sourceAccount, message.payload) 
                 returns (bool ok) 
             {
                 if (ok) {
                     // Deliver the message to the target
                     (bool success, bytes memory returndata) =
-                        message.target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(
+                        message.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(
                             message.payload
                     );
                     emit MessageDispatched(message.nonce, success, returndata);

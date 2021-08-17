@@ -13,8 +13,7 @@ contract DemoApp is ICrossChainFilter {
         inbound = _inbound;
     }
 
-    function crossChainfilter(address sourceAccount, bytes memory payload) public view returns (bool) {
-        require(inbound == msg.send; "only inbound");
+    function crossChainfilter(address sourceAccount, bytes memory) public override view returns (bool) {
         require(sourceAccount == address(0), "invalid source account");
         return true;
     }

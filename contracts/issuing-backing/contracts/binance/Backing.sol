@@ -9,11 +9,12 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@darwinia/contracts-utils/contracts/Scale.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IOutboundChannel.sol";
+import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilter.sol";
 import "../interfaces/IERC20Option.sol";
 import "../interfaces/IERC20Bytes32Option.sol";
 import '../interfaces/IWETH.sol';
 
-contract Backing is CrossCchainFilter, Initializable, Ownable {
+contract Backing is ICrossChainFilter, Initializable, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -170,12 +171,18 @@ contract Backing is CrossCchainFilter, Initializable, Ownable {
     }
 
     // TODO: may could calc the targe address before the response
-    function registerResponse(address origin, address backing, address token, address target) external onlyInbound() onlyOrigin(origin) {
+    function registerResponse(address backing, address token, address target) external onlyInbound() {
         require(assets[token].timestamp != 0, "asset is not existed");
         require(assets[token].target == address(0), "asset has been responsed");
         require(backing == address(this), "not the expected backing");
         assets[token].target = target;
         emit RegistCompleted(token, target);
+    }
+
+    // TODO: ensure sourceAccount is right
+    function crossChainfilter(address sourceAccount, bytes memory) public override view returns (bool) {
+        require(sourceAccount == address(0), "invalid source account");
+        return true;
     }
 }
 
