@@ -13,7 +13,7 @@ import "../interfaces/IERC20Option.sol";
 import "../interfaces/IERC20Bytes32Option.sol";
 import '../interfaces/IWETH.sol';
 
-contract Backing is Initializable, Ownable {
+contract Backing is CrossCchainFilter, Initializable, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -170,7 +170,7 @@ contract Backing is Initializable, Ownable {
     }
 
     // TODO: may could calc the targe address before the response
-    function registerResponse(address backing, address token, address target) external onlyInbound() {
+    function registerResponse(address origin, address backing, address token, address target) external onlyInbound() onlyOrigin(origin) {
         require(assets[token].timestamp != 0, "asset is not existed");
         require(assets[token].target == address(0), "asset has been responsed");
         require(backing == address(this), "not the expected backing");

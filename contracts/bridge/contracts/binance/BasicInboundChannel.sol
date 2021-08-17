@@ -11,11 +11,10 @@ contract BasicInboundChannel {
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
 
     struct Message {
-        address origin;
+        address origin; //TODO: may included in payload
         address target;
-        bytes4 sig;
         uint256 nonce;
-        bytes params;
+        bytes payload; /*abi.encodePacked(SELECTOR, ORIGIN, PARAMS)*/
     }
 
     /**
@@ -92,14 +91,15 @@ contract BasicInboundChannel {
 
             nonce = nonce + 1;
 
-            try ICrossChainFilter(message.target).filter(message.origin, message.target, message.sig) 
+            try ICrossChainFilter(message.target).filtered(message.origin) 
                 returns (bool ok) 
             {
                 if (ok) {
                     // Deliver the message to the target
-                    bytes memory payload = abi.encodePacked(message.sig, message.params);
                     (bool success, bytes memory returndata) =
-                        message.target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload);
+                        message.target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(
+                            message.payload
+                    );
                     emit MessageDispatched(message.nonce, success, returndata);
                 } else {
                     emit MessageDispatched(message.nonce, false, "Channel: filter failed");
