@@ -180,7 +180,7 @@ contract Backing is ICrossChainFilter, Initializable, Ownable {
     }
 
     // TODO: ensure sourceAccount is right
-    function crossChainfilter(address sourceAccount, bytes memory) public override view returns (bool) {
+    function crossChainFilter(address sourceAccount, bytes memory) public override view returns (bool) {
         require(sourceAccount == address(0), "invalid source account");
         return true;
     }

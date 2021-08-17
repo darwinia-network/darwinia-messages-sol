@@ -91,7 +91,7 @@ contract BasicInboundChannel {
 
             nonce = nonce + 1;
 
-            try ICrossChainFilter(message.targetContract).crossChainfilter(message.sourceAccount, message.payload) 
+            try ICrossChainFilter(message.targetContract).crossChainFilter(message.sourceAccount, message.payload) 
                 returns (bool ok) 
             {
                 if (ok) {
