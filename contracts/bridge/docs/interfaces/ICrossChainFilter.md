@@ -1,7 +1,7 @@
 # ICrossChainFilter
 
 
-
+The app layer must implement the interface `ICrossChainFilter`
 
 
 ## Contents
@@ -19,19 +19,27 @@
 ## Functions
 
 ### crossChainFilter
-No description
+Verify the source sender and payload of source chain messages,
+Generally, app layer cross-chain messages require validation of sourceAccount
+
 
 
 #### Declaration
 ```solidity
   function crossChainFilter(
+    address sourceAccount,
+    bytes payload
   ) external returns (bool)
 ```
 
 #### Modifiers:
 No modifiers
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`sourceAccount` | address | The derived DVM address of pallet ID which send the message
+|`payload` | bytes | The calldata which encoded by ABI Encoding
 
 
 
