@@ -1,8 +1,9 @@
 # BasicInboundChannel
 
 
+The basic inbound channel is the message layer of the bridge
 
-
+> See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
 
 ## Contents
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -28,7 +29,9 @@
 | Var | Type |
 | --- | --- |
 | MAX_GAS_PER_MESSAGE | uint256 |
-| nonce | uint64 |
+| GAS_BUFFER | uint256 |
+| laneId | uint256 |
+| nonce | uint256 |
 | lightClientBridge | contract ILightClientBridge |
 
 
@@ -36,34 +39,62 @@
 ## Functions
 
 ### constructor
-No description
+Deploys the BasicInboundChannel contract
+
 
 
 #### Declaration
 ```solidity
   function constructor(
+    uint256 _landId,
+    uint256 _nonce,
+    contract ILightClientBridge _lightClientBridge
   ) public
 ```
 
 #### Modifiers:
 No modifiers
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_landId` | uint256 | The position of the leaf in the message merkle tree, index starting with 0
+|`_nonce` | uint256 | The ID of the message that has been executed, which is incremented in strict order
+|`_lightClientBridge` | contract ILightClientBridge | The contract address of on-chain light client
 
 ### submit
-No description
+Deliver and dispatch the messages
+
 
 
 #### Declaration
 ```solidity
   function submit(
+    struct BasicInboundChannel.Message[] messages,
+    uint256 numOfLanes,
+    bytes32[] proof,
+    struct BasicInboundChannel.BeefyMMRLeaf beefyMMRLeaf,
+    uint256 beefyMMRLeafIndex,
+    uint256 beefyMMRLeafCount,
+    bytes32[] peaks,
+    bytes32[] siblings
   ) public
 ```
 
 #### Modifiers:
 No modifiers
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`messages` | struct BasicInboundChannel.Message[] | All the messages in the source chain block which need be delivered
+|`numOfLanes` | uint256 | Number of all channels
+|`proof` | bytes32[] | The merkle proof required for validation of the messages in the message merkle tree
+|`beefyMMRLeaf` | struct BasicInboundChannel.BeefyMMRLeaf | Beefy MMR leaf which the message root is located
+|`beefyMMRLeafIndex` | uint256 | Beefy MMR index which the beefy leaf is located
+|`beefyMMRLeafCount` | uint256 | Beefy MMR width of the MMR tree
+|`peaks` | bytes32[] | The proof required for validation the leaf
+|`siblings` | bytes32[] | The proof required for validation the leaf
 
 ### verifyMessages
 No description
@@ -130,8 +161,14 @@ No modifiers
 ## Events
 
 ### MessageDispatched
-No description
+Notifies an observer that the message has dispatched
+
 
   
 
-
+#### Params:
+| Param | Type | Indexed | Description |
+| --- | --- | :---: | --- |
+|`nonce` | uint256 | :white_check_mark: | The message nonce
+|`result` | bool | :white_check_mark: | The message result
+|`returndata` | bytes |  | The return data of message call, when return false, it's the reason of the error

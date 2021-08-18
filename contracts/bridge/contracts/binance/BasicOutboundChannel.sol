@@ -12,6 +12,12 @@ contract BasicOutboundChannel is IOutboundChannel, AccessControl {
 
     uint256 public nonce;
 
+    /**
+     * The Message is the structure of EthereRPC which should be delivery to Darwinia
+     * @param source The source sender address which send the message
+     * @param nonce The ID used to uniquely identify the message
+     * @param payload The calldata which encoded by ABI Encoding `abi.encodePacked(SELECTOR, PARAMS)`
+     */
     event Message(
         address source,
         uint256 nonce,

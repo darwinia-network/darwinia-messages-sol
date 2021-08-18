@@ -10,7 +10,7 @@ import "@darwinia/contracts-verify/contracts/KeccakMMR.sol";
 import "./ValidatorRegistry.sol";
 
 /**
- * @title A entry contract for the Ethereum like light client
+ * @title A entry contract for the Ethereum-like light client
  * @author echo
  * @notice The light client is the trust layer of the bridge
  * @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
