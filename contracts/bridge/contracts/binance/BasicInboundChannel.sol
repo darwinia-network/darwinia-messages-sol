@@ -31,15 +31,15 @@ contract BasicInboundChannel {
         uint32 blockNumber;
     }
 
-    event MessageDispatched(uint256 nonce, bool result, bytes returndata);
+    event MessageDispatched(uint256 indexed nonce, bool indexed result, bytes returndata);
 
     uint256 public laneId;
     uint256 public nonce;
     ILightClientBridge public lightClientBridge;
 
-    constructor(uint256 _landId, ILightClientBridge _lightClientBridge) public {
-        nonce = 0;
+    constructor(uint256 _landId, uint256 _nonce, ILightClientBridge _lightClientBridge) public {
         laneId = _landId;
+        nonce = _nonce;
         lightClientBridge = _lightClientBridge;
     }
 

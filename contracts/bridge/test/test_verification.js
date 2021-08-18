@@ -95,50 +95,67 @@ describe("Verification tests", () => {
     const latestMMRRoot = await lightClientBridge.latestMMRRoot();
     expect(latestMMRRoot).to.eq(BeefyFixture.commitment.payload.mmr)
 
-    inbound = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(lightClientBridge.address);
+    let laneId = 0
+    let nonce = 0
+    inbound = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(laneId, nonce, lightClientBridge.address);
     app = await (await ethers.getContractFactory("MockApp")).deploy();
     outbound = await (await ethers.getContractFactory("BasicOutboundChannel")).deploy();
+    await outbound.grantRole("0x7bb193391dc6610af03bd9922e44c83b9fda893aeed61cf64297fb4473500dd1", outbound.signer.address)
   });
 
   it("should successfully verify a commitment", async () => {
     const polkadotSender = ethers.utils.formatBytes32String('fake-polkadot-address');
     const payloadOne = app.interface.encodeFunctionData("unlock", [polkadotSender, userOne.address, ethers.utils.parseEther("2")]);
     const messageOne = [
+      "0x0000000000000000000000000000000000000001",
       app.address,
+      inbound.address,
       1,
       payloadOne
     ];
     const payloadTwo = app.interface.encodeFunctionData("unlock", [polkadotSender, userTwo.address, ethers.utils.parseEther("5")]);
     const messageTwo = [
+      "0x0000000000000000000000000000000000000002",
       app.address,
+      inbound.address,
       2,
       payloadTwo
     ];
     const messages = [messageOne, messageTwo];
     const messagesHash = buildCommitment(messages);
+    console.log(await inbound.nonce())
     const tx = await inbound.submit(
       messages,
+      1,
+      [],
       MessageFixture.mmrLeaf,
       MessageFixture.mmrLeafIndex, // blockNumber + 1
       MessageFixture.mmrLeafCount,
       MessageFixture.mmrProofs.peaks,
       MessageFixture.mmrProofs.siblings
     );
+    console.log(await inbound.nonce())
+    const hashedReason = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("invalid source account"));
+    console.log(hashedReason)
+    let res = await tx.wait()
+    console.log(res.events[0])
+    console.log(res.events[1])
+    console.log(res.events[2])
     expect(tx)
       .to.emit(inbound, "MessageDispatched")
-      .withArgs(1, true)
+      .withArgs(1, true, "0x")
     expect(tx)
       .to.emit(inbound, "MessageDispatched")
-      .withArgs(2, true)
+      .withArgs(2, false, "0x08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000016696e76616c696420736f75726365206163636f756e7400000000000000000000")
     expect(tx)
       .to.emit(app, "Unlocked")
       .withArgs(polkadotSender, userOne.address, ethers.utils.parseEther("2"))
     expect(tx)
-      .to.emit(app, "Unlocked")
-      .withArgs(polkadotSender, userTwo.address, ethers.utils.parseEther("5"))
 
-    const agian = inbound.submit(
+    const again = inbound.submit(
           messages,
+          1,
+          [],
           MessageFixture.mmrLeaf,
           MessageFixture.mmrLeafIndex, 
           MessageFixture.mmrLeafCount,
@@ -146,7 +163,7 @@ describe("Verification tests", () => {
           MessageFixture.mmrProofs.siblings
       )
 
-    await catchRevert(agian, 'Channel: invalid nonce');
+    await catchRevert(again, 'Channel: invalid nonce');
   });
 
   it("should send messages out with the correct event and fields", async function () {

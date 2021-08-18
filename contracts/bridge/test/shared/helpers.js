@@ -4,7 +4,7 @@ const MerkleTree = require("merkletreejs").MerkleTree;
 const rlp = require("rlp");
 
 function buildCommitment(msgs) {
-  return ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["(address,uint64,bytes)[]"], [ msgs ]))
+  return ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["(address,address,address,uint256,bytes)[]"], [ msgs ]))
 }
 
 function signatureSubstrateToEthereum(sig) {
