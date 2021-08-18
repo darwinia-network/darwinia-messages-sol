@@ -167,6 +167,9 @@ contract BasicInboundChannel {
 
             nonce = nonce + 1;
 
+            /**
+             * @notice The app layer must implement the interface `ICrossChainFilter`
+             */
             try ICrossChainFilter(message.targetContract).crossChainFilter(message.sourceAccount, message.payload) 
                 returns (bool ok) 
             {
