@@ -70,7 +70,7 @@ contract BasicInboundChannel {
     uint256 public laneId;
 
     /**
-     * @dev The ID of the message that has been executed, which is incremented in strict order
+     * @dev ID of the next message, which is incremented in strict order
      * @notice When upgrading the channel, this value must be synchronized
      */
     uint256 public nonce;
@@ -83,7 +83,7 @@ contract BasicInboundChannel {
     /**
      * @notice Deploys the BasicInboundChannel contract
      * @param _landId The position of the leaf in the message merkle tree, index starting with 0
-     * @param _nonce The ID of the message that has been executed, which is incremented in strict order
+     * @param _nonce ID of the next message, which is incremented in strict order
      * @param _lightClientBridge The contract address of on-chain light client
      */
     constructor(uint256 _landId, uint256 _nonce, ILightClientBridge _lightClientBridge) public {

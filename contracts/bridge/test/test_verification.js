@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 const { solidity, MockProvider } = require("ethereum-waffle");
+const { keccak } = require("ethereumjs-util");
 const {
   signatureSubstrateToEthereum,
   buildCommitment,
@@ -31,6 +32,7 @@ describe("Verification tests", () => {
   const sigs = [BeefyFixture.signature0, BeefyFixture.signature1, BeefyFixture.signature2]
   let lightClientBridge
   let inbound
+  let inbound2
   let outbound
   let app
 
@@ -98,6 +100,8 @@ describe("Verification tests", () => {
     let laneId = 0
     let nonce = 0
     inbound = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(laneId, nonce, lightClientBridge.address);
+
+    inbound2 = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(1, 0, lightClientBridge.address);
     app = await (await ethers.getContractFactory("MockApp")).deploy();
     outbound = await (await ethers.getContractFactory("BasicOutboundChannel")).deploy();
     await outbound.grantRole("0x7bb193391dc6610af03bd9922e44c83b9fda893aeed61cf64297fb4473500dd1", outbound.signer.address)
@@ -123,24 +127,31 @@ describe("Verification tests", () => {
     ];
     const messages = [messageOne, messageTwo];
     const messagesHash = buildCommitment(messages);
-    console.log(await inbound.nonce())
+    const payloadThree = app.interface.encodeFunctionData("unlock", [polkadotSender, userOne.address, ethers.utils.parseEther("3")]);
+    const messageThree = [
+      "0x0000000000000000000000000000000000000001",
+      app.address,
+      inbound2.address,
+      1,
+      payloadThree
+    ]
+    const messages2 = [messageThree]
+    const messagesHash2 = buildCommitment(messages2)
+    const messageTree = new MerkleTree([messagesHash, messagesHash2], keccak, { duplicateOdd: false, sort: false })
+    // messageTree.print()
+    const proof = messageTree.getHexProof(messagesHash)
+    const proof2 = messageTree.getHexProof(messagesHash2)
+
     const tx = await inbound.submit(
       messages,
-      1,
-      [],
+      2,
+      proof,
       MessageFixture.mmrLeaf,
       MessageFixture.mmrLeafIndex, // blockNumber + 1
       MessageFixture.mmrLeafCount,
       MessageFixture.mmrProofs.peaks,
       MessageFixture.mmrProofs.siblings
     );
-    console.log(await inbound.nonce())
-    const hashedReason = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("invalid source account"));
-    console.log(hashedReason)
-    let res = await tx.wait()
-    console.log(res.events[0])
-    console.log(res.events[1])
-    console.log(res.events[2])
     expect(tx)
       .to.emit(inbound, "MessageDispatched")
       .withArgs(1, true, "0x")
@@ -152,10 +163,24 @@ describe("Verification tests", () => {
       .withArgs(polkadotSender, userOne.address, ethers.utils.parseEther("2"))
     expect(tx)
 
+    const tx2 = await inbound2.submit(
+      messages2,
+      2,
+      proof2,
+      MessageFixture.mmrLeaf,
+      MessageFixture.mmrLeafIndex, // blockNumber + 1
+      MessageFixture.mmrLeafCount,
+      MessageFixture.mmrProofs.peaks,
+      MessageFixture.mmrProofs.siblings
+    );
+    expect(tx2)
+      .to.emit(inbound2, "MessageDispatched")
+      .withArgs(1, true, "0x")
+
     const again = inbound.submit(
           messages,
-          1,
-          [],
+          2,
+          proof,
           MessageFixture.mmrLeaf,
           MessageFixture.mmrLeafIndex, 
           MessageFixture.mmrLeafCount,

@@ -28,7 +28,7 @@ const hashBranch = (index, left, right) => {
 
 const leaves = [
    '0x2a04add3ecc3979741afad967dfedf807e07b136e05f9c670a274334d74892cf',
-   '0x053469cbcb38ac4295aa5eee5c5ba7f26c9469198a37d00c69efd654a70d51a7',
+   '0xa864636a1c0a0398a4d71a51c3aff6e0e49b9065c01a119310a60dd14e44b94f',
    '0xc58e247ea35c51586de2ea40ac6daf90eac7ac7b2f5c88bbc7829280db7890f1',
 ]
 

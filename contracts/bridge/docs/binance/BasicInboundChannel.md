@@ -59,7 +59,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_landId` | uint256 | The position of the leaf in the message merkle tree, index starting with 0
-|`_nonce` | uint256 | The ID of the message that has been executed, which is incremented in strict order
+|`_nonce` | uint256 | ID of the next message, which is incremented in strict order
 |`_lightClientBridge` | contract ILightClientBridge | The contract address of on-chain light client
 
 ### submit

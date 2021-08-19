@@ -17,7 +17,7 @@ function signatureSubstrateToEthereum(sig) {
 
 function createMerkleTree(leavesHex) {
   const leavesHashed = leavesHex.map(leaf => keccakFromHexString(leaf));
-  const merkleTree = new MerkleTree(leavesHashed, keccak, { sort: false });
+  const merkleTree = new MerkleTree(leavesHashed, keccak, { sort: false, duplicateOdd: false });
 
   return merkleTree;
 }
