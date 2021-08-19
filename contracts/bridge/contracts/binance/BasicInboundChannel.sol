@@ -45,7 +45,7 @@ contract BasicInboundChannel {
     /**
      * The BeefyMMRLeaf is the structure of each leaf in each MMR that each commitment's payload commits to.
      * @param parentHash parent hash of the block this leaf describes
-     * @param messagesRoot root hash of messages
+     * @param messagesRoot merkle root of all channel messages
      * @param blockNumber block number for the block this leaf describes
      */
     struct BeefyMMRLeaf {

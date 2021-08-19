@@ -50,12 +50,23 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
 
     /* Types */
 
+    /**
+     * Next BEEFY authority set
+     * @param id ID of the next set
+     * @param len Number of validators in the set
+     * @param root Merkle Root Hash build from BEEFY AuthorityIds
+    */
     struct NextValidatorSet {
         uint64 id;
         uint32 len; 
         bytes32 root;
     }
 
+    /**
+     * The payload being signed
+     * @param mmr MMR root hash
+     * @param nextValidatorSet Next BEEFY authority set
+    */
     struct Payload {
         bytes32 mmr;
         NextValidatorSet nextValidatorSet; 
