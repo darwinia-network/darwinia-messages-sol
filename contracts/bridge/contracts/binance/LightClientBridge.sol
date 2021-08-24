@@ -91,10 +91,10 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     }
 
     /**
-     * The Proof is a collection of proofs used to verify the signatures from the validators signing
+     * The Proof is a collection of proofs used to verify the signatures from the signers signing
      * each new justification.
-     * @param signatures an array of signatures from the randomly chosen validators
-     * @param positions an array of the positions of the randomly chosen validators
+     * @param signatures an array of signatures from the chosen signers
+     * @param positions an array of the positions of the chosen signers
      * @param signers an array of the address of each signer
      * @param signerProofs an array of merkle proofs from the chosen validators proving that their addresses
      * are in the validator set
