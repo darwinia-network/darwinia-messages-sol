@@ -13,6 +13,7 @@ interface ICrossChainFilter {
      * Generally, app layer cross-chain messages require validation of sourceAccount
      * @param sourceAccount The derived DVM address of pallet ID which send the message
      * @param payload The calldata which encoded by ABI Encoding
+     * @return Can call target contract if returns true
      */
     function crossChainFilter(address sourceAccount, bytes calldata payload) external view returns (bool); 
 }

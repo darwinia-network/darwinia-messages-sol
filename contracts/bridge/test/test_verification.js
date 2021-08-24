@@ -97,11 +97,12 @@ describe("Verification tests", () => {
     const latestMMRRoot = await lightClientBridge.latestMMRRoot();
     expect(latestMMRRoot).to.eq(BeefyFixture.commitment.payload.mmr)
 
+    let chainId = 0
     let laneId = 0
     let nonce = 0
-    inbound = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(laneId, nonce, lightClientBridge.address);
+    inbound = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(chainId, laneId, nonce, lightClientBridge.address);
 
-    inbound2 = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(1, 0, lightClientBridge.address);
+    inbound2 = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(chainId, 1, 0, lightClientBridge.address);
     app = await (await ethers.getContractFactory("MockApp")).deploy();
     outbound = await (await ethers.getContractFactory("BasicOutboundChannel")).deploy();
     await outbound.grantRole("0x7bb193391dc6610af03bd9922e44c83b9fda893aeed61cf64297fb4473500dd1", outbound.signer.address)
@@ -142,8 +143,12 @@ describe("Verification tests", () => {
     const proof = messageTree.getHexProof(messagesHash)
     const proof2 = messageTree.getHexProof(messagesHash2)
 
+    const chainMessageRoot = "0xee1dbd71dd99cd0297fd92ac8a254273fb5ec6dd38c1a36e494dc65f6792afb8"
     const tx = await inbound.submit(
       messages,
+      1,
+      [],
+      chainMessageRoot,
       2,
       proof,
       MessageFixture.mmrLeaf,
@@ -165,6 +170,9 @@ describe("Verification tests", () => {
 
     const tx2 = await inbound2.submit(
       messages2,
+      1,
+      [],
+      chainMessageRoot,
       2,
       proof2,
       MessageFixture.mmrLeaf,
@@ -179,6 +187,9 @@ describe("Verification tests", () => {
 
     const again = inbound.submit(
           messages,
+          1,
+          [],
+          chainMessageRoot,
           2,
           proof,
           MessageFixture.mmrLeaf,

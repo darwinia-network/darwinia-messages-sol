@@ -45,7 +45,7 @@ contract BasicInboundChannel {
     /**
      * The BeefyMMRLeaf is the structure of each leaf in each MMR that each commitment's payload commits to.
      * @param parentHash parent hash of the block this leaf describes
-     * @param messagesRoot merkle root of all channel messages
+     * @param messagesRoot merkle root of all chain messages
      * @param blockNumber block number for the block this leaf describes
      */
     struct BeefyMMRLeaf {
@@ -65,7 +65,12 @@ contract BasicInboundChannel {
     /* State */
 
     /**
-     * @dev The position of the leaf in the message merkle tree, index starting with 0
+     * @dev The position of the leaf in the chain message merkle tree, index starting with 0
+     */
+    uint256 public chainId;
+
+    /**
+     * @dev The position of the leaf in the lane message merkle tree, index starting with 0
      */
     uint256 public laneId;
 
@@ -86,7 +91,8 @@ contract BasicInboundChannel {
      * @param _nonce ID of the next message, which is incremented in strict order
      * @param _lightClientBridge The contract address of on-chain light client
      */
-    constructor(uint256 _landId, uint256 _nonce, ILightClientBridge _lightClientBridge) public {
+    constructor(uint256 _chainId, uint256 _landId, uint256 _nonce, ILightClientBridge _lightClientBridge) public {
+        chainId = _chainId;
         laneId = _landId;
         nonce = _nonce;
         lightClientBridge = _lightClientBridge;
@@ -96,9 +102,12 @@ contract BasicInboundChannel {
 
     /**
      * @notice Deliver and dispatch the messages
-     * @param messages All the messages in the source chain block which need be delivered
+     * @param messages All the messages in the source chain block of this channel which need be delivered
+     * @param numOfChains Number of all chain 
+     * @param chainProof The merkle proof required for validation of the messages in the chain message merkle tree
+     * @param chainMessageRoot The merkle root of all channels message on this chain, and merkle leaf of messageRoot 
      * @param numOfLanes Number of all channels
-     * @param proof The merkle proof required for validation of the messages in the message merkle tree
+     * @param laneProof The merkle proof required for validation of the messages in the lane message merkle tree
      * @param beefyMMRLeaf Beefy MMR leaf which the message root is located
      * @param beefyMMRLeafIndex Beefy MMR index which the beefy leaf is located
      * @param beefyMMRLeafCount Beefy MMR width of the MMR tree
@@ -107,8 +116,11 @@ contract BasicInboundChannel {
      */
     function submit(
         Message[] memory messages,
+        uint256 numOfChains,
+        bytes32[] memory chainProof,
+        bytes32 chainMessageRoot,
         uint256 numOfLanes,
-        bytes32[] memory proof,
+        bytes32[] memory laneProof,
         BeefyMMRLeaf memory beefyMMRLeaf,
         uint256 beefyMMRLeafIndex,
         uint256 beefyMMRLeafCount,
@@ -126,7 +138,7 @@ contract BasicInboundChannel {
             ),
             "Channel: Invalid proof"
         );
-        verifyMessages(messages, beefyMMRLeaf, numOfLanes, proof);
+        verifyMessages(messages, beefyMMRLeaf, numOfChains, chainProof, chainMessageRoot, numOfLanes, laneProof);
         processMessages(messages);
     }
 
@@ -135,8 +147,11 @@ contract BasicInboundChannel {
     function verifyMessages(
         Message[] memory messages,
         BeefyMMRLeaf memory leaf,
+        uint256 numOfChains,
+        bytes32[] memory chainProof,
+        bytes32 chainMessageRoot,
         uint256 numOfLanes,
-        bytes32[] memory proof
+        bytes32[] memory laneProof
     )
         internal
         view
@@ -147,7 +162,7 @@ contract BasicInboundChannel {
         );
         // Validate that the commitment matches the commitment contents
         require(
-            validateMessagesMatchRoot(messages, leaf.messagesRoot, numOfLanes, proof),
+            validateMessagesMatchRoot(messages, leaf.messagesRoot, numOfChains, chainProof, chainMessageRoot, numOfLanes, laneProof),
             "Channel: invalid messages"
         );
 
@@ -192,17 +207,28 @@ contract BasicInboundChannel {
     function validateMessagesMatchRoot(
         Message[] memory messages,
         bytes32 root,
+        uint256 numOfChains,
+        bytes32[] memory chainProof,
+        bytes32 chainMessageRoot,
         uint256 numOfLanes,
-        bytes32[] memory proof
+        bytes32[] memory laneProof
     ) internal view returns (bool) {
         bytes32 hash = keccak256(abi.encode(messages));
         return
             MerkleProof.verifyMerkleLeafAtPosition(
-                root,
+                chainMessageRoot,
                 hash,
                 laneId,
                 numOfLanes,
-                proof
+                laneProof 
+            )
+            && 
+            MerkleProof.verifyMerkleLeafAtPosition(
+                root,
+                chainMessageRoot,
+                chainId,
+                numOfChains,
+                chainProof
             );
     }
 
