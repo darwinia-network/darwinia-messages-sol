@@ -46,13 +46,19 @@ describe("Verification tests", () => {
     const validator2PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf2);
     const proofs = [validator0PubKeyMerkleProof, validator1PubKeyMerkleProof, validator2PubKeyMerkleProof]
     const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
+    const crab = "0x4372616200000000000000000000000000000000000000000000000000000000"
     lightClientBridge = await LightClientBridge.deploy(
+      crab,
       0,
       validatorsMerkleTree.getLeaves().length,
-      validatorsMerkleTree.getHexRoot()
+      validatorsMerkleTree.getHexRoot(),
+      0,
+      validatorsMerkleTree.getLeaves().length,
+      validatorsMerkleTree.getHexRoot(),
+      2
     );
-    expect(await lightClientBridge.checkValidatorInSet(beefyValidatorAddresses[0], 0, validator0PubKeyMerkleProof)).to.be.true
-    expect(await lightClientBridge.checkValidatorInSet(beefyValidatorAddresses[1], 1, validator1PubKeyMerkleProof)).to.be.true
+    expect(await lightClientBridge.checkAddrInSet(validatorsMerkleTree.getHexRoot(), beefyValidatorAddresses[0], 3, 0, validator0PubKeyMerkleProof)).to.be.true
+    expect(await lightClientBridge.checkAddrInSet(validatorsMerkleTree.getHexRoot(), beefyValidatorAddresses[1], 3, 1, validator1PubKeyMerkleProof)).to.be.true
     const newCommitment = lightClientBridge.newSignatureCommitment(
       BeefyFixture.commitmentHash,
       BeefyFixture.bitfield,
@@ -86,10 +92,18 @@ describe("Verification tests", () => {
       "signers": [beefyValidatorAddresses[addrIndex]],
       "signerProofs": [proofs[addrIndex]]
     }
+    const proof2 = {
+      "signatures": [sigs[1], sigs[2]],
+      "positions": [1, 2],  
+      "signers": [beefyValidatorAddresses[1], beefyValidatorAddresses[2]],
+      "signerProofs": [proofs[1], proofs[2]]
+    }
     const completeCommitment = lightClientBridge.completeSignatureCommitment(
       lastId,
       BeefyFixture.commitment,
-      proof
+      proof,
+      [6],
+      proof2
     );
     expect(completeCommitment) 
       .to.emit(lightClientBridge, "FinalVerificationSuccessful")

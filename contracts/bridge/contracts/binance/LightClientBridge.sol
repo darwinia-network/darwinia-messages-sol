@@ -490,8 +490,8 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
 
         uint256 requiredNumOfGuardSigs = requiredNumberOfGuardSigs();
         require(
-            countSetBits(guardBitfield) >= requiredNumOfGuardSigs,
-            "Bridge: Bitfield not enough guards"
+            countSetBits(guardBitfield) == requiredNumOfGuardSigs,
+            "Bridge: count Bitfield should equel threshold"
         );
 
         verifyGuardProofSignatures(
@@ -537,7 +537,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     function verifyProofSignatures(
         bytes32 root,
         uint256 width,
-        uint256[] memory randomBitfield,
+        uint256[] memory bitfield,
         Proof memory proof,
         uint256 requiredNumOfSignatures,
         bytes32 commitmentHash
@@ -551,17 +551,17 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         for (uint256 i = 0; i < requiredNumOfSignatures; i++) {
             uint256 pos = proof.positions[i];
             /**
-             * @dev Check if validator in randomBitfield
+             * @dev Check if validator in bitfield
              */
             require(
-                isSet(randomBitfield, pos),
-                "Bridge: Validator must be once in bitfield"
+                isSet(bitfield, pos),
+                "Bridge: signer must be once in bitfield"
             );
 
             /**
-             * @dev Remove validator from randomBitfield such that no validator can appear twice in signatures
+             * @dev Remove validator from bitfield such that no validator can appear twice in signatures
              */
-            clear(randomBitfield, pos);
+            clear(bitfield, pos);
 
             verifySignature(
                 proof.signatures[i],
@@ -622,7 +622,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
                 position,
                 addrMerkleProof
             ),
-            "Bridge: Validator must be in validator set at correct position"
+            "Bridge: signer must be in signer set at correct position"
         );
 
         /**
