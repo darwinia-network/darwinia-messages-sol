@@ -30,6 +30,7 @@ The basic inbound channel is the message layer of the bridge
 | --- | --- |
 | MAX_GAS_PER_MESSAGE | uint256 |
 | GAS_BUFFER | uint256 |
+| chainId | uint256 |
 | laneId | uint256 |
 | nonce | uint256 |
 | lightClientBridge | contract ILightClientBridge |
@@ -48,7 +49,7 @@ Deploys the BasicInboundChannel contract
   function constructor(
     uint256 _landId,
     uint256 _nonce,
-    contract ILightClientBridge _lightClientBridge
+    uint256 _lightClientBridge
   ) public
 ```
 
@@ -60,7 +61,7 @@ No modifiers
 | --- | --- | --- |
 |`_landId` | uint256 | The position of the leaf in the message merkle tree, index starting with 0
 |`_nonce` | uint256 | ID of the next message, which is incremented in strict order
-|`_lightClientBridge` | contract ILightClientBridge | The contract address of on-chain light client
+|`_lightClientBridge` | uint256 | The contract address of on-chain light client
 
 ### submit
 Deliver and dispatch the messages
@@ -71,8 +72,11 @@ Deliver and dispatch the messages
 ```solidity
   function submit(
     struct BasicInboundChannel.Message[] messages,
+    uint256 numOfChains,
+    bytes32[] chainProof,
+    bytes32 chainMessageRoot,
     uint256 numOfLanes,
-    bytes32[] proof,
+    bytes32[] laneProof,
     struct BasicInboundChannel.BeefyMMRLeaf beefyMMRLeaf,
     uint256 beefyMMRLeafIndex,
     uint256 beefyMMRLeafCount,
@@ -87,9 +91,12 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`messages` | struct BasicInboundChannel.Message[] | All the messages in the source chain block which need be delivered
+|`messages` | struct BasicInboundChannel.Message[] | All the messages in the source chain block of this channel which need be delivered
+|`numOfChains` | uint256 | Number of all chain
+|`chainProof` | bytes32[] | The merkle proof required for validation of the messages in the chain message merkle tree
+|`chainMessageRoot` | bytes32 | The merkle root of all channels message on this chain, and merkle leaf of messageRoot 
 |`numOfLanes` | uint256 | Number of all channels
-|`proof` | bytes32[] | The merkle proof required for validation of the messages in the message merkle tree
+|`laneProof` | bytes32[] | The merkle proof required for validation of the messages in the lane message merkle tree
 |`beefyMMRLeaf` | struct BasicInboundChannel.BeefyMMRLeaf | Beefy MMR leaf which the message root is located
 |`beefyMMRLeafIndex` | uint256 | Beefy MMR index which the beefy leaf is located
 |`beefyMMRLeafCount` | uint256 | Beefy MMR width of the MMR tree

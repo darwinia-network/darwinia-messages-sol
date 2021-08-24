@@ -103,7 +103,7 @@ contract BasicInboundChannel {
     /**
      * @notice Deliver and dispatch the messages
      * @param messages All the messages in the source chain block of this channel which need be delivered
-     * @param numOfChains Number of all chain 
+     * @param numOfChains Number of all chain
      * @param chainProof The merkle proof required for validation of the messages in the chain message merkle tree
      * @param chainMessageRoot The merkle root of all channels message on this chain, and merkle leaf of messageRoot 
      * @param numOfLanes Number of all channels
