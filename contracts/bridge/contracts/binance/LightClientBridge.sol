@@ -8,6 +8,7 @@ import "@darwinia/contracts-utils/contracts/Bitfield.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "@darwinia/contracts-verify/contracts/KeccakMMR.sol";
 import "./ValidatorRegistry.sol";
+import "./GuardRegistry.sol";
 
 /**
  * @title A entry contract for the Ethereum-like light client
@@ -15,7 +16,7 @@ import "./ValidatorRegistry.sol";
  * @notice The light client is the trust layer of the bridge
  * @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
  */
-contract LightClientBridge is Bitfield, ValidatorRegistry {
+contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
 
     /* Events */
 
@@ -64,10 +65,12 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
 
     /**
      * The payload being signed
+     * @param network Source chain network identifier
      * @param mmr MMR root hash
      * @param nextValidatorSet Next BEEFY authority set
     */
     struct Payload {
+        bytes32 network;
         bytes32 mmr;
         NextValidatorSet nextValidatorSet; 
     }
@@ -117,8 +120,19 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
         uint256[] validatorClaimsBitfield;
     }
 
+    struct GuardMessage {
+        bytes32 network;
+        bytes4 methodID;
+        uint32 nextGuardSetId;
+        uint32 nextGuardSetLen;
+        bytes32 nextGuardSetRoot;
+        uint32 nextGuardSetThreshold;
+    }
+
     /* State */
 
+    // 'Crab', 'Darwinia', 'Pangolin'
+    bytes32 public network;
     uint256 public currentId;
     bytes32 public latestMMRRoot;
     uint256 public latestBlockNumber;
@@ -133,12 +147,28 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
 
     /**
      * @notice Deploys the LightClientBridge contract
+     * @param _network source chain network name 
      * @param validatorSetId initial validator set id
      * @param numOfValidators number of initial validator set
      * @param validatorSetRoot initial validator set merkle tree root
-     */
-    constructor(uint256 validatorSetId, uint256 numOfValidators, bytes32 validatorSetRoot) public {
-        _update(validatorSetId, numOfValidators, validatorSetRoot);
+     * @param guardSetId initial guard set id
+     * @param numOfGuards number of initial guard set
+     * @param guardSetRoot initial guard set merkle tree root
+     * @param guardSetThreshold initial guard threshold
+    */
+    constructor(
+        bytes32 _network,
+        uint256 validatorSetId,
+        uint256 numOfValidators,
+        bytes32 validatorSetRoot,
+        uint256 guardSetId,
+        uint256 numOfGuards,
+        bytes32 guardSetRoot,
+        uint256 guardSetThreshold
+    ) public {
+        network = _network;
+        _updateValidatorSet(validatorSetId, numOfValidators, validatorSetRoot);
+        _updateGuardSet(guardSetId, numOfGuards, guardSetRoot, guardSetThreshold);
     }
 
     /* Public Functions */
@@ -151,8 +181,12 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
         return validationData[id].validatorClaimsBitfield; 
     }
 
-    function requiredNumberOfSignatures() public view returns (uint256) {
+    function requiredNumberOfValidatorSigs() public view returns (uint256) {
         return (numOfValidators * PICK_NUMERATOR) / THRESHOLD_DENOMINATOR;
+    }
+
+    function requiredNumberOfGuardSigs() public view returns (uint256) {
+        return guardThreshold;
     }
 
     function createRandomBitfield(uint256 id)
@@ -176,7 +210,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
             randomNBitsWithPriorCheck(
                 getSeed(data.blockNumber),
                 data.validatorClaimsBitfield,
-                requiredNumberOfSignatures(),
+                requiredNumberOfValidatorSigs(),
                 numOfValidators
             );
     }
@@ -199,12 +233,33 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
          */
         return keccak256(
                 abi.encodePacked(
+                    commitment.payload.network,
                     commitment.payload.mmr,
                     commitment.payload.nextValidatorSet.id,
                     commitment.payload.nextValidatorSet.len,
                     commitment.payload.nextValidatorSet.root,
                     commitment.blockNumber,
                     commitment.validatorSetId
+                )
+            );
+    }
+
+    function createGuardMessageHash(GuardMessage memory message)
+        public
+        pure 
+        returns (bytes32)
+    {
+        /**
+         * Encode and hash the message
+         */
+        return keccak256(
+                abi.encodePacked(
+                    message.network,
+                    message.methodID,
+                    message.nextGuardSetId,
+                    message.nextGuardSetLen,
+                    message.nextGuardSetRoot,
+                    message.nextGuardSetThreshold
                 )
             );
     }
@@ -264,10 +319,12 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
             "Bridge: Bitfield not enough validators"
         );
 
-        verifyValidatorSignature(
+        verifySignature(
             validatorSignature,
-            validatorPosition,
+            validatorSetRoot,
             validatorAddress,
+            numOfValidators,
+            validatorPosition,
             validatorAddressMerkleProof,
             commitmentHash
         );
@@ -300,12 +357,14 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
     function completeSignatureCommitment(
         uint256 id,
         Commitment memory commitment,
-        ValidatorProof memory validatorProof
+        ValidatorProof memory validatorProof,
+        uint256[] memory guardBitfield,
+        ValidatorProof memory guardProof
     ) public {
         // only current epoch
         require(commitment.validatorSetId == validatorSetId, "Bridge: Invalid validator set id");
 
-        verifyCommitment(id, commitment, validatorProof);
+        verifyCommitment(id, commitment, validatorProof, guardBitfield, guardProof);
 
         processPayload(commitment.payload, commitment.blockNumber);
 
@@ -317,14 +376,65 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
         emit FinalVerificationSuccessful(msg.sender, id);
     }
 
+    /**
+     * @notice Update guard set
+     * @dev This function should call out to the guard registry contract
+     * @param guardMessage Contains the full guard message that was used for the messageHash
+     * @param guardProof A struct containing the data needed to verify the guards signatures
+     * @param guardBitfield A bitfield containing a membership status of each
+     * guard who has claimed to have signed the messageHash 
+     */
+    function UpdateGuardSet(
+        GuardMessage memory guardMessage,
+        ValidatorProof memory guardProof,
+        uint256[] memory guardBitfield
+    ) public {
+        require(guardMessage.network == network, "Bridge: Invalid guard message network");
+        //TODO: method sig
+        require(guardMessage.methodID == hex"b4bcf497", "Bridge: Invalid guard message method ID");
+        require(guardMessage.nextGuardSetId == guardSetId + 1, "Bridge: Invalid next guard set id");
+
+        uint256 requiredNumOfGuardSigs = requiredNumberOfGuardSigs();
+        require(
+            countSetBits(guardBitfield) >= requiredNumOfGuardSigs,
+            "Bridge: Bitfield not enough guards"
+        );
+
+        bytes32 messageHash = createGuardMessageHash(guardMessage);
+
+        verifyGuardProofSignatures(
+            guardBitfield,
+            guardProof,
+            requiredNumOfGuardSigs,
+            messageHash
+        );
+
+        _updateGuardSet(
+            guardMessage.nextGuardSetId,
+            guardMessage.nextGuardSetLen,
+            guardMessage.nextGuardSetRoot,
+            guardMessage.nextGuardSetThreshold
+        );
+    }
+
     /* Private Functions */
 
     function verifyCommitment(
         uint256 id,
         Commitment memory commitment,
-        ValidatorProof memory proof
+        ValidatorProof memory validatorProof,
+        uint256[] memory guardBitfield,
+        ValidatorProof memory guardProof
     ) private view {
         ValidationData storage data = validationData[id];
+
+        /**
+         * @dev verify that network is the same as `network`
+         */
+        require(
+            commitment.payload.network == network,
+            "Bridge: Commitment is not part of this network"
+        );
 
         /**
          * @dev verify that sender is the same as in `newSignatureCommitment`
@@ -335,19 +445,19 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
         );
 
         /**
-         * verify that block wait period has passed
+         * @dev verify that block wait period has passed
          */
         require(
             block.number >= data.blockNumber + BLOCK_WAIT_PERIOD,
             "Bridge: Block wait period not over"
         );
 
-        uint256 requiredNumOfSignatures = requiredNumberOfSignatures();
+        uint256 requiredNumOfValidatorSigs = requiredNumberOfValidatorSigs();
 
         uint256[] memory randomBitfield = randomNBitsWithPriorCheck(
             getSeed(data.blockNumber),
             data.validatorClaimsBitfield,
-            requiredNumOfSignatures,
+            requiredNumOfValidatorSigs,
             numOfValidators
         );
 
@@ -361,8 +471,21 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
 
         verifyValidatorProofSignatures(
             randomBitfield,
-            proof,
-            requiredNumOfSignatures,
+            validatorProof,
+            requiredNumOfValidatorSigs,
+            commitmentHash
+        );
+
+        uint256 requiredNumOfGuardSigs = requiredNumberOfGuardSigs();
+        require(
+            countSetBits(guardBitfield) >= requiredNumOfGuardSigs,
+            "Bridge: Bitfield not enough guards"
+        );
+
+        verifyGuardProofSignatures(
+            guardBitfield,
+            guardProof,
+            requiredNumOfGuardSigs,
             commitmentHash
         );
     }
@@ -373,8 +496,42 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
         uint256 requiredNumOfSignatures,
         bytes32 commitmentHash
     ) private view {
+        verifyProofSignatures(
+            validatorSetRoot,
+            numOfValidators,
+            randomBitfield,
+            proof,
+            requiredNumOfSignatures,
+            commitmentHash
+        );
+    }
 
-        verifyValidatorProofLengths(requiredNumOfSignatures, proof);
+    function verifyGuardProofSignatures(
+        uint256[] memory guardBitfield,
+        ValidatorProof memory proof,
+        uint256 requiredNumOfSignatures,
+        bytes32 hash
+    ) private view {
+        verifyProofSignatures(
+            guardSetRoot,
+            numOfGuards,
+            guardBitfield,
+            proof,
+            requiredNumOfSignatures,
+            hash 
+        );
+    }
+
+    function verifyProofSignatures(
+        bytes32 root,
+        uint256 width,
+        uint256[] memory randomBitfield,
+        ValidatorProof memory proof,
+        uint256 requiredNumOfSignatures,
+        bytes32 commitmentHash
+    ) private pure {
+
+        verifyProofLengths(requiredNumOfSignatures, proof);
 
         /**
          *  @dev For each randomSignature, do:
@@ -394,17 +551,19 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
              */
             clear(randomBitfield, pos);
 
-            verifyValidatorSignature(
+            verifySignature(
                 proof.signatures[i],
-                pos,
+                root,
                 proof.signers[i],
+                width,
+                pos,
                 proof.signerProofs[i],
                 commitmentHash
             );
         }
     }
 
-    function verifyValidatorProofLengths(
+    function verifyProofLengths(
         uint256 requiredNumOfSignatures,
         ValidatorProof memory proof
     ) private pure {
@@ -430,20 +589,24 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
         );
     }
 
-    function verifyValidatorSignature(
+    function verifySignature(
         bytes memory signature,
-        uint256 position,
+        bytes32 root,
         address signer,
+        uint256 width,
+        uint256 position,
         bytes32[] memory addrMerkleProof,
         bytes32 commitmentHash
-    ) private view {
+    ) private pure {
 
         /**
          * @dev Check if merkle proof is valid
          */
         require(
-            checkValidatorInSet(
+            checkAddrInSet(
+                root,
                 signer,
+                width,
                 position,
                 addrMerkleProof
             ),
@@ -457,6 +620,33 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
             ECDSA.recover(commitmentHash, signature) == signer,
             "Bridge: Invalid Signature"
         );
+    }
+
+    /**
+     * @notice Checks if an address is a member of the merkle tree
+     * @param root the root of the merkle tree
+     * @param addr The address to check
+     * @param pos The position to check, index starting at 0
+     * @param width the width or number of leaves in the tree
+     * @param proof Merkle proof required for validation of the address
+     * @return Returns true if the address is in the set
+     */
+    function checkAddrInSet(
+        bytes32 root,
+        address addr,
+        uint256 width,
+        uint256 pos,
+        bytes32[] memory proof
+    ) public pure returns (bool) {
+        bytes32 hashedLeaf = keccak256(abi.encodePacked(addr));
+        return
+            MerkleProof.verifyMerkleLeafAtPosition(
+                root,
+                hashedLeaf,
+                pos,
+                width,
+                proof
+            );
     }
 
     /**
@@ -516,7 +706,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry {
         // TODO: check nextValidatorSet can null or not
         require(nextValidatorSetId == 0 || nextValidatorSetId == validatorSetId + 1, "Bridge: Invalid next validator set id");
         if (nextValidatorSetId == validatorSetId + 1) {
-            _update(
+            _updateValidatorSet(
                 nextValidatorSetId,
                 nextValidatorSetLen,
                 nextValidatorSetRoot
