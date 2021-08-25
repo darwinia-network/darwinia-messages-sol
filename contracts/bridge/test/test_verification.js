@@ -22,29 +22,37 @@ describe("Verification tests", () => {
     },
   })
 
-  const beefyValidatorAddresses = [
-    "0xB13f16A6772C5A0b37d353C07068CA7B46297c43",
-    "0xcC5E48BEb33b83b8bD0D9d9A85A8F6a27C51F5C5",
-    "0x00a1537d251a6a4c4effAb76948899061FeA47b9",
-  ]
+  const beefyValidatorAddresses = BeefyFixture.validators
+  const beefyGuardAddresses = BeefyFixture.guards
   const [owner, userOne, userTwo, userThree] = provider.getWallets()
   const testPayload = ethers.utils.formatBytes32String("arbitrary-payload");
-  const sigs = [BeefyFixture.signature0, BeefyFixture.signature1, BeefyFixture.signature2]
+  const sigs = BeefyFixture.signaturesValidator
+  const sigs2 = BeefyFixture.signaturesGuard
   let lightClientBridge
   let inbound
   let inbound2
   let outbound
   let app
 
+  const validatorsMerkleTree = createMerkleTree(beefyValidatorAddresses);
+  const validatorsLeaf0 = validatorsMerkleTree.getHexLeaves()[0];
+  const validatorsLeaf1 = validatorsMerkleTree.getHexLeaves()[1];
+  const validatorsLeaf2 = validatorsMerkleTree.getHexLeaves()[2];
+  const validator0PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf0);
+  const validator1PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf1);
+  const validator2PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf2);
+  const proofs = [validator0PubKeyMerkleProof, validator1PubKeyMerkleProof, validator2PubKeyMerkleProof]
+
+  const guardsMerkleTree = createMerkleTree(beefyGuardAddresses);
+  const guardsLeaf0 = guardsMerkleTree.getHexLeaves()[0];
+  const guardsLeaf1 = guardsMerkleTree.getHexLeaves()[1];
+  const guardsLeaf2 = guardsMerkleTree.getHexLeaves()[2];
+  const guard0PubKeyMerkleProof = guardsMerkleTree.getHexProof(guardsLeaf0);
+  const guard1PubKeyMerkleProof = guardsMerkleTree.getHexProof(guardsLeaf1);
+  const guard2PubKeyMerkleProof = guardsMerkleTree.getHexProof(guardsLeaf2);
+  const proofs2 = [guard0PubKeyMerkleProof, guard1PubKeyMerkleProof, guard2PubKeyMerkleProof]
+
   before(async () => {
-    const validatorsMerkleTree = createMerkleTree(beefyValidatorAddresses);
-    const validatorsLeaf0 = validatorsMerkleTree.getHexLeaves()[0];
-    const validatorsLeaf1 = validatorsMerkleTree.getHexLeaves()[1];
-    const validatorsLeaf2 = validatorsMerkleTree.getHexLeaves()[2];
-    const validator0PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf0);
-    const validator1PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf1);
-    const validator2PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf2);
-    const proofs = [validator0PubKeyMerkleProof, validator1PubKeyMerkleProof, validator2PubKeyMerkleProof]
     const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
     const crab = "0x4372616200000000000000000000000000000000000000000000000000000000"
     lightClientBridge = await LightClientBridge.deploy(
@@ -53,16 +61,20 @@ describe("Verification tests", () => {
       validatorsMerkleTree.getLeaves().length,
       validatorsMerkleTree.getHexRoot(),
       0,
-      validatorsMerkleTree.getLeaves().length,
-      validatorsMerkleTree.getHexRoot(),
+      guardsMerkleTree.getLeaves().length,
+      guardsMerkleTree.getHexRoot(),
       2
     );
     expect(await lightClientBridge.checkAddrInSet(validatorsMerkleTree.getHexRoot(), beefyValidatorAddresses[0], 3, 0, validator0PubKeyMerkleProof)).to.be.true
     expect(await lightClientBridge.checkAddrInSet(validatorsMerkleTree.getHexRoot(), beefyValidatorAddresses[1], 3, 1, validator1PubKeyMerkleProof)).to.be.true
+
+    expect(await lightClientBridge.checkAddrInSet(guardsMerkleTree.getHexRoot(), beefyGuardAddresses[0], 3, 0, guard0PubKeyMerkleProof)).to.be.true
+    expect(await lightClientBridge.checkAddrInSet(guardsMerkleTree.getHexRoot(), beefyGuardAddresses[1], 3, 1, guard1PubKeyMerkleProof)).to.be.true
+
     const newCommitment = lightClientBridge.newSignatureCommitment(
       BeefyFixture.commitmentHash,
       BeefyFixture.bitfield,
-      BeefyFixture.signature0,
+      sigs[0],
       0,
       beefyValidatorAddresses[0],
       validator0PubKeyMerkleProof
@@ -93,10 +105,10 @@ describe("Verification tests", () => {
       "signerProofs": [proofs[addrIndex]]
     }
     const proof2 = {
-      "signatures": [sigs[1], sigs[2]],
+      "signatures": [sigs2[1], sigs2[2]],
       "positions": [1, 2],  
-      "signers": [beefyValidatorAddresses[1], beefyValidatorAddresses[2]],
-      "signerProofs": [proofs[1], proofs[2]]
+      "signers": [beefyGuardAddresses[1], beefyGuardAddresses[2]],
+      "signerProofs": [proofs2[1], proofs2[2]]
     }
     const completeCommitment = lightClientBridge.completeSignatureCommitment(
       lastId,
@@ -108,6 +120,10 @@ describe("Verification tests", () => {
     expect(completeCommitment) 
       .to.emit(lightClientBridge, "FinalVerificationSuccessful")
       .withArgs((await completeCommitment).from, lastId)
+
+    expect(completeCommitment)
+      .to.emit(lightClientBridge, "ValidatorRegistryUpdated")
+      .withArgs(BeefyFixture.commitment.payload.nextValidatorSet.id, BeefyFixture.commitment.payload.nextValidatorSet.len, BeefyFixture.commitment.payload.nextValidatorSet.root)
     const latestMMRRoot = await lightClientBridge.latestMMRRoot();
     expect(latestMMRRoot).to.eq(BeefyFixture.commitment.payload.mmr)
 
@@ -242,6 +258,23 @@ describe("Verification tests", () => {
     expect(tx3)
       .to.emit(outbound, "Message")
       .withArgs(tx.from, 4, testPayload)
+  });
+
+  it("should update guard set correctly", async function () {
+    const p = {
+      "signatures": [BeefyFixture.signaturesGuardMessage[1], BeefyFixture.signaturesGuardMessage[2]],
+      "positions": [1,2],  
+      "signers": [beefyGuardAddresses[1], beefyGuardAddresses[2]],
+      "signerProofs": [proofs2[1], proofs2[2]]
+    }
+    const tx = await lightClientBridge.updateGuardSet(
+      BeefyFixture.guardMessage,
+      p,
+      [6]
+    )
+    expect(tx)
+      .to.emit(lightClientBridge, "GuardRegistryUpdated")
+      .withArgs(BeefyFixture.guardMessage.nextGuardSetId, BeefyFixture.guardMessage.nextGuardSetLen, BeefyFixture.guardMessage.nextGuardSetRoot)
   });
 });
 
