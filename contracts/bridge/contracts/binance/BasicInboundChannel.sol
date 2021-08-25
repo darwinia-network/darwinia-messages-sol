@@ -65,12 +65,12 @@ contract BasicInboundChannel {
     /* State */
 
     /**
-     * @dev The position of the leaf in the chain message merkle tree, index starting with 0
+     * @dev The position of the leaf in the `chain_message_merkle_tree`, index starting with 0
      */
     uint256 public chainId;
 
     /**
-     * @dev The position of the leaf in the lane message merkle tree, index starting with 0
+     * @dev The position of the leaf in the `channel_message_merkle_tree`, index starting with 0
      */
     uint256 public laneId;
 
