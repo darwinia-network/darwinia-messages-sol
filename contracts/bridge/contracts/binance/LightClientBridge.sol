@@ -127,7 +127,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
      * @param nextGuardSetId The id of the next guard set
      * @param nextGuardSetLen The number of guards in the next guard set
      * @param nextGuardSetRoot The merkle root of the merkle tree of the next guards
-     * @param nextGuardSetThreshold The merkle root of the merkle tree of the next guards
+     * @param nextGuardSetThreshold The threshold of the next guards
      */
     struct GuardMessage {
         bytes32 network;
