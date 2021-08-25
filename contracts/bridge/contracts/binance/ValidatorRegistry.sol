@@ -13,8 +13,18 @@ contract ValidatorRegistry {
 
     /* State */
 
+    /**
+     * @notice Validato set supposed to sign the BEEFY commitment.
+     * @dev The current validator set id
+     */
     uint256 public validatorSetId;
+    /**
+     * @dev The current number of validator set
+     */
     uint256 public numOfValidators;
+    /**
+     * @dev The current merkle root of guard set
+     */
     bytes32 public validatorSetRoot;
 
     /**

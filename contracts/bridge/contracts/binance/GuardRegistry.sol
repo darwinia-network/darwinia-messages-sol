@@ -13,9 +13,23 @@ contract GuardRegistry {
 
     /* State */
 
+    /**
+     * @notice Guard set supposed to sign to double-check the BEEFY commitment
+     * when guard set changes, most of the guards should sign to confirm the change
+     * @dev The current guard set id
+     */
     uint256 public guardSetId;
+    /**
+     * @dev The current number of guard set
+     */
     uint256 public numOfGuards;
+    /**
+     * @dev The current merkle root of guard set
+     */
     bytes32 public guardSetRoot;
+    /**
+     * @dev The current threshold of guard set
+     */
     uint256 public guardThreshold;
 
     /**
