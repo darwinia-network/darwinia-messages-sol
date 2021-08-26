@@ -29,7 +29,7 @@
   "mmrRoot": "0x2c0a2fc1108ee004f48eec805ed60e9d7c364106389f67bf7667a36769a42eb6",
   "mmrLeaf": {
     "parentHash": "0xa87c7fc44bb09f89934d8798eb000020c6cf32630c64f6b09d81bdd280f42db1",
-    "messagesRoot": "0xee1dbd71dd99cd0297fd92ac8a254273fb5ec6dd38c1a36e494dc65f6792afb8",
+    "chainMessagesRoot": "0xee1dbd71dd99cd0297fd92ac8a254273fb5ec6dd38c1a36e494dc65f6792afb8",
     "blockNumber": 2
   }, 
   "mmrLeafHash": "0xa864636a1c0a0398a4d71a51c3aff6e0e49b9065c01a119310a60dd14e44b94f",

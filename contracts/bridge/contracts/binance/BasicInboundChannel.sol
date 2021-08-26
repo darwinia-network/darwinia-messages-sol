@@ -45,12 +45,12 @@ contract BasicInboundChannel {
     /**
      * The BeefyMMRLeaf is the structure of each leaf in each MMR that each commitment's payload commits to.
      * @param parentHash parent hash of the block this leaf describes
-     * @param messagesRoot message root is a two-level Merkle tree consisting of all messages from different chains and different channels, messageRoot is the root hash of `chain_message_merkle_tree`, and the leaves of `chain_message_merkle_tree` are message_root of different chains, they form the first level of merkle tree, `chain_message_root` is the root hash of `channel_message_merkle_tree`, and the leaves of `chain_message_merkle_tree` are the hashes of the message collections of different channels, which form the second level of the merkle tree.
+     * @param chainMessagesRoot  chain message root is a two-level Merkle tree consisting of all messages from different chains and different channels, chainMessagesRoot is the root hash of `chain_messages_merkle_tree`, and the leaves of `chain_messages_merkle_tree` are messages root of different chains, they form the first level of merkle tree, `chain_messages_root` is the root hash of `channel_messages_merkle_tree`, and the leaves of `chain_messages_merkle_tree` are the hashes of the message collections of different channels, which form the second level of the merkle tree.
      * @param blockNumber block number for the block this leaf describes
      */
     struct BeefyMMRLeaf {
         bytes32 parentHash;
-        bytes32 messagesRoot;
+        bytes32 chainMessagesRoot;
         uint32 blockNumber;
     }
 
@@ -67,12 +67,12 @@ contract BasicInboundChannel {
     /**
      * @dev The position of the leaf in the `chain_message_merkle_tree`, index starting with 0
      */
-    uint256 public chainId;
+    uint256 public chainPosition;
 
     /**
-     * @dev The position of the leaf in the `channel_message_merkle_tree`, index starting with 0
+     * @dev The position of the leaf in the `channel_messages_merkle_tree`, index starting with 0
      */
-    uint256 public laneId;
+    uint256 public channelPosition;
 
     /**
      * @dev ID of the next message, which is incremented in strict order
@@ -87,13 +87,14 @@ contract BasicInboundChannel {
 
     /**
      * @notice Deploys the BasicInboundChannel contract
-     * @param _landId The position of the leaf in the message merkle tree, index starting with 0
-     * @param _nonce ID of the next message, which is incremented in strict order
+     * @param _chainPosition The position of the leaf in the `chain_messages_merkle_tree`, index starting with 0
+     * @param _channelPosition The position of the leaf in the `channel_messages_merkle_tree`, index starting with 0
+     * @param _nonce ID of the next messages, which is incremented in strict order
      * @param _lightClientBridge The contract address of on-chain light client
      */
-    constructor(uint256 _chainId, uint256 _landId, uint256 _nonce, ILightClientBridge _lightClientBridge) public {
-        chainId = _chainId;
-        laneId = _landId;
+    constructor(uint256 _chainPosition, uint256 _channelPosition, uint256 _nonce, ILightClientBridge _lightClientBridge) public {
+        chainPosition = _chainPosition;
+        channelPosition = _channelPosition;
         nonce = _nonce;
         lightClientBridge = _lightClientBridge;
     }
@@ -103,12 +104,12 @@ contract BasicInboundChannel {
     /**
      * @notice Deliver and dispatch the messages
      * @param messages All the messages in the source chain block of this channel which need be delivered
-     * @param numOfChains Number of all chain
-     * @param chainProof The merkle proof required for validation of the messages in the chain message merkle tree
-     * @param chainMessageRoot The merkle root of all channels message on this chain, and merkle leaf of messageRoot 
-     * @param numOfLanes Number of all channels
-     * @param laneProof The merkle proof required for validation of the messages in the lane message merkle tree
-     * @param beefyMMRLeaf Beefy MMR leaf which the message root is located
+     * @param chainCount Number of all chain
+     * @param chainMessagesProof The merkle proof required for validation of the messages in the `chain_messages_merkle_tree`
+     * @param channelMessagesRoot The merkle root of the channels, each channel is a leaf constructed by the hash of the messages in the channel
+     * @param channelCount Number of all channels
+     * @param channelMessagesProof The merkle proof required for validation of the messages in the `channel_messages_merkle_tree`
+     * @param beefyMMRLeaf Beefy MMR leaf which the messages root is located
      * @param beefyMMRLeafIndex Beefy MMR index which the beefy leaf is located
      * @param beefyMMRLeafCount Beefy MMR width of the MMR tree
      * @param peaks The proof required for validation the leaf
@@ -116,11 +117,11 @@ contract BasicInboundChannel {
      */
     function submit(
         Message[] memory messages,
-        uint256 numOfChains,
-        bytes32[] memory chainProof,
-        bytes32 chainMessageRoot,
-        uint256 numOfLanes,
-        bytes32[] memory laneProof,
+        uint256 chainCount,
+        bytes32[] memory chainMessagesProof,
+        bytes32 channelMessagesRoot,
+        uint256 channelCount,
+        bytes32[] memory channelMessagesProof,
         BeefyMMRLeaf memory beefyMMRLeaf,
         uint256 beefyMMRLeafIndex,
         uint256 beefyMMRLeafCount,
@@ -138,7 +139,7 @@ contract BasicInboundChannel {
             ),
             "Channel: Invalid proof"
         );
-        verifyMessages(messages, beefyMMRLeaf, numOfChains, chainProof, chainMessageRoot, numOfLanes, laneProof);
+        verifyMessages(messages, beefyMMRLeaf, chainCount, chainMessagesProof, channelMessagesRoot, channelCount, channelMessagesProof);
         processMessages(messages);
     }
 
@@ -147,11 +148,11 @@ contract BasicInboundChannel {
     function verifyMessages(
         Message[] memory messages,
         BeefyMMRLeaf memory leaf,
-        uint256 numOfChains,
-        bytes32[] memory chainProof,
-        bytes32 chainMessageRoot,
-        uint256 numOfLanes,
-        bytes32[] memory laneProof
+        uint256 chainCount,
+        bytes32[] memory chainMessagesProof,
+        bytes32 channelMessagesRoot,
+        uint256 channelCount,
+        bytes32[] memory channelMessagesProof
     )
         internal
         view
@@ -162,7 +163,7 @@ contract BasicInboundChannel {
         );
         // Validate that the commitment matches the commitment contents
         require(
-            validateMessagesMatchRoot(messages, leaf.messagesRoot, numOfChains, chainProof, chainMessageRoot, numOfLanes, laneProof),
+            validateMessagesMatchRoot(messages, leaf.chainMessagesRoot, chainCount, chainMessagesProof, channelMessagesRoot, channelCount, channelMessagesProof),
             "Channel: invalid messages"
         );
 
@@ -206,29 +207,29 @@ contract BasicInboundChannel {
 
     function validateMessagesMatchRoot(
         Message[] memory messages,
-        bytes32 root,
-        uint256 numOfChains,
-        bytes32[] memory chainProof,
-        bytes32 chainMessageRoot,
-        uint256 numOfLanes,
-        bytes32[] memory laneProof
+        bytes32 chainMessagesRoot,
+        uint256 chainCount,
+        bytes32[] memory chainMessagesProof,
+        bytes32 channelMessagesRoot,
+        uint256 channelCount,
+        bytes32[] memory channelMessagesProof
     ) internal view returns (bool) {
-        bytes32 hash = keccak256(abi.encode(messages));
+        bytes32 messagesHash = keccak256(abi.encode(messages));
         return
             MerkleProof.verifyMerkleLeafAtPosition(
-                chainMessageRoot,
-                hash,
-                laneId,
-                numOfLanes,
-                laneProof 
+                channelMessagesRoot,
+                messagesHash,
+                channelPosition,
+                channelCount,
+                channelMessagesProof
             )
             && 
             MerkleProof.verifyMerkleLeafAtPosition(
-                root,
-                chainMessageRoot,
-                chainId,
-                numOfChains,
-                chainProof
+                chainMessagesRoot,
+                channelMessagesRoot,
+                chainPosition,
+                chainCount,
+                chainMessagesProof
             );
     }
 
@@ -240,7 +241,7 @@ contract BasicInboundChannel {
         return keccak256(
                 abi.encodePacked(
                     leaf.parentHash,
-                    leaf.messagesRoot,
+                    leaf.chainMessagesRoot,
                     leaf.blockNumber
                 )
             );
