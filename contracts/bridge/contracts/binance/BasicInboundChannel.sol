@@ -45,7 +45,7 @@ contract BasicInboundChannel {
     /**
      * The BeefyMMRLeaf is the structure of each leaf in each MMR that each commitment's payload commits to.
      * @param parentHash parent hash of the block this leaf describes
-     * @param chainMessagesRoot  chain message root is a two-level Merkle tree consisting of all messages from different chains and different channels, chainMessagesRoot is the root hash of `chain_messages_merkle_tree`, and the leaves of `chain_messages_merkle_tree` are messages root of different chains, they form the first level of merkle tree, `chain_messages_root` is the root hash of `channel_messages_merkle_tree`, and the leaves of `chain_messages_merkle_tree` are the hashes of the message collections of different channels, which form the second level of the merkle tree.
+     * @param chainMessagesRoot  chain message root is a two-level Merkle tree consisting of all messages from different chains and different channels, chainMessagesRoot is the root hash of `chain_messages_merkle_tree`, and the leaves of `chain_messages_merkle_tree` are messages root of different chains, they form the first level of merkle tree, `channel_messages_root` is the root hash of `channel_messages_merkle_tree`, and the leaves of `channel_messages_merkle_tree` are the hashes of the message collections of different channels, which form the second level of the merkle tree.
      * @param blockNumber block number for the block this leaf describes
      */
     struct BeefyMMRLeaf {
