@@ -20,8 +20,8 @@
   - [getThreshold](#getthreshold)
   - [isGuard](#isguard)
   - [getGuards](#getguards)
-  - [beforeChange](#beforechange)
-  - [checkSignatures](#checksignatures)
+  - [verifyGuardSignatures](#verifyguardsignatures)
+  - [checkGuardSignatures](#checkguardsignatures)
   - [checkNSignatures](#checknsignatures)
   - [getChainId](#getchainid)
   - [domainSeparator](#domainseparator)
@@ -246,13 +246,13 @@ No modifiers
 | Type | Description |
 | --- | --- |
 |`Array` | of guards.
-### beforeChange
+### verifyGuardSignatures
 No description
 
 
 #### Declaration
 ```solidity
-  function beforeChange(
+  function verifyGuardSignatures(
   ) internal
 ```
 
@@ -261,14 +261,14 @@ No modifiers
 
 
 
-### checkSignatures
+### checkGuardSignatures
 No description
 > Checks whether the signature provided is valid for the provided data, hash. Will revert otherwise.
 
 
 #### Declaration
 ```solidity
-  function checkSignatures(
+  function checkGuardSignatures(
     bytes32 dataHash,
     bytes[] signatures
   ) public
