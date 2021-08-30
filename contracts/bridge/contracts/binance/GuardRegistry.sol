@@ -84,7 +84,7 @@ contract GuardRegistry {
         require(guard != address(0) && guard != SENTINEL_GUARDS && guard != address(this), "Guard: Invalid guard address provided");
         // No duplicate guards allowed.
         require(guards[guard] == address(0), "Guard: Address is already an guard");
-        beforeChange(msg.sig, abi.encode(guard, _threshold), signatures);
+        verifyGuardSignatures(msg.sig, abi.encode(guard, _threshold), signatures);
         guards[guard] = guards[SENTINEL_GUARDS];
         guards[SENTINEL_GUARDS] = guard;
         guardCount++;
@@ -113,7 +113,7 @@ contract GuardRegistry {
         // Validate guard address and check that it corresponds to guard index.
         require(guard != address(0) && guard != SENTINEL_GUARDS, "Guard: Invalid guard address provided");
         require(guards[prevGuard] == guard, "Guard: Invalid prevGuard, guard pair provided");
-        beforeChange(msg.sig, abi.encode(prevGuard, guard, _threshold), signatures);
+        verifyGuardSignatures(msg.sig, abi.encode(prevGuard, guard, _threshold), signatures);
         guards[prevGuard] = guards[guard];
         guards[guard] = address(0);
         guardCount--;
@@ -144,7 +144,7 @@ contract GuardRegistry {
         // Validate oldGuard address and check that it corresponds to guard index.
         require(oldGuard != address(0) && oldGuard != SENTINEL_GUARDS, "Guard: Invalid guard address provided");
         require(guards[prevGuard] == oldGuard, "Guard: Invalid prevGuard, guard pair provided");
-        beforeChange(msg.sig, abi.encode(prevGuard, oldGuard, newGuard), signatures);
+        verifyGuardSignatures(msg.sig, abi.encode(prevGuard, oldGuard, newGuard), signatures);
         guards[newGuard] = guards[oldGuard];
         guards[prevGuard] = newGuard;
         guards[oldGuard] = address(0);
@@ -160,7 +160,7 @@ contract GuardRegistry {
      * @param signatures The signatures of the guards which to update the `threshold` .
      */
     function changeThreshold(uint256 _threshold, bytes[] memory signatures) public {
-        beforeChange(msg.sig, abi.encode(_threshold), signatures);
+        verifyGuardSignatures(msg.sig, abi.encode(_threshold), signatures);
         _changeThreshold(_threshold);
     }
 
@@ -199,7 +199,7 @@ contract GuardRegistry {
         return array;
     }
 
-    function beforeChange(
+    function verifyGuardSignatures(
         bytes4 methodID,
         bytes memory params,
         bytes[] memory signatures
