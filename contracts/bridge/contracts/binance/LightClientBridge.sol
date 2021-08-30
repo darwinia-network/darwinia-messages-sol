@@ -120,28 +120,8 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         uint256[] validatorClaimsBitfield;
     }
 
-    /**
-     * The GuardMessage is used to update guard set which is sign by most of guards.
-     * @param network source chain network name
-     * @param methodID which method guard need to call
-     * @param nextGuardSetId The id of the next guard set
-     * @param nextGuardSetLen The number of guards in the next guard set
-     * @param nextGuardSetRoot The merkle root of the merkle tree of the next guards
-     * @param nextGuardSetThreshold The threshold of the next guards
-     */
-    struct GuardMessage {
-        bytes32 network;
-        bytes4 methodID;
-        uint32 nextGuardSetId;
-        uint32 nextGuardSetLen;
-        bytes32 nextGuardSetRoot;
-        uint32 nextGuardSetThreshold;
-    }
-
     /* State */
 
-    // 'Crab', 'Darwinia', 'Pangolin'
-    bytes32 public network;
     uint256 public currentId;
     bytes32 public latestMMRRoot;
     uint256 public latestBlockNumber;
@@ -156,28 +136,20 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
 
     /**
      * @notice Deploys the LightClientBridge contract
-     * @param _network source chain network name 
+     * @param network source chain network name
      * @param validatorSetId initial validator set id
      * @param numOfValidators number of initial validator set
      * @param validatorSetRoot initial validator set merkle tree root
-     * @param guardSetId initial guard set id
-     * @param numOfGuards number of initial guard set
-     * @param guardSetRoot initial guard set merkle tree root
-     * @param guardSetThreshold initial guard threshold
     */
     constructor(
-        bytes32 _network,
+        bytes32 network,
+        address[] memory guards,
+        uint256 threshold,
         uint256 validatorSetId,
         uint256 numOfValidators,
-        bytes32 validatorSetRoot,
-        uint256 guardSetId,
-        uint256 numOfGuards,
-        bytes32 guardSetRoot,
-        uint256 guardSetThreshold
-    ) public {
-        network = _network;
+        bytes32 validatorSetRoot
+    ) public GuardRegistry(network, guards, threshold) {
         _updateValidatorSet(validatorSetId, numOfValidators, validatorSetRoot);
-        _updateGuardSet(guardSetId, numOfGuards, guardSetRoot, guardSetThreshold);
     }
 
     /* Public Functions */
@@ -192,10 +164,6 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
 
     function requiredNumberOfValidatorSigs() public view returns (uint256) {
         return (numOfValidators * PICK_NUMERATOR) / THRESHOLD_DENOMINATOR;
-    }
-
-    function requiredNumberOfGuardSigs() public view returns (uint256) {
-        return guardThreshold;
     }
 
     function createRandomBitfield(uint256 id)
@@ -249,26 +217,6 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
                     commitment.payload.nextValidatorSet.root,
                     commitment.blockNumber,
                     commitment.validatorSetId
-                )
-            );
-    }
-
-    function createGuardMessageHash(GuardMessage memory message)
-        public
-        pure 
-        returns (bytes32)
-    {
-        /**
-         * Encode and hash the message
-         */
-        return keccak256(
-                abi.encodePacked(
-                    message.network,
-                    message.methodID,
-                    message.nextGuardSetId,
-                    message.nextGuardSetLen,
-                    message.nextGuardSetRoot,
-                    message.nextGuardSetThreshold
                 )
             );
     }
@@ -362,21 +310,18 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
      * @param id an identifying value generated in the previous transaction
      * @param commitment contains the full commitment that was used for the commitmentHash
      * @param validatorProof a struct containing the data needed to verify all validator signatures
-     * @param guardBitfield A bitfield containing a membership status of each
-     * guard who has claimed to have signed the commitmentHash
-     * @param guardProof A struct containing the data needed to verify the guards signatures
+     * @param guardSignatures The signatures of the guards which to double-check the commitmentHash
      */
     function completeSignatureCommitment(
         uint256 id,
         Commitment memory commitment,
         Proof memory validatorProof,
-        uint256[] memory guardBitfield,
-        Proof memory guardProof
+        bytes[] memory guardSignatures
     ) public {
         // only current epoch
         require(commitment.validatorSetId == validatorSetId, "Bridge: Invalid validator set id");
 
-        verifyCommitment(id, commitment, validatorProof, guardBitfield, guardProof);
+        verifyCommitment(id, commitment, validatorProof, guardSignatures);
 
         processPayload(commitment.payload, commitment.blockNumber);
 
@@ -388,55 +333,13 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         emit FinalVerificationSuccessful(msg.sender, id);
     }
 
-    /**
-     * @notice Update guard set
-     * @dev This function should call out to the guard registry contract
-     * @param guardMessage Contains the full guard message that was used for the messageHash
-     * @param guardProof A struct containing the data needed to verify the guards signatures
-     * @param guardBitfield A bitfield containing a membership status of each
-     * guard who has claimed to have signed the messageHash
-     */
-    function updateGuardSet(
-        GuardMessage memory guardMessage,
-        Proof memory guardProof,
-        uint256[] memory guardBitfield
-    ) public {
-        require(guardMessage.network == network, "Bridge: Invalid guard message network");
-        //bytes4(keccak256("updateGuardSet((bytes32,bytes4,uint32,uint32,bytes32,uint32),(bytes[],uint256[],address[],bytes32[]),uint256[])"))
-        require(guardMessage.methodID == hex"1e8b8a6b", "Bridge: Invalid guard message method ID");
-        require(guardMessage.nextGuardSetId == guardSetId + 1, "Bridge: Invalid next guard set id");
-
-        uint256 requiredNumOfGuardSigs = requiredNumberOfGuardSigs();
-        require(
-            countSetBits(guardBitfield) >= requiredNumOfGuardSigs,
-            "Bridge: Bitfield not enough guards"
-        );
-
-        bytes32 messageHash = createGuardMessageHash(guardMessage);
-
-        verifyGuardProofSignatures(
-            guardBitfield,
-            guardProof,
-            requiredNumOfGuardSigs,
-            messageHash
-        );
-
-        _updateGuardSet(
-            guardMessage.nextGuardSetId,
-            guardMessage.nextGuardSetLen,
-            guardMessage.nextGuardSetRoot,
-            guardMessage.nextGuardSetThreshold
-        );
-    }
-
     /* Private Functions */
 
     function verifyCommitment(
         uint256 id,
         Commitment memory commitment,
         Proof memory validatorProof,
-        uint256[] memory guardBitfield,
-        Proof memory guardProof
+        bytes[] memory guardSignatures
     ) private view {
         ValidationData storage data = validationData[id];
 
@@ -444,7 +347,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
          * @dev verify that network is the same as `network`
          */
         require(
-            commitment.payload.network == network,
+            commitment.payload.network == NETWORK,
             "Bridge: Commitment is not part of this network"
         );
 
@@ -488,18 +391,8 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
             commitmentHash
         );
 
-        uint256 requiredNumOfGuardSigs = requiredNumberOfGuardSigs();
-        require(
-            countSetBits(guardBitfield) == requiredNumOfGuardSigs,
-            "Bridge: count Bitfield should equel threshold"
-        );
-
-        verifyGuardProofSignatures(
-            guardBitfield,
-            guardProof,
-            requiredNumOfGuardSigs,
-            commitmentHash
-        );
+        // Guard Registry double-check the commitmentHash
+        checkSignatures(commitmentHash, guardSignatures);
     }
 
     function verifyValidatorProofSignatures(
@@ -515,22 +408,6 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
             proof,
             requiredNumOfSignatures,
             commitmentHash
-        );
-    }
-
-    function verifyGuardProofSignatures(
-        uint256[] memory guardBitfield,
-        Proof memory proof,
-        uint256 requiredNumOfSignatures,
-        bytes32 hash
-    ) private view {
-        verifyProofSignatures(
-            guardSetRoot,
-            numOfGuards,
-            guardBitfield,
-            proof,
-            requiredNumOfSignatures,
-            hash 
         );
     }
 
