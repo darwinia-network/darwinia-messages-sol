@@ -20,7 +20,7 @@ echo "commitment: $commitment"
 commitmentHash=$(seth keccak "$commitment")
 echo "commitmentHash: $commitmentHash"
 
-accounts=($(ethsign ls | awk '{print $1}'))
+accounts=($(ethsign ls | awk '{print $1}' | sort))
 
 for account in "${accounts[@]}"; do
   if test $account == "0xcC5E48BEb33b83b8bD0D9d9A85A8F6a27C51F5C5" -o $account == "0x00a1537d251a6a4c4effAb76948899061FeA47b9"; then
@@ -31,23 +31,17 @@ for account in "${accounts[@]}"; do
   p $account $sig
 done
 
-network=$(jq -r ".guardMessage.network" "$path")  
-methodID=$(jq -r ".guardMessage.methodID" "$path")  
-nextGuardSetId=$(seth --to-uint32 $(jq -r ".guardMessage.nextGuardSetId" "$path"))
-nextGuardSetLen=$(seth --to-uint32 $(jq -r ".guardMessage.nextGuardSetLen" "$path"))
-nextGuardSetRoot=$(jq -r ".guardMessage.nextGuardSetRoot" "$path")  
-nextGuardSetThreshold=$(seth --to-uint32 $(jq -r ".guardMessage.nextGuardSetThreshold" "$path"))
-
-message=0x${network:2}${methodID:2}${nextGuardSetId:2}${nextGuardSetLen:2}${nextGuardSetRoot:2}${nextGuardSetThreshold:2}
-
 echo "----------------------------------------------------------------"
-echo "message" $message
-messageHash=$(seth keccak $message)
-echo "messageHash" $messageHash
+DOMAIN_SEPARATOR="0xfe0c2a6bde911dc91bbb4830c55642356a387000f9d41859b5a820081ecc44c8"
+HEADER_PRIFIX="0x1901"
+data=0x${HEADER_PRIFIX:2}${DOMAIN_SEPARATOR:2}${commitmentHash:2}
+echo "data" $data
+dataHash=$(seth keccak $data)
+echo "dataHash" $dataHash
 
 for account in "${accounts[@]}"; do
   if test $account != "0xcC5E48BEb33b83b8bD0D9d9A85A8F6a27C51F5C5" -a $account != "0x00a1537d251a6a4c4effAb76948899061FeA47b9" -a $account != "0xB13f16A6772C5A0b37d353C07068CA7B46297c43"; then
-    sig=$(ethsign msg --from $account --data "${message}" --no-prefix --passphrase-file "$pw1")
+    sig=$(ethsign msg --from $account --data "${data}" --no-prefix --passphrase-file "$pw1")
     p $account $sig
   fi
 done
