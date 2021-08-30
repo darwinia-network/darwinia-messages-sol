@@ -58,7 +58,7 @@ Deploys the LightClientBridge contract
   function constructor(
     bytes32 network,
     address[] validatorSetId,
-    uint256 numOfValidators,
+    uint256 validatorSetLen,
     uint256 validatorSetRoot
   ) public GuardRegistry
 ```
@@ -73,7 +73,7 @@ Deploys the LightClientBridge contract
 | --- | --- | --- |
 |`network` | bytes32 | source chain network name
 |`validatorSetId` | address[] | initial validator set id
-|`numOfValidators` | uint256 | number of initial validator set
+|`validatorSetLen` | uint256 | length of initial validator set
 |`validatorSetRoot` | uint256 | initial validator set merkle tree root
 
 ### getFinalizedBlockNumber

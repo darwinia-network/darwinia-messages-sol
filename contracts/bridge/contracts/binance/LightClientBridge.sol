@@ -138,7 +138,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
      * @notice Deploys the LightClientBridge contract
      * @param network source chain network name
      * @param validatorSetId initial validator set id
-     * @param numOfValidators number of initial validator set
+     * @param validatorSetLen length of initial validator set
      * @param validatorSetRoot initial validator set merkle tree root
     */
     constructor(
@@ -146,10 +146,10 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         address[] memory guards,
         uint256 threshold,
         uint256 validatorSetId,
-        uint256 numOfValidators,
+        uint256 validatorSetLen,
         bytes32 validatorSetRoot
     ) public GuardRegistry(network, guards, threshold) {
-        _updateValidatorSet(validatorSetId, numOfValidators, validatorSetRoot);
+        _updateValidatorSet(validatorSetId, validatorSetLen, validatorSetRoot);
     }
 
     /* Public Functions */
@@ -163,7 +163,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     }
 
     function requiredNumberOfValidatorSigs() public view returns (uint256) {
-        return (numOfValidators * PICK_NUMERATOR) / THRESHOLD_DENOMINATOR;
+        return (validatorSetLen * PICK_NUMERATOR) / THRESHOLD_DENOMINATOR;
     }
 
     function createRandomBitfield(uint256 id)
@@ -188,7 +188,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
                 getSeed(data.blockNumber),
                 data.validatorClaimsBitfield,
                 requiredNumberOfValidatorSigs(),
-                numOfValidators
+                validatorSetLen
             );
     }
 
@@ -271,7 +271,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
          */
         require(
             countSetBits(validatorClaimsBitfield) >
-                (numOfValidators * THRESHOLD_NUMERATOR) /
+                (validatorSetLen * THRESHOLD_NUMERATOR) /
                     THRESHOLD_DENOMINATOR,
             "Bridge: Bitfield not enough validators"
         );
@@ -280,7 +280,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
             validatorSignature,
             validatorSetRoot,
             validatorAddress,
-            numOfValidators,
+            validatorSetLen,
             validatorPosition,
             validatorAddressMerkleProof,
             commitmentHash
@@ -373,7 +373,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
             getSeed(data.blockNumber),
             data.validatorClaimsBitfield,
             requiredNumOfValidatorSigs,
-            numOfValidators
+            validatorSetLen
         );
 
         // Encode and hash the commitment
@@ -403,7 +403,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     ) private view {
         verifyProofSignatures(
             validatorSetRoot,
-            numOfValidators,
+            validatorSetLen,
             randomBitfield,
             proof,
             requiredNumOfSignatures,
