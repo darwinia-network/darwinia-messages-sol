@@ -269,7 +269,7 @@ No description
 #### Declaration
 ```solidity
   function checkGuardSignatures(
-    bytes32 dataHash,
+    bytes32 structHash,
     bytes[] signatures
   ) public
 ```
@@ -280,7 +280,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`dataHash` | bytes32 | Hash of the data (could be either a message/commitment hash).
+|`structHash` | bytes32 | The struct Hash of the data (could be either a message/commitment hash).
 |`signatures` | bytes[] | Signature data that should be verified. only ECDSA signature.
 Signers need to be sorted in ascending order
 

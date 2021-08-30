@@ -214,25 +214,25 @@ contract GuardRegistry {
                     nonce
                 )
             );
-        bytes32 dataHash = encodeDataHash(structHash);
-        checkGuardSignatures(dataHash, signatures);
+        checkGuardSignatures(structHash, signatures);
         nonce++;
     }
 
     /**
      * @dev Checks whether the signature provided is valid for the provided data, hash. Will revert otherwise.
-     * @param dataHash Hash of the data (could be either a message/commitment hash).
+     * @param structHash The struct Hash of the data (could be either a message/commitment hash).
      * @param signatures Signature data that should be verified. only ECDSA signature.
      * Signers need to be sorted in ascending order
      */
     function checkGuardSignatures(
-        bytes32 dataHash,
+        bytes32 structHash,
         bytes[] memory signatures
     ) public view {
         // Load threshold to avoid multiple storage loads
         uint256 _threshold = threshold;
         // Check that a threshold is set
         require(_threshold > 0, "Guard: Threshold needs to be defined");
+        bytes32 dataHash = encodeDataHash(structHash);
         checkNSignatures(dataHash, signatures, _threshold);
     }
 
