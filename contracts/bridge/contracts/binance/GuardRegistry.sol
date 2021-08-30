@@ -215,7 +215,7 @@ contract GuardRegistry {
                 )
             );
         bytes32 dataHash = encodeDataHash(structHash);
-        checkSignatures(dataHash, signatures);
+        checkGuardSignatures(dataHash, signatures);
         nonce++;
     }
 
@@ -225,7 +225,7 @@ contract GuardRegistry {
      * @param signatures Signature data that should be verified. only ECDSA signature.
      * Signers need to be sorted in ascending order
      */
-    function checkSignatures(
+    function checkGuardSignatures(
         bytes32 dataHash,
         bytes[] memory signatures
     ) public view {

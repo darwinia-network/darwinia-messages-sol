@@ -392,7 +392,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         );
 
         // Guard Registry double-check the commitmentHash
-        checkSignatures(commitmentHash, guardSignatures);
+        checkGuardSignatures(commitmentHash, guardSignatures);
     }
 
     function verifyValidatorProofSignatures(
