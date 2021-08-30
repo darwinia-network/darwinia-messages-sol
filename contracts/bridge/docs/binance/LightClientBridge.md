@@ -15,15 +15,12 @@ The light client is the trust layer of the bridge
   - [getFinalizedBlockNumber](#getfinalizedblocknumber)
   - [validatorBitfield](#validatorbitfield)
   - [requiredNumberOfValidatorSigs](#requirednumberofvalidatorsigs)
-  - [requiredNumberOfGuardSigs](#requirednumberofguardsigs)
   - [createRandomBitfield](#createrandombitfield)
   - [createInitialBitfield](#createinitialbitfield)
   - [createCommitmentHash](#createcommitmenthash)
-  - [createGuardMessageHash](#createguardmessagehash)
   - [verifyBeefyMerkleLeaf](#verifybeefymerkleleaf)
   - [newSignatureCommitment](#newsignaturecommitment)
   - [completeSignatureCommitment](#completesignaturecommitment)
-  - [updateGuardSet](#updateguardset)
   - [checkAddrInSet](#checkaddrinset)
 - [Events](#events)
   - [InitialVerificationSuccessful](#initialverificationsuccessful)
@@ -38,7 +35,6 @@ The light client is the trust layer of the bridge
 
 | Var | Type |
 | --- | --- |
-| network | bytes32 |
 | currentId | uint256 |
 | latestMMRRoot | bytes32 |
 | latestBlockNumber | uint256 |
@@ -60,31 +56,25 @@ Deploys the LightClientBridge contract
 #### Declaration
 ```solidity
   function constructor(
-    bytes32 _network,
-    uint256 validatorSetId,
+    bytes32 network,
+    address[] validatorSetId,
     uint256 numOfValidators,
-    bytes32 validatorSetRoot,
-    uint256 guardSetId,
-    uint256 numOfGuards,
-    bytes32 guardSetRoot,
-    uint256 guardSetThreshold
-  ) public
+    uint256 validatorSetRoot
+  ) public GuardRegistry
 ```
 
 #### Modifiers:
-No modifiers
+| Modifier |
+| --- |
+| GuardRegistry |
 
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_network` | bytes32 | source chain network name 
-|`validatorSetId` | uint256 | initial validator set id
+|`network` | bytes32 | source chain network name
+|`validatorSetId` | address[] | initial validator set id
 |`numOfValidators` | uint256 | number of initial validator set
-|`validatorSetRoot` | bytes32 | initial validator set merkle tree root
-|`guardSetId` | uint256 | initial guard set id
-|`numOfGuards` | uint256 | number of initial guard set
-|`guardSetRoot` | bytes32 | initial guard set merkle tree root
-|`guardSetThreshold` | uint256 | initial guard threshold
+|`validatorSetRoot` | uint256 | initial validator set merkle tree root
 
 ### getFinalizedBlockNumber
 No description
@@ -131,21 +121,6 @@ No modifiers
 
 
 
-### requiredNumberOfGuardSigs
-No description
-
-
-#### Declaration
-```solidity
-  function requiredNumberOfGuardSigs(
-  ) public returns (uint256)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
 ### createRandomBitfield
 No description
 
@@ -183,21 +158,6 @@ No description
 #### Declaration
 ```solidity
   function createCommitmentHash(
-  ) public returns (bytes32)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### createGuardMessageHash
-No description
-
-
-#### Declaration
-```solidity
-  function createGuardMessageHash(
   ) public returns (bytes32)
 ```
 
@@ -277,8 +237,7 @@ Performs the second step in the validation logic
     uint256 id,
     struct LightClientBridge.Commitment commitment,
     struct LightClientBridge.Proof validatorProof,
-    uint256[] guardBitfield,
-    struct LightClientBridge.Proof guardProof
+    bytes[] guardSignatures
   ) public
 ```
 
@@ -291,35 +250,7 @@ No modifiers
 |`id` | uint256 | an identifying value generated in the previous transaction
 |`commitment` | struct LightClientBridge.Commitment | contains the full commitment that was used for the commitmentHash
 |`validatorProof` | struct LightClientBridge.Proof | a struct containing the data needed to verify all validator signatures
-|`guardBitfield` | uint256[] | A bitfield containing a membership status of each
-guard who has claimed to have signed the commitmentHash
-|`guardProof` | struct LightClientBridge.Proof | A struct containing the data needed to verify the guards signatures
-
-### updateGuardSet
-Update guard set
-
-> This function should call out to the guard registry contract
-
-
-#### Declaration
-```solidity
-  function updateGuardSet(
-    struct LightClientBridge.GuardMessage guardMessage,
-    struct LightClientBridge.Proof guardProof,
-    uint256[] guardBitfield
-  ) public
-```
-
-#### Modifiers:
-No modifiers
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`guardMessage` | struct LightClientBridge.GuardMessage | Contains the full guard message that was used for the messageHash
-|`guardProof` | struct LightClientBridge.Proof | A struct containing the data needed to verify the guards signatures
-|`guardBitfield` | uint256[] | A bitfield containing a membership status of each
-guard who has claimed to have signed the messageHash
+|`guardSignatures` | bytes[] | The signatures of the guards which to double-check the commitmentHash
 
 ### checkAddrInSet
 Checks if an address is a member of the merkle tree
