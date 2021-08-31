@@ -204,15 +204,17 @@ contract GuardRegistry {
         bytes memory params,
         bytes[] memory signatures
     ) internal {
-        bytes32 structHash =
-            keccak256(
+        bytes memory structData = 
                 abi.encode(
                     GUARD_TYPEHASH,
                     NETWORK,
                     methodID,
                     params,
                     nonce
-                )
+                );
+        bytes32 structHash =
+            keccak256(
+                structData
             );
         checkGuardSignatures(structHash, signatures);
         nonce++;
