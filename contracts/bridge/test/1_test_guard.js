@@ -1,19 +1,11 @@
 const { expect } = require("chai");
-const { solidity, MockProvider } = require("ethereum-waffle");
+const { solidity } = require("ethereum-waffle");
 const { GuardFixture } = require('./shared/fixtures.js');
 const chai = require("chai");
 
 chai.use(solidity);
 
 describe("Guard tests", () => {
-  const provider = new MockProvider({
-    ganacheOptions: {
-      hardfork: 'istanbul',
-      mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-      gasLimit: 9999999,
-    },
-  })
-
   let lightClientBridge
 
   before(async () => {
@@ -97,17 +89,3 @@ describe("Guard tests", () => {
   });
 
 });
-
-function parseBitfield(s) {
-  return parseInt(s, 2)
-}
-
-function printBitfield(s) {
-  return parseInt(s.toString(), 10).toString(2)
-}
-
-function firstBit(x) {
-    return Math.floor(
-        Math.log(x | 0) / Math.log(2)
-    ) + 1;
-}
