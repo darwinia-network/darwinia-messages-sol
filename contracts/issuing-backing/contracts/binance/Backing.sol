@@ -9,11 +9,12 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@darwinia/contracts-utils/contracts/Scale.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IOutboundChannel.sol";
+import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilter.sol";
 import "../interfaces/IERC20Option.sol";
 import "../interfaces/IERC20Bytes32Option.sol";
 import '../interfaces/IWETH.sol';
 
-contract Backing is Initializable, Ownable {
+contract Backing is ICrossChainFilter, Initializable, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -176,6 +177,12 @@ contract Backing is Initializable, Ownable {
         require(backing == address(this), "not the expected backing");
         assets[token].target = target;
         emit RegistCompleted(token, target);
+    }
+
+    // TODO: ensure sourceAccount is right
+    function crossChainFilter(address sourceAccount, bytes memory) public override view returns (bool) {
+        require(sourceAccount == address(0), "invalid source account");
+        return true;
     }
 }
 

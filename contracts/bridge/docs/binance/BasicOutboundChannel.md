@@ -22,7 +22,8 @@
 
 | Var | Type |
 | --- | --- |
-| nonce | uint64 |
+| OUTBOUND_ROLE | bytes32 |
+| nonce | uint256 |
 
 
 
@@ -48,8 +49,14 @@ No modifiers
 ## Events
 
 ### Message
-No description
+The Message is the structure of EthereRPC which should be delivery to Darwinia
+
 
   
 
-
+#### Params:
+| Param | Type | Indexed | Description |
+| --- | --- | :---: | --- |
+|`source` | address |  | The source sender address which send the message
+|`nonce` | uint256 |  | The ID used to uniquely identify the message
+|`payload` | bytes |  | The calldata which encoded by ABI Encoding `abi.encodePacked(SELECTOR, PARAMS)`

@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 const { solidity, MockProvider } = require("ethereum-waffle");
+const { keccak } = require("ethereumjs-util");
 const {
   signatureSubstrateToEthereum,
   buildCommitment,
@@ -21,40 +22,46 @@ describe("Verification tests", () => {
     },
   })
 
-  const beefyValidatorAddresses = [
-    "0xB13f16A6772C5A0b37d353C07068CA7B46297c43",
-    "0xcC5E48BEb33b83b8bD0D9d9A85A8F6a27C51F5C5",
-    "0x00a1537d251a6a4c4effAb76948899061FeA47b9",
-  ]
+  const beefyValidatorAddresses = BeefyFixture.validators
+  const beefyGuardAddresses = BeefyFixture.guards
   const [owner, userOne, userTwo, userThree] = provider.getWallets()
   const testPayload = ethers.utils.formatBytes32String("arbitrary-payload");
-  const sigs = [BeefyFixture.signature0, BeefyFixture.signature1, BeefyFixture.signature2]
+  const sigs = BeefyFixture.signaturesValidator
+  const sigs2 = BeefyFixture.signaturesGuard
   let lightClientBridge
   let inbound
+  let inbound2
   let outbound
   let app
 
+  const validatorsMerkleTree = createMerkleTree(beefyValidatorAddresses);
+  const validatorsLeaf0 = validatorsMerkleTree.getHexLeaves()[0];
+  const validatorsLeaf1 = validatorsMerkleTree.getHexLeaves()[1];
+  const validatorsLeaf2 = validatorsMerkleTree.getHexLeaves()[2];
+  const validator0PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf0);
+  const validator1PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf1);
+  const validator2PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf2);
+  const proofs = [validator0PubKeyMerkleProof, validator1PubKeyMerkleProof, validator2PubKeyMerkleProof]
+
   before(async () => {
-    const validatorsMerkleTree = createMerkleTree(beefyValidatorAddresses);
-    const validatorsLeaf0 = validatorsMerkleTree.getHexLeaves()[0];
-    const validatorsLeaf1 = validatorsMerkleTree.getHexLeaves()[1];
-    const validatorsLeaf2 = validatorsMerkleTree.getHexLeaves()[2];
-    const validator0PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf0);
-    const validator1PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf1);
-    const validator2PubKeyMerkleProof = validatorsMerkleTree.getHexProof(validatorsLeaf2);
-    const proofs = [validator0PubKeyMerkleProof, validator1PubKeyMerkleProof, validator2PubKeyMerkleProof]
     const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
+    const crab = "0x4372616200000000000000000000000000000000000000000000000000000000"
     lightClientBridge = await LightClientBridge.deploy(
+      crab,
+      beefyGuardAddresses,
+      2,
       0,
       validatorsMerkleTree.getLeaves().length,
-      validatorsMerkleTree.getHexRoot()
+      validatorsMerkleTree.getHexRoot(),
     );
-    expect(await lightClientBridge.checkValidatorInSet(beefyValidatorAddresses[0], 0, validator0PubKeyMerkleProof)).to.be.true
-    expect(await lightClientBridge.checkValidatorInSet(beefyValidatorAddresses[1], 1, validator1PubKeyMerkleProof)).to.be.true
+
+    expect(await lightClientBridge.checkAddrInSet(validatorsMerkleTree.getHexRoot(), beefyValidatorAddresses[0], 3, 0, validator0PubKeyMerkleProof)).to.be.true
+    expect(await lightClientBridge.checkAddrInSet(validatorsMerkleTree.getHexRoot(), beefyValidatorAddresses[1], 3, 1, validator1PubKeyMerkleProof)).to.be.true
+
     const newCommitment = lightClientBridge.newSignatureCommitment(
       BeefyFixture.commitmentHash,
       BeefyFixture.bitfield,
-      BeefyFixture.signature0,
+      sigs[0],
       0,
       beefyValidatorAddresses[0],
       validator0PubKeyMerkleProof
@@ -87,37 +94,73 @@ describe("Verification tests", () => {
     const completeCommitment = lightClientBridge.completeSignatureCommitment(
       lastId,
       BeefyFixture.commitment,
-      proof
+      proof,
+      sigs2
     );
     expect(completeCommitment) 
       .to.emit(lightClientBridge, "FinalVerificationSuccessful")
       .withArgs((await completeCommitment).from, lastId)
+
+    expect(completeCommitment)
+      .to.emit(lightClientBridge, "ValidatorRegistryUpdated")
+      .withArgs(BeefyFixture.commitment.payload.nextValidatorSet.id, BeefyFixture.commitment.payload.nextValidatorSet.len, BeefyFixture.commitment.payload.nextValidatorSet.root)
     const latestMMRRoot = await lightClientBridge.latestMMRRoot();
     expect(latestMMRRoot).to.eq(BeefyFixture.commitment.payload.mmr)
 
-    inbound = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(lightClientBridge.address);
+    let chainId = 0
+    let laneId = 0
+    let nonce = 0
+    inbound = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(chainId, laneId, nonce, lightClientBridge.address);
+
+    inbound2 = await (await ethers.getContractFactory("BasicInboundChannel")).deploy(chainId, 1, 0, lightClientBridge.address);
     app = await (await ethers.getContractFactory("MockApp")).deploy();
     outbound = await (await ethers.getContractFactory("BasicOutboundChannel")).deploy();
+    await outbound.grantRole("0x7bb193391dc6610af03bd9922e44c83b9fda893aeed61cf64297fb4473500dd1", outbound.signer.address)
   });
 
   it("should successfully verify a commitment", async () => {
     const polkadotSender = ethers.utils.formatBytes32String('fake-polkadot-address');
     const payloadOne = app.interface.encodeFunctionData("unlock", [polkadotSender, userOne.address, ethers.utils.parseEther("2")]);
     const messageOne = [
+      "0x0000000000000000000000000000000000000001",
       app.address,
+      inbound.address,
       1,
       payloadOne
     ];
     const payloadTwo = app.interface.encodeFunctionData("unlock", [polkadotSender, userTwo.address, ethers.utils.parseEther("5")]);
     const messageTwo = [
+      "0x0000000000000000000000000000000000000002",
       app.address,
+      inbound.address,
       2,
       payloadTwo
     ];
     const messages = [messageOne, messageTwo];
     const messagesHash = buildCommitment(messages);
+    const payloadThree = app.interface.encodeFunctionData("unlock", [polkadotSender, userOne.address, ethers.utils.parseEther("3")]);
+    const messageThree = [
+      "0x0000000000000000000000000000000000000001",
+      app.address,
+      inbound2.address,
+      1,
+      payloadThree
+    ]
+    const messages2 = [messageThree]
+    const messagesHash2 = buildCommitment(messages2)
+    const messageTree = new MerkleTree([messagesHash, messagesHash2], keccak, { duplicateOdd: false, sort: false })
+    // messageTree.print()
+    const proof = messageTree.getHexProof(messagesHash)
+    const proof2 = messageTree.getHexProof(messagesHash2)
+
+    const chainMessageRoot = "0xee1dbd71dd99cd0297fd92ac8a254273fb5ec6dd38c1a36e494dc65f6792afb8"
     const tx = await inbound.submit(
       messages,
+      1,
+      [],
+      chainMessageRoot,
+      2,
+      proof,
       MessageFixture.mmrLeaf,
       MessageFixture.mmrLeafIndex, // blockNumber + 1
       MessageFixture.mmrLeafCount,
@@ -126,19 +169,39 @@ describe("Verification tests", () => {
     );
     expect(tx)
       .to.emit(inbound, "MessageDispatched")
-      .withArgs(1, true)
+      .withArgs(1, true, "0x")
     expect(tx)
       .to.emit(inbound, "MessageDispatched")
-      .withArgs(2, true)
+      .withArgs(2, false, "0x08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000016696e76616c696420736f75726365206163636f756e7400000000000000000000")
     expect(tx)
       .to.emit(app, "Unlocked")
       .withArgs(polkadotSender, userOne.address, ethers.utils.parseEther("2"))
     expect(tx)
-      .to.emit(app, "Unlocked")
-      .withArgs(polkadotSender, userTwo.address, ethers.utils.parseEther("5"))
 
-    const agian = inbound.submit(
+    const tx2 = await inbound2.submit(
+      messages2,
+      1,
+      [],
+      chainMessageRoot,
+      2,
+      proof2,
+      MessageFixture.mmrLeaf,
+      MessageFixture.mmrLeafIndex, // blockNumber + 1
+      MessageFixture.mmrLeafCount,
+      MessageFixture.mmrProofs.peaks,
+      MessageFixture.mmrProofs.siblings
+    );
+    expect(tx2)
+      .to.emit(inbound2, "MessageDispatched")
+      .withArgs(1, true, "0x")
+
+    const again = inbound.submit(
           messages,
+          1,
+          [],
+          chainMessageRoot,
+          2,
+          proof,
           MessageFixture.mmrLeaf,
           MessageFixture.mmrLeafIndex, 
           MessageFixture.mmrLeafCount,
@@ -146,7 +209,7 @@ describe("Verification tests", () => {
           MessageFixture.mmrProofs.siblings
       )
 
-    await catchRevert(agian, 'Channel: invalid nonce');
+    await catchRevert(again, 'Channel: invalid nonce');
   });
 
   it("should send messages out with the correct event and fields", async function () {
@@ -175,6 +238,9 @@ describe("Verification tests", () => {
     expect(tx3)
       .to.emit(outbound, "Message")
       .withArgs(tx.from, 4, testPayload)
+  });
+
+  it.skip("should update guard set correctly", async function () {
   });
 });
 

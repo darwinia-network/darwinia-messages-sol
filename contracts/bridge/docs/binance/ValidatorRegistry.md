@@ -10,8 +10,7 @@
 
 - [Globals](#globals)
 - [Functions](#functions)
-  - [_update](#_update)
-  - [checkValidatorInSet](#checkvalidatorinset)
+  - [_updateValidatorSet](#_updatevalidatorset)
 - [Events](#events)
   - [ValidatorRegistryUpdated](#validatorregistryupdated)
 
@@ -24,23 +23,23 @@
 | Var | Type |
 | --- | --- |
 | validatorSetId | uint256 |
-| numOfValidators | uint256 |
+| validatorSetLen | uint256 |
 | validatorSetRoot | bytes32 |
 
 
 
 ## Functions
 
-### _update
+### _updateValidatorSet
 Updates the validator set
 
 
 
 #### Declaration
 ```solidity
-  function _update(
+  function _updateValidatorSet(
     uint256 _validatorSetId,
-    uint256 _numOfValidators,
+    uint256 _validatorSetLen,
     bytes32 _validatorSetRoot
   ) internal
 ```
@@ -52,37 +51,9 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_validatorSetId` | uint256 | The new validator set id
-|`_numOfValidators` | uint256 | The new number of validator set
+|`_validatorSetLen` | uint256 | The new length of validator set
 |`_validatorSetRoot` | bytes32 | The new validator set root
 
-### checkValidatorInSet
-Checks if a validators address is a member of the merkle tree
-
-
-
-#### Declaration
-```solidity
-  function checkValidatorInSet(
-    address addr,
-    uint256 pos,
-    bytes32[] proof
-  ) public returns (bool)
-```
-
-#### Modifiers:
-No modifiers
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`addr` | address | The address of the validator to check
-|`pos` | uint256 | The position of the validator to check, index starting at 0
-|`proof` | bytes32[] | Merkle proof required for validation of the address
-
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`Returns` | true if the validator is in the set
 
 
 ## Events

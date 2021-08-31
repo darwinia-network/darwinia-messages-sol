@@ -28,7 +28,7 @@ const hashBranch = (index, left, right) => {
 
 const leaves = [
    '0x2a04add3ecc3979741afad967dfedf807e07b136e05f9c670a274334d74892cf',
-   '0x4ab663dff53d68b605ae13f271fee66621f2b1257104cda755fabed1bf5b76bb',
+   '0xa864636a1c0a0398a4d71a51c3aff6e0e49b9065c01a119310a60dd14e44b94f',
    '0xc58e247ea35c51586de2ea40ac6daf90eac7ac7b2f5c88bbc7829280db7890f1',
 ]
 
@@ -191,6 +191,10 @@ describe('MerkleMountainRange', () => {
       const index = 2
       const proof = tree.getMerkleProof(index)
       const leaf = leaves[index-1]
+      console.log(tree.getHexRoot())
+      console.log(proof.root.toString('hex'))
+      console.log(proof.peakBagging.map(x => x.toString('hex')))
+      console.log(proof.siblings.map(x => x.toString('hex')))
       const verified = tree.verify(proof.root, proof.width, index, leaf, proof.peakBagging, proof.siblings)
       expect(verified).to.be.true
       const ret = await mmrLib.verifyProof(

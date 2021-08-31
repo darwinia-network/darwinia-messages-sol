@@ -4,7 +4,7 @@ const MerkleTree = require("merkletreejs").MerkleTree;
 const rlp = require("rlp");
 
 function buildCommitment(msgs) {
-  return ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["(address,uint64,bytes)[]"], [ msgs ]))
+  return ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["(address,address,address,uint256,bytes)[]"], [ msgs ]))
 }
 
 function signatureSubstrateToEthereum(sig) {
@@ -17,7 +17,7 @@ function signatureSubstrateToEthereum(sig) {
 
 function createMerkleTree(leavesHex) {
   const leavesHashed = leavesHex.map(leaf => keccakFromHexString(leaf));
-  const merkleTree = new MerkleTree(leavesHashed, keccak, { sort: false });
+  const merkleTree = new MerkleTree(leavesHashed, keccak, { sort: false, duplicateOdd: false });
 
   return merkleTree;
 }

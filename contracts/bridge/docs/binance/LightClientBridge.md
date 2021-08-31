@@ -14,13 +14,14 @@ The light client is the trust layer of the bridge
   - [constructor](#constructor)
   - [getFinalizedBlockNumber](#getfinalizedblocknumber)
   - [validatorBitfield](#validatorbitfield)
-  - [requiredNumberOfSignatures](#requirednumberofsignatures)
+  - [requiredNumberOfValidatorSigs](#requirednumberofvalidatorsigs)
   - [createRandomBitfield](#createrandombitfield)
   - [createInitialBitfield](#createinitialbitfield)
   - [createCommitmentHash](#createcommitmenthash)
   - [verifyBeefyMerkleLeaf](#verifybeefymerkleleaf)
   - [newSignatureCommitment](#newsignaturecommitment)
   - [completeSignatureCommitment](#completesignaturecommitment)
+  - [checkAddrInSet](#checkaddrinset)
 - [Events](#events)
   - [InitialVerificationSuccessful](#initialverificationsuccessful)
   - [FinalVerificationSuccessful](#finalverificationsuccessful)
@@ -55,21 +56,25 @@ Deploys the LightClientBridge contract
 #### Declaration
 ```solidity
   function constructor(
-    uint256 validatorSetId,
-    uint256 numOfValidators,
-    bytes32 validatorSetRoot
-  ) public
+    bytes32 network,
+    address[] validatorSetId,
+    uint256 validatorSetLen,
+    uint256 validatorSetRoot
+  ) public GuardRegistry
 ```
 
 #### Modifiers:
-No modifiers
+| Modifier |
+| --- |
+| GuardRegistry |
 
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`validatorSetId` | uint256 | initial validator set id
-|`numOfValidators` | uint256 | number of initial validator set
-|`validatorSetRoot` | bytes32 | initial validator set merkle tree root
+|`network` | bytes32 | source chain network name
+|`validatorSetId` | address[] | initial validator set id
+|`validatorSetLen` | uint256 | length of initial validator set
+|`validatorSetRoot` | uint256 | initial validator set merkle tree root
 
 ### getFinalizedBlockNumber
 No description
@@ -101,13 +106,13 @@ No modifiers
 
 
 
-### requiredNumberOfSignatures
+### requiredNumberOfValidatorSigs
 No description
 
 
 #### Declaration
 ```solidity
-  function requiredNumberOfSignatures(
+  function requiredNumberOfValidatorSigs(
   ) public returns (uint256)
 ```
 
@@ -231,7 +236,8 @@ Performs the second step in the validation logic
   function completeSignatureCommitment(
     uint256 id,
     struct LightClientBridge.Commitment commitment,
-    struct LightClientBridge.ValidatorProof validatorProof
+    struct LightClientBridge.Proof validatorProof,
+    bytes[] guardSignatures
   ) public
 ```
 
@@ -243,8 +249,41 @@ No modifiers
 | --- | --- | --- |
 |`id` | uint256 | an identifying value generated in the previous transaction
 |`commitment` | struct LightClientBridge.Commitment | contains the full commitment that was used for the commitmentHash
-|`validatorProof` | struct LightClientBridge.ValidatorProof | a struct containing the data needed to verify all validator signatures
+|`validatorProof` | struct LightClientBridge.Proof | a struct containing the data needed to verify all validator signatures
+|`guardSignatures` | bytes[] | The signatures of the guards which to double-check the commitmentHash
 
+### checkAddrInSet
+Checks if an address is a member of the merkle tree
+
+
+
+#### Declaration
+```solidity
+  function checkAddrInSet(
+    bytes32 root,
+    address addr,
+    uint256 pos,
+    uint256 width,
+    bytes32[] proof
+  ) public returns (bool)
+```
+
+#### Modifiers:
+No modifiers
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`root` | bytes32 | the root of the merkle tree
+|`addr` | address | The address to check
+|`pos` | uint256 | The position to check, index starting at 0
+|`width` | uint256 | the width or number of leaves in the tree
+|`proof` | bytes32[] | Merkle proof required for validation of the address
+
+#### Returns:
+| Type | Description |
+| --- | --- |
+|`Returns` | true if the address is in the set
 
 
 ## Events
