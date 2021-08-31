@@ -30,14 +30,14 @@ contract BasicInboundChannel {
      * The Message is the structure of DarwiniaRPC which should be delivery to Ethereum-like chain
      * @param sourceAccount The derived DVM address of pallet ID which send the message
      * @param targetContract The targe contract address which receive the message
-     * @param laneContract The inbound channel contract address which the message commuting to
+     * @param channelContract The inbound channel contract address which the message commuting to
      * @param nonce The ID used to uniquely identify the message
      * @param payload The calldata which encoded by ABI Encoding
      */
     struct Message {
         address sourceAccount;
         address targetContract;
-        address laneContract;
+        address channelContract;
         uint256 nonce;
         bytes payload; /*abi.encodePacked(SELECTOR, PARAMS)*/
     }
@@ -179,7 +179,7 @@ contract BasicInboundChannel {
             Message memory message = messages[i];
             // Check message nonce is correct and increment nonce for replay protection
             require(message.nonce == nonce + 1, "Channel: invalid nonce");
-            require(message.laneContract == address(this), "Channel: invalid lane contract");
+            require(message.channelContract == address(this), "Channel: invalid lane contract");
 
             nonce = nonce + 1;
 
