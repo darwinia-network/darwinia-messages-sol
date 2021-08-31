@@ -27,12 +27,26 @@ contract GuardRegistry {
 
     address internal constant SENTINEL_GUARDS = address(0x1);
 
-    // 'Crab', 'Darwinia', 'Pangolin'
+    /**
+     * @dev NETWORK Source chain network identifier ('Crab', 'Darwinia', 'Pangolin')
+     */
     bytes32 public immutable NETWORK;
 
+    /**
+     * @dev Nonce to prevent replay of update operations
+     */
     uint256 public nonce;
+    /**
+     * @dev Store all guards in the linked list
+     */
     mapping(address => address) internal guards;
+    /**
+     * @dev Count of all guards
+     */
     uint256 internal guardCount;
+    /**
+     * @dev Number of required confirmations for update operations
+     */
     uint256 internal threshold;
 
     /**

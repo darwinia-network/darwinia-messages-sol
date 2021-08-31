@@ -240,8 +240,6 @@ describe("Verification tests", () => {
       .withArgs(tx.from, 4, testPayload)
   });
 
-  it.skip("should update guard set correctly", async function () {
-  });
 });
 
 function parseBitfield(s) {
