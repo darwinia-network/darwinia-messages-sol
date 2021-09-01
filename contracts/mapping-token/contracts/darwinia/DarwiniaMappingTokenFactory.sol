@@ -3,10 +3,11 @@ pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import "@darwinia/contracts-utils/contracts/DailyLimit.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "../interfaces/IERC20.sol";
 
-contract DarwiniaMappingTokenFactory is Initializable, Ownable {
+contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
     address public constant DISPATCH_ENCODER = 0x0000000000000000000000000000000000000018;
     address public constant DISPATCH         = 0x0000000000000000000000000000000000000019;
     struct TokenInfo {
@@ -46,6 +47,14 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
 
     function setAdmin(address _admin) external onlyOwner {
         admin = _admin;
+    }
+
+    function setDailyLimit(address token, uint amount) public onlyOwner  {
+        _setDailyLimit(token, amount);
+    }
+
+    function changeDailyLimit(address token, uint amount) public onlyOwner  {
+        _changeDailyLimit(token, amount);
     }
 
     function setERC20Logic(address _logic) external onlyOwner {
@@ -107,6 +116,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         require(amount > 0, "can not receive amount zero");
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
+        expendDailyLimit(token, amount);
         IERC20(token).mint(recipient, amount);
     }
 
