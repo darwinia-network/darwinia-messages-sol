@@ -127,8 +127,12 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
     // cross transfer to remote chain with waiting confirmation.
     // the transfered token information locked in the contract first, then wait the result from remote chain.
     function crossTransferWaitingConfirm(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
-        bytes memory nonce = crossTransferInternal(specVersion, weight, token, recipient, amount);
-        transferUnconfirmed[nonce] = UnconfirmedInfo(msg.sender, token, amount);
+        crossTransferInternal(specVersion, weight, token, recipient, amount);
+    }
+
+    // save cross transfer unconfirmed info
+    function unconfirmedCrossTransfer(bytes memory nonce, address sender, address token, uint256 amount) external onlySystem {
+        transferUnconfirmed[nonce] = UnconfirmedInfo(sender, token, amount);
     }
 
     // confirm transfer information from remote chain.
@@ -145,7 +149,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         delete transferUnconfirmed[nonce];
     }
 
-    function crossTransferInternal(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) internal returns(bytes memory) {
+    function crossTransferInternal(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) internal {
         require(amount > 0, "can not transfer amount zero");
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
@@ -163,9 +167,8 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
                                       amount,
                                       msg.value)));
         require(encodeSuccess, "burn: encode dispatch failed");
-        (bool success, bytes memory dispatch_result) = DISPATCH.call(encoded);
+        (bool success, ) = DISPATCH.call(encoded);
         require(success, "burn: call burn precompile failed");
-        return dispatch_result;
     }
 }
 
