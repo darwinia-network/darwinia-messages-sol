@@ -7,15 +7,26 @@ path="./beefy-fixture-data.json"
 pw1="./pw1"
 pw2="./pw2"
 
-id=$(seth --to-uint64 $(jq -r ".commitment.payload.nextValidatorSet.id" "$path"))  
-len=$(seth --to-uint32 $(jq -r ".commitment.payload.nextValidatorSet.len" "$path"))  
+NEXTVALIDATORSET_TYPEHASH=$(seth keccak "NextValidatorSet(uint64 id,uint32 len,bytes32 root)")
+PAYLOAD_TYPEHASH=$(seth keccak "Payload(bytes32 network,bytes32 mmr,NextValidatorSet nextValidatorSet)NextValidatorSet(uint64 id,uint32 len,bytes32 root)")
+COMMITMENT_TYPEHASH=$(seth keccak "Commitment(Payload payload,uint32 blockNumber,uint64 validatorSetId)Payload(bytes32 network,bytes32 mmr,NextValidatorSet nextValidatorSet)NextValidatorSet(uint64 id,uint32 len,bytes32 root)")
+
+id=$(seth --to-uint256 $(jq -r ".commitment.payload.nextValidatorSet.id" "$path"))
+len=$(seth --to-uint256 $(jq -r ".commitment.payload.nextValidatorSet.len" "$path"))
 root=$(jq -r ".commitment.payload.nextValidatorSet.root" "$path")  
+nextValidatorSet=0x$(ethabi encode params -v '(bytes32,uint64,uint32,bytes32)' "(${NEXTVALIDATORSET_TYPEHASH:2},${id:2},${len:2},${root:2})")
+nextValidatorSetHash=$(seth keccak $nextValidatorSet)
+
 network=$(jq -r ".commitment.payload.network" "$path")  
 mmr=$(jq -r ".commitment.payload.mmr" "$path")  
-blockNumber=$(seth --to-uint32 $(jq -r ".commitment.blockNumber" "$path"))  
-validatorSetId=$(seth --to-uint64 $(jq -r ".commitment.validatorSetId" "$path"))  
+payload=0x$(ethabi encode params -v '(bytes32,bytes32,bytes32,bytes32)' "(${PAYLOAD_TYPEHASH:2},${network:2},${mmr:2},${nextValidatorSetHash:2})")
+payloadHash=$(seth keccak $payload)
 
-commitment=0x${network:2}${mmr:2}${id:2}${len:2}${root:2}${blockNumber:2}${validatorSetId:2}
+blockNumber=$(seth --to-uint256 $(jq -r ".commitment.blockNumber" "$path"))
+validatorSetId=$(seth --to-uint256 $(jq -r ".commitment.validatorSetId" "$path"))
+commitment=0x$(ethabi encode params -v '(bytes32,bytes32,uint32,uint64)' "(${COMMITMENT_TYPEHASH:2},${payloadHash:2},${blockNumber:2},${validatorSetId:2})")
+
+# commitment=0x${network:2}${mmr:2}${id:2}${len:2}${root:2}${blockNumber:2}${validatorSetId:2}
 echo "commitment: $commitment"
 commitmentHash=$(seth keccak "$commitment")
 echo "commitmentHash: $commitmentHash"
