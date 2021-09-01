@@ -19,9 +19,9 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         address source;
     }
     struct UnconfirmedInfo {
-	address sender;
-	address token;
-	uint256 amount;
+        address sender;
+        address token;
+        uint256 amount;
     }
     address public admin;
     address[] public allTokens;
@@ -120,29 +120,29 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
     // this must request the burn proof can be always verified by the remote chain corrently.
     // so, here the user's token burned directly.
     function crossTransfer(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
-	crossTransferInternal(specVersion, weight, token, recipient, amount);
+        crossTransferInternal(specVersion, weight, token, recipient, amount);
         IERC20(token).burn(address(this), amount);
     }
 
     // cross transfer to remote chain with waiting confirmation.
     // the transfered token information locked in the contract first, then wait the result from remote chain.
     function crossTransferWaitingConfirm(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
-	bytes memory nonce = crossTransferInternal(specVersion, weight, token, recipient, amount);
-	transferUnconfirmed[nonce] = UnconfirmedInfo(msg.sender, token, amount);
+        bytes memory nonce = crossTransferInternal(specVersion, weight, token, recipient, amount);
+        transferUnconfirmed[nonce] = UnconfirmedInfo(msg.sender, token, amount);
     }
 
     // confirm transfer information from remote chain.
     // 1. if event is verified and the token unlocked successfully on remote chain, then we burn the mapped token
     // 2. if event is verified, but the token can't unlocked on remote chain, then we take back the mapped token to user.
     function confirmCrossTransfer(bytes memory nonce, bool result) external onlySystem {
-	UnconfirmedInfo memory info = transferUnconfirmed[nonce];
-	require(info.amount > 0 && info.sender != address(0) && info.token != address(0), "invalid unconfirmed message");
-	if (result) {
-	    IERC20(info.token).burn(address(this), info.amount);
-	} else {
-	    IERC20(info.token).transferFrom(address(this), info.sender, info.amount);
-	}
-	delete transferUnconfirmed[nonce];
+        UnconfirmedInfo memory info = transferUnconfirmed[nonce];
+        require(info.amount > 0 && info.sender != address(0) && info.token != address(0), "invalid unconfirmed message");
+        if (result) {
+            IERC20(info.token).burn(address(this), info.amount);
+        } else {
+            IERC20(info.token).transferFrom(address(this), info.sender, info.amount);
+        }
+        delete transferUnconfirmed[nonce];
     }
 
     function crossTransferInternal(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) internal returns(bytes memory) {
