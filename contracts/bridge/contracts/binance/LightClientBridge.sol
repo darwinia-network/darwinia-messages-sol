@@ -191,11 +191,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     }
 
     function requiredNumberOfValidatorSigs() public view returns (uint256) {
-        return
-            (validatorSetLen *
-                THRESHOLD_NUMERATOR +
-                THRESHOLD_DENOMINATOR -
-                1) / THRESHOLD_DENOMINATOR;
+        return (validatorSetLen * THRESHOLD_NUMERATOR + THRESHOLD_DENOMINATOR) / THRESHOLD_DENOMINATOR;
     }
 
     function createRandomBitfield(uint256 id)
