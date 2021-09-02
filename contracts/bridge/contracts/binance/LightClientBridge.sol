@@ -129,9 +129,10 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
 
     /* Constants */
 
-    uint256 public constant PICK_NUMERATOR = 1;
-    uint256 public constant THRESHOLD_NUMERATOR = 2;
-    uint256 public constant THRESHOLD_DENOMINATOR = 3;
+    // THRESHOLD_NUMERATOR - numerator for percent of validator signatures required
+    // THRESHOLD_DENOMINATOR - denominator for percent of validator signatures required
+    uint256 public constant THRESHOLD_NUMERATOR = 5;
+    uint256 public constant THRESHOLD_DENOMINATOR = 200;
     uint256 public constant BLOCK_WAIT_PERIOD = 12;
 
     /**
@@ -190,7 +191,11 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     }
 
     function requiredNumberOfValidatorSigs() public view returns (uint256) {
-        return (validatorSetLen * PICK_NUMERATOR) / THRESHOLD_DENOMINATOR;
+        return
+            (validatorSetLen *
+                THRESHOLD_NUMERATOR +
+                THRESHOLD_DENOMINATOR -
+                1) / THRESHOLD_DENOMINATOR;
     }
 
     function createRandomBitfield(uint256 id)
@@ -330,9 +335,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, > 2/3
          */
         require(
-            countSetBits(validatorClaimsBitfield) >
-                (validatorSetLen * THRESHOLD_NUMERATOR) /
-                    THRESHOLD_DENOMINATOR,
+            countSetBits(validatorClaimsBitfield) > (validatorSetLen * 2) / 3,
             "Bridge: Bitfield not enough validators"
         );
 

@@ -24,7 +24,7 @@ describe("Light Client Gas Usage", function () {
   const testCases = [
     {
       totalNumberOfValidators: 10,
-      totalNumberOfSignatures: 10,
+      totalNumberOfSignatures: 7,
     },
     {
       totalNumberOfValidators: 100,
@@ -34,30 +34,29 @@ describe("Light Client Gas Usage", function () {
       totalNumberOfValidators: 128,
       totalNumberOfSignatures: 128,
     },
-    // {
-    //   totalNumberOfValidators: 257,
-    //   totalNumberOfSignatures: 257,
-    // },
-    // {
-    //   totalNumberOfValidators: 1000,
-    //   totalNumberOfSignatures: 1000,
-    //   fail: true
-    // },
-    // {
-    //   totalNumberOfValidators: 1000,
-    //   totalNumberOfSignatures: 1000,
-    // },
-    // {
-    //   totalNumberOfValidators: 1000,
-    //   totalNumberOfSignatures: 667,
-    // },
+    {
+      totalNumberOfValidators: 257,
+      totalNumberOfSignatures: 257,
+    },
+    {
+      totalNumberOfValidators: 1000,
+      totalNumberOfSignatures: 1000,
+    },
+    {
+      totalNumberOfValidators: 1000,
+      totalNumberOfSignatures: 667,
+    },
+    {
+      totalNumberOfValidators: 1025,
+      totalNumberOfSignatures: 684,
+    },
   ]
 
   for (const testCase of testCases) {
     it(`runs full flow with ${testCase.totalNumberOfValidators} validators and ${testCase.totalNumberOfSignatures} signers with the complete transaction ${testCase.fail ? 'failing' : 'succeeding'}`,
       async function () {
         this.timeout(1000 * 65);
-        await runFlow(testCase.totalNumberOfValidators, testCase.totalNumberOfSignatures, testCase.fail)
+        await runFlow(testCase.totalNumberOfValidators, testCase.totalNumberOfSignatures)
       });
   }
 
@@ -69,8 +68,6 @@ describe("Light Client Gas Usage", function () {
     )
     const numOfGuards = 3;
     const guards = fixture.validatorAddresses.slice(0, numOfGuards)
-    // console.log(0, guards)
-    // console.log(1, fixture.validatorAddresses)
     const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
     const crab = beefyFixture.commitment.payload.network
     beefyLightClient = await LightClientBridge.deploy(
@@ -106,29 +103,25 @@ describe("Light Client Gas Usage", function () {
       allValidatorProofs[firstPosition].address,
       allValidatorProofs[firstPosition].proof,
     )
-    printTxPromiseGas("newSignatureCommitment", await newSigTxPromise)
+    printTxPromiseGas("1-step", await newSigTxPromise)
     await newSigTxPromise.should.be.fulfilled
 
     const lastId = (await beefyLightClient.currentId()).sub(BigNumber.from(1));
 
-    await mine(45);
+    await mine(20);
 
     const completeValidatorProofs = await createCompleteValidatorProofs(lastId, beefyLightClient, allValidatorProofs);
 
     const completeSigTxPromise = beefyLightClient.completeSignatureCommitment(
-      fail ? 99 : lastId,
+      lastId,
       beefyFixture.commitment,
       completeValidatorProofs,
       allGuardProofs
     )
-    await printTxPromiseGas("completeSignatureCommitment", await completeSigTxPromise)
-    if (fail) {
-      await completeSigTxPromise.should.be.rejected
-    } else {
-      await completeSigTxPromise.should.be.fulfilled
-      latestMMRRoot = await beefyLightClient.latestMMRRoot()
-      expect(latestMMRRoot).to.eq(beefyFixture.commitment.payload.mmr)
-    }
+    await printTxPromiseGas("2-step", await completeSigTxPromise)
+    await completeSigTxPromise.should.be.fulfilled
+    latestMMRRoot = await beefyLightClient.latestMMRRoot()
+    expect(latestMMRRoot).to.eq(beefyFixture.commitment.payload.mmr)
   }
 
 });
