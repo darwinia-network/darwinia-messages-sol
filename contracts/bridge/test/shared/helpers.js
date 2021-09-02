@@ -7,14 +7,6 @@ function buildCommitment(msgs) {
   return ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["(address,address,address,uint256,bytes)[]"], [ msgs ]))
 }
 
-function signatureSubstrateToEthereum(sig) {
-  const recoveryId0 = ethers.BigNumber.from(`0x${sig.slice(130)}`);
-  const newRecoveryId0 = ethers.utils.hexlify(recoveryId0.add(27));
-  const res = sig.slice(0, 130).concat(newRecoveryId0.slice(2));
-
-  return res;
-}
-
 function createMerkleTree(leavesHex) {
   const leavesHashed = leavesHex.map(leaf => keccakFromHexString(leaf));
   const merkleTree = new MerkleTree(leavesHashed, keccak, { sort: false, duplicateOdd: false });
@@ -58,14 +50,35 @@ async function tryCatch(promise, type, message) {
     }
 };
 
+async function printTxPromiseGas(func, tx) {
+    try {
+      let r = await tx.wait()
+      // console.log(r)
+      console.log(`Tx successful - ${func} gas used: ${r.gasUsed}`)
+    } catch (e) {
+      console.log(`Tx failed - ${func} gas used: ${r.gasUsed}`)
+    }
+}
+
+function printBitfield(bitfield) {
+  return bitfield.map(i => {
+    const bf = BigInt(i.toString(), 10).toString(2).split('')
+    while (bf.length < 256) {
+      bf.unshift('0')
+    }
+    return bf.join('')
+  }).reverse().join('').replace(/^0*/g, '')
+}
+
 module.exports = {
   buildCommitment,
   createMerkleTree,
-  signatureSubstrateToEthereum,
   mine,
   addressBytes,
   encodeLog,
   mergeKeccak256,
+  printTxPromiseGas,
+  printBitfield,
   catchRevert: async (promise, message) => await tryCatch(promise, "revert", message),
   catchOutOfGas: async (promise, message) => await tryCatch(promise, "out of gas", message),
   catchInvalidJump: async (promise, message) => await tryCatch(promise, "invalid JUMP", message),

@@ -3,7 +3,6 @@ const { BigNumber } = require("ethers");
 const { solidity, MockProvider } = require("ethereum-waffle");
 const { keccak } = require("ethereumjs-util");
 const {
-  signatureSubstrateToEthereum,
   buildCommitment,
   createMerkleTree, mine, catchRevert
 } = require("./shared/helpers");

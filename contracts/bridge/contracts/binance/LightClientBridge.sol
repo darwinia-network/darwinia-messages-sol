@@ -374,10 +374,10 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
      */
     function completeSignatureCommitment(
         uint256 id,
-        Commitment memory commitment,
-        Proof memory validatorProof,
-        bytes[] memory guardSignatures
-    ) public {
+        Commitment calldata commitment,
+        Proof calldata validatorProof,
+        bytes[] calldata guardSignatures
+    ) external {
         // only current epoch
         require(commitment.validatorSetId == validatorSetId, "Bridge: Invalid validator set id");
 
