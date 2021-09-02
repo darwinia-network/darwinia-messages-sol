@@ -119,37 +119,32 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
     // cross transfer to remote chain without waiting any confirm information,
     // this must request the burn proof can be always verified by the remote chain corrently.
     // so, here the user's token burned directly.
-    function crossTransfer(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
-        crossTransferInternal(specVersion, weight, token, recipient, amount);
+    function burnAndRemoteUnlock(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
+        burnAndSendProof(specVersion, weight, token, recipient, amount);
         IERC20(token).burn(address(this), amount);
     }
 
     // cross transfer to remote chain with waiting confirmation.
     // the transfered token information locked in the contract first, then wait the result from remote chain.
-    function crossTransferWaitingConfirm(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
-        crossTransferInternal(specVersion, weight, token, recipient, amount);
-    }
-
-    // save cross transfer unconfirmed info
-    function unconfirmedCrossTransfer(bytes memory nonce, address sender, address token, uint256 amount) external onlySystem {
-        transferUnconfirmed[nonce] = UnconfirmedInfo(sender, token, amount);
+    function burnAndRemoteUnlockWaitingConfirm(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
+        burnAndSendProof(specVersion, weight, token, recipient, amount);
     }
 
     // confirm transfer information from remote chain.
     // 1. if event is verified and the token unlocked successfully on remote chain, then we burn the mapped token
     // 2. if event is verified, but the token can't unlocked on remote chain, then we take back the mapped token to user.
-    function confirmCrossTransfer(bytes memory nonce, bool result) external onlySystem {
-        UnconfirmedInfo memory info = transferUnconfirmed[nonce];
+    function confirmBurnAndRemoteUnlock(bytes memory messageId, bool result) external onlySystem {
+        UnconfirmedInfo memory info = transferUnconfirmed[messageId];
         require(info.amount > 0 && info.sender != address(0) && info.token != address(0), "invalid unconfirmed message");
         if (result) {
             IERC20(info.token).burn(address(this), info.amount);
         } else {
-            IERC20(info.token).transferFrom(address(this), info.sender, info.amount);
+            require(IERC20(info.token).transferFrom(address(this), info.sender, info.amount), "transfer back failed");
         }
-        delete transferUnconfirmed[nonce];
+        delete transferUnconfirmed[messageId];
     }
 
-    function crossTransferInternal(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) internal {
+    function burnAndSendProof(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) internal {
         require(amount > 0, "can not transfer amount zero");
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
@@ -169,6 +164,11 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         require(encodeSuccess, "burn: encode dispatch failed");
         (bool success, ) = DISPATCH.call(encoded);
         require(success, "burn: call burn precompile failed");
+        (bool readSuccess, bytes memory messageId) = DISPATCH_ENCODER.call(
+            abi.encodePacked(info.eventReceiver, bytes4(keccak256("read_latest_message_id()")))
+        );
+        require(readSuccess, "burn: read message id failed");
+        transferUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, token, amount);
     }
 }
 
