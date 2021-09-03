@@ -134,6 +134,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     uint256 public constant THRESHOLD_NUMERATOR = 5;
     uint256 public constant THRESHOLD_DENOMINATOR = 200;
     uint256 public constant BLOCK_WAIT_PERIOD = 12;
+    uint256 public constant MIN_SUPPORT = 10 ether;
 
     /**
      * Hash of the NextValidatorSet Schema
@@ -326,7 +327,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         uint256 validatorPosition,
         address validatorAddress,
         bytes32[] memory validatorAddressMerkleProof
-    ) public returns (uint256) {
+    ) public payable returns (uint256) {
         /**
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, > 2/3
          */
@@ -348,7 +349,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         /**
          * @todo Lock up the sender stake as collateral
          */
-        // TODO
+        require(msg.value == MIN_SUPPORT, "Bridge: Collateral mismatch");
 
         // Accept and save the commitment
         validationData[currentId] = ValidationData(
@@ -388,6 +389,11 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
          * @dev We no longer need the data held in state, so delete it for a gas refund
          */
         delete validationData[id];
+
+        /**
+         * @notice If relayer do `completeSignatureCommitment` late or failed, `MIN_SUPPORT` will be slashed
+         */
+        msg.sender.transfer(MIN_SUPPORT);
 
         emit FinalVerificationSuccessful(msg.sender, id);
     }
