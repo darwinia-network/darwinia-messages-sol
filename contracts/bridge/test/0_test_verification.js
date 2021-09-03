@@ -6,6 +6,9 @@ const {
   buildCommitment,
   createMerkleTree, mine, catchRevert
 } = require("./shared/helpers");
+const {
+  createCompleteValidatorProofs
+} = require("./shared/beefy-helpers");
 const { BeefyFixture, MessageFixture } = require('./shared/fixtures.js');
 const chai = require("chai");
 const MerkleTree = require("merkletreejs").MerkleTree;
@@ -57,13 +60,18 @@ describe("Verification tests", () => {
     expect(await lightClientBridge.checkAddrInSet(validatorsMerkleTree.getHexRoot(), beefyValidatorAddresses[0], 3, 0, validator0PubKeyMerkleProof)).to.be.true
     expect(await lightClientBridge.checkAddrInSet(validatorsMerkleTree.getHexRoot(), beefyValidatorAddresses[1], 3, 1, validator1PubKeyMerkleProof)).to.be.true
 
+    let overrides = {
+        value: ethers.utils.parseEther("4")
+    };
+
     const newCommitment = lightClientBridge.newSignatureCommitment(
       BeefyFixture.commitmentHash,
       BeefyFixture.bitfield,
       sigs[0],
       0,
       beefyValidatorAddresses[0],
-      validator0PubKeyMerkleProof
+      validator0PubKeyMerkleProof,
+      overrides
     );
     await expect(newCommitment).to.not.be.reverted
     expect(newCommitment)
@@ -80,20 +88,15 @@ describe("Verification tests", () => {
     await catchRevert(lightClientBridge.createRandomBitfield(lastId), 'Bridge: Block wait period not over');
     await mine(45);
 
-    const randomBitfield = (await lightClientBridge.createRandomBitfield(lastId)); 
-    const addrIndex = firstBit(randomBitfield) - 1;
-    const bitfield = parseInt(randomBitfield.toString(), 10)
+    const allValidatorProofs = beefyValidatorAddresses.map((signer, position) => {
+      return {signature: sigs[position], position: position, address: signer, proof: proofs[position]}
+    })
+    const completeValidatorProofs = await createCompleteValidatorProofs(lastId, lightClientBridge, allValidatorProofs);
 
-    const proof = {
-      "signatures": [sigs[addrIndex]],
-      "positions": [addrIndex],  
-      "signers": [beefyValidatorAddresses[addrIndex]],
-      "signerProofs": [proofs[addrIndex]]
-    }
     const completeCommitment = lightClientBridge.completeSignatureCommitment(
       lastId,
       BeefyFixture.commitment,
-      proof,
+      completeValidatorProofs,
       sigs2
     );
     expect(completeCommitment) 

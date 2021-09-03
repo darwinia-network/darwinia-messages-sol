@@ -50,12 +50,16 @@ describe("Light Client Gas Usage", function () {
       totalNumberOfValidators: 1025,
       totalNumberOfSignatures: 684,
     },
+    {
+      totalNumberOfValidators: 2048,
+      totalNumberOfSignatures: 1366,
+    },
   ]
 
   for (const testCase of testCases) {
     it(`runs full flow with ${testCase.totalNumberOfValidators} validators and ${testCase.totalNumberOfSignatures} signers with the complete transaction ${testCase.fail ? 'failing' : 'succeeding'}`,
       async function () {
-        this.timeout(1000 * 65);
+        this.timeout(1000 * 100);
         await runFlow(testCase.totalNumberOfValidators, testCase.totalNumberOfSignatures)
       });
   }
@@ -95,6 +99,9 @@ describe("Light Client Gas Usage", function () {
 
     const allGuardProofs = await createAllGuardProofs(commitmentHash, fixture, domainSeparator, guards)
 
+    let overrides = {
+        value: ethers.utils.parseEther("4")
+    };
     const newSigTxPromise = beefyLightClient.newSignatureCommitment(
       commitmentHash,
       initialBitfield,
@@ -102,6 +109,7 @@ describe("Light Client Gas Usage", function () {
       firstPosition,
       allValidatorProofs[firstPosition].address,
       allValidatorProofs[firstPosition].proof,
+      overrides
     )
     printTxPromiseGas("1-step", await newSigTxPromise)
     await newSigTxPromise.should.be.fulfilled

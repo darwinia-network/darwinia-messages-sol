@@ -129,12 +129,9 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
 
     /* Constants */
 
-    // THRESHOLD_NUMERATOR - numerator for percent of validator signatures required
-    // THRESHOLD_DENOMINATOR - denominator for percent of validator signatures required
-    uint256 public constant THRESHOLD_NUMERATOR = 5;
-    uint256 public constant THRESHOLD_DENOMINATOR = 200;
     uint256 public constant BLOCK_WAIT_PERIOD = 12;
-    uint256 public constant MIN_SUPPORT = 10 ether;
+    // 120000000/2^25 = 3.57
+    uint256 public constant MIN_SUPPORT = 4 ether;
 
     /**
      * Hash of the NextValidatorSet Schema
@@ -192,7 +189,10 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     }
 
     function requiredNumberOfValidatorSigs() public view returns (uint256) {
-        return (validatorSetLen * THRESHOLD_NUMERATOR + THRESHOLD_DENOMINATOR) / THRESHOLD_DENOMINATOR;
+        if (validatorSetLen < 75) {
+            return validatorSetLen * 2 / 3 + 1;
+        }
+        return 25;
     }
 
     function createRandomBitfield(uint256 id)
