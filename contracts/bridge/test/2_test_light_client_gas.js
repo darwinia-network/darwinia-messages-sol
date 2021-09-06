@@ -27,6 +27,34 @@ describe("Light Client Gas Usage", function () {
       totalNumberOfSignatures: 7,
     },
     {
+      totalNumberOfValidators: 15,
+      totalNumberOfSignatures: 15,
+    },
+    {
+      totalNumberOfValidators: 25,
+      totalNumberOfSignatures: 25,
+    },
+    {
+      totalNumberOfValidators: 30,
+      totalNumberOfSignatures: 30,
+    },
+    {
+      totalNumberOfValidators: 35,
+      totalNumberOfSignatures: 35,
+    },
+    {
+      totalNumberOfValidators: 36,
+      totalNumberOfSignatures: 36,
+    },
+    {
+      totalNumberOfValidators: 40,
+      totalNumberOfSignatures: 40,
+    },
+    {
+      totalNumberOfValidators: 50,
+      totalNumberOfSignatures: 50,
+    },
+    {
       totalNumberOfValidators: 100,
       totalNumberOfSignatures: 100,
     },

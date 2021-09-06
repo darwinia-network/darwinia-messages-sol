@@ -189,7 +189,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     }
 
     function requiredNumberOfValidatorSigs() public view returns (uint256) {
-        if (validatorSetLen < 75) {
+        if (validatorSetLen < 36) {
             return validatorSetLen * 2 / 3 + 1;
         }
         return 25;
