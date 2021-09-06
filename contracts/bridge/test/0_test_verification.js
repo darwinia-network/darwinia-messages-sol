@@ -66,6 +66,7 @@ describe("Verification tests", () => {
 
     const newCommitment = lightClientBridge.newSignatureCommitment(
       BeefyFixture.commitmentHash,
+      BeefyFixture.commitment.blockNumber,
       BeefyFixture.bitfield,
       sigs[0],
       0,

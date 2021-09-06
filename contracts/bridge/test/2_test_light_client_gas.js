@@ -132,6 +132,7 @@ describe("Light Client Gas Usage", function () {
     };
     const newSigTxPromise = beefyLightClient.newSignatureCommitment(
       commitmentHash,
+      beefyFixture.commitment.blockNumber,
       initialBitfield,
       allValidatorProofs[firstPosition].signature,
       firstPosition,
