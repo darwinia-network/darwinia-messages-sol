@@ -1,6 +1,5 @@
 const { BigNumber } = require("ethers");
 const {
-  deployBeefyLightClient,
   mine, printTxPromiseGas
 } = require("./shared/helpers");
 
@@ -85,15 +84,15 @@ describe("Light Client Gas Usage", function () {
   ]
 
   for (const testCase of testCases) {
-    it(`runs full flow with ${testCase.totalNumberOfValidators} validators and ${testCase.totalNumberOfSignatures} signers with the complete transaction ${testCase.fail ? 'failing' : 'succeeding'}`,
+    it(`runs full flow with ${testCase.totalNumberOfValidators} validators and ${testCase.totalNumberOfSignatures} signers with the complete transaction succeeding`,
       async function () {
         this.timeout(1000 * 100);
         await runFlow(testCase.totalNumberOfValidators, testCase.totalNumberOfSignatures)
       });
   }
 
-  const runFlow = async function (totalNumberOfValidators, totalNumberOfSignatures, fail) {
-    console.log(`Running flow with ${totalNumberOfValidators} validators and ${totalNumberOfSignatures} signatures with the complete transaction ${fail ? 'failing' : 'succeeding'}: `)
+  const runFlow = async function (totalNumberOfValidators, totalNumberOfSignatures) {
+    console.log(`Running flow with ${totalNumberOfValidators} validators and ${totalNumberOfSignatures} signatures with the complete transaction succeeding: `)
 
     const fixture = await createBeefyValidatorFixture(
       totalNumberOfValidators
