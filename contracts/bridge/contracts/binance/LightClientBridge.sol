@@ -409,11 +409,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     function cleanExpiredCommitment( uint256 id) public {
         ValidationData storage data = validationData[id];
         require(block.number > data.blockNumber + 256, "Bridge: Only expired");
-        require(
-            msg.sender == data.senderAddress,
-            "Bridge: Sender address does not match original validation data"
-        );
-        msg.sender.transfer(MIN_SUPPORT * 9 / 10);
+        data.senderAddress.transfer(MIN_SUPPORT * 9 / 10);
         delete validationData[id];
         emit CleanExpiredCommitment(id);
     }
