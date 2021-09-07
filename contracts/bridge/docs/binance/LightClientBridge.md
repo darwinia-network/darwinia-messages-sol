@@ -43,11 +43,12 @@ The light client is the trust layer of the bridge
 | latestMMRRoot | bytes32 |
 | latestBlockNumber | uint256 |
 | validationData | mapping(uint256 => struct LightClientBridge.ValidationData) |
-| BLOCK_WAIT_PERIOD | uint256 |
-| MIN_SUPPORT | uint256 |
 | NEXTVALIDATORSET_TYPEHASH | bytes32 |
 | PAYLOAD_TYPEHASH | bytes32 |
 | COMMITMENT_TYPEHASH | bytes32 |
+| BLOCK_WAIT_PERIOD | uint256 |
+| MIN_SUPPORT | uint256 |
+| SLASH_VAULT | address payable |
 
 
 
@@ -62,9 +63,12 @@ Deploys the LightClientBridge contract
 ```solidity
   function constructor(
     bytes32 network,
-    address[] validatorSetId,
+    address payable slashVault,
+    address[] guards,
+    uint256 threshold,
+    uint256 validatorSetId,
     uint256 validatorSetLen,
-    uint256 validatorSetRoot
+    bytes32 validatorSetRoot
   ) public GuardRegistry
 ```
 
@@ -77,9 +81,12 @@ Deploys the LightClientBridge contract
 | Arg | Type | Description |
 | --- | --- | --- |
 |`network` | bytes32 | source chain network name
-|`validatorSetId` | address[] | initial validator set id
+|`slashVault` | address payable | initial SLASH_VAULT
+|`guards` | address[] | initial guards of guard set
+|`threshold` | uint256 | initial threshold of guard set
+|`validatorSetId` | uint256 | initial validator set id
 |`validatorSetLen` | uint256 | length of initial validator set
-|`validatorSetRoot` | uint256 | initial validator set merkle tree root
+|`validatorSetRoot` | bytes32 | initial validator set merkle tree root
 
 ### getFinalizedBlockNumber
 No description
@@ -233,14 +240,12 @@ No modifiers
 Executed by the prover in order to begin the process of block
 acceptance by the light client
 
-> `commitmentHash` must be matched to the `commitBlockNumber`, if not the collateral may be slashed.
 
 
 #### Declaration
 ```solidity
   function newSignatureCommitment(
     bytes32 commitmentHash,
-    uint256 commitBlockNumber,
     uint256[] validatorClaimsBitfield,
     bytes validatorSignature,
     uint256 validatorPosition,
@@ -256,7 +261,6 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`commitmentHash` | bytes32 | contains the commitmentHash signed by the validator(s)
-|`commitBlockNumber` | uint256 | the block number of commitmentHash produced
 |`validatorClaimsBitfield` | uint256[] | a bitfield containing a membership status of each
 validator who has claimed to have signed the commitmentHash
 |`validatorSignature` | bytes | the signature of one validator
@@ -291,8 +295,8 @@ No modifiers
 |`guardSignatures` | bytes[] | The signatures of the guards which to double-check the commitmentHash
 
 ### cleanExpiredCommitment
-Relyer could claim the expired commitment's collateral
- 1/10 of `MIN_SUPPORT` will be slashed
+If relayer do `completeSignatureCommitment` late or failed, `MIN_SUPPORT` will be slashed
+ `MIN_SUPPORT` will be slashed
 
 
 

@@ -48,8 +48,10 @@ describe("Verification tests", () => {
   before(async () => {
     const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
     const crab = "0x4372616200000000000000000000000000000000000000000000000000000000"
+    const vault = "0x0000000000000000000000000000000000000000"
     lightClientBridge = await LightClientBridge.deploy(
       crab,
+      vault, 
       beefyGuardAddresses,
       2,
       0,
@@ -66,7 +68,6 @@ describe("Verification tests", () => {
 
     const newCommitment = lightClientBridge.newSignatureCommitment(
       BeefyFixture.commitmentHash,
-      BeefyFixture.commitment.blockNumber,
       BeefyFixture.bitfield,
       sigs[0],
       0,
