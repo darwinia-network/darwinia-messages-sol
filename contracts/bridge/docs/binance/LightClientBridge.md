@@ -295,8 +295,7 @@ No modifiers
 |`guardSignatures` | bytes[] | The signatures of the guards which to double-check the commitmentHash
 
 ### cleanExpiredCommitment
-If relayer do `completeSignatureCommitment` late or failed, `MIN_SUPPORT` will be slashed
- `MIN_SUPPORT` will be slashed
+Clean up the expired commitment and slash
 
 
 
