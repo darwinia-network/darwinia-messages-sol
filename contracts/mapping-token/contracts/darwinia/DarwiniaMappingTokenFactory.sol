@@ -76,7 +76,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         uint8 decimals,
         address backing,
         address source
-    ) external returns (address payable token) {
+    ) external onlySystem returns (address payable token) {
         bytes32 salt = keccak256(abi.encodePacked(backing, source));
         require(tokenMap[salt] == address(0), "contract has been deployed");
         bytes memory bytecode = type(TransparentUpgradeableProxy).creationCode;
