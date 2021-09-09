@@ -9,6 +9,7 @@ import "../interfaces/IERC20.sol";
 contract DarwiniaMappingTokenFactory is Initializable, Ownable {
     address public constant DISPATCH_ENCODER = 0x0000000000000000000000000000000000000018;
     address public constant DISPATCH         = 0x0000000000000000000000000000000000000019;
+    address public constant SYSTEM_ACCOUNT   = 0x6D6F646C6461722f64766D700000000000000000;
     struct TokenInfo {
         bytes4 eventReceiver;
         // 0 - Erc20Token
@@ -46,7 +47,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
      * @dev Throws if called by any account other than the system account defined by 0x0 address.
      */
     modifier onlySystem() {
-        require(address(0) == msg.sender, "System: caller is not the system account");
+        require(SYSTEM_ACCOUNT == msg.sender, "System: caller is not the system account");
         _;
     }
 
@@ -75,7 +76,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         uint8 decimals,
         address backing,
         address source
-    ) external onlySystem returns (address payable token) {
+    ) external returns (address payable token) {
         bytes32 salt = keccak256(abi.encodePacked(backing, source));
         require(tokenMap[salt] == address(0), "contract has been deployed");
         bytes memory bytecode = type(TransparentUpgradeableProxy).creationCode;
@@ -91,12 +92,14 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         tokenToInfo[token] = TokenInfo(eventReceiver, tokenType, backing, source);
 
         (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
-            abi.encodePacked(eventReceiver, bytes4(keccak256("registered(bytes4,uint32,string,string,uint8,address,address)")),
+            abi.encodePacked(eventReceiver, bytes4(keccak256("token_register_response()")),
                              abi.encode(backing, source, token)));
         require(encodeSuccess, "create: encode dispatch failed");
 
-        (bool success, ) = DISPATCH.call(encoded);
-        require(success, "create: call create erc20 precompile failed");
+        if (encoded.length > 0) {
+            (bool success, ) = DISPATCH.call(encoded);
+            require(success, "create: call create erc20 precompile failed");
+        }
         emit IssuingERC20Created(msg.sender, backing, source, token);
     }
 
@@ -128,6 +131,12 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
     // the transfered token information locked in the contract first, then wait the result from remote chain.
     function burnAndRemoteUnlockWaitingConfirm(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
         burnAndSendProof(specVersion, weight, token, recipient, amount);
+        TokenInfo memory info = tokenToInfo[token];
+        (bool readSuccess, bytes memory messageId) = DISPATCH_ENCODER.call(
+            abi.encodePacked(info.eventReceiver, bytes4(keccak256("read_latest_message_id()")))
+        );
+        require(readSuccess, "burn: read message id failed");
+        transferUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, token, amount);
     }
 
     // confirm transfer information from remote chain.
@@ -151,7 +160,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer token failed");
 
         (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
-            abi.encodePacked(info.eventReceiver, bytes4(keccak256("burned(uint32,uint64,address,address,uint256)")),
+            abi.encodePacked(info.eventReceiver, bytes4(keccak256("burn_and_remote_unlock()")),
                            abi.encode(specVersion,
                                       weight,
                                       info.tokenType,
@@ -164,11 +173,6 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         require(encodeSuccess, "burn: encode dispatch failed");
         (bool success, ) = DISPATCH.call(encoded);
         require(success, "burn: call burn precompile failed");
-        (bool readSuccess, bytes memory messageId) = DISPATCH_ENCODER.call(
-            abi.encodePacked(info.eventReceiver, bytes4(keccak256("read_latest_message_id()")))
-        );
-        require(readSuccess, "burn: read message id failed");
-        transferUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, token, amount);
     }
 }
 
