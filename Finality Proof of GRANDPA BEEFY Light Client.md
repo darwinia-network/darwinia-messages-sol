@@ -1,6 +1,6 @@
 ## Original Process of Proof
 
-A GRANDPA light client needs to verify the validity of a state before accepting a state update. A simple approach is to provide the signatures of the members of the ***GRANDPA*** Authority Set and the supporting evidence along with the state to the light client, so that the light client knows whether there are enough authority members to endorse the state. If more than 2/3 of members sign it(we assume less than 1/3 dishonest Authorities), the light client can accept the state.
+A ***GRANDPA*** light client needs to verify the validity of a state before accepting a state update. A simple approach is to provide the signatures of the members of the ***GRANDPA*** Authority Set and the supporting evidence along with the state to the light client, so that the light client knows whether there are enough authority members to endorse the state. If more than 2/3 of members sign it(we assume less than 1/3 dishonest Authorities), the light client can accept the state.
 
 ## An Improvement Proposal
 
@@ -35,13 +35,13 @@ where:
 
     Suppose an evil-intentioned authority member wants to submit a problematic state, what is the probability of the state being accepted?
 
-    ![BEEFY Security Model](https://github.com/robinwei-itering/assets/blob/main/darwinia-bridge-sol/BEEFY_Security_Model.png)
+    ![BEEFY Security Model](assets/BEEFY_Security_Model.png)
 
-    As the figure shows, **N** is the set of the whole authority set, **b** (>2/3) denotes those who sign, and the bad authorities is a subset of **b**. **Malicious nodes** account for less that 1/2 of **b**. So in the worst case, all the randomly selected members of authority set are **bad**, whose probability is less than $(1/2)^k$. Only when this happens, the attack is successful. Every authority member is required to stake some assets $minsupport$. Then we have the expected tries of a successful attack $E_{tries}$
+    As the figure shows, **_N_** is the set of the whole authority set, **_b_** (>2/3) denotes those who sign, and the bad authorities is a subset of **b**. **_Malicious nodes_** account for less that 1/2 of **_b_**. So in the worst case, all the randomly selected members of authority set are **_bad_**, whose probability is less than __(1/2)<sup>k</sup>__. Only when this happens, the attack is successful. Every authority member is required to stake some assets **_minsupport_**. Then we have the expected tries of a successful attack **_E<sub>tries</sub>_**
 
-    $$E_{tries} > 2^k$$
+    **_E<sub>tries</sub> > 2<sup>k</sup>_**
 
-    and the expected cost $E_{cost}$
+    and the expected cost **_E<sub>cost</sub>_**
 
-    $$E_{cost} > minsupport*2^k$$
+    **_E<sub>cost</sub>_**   > **_minsupport_** * **2<sup>k</sup>**
 
