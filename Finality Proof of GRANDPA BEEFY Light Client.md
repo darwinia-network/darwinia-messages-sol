@@ -8,7 +8,7 @@ However, the reality is far from ideal because the number of members of the GRAN
 
 We can reduce the required number of signatures to reduce the amount of data.
 
-First, we assume that less than 1/3 members in the authority set are dishonest. We can randomly sample 1/3 of the verifier's signatures; the light client can be confident that the state is valid if all the sampled signatures are the same.
+First, we assume that less than 1/3 members in the authority set are dishonest. We can randomly sample 1/3 of the verifier's signatures; the light client can be confident that the state is valid if all the sampled signatures are the same. Here, 1/3 is the estimated result, and we actually use the selection of K and MIN_SUPPORT values to estimate the desired attack cost.
 
 ### Steps of Verification
 
