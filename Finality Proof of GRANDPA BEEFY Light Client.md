@@ -29,7 +29,7 @@ where:
 
 1. Random Number Generation
 
-    In Step 4, there is a random choice involved. We need to hide randomness unpredictable to the attackers. We can use a number `txhash` as a seed for random number generation. This  `txhash` denotes the transaction hash when the potential attack happens which can not be predicted by the attacker.
+    In Step 4, there is a random choice involved. We need to hide randomness unpredictable to the attackers. We can use a number `txhash` as a seed for random number generation. This  `txhash` denotes the transaction hash when the potential attack happens which can not be predicted by the attacker. We use a future block hash in practice.
 
 2. Cost Analysis of Attacks
 
