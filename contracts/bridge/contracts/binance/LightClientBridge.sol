@@ -475,6 +475,11 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         // Encode and hash the commitment
         bytes32 commitmentHash = createCommitmentHash(commitment);
 
+        require(
+            commitmentHash == data.commitmentHash,
+            "Bridge: Commitment must match commitment hash"
+        );
+
         verifyValidatorProofSignatures(
             randomBitfield,
             validatorProof,
