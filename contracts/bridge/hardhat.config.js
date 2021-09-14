@@ -71,6 +71,7 @@ module.exports = {
   defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
+      blockGasLimit: 30000000,
     },
     dev: {
       url: 'http://localhost:8545/',

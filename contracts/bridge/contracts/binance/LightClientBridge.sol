@@ -47,6 +47,8 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         uint256 id
     );
 
+    event CleanExpiredCommitment(uint256 id);
+
     event NewMMRRoot(bytes32 mmrRoot, uint256 blockNumber);
 
     /* Types */
@@ -80,7 +82,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
      * It contains a next validator set or not and a MMR root that commits to the darwinia history,
      * including past blocks and can be used to verify darwinia blocks. 
      * @param payload the payload of the new commitment in beefy justifications (in
-     * our case, this is a next validator set and a new MMR root for all past darwinia blocks)
+     *  our case, this is a next validator set and a new MMR root for all past darwinia blocks)
      * @param blockNumber block number for the given commitment
      * @param validatorSetId validator set id that signed the given commitment
      */
@@ -114,7 +116,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
      * @param validatorClaimsBitfield a bitfield signalling which validators they claim have signed
      */
     struct ValidationData {
-        address senderAddress;
+        address payable senderAddress;
         bytes32 commitmentHash;
         uint256 blockNumber;
         uint256[] validatorClaimsBitfield;
@@ -128,11 +130,6 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     mapping(uint256 => ValidationData) public validationData;
 
     /* Constants */
-
-    uint256 public constant PICK_NUMERATOR = 1;
-    uint256 public constant THRESHOLD_NUMERATOR = 2;
-    uint256 public constant THRESHOLD_DENOMINATOR = 3;
-    uint256 public constant BLOCK_WAIT_PERIOD = 12;
 
     /**
      * Hash of the NextValidatorSet Schema
@@ -162,20 +159,41 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     bytes32 internal constant COMMITMENT_TYPEHASH = 0xfb7618382249e6518a69252ccf86f0a991565f2a2cd2d7af9c6b59cb805b9f0b;
 
     /**
+     * @dev Block wait period after `newSignatureCommitment` to pick the random block hash
+    */
+    uint256 public constant BLOCK_WAIT_PERIOD = 12;
+
+    /**
+     * @dev Block wait period after `newSignatureCommitment` to pick the random block hash
+     *  120000000/2^25 = 3.57 ether is recommended for Ethereum
+    */
+    uint256 public constant MIN_SUPPORT = 4 ether;
+
+    /**
+     * @dev A vault to store expired commitment or malicious commitment slashed asset
+     */
+    address payable public immutable SLASH_VAULT;
+
+    /**
      * @notice Deploys the LightClientBridge contract
      * @param network source chain network name
+     * @param slashVault initial SLASH_VAULT
+     * @param guards initial guards of guard set
+     * @param threshold initial threshold of guard set
      * @param validatorSetId initial validator set id
      * @param validatorSetLen length of initial validator set
      * @param validatorSetRoot initial validator set merkle tree root
     */
     constructor(
         bytes32 network,
+        address payable slashVault,
         address[] memory guards,
         uint256 threshold,
         uint256 validatorSetId,
         uint256 validatorSetLen,
         bytes32 validatorSetRoot
     ) public GuardRegistry(network, guards, threshold) {
+        SLASH_VAULT = slashVault;
         _updateValidatorSet(validatorSetId, validatorSetLen, validatorSetRoot);
     }
 
@@ -190,7 +208,10 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     }
 
     function requiredNumberOfValidatorSigs() public view returns (uint256) {
-        return (validatorSetLen * PICK_NUMERATOR) / THRESHOLD_DENOMINATOR;
+        if (validatorSetLen < 36) {
+            return validatorSetLen * 2 / 3 + 1;
+        }
+        return 25;
     }
 
     function createRandomBitfield(uint256 id)
@@ -199,17 +220,15 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         returns (uint256[] memory)
     {
         ValidationData storage data = validationData[id];
+        return _createRandomBitfield(data);
+    }
 
+    function _createRandomBitfield(ValidationData storage data)
+        internal
+        view
+        returns (uint256[] memory)
+    {
         require(data.blockNumber > 0, "Bridge: invalid id");
-
-        /**
-         * @dev verify that block wait period has passed
-         */
-        require(
-            block.number >= data.blockNumber + BLOCK_WAIT_PERIOD,
-            "Bridge: Block wait period not over"
-        );
-
         return
             randomNBitsWithPriorCheck(
                 getSeed(data.blockNumber),
@@ -325,14 +344,12 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         uint256 validatorPosition,
         address validatorAddress,
         bytes32[] memory validatorAddressMerkleProof
-    ) public returns (uint256) {
+    ) public payable returns (uint256) {
         /**
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, > 2/3
          */
         require(
-            countSetBits(validatorClaimsBitfield) >
-                (validatorSetLen * THRESHOLD_NUMERATOR) /
-                    THRESHOLD_DENOMINATOR,
+            countSetBits(validatorClaimsBitfield) > (validatorSetLen * 2) / 3,
             "Bridge: Bitfield not enough validators"
         );
 
@@ -347,9 +364,9 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         );
 
         /**
-         * @todo Lock up the sender stake as collateral
+         * @notice Lock up the sender stake as collateral
          */
-        // TODO
+        require(msg.value == MIN_SUPPORT, "Bridge: Collateral mismatch");
 
         // Accept and save the commitment
         validationData[currentId] = ValidationData(
@@ -390,7 +407,24 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
          */
         delete validationData[id];
 
+        /**
+         * @notice If relayer do `completeSignatureCommitment` late or failed, `MIN_SUPPORT` will be slashed
+         */
+        msg.sender.transfer(MIN_SUPPORT);
+
         emit FinalVerificationSuccessful(msg.sender, id);
+    }
+
+    /**
+     * @notice Clean up the expired commitment and slash
+     * @param id the identifier generated by submit commitment
+     */
+    function cleanExpiredCommitment(uint256 id) public {
+        ValidationData storage data = validationData[id];
+        require(block.number > data.blockNumber + BLOCK_WAIT_PERIOD + 256, "Bridge: Only expired");
+        SLASH_VAULT.transfer(MIN_SUPPORT);
+        delete validationData[id];
+        emit CleanExpiredCommitment(id);
     }
 
     /* Private Functions */
@@ -419,22 +453,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
             "Bridge: Sender address does not match original validation data"
         );
 
-        /**
-         * @dev verify that block wait period has passed
-         */
-        require(
-            block.number >= data.blockNumber + BLOCK_WAIT_PERIOD,
-            "Bridge: Block wait period not over"
-        );
-
-        uint256 requiredNumOfValidatorSigs = requiredNumberOfValidatorSigs();
-
-        uint256[] memory randomBitfield = randomNBitsWithPriorCheck(
-            getSeed(data.blockNumber),
-            data.validatorClaimsBitfield,
-            requiredNumOfValidatorSigs,
-            validatorSetLen
-        );
+        uint256[] memory randomBitfield = _createRandomBitfield(data);
 
         // Encode and hash the commitment
         bytes32 commitmentHash = createCommitmentHash(commitment);
@@ -447,7 +466,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         verifyValidatorProofSignatures(
             randomBitfield,
             validatorProof,
-            requiredNumOfValidatorSigs,
+            requiredNumberOfValidatorSigs(),
             commitmentHash
         );
 
@@ -611,6 +630,19 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         view
         returns (uint256)
     {
+        /**
+         * @dev verify that block wait period has passed
+         */
+        require(
+            block.number > blockNumber + BLOCK_WAIT_PERIOD,
+            "Bridge: Block wait period not over"
+        );
+
+        require(
+            block.number <= blockNumber + BLOCK_WAIT_PERIOD + 256,
+            "Bridge: Block number has expired"
+        );
+
         uint256 randomSeedBlockNum = blockNumber + BLOCK_WAIT_PERIOD;
         // @note Create a hash seed from the block number
         bytes32 randomSeedBlockHash = blockhash(randomSeedBlockNum);
