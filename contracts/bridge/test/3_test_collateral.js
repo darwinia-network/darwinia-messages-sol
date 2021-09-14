@@ -1,6 +1,6 @@
 const { BigNumber } = require("ethers");
 const {
-  mine, printTxPromiseGas
+  mine, printTxPromiseGas, catchRevert
 } = require("./shared/helpers");
 
 const {
@@ -63,13 +63,23 @@ describe("Light Client collateral tests", function () {
     )
     await newSigTxPromise.should.be.fulfilled
     const lastId = (await beefyLightClient.currentId()).sub(BigNumber.from(1));
-    await mine(20);
+
+
+    const blockNumber = (await beefyLightClient.validationData(lastId)).blockNumber
+    await mine(12);
+    await catchRevert(beefyLightClient.createRandomBitfield(lastId), 'Bridge: Block wait period not over');
+    await mine(1);
+    expect((await beefyLightClient.createRandomBitfield(lastId)).toString())
+      .eq("7")
     const cleanTxPromise = beefyLightClient.cleanExpiredCommitment(lastId)
     await cleanTxPromise.should.be.rejected
-
-    await mine(235)
+    await mine(254)
+    expect((await beefyLightClient.createRandomBitfield(lastId)).toString())
+      .eq("7")
+    console.log(await ethers.provider.getBlockNumber())
     const cleanTxPromise2 = beefyLightClient.cleanExpiredCommitment(lastId)
     await cleanTxPromise2.should.be.fulfilled
+    await catchRevert(beefyLightClient.createRandomBitfield(lastId), 'Bridge: invalid id');
     const slash = (await ethers.provider.getBalance(vault)).toString()
     expect(slash).to.eq("4000000000000000000")
   })
