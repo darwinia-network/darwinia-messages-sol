@@ -229,15 +229,6 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         returns (uint256[] memory)
     {
         require(data.blockNumber > 0, "Bridge: invalid id");
-
-        /**
-         * @dev verify that block wait period has passed
-         */
-        require(
-            block.number >= data.blockNumber + BLOCK_WAIT_PERIOD,
-            "Bridge: Block wait period not over"
-        );
-
         return
             randomNBitsWithPriorCheck(
                 getSeed(data.blockNumber),
@@ -639,8 +630,16 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         view
         returns (uint256)
     {
+        /**
+         * @dev verify that block wait period has passed
+         */
         require(
-            block.number <= blockNumber + 256,
+            block.number > blockNumber + BLOCK_WAIT_PERIOD,
+            "Bridge: Block wait period not over"
+        );
+
+        require(
+            block.number <= blockNumber + BLOCK_WAIT_PERIOD + 256,
             "Bridge: Block number has expired"
         );
 
