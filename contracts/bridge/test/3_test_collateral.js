@@ -64,8 +64,6 @@ describe("Light Client collateral tests", function () {
     await newSigTxPromise.should.be.fulfilled
     const lastId = (await beefyLightClient.currentId()).sub(BigNumber.from(1));
 
-
-    const blockNumber = (await beefyLightClient.validationData(lastId)).blockNumber
     await mine(12);
     await catchRevert(beefyLightClient.createRandomBitfield(lastId), 'Bridge: Block wait period not over');
     await mine(1);
@@ -76,7 +74,6 @@ describe("Light Client collateral tests", function () {
     await mine(254)
     expect((await beefyLightClient.createRandomBitfield(lastId)).toString())
       .eq("7")
-    console.log(await ethers.provider.getBlockNumber())
     const cleanTxPromise2 = beefyLightClient.cleanExpiredCommitment(lastId)
     await cleanTxPromise2.should.be.fulfilled
     await catchRevert(beefyLightClient.createRandomBitfield(lastId), 'Bridge: invalid id');
