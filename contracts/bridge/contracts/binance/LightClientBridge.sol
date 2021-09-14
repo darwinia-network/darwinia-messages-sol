@@ -220,7 +220,14 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         returns (uint256[] memory)
     {
         ValidationData storage data = validationData[id];
+        return _createRandomBitfield(data);
+    }
 
+    function _createRandomBitfield(ValidationData storage data)
+        internal
+        view
+        returns (uint256[] memory)
+    {
         require(data.blockNumber > 0, "Bridge: invalid id");
 
         /**
@@ -455,22 +462,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
             "Bridge: Sender address does not match original validation data"
         );
 
-        /**
-         * @dev verify that block wait period has passed
-         */
-        require(
-            block.number >= data.blockNumber + BLOCK_WAIT_PERIOD,
-            "Bridge: Block wait period not over"
-        );
-
-        uint256 requiredNumOfValidatorSigs = requiredNumberOfValidatorSigs();
-
-        uint256[] memory randomBitfield = randomNBitsWithPriorCheck(
-            getSeed(data.blockNumber),
-            data.validatorClaimsBitfield,
-            requiredNumOfValidatorSigs,
-            validatorSetLen
-        );
+        uint256[] memory randomBitfield = _createRandomBitfield(data);
 
         // Encode and hash the commitment
         bytes32 commitmentHash = createCommitmentHash(commitment);
@@ -483,7 +475,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         verifyValidatorProofSignatures(
             randomBitfield,
             validatorProof,
-            requiredNumOfValidatorSigs,
+            requiredNumberOfValidatorSigs(),
             commitmentHash
         );
 
@@ -648,7 +640,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         returns (uint256)
     {
         require(
-            block.number < blockNumber + 256,
+            block.number <= blockNumber + 256,
             "Bridge: Block number has expired"
         );
 
