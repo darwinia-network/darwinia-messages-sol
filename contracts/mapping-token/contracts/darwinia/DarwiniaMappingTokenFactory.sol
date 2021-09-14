@@ -9,6 +9,8 @@ import "../interfaces/IERC20.sol";
 contract DarwiniaMappingTokenFactory is Initializable, Ownable {
     address public constant DISPATCH_ENCODER = 0x0000000000000000000000000000000000000018;
     address public constant DISPATCH         = 0x0000000000000000000000000000000000000019;
+    // This system account is derived from the dvm pallet id `dar/dvmp`,
+    // and it has no private key, it comes from internal transaction in dvm.
     address public constant SYSTEM_ACCOUNT   = 0x6D6F646C6461722f64766D700000000000000000;
     struct TokenInfo {
         bytes4 eventReceiver;
@@ -46,7 +48,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
     }
 
     /**
-     * @dev Throws if called by any account other than the system account defined by 0x0 address.
+     * @dev Throws if called by any account other than the system account defined by SYSTEM_ACCOUNT address.
      */
     modifier onlySystem() {
         require(SYSTEM_ACCOUNT == msg.sender, "System: caller is not the system account");
@@ -98,6 +100,8 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
                              abi.encode(backing, source, token)));
         require(encodeSuccess, "create: encode dispatch failed");
 
+        // for sub<>sub bridge, we don't need return the register response, so the encoder above return an empty call
+        // for ethereum<>darwinia bridge, the encoded call is `register_response_from_contract`
         if (encoded.length > 0) {
             (bool success, ) = DISPATCH.call(encoded);
             require(success, "create: call create erc20 precompile failed");
@@ -122,15 +126,14 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
     }
     
     // cross transfer to remote chain without waiting any confirm information,
-    // this must request the burn proof can be always verified by the remote chain corrently.
+    // this require the burn proof can be always verified by the remote chain corrently.
     // so, here the user's token burned directly.
     function burnAndRemoteUnlock(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
         burnAndSendProof(specVersion, weight, token, recipient, amount);
         IERC20(token).burn(address(this), amount);
     }
 
-    // cross transfer to remote chain with waiting confirmation.
-    // the transfered token information locked in the contract first, then wait the result from remote chain.
+    // Step 1: User lock the mapped token to this contract and waiting the remote backing's unlock result.
     function burnAndRemoteUnlockWaitingConfirm(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
         burnAndSendProof(specVersion, weight, token, recipient, amount);
         TokenInfo memory info = tokenToInfo[token];
@@ -142,9 +145,9 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, token, amount);
     }
 
-    // confirm transfer information from remote chain.
-    // 1. if event is verified and the token unlocked successfully on remote chain, then we burn the mapped token
-    // 2. if event is verified, but the token can't unlocked on remote chain, then we take back the mapped token to user.
+    // Step 2: The remote backing's unlock result comes. The result is true(success) or false(failure).
+    // True:  if event is verified and the origin token unlocked successfully on remote chain, then we burn the mapped token
+    // False: if event is verified, but the origin token unlocked on remote chain failed, then we take back the mapped token to user.
     function confirmBurnAndRemoteUnlock(bytes memory messageId, bool result) external onlySystem {
         UnconfirmedInfo memory info = transferUnconfirmed[messageId];
         require(info.amount > 0 && info.sender != address(0) && info.token != address(0), "invalid unconfirmed message");
@@ -161,6 +164,9 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         require(amount > 0, "can not transfer amount zero");
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
+        // Lock the fund in this before message on remote backing chain get dispatched successfully and burn finally
+        // If remote backing chain unlock the origin token successfully, then this fund will be burned.
+        // Otherwise, this fund will be transfered back to the msg.sender.
         require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer token failed");
 
         (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
