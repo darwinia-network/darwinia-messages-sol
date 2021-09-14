@@ -10,6 +10,9 @@ import "../interfaces/IERC20.sol";
 contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
     address public constant DISPATCH_ENCODER = 0x0000000000000000000000000000000000000018;
     address public constant DISPATCH         = 0x0000000000000000000000000000000000000019;
+    // This system account is derived from the dvm pallet id `dar/dvmp`,
+    // and it has no private key, it comes from internal transaction in dvm.
+    address public constant SYSTEM_ACCOUNT   = 0x6D6F646C6461722f64766D700000000000000000;
     struct TokenInfo {
         bytes4 eventReceiver;
         // 0 - Erc20Token
@@ -19,16 +22,24 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
         address backing;
         address source;
     }
+    struct UnconfirmedInfo {
+        address sender;
+        address token;
+        uint256 amount;
+    }
     address public admin;
     address[] public allTokens;
     mapping(bytes32 => address payable) public tokenMap;
     mapping(address => TokenInfo) public tokenToInfo;
     mapping(string => address) public logic;
+    mapping(bytes => UnconfirmedInfo) public transferUnconfirmed;
 
     string constant LOGIC_ERC20 = "erc20";
 
     event NewLogicSetted(string name, address addr);
     event IssuingERC20Created(address indexed sender, address backing, address source, address token);
+    event BurnAndWaitingConfirm(bytes, address, bytes, address, uint256);
+    event RemoteUnlockConfirmed(bytes, address, address, uint256, bool);
 
     receive() external payable {
     }
@@ -38,10 +49,10 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
     }
 
     /**
-     * @dev Throws if called by any account other than the system account defined by 0x0 address.
+     * @dev Throws if called by any account other than the system account defined by SYSTEM_ACCOUNT address.
      */
     modifier onlySystem() {
-        require(address(0) == msg.sender, "System: caller is not the system account");
+        require(SYSTEM_ACCOUNT == msg.sender, "System: caller is not the system account");
         _;
     }
 
@@ -94,12 +105,16 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
         tokenToInfo[token] = TokenInfo(eventReceiver, tokenType, backing, source);
 
         (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
-            abi.encodePacked(eventReceiver, bytes4(keccak256("registered(bytes4,uint32,string,string,uint8,address,address)")),
+            abi.encodePacked(eventReceiver, bytes4(keccak256("token_register_response()")),
                              abi.encode(backing, source, token)));
         require(encodeSuccess, "create: encode dispatch failed");
 
-        (bool success, ) = DISPATCH.call(encoded);
-        require(success, "create: call create erc20 precompile failed");
+        // for sub<>sub bridge, we don't need return the register response, so the encoder above return an empty call
+        // for ethereum<>darwinia bridge, the encoded call is `register_response_from_contract`
+        if (encoded.length > 0) {
+            (bool success, ) = DISPATCH.call(encoded);
+            require(success, "create: call create erc20 precompile failed");
+        }
         emit IssuingERC20Created(msg.sender, backing, source, token);
     }
 
@@ -119,16 +134,53 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
         expendDailyLimit(token, amount);
         IERC20(token).mint(recipient, amount);
     }
+    
+    // cross transfer to remote chain without waiting any confirm information,
+    // this require the burn proof can be always verified by the remote chain corrently.
+    // so, here the user's token burned directly.
+    function burnAndRemoteUnlock(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
+        burnAndSendProof(specVersion, weight, token, recipient, amount);
+        IERC20(token).burn(address(this), amount);
+    }
 
-    function crossTransfer(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
+    // Step 1: User lock the mapped token to this contract and waiting the remote backing's unlock result.
+    function burnAndRemoteUnlockWaitingConfirm(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
+        burnAndSendProof(specVersion, weight, token, recipient, amount);
+        TokenInfo memory info = tokenToInfo[token];
+        (bool readSuccess, bytes memory messageId) = DISPATCH_ENCODER.call(
+            abi.encodePacked(info.eventReceiver, bytes4(keccak256("read_latest_message_id()")))
+        );
+        require(readSuccess, "burn: read message id failed");
+        transferUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, token, amount);
+        emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, token, amount);
+    }
+
+    // Step 2: The remote backing's unlock result comes. The result is true(success) or false(failure).
+    // True:  if event is verified and the origin token unlocked successfully on remote chain, then we burn the mapped token
+    // False: if event is verified, but the origin token unlocked on remote chain failed, then we take back the mapped token to user.
+    function confirmBurnAndRemoteUnlock(bytes memory messageId, bool result) external onlySystem {
+        UnconfirmedInfo memory info = transferUnconfirmed[messageId];
+        require(info.amount > 0 && info.sender != address(0) && info.token != address(0), "invalid unconfirmed message");
+        if (result) {
+            IERC20(info.token).burn(address(this), info.amount);
+        } else {
+            require(IERC20(info.token).transfer(info.sender, info.amount), "transfer back failed");
+        }
+        delete transferUnconfirmed[messageId];
+        emit RemoteUnlockConfirmed(messageId, info.sender, info.token, info.amount, result);
+    }
+
+    function burnAndSendProof(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) internal {
         require(amount > 0, "can not transfer amount zero");
         TokenInfo memory info = tokenToInfo[token];
         require(info.source != address(0), "token is not created by factory");
+        // Lock the fund in this before message on remote backing chain get dispatched successfully and burn finally
+        // If remote backing chain unlock the origin token successfully, then this fund will be burned.
+        // Otherwise, this fund will be transfered back to the msg.sender.
         require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer token failed");
-        IERC20(token).burn(address(this), amount);
 
         (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
-            abi.encodePacked(info.eventReceiver, bytes4(keccak256("burned(uint32,uint64,address,address,uint256)")),
+            abi.encodePacked(info.eventReceiver, bytes4(keccak256("burn_and_remote_unlock()")),
                            abi.encode(specVersion,
                                       weight,
                                       info.tokenType,
