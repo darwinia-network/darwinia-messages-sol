@@ -36,7 +36,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
     event NewLogicSetted(string name, address addr);
     event IssuingERC20Created(address indexed sender, address backing, address source, address token);
     event BurnAndWaitingConfirm(bytes, address, bytes, address, uint256);
-    event RemoteUnlockConfirmed(bytes, address, address, uint256);
+    event RemoteUnlockConfirmed(bytes, address, address, uint256, bool);
 
     receive() external payable {
     }
@@ -151,10 +151,10 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable {
         if (result) {
             IERC20(info.token).burn(address(this), info.amount);
         } else {
-            require(IERC20(info.token).transferFrom(address(this), info.sender, info.amount), "transfer back failed");
+            require(IERC20(info.token).transfer(info.sender, info.amount), "transfer back failed");
         }
         delete transferUnconfirmed[messageId];
-        emit RemoteUnlockConfirmed(messageId, info.sender, info.token, info.amount);
+        emit RemoteUnlockConfirmed(messageId, info.sender, info.token, info.amount, result);
     }
 
     function burnAndSendProof(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) internal {
