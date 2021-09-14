@@ -421,7 +421,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
      */
     function cleanExpiredCommitment(uint256 id) public {
         ValidationData storage data = validationData[id];
-        require(block.number > data.blockNumber + 256, "Bridge: Only expired");
+        require(block.number > data.blockNumber + BLOCK_WAIT_PERIOD + 256, "Bridge: Only expired");
         SLASH_VAULT.transfer(MIN_SUPPORT);
         delete validationData[id];
         emit CleanExpiredCommitment(id);
