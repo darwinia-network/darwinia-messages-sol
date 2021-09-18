@@ -1,0 +1,39 @@
+specVersion: 0.0.2
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: DarwiniaMappingTokenFactory
+    network: ropsten
+    source:
+      address: "0xCBe0c1ac9eFF75f2002158A1635974caaac3A811"
+      abi: DarwiniaMappingTokenFactory
+      startBlock: 11000000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - BurnAndWaitingConfirm
+        - DailyLimitChange
+        - IssuingERC20Created
+        - NewLogicSetted
+        - OwnershipTransferred
+        - RemoteUnlockConfirmed
+      abis:
+        - name: DarwiniaMappingTokenFactory
+          file: ./abis/DarwiniaMappingTokenFactory.json
+      eventHandlers:
+        - event: BurnAndWaitingConfirm(indexed bytes,address,bytes,address,uint256)
+          handler: handleBurnAndWaitingConfirm
+        - event: DailyLimitChange(address,uint256)
+          handler: handleDailyLimitChange
+        - event: IssuingERC20Created(indexed address,address,address,address)
+          handler: handleIssuingERC20Created
+        - event: NewLogicSetted(string,address)
+          handler: handleNewLogicSetted
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: RemoteUnlockConfirmed(indexed bytes,address,address,uint256,bool)
+          handler: handleRemoteUnlockConfirmed
+      file: ./src/mapping.ts
