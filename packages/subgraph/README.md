@@ -1,3 +1,5 @@
+* Step 1. Init the project use abi
+```
 >> graph init --product subgraph-studio. --abi
 ✔ Product for which to initialize · hosted-service
 ✔ Subgraph name · wormhole/DarwiniaMappingTokenFactory
@@ -25,10 +27,13 @@ Next steps:
   3. Run `yarn deploy` to deploy the subgraph.
 
 Make sure to visit the documentation on https://thegraph.com/docs/ for further information.
+```
 
-This will generate a named ExampleEntity entity in schema.graphql. This maybe not suitable for our project.
+* Step 2. Modify schema.graphql to define the entity.
+
+Last step will generate a named ExampleEntity entity in schema.graphql. This maybe not suitable for our project.
 So we need to modify schema.graphql and regenerate the schema files.
-
+```
 >> npx graph codegen --output-dir generated/
   Skip migration: Bump mapping apiVersion from 0.0.1 to 0.0.2
   Skip migration: Bump mapping apiVersion from 0.0.2 to 0.0.3
@@ -49,14 +54,18 @@ So we need to modify schema.graphql and regenerate the schema files.
 ✔ Generate types for GraphQL schema
 
 Types generated successfully
+```
 
-Then we need modify the logic file src/mapping.ts
+* Step 3. Modify the logic file src/mapping.ts
 
-Then create subgraph on subnode
+* Step 4. Create subgraph on subnode
+```
 >> npx graph create wormhole/DarwiniaMappingTokenFactory --node http://127.0.0.1:8020
 Created subgraph: wormhole/DarwiniaMappingTokenFactory
+```
 
-The last step, deploy
+* Step 5. The last step, deploy
+```
 >> npx graph deploy wormhole/DarwiniaMappingTokenFactory --ipfs http://localhost:5001 --node http://localhost:8020
 ✔ Version Label (e.g. v0.0.1) ·
   Skip migration: Bump mapping apiVersion from 0.0.1 to 0.0.2
@@ -86,4 +95,4 @@ Deployed to http://localhost:8000/subgraphs/name/wormhole/DarwiniaMappingTokenFa
 Subgraph endpoints:
 Queries (HTTP):     http://localhost:8000/subgraphs/name/wormhole/DarwiniaMappingTokenFactory
 Subscriptions (WS): http://localhost:8001/subgraphs/name/wormhole/DarwiniaMappingTokenFactory
-
+```
