@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: DarwiniaMappingTokenFactory
-    network: ropsten
+    network: pangolin
     source:
-      address: "0xCBe0c1ac9eFF75f2002158A1635974caaac3A811"
+      address: "0xfE5D3c52F7ee9aa32a69b96Bfbb088Ba0bCd8EfC"
       abi: DarwiniaMappingTokenFactory
-      startBlock: 11000000
+      startBlock: 1
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4

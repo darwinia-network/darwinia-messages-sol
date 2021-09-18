@@ -25,8 +25,8 @@ const deployContract = async function () {
         console.log("it is production env");
         web3 = new Web3("http://pangolin-rpc.darwinia.network");
     }
-    const key =  "0x...";
-    const addr = "0x...";
+    const key =  "0x99b3c12287537e38c90a9219d4cb074a89a16e9cdb20bf85728ebd97c343e342";
+    const addr = "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b";
     web3.eth.accounts.wallet.add(key);
     const _1e8 = web3.utils.toHex("0x52b7d2dcc80cd2e4000000");
 

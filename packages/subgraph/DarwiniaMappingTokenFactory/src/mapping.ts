@@ -15,12 +15,12 @@ export function handleBurnAndWaitingConfirm(
 ): void {
   // Entities can be loaded from the store using a string ID; this ID
   // needs to be unique across all entities of the same type
-  let entity = BurnRecordEntity.load(event.params.message_id.toString())
+  let entity = BurnRecordEntity.load(event.params.message_id.toHexString())
 
   // Entities only exist after they have been saved to the store;
   // `null` checks allow to create entities on demand
   if (entity == null) {
-    entity = new BurnRecordEntity(event.params.message_id.toString())
+    entity = new BurnRecordEntity(event.params.message_id.toHexString())
   }
 
   // Entity fields can be set based on event parameters
@@ -82,7 +82,7 @@ export function handleOwnershipTransferred(event: OwnershipTransferred): void {}
 export function handleRemoteUnlockConfirmed(
   event: RemoteUnlockConfirmed
 ): void {
-  let entity = new BurnRecordEntity(event.params.message_id.toString())
+  let entity = new BurnRecordEntity(event.params.message_id.toHexString())
   if (entity == null) {
     return
   }
