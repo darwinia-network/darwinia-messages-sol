@@ -29,6 +29,7 @@ export function handleBurnAndWaitingConfirm(
   entity.receipt = event.params.receipt
   entity.token = event.params.token
   entity.amount = event.params.amount
+  entity.transaction = event.transaction.hash
   // 0 --- unconfirmed
   // 1 --- confirmed return true
   // 2 --- confirmed return false

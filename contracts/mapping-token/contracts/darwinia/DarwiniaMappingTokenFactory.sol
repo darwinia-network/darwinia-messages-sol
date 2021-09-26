@@ -38,8 +38,8 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
 
     event NewLogicSetted(string name, address addr);
     event IssuingERC20Created(address indexed sender, address backing, address source, address token);
-    event BurnAndWaitingConfirm(bytes indexed message_id, address sender, bytes receipt, address token, uint256 amount);
-    event RemoteUnlockConfirmed(bytes indexed message_id, address sender, address token, uint256 amount, bool result);
+    event BurnAndWaitingConfirm(bytes message_id, address sender, bytes receipt, address token, uint256 amount);
+    event RemoteUnlockConfirmed(bytes message_id, address sender, address token, uint256 amount, bool result);
 
     receive() external payable {
     }

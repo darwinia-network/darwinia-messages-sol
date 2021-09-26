@@ -6,9 +6,9 @@ dataSources:
     name: DarwiniaMappingTokenFactory
     network: pangolin
     source:
-      address: "0xfE5D3c52F7ee9aa32a69b96Bfbb088Ba0bCd8EfC"
+      address: "0xdc552396caec809752fed0c5e23fd3983766e758"
       abi: DarwiniaMappingTokenFactory
-      startBlock: 1
+      startBlock: 598002
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -24,7 +24,7 @@ dataSources:
         - name: DarwiniaMappingTokenFactory
           file: ./abis/DarwiniaMappingTokenFactory.json
       eventHandlers:
-        - event: BurnAndWaitingConfirm(indexed bytes,address,bytes,address,uint256)
+        - event: BurnAndWaitingConfirm(bytes,address,bytes,address,uint256)
           handler: handleBurnAndWaitingConfirm
         - event: DailyLimitChange(address,uint256)
           handler: handleDailyLimitChange
@@ -34,6 +34,6 @@ dataSources:
           handler: handleNewLogicSetted
         - event: OwnershipTransferred(indexed address,indexed address)
           handler: handleOwnershipTransferred
-        - event: RemoteUnlockConfirmed(indexed bytes,address,address,uint256,bool)
+        - event: RemoteUnlockConfirmed(bytes,address,address,uint256,bool)
           handler: handleRemoteUnlockConfirmed
       file: ./src/mapping.ts
