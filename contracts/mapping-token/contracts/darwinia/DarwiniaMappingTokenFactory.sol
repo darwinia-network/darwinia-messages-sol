@@ -33,7 +33,7 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
     mapping(address => TokenInfo) public tokenToInfo;
     mapping(string => address) public logic;
     mapping(bytes => UnconfirmedInfo) public transferUnconfirmed;
-    string public chain_name;
+    string public issuing_chain_name;
 
     string constant LOGIC_ERC20 = "erc20";
 
@@ -45,9 +45,9 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
     receive() external payable {
     }
 
-    function initialize(string memory _chain_name) public initializer {
+    function initialize(string memory _issuing_chain_name) public initializer {
         ownableConstructor();
-        chain_name = _chain_name;
+        issuing_chain_name = _issuing_chain_name;
     }
 
     /**
@@ -91,14 +91,14 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
         uint8 decimals,
         address backing,
         address source,
-        string memory source_chain
+        string memory backing_chain_name
     ) external onlySystem returns (address payable token) {
         bytes32 salt = keccak256(abi.encodePacked(backing, source));
         require(tokenMap[salt] == address(0), "contract has been deployed");
         bytes memory bytecode = type(TransparentUpgradeableProxy).creationCode;
         bytes memory erc20initdata = 
             abi.encodeWithSignature("initialize(string,string,uint8)",
-                                    string(abi.encodePacked(name, "(", source_chain, "->", chain_name, ")")),
+                                    string(abi.encodePacked(name, "(", backing_chain_name, ">", issuing_chain_name, ")")),
                                     symbol,
                                     decimals);
         bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(logic[LOGIC_ERC20], admin, erc20initdata));
