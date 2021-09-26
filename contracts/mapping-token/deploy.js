@@ -51,7 +51,7 @@ const deployContract = async function () {
     const mapping_logic = require("./artifacts/contracts/darwinia/DarwiniaMappingTokenFactory.sol/DarwiniaMappingTokenFactory.json");
     const mapping_logic_addr = await deploy.deployJson(web3, mapping_logic, []);
 
-    var calldata = deploy.callData(web3, "./abi/contracts/darwinia/DarwiniaMappingTokenFactory.sol/DarwiniaMappingTokenFactory.json", mapping_logic_addr, "initialize");
+    var calldata = deploy.callData(web3, "./abi/contracts/darwinia/DarwiniaMappingTokenFactory.sol/DarwiniaMappingTokenFactory.json", mapping_logic_addr, "initialize", "Pangolin");
 
     // 4. mapping token proxy for erc20
     console.log("4. start to deploy erc20 mapping token factory proxy");

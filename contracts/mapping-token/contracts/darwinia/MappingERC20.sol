@@ -11,7 +11,7 @@ contract MappingERC20 is IERC20, Ownable, Initializable {
     using SafeMath for uint256;
     using Address for address;
 
-    string private constant symbolPrefix = "m";
+    string private constant symbolPrefix = "x";
     mapping (address => uint256) private _balances;
 
     mapping (address => mapping (address => uint256)) private _allowances;

@@ -19,12 +19,12 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
         // 1 - NativeToken
         // ...
         uint32  tokenType;
-        address backing;
-        address source;
+        address backing_address;
+        address original_token;
     }
     struct UnconfirmedInfo {
         address sender;
-        address token;
+        address mapping_token;
         uint256 amount;
     }
     address public admin;
@@ -33,19 +33,21 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
     mapping(address => TokenInfo) public tokenToInfo;
     mapping(string => address) public logic;
     mapping(bytes => UnconfirmedInfo) public transferUnconfirmed;
+    string public issuing_chain_name;
 
     string constant LOGIC_ERC20 = "erc20";
 
     event NewLogicSetted(string name, address addr);
-    event IssuingERC20Created(address indexed sender, address backing, address source, address token);
+    event IssuingERC20Created(address indexed sender, address backing_address, address original_token, address mapping_token);
     event BurnAndWaitingConfirm(bytes message_id, address sender, bytes receipt, address token, uint256 amount);
     event RemoteUnlockConfirmed(bytes message_id, address sender, address token, uint256 amount, bool result);
 
     receive() external payable {
     }
 
-    function initialize() public initializer {
+    function initialize(string memory _issuing_chain_name) public initializer {
         ownableConstructor();
+        issuing_chain_name = _issuing_chain_name;
     }
 
     /**
@@ -60,12 +62,12 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
         admin = _admin;
     }
 
-    function setDailyLimit(address token, uint amount) public onlyOwner  {
-        _setDailyLimit(token, amount);
+    function setDailyLimit(address mapping_token, uint amount) public onlyOwner  {
+        _setDailyLimit(mapping_token, amount);
     }
 
-    function changeDailyLimit(address token, uint amount) public onlyOwner  {
-        _changeDailyLimit(token, amount);
+    function changeDailyLimit(address mapping_token, uint amount) public onlyOwner  {
+        _changeDailyLimit(mapping_token, amount);
     }
 
     function setERC20Logic(address _logic) external onlyOwner {
@@ -87,26 +89,27 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
         string memory name,
         string memory symbol,
         uint8 decimals,
-        address backing,
-        address source
-    ) external onlySystem returns (address payable token) {
-        bytes32 salt = keccak256(abi.encodePacked(backing, source));
+        address backing_address,
+        address original_token,
+        string memory backing_chain_name
+    ) external onlySystem returns (address payable mapping_token) {
+        bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
         require(tokenMap[salt] == address(0), "contract has been deployed");
         bytes memory bytecode = type(TransparentUpgradeableProxy).creationCode;
         bytes memory erc20initdata = 
             abi.encodeWithSignature("initialize(string,string,uint8)",
-                                    name,
+                                    string(abi.encodePacked(name, "(", backing_chain_name, ">", issuing_chain_name, ")")),
                                     symbol,
                                     decimals);
         bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(logic[LOGIC_ERC20], admin, erc20initdata));
-        token = deploy(salt, bytecodeWithInitdata);
-        tokenMap[salt] = token;
-        allTokens.push(token);
-        tokenToInfo[token] = TokenInfo(eventReceiver, tokenType, backing, source);
+        mapping_token = deploy(salt, bytecodeWithInitdata);
+        tokenMap[salt] = mapping_token;
+        allTokens.push(mapping_token);
+        tokenToInfo[mapping_token] = TokenInfo(eventReceiver, tokenType, backing_address, original_token);
 
         (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
             abi.encodePacked(eventReceiver, bytes4(keccak256("token_register_response()")),
-                             abi.encode(backing, source, token)));
+                             abi.encode(backing_address, original_token, mapping_token)));
         require(encodeSuccess, "create: encode dispatch failed");
 
         // for sub<>sub bridge, we don't need return the register response, so the encoder above return an empty call
@@ -115,44 +118,44 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
             (bool success, ) = DISPATCH.call(encoded);
             require(success, "create: call create erc20 precompile failed");
         }
-        emit IssuingERC20Created(msg.sender, backing, source, token);
+        emit IssuingERC20Created(msg.sender, backing_address, original_token, mapping_token);
     }
 
     function tokenLength() external view returns (uint) {
         return allTokens.length;
     }
 
-    function mappingToken(address backing, address source) public view returns (address) {
-        bytes32 salt = keccak256(abi.encodePacked(backing, source));
+    function mappingToken(address backing_address, address original_token) public view returns (address) {
+        bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
         return tokenMap[salt];
     }
 
-    function crossReceive(address token, address recipient, uint256 amount) external onlySystem {
+    function crossReceive(address mapping_token, address recipient, uint256 amount) external onlySystem {
         require(amount > 0, "can not receive amount zero");
-        TokenInfo memory info = tokenToInfo[token];
-        require(info.source != address(0), "token is not created by factory");
-        expendDailyLimit(token, amount);
-        IERC20(token).mint(recipient, amount);
+        TokenInfo memory info = tokenToInfo[mapping_token];
+        require(info.original_token != address(0), "token is not created by factory");
+        expendDailyLimit(mapping_token, amount);
+        IERC20(mapping_token).mint(recipient, amount);
     }
     
     // cross transfer to remote chain without waiting any confirm information,
     // this require the burn proof can be always verified by the remote chain corrently.
     // so, here the user's token burned directly.
-    function burnAndRemoteUnlock(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
-        burnAndSendProof(specVersion, weight, token, recipient, amount);
-        IERC20(token).burn(address(this), amount);
+    function burnAndRemoteUnlock(uint32 specVersion, uint64 weight, address mapping_token, bytes memory recipient, uint256 amount) external payable {
+        burnAndSendProof(specVersion, weight, mapping_token, recipient, amount);
+        IERC20(mapping_token).burn(address(this), amount);
     }
 
     // Step 1: User lock the mapped token to this contract and waiting the remote backing's unlock result.
-    function burnAndRemoteUnlockWaitingConfirm(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) external payable {
-        burnAndSendProof(specVersion, weight, token, recipient, amount);
-        TokenInfo memory info = tokenToInfo[token];
+    function burnAndRemoteUnlockWaitingConfirm(uint32 specVersion, uint64 weight, address mapping_token, bytes memory recipient, uint256 amount) external payable {
+        burnAndSendProof(specVersion, weight, mapping_token, recipient, amount);
+        TokenInfo memory info = tokenToInfo[mapping_token];
         (bool readSuccess, bytes memory messageId) = DISPATCH_ENCODER.call(
             abi.encodePacked(info.eventReceiver, bytes4(keccak256("read_latest_message_id()")))
         );
         require(readSuccess, "burn: read message id failed");
-        transferUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, token, amount);
-        emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, token, amount);
+        transferUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mapping_token, amount);
+        emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mapping_token, amount);
     }
 
     // Step 2: The remote backing's unlock result comes. The result is true(success) or false(failure).
@@ -160,33 +163,33 @@ contract DarwiniaMappingTokenFactory is Initializable, Ownable, DailyLimit {
     // False: if event is verified, but the origin token unlocked on remote chain failed, then we take back the mapped token to user.
     function confirmBurnAndRemoteUnlock(bytes memory messageId, bool result) external onlySystem {
         UnconfirmedInfo memory info = transferUnconfirmed[messageId];
-        require(info.amount > 0 && info.sender != address(0) && info.token != address(0), "invalid unconfirmed message");
+        require(info.amount > 0 && info.sender != address(0) && info.mapping_token != address(0), "invalid unconfirmed message");
         if (result) {
-            IERC20(info.token).burn(address(this), info.amount);
+            IERC20(info.mapping_token).burn(address(this), info.amount);
         } else {
-            require(IERC20(info.token).transfer(info.sender, info.amount), "transfer back failed");
+            require(IERC20(info.mapping_token).transfer(info.sender, info.amount), "transfer back failed");
         }
         delete transferUnconfirmed[messageId];
-        emit RemoteUnlockConfirmed(messageId, info.sender, info.token, info.amount, result);
+        emit RemoteUnlockConfirmed(messageId, info.sender, info.mapping_token, info.amount, result);
     }
 
-    function burnAndSendProof(uint32 specVersion, uint64 weight, address token, bytes memory recipient, uint256 amount) internal {
+    function burnAndSendProof(uint32 specVersion, uint64 weight, address mapping_token, bytes memory recipient, uint256 amount) internal {
         require(amount > 0, "can not transfer amount zero");
-        TokenInfo memory info = tokenToInfo[token];
-        require(info.source != address(0), "token is not created by factory");
+        TokenInfo memory info = tokenToInfo[mapping_token];
+        require(info.original_token != address(0), "token is not created by factory");
         // Lock the fund in this before message on remote backing chain get dispatched successfully and burn finally
         // If remote backing chain unlock the origin token successfully, then this fund will be burned.
         // Otherwise, this fund will be transfered back to the msg.sender.
-        require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer token failed");
+        require(IERC20(mapping_token).transferFrom(msg.sender, address(this), amount), "transfer token failed");
 
         (bool encodeSuccess, bytes memory encoded) = DISPATCH_ENCODER.call(
             abi.encodePacked(info.eventReceiver, bytes4(keccak256("burn_and_remote_unlock()")),
                            abi.encode(specVersion,
                                       weight,
                                       info.tokenType,
-                                      info.backing,
+                                      info.backing_address,
                                       msg.sender, 
-                                      info.source, 
+                                      info.original_token,
                                       recipient, 
                                       amount,
                                       msg.value)));
