@@ -11,7 +11,6 @@ contract MappingERC20 is IERC20, Ownable, Initializable {
     using SafeMath for uint256;
     using Address for address;
 
-    string private constant symbolPrefix = "x";
     mapping (address => uint256) private _balances;
 
     mapping (address => mapping (address => uint256)) private _allowances;
@@ -31,7 +30,7 @@ contract MappingERC20 is IERC20, Ownable, Initializable {
     ) public initializer {
         ownableConstructor();
         _name = name;
-        _symbol = string(abi.encodePacked(symbolPrefix, symbol));
+        _symbol = symbol;
         _decimals = decimals;
     }
 
