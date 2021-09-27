@@ -18,11 +18,11 @@ mapping(token) = {symbol: token_prefix + token.symbol, name: token.name + name_p
 
     Example: If the original symbol is "RING", the mapping token's symbol will be "xRING". If this token is mapped to a third chain further, the symbol will be "xxRING".
 
-2. name postfix: "(${backing_chain_short_name}>${issuing_chain_short_name})"
+2. name postfix: "[${backing_chain_short_name}>"
 
-    Example: If RING is mapped from Darwinia to Crab, assume RING's name on Darwinia is "Darwinia Network Native Token" (Note: it is using balances pallet instead of ERC20, so the name was newly created in Backing Pallet).  The mapping ERC20 token's name on Crab will be "Darwinia Network Native Token(Darwinia>Crab)", the token is mapped from Crab to Moonriver again, the name will be "Darwinia Network Native Token(Darwinia>Crab)(Crab>Moonriver)"
+    Example: If RING is mapped from Darwinia to Crab, assume RING's name on Darwinia is "Darwinia Network Native Token" (Note: it is using balances pallet instead of ERC20, so the name was newly created in Backing Pallet).  The mapping ERC20 token's name on Crab will be "Darwinia Network Native Token[Darwinia>", the token is mapped from Crab to Moonriver again, the name will be "Darwinia Network Native Token[Darwinia>[Crab>"
 
-## 资产类型
+## Supported Token Types
 
 ### ERC20:
 
