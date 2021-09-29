@@ -2,7 +2,7 @@
 pragma solidity ^0.6.0;
 import "./BasicMappingTokenFactory.sol";
 
-contract Ethereum2DarwiniabMappingTokenFactory is BasicMappingTokenFactory {
+contract Ethereum2DarwiniaMappingTokenFactory is BasicMappingTokenFactory {
     // create new erc20 mapping token contract
     // save and manage the token list
     function newErc20Contract(

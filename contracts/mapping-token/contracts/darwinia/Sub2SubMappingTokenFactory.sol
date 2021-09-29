@@ -3,7 +3,7 @@ pragma solidity ^0.6.0;
 import "./BasicMappingTokenFactory.sol";
 
 contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
-    address payable public constant FEE_ACCOUNT   = 0x6D6F646C6461722f64766D700000000000000000;
+    address payable public constant FEE_ACCOUNT   = 0x726f6F7400000000000000000000000000000000;
     struct UnconfirmedInfo {
         address sender;
         address mapping_token;
@@ -29,20 +29,26 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
         // Otherwise, this fund will be transfered back to the msg.sender.
         require(IERC20(mapping_token).transferFrom(msg.sender, address(this), amount), "transfer token failed");
 
-        (bool encodeSuccess, bytes memory unlock_message) = DISPATCH_ENCODER.call(
-            abi.encodePacked(bytes4(keccak256("s2s_encode_remote_unlock_message()")),
+        (bool encodePayloadSuccess, bytes memory unlockMessage) = DISPATCH_ENCODER.call(
+            abi.encodePacked(bytes4(keccak256("s2s_encode_remote_unlock_payload()")),
                 abi.encode(specVersion,
                     weight,
                     info.tokenType,
                     info.original_token,
                     recipient, 
                     amount)));
-        require(encodeSuccess, "burn: encode dispatch failed");
+        require(encodePayloadSuccess, "burn: encode remote unlock payload failed");
+
+        // (message payload, fee)
+        (bool encodeSendMessageCall, bytes memory sendMessageCall) = DISPATCH_ENCODER.call(
+            abi.encodePacked(bytes4(keccak256("s2s_encode_send_message_call()")),
+                abi.encode(unlockMessage, msg.value)));
+        require(encodeSendMessageCall, "burn: encode send message call failed");
 
         // 1. send bridge fee to fee_account
         FEE_ACCOUNT.transfer(msg.value);
         // 2. send unlock message to remote backing across sub<>sub bridge
-        (bool success, ) = DISPATCH.call(unlock_message);
+        (bool success, ) = DISPATCH.call(sendMessageCall);
         require(success, "burn: send unlock message failed");
         // 3. getting the messageid, saving and waiting confirm
         (bool readSuccess, bytes memory messageId) = DISPATCH_ENCODER.call(
