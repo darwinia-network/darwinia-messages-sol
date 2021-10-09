@@ -6,13 +6,9 @@ import "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
 import "@darwinia/contracts-utils/contracts/DailyLimit.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "../interfaces/IERC20.sol";
+import "./MappingTokenAddress.sol";
 
-contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit {
-    address public constant DISPATCH_ENCODER = 0x0000000000000000000000000000000000000018;
-    address public constant DISPATCH         = 0x0000000000000000000000000000000000000019;
-    // This system account is derived from the dvm pallet id `dar/dvmp`,
-    // and it has no private key, it comes from internal transaction in dvm.
-    address public constant SYSTEM_ACCOUNT   = 0x6D6F646C6461722f64766D700000000000000000;
+contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, MappingTokenAddress {
     struct TokenInfo {
         // 0 - Erc20Token
         // 1 - NativeToken

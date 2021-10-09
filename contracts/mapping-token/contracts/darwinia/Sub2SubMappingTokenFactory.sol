@@ -3,14 +3,13 @@ pragma solidity ^0.6.0;
 import "./BasicMappingTokenFactory.sol";
 
 contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
-    address payable public constant FEE_ACCOUNT   = 0x726f6F7400000000000000000000000000000000;
     struct UnconfirmedInfo {
         address sender;
         address mapping_token;
         uint256 amount;
     }
     mapping(bytes => UnconfirmedInfo) public transferUnconfirmed;
-    event BurnAndWaitingConfirm(bytes message_id, address sender, bytes receipt, address token, uint256 amount);
+    event BurnAndWaitingConfirm(bytes message_id, address sender, bytes recipient, address token, uint256 amount);
     event RemoteUnlockConfirmed(bytes message_id, address sender, address token, uint256 amount, bool result);
 
     // Step 1: User lock the mapped token to this contract and waiting the remote backing's unlock result.
@@ -46,7 +45,7 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
         require(encodeSendMessageCall, "burn: encode send message call failed");
 
         // 1. send bridge fee to fee_account
-        FEE_ACCOUNT.transfer(msg.value);
+        S2S_FEE_ACCOUNT.transfer(msg.value);
         // 2. send unlock message to remote backing across sub<>sub bridge
         (bool success, ) = DISPATCH.call(sendMessageCall);
         require(success, "burn: send unlock message failed");
@@ -74,4 +73,3 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
         emit RemoteUnlockConfirmed(messageId, info.sender, info.mapping_token, info.amount, result);
     }
 }
-    
