@@ -3,8 +3,10 @@ type BurnRecordEntity @entity {
   message_id: Bytes! # bytes
   transaction: Bytes! # bytes
   sender: Bytes! # address
-  receipt: Bytes! # address
+  recipient: Bytes! # address
   token: Bytes! # address
   amount: BigInt!
+  start_timestamp: BigInt!
+  end_timestamp: BigInt
   result: Int
 }
