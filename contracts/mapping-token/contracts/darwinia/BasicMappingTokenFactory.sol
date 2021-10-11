@@ -63,7 +63,7 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
 
     // internal
     function deploy(bytes32 salt, bytes memory code) internal returns (address addr) {
-        bytes32 newsalt = keccak256(abi.encodePacked(salt, msg.sender)); 
+        bytes32 newsalt = keccak256(abi.encodePacked(salt, msg.sender, address(this)));
         assembly {
             addr := create2(0, add(code, 0x20), mload(code), newsalt)
             if iszero(extcodesize(addr)) { revert(0, 0) }
