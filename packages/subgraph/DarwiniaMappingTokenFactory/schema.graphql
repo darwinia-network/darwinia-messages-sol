@@ -1,7 +1,8 @@
 type BurnRecordEntity @entity {
   id: ID!
   message_id: Bytes! # bytes
-  transaction: Bytes! # bytes
+  request_transaction: Bytes! # bytes
+  response_transaction: Bytes # bytes
   sender: Bytes! # address
   recipient: Bytes! # address
   token: Bytes! # address

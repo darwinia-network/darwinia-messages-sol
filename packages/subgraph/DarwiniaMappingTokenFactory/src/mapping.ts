@@ -29,7 +29,7 @@ export function handleBurnAndWaitingConfirm(
   entity.recipient = event.params.recipient
   entity.token = event.params.token
   entity.amount = event.params.amount
-  entity.transaction = event.transaction.hash
+  entity.request_transaction = event.transaction.hash
   entity.start_timestamp = event.block.timestamp
   // 0 --- unconfirmed
   // 1 --- confirmed return true
@@ -89,6 +89,7 @@ export function handleRemoteUnlockConfirmed(
     return
   }
   entity.result = event.params.result ? 1 : 2
+  entity.response_transaction = event.transaction.hash
   entity.end_timestamp = event.block.timestamp
   entity.save()
 }
