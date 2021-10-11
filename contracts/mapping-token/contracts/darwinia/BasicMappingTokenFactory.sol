@@ -27,6 +27,7 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
 
     event NewLogicSetted(string name, address addr);
     event IssuingERC20Created(address backing_address, address original_token, address mapping_token);
+    event MappingTokenUpdated(bytes32 salt, address old_address, address new_address);
 
     receive() external payable {
     }
@@ -61,6 +62,23 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
         emit NewLogicSetted(LOGIC_ERC20, _logic);
     }
 
+    // update the mapping token address when the mapping token contract deployed before
+    function updateMappingToken(uint32 tokenType, address backing_address, address original_token, address mapping_token, uint index) external onlyOwner {
+        bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
+        address existed = tokenMap[salt];
+        if (existed != address(0)) {
+            require(tokenLength() > index && allTokens[index] == existed, "invalid index");
+            allTokens[index] = mapping_token;
+            tokenToInfo[mapping_token] = tokenToInfo[existed];
+            delete tokenToInfo[existed];
+        } else {
+            allTokens.push(mapping_token);
+            tokenToInfo[mapping_token] = TokenInfo(tokenType, backing_address, original_token);
+        }
+        tokenMap[salt] = mapping_token;
+        emit MappingTokenUpdated(salt, existed, mapping_token);
+    }
+
     // internal
     function deploy(bytes32 salt, bytes memory code) internal returns (address addr) {
         bytes32 newsalt = keccak256(abi.encodePacked(salt, msg.sender, address(this)));
@@ -71,7 +89,7 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
     }
 
     // view
-    function tokenLength() external view returns (uint) {
+    function tokenLength() public view returns (uint) {
         return allTokens.length;
     }
 
