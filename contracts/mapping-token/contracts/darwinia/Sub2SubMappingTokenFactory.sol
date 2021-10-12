@@ -21,7 +21,7 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
         uint256 amount
     ) external payable {
         require(amount > 0, "can not transfer amount zero");
-        TokenInfo memory info = tokenToInfo[mapping_token];
+        TokenInfo memory info = mappingToken2Info[mapping_token];
         require(info.original_token != address(0), "token is not created by factory");
         // Lock the fund in this before message on remote backing chain get dispatched successfully and burn finally
         // If remote backing chain unlock the origin token successfully, then this fund will be burned.

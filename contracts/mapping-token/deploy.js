@@ -74,7 +74,8 @@ const deployContract = async function () {
     console.log("set admin");
     await api.send(web3, e2d_mapping_proxy, 'setAdmin', addr, admin_addr);
     console.log("set erc20 logic");
-    await api.send(web3, e2d_mapping_proxy, 'setERC20Logic', addr, issuing_addr);
+    await api.send(web3, e2d_mapping_proxy, 'setTokenContractLogic', addr, 0, issuing_addr);
+    await api.send(web3, e2d_mapping_proxy, 'setTokenContractLogic', addr, 1, issuing_addr);
     
     // 5. mapping token proxy for s2s
     console.log("6. start to deploy s2s mapping token factory proxy");
@@ -84,7 +85,8 @@ const deployContract = async function () {
     console.log("set admin");
     await api.send(web3, s2s_mapping_proxy, 'setAdmin', addr, admin_addr);
     console.log("set erc20 logic");
-    await api.send(web3, s2s_mapping_proxy, 'setERC20Logic', addr, issuing_addr);
+    await api.send(web3, s2s_mapping_proxy, 'setTokenContractLogic', addr, 0, issuing_addr);
+    await api.send(web3, s2s_mapping_proxy, 'setTokenContractLogic', addr, 1, issuing_addr);
     console.log("deploy fininshed");
 }
 
