@@ -5,10 +5,10 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "../interfaces/ILightClientBridge.sol";
-import "../interfaces/IOutboundChannel.sol";
+import "../interfaces/IOutboundLane.sol";
 
 // BasicOutboundChannel is a basic channel that just sends messages with a nonce.
-contract BasicOutboundChannel is IOutboundChannel, AccessControl {
+contract BasicOutboundLane is IOutboundLane, AccessControl {
 
     /**
      * Notifies an observer that the message has accepted
@@ -102,7 +102,6 @@ contract BasicOutboundChannel is IOutboundChannel, AccessControl {
     constructor(
         uint256 _chainPosition,
         uint256 _lanePosition,
-        uint256 _oldestUnprunedNonce,
         uint256 _latestReceivedNonce,
         uint256 _latestGeneratedNonce,
         ILightClientBridge _lightClientBridge
@@ -122,7 +121,7 @@ contract BasicOutboundChannel is IOutboundChannel, AccessControl {
         require(hasRole(OUTBOUND_ROLE, msg.sender), "Channel: not-authorized");
         uint256 nonce = latestGeneratedNonce + 1;
         latestGeneratedNonce = nonce;
-        bytes32 messageHash = keccak256(
+        bytes32 messageInfoHash = keccak256(
             abi.encode(
                 MESSAGEINFO_TYPEHASH,
                 nonce,
@@ -134,7 +133,7 @@ contract BasicOutboundChannel is IOutboundChannel, AccessControl {
         );
         messages[nonce] = Message({
             status: Status.ACCEPTED,
-            hash: messageHash,
+            infoHash: messageInfoHash,
             dispatchResult: false
         });
         // TODO:: callback `on_messages_accepted`
@@ -252,7 +251,7 @@ contract BasicOutboundChannel is IOutboundChannel, AccessControl {
         return keccak256(
                     abi.encode(
                         INBOUNDLANEDATA_TYPETASH,
-                        inboundLaneData.latestReceivedNonce,
+                        inboundLaneData.lastDeliveredNonce,
                         hashMessages(inboundLaneData.msgs)
                     )
                 );
@@ -292,18 +291,18 @@ contract BasicOutboundChannel is IOutboundChannel, AccessControl {
         uint256 nonce = latestReceivedNonce + 1;
         for (uint256 i = nonce; i <= latest_delivered_nonce; i++) {
             Message storage message = messages[i];
-            Message memory newMsg = inboundLaneData.msgs[i];
-            require(message.nonce == nonce, "Channel: invalid nonce");
-            require(message.nonce == newMsg.nonce, "Channel: invalid nonce");
-            require(newMsg.Status == Status.DISPATCHED, "Channel: message should dispatched");
-            message.Status = DELIVERED;
+            uint256 index = i - nonce;
+            Message memory newMsg = inboundLaneData.msgs[index];
+            require(message.infoHash == newMsg.infoHash, "Channel: invalid message hash");
+            require(newMsg.status == Status.DISPATCHED, "Channel: message should dispatched");
+            message.status = Status.DELIVERED;
             message.dispatchResult = newMsg.dispatchResult;
             // TODO: may need a callback, such as `on_messages_delivered`
-            emit MessagesDelivered(nonce, message.dispatchResult);
-            // pruneMessage(nonce);
-            delete messages[nonce];
+            emit MessagesDelivered(i, message.dispatchResult);
+            // pruneMessage(i);
+            delete messages[i];
         }
-        latestReceivedNonce = nonce;
+        latestReceivedNonce = latest_delivered_nonce;
     }
 
 }

@@ -7,7 +7,7 @@ interface ILightClientBridge {
         uint256 beefyMMRLeafIndex,
         uint256 beefyMMRLeafCount,
         bytes32[] calldata peaks,
-        bytes32[] calldata siblings 
+        bytes32[] calldata siblings
     ) external view returns (bool);
 
     function getFinalizedBlockNumber() external view returns (uint256);

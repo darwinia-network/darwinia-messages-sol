@@ -88,6 +88,12 @@ contract BasicInboundLane {
         bool dispatchResult;
     }
 
+    struct MessageStorage {
+        Status status;
+        bytes32 infoHash;
+        bool dispatchResult;
+    }
+
     struct OutboundLaneData {
         uint256 latestReceivedNonce;
         Message[] msgs;
@@ -131,7 +137,7 @@ contract BasicInboundLane {
     uint256 public lastDeliveredNonce;
 
     // nonce => message
-    mapping(uint256 => Message) messages;
+    mapping(uint256 => MessageStorage) messages;
 
     /**
      * @notice Deploys the BasicInboundChannel contract
@@ -188,7 +194,7 @@ contract BasicInboundLane {
             "Channel: Invalid proof"
         );
         verifyMessages(outboundLaneData, inboundLaneDataHash, beefyMMRLeaf, chainCount, chainMessagesProof, channelMessagesRoot, channelCount, channelMessagesProof);
-        receiveStateUpdate(OutboundLaneData.latestReceivedNonce);
+        receiveStateUpdate(outboundLaneData.latestReceivedNonce);
         dispatch(outboundLaneData.msgs);
     }
 
@@ -219,7 +225,7 @@ contract BasicInboundLane {
 
         // Require there is enough gas to play all messages
         require(
-            gasleft() >= (messages.length * MAX_GAS_PER_MESSAGE) + GAS_BUFFER,
+            gasleft() >= (outboundLaneData.msgs.length * MAX_GAS_PER_MESSAGE) + GAS_BUFFER,
             "Channel: insufficient gas for delivery of all messages"
         );
     }
@@ -227,27 +233,28 @@ contract BasicInboundLane {
     function receiveStateUpdate(uint256 latest_received_nonce) internal {
         uint256 last_delivered_nonce = lastDeliveredNonce;
         uint256 last_confirmed_nonce = lastConfirmedNonce;
-        require(latest_received_nonce <= lastDeliveredNonce, "Channel: invalid received nonce");
-        if (latest_received_nonce > lastConfirmedNonce) {
-            for (uint256 nonce = lastConfirmedNonce; nonce <= latest_received_nonce; nonce++) {
+        require(latest_received_nonce <= last_delivered_nonce, "Channel: invalid received nonce");
+        if (latest_received_nonce > last_confirmed_nonce) {
+            for (uint256 nonce = last_confirmed_nonce; nonce <= latest_received_nonce; nonce++) {
                 // pruneMessage(nonce);
                 delete messages[nonce];
                 emit MessagePruned(nonce);
             }
+            lastConfirmedNonce = latest_received_nonce;
         }
-        lastConfirmedNonce = latest_received_nonce;
     }
 
     function dispatch(Message[] memory msgs) internal {
         for (uint256 i = 0; i < msgs.length; i++) {
+            require(msgs[i].status == Status.ACCEPTED, "Channel: invalid message status");
             MessageInfo memory message = msgs[i].info;
-            require(message.status == Status.ACCEPTED, "Channel: invalid message status");
-            uint256 nonce = lastDeliveredNonce;
+            uint256 nonce = lastDeliveredNonce + 1;
             // Check message nonce is correct and increment nonce for replay protection
-            require(message.nonce == nonce + 1, "Channel: invalid nonce");
-            require(message.channelContract == address(this), "Channel: invalid lane contract");
+            require(message.nonce == nonce, "Channel: invalid nonce");
+            require(message.laneContract == address(this), "Channel: invalid lane contract");
 
-            nonce = nonce + 1;
+            lastDeliveredNonce = nonce;
+
             bool success = false;
             bytes memory returndata;
 
@@ -271,22 +278,21 @@ contract BasicInboundLane {
                 emit MessageDispatched(message.nonce, false, reason);
             }
 
-            bytes32 messageHash = keccak256(
+            bytes32 messageInfoHash = keccak256(
                 abi.encode(
-                    MESSAGE_TYPEHASH,
+                    MESSAGEINFO_TYPEHASH,
+                    message.nonce,
                     message.sourceAccount,
                     message.targetContract,
-                    message.channelContract,
-                    message.nonce,
+                    message.laneContract,
                     message.payload
                 )
             );
-            messages[nonce] = Message({
+            messages[nonce] = MessageStorage({
                 status: Status.ACCEPTED,
-                hash: messageHash,
+                infoHash: messageInfoHash,
                 dispatchResult: success
             });
-            lastDeliveredNonce = nonce;
         }
     }
 
@@ -319,7 +325,7 @@ contract BasicInboundLane {
             );
     }
 
-    function hash(Message memory message)
+    function hash(MessageInfo memory message)
         internal
         pure
         returns (bytes32)
@@ -349,7 +355,7 @@ contract BasicInboundLane {
                 abi.encode(
                     MESSAGE_TYPEHASH,
                     message.status,
-                    hash(message),
+                    hash(message.info),
                     message.dispatchResult
                 )
             );
