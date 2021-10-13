@@ -72,6 +72,97 @@ contract BasicLane {
         uint32 blockNumber;
     }
 
+    /* State */
+    /**
+     * @dev The contract address of on-chain light client
+     */
+    ILightClientBridge public lightClientBridge;
+
+    /**
+     * @dev The position of the leaf in the `chain_message_merkle_tree`, index starting with 0
+     */
+    uint256 public chainPosition;
+
+    /**
+     * @dev The position of the leaf in the `channel_messages_merkle_tree`, index starting with 0
+     */
+    uint256 public lanePosition;
+
+    function verifyMMRLeaf(
+        BeefyMMRLeaf memory beefyMMRLeaf,
+        uint256 beefyMMRLeafIndex,
+        uint256 beefyMMRLeafCount,
+        bytes32[] memory peaks,
+        bytes32[] memory siblings
+    ) internal
+      view
+    {
+        require(
+            lightClientBridge.verifyBeefyMerkleLeaf(
+                hash(beefyMMRLeaf),
+                beefyMMRLeafIndex,
+                beefyMMRLeafCount,
+                peaks,
+                siblings
+            ),
+            "Channel: Invalid proof"
+        );
+    }
+
+
+    function verifyMessages(
+        bytes32  outboundLaneDataHash,
+        bytes32  inboundLaneDataHash,
+        BeefyMMRLeaf memory leaf,
+        uint256 chainCount,
+        bytes32[] memory chainMessagesProof,
+        bytes32 channelMessagesRoot,
+        uint256 channelCount,
+        bytes32[] memory channelMessagesProof
+    )
+        internal
+        view
+    {
+        require(
+            leaf.blockNumber <= lightClientBridge.getFinalizedBlockNumber(),
+            "Channel: block not finalized"
+        );
+        // Validate that the commitment matches the commitment contents
+        require(
+            validateMessagesMatchRoot(outboundLaneDataHash, inboundLaneDataHash, leaf.chainMessagesRoot, chainCount, chainMessagesProof, channelMessagesRoot, channelCount, channelMessagesProof),
+            "Channel: invalid messages"
+        );
+    }
+
+    function validateMessagesMatchRoot(
+        bytes32 outboundLaneDataHash,
+        bytes32 inboundLaneDataHash,
+        bytes32 chainMessagesRoot,
+        uint256 chainCount,
+        bytes32[] memory chainMessagesProof,
+        bytes32 channelMessagesRoot,
+        uint256 channelCount,
+        bytes32[] memory channelMessagesProof
+    ) internal view returns (bool) {
+        bytes32 laneHash = hash(outboundLaneDataHash, inboundLaneDataHash);
+        return
+            MerkleProof.verifyMerkleLeafAtPosition(
+                channelMessagesRoot,
+                laneHash,
+                lanePosition,
+                channelCount,
+                channelMessagesProof
+            )
+            &&
+            MerkleProof.verifyMerkleLeafAtPosition(
+                chainMessagesRoot,
+                channelMessagesRoot,
+                lanePosition,
+                chainCount,
+                chainMessagesProof
+            );
+    }
+
     function hash(BeefyMMRLeaf memory leaf)
         internal
         pure

@@ -49,21 +49,6 @@ contract BasicInboundLane is BasicLane {
     /* State */
 
     /**
-     * @dev The contract address of on-chain light client
-     */
-    ILightClientBridge public lightClientBridge;
-
-    /**
-     * @dev The position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-     */
-    uint256 public chainPosition;
-
-    /**
-     * @dev The position of the leaf in the `channel_messages_merkle_tree`, index starting with 0
-     */
-    uint256 public lanePosition;
-
-    /**
      * @dev ID of the next message, which is incremented in strict order
      * @notice When upgrading the channel, this value must be synchronized
      */
@@ -117,53 +102,18 @@ contract BasicInboundLane is BasicLane {
         bytes32[] memory peaks,
         bytes32[] memory siblings
     ) public {
-        bytes32 beefyMMRLeafHash = hash(beefyMMRLeaf);
-        require(
-            lightClientBridge.verifyBeefyMerkleLeaf(
-                beefyMMRLeafHash,
-                beefyMMRLeafIndex,
-                beefyMMRLeafCount,
-                peaks,
-                siblings
-            ),
-            "Channel: Invalid proof"
-        );
-        verifyMessages(outboundLaneData, inboundLaneDataHash, beefyMMRLeaf, chainCount, chainMessagesProof, channelMessagesRoot, channelCount, channelMessagesProof);
-        receiveStateUpdate(outboundLaneData.latestReceivedNonce);
-        dispatch(outboundLaneData.msgs);
-    }
-
-    /* Private Functions */
-
-    function verifyMessages(
-        OutboundLaneData memory outboundLaneData,
-        bytes32 inboundLaneDataHash,
-        BeefyMMRLeaf memory leaf,
-        uint256 chainCount,
-        bytes32[] memory chainMessagesProof,
-        bytes32 channelMessagesRoot,
-        uint256 channelCount,
-        bytes32[] memory channelMessagesProof
-    )
-        internal
-        view
-    {
-        require(
-            leaf.blockNumber <= lightClientBridge.getFinalizedBlockNumber(),
-            "Channel: block not finalized"
-        );
-        // Validate that the commitment matches the commitment contents
-        require(
-            validateMessagesMatchRoot(outboundLaneData, inboundLaneDataHash, leaf.chainMessagesRoot, chainCount, chainMessagesProof, channelMessagesRoot, channelCount, channelMessagesProof),
-            "Channel: invalid messages"
-        );
-
+        verifyMMRLeaf(beefyMMRLeaf, beefyMMRLeafIndex, beefyMMRLeafCount, peaks, siblings);
+        verifyMessages(hash(outboundLaneData), inboundLaneDataHash, beefyMMRLeaf, chainCount, chainMessagesProof, channelMessagesRoot, channelCount, channelMessagesProof);
         // Require there is enough gas to play all messages
         require(
             gasleft() >= (outboundLaneData.msgs.length * MAX_GAS_PER_MESSAGE) + GAS_BUFFER,
             "Channel: insufficient gas for delivery of all messages"
         );
+        receiveStateUpdate(outboundLaneData.latestReceivedNonce);
+        dispatch(outboundLaneData.msgs);
     }
+
+    /* Private Functions */
 
     function receiveStateUpdate(uint256 latest_received_nonce) internal {
         uint256 last_delivered_nonce = lastDeliveredNonce;
@@ -220,35 +170,6 @@ contract BasicInboundLane is BasicLane {
                 dispatchResult: success
             });
         }
-    }
-
-    function validateMessagesMatchRoot(
-        OutboundLaneData memory outboundLaneData,
-        bytes32 inboundLaneDataHash,
-        bytes32 chainMessagesRoot,
-        uint256 chainCount,
-        bytes32[] memory chainMessagesProof,
-        bytes32 channelMessagesRoot,
-        uint256 channelCount,
-        bytes32[] memory channelMessagesProof
-    ) internal view returns (bool) {
-        bytes32 messagesHash = hash(hash(outboundLaneData), inboundLaneDataHash);
-        return
-            MerkleProof.verifyMerkleLeafAtPosition(
-                channelMessagesRoot,
-                messagesHash,
-                lanePosition,
-                channelCount,
-                channelMessagesProof
-            )
-            &&
-            MerkleProof.verifyMerkleLeafAtPosition(
-                chainMessagesRoot,
-                channelMessagesRoot,
-                lanePosition,
-                chainCount,
-                chainMessagesProof
-            );
     }
 
     function hash(OutboundLaneData memory outboundChannelData)
