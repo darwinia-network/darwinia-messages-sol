@@ -26,10 +26,11 @@ export function handleBurnAndWaitingConfirm(
   // Entity fields can be set based on event parameters
   entity.message_id = event.params.message_id
   entity.sender = event.params.sender
-  entity.receipt = event.params.receipt
+  entity.recipient = event.params.recipient
   entity.token = event.params.token
   entity.amount = event.params.amount
-  entity.transaction = event.transaction.hash
+  entity.request_transaction = event.transaction.hash
+  entity.start_timestamp = event.block.timestamp
   // 0 --- unconfirmed
   // 1 --- confirmed return true
   // 2 --- confirmed return false
@@ -88,6 +89,8 @@ export function handleRemoteUnlockConfirmed(
     return
   }
   entity.result = event.params.result ? 1 : 2
+  entity.response_transaction = event.transaction.hash
+  entity.end_timestamp = event.block.timestamp
   entity.save()
 }
 
