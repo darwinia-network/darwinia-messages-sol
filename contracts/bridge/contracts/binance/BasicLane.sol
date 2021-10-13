@@ -88,6 +88,8 @@ contract BasicLane {
      */
     uint256 public lanePosition;
 
+    /* Private Functions */
+
     function verifyMMRLeaf(
         BeefyMMRLeaf memory beefyMMRLeaf,
         uint256 beefyMMRLeafIndex,
@@ -109,7 +111,6 @@ contract BasicLane {
         );
     }
 
-
     function verifyMessages(
         bytes32  outboundLaneDataHash,
         bytes32  inboundLaneDataHash,
@@ -129,7 +130,16 @@ contract BasicLane {
         );
         // Validate that the commitment matches the commitment contents
         require(
-            validateMessagesMatchRoot(outboundLaneDataHash, inboundLaneDataHash, leaf.chainMessagesRoot, chainCount, chainMessagesProof, channelMessagesRoot, channelCount, channelMessagesProof),
+            validateMessagesMatchRoot(
+                outboundLaneDataHash,
+                inboundLaneDataHash,
+                leaf.chainMessagesRoot,
+                chainCount,
+                chainMessagesProof,
+                channelMessagesRoot,
+                channelCount,
+                channelMessagesProof
+            ),
             "Channel: invalid messages"
         );
     }

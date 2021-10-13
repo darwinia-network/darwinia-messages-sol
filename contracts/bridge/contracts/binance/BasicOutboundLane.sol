@@ -101,7 +101,16 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
         bytes32[] memory siblings
     ) public {
         verifyMMRLeaf(beefyMMRLeaf, beefyMMRLeafIndex, beefyMMRLeafCount, peaks, siblings);
-        verifyMessages(outboundLaneDataHash, hash(inboundLaneData), beefyMMRLeaf, chainCount, chainMessagesProof, channelMessagesRoot, channelCount, channelMessagesProof);
+        verifyMessages(
+            outboundLaneDataHash,
+            hash(inboundLaneData),
+            beefyMMRLeaf,
+            chainCount,
+            chainMessagesProof,
+            channelMessagesRoot,
+            channelCount,
+            channelMessagesProof
+        );
         confirmDelivery(inboundLaneData);
     }
 

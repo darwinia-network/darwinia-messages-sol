@@ -103,10 +103,19 @@ contract BasicInboundLane is BasicLane {
         bytes32[] memory siblings
     ) public {
         verifyMMRLeaf(beefyMMRLeaf, beefyMMRLeafIndex, beefyMMRLeafCount, peaks, siblings);
-        verifyMessages(hash(outboundLaneData), inboundLaneDataHash, beefyMMRLeaf, chainCount, chainMessagesProof, channelMessagesRoot, channelCount, channelMessagesProof);
+        verifyMessages(
+            hash(outboundLaneData),
+            inboundLaneDataHash,
+            beefyMMRLeaf,
+            chainCount,
+            chainMessagesProof,
+            channelMessagesRoot,
+            channelCount,
+            channelMessagesProof
+        );
         // Require there is enough gas to play all messages
         require(
-            gasleft() >= (outboundLaneData.msgs.length * MAX_GAS_PER_MESSAGE) + GAS_BUFFER,
+            gasleft() >= outboundLaneData.msgs.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
             "Channel: insufficient gas for delivery of all messages"
         );
         receiveStateUpdate(outboundLaneData.latestReceivedNonce);
@@ -163,16 +172,15 @@ contract BasicInboundLane is BasicLane {
                 emit MessageDispatched(messageInfo.nonce, false, reason);
             }
 
-            bytes32 messageInfoHash = hash(messageInfo);
             messages[nonce] = MessageStorage({
                 status: Status.ACCEPTED,
-                infoHash: messageInfoHash,
+                infoHash: hash(messageInfo),
                 dispatchResult: success
             });
         }
     }
 
-    function hash(OutboundLaneData memory outboundChannelData)
+    function hash(OutboundLaneData memory outboundLaneData)
         internal
         pure
         returns (bytes32)
@@ -180,8 +188,8 @@ contract BasicInboundLane is BasicLane {
         return keccak256(
                     abi.encode(
                         OUTBOUNDLANEDATA_TYPETASH,
-                        outboundChannelData.latestReceivedNonce,
-                        hash(outboundChannelData.msgs)
+                        outboundLaneData.latestReceivedNonce,
+                        hash(outboundLaneData.msgs)
                     )
                 );
     }
