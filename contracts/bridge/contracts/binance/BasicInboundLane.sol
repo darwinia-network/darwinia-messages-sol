@@ -10,7 +10,7 @@ import "../interfaces/ICrossChainFilter.sol";
  * @title A entry contract for syncing message from Darwinia to Ethereum-like chain
  * @author echo
  * @notice The basic inbound lane is the message layer of the bridge
- * @dev See https://itering.notion.site/Basic-Message-Lane-c41f0c9e453c478abb68e93f6a067c52
+ * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
  */
 contract BasicInboundLane is BasicLane {
     /**
@@ -19,8 +19,8 @@ contract BasicInboundLane is BasicLane {
      * @param result The message result
      * @param returndata The return data of message call, when return false, it's the reason of the error
      */
-    event MessageDispatched(uint256 indexed nonce, bool indexed result, bytes returndata);
-    event MessagePruned(uint256 indexed nonce);
+    event MessageDispatched(uint256 indexed lanePosition, uint256 indexed nonce, bool indexed result, bytes returndata);
+    event MessagePruned(uint256 indexed lanePosition, uint256 indexed nonce);
 
     /* Constants */
 
@@ -130,16 +130,22 @@ contract BasicInboundLane is BasicLane {
         require(latest_received_nonce <= last_delivered_nonce, "Lane: invalid received nonce");
         if (latest_received_nonce > last_confirmed_nonce) {
             for (uint256 nonce = last_confirmed_nonce; nonce <= latest_received_nonce; nonce++) {
-                // pruneMessage(nonce);
-                delete messages[nonce];
-                emit MessagePruned(nonce);
+                pruneMessage(nonce);
             }
             lastConfirmedNonce = latest_received_nonce;
         }
     }
 
+    function pruneMessage(uint256 nonce) internal {
+        delete messages[nonce];
+        emit MessagePruned(lanePosition, nonce);
+    }
+
     function dispatch(Message[] memory msgs) internal {
         for (uint256 i = 0; i < msgs.length; i++) {
+            if (msg[i].status == Status.ACCEPTED) {
+                continue;
+            }
             require(msgs[i].status == Status.ACCEPTED, "Lane: invalid message status");
             MessageInfo memory messageInfo = msgs[i].info;
             uint256 nonce = lastDeliveredNonce + 1;
@@ -164,16 +170,16 @@ contract BasicInboundLane is BasicLane {
                         messageInfo.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(
                             messageInfo.payload
                     );
-                    emit MessageDispatched(messageInfo.nonce, success, returndata);
+                    emit MessageDispatched(lanePosition, messageInfo.nonce, success, returndata);
                 } else {
-                    emit MessageDispatched(messageInfo.nonce, false, "Lane: filter failed");
+                    emit MessageDispatched(lanePosition, messageInfo.nonce, false, "Lane: filter failed");
                 }
             } catch (bytes memory reason) {
-                emit MessageDispatched(messageInfo.nonce, false, reason);
+                emit MessageDispatched(lanePosition, messageInfo.nonce, false, reason);
             }
 
             messages[nonce] = MessageStorage({
-                status: Status.ACCEPTED,
+                status: Status.DISPATCHED,
                 infoHash: hash(messageInfo),
                 dispatchResult: success
             });

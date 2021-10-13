@@ -17,9 +17,9 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
      * @param nonce The ID used to uniquely identify the message
      * @param payload The calldata which encoded by ABI Encoding, abi.encodePacked(SELECTOR, PARAMS)
      */
-    event MessageAccepted(uint256 indexed nonce, address sourceAccount, address targetContract, address laneContract, bytes payload);
-    event MessagesDelivered(uint256 indexed nonce, bool indexed result);
-    event MessagePruned(uint256 indexed nonce);
+    event MessageAccepted(uint256 indexed lanePosition, uint256 indexed nonce, address sourceAccount, address targetContract, address laneContract, bytes payload);
+    event MessagesDelivered(uint256 indexed lanePosition, uint256 indexed nonce, bool indexed result);
+    event MessagePruned(uint256 indexed lanePosition, uint256 indexed nonce);
 
     bytes32 public constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
 
@@ -31,6 +31,8 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
      * )
      */
     bytes32 public constant INBOUNDLANEDATA_TYPETASH = 0x54fe6a2dce20f4c0c068b32ba323865c047ce85a18de6aa3a48bbe4fba4c5284;
+
+    uint256 public constant MAX_PENDING_MESSAGES = 50;
 
     /* State */
 
@@ -67,6 +69,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
      */
     function sendMessage(address targetContract, bytes calldata payload) external override {
         require(hasRole(OUTBOUND_ROLE, msg.sender), "Lane: not-authorized");
+        require(latestGeneratedNonce - latestReceivedNonce <= MAX_PENDING_MESSAGES, "Lane: Too many pending messages");
         uint256 nonce = latestGeneratedNonce + 1;
         latestGeneratedNonce = nonce;
         MessageInfo memory messageInfo = MessageInfo({
@@ -83,7 +86,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
             dispatchResult: false
         });
         // TODO:: callback `on_messages_accepted`
-        emit MessageAccepted(messageInfo.nonce, messageInfo.sourceAccount, messageInfo.targetContract, messageInfo.laneContract, messageInfo.payload);
+        emit MessageAccepted(lanePosition, messageInfo.nonce, messageInfo.sourceAccount, messageInfo.targetContract, messageInfo.laneContract, messageInfo.payload);
     }
 
     function receiveMessagesDeliveryProof(
@@ -120,21 +123,25 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
         uint256 latest_delivered_nonce = inboundLaneData.lastDeliveredNonce;
         require(latest_delivered_nonce > latestReceivedNonce, "Lane: no new confirmations");
         require(latest_delivered_nonce <= latestGeneratedNonce, "Lane: future messages");
+        require(latest_delivered_nonce - latestReceivedNonce == inboundLaneData.msgs.length, "Lane: invalid messages size");
         uint256 nonce = latestReceivedNonce + 1;
         for (uint256 i = nonce; i <= latest_delivered_nonce; i++) {
             MessageStorage storage message = messages[i];
-            uint256 index = i - nonce;
-            Message memory newMsg = inboundLaneData.msgs[index];
+            Message memory newMsg = inboundLaneData.msgs[i - nonce];
             require(message.infoHash == hash(newMsg.info), "Lane: invalid message hash");
             require(newMsg.status == Status.DISPATCHED, "Lane: message should dispatched");
             message.status = Status.DELIVERED;
             message.dispatchResult = newMsg.dispatchResult;
             // TODO: may need a callback, such as `on_messages_delivered`
-            emit MessagesDelivered(i, message.dispatchResult);
-            // pruneMessage(i);
-            delete messages[i];
+            emit MessagesDelivered(lanePosition, i, message.dispatchResult);
+            pruneMessage(i);
         }
         latestReceivedNonce = latest_delivered_nonce;
+    }
+
+    function pruneMessage(uint256 nonce) internal {
+        delete messages[nonce];
+        emit MessagePruned(lanePosition, nonce);
     }
 
     function hash(InboundLaneData memory inboundLaneData)
