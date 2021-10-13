@@ -3,12 +3,11 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
-import "../interfaces/ILightClientBridge.sol";
+import "./BasicLane.sol";
 import "../interfaces/IOutboundLane.sol";
 
 // BasicOutboundChannel is a basic channel that just sends messages with a nonce.
-contract BasicOutboundLane is IOutboundLane, AccessControl {
+contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
 
     /**
      * Notifies an observer that the message has accepted
@@ -22,31 +21,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl {
     event MessagesDelivered(uint256 indexed nonce, bool indexed result);
     event MessagePruned(uint256 indexed nonce);
 
-    struct BeefyMMRLeaf {
-        bytes32 parentHash;
-        bytes32 chainMessagesRoot;
-        uint32 blockNumber;
-    }
-
     bytes32 public constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
-
-    /**
-     * Hash of the MessageInfo Schema
-     * keccak256(abi.encodePacked(
-     *     "MessageInfo(uint256 nonce,address sourceAccount,address targetContract,address channelContract,bytes payload)"
-     *     ")"
-     * )
-     */
-    bytes32 public constant MESSAGEINFO_TYPEHASH = 0x875eb7edeec63d096eb4a18d42ce11cbb92aa599ce7fef87dfc12ffe08dd79b5;
-
-    /**
-     * Hash of the Message Schema
-     * keccak256(abi.encodePacked(
-     *     "Message(Status status,bytes32 infoHash,bool dispatchResult)"
-     *     ")"
-     * )
-     */
-    bytes32 public constant MESSAGE_TYPEHASH = 0x85750a81522861eac690c0069b9cd0df956555451fc936325575e0139150c4e2;
 
     /**
      * Hash of the InboundLaneData Schema
@@ -58,18 +33,6 @@ contract BasicOutboundLane is IOutboundLane, AccessControl {
     bytes32 public constant INBOUNDLANEDATA_TYPETASH = 0x54fe6a2dce20f4c0c068b32ba323865c047ce85a18de6aa3a48bbe4fba4c5284;
 
     /* State */
-
-    enum Status {
-        ACCEPTED,
-        DISPATCHED,
-        DELIVERED
-    }
-
-    struct Message {
-        Status status;
-        bytes32 infoHash;
-        bool dispatchResult;
-    }
 
     struct InboundLaneData {
         uint256 lastDeliveredNonce;
@@ -97,7 +60,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl {
     uint256 public latestGeneratedNonce;
 
     // nonce => message
-    mapping(uint256 => Message) messages;
+    mapping(uint256 => MessageStorage) messages;
 
     constructor(
         uint256 _chainPosition,
@@ -121,23 +84,21 @@ contract BasicOutboundLane is IOutboundLane, AccessControl {
         require(hasRole(OUTBOUND_ROLE, msg.sender), "Channel: not-authorized");
         uint256 nonce = latestGeneratedNonce + 1;
         latestGeneratedNonce = nonce;
-        bytes32 messageInfoHash = keccak256(
-            abi.encode(
-                MESSAGEINFO_TYPEHASH,
-                nonce,
-                msg.sender,
-                targetContract,
-                address(this),
-                payload
-            )
-        );
-        messages[nonce] = Message({
+        MessageInfo memory messageInfo = MessageInfo({
+            nonce: nonce,
+            sourceAccount: msg.sender,
+            targetContract: targetContract,
+            laneContract: address(this),
+            payload: payload
+        });
+        bytes32 messageInfoHash = hash(messageInfo);
+        messages[nonce] = MessageStorage({
             status: Status.ACCEPTED,
             infoHash: messageInfoHash,
             dispatchResult: false
         });
         // TODO:: callback `on_messages_accepted`
-        emit MessageAccepted(nonce, msg.sender, targetContract, address(this), payload);
+        emit MessageAccepted(messageInfo.nonce, messageInfo.sourceAccount, messageInfo.targetContract, messageInfo.laneContract, messageInfo.payload);
     }
 
     function receiveMessagesDeliveryProof(
@@ -154,7 +115,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl {
         bytes32[] memory peaks,
         bytes32[] memory siblings
     ) public {
-        bytes32 beefyMMRLeafHash = hashMMRLeaf(beefyMMRLeaf);
+        bytes32 beefyMMRLeafHash = hash(beefyMMRLeaf);
         require(
             lightClientBridge.verifyBeefyMerkleLeaf(
                 beefyMMRLeafHash,
@@ -203,7 +164,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl {
         uint256 channelCount,
         bytes32[] memory channelMessagesProof
     ) internal view returns (bool) {
-        bytes32 messagesHash = hashLaneData(outboundLaneDataHash, inboundLaneData);
+        bytes32 messagesHash = hash(outboundLaneDataHash, hash(inboundLaneData));
         return
             MerkleProof.verifyMerkleLeafAtPosition(
                 channelMessagesRoot,
@@ -222,28 +183,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl {
             );
     }
 
-    function hashMessages(Message[] memory msgs)
-        internal
-        pure
-        returns (bytes32)
-    {
-        bytes memory encoded = abi.encode(msgs.length);
-        for (uint256 i = 0; i < msgs.length; i ++) {
-            Message memory message = msgs[i];
-            encoded = abi.encodePacked(
-                encoded,
-                abi.encode(
-                    MESSAGE_TYPEHASH,
-                    message.status,
-                    message.infoHash,
-                    message.dispatchResult
-                )
-            );
-        }
-        return keccak256(encoded);
-    }
-
-    function hashInboundLaneData(InboundLaneData memory inboundLaneData)
+    function hash(InboundLaneData memory inboundLaneData)
         internal
         pure
         returns (bytes32)
@@ -252,36 +192,9 @@ contract BasicOutboundLane is IOutboundLane, AccessControl {
                     abi.encode(
                         INBOUNDLANEDATA_TYPETASH,
                         inboundLaneData.lastDeliveredNonce,
-                        hashMessages(inboundLaneData.msgs)
+                        hash(inboundLaneData.msgs)
                     )
                 );
-    }
-
-    function hashLaneData(bytes32 outboundLaneDataHash, InboundLaneData memory inboundLaneData)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(
-                    abi.encodePacked(
-                        outboundLaneDataHash,
-                        hashInboundLaneData(inboundLaneData)
-                    )
-                );
-    }
-
-    function hashMMRLeaf(BeefyMMRLeaf memory leaf)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(
-                abi.encodePacked(
-                    leaf.parentHash,
-                    leaf.chainMessagesRoot,
-                    leaf.blockNumber
-                )
-            );
     }
 
     function confirmDelivery(InboundLaneData memory inboundLaneData) internal {
@@ -290,10 +203,10 @@ contract BasicOutboundLane is IOutboundLane, AccessControl {
         require(latest_delivered_nonce <= latestGeneratedNonce, "Channel: future messages");
         uint256 nonce = latestReceivedNonce + 1;
         for (uint256 i = nonce; i <= latest_delivered_nonce; i++) {
-            Message storage message = messages[i];
+            MessageStorage storage message = messages[i];
             uint256 index = i - nonce;
             Message memory newMsg = inboundLaneData.msgs[index];
-            require(message.infoHash == newMsg.infoHash, "Channel: invalid message hash");
+            require(message.infoHash == hash(newMsg.info), "Channel: invalid message hash");
             require(newMsg.status == Status.DISPATCHED, "Channel: message should dispatched");
             message.status = Status.DELIVERED;
             message.dispatchResult = newMsg.dispatchResult;
