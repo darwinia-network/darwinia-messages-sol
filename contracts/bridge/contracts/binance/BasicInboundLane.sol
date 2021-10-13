@@ -10,7 +10,7 @@ import "../interfaces/ICrossChainFilter.sol";
  * @title A entry contract for syncing message from Darwinia to Ethereum-like chain
  * @author echo
  * @notice The basic inbound lane is the message layer of the bridge
- * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
+ * @dev See https://itering.notion.site/Basic-Message-Lane-c41f0c9e453c478abb68e93f6a067c52
  */
 contract BasicInboundLane is BasicLane {
     /**
@@ -50,7 +50,7 @@ contract BasicInboundLane is BasicLane {
 
     /**
      * @dev ID of the next message, which is incremented in strict order
-     * @notice When upgrading the channel, this value must be synchronized
+     * @notice When upgrading the lane, this value must be synchronized
      */
     uint256 public lastConfirmedNonce;
 
@@ -60,9 +60,9 @@ contract BasicInboundLane is BasicLane {
     mapping(uint256 => MessageStorage) messages;
 
     /**
-     * @notice Deploys the BasicInboundChannel contract
+     * @notice Deploys the BasicInboundLane contract
      * @param _chainPosition The position of the leaf in the `chain_messages_merkle_tree`, index starting with 0
-     * @param _lanePosition The position of the leaf in the `channel_messages_merkle_tree`, index starting with 0
+     * @param _lanePosition The position of the leaf in the `lane_messages_merkle_tree`, index starting with 0
      * @param _lightClientBridge The contract address of on-chain light client
      */
     constructor(uint256 _chainPosition, uint256 _lanePosition, uint256 _lastConfirmedNonce, uint256 _lastDeliveredNonce, ILightClientBridge _lightClientBridge) public {
@@ -79,9 +79,9 @@ contract BasicInboundLane is BasicLane {
      * @notice Deliver and dispatch the messages
      * @param chainCount Number of all chain
      * @param chainMessagesProof The merkle proof required for validation of the messages in the `chain_messages_merkle_tree`
-     * @param channelMessagesRoot The merkle root of the channels, each channel is a leaf constructed by the hash of the messages in the channel
-     * @param channelCount Number of all channels
-     * @param channelMessagesProof The merkle proof required for validation of the messages in the `channel_messages_merkle_tree`
+     * @param laneMessagesRoot The merkle root of the lanes, each lane is a leaf constructed by the hash of the messages in the lane
+     * @param laneCount Number of all lanes
+     * @param laneMessagesProof The merkle proof required for validation of the messages in the `lane_messages_merkle_tree`
      * @param beefyMMRLeaf Beefy MMR leaf which the messages root is located
      * @param beefyMMRLeafIndex Beefy MMR index which the beefy leaf is located
      * @param beefyMMRLeafCount Beefy MMR width of the MMR tree
@@ -93,9 +93,9 @@ contract BasicInboundLane is BasicLane {
         bytes32 inboundLaneDataHash,
         uint256 chainCount,
         bytes32[] memory chainMessagesProof,
-        bytes32 channelMessagesRoot,
-        uint256 channelCount,
-        bytes32[] memory channelMessagesProof,
+        bytes32 laneMessagesRoot,
+        uint256 laneCount,
+        bytes32[] memory laneMessagesProof,
         BeefyMMRLeaf memory beefyMMRLeaf,
         uint256 beefyMMRLeafIndex,
         uint256 beefyMMRLeafCount,
@@ -109,14 +109,14 @@ contract BasicInboundLane is BasicLane {
             beefyMMRLeaf,
             chainCount,
             chainMessagesProof,
-            channelMessagesRoot,
-            channelCount,
-            channelMessagesProof
+            laneMessagesRoot,
+            laneCount,
+            laneMessagesProof
         );
         // Require there is enough gas to play all messages
         require(
             gasleft() >= outboundLaneData.msgs.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
-            "Channel: insufficient gas for delivery of all messages"
+            "Lane: insufficient gas for delivery of all messages"
         );
         receiveStateUpdate(outboundLaneData.latestReceivedNonce);
         dispatch(outboundLaneData.msgs);
@@ -127,7 +127,7 @@ contract BasicInboundLane is BasicLane {
     function receiveStateUpdate(uint256 latest_received_nonce) internal {
         uint256 last_delivered_nonce = lastDeliveredNonce;
         uint256 last_confirmed_nonce = lastConfirmedNonce;
-        require(latest_received_nonce <= last_delivered_nonce, "Channel: invalid received nonce");
+        require(latest_received_nonce <= last_delivered_nonce, "Lane: invalid received nonce");
         if (latest_received_nonce > last_confirmed_nonce) {
             for (uint256 nonce = last_confirmed_nonce; nonce <= latest_received_nonce; nonce++) {
                 // pruneMessage(nonce);
@@ -140,12 +140,12 @@ contract BasicInboundLane is BasicLane {
 
     function dispatch(Message[] memory msgs) internal {
         for (uint256 i = 0; i < msgs.length; i++) {
-            require(msgs[i].status == Status.ACCEPTED, "Channel: invalid message status");
+            require(msgs[i].status == Status.ACCEPTED, "Lane: invalid message status");
             MessageInfo memory messageInfo = msgs[i].info;
             uint256 nonce = lastDeliveredNonce + 1;
             // Check message nonce is correct and increment nonce for replay protection
-            require(messageInfo.nonce == nonce, "Channel: invalid nonce");
-            require(messageInfo.laneContract == address(this), "Channel: invalid lane contract");
+            require(messageInfo.nonce == nonce, "Lane: invalid nonce");
+            require(messageInfo.laneContract == address(this), "Lane: invalid lane contract");
 
             lastDeliveredNonce = nonce;
 
@@ -166,7 +166,7 @@ contract BasicInboundLane is BasicLane {
                     );
                     emit MessageDispatched(messageInfo.nonce, success, returndata);
                 } else {
-                    emit MessageDispatched(messageInfo.nonce, false, "Channel: filter failed");
+                    emit MessageDispatched(messageInfo.nonce, false, "Lane: filter failed");
                 }
             } catch (bytes memory reason) {
                 emit MessageDispatched(messageInfo.nonce, false, reason);

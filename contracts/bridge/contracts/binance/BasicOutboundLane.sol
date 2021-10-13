@@ -6,18 +6,18 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./BasicLane.sol";
 import "../interfaces/IOutboundLane.sol";
 
-// BasicOutboundChannel is a basic channel that just sends messages with a nonce.
+// BasicOutboundLand is a basic lane that just sends messages with a nonce.
 contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
 
     /**
      * Notifies an observer that the message has accepted
      * @param sourceAccount The source contract address which send the message
      * @param targetContract The targe derived DVM address of pallet ID which receive the message
-     * @param channelContract The outbound channel contract address which the message commuting to
+     * @param laneContract The outbound lane contract address which the message commuting to
      * @param nonce The ID used to uniquely identify the message
      * @param payload The calldata which encoded by ABI Encoding, abi.encodePacked(SELECTOR, PARAMS)
      */
-    event MessageAccepted(uint256 indexed nonce, address sourceAccount, address targetContract, address channelContract, bytes payload);
+    event MessageAccepted(uint256 indexed nonce, address sourceAccount, address targetContract, address laneContract, bytes payload);
     event MessagesDelivered(uint256 indexed nonce, bool indexed result);
     event MessagePruned(uint256 indexed nonce);
 
@@ -63,10 +63,10 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
     }
 
     /**
-     * @dev Sends a message across the channel
+     * @dev Sends a message across the lane
      */
     function sendMessage(address targetContract, bytes calldata payload) external override {
-        require(hasRole(OUTBOUND_ROLE, msg.sender), "Channel: not-authorized");
+        require(hasRole(OUTBOUND_ROLE, msg.sender), "Lane: not-authorized");
         uint256 nonce = latestGeneratedNonce + 1;
         latestGeneratedNonce = nonce;
         MessageInfo memory messageInfo = MessageInfo({
@@ -91,9 +91,9 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
         InboundLaneData memory inboundLaneData,
         uint256 chainCount,
         bytes32[] memory chainMessagesProof,
-        bytes32 channelMessagesRoot,
-        uint256 channelCount,
-        bytes32[] memory channelMessagesProof,
+        bytes32 laneMessagesRoot,
+        uint256 laneCount,
+        bytes32[] memory laneMessagesProof,
         BeefyMMRLeaf memory beefyMMRLeaf,
         uint256 beefyMMRLeafIndex,
         uint256 beefyMMRLeafCount,
@@ -107,9 +107,9 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
             beefyMMRLeaf,
             chainCount,
             chainMessagesProof,
-            channelMessagesRoot,
-            channelCount,
-            channelMessagesProof
+            laneMessagesRoot,
+            laneCount,
+            laneMessagesProof
         );
         confirmDelivery(inboundLaneData);
     }
@@ -118,15 +118,15 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
 
     function confirmDelivery(InboundLaneData memory inboundLaneData) internal {
         uint256 latest_delivered_nonce = inboundLaneData.lastDeliveredNonce;
-        require(latest_delivered_nonce > latestReceivedNonce, "Channel: no new confirmations");
-        require(latest_delivered_nonce <= latestGeneratedNonce, "Channel: future messages");
+        require(latest_delivered_nonce > latestReceivedNonce, "Lane: no new confirmations");
+        require(latest_delivered_nonce <= latestGeneratedNonce, "Lane: future messages");
         uint256 nonce = latestReceivedNonce + 1;
         for (uint256 i = nonce; i <= latest_delivered_nonce; i++) {
             MessageStorage storage message = messages[i];
             uint256 index = i - nonce;
             Message memory newMsg = inboundLaneData.msgs[index];
-            require(message.infoHash == hash(newMsg.info), "Channel: invalid message hash");
-            require(newMsg.status == Status.DISPATCHED, "Channel: message should dispatched");
+            require(message.infoHash == hash(newMsg.info), "Lane: invalid message hash");
+            require(newMsg.status == Status.DISPATCHED, "Lane: message should dispatched");
             message.status = Status.DELIVERED;
             message.dispatchResult = newMsg.dispatchResult;
             // TODO: may need a callback, such as `on_messages_delivered`

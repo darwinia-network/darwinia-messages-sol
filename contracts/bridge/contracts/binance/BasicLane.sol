@@ -11,7 +11,7 @@ contract BasicLane {
     /**
      * Hash of the MessageInfo Schema
      * keccak256(abi.encodePacked(
-     *     "MessageInfo(uint256 nonce,address sourceAccount,address targetContract,address channelContract,bytes payload)"
+     *     "MessageInfo(uint256 nonce,address sourceAccount,address targetContract,address laneContract,bytes payload)"
      *     ")"
      * )
      */
@@ -63,7 +63,7 @@ contract BasicLane {
     /**
      * The BeefyMMRLeaf is the structure of each leaf in each MMR that each commitment's payload commits to.
      * @param parentHash parent hash of the block this leaf describes
-     * @param chainMessagesRoot  chain message root is a two-level Merkle tree consisting of all messages from different chains and different channels, chainMessagesRoot is the root hash of `chain_messages_merkle_tree`, and the leaves of `chain_messages_merkle_tree` are messages root of different chains, they form the first level of merkle tree, `channel_messages_root` is the root hash of `channel_messages_merkle_tree`, and the leaves of `channel_messages_merkle_tree` are the hashes of the message collections of different channels, which form the second level of the merkle tree.
+     * @param chainMessagesRoot  chain message root is a two-level Merkle tree consisting of all messages from different chains and different lanes, chainMessagesRoot is the root hash of `chain_messages_merkle_tree`, and the leaves of `chain_messages_merkle_tree` are messages root of different chains, they form the first level of merkle tree, `lane_messages_root` is the root hash of `lane_messages_merkle_tree`, and the leaves of `lane_messages_merkle_tree` are the hashes of the message collections of different lanes, which form the second level of the merkle tree.
      * @param blockNumber block number for the block this leaf describes
      */
     struct BeefyMMRLeaf {
@@ -84,7 +84,7 @@ contract BasicLane {
     uint256 public chainPosition;
 
     /**
-     * @dev The position of the leaf in the `channel_messages_merkle_tree`, index starting with 0
+     * @dev The position of the leaf in the `lane_messages_merkle_tree`, index starting with 0
      */
     uint256 public lanePosition;
 
@@ -107,7 +107,7 @@ contract BasicLane {
                 peaks,
                 siblings
             ),
-            "Channel: Invalid proof"
+            "Lane: Invalid proof"
         );
     }
 
@@ -117,16 +117,16 @@ contract BasicLane {
         BeefyMMRLeaf memory leaf,
         uint256 chainCount,
         bytes32[] memory chainMessagesProof,
-        bytes32 channelMessagesRoot,
-        uint256 channelCount,
-        bytes32[] memory channelMessagesProof
+        bytes32 laneMessagesRoot,
+        uint256 laneCount,
+        bytes32[] memory laneMessagesProof
     )
         internal
         view
     {
         require(
             leaf.blockNumber <= lightClientBridge.getFinalizedBlockNumber(),
-            "Channel: block not finalized"
+            "Lane: block not finalized"
         );
         // Validate that the commitment matches the commitment contents
         require(
@@ -136,11 +136,11 @@ contract BasicLane {
                 leaf.chainMessagesRoot,
                 chainCount,
                 chainMessagesProof,
-                channelMessagesRoot,
-                channelCount,
-                channelMessagesProof
+                laneMessagesRoot,
+                laneCount,
+                laneMessagesProof
             ),
-            "Channel: invalid messages"
+            "Lane: invalid messages"
         );
     }
 
@@ -150,23 +150,23 @@ contract BasicLane {
         bytes32 chainMessagesRoot,
         uint256 chainCount,
         bytes32[] memory chainMessagesProof,
-        bytes32 channelMessagesRoot,
-        uint256 channelCount,
-        bytes32[] memory channelMessagesProof
+        bytes32 laneMessagesRoot,
+        uint256 laneCount,
+        bytes32[] memory laneMessagesProof
     ) internal view returns (bool) {
         bytes32 laneHash = hash(outboundLaneDataHash, inboundLaneDataHash);
         return
             MerkleProof.verifyMerkleLeafAtPosition(
-                channelMessagesRoot,
+                laneMessagesRoot,
                 laneHash,
                 lanePosition,
-                channelCount,
-                channelMessagesProof
+                laneCount,
+                laneMessagesProof
             )
             &&
             MerkleProof.verifyMerkleLeafAtPosition(
                 chainMessagesRoot,
-                channelMessagesRoot,
+                laneMessagesRoot,
                 lanePosition,
                 chainCount,
                 chainMessagesProof
@@ -187,14 +187,14 @@ contract BasicLane {
             );
     }
 
-    function hash(bytes32 outboundChannelDataHash, bytes32 inboundLaneDataHash)
+    function hash(bytes32 outboundLaneDataHash, bytes32 inboundLaneDataHash)
         internal
         pure
         returns (bytes32)
     {
         return keccak256(
                     abi.encodePacked(
-                        outboundChannelDataHash,
+                        outboundLaneDataHash,
                         inboundLaneDataHash
                     )
                 );
