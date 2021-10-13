@@ -61,7 +61,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     */
     struct NextValidatorSet {
         uint64 id;
-        uint32 len; 
+        uint32 len;
         bytes32 root;
     }
 
@@ -74,13 +74,13 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     struct Payload {
         bytes32 network;
         bytes32 mmr;
-        NextValidatorSet nextValidatorSet; 
+        NextValidatorSet nextValidatorSet;
     }
 
     /**
      * The Commitment, with its payload, is the core thing we are trying to verify with this contract.
      * It contains a next validator set or not and a MMR root that commits to the darwinia history,
-     * including past blocks and can be used to verify darwinia blocks. 
+     * including past blocks and can be used to verify darwinia blocks.
      * @param payload the payload of the new commitment in beefy justifications (in
      *  our case, this is a next validator set and a new MMR root for all past darwinia blocks)
      * @param blockNumber block number for the given commitment
@@ -204,7 +204,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     }
 
     function validatorBitfield(uint256 id) external view returns (uint256[] memory) {
-        return validationData[id].validatorClaimsBitfield; 
+        return validationData[id].validatorClaimsBitfield;
     }
 
     function requiredNumberOfValidatorSigs() public view returns (uint256) {
@@ -248,7 +248,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
 
     function createCommitmentHash(Commitment memory commitment)
         public
-        pure 
+        pure
         returns (bytes32)
     {
         /**
@@ -313,7 +313,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         uint256 beefyMMRLeafIndex,
         uint256 beefyMMRLeafCount,
         bytes32[] calldata peaks,
-        bytes32[] calldata siblings 
+        bytes32[] calldata siblings
     ) external view returns (bool) {
         return
             KeccakMMR.inclusionProof(
