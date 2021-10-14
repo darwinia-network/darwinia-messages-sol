@@ -143,12 +143,12 @@ contract BasicInboundLane is BasicLane {
 
     function dispatch(Message[] memory msgs) internal {
         for (uint256 i = 0; i < msgs.length; i++) {
-            if (msg[i].status == Status.ACCEPTED) {
-                continue;
-            }
             require(msgs[i].status == Status.ACCEPTED, "Lane: invalid message status");
             MessageInfo memory messageInfo = msgs[i].info;
             uint256 nonce = lastDeliveredNonce + 1;
+            if (messageInfo.nonce < nonce) {
+                continue;
+            }
             // Check message nonce is correct and increment nonce for replay protection
             require(messageInfo.nonce == nonce, "Lane: invalid nonce");
             require(messageInfo.laneContract == address(this), "Lane: invalid lane contract");

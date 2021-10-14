@@ -123,20 +123,24 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
         uint256 latest_delivered_nonce = inboundLaneData.lastDeliveredNonce;
         require(latest_delivered_nonce > latestReceivedNonce, "Lane: no new confirmations");
         require(latest_delivered_nonce <= latestGeneratedNonce, "Lane: future messages");
-        require(latest_delivered_nonce - latestReceivedNonce == inboundLaneData.msgs.length, "Lane: invalid messages size");
-        uint256 nonce = latestReceivedNonce + 1;
-        for (uint256 i = nonce; i <= latest_delivered_nonce; i++) {
-            MessageStorage storage message = messages[i];
-            Message memory newMsg = inboundLaneData.msgs[i - nonce];
-            require(message.infoHash == hash(newMsg.info), "Lane: invalid message hash");
+        require(latest_delivered_nonce - latestReceivedNonce <= inboundLaneData.msgs.length, "Lane: invalid messages size");
+        for (uint256 i = 0; i < inboundLaneData.msgs.length; i++) {
+            uint256 nonce = latestReceivedNonce + 1;
+            Message memory newMsg = inboundLaneData.msgs[i];
+            if (newMsg.info.nonce < nonce) {
+                continue;
+            }
             require(newMsg.status == Status.DISPATCHED, "Lane: message should dispatched");
+            require(newMsg.info.nonce == nonce, "Lane: invalid nonce");
+            MessageStorage storage message = messages[i];
+            require(message.infoHash == hash(newMsg.info), "Lane: invalid message hash");
             message.status = Status.DELIVERED;
             message.dispatchResult = newMsg.dispatchResult;
             // TODO: may need a callback, such as `on_messages_delivered`
-            emit MessagesDelivered(lanePosition, i, message.dispatchResult);
-            pruneMessage(i);
+            emit MessagesDelivered(lanePosition, nonce, message.dispatchResult);
+            pruneMessage(nonce);
+            latestReceivedNonce = nonce;
         }
-        latestReceivedNonce = latest_delivered_nonce;
     }
 
     function pruneMessage(uint256 nonce) internal {
