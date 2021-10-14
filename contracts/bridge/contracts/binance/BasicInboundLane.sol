@@ -166,10 +166,7 @@ contract BasicInboundLane is BasicLane {
             {
                 if (ok) {
                     // Deliver the message to the target
-                    (success, returndata) =
-                        messageInfo.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(
-                            messageInfo.payload
-                    );
+                    (success, returndata) = messageInfo.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(messageInfo.payload);
                 } else {
                     success = false;
                     returndata = "Lane: filter failed";
