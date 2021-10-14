@@ -79,10 +79,9 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
             laneContract: address(this),
             payload: payload
         });
-        bytes32 messageInfoHash = hash(messageInfo);
         messages[nonce] = MessageStorage({
             status: Status.ACCEPTED,
-            infoHash: messageInfoHash,
+            infoHash: hash(messageInfo),
             dispatchResult: false
         });
         // TODO:: callback `on_messages_accepted`
