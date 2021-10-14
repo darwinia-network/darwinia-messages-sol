@@ -27,6 +27,24 @@ contract BasicLane {
     bytes32 public constant MESSAGE_TYPEHASH = 0x85750a81522861eac690c0069b9cd0df956555451fc936325575e0139150c4e2;
 
     /**
+     * Hash of the LaneData Schema
+     * keccak256(abi.encodePacked(
+     *     "LaneData(bytes32 outboundLaneDataHash,bytes32 inboundLaneDataHash)"
+     *     ")"
+     * )
+     */
+    bytes32 public constant LANEDATA_TYPEHASH = 0x8f6ab5f61c30d2037b3accf5c8898c9242d2acc51072316f994ac5d6748dd567;
+
+    /**
+     * Hash of the BeefyMMRLeaf Schema
+     * keccak256(abi.encodePacked(
+     *     "BeefyMMRLeaf(bytes32 parentHash,bytes32 chainMessagesRoot,uint32 blockNumber)"
+     *     ")"
+     * )
+     */
+    bytes32 public constant BEEFYMMRLEAF_TYPEHASH = 0x344720a031552a825254ba106025d2909e0f38c0116c1aa520eed4e00ad8e215;
+
+    /**
      * The MessageInfo is the structure of DarwiniaRPC which should be delivery to Ethereum-like chain
      * @param sourceAccount The derived DVM address of pallet ID which send the message
      * @param targetContract The targe contract address which receive the message
@@ -180,6 +198,7 @@ contract BasicLane {
     {
         return keccak256(
                 abi.encodePacked(
+                    BEEFYMMRLEAF_TYPEHASH,
                     leaf.parentHash,
                     leaf.chainMessagesRoot,
                     leaf.blockNumber
@@ -194,6 +213,7 @@ contract BasicLane {
     {
         return keccak256(
                     abi.encodePacked(
+                        LANEDATA_TYPEHASH,
                         outboundLaneDataHash,
                         inboundLaneDataHash
                     )
