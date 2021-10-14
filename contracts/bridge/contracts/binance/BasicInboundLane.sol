@@ -170,12 +170,13 @@ contract BasicInboundLane is BasicLane {
                         messageInfo.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(
                             messageInfo.payload
                     );
-                    emit MessageDispatched(lanePosition, messageInfo.nonce, success, returndata);
                 } else {
-                    emit MessageDispatched(lanePosition, messageInfo.nonce, false, "Lane: filter failed");
+                    success = false;
+                    returndata = "Lane: filter failed";
                 }
             } catch (bytes memory reason) {
-                emit MessageDispatched(lanePosition, messageInfo.nonce, false, reason);
+                success = false;
+                returndata = reason;
             }
 
             messages[nonce] = MessageStorage({
@@ -183,6 +184,7 @@ contract BasicInboundLane is BasicLane {
                 infoHash: hash(messageInfo),
                 dispatchResult: success
             });
+            emit MessageDispatched(lanePosition, messageInfo.nonce, success, returndata);
         }
     }
 
