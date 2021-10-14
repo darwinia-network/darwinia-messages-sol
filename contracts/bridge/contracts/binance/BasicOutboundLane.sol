@@ -131,7 +131,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
             }
             require(newMsg.status == Status.DISPATCHED, "Lane: message should dispatched");
             require(newMsg.info.nonce == nonce, "Lane: invalid nonce");
-            MessageStorage storage message = messages[i];
+            MessageStorage storage message = messages[nonce];
             require(message.infoHash == hash(newMsg.info), "Lane: invalid message hash");
             message.status = Status.DELIVERED;
             message.dispatchResult = newMsg.dispatchResult;
