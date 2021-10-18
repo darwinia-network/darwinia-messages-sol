@@ -9,7 +9,4 @@ contract MappingTokenAddress {
     // This system account is derived from the dvm pallet id `dar/dvmp`,
     // and it has no private key, it comes from internal transaction in dvm.
     address public constant SYSTEM_ACCOUNT = 0x6D6F646C6461722f64766D700000000000000000;
-
-    // sub<>sub used address
-    address payable public constant S2S_FEE_ACCOUNT = 0x726f6F7400000000000000000000000000000000;
 }
