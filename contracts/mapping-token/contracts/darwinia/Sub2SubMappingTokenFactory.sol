@@ -59,8 +59,8 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
         require(success, "burn: send unlock message failed");
         // 2. getting the messageid, saving and waiting confirm
         (bool readSuccess, bytes memory messageId) = DISPATCH_ENCODER.call(
-            abi.encodePacked(bytes4(keccak256("s2s_read_latest_message_id()")))
-        );
+            abi.encodePacked(bytes4(keccak256("s2s_read_latest_message_id()")),
+                lane_id));
         require(readSuccess, "burn: read s2s message id failed");
         transferUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mapping_token, amount);
         emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mapping_token, amount);
