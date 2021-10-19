@@ -131,7 +131,7 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
         emit IssuingERC20Created(backing_address, original_token, mapping_token);
     }
 
-    function issueMappingToken(address mapping_token, address recipient, uint256 amount) external onlySystem {
+    function issueMappingToken(address mapping_token, address recipient, uint256 amount) public virtual onlySystem {
         require(amount > 0, "can not receive amount zero");
         TokenInfo memory info = mappingToken2Info[mapping_token];
         require(info.original_token != address(0), "token is not created by factory");

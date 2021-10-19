@@ -11,6 +11,7 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
     mapping(bytes => UnconfirmedInfo) public transferUnconfirmed;
     uint32 public message_pallet_index;
     bytes4 public lane_id;
+    event IssuingMappingToken(bytes message_id, address mapping_token, address recipient, uint256 amount);
     event BurnAndWaitingConfirm(bytes message_id, address sender, bytes recipient, address token, uint256 amount);
     event RemoteUnlockConfirmed(bytes message_id, address sender, address token, uint256 amount, bool result);
 
@@ -20,6 +21,15 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
 
     function setLaneId(bytes4 laneid) external onlyOwner {
         lane_id = laneid;
+    }
+
+    function issueMappingToken(address mapping_token, address recipient, uint256 amount) public override {
+        super.issueMappingToken(mapping_token, recipient, amount);
+        (bool readSuccess, bytes memory message_id) = DISPATCH_ENCODER.call(
+            abi.encodePacked(bytes4(keccak256("s2s_read_latest_recv_message_id()")),
+                lane_id));
+        require(readSuccess, "issuing: read s2s recv message id failed");
+        emit IssuingMappingToken(message_id, mapping_token, recipient, amount);
     }
 
     // Step 1: User lock the mapped token to this contract and waiting the remote backing's unlock result.
