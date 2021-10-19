@@ -48,10 +48,11 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
                     amount)));
         require(encodePayloadSuccess, "burn: encode remote unlock payload failed");
 
-        // (message payload, fee)
+        // the pricision in contract is 18, and in pallet is 9, transform the fee value
+        uint256 fee = msg.value/(10**9);
         (bool encodeSendMessageCall, bytes memory sendMessageCall) = DISPATCH_ENCODER.call(
             abi.encodePacked(bytes4(keccak256("s2s_encode_send_message_call()")),
-                abi.encode(message_pallet_index, lane_id, unlockMessage, msg.value)));
+                abi.encode(message_pallet_index, lane_id, unlockMessage, fee)));
         require(encodeSendMessageCall, "burn: encode send message call failed");
 
         // 1. send unlock message to remote backing across sub<>sub bridge
