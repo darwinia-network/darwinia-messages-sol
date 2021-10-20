@@ -9,8 +9,28 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
         uint256 amount;
     }
     mapping(bytes => UnconfirmedInfo) public transferUnconfirmed;
+    uint32 public message_pallet_index;
+    bytes4 public lane_id;
+    event IssuingMappingToken(bytes message_id, address mapping_token, address recipient, uint256 amount);
     event BurnAndWaitingConfirm(bytes message_id, address sender, bytes recipient, address token, uint256 amount);
     event RemoteUnlockConfirmed(bytes message_id, address sender, address token, uint256 amount, bool result);
+
+    function setMessagePalletIndex(uint32 index) external onlyOwner {
+        message_pallet_index = index;
+    }
+
+    function setLaneId(bytes4 laneid) external onlyOwner {
+        lane_id = laneid;
+    }
+
+    function issueMappingToken(address mapping_token, address recipient, uint256 amount) public override {
+        super.issueMappingToken(mapping_token, recipient, amount);
+        (bool readSuccess, bytes memory message_id) = DISPATCH_ENCODER.call(
+            abi.encodePacked(bytes4(keccak256("s2s_read_latest_recv_message_id()")),
+                lane_id));
+        require(readSuccess, "issuing: read s2s recv message id failed");
+        emit IssuingMappingToken(message_id, mapping_token, recipient, amount);
+    }
 
     // Step 1: User lock the mapped token to this contract and waiting the remote backing's unlock result.
     function burnAndRemoteUnlockWaitingConfirm(
@@ -38,21 +58,20 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
                     amount)));
         require(encodePayloadSuccess, "burn: encode remote unlock payload failed");
 
-        // (message payload, fee)
+        // the pricision in contract is 18, and in pallet is 9, transform the fee value
+        uint256 fee = msg.value/(10**9);
         (bool encodeSendMessageCall, bytes memory sendMessageCall) = DISPATCH_ENCODER.call(
             abi.encodePacked(bytes4(keccak256("s2s_encode_send_message_call()")),
-                abi.encode(unlockMessage, msg.value)));
+                abi.encode(message_pallet_index, lane_id, unlockMessage, fee)));
         require(encodeSendMessageCall, "burn: encode send message call failed");
 
-        // 1. send bridge fee to fee_account
-        S2S_FEE_ACCOUNT.transfer(msg.value);
-        // 2. send unlock message to remote backing across sub<>sub bridge
+        // 1. send unlock message to remote backing across sub<>sub bridge
         (bool success, ) = DISPATCH.call(sendMessageCall);
         require(success, "burn: send unlock message failed");
-        // 3. getting the messageid, saving and waiting confirm
+        // 2. getting the messageid, saving and waiting confirm
         (bool readSuccess, bytes memory messageId) = DISPATCH_ENCODER.call(
-            abi.encodePacked(bytes4(keccak256("s2s_read_latest_message_id()")))
-        );
+            abi.encodePacked(bytes4(keccak256("s2s_read_latest_message_id()")),
+                lane_id));
         require(readSuccess, "burn: read s2s message id failed");
         transferUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mapping_token, amount);
         emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mapping_token, amount);

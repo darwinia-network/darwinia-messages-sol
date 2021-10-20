@@ -87,6 +87,8 @@ const deployContract = async function () {
     console.log("set erc20 logic");
     await api.send(web3, s2s_mapping_proxy, 'setTokenContractLogic', addr, 0, issuing_addr);
     await api.send(web3, s2s_mapping_proxy, 'setTokenContractLogic', addr, 1, issuing_addr);
+    await api.send(web3, s2s_mapping_proxy, 'setMessagePalletIndex', addr, 43);
+    await api.send(web3, s2s_mapping_proxy, 'setLaneId', addr, "0x726f6c69");
     console.log("deploy fininshed");
 }
 
