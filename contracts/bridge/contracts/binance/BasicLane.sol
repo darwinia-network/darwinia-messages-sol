@@ -76,6 +76,18 @@ contract BasicLane {
         uint256 dispatch_results;
     }
 
+    struct InboundLaneData {
+        UnrewardedRelayer[] relayers;
+        uint256 last_confirmed_nonce;
+    }
+
+    struct OutboundLaneData {
+        uint256 oldest_unpruned_nonce;
+        uint256 latest_received_nonce;
+        uint256 latest_generated_nonce;
+    }
+
+
     /**
      * The BeefyMMRLeaf is the structure of each leaf in each MMR that each commitment's payload commits to.
      * @param parentHash parent hash of the block this leaf describes

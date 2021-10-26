@@ -20,7 +20,7 @@ contract BasicInboundLane is BasicLane {
      * @param returndata The return data of message call, when return false, it's the reason of the error
      */
     event MessageDispatched(uint256 indexed lanePosition, uint256 indexed nonce, bool indexed result, bytes returndata);
-    event MessagePruned(uint256 indexed lanePosition, uint256 indexed nonce);
+    event DeliveredMessagePruned(uint256 indexed lanePosition, uint256 indexed nonce);
 
     /* Constants */
 
@@ -36,14 +36,26 @@ contract BasicInboundLane is BasicLane {
      * @dev Gas used per message needs to be less than 100000 wei
      */
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
+
+    uint256 public constant MaxUnconfirmedMessagesAtInboundLane = 50;
     /**
      * @dev Gas buffer for executing `submit` tx
      */
     uint256 public constant GAS_BUFFER = 60000;
 
+    struct Message {
+        MessagePayload data;
+        uint256 fee;
+    }
+
     struct OutboundLaneData {
-        uint256 latestReceivedNonce;
-        Message[] msgs;
+        uint256 latest_received_nonce;
+        Message[] messages;
+    }
+
+    struct DeliveredMessage {
+        address relayer;
+        bool dispatch_result;
     }
 
     /* State */
@@ -52,12 +64,16 @@ contract BasicInboundLane is BasicLane {
      * @dev ID of the next message, which is incremented in strict order
      * @notice When upgrading the lane, this value must be synchronized
      */
-    uint256 public lastConfirmedNonce;
 
-    uint256 public lastDeliveredNonce;
+    struct InboundLaneData {
+        uint256 last_confirmed_nonce;
+        uint256 last_delivered_nonce;
+    }
 
-    // nonce => message
-    mapping(uint256 => MessageStorage) messages;
+    InboundLaneData public data;
+
+    // nonce => DeliveredMessage
+    mapping(uint256 => DeliveredMessage) deliveredMessages;
 
     /**
      * @notice Deploys the BasicInboundLane contract
@@ -65,12 +81,11 @@ contract BasicInboundLane is BasicLane {
      * @param _lanePosition The position of the leaf in the `lane_messages_merkle_tree`, index starting with 0
      * @param _lightClientBridge The contract address of on-chain light client
      */
-    constructor(uint256 _chainPosition, uint256 _lanePosition, uint256 _lastConfirmedNonce, uint256 _lastDeliveredNonce, ILightClientBridge _lightClientBridge) public {
+    constructor(address _lightClientBridge, uint256 _chainPosition, uint256 _lanePosition, uint256 _last_confirmed_nonce, uint256 _last_delivered_nonce) public {
+        lightClientBridge = ILightClientBridge(_lightClientBridge);
         chainPosition = _chainPosition;
         lanePosition = _lanePosition;
-        lastConfirmedNonce = _lastConfirmedNonce;
-        lastDeliveredNonce = _lastDeliveredNonce;
-        lightClientBridge = _lightClientBridge;
+        data = InboundLaneData(_last_confirmed_nonce, _last_delivered_nonce);
     }
 
     /* Public Functions */
@@ -88,7 +103,7 @@ contract BasicInboundLane is BasicLane {
      * @param peaks The proof required for validation the leaf
      * @param siblings The proof required for validation the leaf
      */
-    function receiveMessagesProof(
+    function receive_messages_proof(
         OutboundLaneData memory outboundLaneData,
         bytes32 inboundLaneDataHash,
         uint256 chainCount,
@@ -118,70 +133,67 @@ contract BasicInboundLane is BasicLane {
             gasleft() >= outboundLaneData.msgs.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
             "Lane: insufficient gas for delivery of all messages"
         );
-        receiveStateUpdate(outboundLaneData.latestReceivedNonce);
-        dispatch(outboundLaneData.msgs);
+        receive_state_update(outboundLaneData.latest_received_nonce);
+        receive_message(outboundLaneData.messages);
     }
 
     /* Private Functions */
 
-    function receiveStateUpdate(uint256 latest_received_nonce) internal {
-        uint256 last_delivered_nonce = lastDeliveredNonce;
-        uint256 last_confirmed_nonce = lastConfirmedNonce;
-        require(latest_received_nonce <= last_delivered_nonce, "Lane: invalid received nonce");
+    function receive_state_update(uint256 latest_received_nonce) internal returns (uint256) {
+        uint256 last_delivered_nonce = data.last_delivered_nonce;
+        uint256 last_confirmed_nonce = data.last_confirmed_nonce;
+        require(latest_received_nonce <= last_delivered_nonce, "Lane: InvalidReceivedNonce");
         if (latest_received_nonce > last_confirmed_nonce) {
+            uint256 new_confirmed_nonce = latest_received_nonce;
             for (uint256 nonce = last_confirmed_nonce; nonce <= latest_received_nonce; nonce++) {
-                pruneMessage(nonce);
+                delete deliveredMessages[nonce];
+                emit DeliveredMessagePruned(lanePosition, nonce);
             }
-            lastConfirmedNonce = latest_received_nonce;
+            data.last_confirmed_nonce = new_confirmed_nonce;
         }
+        return latest_received_nonce;
     }
 
-    function pruneMessage(uint256 nonce) internal {
-        delete messages[nonce];
-        emit MessagePruned(lanePosition, nonce);
-    }
-
-    function dispatch(Message[] memory msgs) internal {
-        for (uint256 i = 0; i < msgs.length; i++) {
-            require(msgs[i].status == Status.ACCEPTED, "Lane: invalid message status");
-            MessageInfo memory messageInfo = msgs[i].info;
-            uint256 nonce = lastDeliveredNonce + 1;
-            if (messageInfo.nonce < nonce) {
+    function receive_message(Message[] memory messages) internal {
+        address relayer = msg.sender;
+        for (uint256 i = 0; i < messages.length; i++) {
+            Message memory message = messages[i];
+            MessagePayload message_data = message.data;
+            uint256 nonce = data.last_delivered_nonce + 1;
+            if (message_data.nonce < nonce) {
                 continue;
             }
             // Check message nonce is correct and increment nonce for replay protection
-            require(messageInfo.nonce == nonce, "Lane: invalid nonce");
-            require(messageInfo.laneContract == address(this), "Lane: invalid lane contract");
+            require(message_data.nonce == nonce, "Lane: InvalidNonce");
+            uint256 unconfirmed_messages_count = nonce - (data.last_confirmed_nonce);
+            require(nonce - data.last_confirmed_nonce <= MaxUnconfirmedMessagesAtInboundLane, "Lane: TooManyUnconfirmedMessages")
+            require(message_data.laneContract == address(this), "Lane: InvalidLaneContract");
 
-            lastDeliveredNonce = nonce;
+            data.last_delivered_nonce = nonce;
 
-            bool success = false;
+            bool dispatch_result = false;
             bytes memory returndata;
 
             /**
              * @notice The app layer must implement the interface `ICrossChainFilter`
              */
-            try ICrossChainFilter(messageInfo.targetContract).crossChainFilter(messageInfo.sourceAccount, messageInfo.payload)
+            try ICrossChainFilter(message_data.targetContract).crossChainFilter(message_data.sourceAccount, message_data.payload)
                 returns (bool ok)
             {
                 if (ok) {
                     // Deliver the message to the target
-                    (success, returndata) = messageInfo.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(messageInfo.payload);
+                    (dispatch_result, returndata) = message_data.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(message_data.payload);
                 } else {
-                    success = false;
+                    dispatch_result = false;
                     returndata = "Lane: filter failed";
                 }
             } catch (bytes memory reason) {
-                success = false;
+                dispatch_result = false;
                 returndata = reason;
             }
-
-            messages[nonce] = MessageStorage({
-                status: Status.DISPATCHED,
-                infoHash: hash(messageInfo),
-                dispatchResult: success
-            });
-            emit MessageDispatched(lanePosition, messageInfo.nonce, success, returndata);
+            deliveredMessages[nonce] = DeliveredMessage(relayer, dispatch_result);
+            emit MessageDispatched(lanePosition, nonce, dispatch_result, returndata);
+            // TODO: callback `pay_inbound_dispatch_fee_overhead`
         }
     }
 

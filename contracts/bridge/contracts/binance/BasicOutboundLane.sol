@@ -50,16 +50,6 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
         DeliveredMessages messages;
     }
 
-    struct InboundLaneData {
-        UnrewardedRelayer[] relayers;
-        uint256 last_confirmed_nonce;
-    }
-    struct OutboundLaneData {
-        uint256 oldest_unpruned_nonce;
-        uint256 latest_received_nonce;
-        uint256 latest_generated_nonce;
-    }
-
     OutboundLaneData public data;
 
     // nonce => message
