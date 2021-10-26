@@ -22,6 +22,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
     event MessageAccepted(uint256 indexed lanePosition, uint256 indexed nonce, address sourceAccount, address targetContract, address laneContract, bytes payload, uint256 fee);
     event MessagesDelivered(uint256 indexed lanePosition, uint256 begin, uint256 end, uint256 results);
     event MessagePruned(uint256 indexed lanePosition, uint256 indexed oldest_unpruned_nonce);
+    event MessageFeeIncreased(uint256 indexed lanePosition, uint256 indexed nonce, uint256 fee);
 
     bytes32 public constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
 
@@ -94,6 +95,13 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane {
         prune_messages(MaxMessagesToPruneAtOnce);
         emit MessageAccepted(lanePosition, messagePayload.nonce, messagePayload.sourceAccount, messagePayload.targetContract, messagePayload.laneContract, messagePayload.payload, fee);
         return nonce;
+    }
+
+    function increase_message_fee(uint256 nonce) external payable {
+        require(nonce > data.latest_received_nonce, "Lane: MessageIsAlreadyDelivered");
+        require(nonce <= data.latest_generated_nonce, "Lane: MessageIsNotYetSent");
+        messages[nonce].fee += msg.value;
+        emit MessageFeeIncreased(lanePosition, nonce, messages[nonce].fee);
     }
 
     function receiveMessagesDeliveryProof(
