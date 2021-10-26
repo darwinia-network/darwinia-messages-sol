@@ -45,14 +45,14 @@ contract BasicLane {
     bytes32 public constant BEEFYMMRLEAF_TYPEHASH = 0x344720a031552a825254ba106025d2909e0f38c0116c1aa520eed4e00ad8e215;
 
     /**
-     * The MessageInfo is the structure of DarwiniaRPC which should be delivery to Ethereum-like chain
+     * The MessagePayload is the structure of DarwiniaRPC which should be delivery to Ethereum-like chain
      * @param sourceAccount The derived DVM address of pallet ID which send the message
      * @param targetContract The targe contract address which receive the message
      * @param laneContract The inbound lane contract address which the message commuting to
      * @param nonce The ID used to uniquely identify the message
      * @param payload The calldata which encoded by ABI Encoding
      */
-    struct MessageInfo {
+    struct MessagePayload {
         uint256 nonce;
         address sourceAccount;
         address targetContract;
@@ -60,22 +60,20 @@ contract BasicLane {
         bytes payload; /*abi.encodePacked(SELECTOR, PARAMS)*/
     }
 
-    enum Status {
-        ACCEPTED,
-        DISPATCHED,
-        DELIVERED
+    struct MessageData {
+        bytes32 payloadHash;
+        uint256 fee;
     }
 
-    struct Message {
-        Status status;
-        MessageInfo info;
-        bool dispatchResult;
+    struct UnrewardedRelayer {
+        address relayer;
+        DeliveredMessages messages;
     }
 
-    struct MessageStorage {
-        Status status;
-        bytes32 infoHash;
-        bool dispatchResult;
+    struct DeliveredMessages {
+        uint256 begin;
+        uint256 end;
+        uint256 dispatch_results;
     }
 
     /**
