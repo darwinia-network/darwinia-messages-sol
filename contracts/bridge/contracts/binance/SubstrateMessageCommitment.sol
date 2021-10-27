@@ -6,7 +6,7 @@ pragma experimental ABIEncoderV2;
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "../interfaces/ILightClientBridge.sol";
 
-contract BasicLane {
+contract SubstrateMessageCommitment {
     struct LaneData {
         bytes32 outboundLaneDataHash;
         bytes32 inboundLaneDataHash;
@@ -84,8 +84,8 @@ contract BasicLane {
     }
 
     function verifyMessages(
-        bytes32  outboundLaneDataHash,
-        bytes32  inboundLaneDataHash,
+        bytes32 outboundLaneDataHash,
+        bytes32 inboundLaneDataHash,
         BeefyMMRLeaf memory leaf,
         uint256 chainCount,
         bytes32[] memory chainMessagesProof,
@@ -130,7 +130,7 @@ contract BasicLane {
         return
             MerkleProof.verifyMerkleLeafAtPosition(
                 laneMessagesRoot,
-                laneHash,
+                messagesHash,
                 lanePosition,
                 laneCount,
                 laneMessagesProof
@@ -139,7 +139,7 @@ contract BasicLane {
             MerkleProof.verifyMerkleLeafAtPosition(
                 chainMessagesRoot,
                 laneMessagesRoot,
-                lanePosition,
+                chainPosition,
                 chainCount,
                 chainMessagesProof
             );

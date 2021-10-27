@@ -4,7 +4,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "../interfaces/ICrossChainFilter.sol";
-import "./BasicLane.sol";
+import "./SubstrateMessageCommitment.sol";
 import "./SubstrateOutboundLane.sol";
 
 /**
@@ -13,7 +13,7 @@ import "./SubstrateOutboundLane.sol";
  * @notice The basic inbound lane is the message layer of the bridge
  * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
  */
-contract BasicInboundLane is BasicLane, SubstrateOutboundLane {
+contract BasicInboundLane is SubstrateMessageCommitment, SubstrateOutboundLane {
     /**
      * @notice Notifies an observer that the message has dispatched
      * @param nonce The message nonce
@@ -30,7 +30,7 @@ contract BasicInboundLane is BasicLane, SubstrateOutboundLane {
      */
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
 
-    uint256 public constant MaxUnconfirmedMessagesAtInboundLane = 50;
+    uint256 public constant MAX_UNCONFIRMED_MESSAGES = 50;
     /**
      * @dev Gas buffer for executing `submit` tx
      */
@@ -150,7 +150,7 @@ contract BasicInboundLane is BasicLane, SubstrateOutboundLane {
             // Check message nonce is correct and increment nonce for replay protection
             require(key.nonce == nonce, "Lane: InvalidNonce");
             require(key.lane_id == lanePosition, "Lane: InvalidLaneID");
-            require(nonce - data.last_confirmed_nonce <= MaxUnconfirmedMessagesAtInboundLane, "Lane: TooManyUnconfirmedMessages");
+            require(nonce - data.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "Lane: TooManyUnconfirmedMessages");
             require(message_payload.laneContract == address(this), "Lane: InvalidLaneContract");
 
             data.last_delivered_nonce = nonce;

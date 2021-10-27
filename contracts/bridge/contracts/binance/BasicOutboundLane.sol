@@ -3,26 +3,20 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./BasicLane.sol";
 import "../interfaces/IOutboundLane.sol";
+import "./SubstrateMessageCommitment.sol";
 import "./SubstrateInboundLane.sol";
 
 // BasicOutboundLand is a basic lane that just sends messages with a nonce.
-contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane, SubstrateInboundLane {
-    /**
-     * Notifies an observer that the message has accepted
-     * @param sourceAccount The source contract address which send the message
-     * @param targetContract The targe derived DVM address of pallet ID which receive the message
-     * @param laneContract The outbound lane contract address which the message commuting to
-     * @param nonce The ID used to uniquely identify the message
-     * @param encoded The calldata which encoded by ABI Encoding, abi.encodePacked(SELECTOR, PARAMS)
-     */
+contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageCommitment, SubstrateInboundLane {
     event MessageAccepted(uint256 indexed lanePosition, uint256 indexed nonce, address sourceAccount, address targetContract, address laneContract, bytes encoded, uint256 fee);
     event MessagesDelivered(uint256 indexed lanePosition, uint256 begin, uint256 end, uint256 results);
     event MessagePruned(uint256 indexed lanePosition, uint256 indexed oldest_unpruned_nonce);
     event MessageFeeIncreased(uint256 indexed lanePosition, uint256 indexed nonce, uint256 fee);
 
     bytes32 internal constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
+    uint256 internal constant MAX_PENDING_MESSAGES = 50;
+    uint256 internal constant MAX_PRUNE_MESSAGES_ATONCE = 10;
 
     /**
      * Hash of the MessagePayload Schema
@@ -33,9 +27,6 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane, Substrate
      */
     bytes32 internal constant MESSAGEPAYLOAD_TYPEHASH = 0xa2b843d52192ed322a0cda3ca8b407825100c01ffd3676529bc139bc847a12fb;
 
-
-    uint256 internal constant MAX_PENDING_MESSAGES = 50;
-    uint256 internal constant MaxMessagesToPruneAtOnce = 10;
 
     /**
      * The MessagePayload is the structure of DarwiniaRPC which should be delivery to Ethereum-like chain
@@ -105,7 +96,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane, Substrate
             fee: fee  // a lowest fee may be required and how to set it
         });
         // TODO:: callback `on_messages_accepted`
-        prune_messages(MaxMessagesToPruneAtOnce);
+        prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
         emit MessageAccepted(lanePosition, nonce, messagePayload.sourceAccount, messagePayload.targetContract, messagePayload.laneContract, messagePayload.encoded, fee);
         return nonce;
     }
@@ -118,8 +109,8 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane, Substrate
     }
 
     function receiveMessagesDeliveryProof(
-        bytes32 outboundLaneDataHash,
-        InboundLaneData memory inboundLaneData,
+        bytes32 subOutboundLaneDataHash,
+        InboundLaneData memory subInboundLaneData,
         uint256 chainCount,
         bytes32[] memory chainMessagesProof,
         bytes32 laneMessagesRoot,
@@ -133,8 +124,8 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane, Substrate
     ) public {
         verifyMMRLeaf(beefyMMRLeaf, beefyMMRLeafIndex, beefyMMRLeafCount, peaks, siblings);
         verifyMessages(
-            outboundLaneDataHash,
-            hash(inboundLaneData),
+            subOutboundLaneDataHash,
+            hash(subInboundLaneData),
             beefyMMRLeaf,
             chainCount,
             chainMessagesProof,
@@ -142,9 +133,9 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, BasicLane, Substrate
             laneCount,
             laneMessagesProof
         );
-        (uint256 total_messages, uint256 last_delivered_nonce) = source_chain_inbound_lane_info(inboundLaneData);
+        (uint256 total_messages, uint256 last_delivered_nonce) = source_chain_inbound_lane_info(subInboundLaneData);
         require(total_messages < 256, "Lane: InvalidNumberOfMessages");
-        confirm_delivery(total_messages, last_delivered_nonce, inboundLaneData.relayers);
+        confirm_delivery(total_messages, last_delivered_nonce, subInboundLaneData.relayers);
         // TODO: callback `on_messages_delivered`
         // TODO: hook `pay_relayers_rewards`
     }
