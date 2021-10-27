@@ -67,12 +67,24 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
         emit NewLogicSetted(tokenType, logic);
     }
 
+    // add new mapping token address
+    function addMappingToken(address backing_address, address original_token, address mapping_token, uint32 token_type) external onlyOwner {
+        bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
+        address existed = salt2MappingToken[salt];
+        require(existed == address(0), "the mapping token exist");
+        allMappingTokens.push(mapping_token);
+        mappingToken2Info[mapping_token] = TokenInfo(token_type, backing_address, original_token);
+        salt2MappingToken[salt] = mapping_token;
+        emit MappingTokenUpdated(salt, existed, mapping_token);
+    }
+
     // update the mapping token address when the mapping token contract deployed before
     function updateMappingToken(address backing_address, address original_token, address mapping_token, uint index) external onlyOwner {
         bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
         address existed = salt2MappingToken[salt];
         require(salt2MappingToken[salt] != address(0), "the mapping token not exist");
         require(tokenLength() > index && allMappingTokens[index] == existed, "invalid index");
+        require(existed != mapping_token, "this mapping token address already exist");
         allMappingTokens[index] = mapping_token;
         mappingToken2Info[mapping_token] = mappingToken2Info[existed];
         delete mappingToken2Info[existed];
