@@ -59,7 +59,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
     OutboundLaneData public data;
 
     // nonce => message
-    mapping(uint256 => MessageDataHashed) messages;
+    mapping(uint256 => MessageDataHashed) public messages;
 
     constructor(
         address _lightClientBridge,
@@ -82,9 +82,9 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
     function send_message(address targetContract, bytes calldata encoded) external payable override returns (uint256) {
         require(hasRole(OUTBOUND_ROLE, msg.sender), "Lane: NotAuthorized");
         require(data.latest_generated_nonce - data.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
-		uint256 nonce = data.latest_generated_nonce + 1;
+        uint256 nonce = data.latest_generated_nonce + 1;
         uint256 fee = msg.value;
-		data.latest_generated_nonce = nonce;
+        data.latest_generated_nonce = nonce;
         MessagePayload memory messagePayload = MessagePayload({
             sourceAccount: msg.sender,
             targetContract: targetContract,
@@ -161,10 +161,8 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
         require(latest_delivered_nonce <= dataMem.latest_generated_nonce, "Lane: FailedToConfirmFutureMessages");
         require(latest_delivered_nonce - dataMem.latest_received_nonce <= max_allowed_messages, "Lane: TryingToConfirmMoreMessagesThanExpected");
         uint256 dispatch_results = extract_dispatch_results(dataMem.latest_received_nonce, latest_delivered_nonce, relayers);
-
-		uint256 prev_latest_received_nonce = dataMem.latest_received_nonce;
-		data.latest_received_nonce = latest_delivered_nonce;
-
+        uint256 prev_latest_received_nonce = dataMem.latest_received_nonce;
+        data.latest_received_nonce = latest_delivered_nonce;
         confirmed_messages = DeliveredMessages({
             begin: prev_latest_received_nonce + 1,
             end: latest_delivered_nonce,
@@ -200,21 +198,20 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
 	///
 	/// Returns number of pruned messages.
     function prune_messages(uint256 max_messages_to_prune) internal returns (uint256) {
-		uint256 pruned_messages = 0;
-		bool anything_changed = false;
-		OutboundLaneData memory dataMem = data;
-		while (pruned_messages < max_messages_to_prune &&
-			dataMem.oldest_unpruned_nonce <= dataMem.latest_received_nonce)
-		{
+        uint256 pruned_messages = 0;
+        bool anything_changed = false;
+        OutboundLaneData memory dataMem = data;
+        while (pruned_messages < max_messages_to_prune &&
+            dataMem.oldest_unpruned_nonce <= dataMem.latest_received_nonce)
+        {
             delete messages[dataMem.oldest_unpruned_nonce];
-			anything_changed = true;
-			pruned_messages += 1;
-			dataMem.oldest_unpruned_nonce += 1;
-		}
-
-		if (anything_changed) {
-			data = dataMem;
-		}
+            anything_changed = true;
+            pruned_messages += 1;
+            dataMem.oldest_unpruned_nonce += 1;
+        }
+        if (anything_changed) {
+            data = dataMem;
+        }
         emit MessagePruned(lanePosition, data.oldest_unpruned_nonce);
         return pruned_messages;
     }

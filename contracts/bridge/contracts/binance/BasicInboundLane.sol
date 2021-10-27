@@ -56,7 +56,7 @@ contract BasicInboundLane is SubstrateMessageCommitment, SubstrateOutboundLane {
     InboundLaneData public data;
 
     // nonce => DeliveredMessage
-    mapping(uint256 => DeliveredMessage) deliveredMessages;
+    mapping(uint256 => DeliveredMessage) public deliveredMessages;
 
     /**
      * @notice Deploys the BasicInboundLane contract
