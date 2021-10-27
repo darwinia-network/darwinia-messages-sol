@@ -46,9 +46,7 @@ var m = {
         return deployment.options.address
     },
 
-    callData: function(web3, abi, address, func, ...params) {
-        const abistream = fs.readFileSync(abi).toString();
-        const jsonabi = JSON.parse(abistream);
+    callData: function(web3, jsonabi, address, func, ...params) {
         var contract = new web3.eth.Contract(jsonabi, address);
         return contract.methods.initialize(...params).encodeABI();
     },
