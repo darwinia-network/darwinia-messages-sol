@@ -3,8 +3,9 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "./BasicLane.sol";
 import "../interfaces/ICrossChainFilter.sol";
+import "./BasicLane.sol";
+import "./SubstrateOutboundLane.sol";
 
 /**
  * @title A entry contract for syncing message from Darwinia to Ethereum-like chain
@@ -12,7 +13,7 @@ import "../interfaces/ICrossChainFilter.sol";
  * @notice The basic inbound lane is the message layer of the bridge
  * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
  */
-contract BasicInboundLane is BasicLane {
+contract BasicInboundLane is BasicLane, SubstrateOutboundLane {
     /**
      * @notice Notifies an observer that the message has dispatched
      * @param nonce The message nonce
@@ -25,14 +26,6 @@ contract BasicInboundLane is BasicLane {
     /* Constants */
 
     /**
-     * Hash of the OutboundLaneData Schema
-     * keccak256(abi.encodePacked(
-     *     "OutboundLaneData(uint256 latestReceivedNonce,bytes32 messagesHash)"
-     *     ")"
-     * )
-     */
-    bytes32 public constant OUTBOUNDLANEDATA_TYPETASH = 0x54fe6a2dce20f4c0c068b32ba323865c047ce85a18de6aa3a48bbe4fba4c5284;
-    /**
      * @dev Gas used per message needs to be less than 100000 wei
      */
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
@@ -42,16 +35,6 @@ contract BasicInboundLane is BasicLane {
      * @dev Gas buffer for executing `submit` tx
      */
     uint256 public constant GAS_BUFFER = 60000;
-
-    struct Message {
-        MessagePayload data;
-        uint256 fee;
-    }
-
-    struct OutboundLaneData {
-        uint256 latest_received_nonce;
-        Message[] messages;
-    }
 
     struct DeliveredMessage {
         address relayer;
@@ -104,8 +87,8 @@ contract BasicInboundLane is BasicLane {
      * @param siblings The proof required for validation the leaf
      */
     function receive_messages_proof(
-        OutboundLaneData memory outboundLaneData,
-        bytes32 inboundLaneDataHash,
+        OutboundLaneData memory subOutboundLaneData,
+        bytes32 subInboundLaneDataHash,
         uint256 chainCount,
         bytes32[] memory chainMessagesProof,
         bytes32 laneMessagesRoot,
@@ -119,8 +102,8 @@ contract BasicInboundLane is BasicLane {
     ) public {
         verifyMMRLeaf(beefyMMRLeaf, beefyMMRLeafIndex, beefyMMRLeafCount, peaks, siblings);
         verifyMessages(
-            hash(outboundLaneData),
-            inboundLaneDataHash,
+            hash(subOutboundLaneData),
+            subInboundLaneDataHash,
             beefyMMRLeaf,
             chainCount,
             chainMessagesProof,
@@ -130,11 +113,11 @@ contract BasicInboundLane is BasicLane {
         );
         // Require there is enough gas to play all messages
         require(
-            gasleft() >= outboundLaneData.msgs.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
+            gasleft() >= subOutboundLaneData.messages.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
             "Lane: insufficient gas for delivery of all messages"
         );
-        receive_state_update(outboundLaneData.latest_received_nonce);
-        receive_message(outboundLaneData.messages);
+        receive_state_update(subOutboundLaneData.latest_received_nonce);
+        receive_message(subOutboundLaneData.messages);
     }
 
     /* Private Functions */
@@ -158,16 +141,17 @@ contract BasicInboundLane is BasicLane {
         address relayer = msg.sender;
         for (uint256 i = 0; i < messages.length; i++) {
             Message memory message = messages[i];
-            MessagePayload message_data = message.data;
+            MessageKey memory key = message.key;
+            MessagePayload memory message_payload = message.data.payload;
             uint256 nonce = data.last_delivered_nonce + 1;
-            if (message_data.nonce < nonce) {
+            if (key.nonce < nonce) {
                 continue;
             }
             // Check message nonce is correct and increment nonce for replay protection
-            require(message_data.nonce == nonce, "Lane: InvalidNonce");
-            uint256 unconfirmed_messages_count = nonce - (data.last_confirmed_nonce);
-            require(nonce - data.last_confirmed_nonce <= MaxUnconfirmedMessagesAtInboundLane, "Lane: TooManyUnconfirmedMessages")
-            require(message_data.laneContract == address(this), "Lane: InvalidLaneContract");
+            require(key.nonce == nonce, "Lane: InvalidNonce");
+            require(key.lane_id == lanePosition, "Lane: InvalidLaneID");
+            require(nonce - data.last_confirmed_nonce <= MaxUnconfirmedMessagesAtInboundLane, "Lane: TooManyUnconfirmedMessages");
+            require(message_payload.laneContract == address(this), "Lane: InvalidLaneContract");
 
             data.last_delivered_nonce = nonce;
 
@@ -177,12 +161,12 @@ contract BasicInboundLane is BasicLane {
             /**
              * @notice The app layer must implement the interface `ICrossChainFilter`
              */
-            try ICrossChainFilter(message_data.targetContract).crossChainFilter(message_data.sourceAccount, message_data.payload)
+            try ICrossChainFilter(message_payload.targetContract).crossChainFilter(message_payload.sourceAccount, message_payload.encoded)
                 returns (bool ok)
             {
                 if (ok) {
                     // Deliver the message to the target
-                    (dispatch_result, returndata) = message_data.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(message_data.payload);
+                    (dispatch_result, returndata) = message_payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(message_payload.encoded);
                 } else {
                     dispatch_result = false;
                     returndata = "Lane: filter failed";
@@ -197,17 +181,4 @@ contract BasicInboundLane is BasicLane {
         }
     }
 
-    function hash(OutboundLaneData memory outboundLaneData)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(
-                    abi.encode(
-                        OUTBOUNDLANEDATA_TYPETASH,
-                        outboundLaneData.latestReceivedNonce,
-                        hash(outboundLaneData.msgs)
-                    )
-                );
-    }
 }

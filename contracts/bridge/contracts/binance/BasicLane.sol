@@ -7,86 +7,10 @@ import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "../interfaces/ILightClientBridge.sol";
 
 contract BasicLane {
-
-    /**
-     * Hash of the MessageInfo Schema
-     * keccak256(abi.encodePacked(
-     *     "MessageInfo(uint256 nonce,address sourceAccount,address targetContract,address laneContract,bytes payload)"
-     *     ")"
-     * )
-     */
-    bytes32 public constant MESSAGEINFO_TYPEHASH = 0x875eb7edeec63d096eb4a18d42ce11cbb92aa599ce7fef87dfc12ffe08dd79b5;
-
-    /**
-     * Hash of the Message Schema
-     * keccak256(abi.encodePacked(
-     *     "Message(Status status,bytes32 infoHash,bool dispatchResult)"
-     *     ")"
-     * )
-     */
-    bytes32 public constant MESSAGE_TYPEHASH = 0x85750a81522861eac690c0069b9cd0df956555451fc936325575e0139150c4e2;
-
-    /**
-     * Hash of the LaneData Schema
-     * keccak256(abi.encodePacked(
-     *     "LaneData(bytes32 outboundLaneDataHash,bytes32 inboundLaneDataHash)"
-     *     ")"
-     * )
-     */
-    bytes32 public constant LANEDATA_TYPEHASH = 0x8f6ab5f61c30d2037b3accf5c8898c9242d2acc51072316f994ac5d6748dd567;
-
-    /**
-     * Hash of the BeefyMMRLeaf Schema
-     * keccak256(abi.encodePacked(
-     *     "BeefyMMRLeaf(bytes32 parentHash,bytes32 chainMessagesRoot,uint32 blockNumber)"
-     *     ")"
-     * )
-     */
-    bytes32 public constant BEEFYMMRLEAF_TYPEHASH = 0x344720a031552a825254ba106025d2909e0f38c0116c1aa520eed4e00ad8e215;
-
-    /**
-     * The MessagePayload is the structure of DarwiniaRPC which should be delivery to Ethereum-like chain
-     * @param sourceAccount The derived DVM address of pallet ID which send the message
-     * @param targetContract The targe contract address which receive the message
-     * @param laneContract The inbound lane contract address which the message commuting to
-     * @param nonce The ID used to uniquely identify the message
-     * @param payload The calldata which encoded by ABI Encoding
-     */
-    struct MessagePayload {
-        uint256 nonce;
-        address sourceAccount;
-        address targetContract;
-        address laneContract;
-        bytes payload; /*abi.encodePacked(SELECTOR, PARAMS)*/
+    struct LaneData {
+        bytes32 outboundLaneDataHash;
+        bytes32 inboundLaneDataHash;
     }
-
-    struct MessageData {
-        bytes32 payloadHash;
-        uint256 fee;
-    }
-
-    struct UnrewardedRelayer {
-        address relayer;
-        DeliveredMessages messages;
-    }
-
-    struct DeliveredMessages {
-        uint256 begin;
-        uint256 end;
-        uint256 dispatch_results;
-    }
-
-    struct InboundLaneData {
-        UnrewardedRelayer[] relayers;
-        uint256 last_confirmed_nonce;
-    }
-
-    struct OutboundLaneData {
-        uint256 oldest_unpruned_nonce;
-        uint256 latest_received_nonce;
-        uint256 latest_generated_nonce;
-    }
-
 
     /**
      * The BeefyMMRLeaf is the structure of each leaf in each MMR that each commitment's payload commits to.
@@ -99,6 +23,26 @@ contract BasicLane {
         bytes32 chainMessagesRoot;
         uint32 blockNumber;
     }
+
+    /**
+     * Hash of the LaneData Schema
+     * keccak256(abi.encodePacked(
+     *     "LaneData(bytes32 outboundLaneDataHash,bytes32 inboundLaneDataHash)"
+     *     ")"
+     * )
+     */
+    bytes32 internal constant LANEDATA_TYPEHASH = 0x8f6ab5f61c30d2037b3accf5c8898c9242d2acc51072316f994ac5d6748dd567;
+
+    /**
+     * Hash of the BeefyMMRLeaf Schema
+     * keccak256(abi.encodePacked(
+     *     "BeefyMMRLeaf(bytes32 parentHash,bytes32 chainMessagesRoot,uint32 blockNumber)"
+     *     ")"
+     * )
+     */
+    bytes32 internal constant BEEFYMMRLEAF_TYPEHASH = 0x344720a031552a825254ba106025d2909e0f38c0116c1aa520eed4e00ad8e215;
+
+
 
     /* State */
     /**
@@ -182,7 +126,7 @@ contract BasicLane {
         uint256 laneCount,
         bytes32[] memory laneMessagesProof
     ) internal view returns (bool) {
-        bytes32 laneHash = hash(outboundLaneDataHash, inboundLaneDataHash);
+        bytes32 laneHash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
         return
             MerkleProof.verifyMerkleLeafAtPosition(
                 laneMessagesRoot,
@@ -216,7 +160,7 @@ contract BasicLane {
             );
     }
 
-    function hash(bytes32 outboundLaneDataHash, bytes32 inboundLaneDataHash)
+    function hash(LaneData memory land_data)
         internal
         pure
         returns (bytes32)
@@ -224,48 +168,10 @@ contract BasicLane {
         return keccak256(
                     abi.encodePacked(
                         LANEDATA_TYPEHASH,
-                        outboundLaneDataHash,
-                        inboundLaneDataHash
+                        land_data.outboundLaneDataHash,
+                        land_data.inboundLaneDataHash
                     )
                 );
-    }
-
-    function hash(Message[] memory msgs)
-        internal
-        pure
-        returns (bytes32)
-    {
-        bytes memory encoded = abi.encode(msgs.length);
-        for (uint256 i = 0; i < msgs.length; i ++) {
-            Message memory message = msgs[i];
-            encoded = abi.encodePacked(
-                encoded,
-                abi.encode(
-                    MESSAGE_TYPEHASH,
-                    message.status,
-                    hash(message.info),
-                    message.dispatchResult
-                )
-            );
-        }
-        return keccak256(encoded);
-    }
-
-    function hash(MessageInfo memory message)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(
-                abi.encode(
-                    MESSAGEINFO_TYPEHASH,
-                    message.nonce,
-                    message.sourceAccount,
-                    message.targetContract,
-                    message.laneContract,
-                    message.payload
-                )
-            );
     }
 }
 
