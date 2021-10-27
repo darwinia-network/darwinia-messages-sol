@@ -130,7 +130,7 @@ contract SubstrateMessageCommitment {
         return
             MerkleProof.verifyMerkleLeafAtPosition(
                 laneMessagesRoot,
-                messagesHash,
+                laneHash,
                 lanePosition,
                 laneCount,
                 laneMessagesProof
