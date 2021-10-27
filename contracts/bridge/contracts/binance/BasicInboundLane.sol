@@ -74,7 +74,7 @@ contract BasicInboundLane is SubstrateMessageCommitment, SubstrateOutboundLane {
     /* Public Functions */
 
     /**
-     * @notice Deliver and dispatch the messages
+     * @notice Receive messages proof from bridged chain
      * @param chainCount Number of all chain
      * @param chainMessagesProof The merkle proof required for validation of the messages in the `chain_messages_merkle_tree`
      * @param laneMessagesRoot The merkle root of the lanes, each lane is a leaf constructed by the hash of the messages in the lane
@@ -155,29 +155,31 @@ contract BasicInboundLane is SubstrateMessageCommitment, SubstrateOutboundLane {
 
             data.last_delivered_nonce = nonce;
 
-            bool dispatch_result = false;
-            bytes memory returndata;
+            (bool dispatch_result, bytes memory returndata) = dispatch(message_payload);
 
-            /**
-             * @notice The app layer must implement the interface `ICrossChainFilter`
-             */
-            try ICrossChainFilter(message_payload.targetContract).crossChainFilter(message_payload.sourceAccount, message_payload.encoded)
-                returns (bool ok)
-            {
-                if (ok) {
-                    // Deliver the message to the target
-                    (dispatch_result, returndata) = message_payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(message_payload.encoded);
-                } else {
-                    dispatch_result = false;
-                    returndata = "Lane: filter failed";
-                }
-            } catch (bytes memory reason) {
-                dispatch_result = false;
-                returndata = reason;
-            }
             deliveredMessages[nonce] = DeliveredMessage(relayer, dispatch_result);
             emit MessageDispatched(lanePosition, nonce, dispatch_result, returndata);
             // TODO: callback `pay_inbound_dispatch_fee_overhead`
+        }
+    }
+
+    function dispatch(MessagePayload memory payload) internal returns (bool dispatch_result, bytes memory returndata) {
+        /**
+         * @notice The app layer must implement the interface `ICrossChainFilter`
+         */
+        try ICrossChainFilter(payload.targetContract).crossChainFilter(payload.sourceAccount, payload.encoded)
+            returns (bool ok)
+        {
+            if (ok) {
+                // Deliver the message to the target
+                (dispatch_result, returndata) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
+            } else {
+                dispatch_result = false;
+                returndata = "Lane: filter failed";
+            }
+        } catch (bytes memory reason) {
+            dispatch_result = false;
+            returndata = reason;
         }
     }
 

@@ -151,13 +151,13 @@ contract SubstrateMessageCommitment {
         returns (bytes32)
     {
         return keccak256(
-                abi.encodePacked(
-                    BEEFYMMRLEAF_TYPEHASH,
-                    leaf.parentHash,
-                    leaf.chainMessagesRoot,
-                    leaf.blockNumber
-                )
-            );
+            abi.encodePacked(
+                BEEFYMMRLEAF_TYPEHASH,
+                leaf.parentHash,
+                leaf.chainMessagesRoot,
+                leaf.blockNumber
+            )
+        );
     }
 
     function hash(LaneData memory land_data)
@@ -166,12 +166,12 @@ contract SubstrateMessageCommitment {
         returns (bytes32)
     {
         return keccak256(
-                    abi.encodePacked(
-                        LANEDATA_TYPEHASH,
-                        land_data.outboundLaneDataHash,
-                        land_data.inboundLaneDataHash
-                    )
-                );
+            abi.encodePacked(
+                LANEDATA_TYPEHASH,
+                land_data.outboundLaneDataHash,
+                land_data.inboundLaneDataHash
+            )
+        );
     }
 }
 

@@ -77,7 +77,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
     }
 
     /**
-     * @dev Sends a message across the lane
+     * @dev Send message over lane
      */
     function send_message(address targetContract, bytes calldata encoded) external payable override returns (uint256) {
         require(hasRole(OUTBOUND_ROLE, msg.sender), "Lane: NotAuthorized");
@@ -133,7 +133,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
             laneCount,
             laneMessagesProof
         );
-        (uint256 total_messages, uint256 last_delivered_nonce) = source_chain_inbound_lane_info(subInboundLaneData);
+        (uint256 total_messages, uint256 last_delivered_nonce) = extract_substrate_inbound_lane_info(subInboundLaneData);
         require(total_messages < 256, "Lane: InvalidNumberOfMessages");
         confirm_delivery(total_messages, last_delivered_nonce, subInboundLaneData.relayers);
         // TODO: callback `on_messages_delivered`
@@ -142,7 +142,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
 
     /* Private Functions */
 
-    function source_chain_inbound_lane_info(InboundLaneData memory lane_data) internal pure returns (uint256 total_unrewarded_messages, uint256 last_delivered_nonce) {
+    function extract_substrate_inbound_lane_info(InboundLaneData memory lane_data) internal pure returns (uint256 total_unrewarded_messages, uint256 last_delivered_nonce) {
         uint256 len = lane_data.relayers.length;
         if(len > 0) {
             UnrewardedRelayer memory front = lane_data.relayers[0];
