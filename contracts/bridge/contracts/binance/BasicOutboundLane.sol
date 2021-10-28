@@ -27,7 +27,6 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
      */
     bytes32 internal constant MESSAGEPAYLOAD_TYPEHASH = 0xa2b843d52192ed322a0cda3ca8b407825100c01ffd3676529bc139bc847a12fb;
 
-
     /**
      * The MessagePayload is the structure of DarwiniaRPC which should be delivery to Ethereum-like chain
      * @param sourceAccount The derived DVM address of pallet ID which send the message
@@ -60,6 +59,8 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
 
     // nonce => message
     mapping(uint256 => MessageDataHashed) public messages;
+
+    uint256 public confirmationFee = 0.1 ether; // how to set confirmation_fee
 
     constructor(
         address _lightClientBridge,
@@ -133,11 +134,9 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
             laneCount,
             laneMessagesProof
         );
-        (uint256 total_messages, uint256 last_delivered_nonce) = extract_substrate_inbound_lane_info(subInboundLaneData);
-        require(total_messages < 256, "Lane: InvalidNumberOfMessages");
-        confirm_delivery(total_messages, last_delivered_nonce, subInboundLaneData.relayers);
+        DeliveredMessages memory confirmed_messages = confirm_delivery(subInboundLaneData);
         // TODO: callback `on_messages_delivered`
-        // TODO: hook `pay_relayers_rewards`
+        pay_relayers_rewards(subInboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
     }
 
     /* Private Functions */
@@ -155,11 +154,15 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
         }
     }
 
-    function confirm_delivery(uint256 max_allowed_messages, uint256 latest_delivered_nonce, UnrewardedRelayer[] memory relayers) internal returns (DeliveredMessages memory confirmed_messages) {
+    function confirm_delivery(InboundLaneData memory subInboundLaneData) internal returns (DeliveredMessages memory confirmed_messages) {
+        (uint256 total_messages, uint256 latest_delivered_nonce) = extract_substrate_inbound_lane_info(subInboundLaneData);
+        require(total_messages < 256, "Lane: InvalidNumberOfMessages");
+
+        UnrewardedRelayer[] memory relayers = subInboundLaneData.relayers;
         OutboundLaneData memory dataMem = data;
         require(latest_delivered_nonce > dataMem.latest_received_nonce, "Lane: NoNewConfirmations");
         require(latest_delivered_nonce <= dataMem.latest_generated_nonce, "Lane: FailedToConfirmFutureMessages");
-        require(latest_delivered_nonce - dataMem.latest_received_nonce <= max_allowed_messages, "Lane: TryingToConfirmMoreMessagesThanExpected");
+        require(latest_delivered_nonce - dataMem.latest_received_nonce <= total_messages, "Lane: TryingToConfirmMoreMessagesThanExpected");
         uint256 dispatch_results = extract_dispatch_results(dataMem.latest_received_nonce, latest_delivered_nonce, relayers);
         uint256 prev_latest_received_nonce = dataMem.latest_received_nonce;
         data.latest_received_nonce = latest_delivered_nonce;
@@ -214,6 +217,53 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
         }
         emit MessagePruned(lanePosition, data.oldest_unpruned_nonce);
         return pruned_messages;
+    }
+
+    /// Pay rewards to given relayers, optionally rewarding confirmation relayer.
+    function pay_relayers_rewards(UnrewardedRelayer[] memory relayers, uint256 received_start, uint256 received_end) internal {
+        address payable confirmation_relayer = msg.sender;
+        uint256 confirmation_relayer_reward = 0;
+        uint256 confirmation_fee = confirmationFee;
+        // reward every relayer except `confirmation_relayer`
+        for (uint256 i = 0; i < relayers.length; i++) {
+            UnrewardedRelayer memory entry = relayers[i];
+            address payable delivery_relayer = entry.relayer;
+            uint256 nonce_begin = max(entry.messages.begin, received_start);
+            uint256 nonce_end = min(entry.messages.end, received_end);
+            uint256 delivery_reward = 0;
+            uint256 confirmation_reward = 0;
+            for (uint256 nonce = nonce_begin; nonce <= nonce_end; nonce++) {
+                MessageDataHashed memory message_data = messages[nonce];
+                delivery_reward += message_data.fee;
+                confirmation_reward += confirmation_fee;
+            }
+            if (confirmation_relayer != delivery_relayer) {
+                // If delivery confirmation is submitted by other relayer, let's deduct confirmation fee
+                // from relayer reward.
+                //
+                // If confirmation fee has been increased (or if it was the only component of message
+                // fee), then messages relayer may receive zero reward.
+                if (confirmation_reward > delivery_reward) {
+                    confirmation_reward = delivery_reward;
+                }
+                delivery_reward = delivery_reward - confirmation_reward;
+                confirmation_relayer_reward = confirmation_relayer_reward + confirmation_reward;
+            } else {
+                // If delivery confirmation is submitted by this relayer, let's add confirmation fee
+                // from other relayers to this relayer reward.
+                confirmation_relayer_reward = confirmation_relayer_reward + delivery_reward;
+                continue;
+            }
+            pay_relayer_reward(delivery_relayer, delivery_reward);
+        }
+        // finally - pay reward to confirmation relayer
+        pay_relayer_reward(confirmation_relayer, confirmation_relayer_reward);
+    }
+
+    function pay_relayer_reward(address payable to, uint256 value) internal {
+        if (value > 0) {
+            to.transfer(value);
+        }
     }
 
     function hash(MessagePayload memory payload)

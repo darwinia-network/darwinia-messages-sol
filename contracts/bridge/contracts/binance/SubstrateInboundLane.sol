@@ -11,7 +11,7 @@ contract SubstrateInboundLane {
     }
 
     struct UnrewardedRelayer {
-        address relayer;
+        address payable relayer;
         DeliveredMessages messages;
     }
 
