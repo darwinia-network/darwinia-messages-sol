@@ -17,7 +17,6 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
         address backing_address;
         address original_token;
     }
-    address public admin;
     // the mapping token list
     address[] public allMappingTokens;
     // salt=>mapping_token, the salt is derived from origin token on backing chain
@@ -47,11 +46,6 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
     modifier onlySystem() {
         require(SYSTEM_ACCOUNT == msg.sender, "System: caller is not the system account");
         _;
-    }
-
-    // only owner settings
-    function setAdmin(address _admin) external onlyOwner {
-        admin = _admin;
     }
 
     function setDailyLimit(address mapping_token, uint amount) public onlyOwner  {
@@ -94,9 +88,8 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
 
     // internal
     function deploy(bytes32 salt, bytes memory code) internal returns (address addr) {
-        bytes32 newsalt = keccak256(abi.encodePacked(salt, msg.sender, address(this)));
         assembly {
-            addr := create2(0, add(code, 0x20), mload(code), newsalt)
+            addr := create2(0, add(code, 0x20), mload(code), salt)
             if iszero(extcodesize(addr)) { revert(0, 0) }
         }
     }
@@ -133,7 +126,8 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
                 name,
                 symbol,
                 decimals);
-        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(tokenType2Logic[tokenType], admin, erc20initdata));
+        // no admin can operate this erc20 contract
+        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(tokenType2Logic[tokenType], address(0), erc20initdata));
         mapping_token = deploy(salt, bytecodeWithInitdata);
         salt2MappingToken[salt] = mapping_token;
         // save the mapping tokens in an array so it can be listed
