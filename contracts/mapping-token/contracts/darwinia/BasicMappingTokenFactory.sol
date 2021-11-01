@@ -82,7 +82,6 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
         address existed = salt2MappingToken[salt];
         require(salt2MappingToken[salt] != address(0), "the mapping token not exist");
         require(tokenLength() > index && allMappingTokens[index] == existed, "invalid index");
-        require(existed != new_mapping_token, "this mapping token address already exist");
         allMappingTokens[index] = new_mapping_token;
         OriginalInfo memory info = mappingToken2OriginalInfo[existed];
         delete mappingToken2OriginalInfo[existed];
