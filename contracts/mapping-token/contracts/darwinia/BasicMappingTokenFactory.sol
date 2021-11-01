@@ -9,15 +9,14 @@ import "../interfaces/IERC20.sol";
 import "./MappingTokenAddress.sol";
 
 contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, MappingTokenAddress {
-    struct TokenInfo {
-        // 0 - Erc20Token
-        // 1 - NativeToken
+    struct OriginalInfo {
+        // 0 - NativeToken
+        // 1 - Erc20Token
         // ...
         uint32  tokenType;
         address backing_address;
         address original_token;
     }
-    address public admin;
     // the mapping token list
     address[] public allMappingTokens;
     // salt=>mapping_token, the salt is derived from origin token on backing chain
@@ -25,7 +24,7 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
     mapping(bytes32 => address) public salt2MappingToken;
     // mapping_token=>info the info is the original token info
     // so this is a mapping from mapping_token to original token
-    mapping(address => TokenInfo) public mappingToken2Info;
+    mapping(address => OriginalInfo) public mappingToken2OriginalInfo;
     // tokenType=>Logic
     // tokenType comes from original token, the logic contract is used to create the mapping-token contract
     mapping(uint32 => address) public tokenType2Logic;
@@ -49,11 +48,6 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
         _;
     }
 
-    // only owner settings
-    function setAdmin(address _admin) external onlyOwner {
-        admin = _admin;
-    }
-
     function setDailyLimit(address mapping_token, uint amount) public onlyOwner  {
         _setDailyLimit(mapping_token, amount);
     }
@@ -67,24 +61,39 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
         emit NewLogicSetted(tokenType, logic);
     }
 
-    // update the mapping token address when the mapping token contract deployed before
-    function updateMappingToken(address backing_address, address original_token, address mapping_token, uint index) external onlyOwner {
+    function transferMappingTokenOwnership(address mapping_token, address new_owner) external onlyOwner {
+        Ownable(mapping_token).transferOwnership(new_owner);
+    }
+
+    // add new mapping token address
+    function addMappingToken(address backing_address, address original_token, address mapping_token, uint32 token_type) external onlyOwner {
         bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
         address existed = salt2MappingToken[salt];
-        require(salt2MappingToken[salt] != address(0), "the mapping token not exist");
-        require(tokenLength() > index && allMappingTokens[index] == existed, "invalid index");
-        allMappingTokens[index] = mapping_token;
-        mappingToken2Info[mapping_token] = mappingToken2Info[existed];
-        delete mappingToken2Info[existed];
+        require(existed == address(0), "the mapping token exist");
+        allMappingTokens.push(mapping_token);
+        mappingToken2OriginalInfo[mapping_token] = OriginalInfo(token_type, backing_address, original_token);
         salt2MappingToken[salt] = mapping_token;
         emit MappingTokenUpdated(salt, existed, mapping_token);
     }
 
+    // update the mapping token address when the mapping token contract deployed before
+    function updateMappingToken(address backing_address, address original_token, address new_mapping_token, uint index) external onlyOwner {
+        bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
+        address existed = salt2MappingToken[salt];
+        require(salt2MappingToken[salt] != address(0), "the mapping token not exist");
+        require(tokenLength() > index && allMappingTokens[index] == existed, "invalid index");
+        allMappingTokens[index] = new_mapping_token;
+        OriginalInfo memory info = mappingToken2OriginalInfo[existed];
+        delete mappingToken2OriginalInfo[existed];
+        mappingToken2OriginalInfo[new_mapping_token] = info;
+        salt2MappingToken[salt] = new_mapping_token;
+        emit MappingTokenUpdated(salt, existed, new_mapping_token);
+    }
+
     // internal
     function deploy(bytes32 salt, bytes memory code) internal returns (address addr) {
-        bytes32 newsalt = keccak256(abi.encodePacked(salt, msg.sender, address(this)));
         assembly {
-            addr := create2(0, add(code, 0x20), mload(code), newsalt)
+            addr := create2(0, add(code, 0x20), mload(code), salt)
             if iszero(extcodesize(addr)) { revert(0, 0) }
         }
     }
@@ -121,19 +130,20 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
                 name,
                 symbol,
                 decimals);
-        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(tokenType2Logic[tokenType], admin, erc20initdata));
+        // no admin can operate this erc20 contract
+        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(tokenType2Logic[tokenType], address(0), erc20initdata));
         mapping_token = deploy(salt, bytecodeWithInitdata);
         salt2MappingToken[salt] = mapping_token;
         // save the mapping tokens in an array so it can be listed
         allMappingTokens.push(mapping_token);
         // map the mapping_token to origin info
-        mappingToken2Info[mapping_token] = TokenInfo(tokenType, backing_address, original_token);
+        mappingToken2OriginalInfo[mapping_token] = OriginalInfo(tokenType, backing_address, original_token);
         emit IssuingERC20Created(backing_address, original_token, mapping_token);
     }
 
     function issueMappingToken(address mapping_token, address recipient, uint256 amount) public virtual onlySystem {
         require(amount > 0, "can not receive amount zero");
-        TokenInfo memory info = mappingToken2Info[mapping_token];
+        OriginalInfo memory info = mappingToken2OriginalInfo[mapping_token];
         require(info.original_token != address(0), "token is not created by factory");
         expendDailyLimit(mapping_token, amount);
         IERC20(mapping_token).mint(recipient, amount);
