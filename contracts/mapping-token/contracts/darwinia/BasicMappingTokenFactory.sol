@@ -10,8 +10,8 @@ import "./MappingTokenAddress.sol";
 
 contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, MappingTokenAddress {
     struct OriginalInfo {
-        // 0 - Erc20Token
-        // 1 - NativeToken
+        // 0 - NativeToken
+        // 1 - Erc20Token
         // ...
         uint32  tokenType;
         address backing_address;
