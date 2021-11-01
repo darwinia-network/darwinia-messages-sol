@@ -9,7 +9,7 @@ import "../interfaces/IERC20.sol";
 import "./MappingTokenAddress.sol";
 
 contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, MappingTokenAddress {
-    struct TokenInfo {
+    struct OriginalInfo {
         // 0 - Erc20Token
         // 1 - NativeToken
         // ...
@@ -24,7 +24,7 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
     mapping(bytes32 => address) public salt2MappingToken;
     // mapping_token=>info the info is the original token info
     // so this is a mapping from mapping_token to original token
-    mapping(address => TokenInfo) public mappingToken2Info;
+    mapping(address => OriginalInfo) public mappingToken2OriginalInfo;
     // tokenType=>Logic
     // tokenType comes from original token, the logic contract is used to create the mapping-token contract
     mapping(uint32 => address) public tokenType2Logic;
@@ -61,29 +61,34 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
         emit NewLogicSetted(tokenType, logic);
     }
 
+    function transferMappingTokenOwnership(address mapping_token, address new_owner) external onlyOwner {
+        Ownable(mapping_token).transferOwnership(new_owner);
+    }
+
     // add new mapping token address
     function addMappingToken(address backing_address, address original_token, address mapping_token, uint32 token_type) external onlyOwner {
         bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
         address existed = salt2MappingToken[salt];
         require(existed == address(0), "the mapping token exist");
         allMappingTokens.push(mapping_token);
-        mappingToken2Info[mapping_token] = TokenInfo(token_type, backing_address, original_token);
+        mappingToken2OriginalInfo[mapping_token] = OriginalInfo(token_type, backing_address, original_token);
         salt2MappingToken[salt] = mapping_token;
         emit MappingTokenUpdated(salt, existed, mapping_token);
     }
 
     // update the mapping token address when the mapping token contract deployed before
-    function updateMappingToken(address backing_address, address original_token, address mapping_token, uint index) external onlyOwner {
+    function updateMappingToken(address backing_address, address original_token, address new_mapping_token, uint index) external onlyOwner {
         bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
         address existed = salt2MappingToken[salt];
         require(salt2MappingToken[salt] != address(0), "the mapping token not exist");
         require(tokenLength() > index && allMappingTokens[index] == existed, "invalid index");
-        require(existed != mapping_token, "this mapping token address already exist");
-        allMappingTokens[index] = mapping_token;
-        mappingToken2Info[mapping_token] = mappingToken2Info[existed];
-        delete mappingToken2Info[existed];
-        salt2MappingToken[salt] = mapping_token;
-        emit MappingTokenUpdated(salt, existed, mapping_token);
+        require(existed != new_mapping_token, "this mapping token address already exist");
+        allMappingTokens[index] = new_mapping_token;
+        OriginalInfo memory info = mappingToken2OriginalInfo[existed];
+        delete mappingToken2OriginalInfo[existed];
+        mappingToken2OriginalInfo[new_mapping_token] = info;
+        salt2MappingToken[salt] = new_mapping_token;
+        emit MappingTokenUpdated(salt, existed, new_mapping_token);
     }
 
     // internal
@@ -133,13 +138,13 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
         // save the mapping tokens in an array so it can be listed
         allMappingTokens.push(mapping_token);
         // map the mapping_token to origin info
-        mappingToken2Info[mapping_token] = TokenInfo(tokenType, backing_address, original_token);
+        mappingToken2OriginalInfo[mapping_token] = OriginalInfo(tokenType, backing_address, original_token);
         emit IssuingERC20Created(backing_address, original_token, mapping_token);
     }
 
     function issueMappingToken(address mapping_token, address recipient, uint256 amount) public virtual onlySystem {
         require(amount > 0, "can not receive amount zero");
-        TokenInfo memory info = mappingToken2Info[mapping_token];
+        OriginalInfo memory info = mappingToken2OriginalInfo[mapping_token];
         require(info.original_token != address(0), "token is not created by factory");
         expendDailyLimit(mapping_token, amount);
         IERC20(mapping_token).mint(recipient, amount);
