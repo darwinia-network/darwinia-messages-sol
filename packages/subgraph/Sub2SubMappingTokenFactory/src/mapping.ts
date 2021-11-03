@@ -89,6 +89,7 @@ export function handleIssuingMappingToken(event: IssuingMappingToken): void {
     entity.mapping_token = event.params.mapping_token
     entity.recipient = event.params.recipient
     entity.amount = event.params.amount
+    entity.save()
 }
 
 export function handleMappingTokenUpdated(event: MappingTokenUpdated): void {}

@@ -2,12 +2,12 @@
 ```
 >> graph init --product subgraph-studio. --abi
 ✔ Product for which to initialize · hosted-service
-✔ Subgraph name · wormhole/DarwiniaMappingTokenFactory
-✔ Directory to create the subgraph in · DarwiniaMappingTokenFactory
+✔ Subgraph name · wormhole/Sub2SubMappingTokenFactory
+✔ Directory to create the subgraph in · Sub2SubMappingTokenFactory
 ✔ Ethereum network · ropsten
 ✔ Contract address · 0xCBe0c1ac9eFF75f2002158A1635974caaac3A811
-✔ ABI file (path) · ../../contracts/mapping-token/abi/contracts/darwinia/DarwiniaMappingTokenFactory.sol/DarwiniaMappingTokenFactory.json
-✔ Contract Name · DarwiniaMappingTokenFactory
+✔ ABI file (path) · ../../contracts/mapping-token/abi/contracts/darwinia/Sub2SubMappingTokenFactory.sol/Sub2SubMappingTokenFactory.json
+✔ Contract Name · Sub2SubMappingTokenFactory
 ———
   Generate subgraph from ABI
   Write subgraph to directory
@@ -16,13 +16,13 @@
 ✔ Install dependencies with yarn
 ✔ Generate ABI and schema types with yarn codegen
 
-Subgraph wormhole/DarwiniaMappingTokenFactory created in DarwiniaMappingTokenFactory
+Subgraph wormhole/Sub2SubMappingTokenFactory created in Sub2SubMappingTokenFactory
 
 Next steps:
 
   1. Run `graph auth` to authenticate with your deploy key.
 
-  2. Type `cd DarwiniaMappingTokenFactory` to enter the subgraph.
+  2. Type `cd Sub2SubMappingTokenFactory` to enter the subgraph.
 
   3. Run `yarn deploy` to deploy the subgraph.
 
@@ -41,10 +41,10 @@ So we need to modify schema.graphql and regenerate the schema files.
   Skip migration: Bump mapping specVersion from 0.0.1 to 0.0.2
 ✔ Apply migrations
 ✔ Load subgraph from subgraph.yaml
-  Load contract ABI from abis/DarwiniaMappingTokenFactory.json
+  Load contract ABI from abis/Sub2SubMappingTokenFactory.json
 ✔ Load contract ABIs
-  Generate types for contract ABI: DarwiniaMappingTokenFactory (abis/DarwiniaMappingTokenFactory.json)
-  Write types to generated/DarwiniaMappingTokenFactory/DarwiniaMappingTokenFactory.ts
+  Generate types for contract ABI: Sub2SubMappingTokenFactory (abis/Sub2SubMappingTokenFactory.json)
+  Write types to generated/Sub2SubMappingTokenFactory/Sub2SubMappingTokenFactory.ts
 ✔ Generate types for contract ABIs
 ✔ Generate types for data source templates
 ✔ Load data source template ABIs
@@ -60,13 +60,13 @@ Types generated successfully
 
 * Step 4. Create subgraph on subnode
 ```
->> npx graph create wormhole/DarwiniaMappingTokenFactory --node http://127.0.0.1:8020
-Created subgraph: wormhole/DarwiniaMappingTokenFactory
+>> npx graph create wormhole/Sub2SubMappingTokenFactory --node http://127.0.0.1:8020
+Created subgraph: wormhole/Sub2SubMappingTokenFactory
 ```
 
 * Step 5. The last step, deploy
 ```
->> npx graph deploy wormhole/DarwiniaMappingTokenFactory --ipfs http://localhost:5001 --node http://localhost:8020
+>> npx graph deploy wormhole/Sub2SubMappingTokenFactory --ipfs http://localhost:5001 --node http://localhost:8020
 ✔ Version Label (e.g. v0.0.1) ·
   Skip migration: Bump mapping apiVersion from 0.0.1 to 0.0.2
   Skip migration: Bump mapping apiVersion from 0.0.2 to 0.0.3
@@ -74,25 +74,25 @@ Created subgraph: wormhole/DarwiniaMappingTokenFactory
   Skip migration: Bump mapping specVersion from 0.0.1 to 0.0.2
 ✔ Apply migrations
 ✔ Load subgraph from subgraph.yaml
-  Compile data source: DarwiniaMappingTokenFactory => build/DarwiniaMappingTokenFactory/DarwiniaMappingTokenFactory.wasm
+  Compile data source: Sub2SubMappingTokenFactory => build/Sub2SubMappingTokenFactory/Sub2SubMappingTokenFactory.wasm
 ✔ Compile subgraph
   Copy schema file build/schema.graphql
-  Write subgraph file build/DarwiniaMappingTokenFactory/abis/DarwiniaMappingTokenFactory.json
+  Write subgraph file build/Sub2SubMappingTokenFactory/abis/Sub2SubMappingTokenFactory.json
   Write subgraph manifest build/subgraph.yaml
 ✔ Write compiled subgraph to build/
   Add file to IPFS build/schema.graphql
                 .. QmVRyRF12mxYcKAd9YfsiXkeHHc79wkU5LqWLDinrfnmbg
-  Add file to IPFS build/DarwiniaMappingTokenFactory/abis/DarwiniaMappingTokenFactory.json
+  Add file to IPFS build/Sub2SubMappingTokenFactory/abis/Sub2SubMappingTokenFactory.json
                 .. QmTDhpdjATMtKcmxoeAR9nZ59fhhm2cJ1xuQ5dikJiWNyL
-  Add file to IPFS build/DarwiniaMappingTokenFactory/DarwiniaMappingTokenFactory.wasm
+  Add file to IPFS build/Sub2SubMappingTokenFactory/Sub2SubMappingTokenFactory.wasm
                 .. QmTDJcE1hZ1cbSa9kTx7iGVQ5VM2H8XVg7tQKCRwz3iSwZ
 ✔ Upload subgraph to IPFS
 
 Build completed: QmSAjoWQcHa9B56DGuE3WTSahWR3dTy7d7VpVNuWj3VFmS
 
-Deployed to http://localhost:8000/subgraphs/name/wormhole/DarwiniaMappingTokenFactory/graphql
+Deployed to http://localhost:8000/subgraphs/name/wormhole/Sub2SubMappingTokenFactory/graphql
 
 Subgraph endpoints:
-Queries (HTTP):     http://localhost:8000/subgraphs/name/wormhole/DarwiniaMappingTokenFactory
-Subscriptions (WS): http://localhost:8001/subgraphs/name/wormhole/DarwiniaMappingTokenFactory
+Queries (HTTP):     http://localhost:8000/subgraphs/name/wormhole/Sub2SubMappingTokenFactory
+Subscriptions (WS): http://localhost:8001/subgraphs/name/wormhole/Sub2SubMappingTokenFactory
 ```
