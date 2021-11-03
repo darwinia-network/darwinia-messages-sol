@@ -21,6 +21,16 @@ contract MessageCommitment {
      */
     bytes32 internal constant LANEDATA_TYPEHASH = 0x8f6ab5f61c30d2037b3accf5c8898c9242d2acc51072316f994ac5d6748dd567;
 
+    struct MessagesProof {
+        Proof chainProof;
+        Proof laneProof;
+    }
+
+    struct Proof {
+        bytes32 root;
+        uint256 count;
+        bytes32[] proof;
+    }
 
     /* State */
     /**
@@ -49,26 +59,19 @@ contract MessageCommitment {
     function verify_messages_proof(
         bytes32 outboundLaneDataHash,
         bytes32 inboundLaneDataHash,
-        uint256 chainCount,
-        bytes32[] memory chainMessagesProof,
-        bytes32 laneMessagesRoot,
-        uint256 laneCount,
-        bytes32[] memory laneMessagesProof
+        MessagesProof memory messagesProof
     )
         internal
         view
     {
         // Validate that the commitment matches the commitment contents
+        require(messagesProof.chainProof.root == lightClientBridge.getFinalizedChainMessagesRoot(), "Lane: invalid ChainMessagesRoot");
         require(
             validateMessagesMatchRoot(
                 outboundLaneDataHash,
                 inboundLaneDataHash,
-                lightClientBridge.getFinalizedChainMessagesRoot(),
-                chainCount,
-                chainMessagesProof,
-                laneMessagesRoot,
-                laneCount,
-                laneMessagesProof
+                messagesProof.chainProof,
+                messagesProof.laneProof
             ),
             "Lane: invalid messages"
         );
@@ -77,29 +80,25 @@ contract MessageCommitment {
     function validateMessagesMatchRoot(
         bytes32 outboundLaneDataHash,
         bytes32 inboundLaneDataHash,
-        bytes32 chainMessagesRoot,
-        uint256 chainCount,
-        bytes32[] memory chainMessagesProof,
-        bytes32 laneMessagesRoot,
-        uint256 laneCount,
-        bytes32[] memory laneMessagesProof
+        Proof memory chainProof,
+        Proof memory laneProof
     ) internal view returns (bool) {
         bytes32 laneHash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
         return
             MerkleProof.verifyMerkleLeafAtPosition(
-                laneMessagesRoot,
+                laneProof.root,
                 laneHash,
                 lanePosition,
-                laneCount,
-                laneMessagesProof
+                laneProof.count,
+                laneProof.proof
             )
             &&
             MerkleProof.verifyMerkleLeafAtPosition(
-                chainMessagesRoot,
-                laneMessagesRoot,
+                chainProof.root,
+                laneProof.root,
                 chainPosition,
-                chainCount,
-                chainMessagesProof
+                chainProof.count,
+                chainProof.proof
             );
     }
 

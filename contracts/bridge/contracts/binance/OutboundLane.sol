@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "../interfaces/IOutboundLane.sol";
 import "./MessageCommitment.sol";
-import "./SourceChain.sol";
+import "./TargetChain.sol";
 
 // OutboundLand is a basic lane that just sends messages with a nonce.
 contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, TargetChain {
@@ -109,21 +109,9 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
     function receive_messages_delivery_proof(
         bytes32 outboundLaneDataHash,
         InboundLaneData memory inboundLaneData,
-        uint256 chainCount,
-        bytes32[] memory chainMessagesProof,
-        bytes32 laneMessagesRoot,
-        uint256 laneCount,
-        bytes32[] memory laneMessagesProof
+        MessagesProof memory messagesProof
     ) public {
-        verify_messages_proof(
-            outboundLaneDataHash,
-            hash(inboundLaneData),
-            chainCount,
-            chainMessagesProof,
-            laneMessagesRoot,
-            laneCount,
-            laneMessagesProof
-        );
+        verify_messages_proof(outboundLaneDataHash, hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
         // TODO: callback `on_messages_delivered`
         pay_relayers_rewards(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);

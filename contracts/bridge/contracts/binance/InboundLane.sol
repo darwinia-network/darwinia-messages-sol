@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import "../interfaces/ICrossChainFilter.sol";
 import "./MessageCommitment.sol";
-import "./TargetChain.sol";
+import "./SourceChain.sol";
 
 /**
  * @title A entry contract for syncing message from Darwinia to Ethereum-like chain
@@ -64,7 +64,7 @@ contract InboundLane is MessageCommitment, SourceChain {
      * @param _lanePosition The position of the leaf in the `lane_messages_merkle_tree`, index starting with 0
      * @param _lightClientBridge The contract address of on-chain light client
      */
-    constructor(address _lightClientBridge, uint256 _chainPosition, uint256 _lanePosition, uint256 _last_confirmed_nonce, uint256 _last_delivered_nonce) MessageCommitment(_lightClientBridge, _chainPosition, _lanePosition) public {
+    constructor(address _lightClientBridge, uint256 _chainPosition, uint256 _lanePosition, uint256 _last_confirmed_nonce, uint256 _last_delivered_nonce) public MessageCommitment(_lightClientBridge, _chainPosition, _lanePosition) {
         data = InboundLaneData(_last_confirmed_nonce, _last_delivered_nonce);
     }
 
@@ -72,42 +72,20 @@ contract InboundLane is MessageCommitment, SourceChain {
 
     /**
      * @notice Receive messages proof from bridged chain
-     * @param chainCount Number of all chain
-     * @param chainMessagesProof The merkle proof required for validation of the messages in the `chain_messages_merkle_tree`
-     * @param laneMessagesRoot The merkle root of the lanes, each lane is a leaf constructed by the hash of the messages in the lane
-     * @param laneCount Number of all lanes
-     * @param laneMessagesProof The merkle proof required for validation of the messages in the `lane_messages_merkle_tree`
-     * @param beefyMMRLeaf Beefy MMR leaf which the messages root is located
-     * @param beefyMMRLeafIndex Beefy MMR index which the beefy leaf is located
-     * @param beefyMMRLeafCount Beefy MMR width of the MMR tree
-     * @param peaks The proof required for validation the leaf
-     * @param siblings The proof required for validation the leaf
      */
     function receive_messages_proof(
         OutboundLaneData memory outboundLaneData,
         bytes32 inboundLaneDataHash,
-        uint256 chainCount,
-        bytes32[] memory chainMessagesProof,
-        bytes32 laneMessagesRoot,
-        uint256 laneCount,
-        bytes32[] memory laneMessagesProof
+        MessagesProof memory messagesProof
     ) public {
-        verify_messages_proof(
-            hash(outboundLaneData),
-            inboundLaneDataHash,
-            chainCount,
-            chainMessagesProof,
-            laneMessagesRoot,
-            laneCount,
-            laneMessagesProof
-        );
+        verify_messages_proof(hash(outboundLaneData), inboundLaneDataHash, messagesProof);
         // Require there is enough gas to play all messages
         require(
             gasleft() >= outboundLaneData.messages.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
             "Lane: insufficient gas for delivery of all messages"
         );
         receive_state_update(outboundLaneData.latest_received_nonce);
-        receive_message(subOutboundLaneData.messages);
+        receive_message(outboundLaneData.messages);
     }
 
     /* Private Functions */

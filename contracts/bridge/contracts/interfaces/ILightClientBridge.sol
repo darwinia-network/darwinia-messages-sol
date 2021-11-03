@@ -11,4 +11,5 @@ interface ILightClientBridge {
     ) external view returns (bool);
 
     function getFinalizedBlockNumber() external view returns (uint256);
+    function getFinalizedChainMessagesRoot() external view returns (bytes32);
 }
