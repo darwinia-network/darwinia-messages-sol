@@ -4,16 +4,16 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "../interfaces/ICrossChainFilter.sol";
-import "./SubstrateMessageCommitment.sol";
-import "./SubstrateOutboundLane.sol";
+import "./MessageCommitment.sol";
+import "./TargetChain.sol";
 
 /**
  * @title A entry contract for syncing message from Darwinia to Ethereum-like chain
  * @author echo
- * @notice The basic inbound lane is the message layer of the bridge
+ * @notice The inbound lane is the message layer of the bridge
  * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
  */
-contract BasicInboundLane is SubstrateMessageCommitment, SubstrateOutboundLane {
+contract InboundLane is MessageCommitment, SourceChain {
     /**
      * @notice Notifies an observer that the message has dispatched
      * @param nonce The message nonce
@@ -64,10 +64,7 @@ contract BasicInboundLane is SubstrateMessageCommitment, SubstrateOutboundLane {
      * @param _lanePosition The position of the leaf in the `lane_messages_merkle_tree`, index starting with 0
      * @param _lightClientBridge The contract address of on-chain light client
      */
-    constructor(address _lightClientBridge, uint256 _chainPosition, uint256 _lanePosition, uint256 _last_confirmed_nonce, uint256 _last_delivered_nonce) public {
-        lightClientBridge = ILightClientBridge(_lightClientBridge);
-        chainPosition = _chainPosition;
-        lanePosition = _lanePosition;
+    constructor(address _lightClientBridge, uint256 _chainPosition, uint256 _lanePosition, uint256 _last_confirmed_nonce, uint256 _last_delivered_nonce) MessageCommitment(_lightClientBridge, _chainPosition, _lanePosition) public {
         data = InboundLaneData(_last_confirmed_nonce, _last_delivered_nonce);
     }
 
@@ -87,24 +84,17 @@ contract BasicInboundLane is SubstrateMessageCommitment, SubstrateOutboundLane {
      * @param siblings The proof required for validation the leaf
      */
     function receive_messages_proof(
-        OutboundLaneData memory subOutboundLaneData,
-        bytes32 subInboundLaneDataHash,
+        OutboundLaneData memory outboundLaneData,
+        bytes32 inboundLaneDataHash,
         uint256 chainCount,
         bytes32[] memory chainMessagesProof,
         bytes32 laneMessagesRoot,
         uint256 laneCount,
-        bytes32[] memory laneMessagesProof,
-        BeefyMMRLeaf memory beefyMMRLeaf,
-        uint256 beefyMMRLeafIndex,
-        uint256 beefyMMRLeafCount,
-        bytes32[] memory peaks,
-        bytes32[] memory siblings
+        bytes32[] memory laneMessagesProof
     ) public {
-        verifyMMRLeaf(beefyMMRLeaf, beefyMMRLeafIndex, beefyMMRLeafCount, peaks, siblings);
-        verifyMessages(
-            hash(subOutboundLaneData),
-            subInboundLaneDataHash,
-            beefyMMRLeaf,
+        verify_messages_proof(
+            hash(outboundLaneData),
+            inboundLaneDataHash,
             chainCount,
             chainMessagesProof,
             laneMessagesRoot,
@@ -113,10 +103,10 @@ contract BasicInboundLane is SubstrateMessageCommitment, SubstrateOutboundLane {
         );
         // Require there is enough gas to play all messages
         require(
-            gasleft() >= subOutboundLaneData.messages.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
+            gasleft() >= outboundLaneData.messages.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
             "Lane: insufficient gas for delivery of all messages"
         );
-        receive_state_update(subOutboundLaneData.latest_received_nonce);
+        receive_state_update(outboundLaneData.latest_received_nonce);
         receive_message(subOutboundLaneData.messages);
     }
 

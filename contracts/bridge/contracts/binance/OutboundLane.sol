@@ -4,11 +4,11 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "../interfaces/IOutboundLane.sol";
-import "./SubstrateMessageCommitment.sol";
-import "./SubstrateInboundLane.sol";
+import "./MessageCommitment.sol";
+import "./SourceChain.sol";
 
-// BasicOutboundLand is a basic lane that just sends messages with a nonce.
-contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageCommitment, SubstrateInboundLane {
+// OutboundLand is a basic lane that just sends messages with a nonce.
+contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, TargetChain {
     event MessageAccepted(uint256 indexed lanePosition, uint256 indexed nonce, address sourceAccount, address targetContract, address laneContract, bytes encoded, uint256 fee);
     event MessagesDelivered(uint256 indexed lanePosition, uint256 begin, uint256 end, uint256 results);
     event MessagePruned(uint256 indexed lanePosition, uint256 indexed oldest_unpruned_nonce);
@@ -69,10 +69,7 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
         uint256 _oldest_unpruned_nonce,
         uint256 _latest_received_nonce,
         uint256 _latest_generated_nonce
-    ) public {
-        lightClientBridge = ILightClientBridge(_lightClientBridge);
-        chainPosition = _chainPosition;
-        lanePosition = _lanePosition;
+    ) public MessageCommitment(_lightClientBridge, _chainPosition, _lanePosition) {
         data = OutboundLaneData(_oldest_unpruned_nonce, _latest_received_nonce, _latest_generated_nonce);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -109,34 +106,27 @@ contract BasicOutboundLane is IOutboundLane, AccessControl, SubstrateMessageComm
         emit MessageFeeIncreased(lanePosition, nonce, messages[nonce].fee);
     }
 
-    function receiveMessagesDeliveryProof(
-        bytes32 subOutboundLaneDataHash,
-        InboundLaneData memory subInboundLaneData,
+    function receive_messages_delivery_proof(
+        bytes32 outboundLaneDataHash,
+        InboundLaneData memory inboundLaneData,
         uint256 chainCount,
         bytes32[] memory chainMessagesProof,
         bytes32 laneMessagesRoot,
         uint256 laneCount,
-        bytes32[] memory laneMessagesProof,
-        BeefyMMRLeaf memory beefyMMRLeaf,
-        uint256 beefyMMRLeafIndex,
-        uint256 beefyMMRLeafCount,
-        bytes32[] memory peaks,
-        bytes32[] memory siblings
+        bytes32[] memory laneMessagesProof
     ) public {
-        verifyMMRLeaf(beefyMMRLeaf, beefyMMRLeafIndex, beefyMMRLeafCount, peaks, siblings);
-        verifyMessages(
-            subOutboundLaneDataHash,
-            hash(subInboundLaneData),
-            beefyMMRLeaf,
+        verify_messages_proof(
+            outboundLaneDataHash,
+            hash(inboundLaneData),
             chainCount,
             chainMessagesProof,
             laneMessagesRoot,
             laneCount,
             laneMessagesProof
         );
-        DeliveredMessages memory confirmed_messages = confirm_delivery(subInboundLaneData);
+        DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
         // TODO: callback `on_messages_delivered`
-        pay_relayers_rewards(subInboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
+        pay_relayers_rewards(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
     }
 
     /* Private Functions */

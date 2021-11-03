@@ -126,6 +126,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
 
     uint256 public currentId;
     bytes32 public latestMMRRoot;
+    bytes32 public latestChainMessagesRoot;
     uint256 public latestBlockNumber;
     mapping(uint256 => ValidationData) public validationData;
 
@@ -198,6 +199,10 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     }
 
     /* Public Functions */
+
+    function getFinalizedChainMessagesRoot() external view returns (bytes32) {
+        return latestChainMessagesRoot;
+    }
 
     function getFinalizedBlockNumber() external view returns (uint256) {
         return latestBlockNumber;
