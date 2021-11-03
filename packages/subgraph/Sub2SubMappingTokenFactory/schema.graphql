@@ -18,4 +18,5 @@ type LockRecordEntity @entity {
   mapping_token: Bytes!
   recipient: Bytes!
   amount: BigInt!
+  transaction: Bytes!
 }
