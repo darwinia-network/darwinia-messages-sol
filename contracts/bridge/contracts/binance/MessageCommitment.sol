@@ -35,6 +35,8 @@ contract MessageCommitment is LaneDataScheme {
      */
     uint256 public lanePosition;
 
+    bytes32 public commitment;
+
     constructor(address _lightClientBridge, uint256 _chainPosition, uint256 _lanePosition) public {
         lightClientBridge = ILightClientBridge(_lightClientBridge);
         chainPosition = _chainPosition;

@@ -4,6 +4,14 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 contract SourceChain {
+    /**
+     * The MessagePayload is the structure of DarwiniaRPC which should be delivery to Ethereum-like chain
+     * @param sourceAccount The derived DVM address of pallet ID which send the message
+     * @param targetContract The targe contract address which receive the message
+     * @param laneContract The inbound lane contract address which the message commuting to
+     * @param nonce The ID used to uniquely identify the message
+     * @param encoded The calldata which encoded by ABI Encoding
+     */
     struct MessagePayload {
         address sourceAccount;
         address targetContract;

@@ -61,8 +61,6 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
     // nonce => UnrewardedRelayer
     mapping(uint256 => UnrewardedRelayer) public relayers;
 
-    bytes32 commitment;
-
     /**
      * @notice Deploys the BasicInboundLane contract
      * @param _chainPosition The position of the leaf in the `chain_messages_merkle_tree`, index starting with 0
@@ -91,7 +89,33 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
         );
         receive_state_update(outboundLaneData.latest_received_nonce);
         receive_message(outboundLaneData.messages);
-        commitment();
+        commit();
+    }
+
+    function relayer_size() public view returns (uint256 size) {
+        size = relayersIndex.back - relayersIndex.front + 1;
+    }
+
+    function relayers_back() public view returns (address pre_relayer, uint256 nonce) {
+        uint256 back = relayersIndex.back;
+        pre_relayer = relayers[back].relayer;
+        nonce = relayers[back].messages.begin;
+    }
+
+    function data() public view returns (InboundLaneData memory lane_data) {
+        uint256 size = relayer_size();
+        lane_data.relayers = new UnrewardedRelayer[](size);
+        uint256 front = relayersIndex.front;
+        for (uint256 index = 0; index < size; index++) {
+            lane_data.relayers[index] = relayers[front + index];
+        }
+        lane_data.last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
+    }
+
+    // storage proof issue: must use latest commitment in lightclient, cause we rm mmr root
+    function commit() public returns (bytes32) {
+        commitment = hash(data());
+        return commitment;
     }
 
     /* Private Functions */
@@ -107,7 +131,7 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
             for (uint256 index = front; index <= back; index++) {
                 UnrewardedRelayer storage entry = relayers[index];
                 if (entry.messages.end <= new_confirmed_nonce) {
-                    delete entry;
+                    delete relayers[index];
                     relayersIndex.front = index + 1;
                 } else if (entry.messages.begin < new_confirmed_nonce) {
                     entry.messages.dispatch_results >>= (new_confirmed_nonce + 1 - entry.messages.begin);
@@ -156,12 +180,6 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
         }
     }
 
-    function relayers_back() internal view returns (address pre_relayer, uint256 nonce) {
-        uint256 back = relayersIndex.back;
-        pre_relayer = relayers[back].relayer;
-        nonce = relayers[back].messages.begin;
-    }
-
     function dispatch(MessagePayload memory payload) internal returns (bool dispatch_result, bytes memory returndata) {
         /**
          * @notice The app layer must implement the interface `ICrossChainFilter`
@@ -180,23 +198,5 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
             dispatch_result = false;
             returndata = reason;
         }
-    }
-
-    function relayer_size() public view returns (uint256 size) {
-        size = relayersIndex.back - relayersIndex.front + 1;
-    }
-
-    function data() public view returns (InboundLaneData memory lane_data) {
-        uint256 size = relayer_size();
-        lane_data.relayers = new UnrewardedRelayer[](size);
-        uint256 front = relayersIndex.front;
-        for (uint256 index = 0; index < size; index++) {
-            lane_data.relayers[index] = relayers[front + index];
-        }
-        lane_data.last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
-    }
-
-    function commit() public returns {
-        commitment = hash(data());
     }
 }

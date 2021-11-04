@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "../interfaces/IOutboundLane.sol";
 import "./MessageCommitment.sol";
 import "./TargetChain.sol";
+import "./SourceChain.sol";
 
 // OutboundLand is a basic lane that just sends messages with a nonce.
-contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, TargetChain {
+contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, TargetChain, SourceChain {
     event MessageAccepted(uint256 indexed lanePosition, uint256 indexed nonce, address sourceAccount, address targetContract, address laneContract, bytes encoded, uint256 fee);
     event MessagesDelivered(uint256 indexed lanePosition, uint256 begin, uint256 end, uint256 results);
     event MessagePruned(uint256 indexed lanePosition, uint256 indexed oldest_unpruned_nonce);
@@ -18,36 +19,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
     uint256 internal constant MAX_PENDING_MESSAGES = 50;
     uint256 internal constant MAX_PRUNE_MESSAGES_ATONCE = 10;
 
-    /**
-     * Hash of the MessagePayload Schema
-     * keccak256(abi.encodePacked(
-     *     "MessagePayload(address sourceAccount,address targetContract,address laneContract,bytes encoded)"
-     *     ")"
-     * )
-     */
-    bytes32 internal constant MESSAGEPAYLOAD_TYPEHASH = 0xa2b843d52192ed322a0cda3ca8b407825100c01ffd3676529bc139bc847a12fb;
-
-    /**
-     * The MessagePayload is the structure of DarwiniaRPC which should be delivery to Ethereum-like chain
-     * @param sourceAccount The derived DVM address of pallet ID which send the message
-     * @param targetContract The targe contract address which receive the message
-     * @param laneContract The inbound lane contract address which the message commuting to
-     * @param nonce The ID used to uniquely identify the message
-     * @param encoded The calldata which encoded by ABI Encoding
-     */
-    struct MessagePayload {
-        address sourceAccount;
-        address targetContract;
-        address laneContract;
-        bytes encoded; /*abi.encodePacked(SELECTOR, PARAMS)*/
-    }
-
-    struct MessageDataHashed {
-        bytes32 payloadHash;
-        uint256 fee;
-    }
-
-    struct OutboundLaneData {
+    struct OutboundLaneNonce {
         uint256 oldest_unpruned_nonce;
         uint256 latest_received_nonce;
         uint256 latest_generated_nonce;
@@ -55,12 +27,12 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
 
     /* State */
 
-    OutboundLaneData public data;
-
-    // nonce => message
-    mapping(uint256 => MessageDataHashed) public messages;
+    OutboundLaneNonce public outboundLaneNonce;
 
     uint256 public confirmationFee = 0.1 ether; // how to set confirmation_fee
+
+    // nonce => message
+    mapping(uint256 => MessageData) public messages;
 
     constructor(
         address _lightClientBridge,
@@ -70,7 +42,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
         uint256 _latest_received_nonce,
         uint256 _latest_generated_nonce
     ) public MessageCommitment(_lightClientBridge, _chainPosition, _lanePosition) {
-        data = OutboundLaneData(_oldest_unpruned_nonce, _latest_received_nonce, _latest_generated_nonce);
+        outboundLaneNonce = OutboundLaneNonce(_oldest_unpruned_nonce, _latest_received_nonce, _latest_generated_nonce);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -79,30 +51,32 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
      */
     function send_message(address targetContract, bytes calldata encoded) external payable override returns (uint256) {
         require(hasRole(OUTBOUND_ROLE, msg.sender), "Lane: NotAuthorized");
-        require(data.latest_generated_nonce - data.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
-        uint256 nonce = data.latest_generated_nonce + 1;
+        require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
+        uint256 nonce = outboundLaneNonce.latest_generated_nonce + 1;
         uint256 fee = msg.value;
-        data.latest_generated_nonce = nonce;
+        outboundLaneNonce.latest_generated_nonce = nonce;
         MessagePayload memory messagePayload = MessagePayload({
             sourceAccount: msg.sender,
             targetContract: targetContract,
             laneContract: address(this),
             encoded: encoded
         });
-        messages[nonce] = MessageDataHashed({
-            payloadHash: hash(messagePayload),
+        messages[nonce] = MessageData({
+            payload: messagePayload,
             fee: fee  // a lowest fee may be required and how to set it
         });
         // TODO:: callback `on_messages_accepted`
         prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
         emit MessageAccepted(lanePosition, nonce, messagePayload.sourceAccount, messagePayload.targetContract, messagePayload.laneContract, messagePayload.encoded, fee);
+        commit();
         return nonce;
     }
 
     function increase_message_fee(uint256 nonce) external payable {
-        require(nonce > data.latest_received_nonce, "Lane: MessageIsAlreadyDelivered");
-        require(nonce <= data.latest_generated_nonce, "Lane: MessageIsNotYetSent");
+        require(nonce > outboundLaneNonce.latest_received_nonce, "Lane: MessageIsAlreadyDelivered");
+        require(nonce <= outboundLaneNonce.latest_generated_nonce, "Lane: MessageIsNotYetSent");
         messages[nonce].fee += msg.value;
+        commit();
         emit MessageFeeIncreased(lanePosition, nonce, messages[nonce].fee);
     }
 
@@ -115,6 +89,27 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
         // TODO: callback `on_messages_delivered`
         pay_relayers_rewards(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
+        commit();
+    }
+
+    function message_size() public view returns (uint256 size) {
+        size = outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce;
+    }
+
+    function data() public view returns (OutboundLaneData memory lane_data) {
+        uint256 size = message_size();
+        lane_data.messages = new Message[](size);
+        uint256 begin = outboundLaneNonce.latest_received_nonce + 1;
+        for (uint256 index = 0; index < size; index++) {
+            uint256 nonce = index + begin;
+            lane_data.messages[index] = Message(MessageKey(lanePosition, nonce), messages[nonce]);
+        }
+        lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
+    }
+
+    function commit() public returns (bytes32) {
+        commitment = hash(data());
+        return commitment;
     }
 
     /* Private Functions */
@@ -137,13 +132,13 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
         require(total_messages < 256, "Lane: InvalidNumberOfMessages");
 
         UnrewardedRelayer[] memory relayers = subInboundLaneData.relayers;
-        OutboundLaneData memory dataMem = data;
-        require(latest_delivered_nonce > dataMem.latest_received_nonce, "Lane: NoNewConfirmations");
-        require(latest_delivered_nonce <= dataMem.latest_generated_nonce, "Lane: FailedToConfirmFutureMessages");
-        require(latest_delivered_nonce - dataMem.latest_received_nonce <= total_messages, "Lane: TryingToConfirmMoreMessagesThanExpected");
-        uint256 dispatch_results = extract_dispatch_results(dataMem.latest_received_nonce, latest_delivered_nonce, relayers);
-        uint256 prev_latest_received_nonce = dataMem.latest_received_nonce;
-        data.latest_received_nonce = latest_delivered_nonce;
+        OutboundLaneNonce memory nonce = outboundLaneNonce;
+        require(latest_delivered_nonce > nonce.latest_received_nonce, "Lane: NoNewConfirmations");
+        require(latest_delivered_nonce <= nonce.latest_generated_nonce, "Lane: FailedToConfirmFutureMessages");
+        require(latest_delivered_nonce - nonce.latest_received_nonce <= total_messages, "Lane: TryingToConfirmMoreMessagesThanExpected");
+        uint256 dispatch_results = extract_dispatch_results(nonce.latest_received_nonce, latest_delivered_nonce, relayers);
+        uint256 prev_latest_received_nonce = nonce.latest_received_nonce;
+        outboundLaneNonce.latest_received_nonce = latest_delivered_nonce;
         confirmed_messages = DeliveredMessages({
             begin: prev_latest_received_nonce + 1,
             end: latest_delivered_nonce,
@@ -157,7 +152,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
         uint256 padding = 0;
         for (uint256 i = 0; i < relayers.length; i++) {
             UnrewardedRelayer memory entry = relayers[i];
-            require(entry.messages.end < entry.messages.begin, "Lane: EmptyUnrewardedRelayerEntry");
+            require(entry.messages.end >= entry.messages.begin, "Lane: EmptyUnrewardedRelayerEntry");
             if (last_entry_end > 0) {
                 uint256 expected_entry_begin = last_entry_end + 1;
                 require(entry.messages.begin == expected_entry_begin, "Lane: NonConsecutiveUnrewardedRelayerEntries");
@@ -170,8 +165,10 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
                 continue;
             }
             uint256 extend_begin = new_messages_begin - entry.messages.begin;
-            received_dispatch_result |= ((entry.messages.dispatch_results << extend_begin) >> padding);
-            padding = padding + entry.messages.end - entry.messages.begin - extend_begin + 1;
+            uint256 messages_count_opp = 255 - (entry.messages.end - entry.messages.begin);
+            uint256 dispatch_results = entry.messages.dispatch_results << messages_count_opp >> messages_count_opp;
+            received_dispatch_result |= ((dispatch_results >> extend_begin) << padding);
+            padding += (messages_count_opp - extend_begin);
         }
     }
 
@@ -181,19 +178,19 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
     function prune_messages(uint256 max_messages_to_prune) internal returns (uint256) {
         uint256 pruned_messages = 0;
         bool anything_changed = false;
-        OutboundLaneData memory dataMem = data;
+        OutboundLaneNonce memory nonce = outboundLaneNonce;
         while (pruned_messages < max_messages_to_prune &&
-            dataMem.oldest_unpruned_nonce <= dataMem.latest_received_nonce)
+            nonce.oldest_unpruned_nonce <= nonce.latest_received_nonce)
         {
-            delete messages[dataMem.oldest_unpruned_nonce];
+            delete messages[nonce.oldest_unpruned_nonce];
             anything_changed = true;
             pruned_messages += 1;
-            dataMem.oldest_unpruned_nonce += 1;
+            nonce.oldest_unpruned_nonce += 1;
         }
         if (anything_changed) {
-            data = dataMem;
+            outboundLaneNonce = nonce;
         }
-        emit MessagePruned(lanePosition, data.oldest_unpruned_nonce);
+        emit MessagePruned(lanePosition, outboundLaneNonce.oldest_unpruned_nonce);
         return pruned_messages;
     }
 
@@ -211,8 +208,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
             uint256 delivery_reward = 0;
             uint256 confirmation_reward = 0;
             for (uint256 nonce = nonce_begin; nonce <= nonce_end; nonce++) {
-                MessageDataHashed memory message_data = messages[nonce];
-                delivery_reward += message_data.fee;
+                delivery_reward += messages[nonce].fee;
                 confirmation_reward += confirmation_fee;
             }
             if (confirmation_relayer != delivery_relayer) {
@@ -242,22 +238,6 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
         if (value > 0) {
             to.transfer(value);
         }
-    }
-
-    function hash(MessagePayload memory payload)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(
-            abi.encode(
-                MESSAGEPAYLOAD_TYPEHASH,
-                payload.sourceAccount,
-                payload.targetContract,
-                payload.laneContract,
-                payload.encoded
-            )
-        );
     }
 
     // --- Math ---
