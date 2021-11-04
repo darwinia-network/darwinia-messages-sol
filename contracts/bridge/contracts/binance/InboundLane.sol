@@ -58,7 +58,7 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
 
     RelayersIndex public relayersIndex;
 
-    // nonce => UnrewardedRelayer
+    // index => UnrewardedRelayer
     mapping(uint256 => UnrewardedRelayer) public relayers;
 
     /**

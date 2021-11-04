@@ -11,6 +11,7 @@ contract Message is Ownable, LaneDataScheme {
     event RegistryLane(address inboundLane, address outboundLane);
 
     uint256 public laneCount;
+    bytes32 public commitmentRoot;
     mapping(uint256 => address) inboundLanes;
     mapping(uint256 => address) outboundLanes;
 
@@ -21,6 +22,11 @@ contract Message is Ownable, LaneDataScheme {
         outboundLanes[laneCount] = outboundLane;
         laneCount++;
         emit RegistryLane(inboundLane, outboundLane);
+    }
+
+    function commit() external return (bytes32) {
+        commitmentRoot = commitment();
+        return commitmentRoot;
     }
 
     function commitment(uint256 pos) public view returns (bytes32) {
