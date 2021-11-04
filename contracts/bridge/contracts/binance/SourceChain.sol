@@ -9,33 +9,44 @@ contract SourceChain {
      * @param sourceAccount The derived DVM address of pallet ID which send the message
      * @param targetContract The targe contract address which receive the message
      * @param laneContract The inbound lane contract address which the message commuting to
-     * @param nonce The ID used to uniquely identify the message
      * @param encoded The calldata which encoded by ABI Encoding
      */
     struct MessagePayload {
         address sourceAccount;
         address targetContract;
-        address laneContract;
+        address laneContract; //TODO: may not necessary
         bytes encoded; /*abi.encodePacked(SELECTOR, PARAMS)*/
     }
 
+    // Message key (unique message identifier) as it is stored in the storage.
     struct MessageKey {
+        // ID of the message lane.
         uint256 lane_id;
+        /// Nonce of the message.
         uint256 nonce;
     }
 
+    // Message data as it is stored in the storage.
     struct MessageData {
+        // Message payload.
         MessagePayload payload;
+        // Message delivery and dispatch fee, paid by the submitter.
         uint256 fee;
     }
 
+    // Message as it is stored in the storage.
     struct Message {
+        // Message key.
         MessageKey key;
+        // Message data.
         MessageData data;
     }
 
+    // Outbound lane data.
     struct OutboundLaneData {
+        // Nonce of the latest message, received by bridged chain.
         uint256 latest_received_nonce;
+        // Messages sent through this lane.
         Message[] messages;
     }
 
