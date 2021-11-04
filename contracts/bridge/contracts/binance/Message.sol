@@ -24,7 +24,7 @@ contract Message is Ownable, LaneDataScheme {
         emit RegistryLane(inboundLane, outboundLane);
     }
 
-    function commit() external return (bytes32) {
+    function commit() external returns (bytes32) {
         commitmentRoot = commitment();
         return commitmentRoot;
     }
@@ -41,8 +41,8 @@ contract Message is Ownable, LaneDataScheme {
     }
 
     // we use sparse tree to commit
-    function commitment() external view returns (bytes32) {
-        uint256 hashes = new bytes32[](roundUpToPow2(laneCount));
+    function commitment() public view returns (bytes32) {
+        bytes32[] memory hashes = new bytes32[](roundUpToPow2(laneCount));
         for (uint256 pos = 0; pos < laneCount; pos++) {
             hashes[pos] = commitment(pos);
         }
