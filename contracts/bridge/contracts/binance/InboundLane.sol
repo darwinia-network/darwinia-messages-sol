@@ -51,8 +51,17 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
 
     InboundLaneNonce public inboundLaneNonce;
 
+    struct RelayersIndex {
+        uint256 front;
+        uint256 back;
+    }
+
+    RelayersIndex public relayersIndex;
+
     // nonce => UnrewardedRelayer
     mapping(uint256 => UnrewardedRelayer) public relayers;
+
+    bytes32 commitment;
 
     /**
      * @notice Deploys the BasicInboundLane contract
@@ -82,6 +91,7 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
         );
         receive_state_update(outboundLaneData.latest_received_nonce);
         receive_message(outboundLaneData.messages);
+        commitment();
     }
 
     /* Private Functions */
@@ -92,20 +102,17 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
         require(latest_received_nonce <= last_delivered_nonce, "Lane: InvalidReceivedNonce");
         if (latest_received_nonce > last_confirmed_nonce) {
             uint256 new_confirmed_nonce = latest_received_nonce;
-            uint256 nonce = last_confirmed_nonce + 1;
-            while (nonce <= latest_received_nonce) {
-                UnrewardedRelayer memory entry = relayers[nonce];
+            uint256 front = relayersIndex.front;
+            uint256 back = relayersIndex.back;
+            for (uint256 index = front; index <= back; index++) {
+                UnrewardedRelayer storage entry = relayers[index];
                 if (entry.messages.end <= new_confirmed_nonce) {
-                    delete relayers[nonce];
-                    nonce = entry.messages.end + 1;
+                    delete entry;
+                    relayersIndex.front = index + 1;
                 } else if (entry.messages.begin < new_confirmed_nonce) {
                     entry.messages.dispatch_results >>= (new_confirmed_nonce + 1 - entry.messages.begin);
                     entry.messages.begin = new_confirmed_nonce + 1;
-                    delete relayers[nonce];
-                    nonce = new_confirmed_nonce + 1;
-                    relayers[nonce] = entry;
                 }
-                revert("unexpect behavior");
             }
             inboundLaneNonce.last_confirmed_nonce = new_confirmed_nonce;
         }
@@ -144,18 +151,15 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
             r.messages.end = end;
             r.messages.dispatch_results |= dispatch_results << padding;
         } else {
-            relayers[begin] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
+            relayersIndex.back += 1;
+            relayers[relayersIndex.back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
         }
     }
 
     function relayers_back() internal view returns (address pre_relayer, uint256 nonce) {
-        uint256 index = inboundLaneNonce.last_confirmed_nonce + 1;
-        while (index <= inboundLaneNonce.last_delivered_nonce) {
-            UnrewardedRelayer memory entry = relayers[nonce];
-            pre_relayer = entry.relayer;
-            nonce = entry.messages.begin;
-            index = entry.messages.end + 1;
-        }
+        uint256 back = relayersIndex.back;
+        pre_relayer = relayers[back].relayer;
+        nonce = relayers[back].messages.begin;
     }
 
     function dispatch(MessagePayload memory payload) internal returns (bool dispatch_result, bytes memory returndata) {
@@ -179,21 +183,20 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
     }
 
     function relayer_size() public view returns (uint256 size) {
-        uint256 nonce = inboundLaneNonce.last_confirmed_nonce + 1;
-        while (nonce <= inboundLaneNonce.last_delivered_nonce) {
-            nonce = relayers[nonce].messages.end + 1;
-            size++;
-        }
+        size = relayersIndex.back - relayersIndex.front + 1;
     }
 
     function data() public view returns (InboundLaneData memory lane_data) {
-        lane_data.relayers = new UnrewardedRelayer[](relayer_size());
-        uint256 index = 0;
-        uint256 nonce = inboundLaneNonce.last_confirmed_nonce + 1;
-        while (nonce <= inboundLaneNonce.last_delivered_nonce) {
-            UnrewardedRelayer memory entry = relayers[nonce];
-            lane_data.relayers[index++] = entry;
+        uint256 size = relayer_size();
+        lane_data.relayers = new UnrewardedRelayer[](size);
+        uint256 front = relayersIndex.front;
+        for (uint256 index = 0; index < size; index++) {
+            lane_data.relayers[index] = relayers[front + index];
         }
         lane_data.last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
+    }
+
+    function commit() public returns {
+        commitment = hash(data());
     }
 }
