@@ -6,6 +6,7 @@ pragma experimental ABIEncoderV2;
 import "../interfaces/ICrossChainFilter.sol";
 import "./MessageCommitment.sol";
 import "./SourceChain.sol";
+import "./TargetChain.sol";
 
 /**
  * @title A entry contract for syncing message from Darwinia to Ethereum-like chain
@@ -13,7 +14,7 @@ import "./SourceChain.sol";
  * @notice The inbound lane is the message layer of the bridge
  * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
  */
-contract InboundLane is MessageCommitment, SourceChain {
+contract InboundLane is MessageCommitment, SourceChain, TargetChain {
     /**
      * @notice Notifies an observer that the message has dispatched
      * @param nonce The message nonce
@@ -36,11 +37,6 @@ contract InboundLane is MessageCommitment, SourceChain {
      */
     uint256 public constant GAS_BUFFER = 60000;
 
-    struct DeliveredMessage {
-        address relayer;
-        bool dispatch_result;
-    }
-
     /* State */
 
     /**
@@ -48,15 +44,15 @@ contract InboundLane is MessageCommitment, SourceChain {
      * @notice When upgrading the lane, this value must be synchronized
      */
 
-    struct InboundLaneData {
+    struct InboundLaneNonce {
         uint256 last_confirmed_nonce;
         uint256 last_delivered_nonce;
     }
 
-    InboundLaneData public data;
+    InboundLaneNonce public inboundLaneNonce;
 
-    // nonce => DeliveredMessage
-    mapping(uint256 => DeliveredMessage) public deliveredMessages;
+    // nonce => UnrewardedRelayer
+    mapping(uint256 => UnrewardedRelayer) public relayers;
 
     /**
      * @notice Deploys the BasicInboundLane contract
@@ -65,7 +61,7 @@ contract InboundLane is MessageCommitment, SourceChain {
      * @param _lightClientBridge The contract address of on-chain light client
      */
     constructor(address _lightClientBridge, uint256 _chainPosition, uint256 _lanePosition, uint256 _last_confirmed_nonce, uint256 _last_delivered_nonce) public MessageCommitment(_lightClientBridge, _chainPosition, _lanePosition) {
-        data = InboundLaneData(_last_confirmed_nonce, _last_delivered_nonce);
+        inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce);
     }
 
     /* Public Functions */
@@ -91,43 +87,74 @@ contract InboundLane is MessageCommitment, SourceChain {
     /* Private Functions */
 
     function receive_state_update(uint256 latest_received_nonce) internal returns (uint256) {
-        uint256 last_delivered_nonce = data.last_delivered_nonce;
-        uint256 last_confirmed_nonce = data.last_confirmed_nonce;
+        uint256 last_delivered_nonce = inboundLaneNonce.last_delivered_nonce;
+        uint256 last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
         require(latest_received_nonce <= last_delivered_nonce, "Lane: InvalidReceivedNonce");
         if (latest_received_nonce > last_confirmed_nonce) {
             uint256 new_confirmed_nonce = latest_received_nonce;
-            for (uint256 nonce = last_confirmed_nonce; nonce <= latest_received_nonce; nonce++) {
-                delete deliveredMessages[nonce];
-                emit DeliveredMessagePruned(lanePosition, nonce);
+            uint256 nonce = last_confirmed_nonce + 1;
+            while (nonce <= latest_received_nonce) {
+                UnrewardedRelayer memory entry = relayers[nonce];
+                if (entry.messages.end <= new_confirmed_nonce) {
+                    delete relayers[nonce];
+                    nonce = entry.messages.end + 1;
+                } else if (entry.messages.begin < new_confirmed_nonce) {
+                    entry.messages.dispatch_results >>= (new_confirmed_nonce + 1 - entry.messages.begin);
+                    entry.messages.begin = new_confirmed_nonce + 1;
+                    delete relayers[nonce];
+                    nonce = new_confirmed_nonce + 1;
+                    relayers[nonce] = entry;
+                }
+                revert("unexpect behavior");
             }
-            data.last_confirmed_nonce = new_confirmed_nonce;
+            inboundLaneNonce.last_confirmed_nonce = new_confirmed_nonce;
         }
         return latest_received_nonce;
     }
 
-    function receive_message(Message[] memory messages) internal {
-        address relayer = msg.sender;
+    function receive_message(Message[] memory messages) internal returns (uint256 dispatch_results) {
+        address payable relayer = msg.sender;
+        uint256 begin = inboundLaneNonce.last_delivered_nonce + 1;
+        uint256 end = begin;
         for (uint256 i = 0; i < messages.length; i++) {
             Message memory message = messages[i];
             MessageKey memory key = message.key;
             MessagePayload memory message_payload = message.data.payload;
-            uint256 nonce = data.last_delivered_nonce + 1;
-            if (key.nonce < nonce) {
+            if (key.nonce < end) {
                 continue;
             }
             // Check message nonce is correct and increment nonce for replay protection
-            require(key.nonce == nonce, "Lane: InvalidNonce");
+            require(key.nonce == end, "Lane: InvalidNonce");
             require(key.lane_id == lanePosition, "Lane: InvalidLaneID");
-            require(nonce - data.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "Lane: TooManyUnconfirmedMessages");
+            require(end - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "Lane: TooManyUnconfirmedMessages");
             require(message_payload.laneContract == address(this), "Lane: InvalidLaneContract");
 
-            data.last_delivered_nonce = nonce;
+            inboundLaneNonce.last_delivered_nonce = end;
 
             (bool dispatch_result, bytes memory returndata) = dispatch(message_payload);
 
-            deliveredMessages[nonce] = DeliveredMessage(relayer, dispatch_result);
-            emit MessageDispatched(lanePosition, nonce, dispatch_result, returndata);
+            emit MessageDispatched(lanePosition, end, dispatch_result, returndata);
             // TODO: callback `pay_inbound_dispatch_fee_overhead`
+            dispatch_results |= (dispatch_result ? uint256(1) : uint256(0)) << (end - begin);
+        }
+        (address pre_relayer, uint256 nonce) = relayers_back();
+        if (pre_relayer == relayer) {
+            UnrewardedRelayer storage r = relayers[nonce];
+            uint256 padding = r.messages.end - r.messages.begin + 1;
+            r.messages.end = end;
+            r.messages.dispatch_results |= dispatch_results << padding;
+        } else {
+            relayers[begin] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
+        }
+    }
+
+    function relayers_back() internal view returns (address pre_relayer, uint256 nonce) {
+        uint256 index = inboundLaneNonce.last_confirmed_nonce + 1;
+        while (index <= inboundLaneNonce.last_delivered_nonce) {
+            UnrewardedRelayer memory entry = relayers[nonce];
+            pre_relayer = entry.relayer;
+            nonce = entry.messages.begin;
+            index = entry.messages.end + 1;
         }
     }
 
@@ -151,4 +178,22 @@ contract InboundLane is MessageCommitment, SourceChain {
         }
     }
 
+    function relayer_size() public view returns (uint256 size) {
+        uint256 nonce = inboundLaneNonce.last_confirmed_nonce + 1;
+        while (nonce <= inboundLaneNonce.last_delivered_nonce) {
+            nonce = relayers[nonce].messages.end + 1;
+            size++;
+        }
+    }
+
+    function data() public view returns (InboundLaneData memory lane_data) {
+        lane_data.relayers = new UnrewardedRelayer[](relayer_size());
+        uint256 index = 0;
+        uint256 nonce = inboundLaneNonce.last_confirmed_nonce + 1;
+        while (nonce <= inboundLaneNonce.last_delivered_nonce) {
+            UnrewardedRelayer memory entry = relayers[nonce];
+            lane_data.relayers[index++] = entry;
+        }
+        lane_data.last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
+    }
 }

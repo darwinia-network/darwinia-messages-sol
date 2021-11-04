@@ -5,22 +5,9 @@ pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "../interfaces/ILightClientBridge.sol";
+import "./LaneDataScheme.sol";
 
-contract MessageCommitment {
-    struct LaneData {
-        bytes32 outboundLaneDataHash;
-        bytes32 inboundLaneDataHash;
-    }
-
-    /**
-     * Hash of the LaneData Schema
-     * keccak256(abi.encodePacked(
-     *     "LaneData(bytes32 outboundLaneDataHash,bytes32 inboundLaneDataHash)"
-     *     ")"
-     * )
-     */
-    bytes32 internal constant LANEDATA_TYPEHASH = 0x8f6ab5f61c30d2037b3accf5c8898c9242d2acc51072316f994ac5d6748dd567;
-
+contract MessageCommitment is LaneDataScheme {
     struct MessagesProof {
         Proof chainProof;
         Proof laneProof;
@@ -102,18 +89,5 @@ contract MessageCommitment {
             );
     }
 
-    function hash(LaneData memory land_data)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(
-            abi.encodePacked(
-                LANEDATA_TYPEHASH,
-                land_data.outboundLaneDataHash,
-                land_data.inboundLaneDataHash
-            )
-        );
-    }
 }
 
