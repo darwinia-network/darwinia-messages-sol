@@ -16,7 +16,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "../../interfaces/ICrossChainFilter.sol";
-import "./MessageCommitment.sol";
+import "./MessageVerifier.sol";
 import "./SourceChain.sol";
 import "./TargetChain.sol";
 
@@ -26,7 +26,7 @@ import "./TargetChain.sol";
  * @notice The inbound lane is the message layer of the bridge
  * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
  */
-contract InboundLane is MessageCommitment, SourceChain, TargetChain {
+contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     /**
      * @notice Notifies an observer that the message has dispatched
      * @param nonce The message nonce
@@ -114,7 +114,7 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
      * @param _lanePosition The position of the leaf in the `lane_messages_merkle_tree`, index starting with 0
      * @param _lightClientBridge The contract address of on-chain light client
      */
-    constructor(address _lightClientBridge, uint256 _chainPosition, uint256 _lanePosition, uint256 _last_confirmed_nonce, uint256 _last_delivered_nonce) public MessageCommitment(_lightClientBridge, _chainPosition, _lanePosition) {
+    constructor(address _lightClientBridge, uint256 _chainPosition, uint256 _lanePosition, uint256 _last_confirmed_nonce, uint256 _last_delivered_nonce) public MessageVerifier(_lightClientBridge, _chainPosition, _lanePosition) {
         inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce);
     }
 
@@ -128,7 +128,7 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
     function receive_messages_proof(
         OutboundLaneData memory outboundLaneData,
         bytes32 inboundLaneDataHash,
-        MessagesProof memory messagesProof
+        bytes memory messagesProof
     ) public {
         verify_messages_proof(hash(outboundLaneData), inboundLaneDataHash, messagesProof);
         // Require there is enough gas to play all messages

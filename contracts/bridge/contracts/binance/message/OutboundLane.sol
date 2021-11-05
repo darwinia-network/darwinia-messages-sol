@@ -17,12 +17,12 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "../../interfaces/IOutboundLane.sol";
-import "./MessageCommitment.sol";
+import "./MessageVerifier.sol";
 import "./TargetChain.sol";
 import "./SourceChain.sol";
 
 // Everything about outgoing messages sending.
-contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, TargetChain, SourceChain {
+contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetChain, SourceChain {
     event MessageAccepted(uint256 indexed lanePosition, uint256 indexed nonce, address sourceAccount, address targetContract, address laneContract, bytes encoded, uint256 fee);
     event MessagesDelivered(uint256 indexed lanePosition, uint256 begin, uint256 end, uint256 results);
     event MessagePruned(uint256 indexed lanePosition, uint256 indexed oldest_unpruned_nonce);
@@ -59,7 +59,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
         uint256 _oldest_unpruned_nonce,
         uint256 _latest_received_nonce,
         uint256 _latest_generated_nonce
-    ) public MessageCommitment(_lightClientBridge, _chainPosition, _lanePosition) {
+    ) public MessageVerifier(_lightClientBridge, _chainPosition, _lanePosition) {
         outboundLaneNonce = OutboundLaneNonce(_oldest_unpruned_nonce, _latest_received_nonce, _latest_generated_nonce);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -111,7 +111,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageCommitment, Target
     function receive_messages_delivery_proof(
         bytes32 outboundLaneDataHash,
         InboundLaneData memory inboundLaneData,
-        MessagesProof memory messagesProof
+        bytes memory messagesProof
     ) public {
         verify_messages_proof(outboundLaneDataHash, hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);

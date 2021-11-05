@@ -122,6 +122,17 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         uint256[] validatorClaimsBitfield;
     }
 
+    struct MessagesProof {
+        MProof chainProof;
+        MProof laneProof;
+    }
+
+    struct MProof {
+        bytes32 root;
+        uint256 count;
+        bytes32[] proof;
+    }
+
     /* State */
 
     uint256 public currentId;
@@ -303,6 +314,49 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
                 nextValidatorSet.root
             )
         );
+    }
+
+    function validate_messages_match_root(
+        bytes32 lane_hash,
+        uint256 chain_pos,
+        uint256 lane_pos,
+        bytes calldata proof
+    ) external view returns (bool) {
+        MessagesProof memory messages_proof = abi.decode(proof, (MessagesProof));
+        // Validate that the commitment matches the commitment contents
+        require(messages_proof.chainProof.root == latestChainMessagesRoot, "Lane: invalid ChainMessagesRoot");
+        return validateMessagesMatchRoot(
+                lane_hash,
+                chain_pos,
+                lane_pos,
+                messages_proof.chainProof,
+                messages_proof.laneProof
+            );
+    }
+
+    function validateMessagesMatchRoot(
+        bytes32 laneHash,
+        uint256 chainPosition,
+        uint256 lanePosition,
+        MProof memory chainProof,
+        MProof memory laneProof
+    ) internal pure returns (bool) {
+        return
+            MerkleProof.verifyMerkleLeafAtPosition(
+                laneProof.root,
+                laneHash,
+                lanePosition,
+                laneProof.count,
+                laneProof.proof
+            )
+            &&
+            MerkleProof.verifyMerkleLeafAtPosition(
+                chainProof.root,
+                laneProof.root,
+                chainPosition,
+                chainProof.count,
+                chainProof.proof
+            );
     }
 
     /**
