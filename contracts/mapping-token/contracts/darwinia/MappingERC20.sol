@@ -2,14 +2,12 @@
 pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 
 contract MappingERC20 is IERC20, Ownable, Initializable {
     using SafeMath for uint256;
-    using Address for address;
 
     mapping (address => uint256) private _balances;
 
@@ -20,8 +18,6 @@ contract MappingERC20 is IERC20, Ownable, Initializable {
     string private _name;
     string private _symbol;
     uint8 private _decimals;
-
-    event Burn(address indexed recipient, uint256 amount);
 
     function initialize (
         string memory name,
