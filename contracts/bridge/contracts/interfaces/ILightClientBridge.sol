@@ -11,5 +11,11 @@ interface ILightClientBridge {
     ) external view returns (bool);
 
     function getFinalizedBlockNumber() external view returns (uint256);
-    function getFinalizedChainMessagesRoot() external view returns (bytes32);
+
+    function validate_messages_match_root(
+        bytes32 lane_hash,
+        uint256 chain_pos,
+        uint256 lane_pos,
+        bytes calldata proof
+    ) external view returns (bool);
 }
