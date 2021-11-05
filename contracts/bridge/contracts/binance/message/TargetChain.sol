@@ -4,19 +4,52 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 contract TargetChain {
+    // Delivered messages with their dispatch result.
     struct DeliveredMessages {
+        // Nonce of the first message that has been delivered (inclusive).
         uint256 begin;
+        // Nonce of the last message that has been delivered (inclusive).
         uint256 end;
+        // Dispatch result (`false`/`true`), returned by the message dispatcher for every
+        // message in the `[end; begin]` range.
+        // The `MAX_UNCONFIRMED_MESSAGES` parameter must lesser than 256 for gas saving
         uint256 dispatch_results;
     }
 
+    // Unrewarded relayer entry stored in the inbound lane data.
+    //
+    // This struct represents a continuous range of messages that have been delivered by the same
+    // relayer and whose confirmations are still pending.
     struct UnrewardedRelayer {
+        // Address of the relayer.
         address payable relayer;
+        // Messages range, delivered by this relayer.
         DeliveredMessages messages;
     }
 
+    // Inbound lane data
     struct InboundLaneData {
+        // Identifiers of relayers and messages that they have delivered to this lane (ordered by
+        // message nonce).
+        //
+        // This serves as a helper storage item, to allow the source chain to easily pay rewards
+        // to the relayers who successfully delivered messages to the target chain (inbound lane).
+        //
+        // All nonces in this queue are in
+        // range: `(self.last_confirmed_nonce; self.last_delivered_nonce()]`.
+        //
+        // When a relayer sends a single message, both of begin and end nonce are the same.
+        // When relayer sends messages in a batch, the first arg is the lowest nonce, second arg the
+        // highest nonce. Multiple dispatches from the same relayer are allowed.
         UnrewardedRelayer[] relayers;
+        // Nonce of the last message that
+        // a) has been delivered to the target (this) chain and
+        // b) the delivery has been confirmed on the source chain
+        //
+        // that the target chain knows of.
+        //
+        // This value is updated indirectly when an `OutboundLane` state of the source
+        // chain is received alongside with new messages delivery.
         uint256 last_confirmed_nonce;
     }
 

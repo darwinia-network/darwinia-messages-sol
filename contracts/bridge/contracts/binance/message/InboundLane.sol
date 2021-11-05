@@ -43,9 +43,23 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
      */
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
 
+    // Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
+    // message has been delivered, but either confirmations haven't been delivered back to the
+    // source chain, or we haven't received reward confirmations for these messages yet.
+    //
+    // This constant limits difference between last message from last entry of the
+    // `InboundLaneData::relayers` and first message at the first entry.
+    //
+    // This value also represents maximal number of messages in single delivery transaction.
+    // Transaction that is declaring more messages than this value, will be rejected. Even if
+    // these messages are from different lanes.
+
+    /**
+     * @notice This parameter must lesser than 256 for gas saving
+     */
     uint256 public constant MAX_UNCONFIRMED_MESSAGES = 50;
     /**
-     * @dev Gas buffer for executing `submit` tx
+     * @dev Gas buffer for executing `send_message` tx
      */
     uint256 public constant GAS_BUFFER = 60000;
 
@@ -55,14 +69,23 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
      * @dev ID of the next message, which is incremented in strict order
      * @notice When upgrading the lane, this value must be synchronized
      */
-
     struct InboundLaneNonce {
+        // Nonce of the last message that
+        // a) has been delivered to the target (this) chain and
+        // b) the delivery has been confirmed on the source chain
+        //
+        // that the target chain knows of.
+        //
+        // This value is updated indirectly when an `OutboundLane` state of the source
+        // chain is received alongside with new messages delivery.
         uint256 last_confirmed_nonce;
+		// Nonce of the latest received message at given inbound lane.
         uint256 last_delivered_nonce;
     }
 
     InboundLaneNonce public inboundLaneNonce;
 
+    // Range of UnrewardedRelayer
     struct RelayersIndex {
         uint256 front;
         uint256 back;
@@ -71,6 +94,18 @@ contract InboundLane is MessageCommitment, SourceChain, TargetChain {
     RelayersIndex public relayersIndex;
 
     // index => UnrewardedRelayer
+    // Identifiers of relayers and messages that they have delivered to this lane (ordered by
+    // message nonce).
+    //
+    // This serves as a helper storage item, to allow the source chain to easily pay rewards
+    // to the relayers who successfully delivered messages to the target chain (inbound lane).
+    //
+    // All nonces in this queue are in
+    // range: `(self.last_confirmed_nonce; self.last_delivered_nonce()]`.
+    //
+    // When a relayer sends a single message, both of begin and end nonce are the same.
+    // When relayer sends messages in a batch, the first arg is the lowest nonce, second arg the
+    // highest nonce. Multiple dispatches from the same relayer are allowed.
     mapping(uint256 => UnrewardedRelayer) public relayers;
 
     /**
