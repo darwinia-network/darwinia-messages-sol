@@ -31,10 +31,13 @@ contract MessageCommitment is LaneDataScheme {
     uint256 public chainPosition;
 
     /**
-     * @dev The position of the leaf in the `lane_messages_merkle_tree`, index starting with 0
+     * @dev The position of the leaf in the `lane_message_merkle_tree`, index starting with 0
      */
     uint256 public lanePosition;
 
+    /**
+     * @dev The lane data storage commitment
+     */
     bytes32 public commitment;
 
     constructor(address _lightClientBridge, uint256 _chainPosition, uint256 _lanePosition) public {
