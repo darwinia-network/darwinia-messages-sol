@@ -16,7 +16,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "../interfaces/IOutboundLane.sol";
+import "../../interfaces/IOutboundLane.sol";
 import "./MessageCommitment.sol";
 import "./TargetChain.sol";
 import "./SourceChain.sol";

@@ -15,7 +15,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/ICrossChainFilter.sol";
+import "../../interfaces/ICrossChainFilter.sol";
 import "./MessageCommitment.sol";
 import "./SourceChain.sol";
 import "./TargetChain.sol";

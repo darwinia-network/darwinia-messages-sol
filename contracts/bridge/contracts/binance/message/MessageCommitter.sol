@@ -4,10 +4,10 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
-import "../interfaces/IMessageCommitment.sol";
+import "../../interfaces/IMessageCommitment.sol";
 import "./LaneDataScheme.sol";
 
-contract Message is Ownable, LaneDataScheme {
+contract MessageCommitter is Ownable, LaneDataScheme {
     event RegistryLane(address inboundLane, address outboundLane);
 
     uint256 public laneCount;
@@ -24,10 +24,10 @@ contract Message is Ownable, LaneDataScheme {
         emit RegistryLane(inboundLane, outboundLane);
     }
 
-    function commit() external returns (bytes32) {
-        commitmentRoot = commitment();
-        return commitmentRoot;
-    }
+    // function commit() external returns (bytes32) {
+    //     commitmentRoot = commitment();
+    //     return commitmentRoot;
+    // }
 
     function commitment(uint256 pos) public view returns (bytes32) {
         require(pos < laneCount, "Message: invalid position");
