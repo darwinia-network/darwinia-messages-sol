@@ -5,28 +5,35 @@ pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "../../interfaces/IMessageCommitment.sol";
-import "./LaneDataScheme.sol";
+import "../../common/message/LaneDataScheme.sol";
 
-contract MessageCommitter is Ownable, LaneDataScheme {
-    event RegistryLane(address inboundLane, address outboundLane);
+contract LaneMessageCommitter is Ownable, LaneDataScheme {
+    event Registry(address inboundLane, address outboundLane);
 
+    uint256 public immutable chainPosition;
     uint256 public laneCount;
-    bytes32 public commitmentRoot;
-    mapping(uint256 => address) inboundLanes;
-    mapping(uint256 => address) outboundLanes;
+    // bytes32 public laneMessageCommitmentRoot;
+    mapping(uint256 => address) public inboundLanes;
+    mapping(uint256 => address) public outboundLanes;
+
+    constructor(uint256 _chainPosition) public {
+        chainPosition = _chainPosition;
+    }
 
     function registry(address inboundLane, address outboundLane) external onlyOwner {
-        require(laneCount == IMessageCommitment(inboundLane).lanePosition(), "Message: invalid inlane index");
-        require(laneCount == IMessageCommitment(outboundLane).lanePosition(), "Message: invalid outlane index");
+        require(chainPosition == IMessageCommitment(inboundLane).chainPosition(), "Message: invalid chain position");
+        require(chainPosition == IMessageCommitment(outboundLane).chainPosition(), "Message: invalid chain position");
+        require(laneCount == IMessageCommitment(inboundLane).lanePosition(), "Message: invalid inlane position");
+        require(laneCount == IMessageCommitment(outboundLane).lanePosition(), "Message: invalid outlane position");
         inboundLanes[laneCount] = inboundLane;
         outboundLanes[laneCount] = outboundLane;
         laneCount++;
-        emit RegistryLane(inboundLane, outboundLane);
+        emit Registry(inboundLane, outboundLane);
     }
 
     // function commit() external returns (bytes32) {
-    //     commitmentRoot = commitment();
-    //     return commitmentRoot;
+    //     laneMessageCommitmentRoot = commitment();
+    //     return laneMessageCommitmentRoot;
     // }
 
     function commitment(uint256 pos) public view returns (bytes32) {
@@ -57,6 +64,7 @@ contract MessageCommitter is Ownable, LaneDataScheme {
         return hashes[0];
     }
 
+    // --- Math ---
     function roundUpToPow2(uint256 len) internal pure returns (uint256) {
         if (len <= 1) return 1;
         else return 2 * roundUpToPow2((len + 1) / 2);
