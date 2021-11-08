@@ -29,6 +29,7 @@ import "./TargetChain.sol";
 contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     /**
      * @notice Notifies an observer that the message has dispatched
+     * @param lanePosition The lanePosition of inbound lane
      * @param nonce The message nonce
      * @param result The message result
      * @param returndata The return data of message call, when return false, it's the reason of the error
@@ -79,7 +80,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         // This value is updated indirectly when an `OutboundLane` state of the source
         // chain is received alongside with new messages delivery.
         uint256 last_confirmed_nonce;
-		// Nonce of the latest received message at given inbound lane.
+        // Nonce of the latest received or has been delivered message to this inbound lane.
         uint256 last_delivered_nonce;
     }
 
@@ -114,7 +115,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
      * @param _lanePosition The position of the leaf in the `lane_messages_merkle_tree`, index starting with 0
      * @param _lightClientBridge The contract address of on-chain light client
      */
-    constructor(address _lightClientBridge, uint256 _chainPosition, uint256 _lanePosition, uint256 _last_confirmed_nonce, uint256 _last_delivered_nonce) public MessageVerifier(_lightClientBridge, _chainPosition, _lanePosition) {
+    constructor(
+        address _lightClientBridge,
+        uint256 _thisChainPosition,
+        uint256 _bridgedChainPosition,
+        uint256 _lanePosition,
+        uint256 _last_confirmed_nonce,
+        uint256 _last_delivered_nonce
+    ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _bridgedChainPosition, _lanePosition) {
         inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce);
     }
 

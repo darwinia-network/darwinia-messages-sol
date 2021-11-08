@@ -54,12 +54,13 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
 
     constructor(
         address _lightClientBridge,
-        uint256 _chainPosition,
+        uint256 _thisChainPosition,
+        uint256 _bridgedChainPosition,
         uint256 _lanePosition,
         uint256 _oldest_unpruned_nonce,
         uint256 _latest_received_nonce,
         uint256 _latest_generated_nonce
-    ) public MessageVerifier(_lightClientBridge, _chainPosition, _lanePosition) {
+    ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _bridgedChainPosition, _lanePosition) {
         outboundLaneNonce = OutboundLaneNonce(_oldest_unpruned_nonce, _latest_received_nonce, _latest_generated_nonce);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }

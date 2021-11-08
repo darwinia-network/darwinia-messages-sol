@@ -10,19 +10,19 @@ import "../../common/message/LaneDataScheme.sol";
 contract LaneMessageCommitter is Ownable, LaneDataScheme {
     event Registry(address inboundLane, address outboundLane);
 
-    uint256 public immutable chainPosition;
+    uint256 public immutable bridgedChainPosition;
     uint256 public laneCount;
     // bytes32 public laneMessageCommitmentRoot;
     mapping(uint256 => address) public inboundLanes;
     mapping(uint256 => address) public outboundLanes;
 
-    constructor(uint256 _chainPosition) public {
-        chainPosition = _chainPosition;
+    constructor(uint256 _bridgedChainPosition) public {
+        bridgedChainPosition = _bridgedChainPosition;
     }
 
     function registry(address inboundLane, address outboundLane) external onlyOwner {
-        require(chainPosition == IMessageCommitment(inboundLane).chainPosition(), "Message: invalid chain position");
-        require(chainPosition == IMessageCommitment(outboundLane).chainPosition(), "Message: invalid chain position");
+        require(bridgedChainPosition == IMessageCommitment(inboundLane).bridgedChainPosition(), "Message: invalid chain position");
+        require(bridgedChainPosition == IMessageCommitment(outboundLane).bridgedChainPosition(), "Message: invalid chain position");
         require(laneCount == IMessageCommitment(inboundLane).lanePosition(), "Message: invalid inlane position");
         require(laneCount == IMessageCommitment(outboundLane).lanePosition(), "Message: invalid outlane position");
         inboundLanes[laneCount] = inboundLane;
@@ -30,11 +30,6 @@ contract LaneMessageCommitter is Ownable, LaneDataScheme {
         laneCount++;
         emit Registry(inboundLane, outboundLane);
     }
-
-    // function commit() external returns (bytes32) {
-    //     laneMessageCommitmentRoot = commitment();
-    //     return laneMessageCommitmentRoot;
-    // }
 
     function commitment(uint256 pos) public view returns (bytes32) {
         require(pos < laneCount, "Message: invalid position");

@@ -20,17 +20,13 @@ contract ChainMessageCommitter is Ownable {
     }
 
     function registry(address laneCommitter) external onlyOwner {
-        uint256 position = IMessageCommitment(laneCommitter).chainPosition();
+        uint256 position = IMessageCommitment(laneCommitter).bridgedChainPosition();
         require(thisChainPositon != position, "Message: invalid chain position");
+        require(thisChainPositon == IMessageCommitment(laneCommitter).thisChainPosition, "Message: invalid chain position");
         chains[position] = laneCommitter;
         maxChainPosition = max(maxChainPosition, position);
         emit Registry(position, laneCommitter);
     }
-
-    // function commit() external returns (bytes32) {
-    //     chainMessageCommitmentRoot = commitment();
-    //     return chainMessageCommitmentRoot;
-    // }
 
     function commitment(uint256 pos) public view returns (bytes32) {
         require(pos <= maxChainPosition, "Message: invalid position");

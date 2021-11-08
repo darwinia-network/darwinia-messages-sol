@@ -16,9 +16,14 @@ contract MessageVerifier is LaneDataScheme {
     ILightClientBridge public lightClientBridge;
 
     /**
-     * @dev The position of the leaf in the `chain_message_merkle_tree`, index starting with 0
+     * @dev The this chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
      */
-    uint256 public chainPosition;
+    uint256 public thisChainPosition;
+
+    /**
+     * @dev The bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
+     */
+    uint256 public bridgedChainPosition;
 
     /**
      * @dev The position of the leaf in the `lane_message_merkle_tree`, index starting with 0
@@ -30,9 +35,15 @@ contract MessageVerifier is LaneDataScheme {
      */
     bytes32 public commitment;
 
-    constructor(address _lightClientBridge, uint256 _chainPosition, uint256 _lanePosition) public {
+    constructor(
+        address _lightClientBridge,
+        uint256 _thisChainPosition,
+        uint256 _bridgedChainPosition,
+        uint256 _lanePosition
+    ) public {
         lightClientBridge = ILightClientBridge(_lightClientBridge);
-        chainPosition = _chainPosition;
+        thisChainPosition = _thisChainPosition;
+        bridgedChainPosition = _bridgedChainPosition;
         lanePosition = _lanePosition;
     }
 
@@ -47,7 +58,7 @@ contract MessageVerifier is LaneDataScheme {
         view
     {
         bytes32 lane_hash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
-        require(lightClientBridge.validate_messages_match_root(lane_hash, chainPosition, lanePosition, messagesProof), "Lane: invalid proof");
+        require(lightClientBridge.validate_messages_match_root(lane_hash, thisChainPosition, lanePosition, messagesProof), "Lane: invalid proof");
     }
 }
 
