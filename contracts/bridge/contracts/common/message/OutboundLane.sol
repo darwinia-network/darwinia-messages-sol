@@ -52,6 +52,16 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
     // MessageKey => MessageData
     mapping(uint256 => MessageData) public messages;
 
+    /**
+     * @notice Deploys the OutboundLane contract
+     * @param _lightClientBridge The contract address of on-chain light client
+     * @param _thisChainPosition The thisChainPosition of outbound lane
+     * @param _bridgedChainPosition The bridgedChainPosition of outbound lane
+     * @param _lanePosition The lanePosition of outbound lane
+     * @param _oldest_unpruned_nonce The oldest_unpruned_nonce of outbound lane
+     * @param _latest_received_nonce The latest_received_nonce of outbound lane
+     * @param _latest_generated_nonce The latest_generated_nonce of outbound lane
+     */
     constructor(
         address _lightClientBridge,
         uint256 _thisChainPosition,

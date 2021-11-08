@@ -29,12 +29,13 @@ import "./TargetChain.sol";
 contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     /**
      * @notice Notifies an observer that the message has dispatched
+     * @param thisChainPosition The thisChainPosition of inbound lane
      * @param lanePosition The lanePosition of inbound lane
      * @param nonce The message nonce
      * @param result The message result
      * @param returndata The return data of message call, when return false, it's the reason of the error
      */
-    event MessageDispatched(uint256 targetChainId, uint256 lanePosition, uint256 nonce, bool indexed result, bytes returndata);
+    event MessageDispatched(uint256 thisChainPosition, uint256 lanePosition, uint256 nonce, bool indexed result, bytes returndata);
 
     /* Constants */
 
@@ -42,26 +43,24 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
      * @dev Gas used per message needs to be less than 100000 wei
      */
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
-
-    // Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
-    // message has been delivered, but either confirmations haven't been delivered back to the
-    // source chain, or we haven't received reward confirmations for these messages yet.
-    //
-    // This constant limits difference between last message from last entry of the
-    // `InboundLaneData::relayers` and first message at the first entry.
-    //
-    // This value also represents maximal number of messages in single delivery transaction.
-    // Transaction that is declaring more messages than this value, will be rejected. Even if
-    // these messages are from different lanes.
-
-    /**
-     * @notice This parameter must lesser than 256 for gas saving
-     */
-    uint256 public constant MAX_UNCONFIRMED_MESSAGES = 50;
     /**
      * @dev Gas buffer for executing `send_message` tx
      */
     uint256 public constant GAS_BUFFER = 60000;
+    /**
+     * @notice This parameter must lesser than 256
+     * Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
+     * message has been delivered, but either confirmations haven't been delivered back to the
+     * source chain, or we haven't received reward confirmations for these messages yet.
+     *
+     * This constant limits difference between last message from last entry of the
+     * `InboundLaneData::relayers` and first message at the first entry.
+     *
+     * This value also represents maximal number of messages in single delivery transaction.
+     * Transaction that is declaring more messages than this value, will be rejected. Even if
+     * these messages are from different lanes.
+     */
+    uint256 public constant MAX_UNCONFIRMED_MESSAGES = 50;
 
     /* State */
 
@@ -86,12 +85,12 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     InboundLaneNonce public inboundLaneNonce;
 
     // Range of UnrewardedRelayer
-    struct RelayersIndex {
+    struct RelayersRange {
         uint256 front;
         uint256 back;
     }
 
-    RelayersIndex public relayersIndex;
+    RelayersRange public relayersRange;
 
     // index => UnrewardedRelayer
     // Identifiers of relayers and messages that they have delivered to this lane (ordered by
@@ -109,10 +108,13 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     mapping(uint256 => UnrewardedRelayer) public relayers;
 
     /**
-     * @notice Deploys the BasicInboundLane contract
-     * @param _thisChainPosition The position of the leaf in the `chain_messages_merkle_tree`, index starting with 0
-     * @param _lanePosition The position of the leaf in the `lane_messages_merkle_tree`, index starting with 0
+     * @notice Deploys the InboundLane contract
      * @param _lightClientBridge The contract address of on-chain light client
+     * @param _thisChainPosition The thisChainPosition of inbound lane
+     * @param _bridgedChainPosition The bridgedChainPosition of inbound lane
+     * @param _lanePosition The lanePosition of inbound lane
+     * @param _last_confirmed_nonce The last_confirmed_nonce of inbound lane
+     * @param _last_delivered_nonce The last_delivered_nonce of inbound lane
      */
     constructor(
         address _lightClientBridge,
@@ -149,11 +151,11 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     }
 
     function relayer_size() public view returns (uint256 size) {
-        size = relayersIndex.back - relayersIndex.front + 1;
+        size = relayersRange.back - relayersRange.front + 1;
     }
 
     function relayers_back() public view returns (address pre_relayer, uint256 nonce) {
-        uint256 back = relayersIndex.back;
+        uint256 back = relayersRange.back;
         pre_relayer = relayers[back].relayer;
         nonce = relayers[back].messages.begin;
     }
@@ -162,7 +164,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     function data() public view returns (InboundLaneData memory lane_data) {
         uint256 size = relayer_size();
         lane_data.relayers = new UnrewardedRelayer[](size);
-        uint256 front = relayersIndex.front;
+        uint256 front = relayersRange.front;
         for (uint256 index = 0; index < size; index++) {
             lane_data.relayers[index] = relayers[front + index];
         }
@@ -184,14 +186,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         require(latest_received_nonce <= last_delivered_nonce, "Lane: InvalidReceivedNonce");
         if (latest_received_nonce > last_confirmed_nonce) {
             uint256 new_confirmed_nonce = latest_received_nonce;
-            uint256 front = relayersIndex.front;
-            uint256 back = relayersIndex.back;
+            uint256 front = relayersRange.front;
+            uint256 back = relayersRange.back;
             for (uint256 index = front; index <= back; index++) {
                 UnrewardedRelayer storage entry = relayers[index];
                 if (entry.messages.end <= new_confirmed_nonce) {
                     // Firstly, remove all of the records where higher nonce <= new confirmed nonce
                     delete relayers[index];
-                    relayersIndex.front = index + 1;
+                    relayersRange.front = index + 1;
                 } else if (entry.messages.begin < new_confirmed_nonce) {
                     // Secondly, update the next record with lower nonce equal to new confirmed nonce if needed.
                     // Note: There will be max. 1 record to update as we don't allow messages from relayers to
@@ -245,8 +247,8 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
             r.messages.end = end;
             r.messages.dispatch_results |= dispatch_results << padding;
         } else {
-            relayersIndex.back += 1;
-            relayers[relayersIndex.back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
+            relayersRange.back += 1;
+            relayers[relayersRange.back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
         }
     }
 
