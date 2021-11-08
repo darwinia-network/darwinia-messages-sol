@@ -34,8 +34,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
      * @param result The message result
      * @param returndata The return data of message call, when return false, it's the reason of the error
      */
-    event MessageDispatched(uint256 indexed lanePosition, uint256 indexed nonce, bool indexed result, bytes returndata);
-    event DeliveredMessagePruned(uint256 indexed lanePosition, uint256 indexed nonce);
+    event MessageDispatched(uint256 targetChainId, uint256 lanePosition, uint256 nonce, bool indexed result, bytes returndata);
 
     /* Constants */
 
@@ -111,7 +110,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
 
     /**
      * @notice Deploys the BasicInboundLane contract
-     * @param _chainPosition The position of the leaf in the `chain_messages_merkle_tree`, index starting with 0
+     * @param _thisChainPosition The position of the leaf in the `chain_messages_merkle_tree`, index starting with 0
      * @param _lanePosition The position of the leaf in the `lane_messages_merkle_tree`, index starting with 0
      * @param _lightClientBridge The contract address of on-chain light client
      */
@@ -220,6 +219,8 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
             }
             // check message nonce is correct and increment nonce for replay protection
             require(key.nonce == end, "Lane: InvalidNonce");
+            // check message delivery to the correct chain position
+            require(key.chain_id == thisChainPosition, "Lane: InvalidChainId");
             // check message delivery to the correct lane position
             require(key.lane_id == lanePosition, "Lane: InvalidLaneID");
             // if there are more unconfirmed messages than we may accept, reject this message
@@ -232,7 +233,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
             // then, dispatch message
             (bool dispatch_result, bytes memory returndata) = dispatch(message_payload);
 
-            emit MessageDispatched(lanePosition, end, dispatch_result, returndata);
+            emit MessageDispatched(thisChainPosition, lanePosition, end, dispatch_result, returndata);
             // TODO: callback `pay_inbound_dispatch_fee_overhead`
             dispatch_results |= (dispatch_result ? uint256(1) : uint256(0)) << (end - begin);
         }

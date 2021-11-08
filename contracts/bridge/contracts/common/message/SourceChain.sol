@@ -20,7 +20,9 @@ contract SourceChain {
 
     // Message key (unique message identifier) as it is stored in the storage.
     struct MessageKey {
-        // ID of the message lane.
+        // Bridged chain position
+        uint256 chain_id;
+        // Position of the message lane.
         uint256 lane_id;
         /// Nonce of the message.
         uint256 nonce;
@@ -63,18 +65,18 @@ contract SourceChain {
      * Hash of the Message Schema
      * keccak256(abi.encodePacked(
      *     "Message(MessageKey key,MessageData data)",
-     *     "MessageKey(uint256 lane_id,uint256 nonce)",
+     *     "MessageKey(uint256 chain_id,uint256 lane_id,uint256 nonce)",
      *     "MessageData(MessagePayload payload,uint256 fee)",
      *     "MessagePayload(address sourceAccount,address targetContract,address laneContract,bytes encoded)"
      *     ")"
      * )
      */
-    bytes32 internal constant MESSAGE_TYPEHASH = 0xa1a5aa364010c6a1c34a38c6ed245798908f49395d1364300ea199a188d105f0;
+    bytes32 internal constant MESSAGE_TYPEHASH = 0xbf061c47658829c8b578ca83b92b38baa29739ec8716bc73ff824f1615886a84;
 
     /**
      * Hash of the MessageKey Schema
      * keccak256(abi.encodePacked(
-     *     "MessageKey(uint256 lane_id,uint256 nonce)"
+     *     "MessageKey(uint256 chain_id,uint256 lane_id,uint256 nonce)"
      *     ")"
      * )
      */

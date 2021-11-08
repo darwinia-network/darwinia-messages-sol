@@ -57,8 +57,11 @@ contract MessageVerifier is LaneDataScheme {
         internal
         view
     {
-        bytes32 lane_hash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
-        require(lightClientBridge.validate_messages_match_root(lane_hash, thisChainPosition, lanePosition, messagesProof), "Lane: invalid proof");
+        bytes32 laneHash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
+        require(
+            lightClientBridge.validate_messages_match_root(laneHash, thisChainPosition, lanePosition, messagesProof),
+            "Lane: invalid proof"
+        );
     }
 }
 

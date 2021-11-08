@@ -11,7 +11,6 @@ contract ChainMessageCommitter is Ownable {
 
     uint256 public immutable thisChainPositon;
     uint256 public maxChainPosition;
-    // bytes32 public chainMessageCommitmentRoot;
     mapping(uint256 => address) public chains;
 
     constructor(uint256 _thisChainPosition) public {
@@ -22,7 +21,7 @@ contract ChainMessageCommitter is Ownable {
     function registry(address laneCommitter) external onlyOwner {
         uint256 position = IMessageCommitment(laneCommitter).bridgedChainPosition();
         require(thisChainPositon != position, "Message: invalid chain position");
-        require(thisChainPositon == IMessageCommitment(laneCommitter).thisChainPosition, "Message: invalid chain position");
+        require(thisChainPositon == IMessageCommitment(laneCommitter).thisChainPosition(), "Message: invalid chain position");
         chains[position] = laneCommitter;
         maxChainPosition = max(maxChainPosition, position);
         emit Registry(position, laneCommitter);

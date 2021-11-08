@@ -23,10 +23,10 @@ import "./SourceChain.sol";
 
 // Everything about outgoing messages sending.
 contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetChain, SourceChain {
-    event MessageAccepted(uint256 indexed lanePosition, uint256 indexed nonce, address sourceAccount, address targetContract, address laneContract, bytes encoded, uint256 fee);
-    event MessagesDelivered(uint256 indexed lanePosition, uint256 begin, uint256 end, uint256 results);
-    event MessagePruned(uint256 indexed lanePosition, uint256 indexed oldest_unpruned_nonce);
-    event MessageFeeIncreased(uint256 indexed lanePosition, uint256 indexed nonce, uint256 fee);
+    event MessageAccepted(uint256 bridgedChainPosition, uint256 lanePosition, uint256 nonce);
+    event MessagesDelivered(uint256 bridgedChainPosition, uint256 lanePosition, uint256 begin, uint256 end, uint256 results);
+    event MessagePruned(uint256 bridgedChainPosition, uint256 lanePosition, uint256 oldest_unpruned_nonce);
+    event MessageFeeIncreased(uint256 bridgedChainPosition, uint256 lanePosition, uint256 nonce, uint256 fee);
 
     bytes32 internal constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
     uint256 internal constant MAX_PENDING_MESSAGES = 50;
@@ -89,13 +89,13 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
 
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
         prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
-        emit MessageAccepted(lanePosition, nonce, messagePayload.sourceAccount, messagePayload.targetContract, messagePayload.laneContract, messagePayload.encoded, fee);
+        emit MessageAccepted(bridgedChainPosition, lanePosition, nonce);
         commit();
         return nonce;
     }
 
     function encodeMessageKey(uint256 nonce) public view returns (uint256 key) {
-        key = (lanePosition << 128) | nonce;
+        key = (bridgedChainPosition << 192) + (lanePosition << 128) + nonce;
     }
 
     // Pay additional fee for the message.
@@ -105,7 +105,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
         uint256 key = encodeMessageKey(nonce);
         messages[key].fee += msg.value;
         commit();
-        emit MessageFeeIncreased(lanePosition, nonce, messages[key].fee);
+        emit MessageFeeIncreased(bridgedChainPosition, lanePosition, nonce, messages[key].fee);
     }
 
     // Receive messages delivery proof from bridged chain.
@@ -138,7 +138,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
         for (uint256 index = 0; index < size; index++) {
             uint256 nonce = index + begin;
             uint256 key = encodeMessageKey(nonce);
-            lane_data.messages[index] = Message(MessageKey(lanePosition, nonce), messages[key]);
+            lane_data.messages[index] = Message(MessageKey(bridgedChainPosition, lanePosition, nonce), messages[key]);
         }
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
     }
@@ -187,7 +187,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
             dispatch_results: dispatch_results
         });
         // emit 'MessagesDelivered' event
-        emit MessagesDelivered(lanePosition, confirmed_messages.begin, confirmed_messages.end, confirmed_messages.dispatch_results);
+        emit MessagesDelivered(bridgedChainPosition, lanePosition, confirmed_messages.begin, confirmed_messages.end, confirmed_messages.dispatch_results);
     }
 
     // Extract new dispatch results from the unrewarded relayers vec.
@@ -257,7 +257,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
         if (anything_changed) {
             outboundLaneNonce = nonce;
         }
-        emit MessagePruned(lanePosition, outboundLaneNonce.oldest_unpruned_nonce);
+        emit MessagePruned(bridgedChainPosition, lanePosition, outboundLaneNonce.oldest_unpruned_nonce);
         return pruned_messages;
     }
 

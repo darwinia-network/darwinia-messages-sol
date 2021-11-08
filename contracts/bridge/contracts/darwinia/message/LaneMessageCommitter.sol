@@ -12,7 +12,6 @@ contract LaneMessageCommitter is Ownable, LaneDataScheme {
 
     uint256 public immutable bridgedChainPosition;
     uint256 public laneCount;
-    // bytes32 public laneMessageCommitmentRoot;
     mapping(uint256 => address) public inboundLanes;
     mapping(uint256 => address) public outboundLanes;
 
