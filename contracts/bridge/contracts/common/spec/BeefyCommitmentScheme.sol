@@ -102,6 +102,7 @@ contract BeefyCommitmentScheme {
                 PAYLOAD_TYPEHASH,
                 payload.network,
                 payload.mmr,
+                payload.messageRoot,
                 hash(payload.nextValidatorSet)
             )
         );

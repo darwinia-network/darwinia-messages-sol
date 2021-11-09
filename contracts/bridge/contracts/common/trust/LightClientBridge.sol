@@ -624,6 +624,7 @@ contract LightClientBridge is LaneDataScheme, BeefyCommitmentScheme, Bitfield, V
         require(blockNumber > latestBlockNumber, "Bridge: Import old block");
 
         latestMMRRoot = payload.mmr;
+        latestChainMessagesRoot = payload.messageRoot;
         latestBlockNumber = blockNumber;
 
         applyValidatorSetChanges(
