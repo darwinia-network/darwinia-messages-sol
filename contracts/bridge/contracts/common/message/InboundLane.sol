@@ -95,7 +95,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     RelayersRange public relayersRange;
 
     // index => UnrewardedRelayer
-    // Identifiers of relayers and messages that they have delivered to this lane (ordered by
+    // indexes to relayers and messages that they have delivered to this lane (ordered by
     // message nonce).
     //
     // This serves as a helper storage item, to allow the source chain to easily pay rewards
@@ -153,22 +153,27 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     }
 
     function relayers_size() public view returns (uint256 size) {
-        size = relayersRange.back - relayersRange.front + 1;
+        if (relayersRange.back >= relayersRange.front) {
+            size = relayersRange.back - relayersRange.front + 1;
+        }
     }
 
-    function relayers_back() public view returns (address pre_relayer, uint256 nonce) {
-        uint256 back = relayersRange.back;
-        pre_relayer = relayers[back].relayer;
-        nonce = relayers[back].messages.begin;
+    function relayers_back() public view returns (address pre_relayer) {
+        if (relayers_size() > 0) {
+            uint256 back = relayersRange.back;
+            pre_relayer = relayers[back].relayer;
+        }
     }
 
 	// Get lane data from the storage.
     function data() public view returns (InboundLaneData memory lane_data) {
         uint256 size = relayers_size();
-        lane_data.relayers = new UnrewardedRelayer[](size);
-        uint256 front = relayersRange.front;
-        for (uint256 index = 0; index < size; index++) {
-            lane_data.relayers[index] = relayers[front + index];
+        if (size > 0) {
+            lane_data.relayers = new UnrewardedRelayer[](size);
+            uint256 front = relayersRange.front;
+            for (uint256 index = 0; index < size; index++) {
+                lane_data.relayers[index] = relayers[front + index];
+            }
         }
         lane_data.last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
         lane_data.last_delivered_nonce = inboundLaneNonce.last_delivered_nonce;
@@ -212,9 +217,12 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
 
 	// Receive new message.
     function receive_message(Message[] memory messages) internal returns (uint256 dispatch_results) {
+        if (messages.length == 0) {
+            return;
+        }
         address payable relayer = msg.sender;
         uint256 begin = inboundLaneNonce.last_delivered_nonce + 1;
-        uint256 end = begin;
+        uint256 end;
         for (uint256 i = 0; i < messages.length; i++) {
             Message memory message = messages[i];
             MessageKey memory key = message.key;
@@ -222,6 +230,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
             if (key.nonce < end) {
                 continue;
             }
+            end = begin + i;
             // check message nonce is correct and increment nonce for replay protection
             require(key.nonce == end, "Lane: InvalidNonce");
             // check message delivery to the correct chain position
@@ -231,22 +240,23 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
             // if there are more unconfirmed messages than we may accept, reject this message
             require(end - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "Lane: TooManyUnconfirmedMessages");
 
-            inboundLaneNonce.last_delivered_nonce = end;
-
             // then, dispatch message
             (bool dispatch_result, bytes memory returndata) = dispatch(message_payload);
 
             emit MessageDispatched(thisChainPosition, lanePosition, end, dispatch_result, returndata);
             // TODO: callback `pay_inbound_dispatch_fee_overhead`
-            dispatch_results |= (dispatch_result ? uint256(1) : uint256(0)) << (end - begin);
+            dispatch_results |= (dispatch_result ? uint256(1) : uint256(0)) << i;
+
         }
+        // update inbound lane nonce storage
+        inboundLaneNonce.last_delivered_nonce = end;
+
 		// now let's update inbound lane storage
-        (address pre_relayer, uint256 nonce) = relayers_back();
+        address pre_relayer = relayers_back();
         if (pre_relayer == relayer) {
-            UnrewardedRelayer storage r = relayers[nonce];
-            uint256 padding = r.messages.end - r.messages.begin + 1;
+            UnrewardedRelayer storage r = relayers[relayersRange.back];
+            r.messages.dispatch_results |= dispatch_results << (r.messages.end - r.messages.begin + 1);
             r.messages.end = end;
-            r.messages.dispatch_results |= dispatch_results << padding;
         } else {
             relayersRange.back += 1;
             relayers[relayersRange.back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
@@ -265,7 +275,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
                 (dispatch_result, returndata) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
             } else {
                 dispatch_result = false;
-                returndata = "Lane: filter failed";
+                returndata = "Lane: MessageCallRejected";
             }
         } catch (bytes memory reason) {
             dispatch_result = false;

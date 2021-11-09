@@ -79,7 +79,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
     function send_message(address targetContract, bytes calldata encoded) external payable override returns (uint256) {
         require(hasRole(OUTBOUND_ROLE, msg.sender), "Lane: NotAuthorized");
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
-        require(outboundLaneNonce.latest_generated_nonce <= uint128(-1), "Lane: Overflow");
+        require(outboundLaneNonce.latest_generated_nonce < uint128(-1), "Lane: Overflow");
         uint256 nonce = outboundLaneNonce.latest_generated_nonce + 1;
         uint256 fee = msg.value;
         outboundLaneNonce.latest_generated_nonce = nonce;
@@ -98,8 +98,8 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
 
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
         prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
-        emit MessageAccepted(bridgedChainPosition, lanePosition, nonce);
         commit();
+        emit MessageAccepted(bridgedChainPosition, lanePosition, nonce);
         return nonce;
     }
 
@@ -123,7 +123,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
         InboundLaneData memory inboundLaneData,
         bytes memory messagesProof
     ) public {
-        verify_messages_proof(outboundLaneDataHash, hash(inboundLaneData), messagesProof);
+        verify_messages_delivery_proof(outboundLaneDataHash, hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
         // TODO: callback `on_messages_delivered`
         pay_relayers_rewards(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
@@ -142,12 +142,14 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
 	// Get lane data from the storage.
     function data() public view returns (OutboundLaneData memory lane_data) {
         uint256 size = message_size();
-        lane_data.messages = new Message[](size);
-        uint256 begin = outboundLaneNonce.latest_received_nonce + 1;
-        for (uint256 index = 0; index < size; index++) {
-            uint256 nonce = index + begin;
-            uint256 key = encodeMessageKey(nonce);
-            lane_data.messages[index] = Message(MessageKey(bridgedChainPosition, lanePosition, nonce), messages[key]);
+        if (size > 0) {
+            lane_data.messages = new Message[](size);
+            uint256 begin = outboundLaneNonce.latest_received_nonce + 1;
+            for (uint256 index = 0; index < size; index++) {
+                uint256 nonce = index + begin;
+                uint256 key = encodeMessageKey(nonce);
+                lane_data.messages[index] = Message(MessageKey(bridgedChainPosition, lanePosition, nonce), messages[key]);
+            }
         }
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
     }
@@ -228,14 +230,14 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
                 continue;
             }
             uint256 extend_begin = new_messages_begin - entry.messages.begin;
-            uint256 messages_count_opp = 255 - (entry.messages.end - entry.messages.begin);
+            uint256 hight_bits_opp = 255 - (new_messages_end - entry.messages.begin);
             // entry must have single dispatch result for every message
             // (guaranteed by the `InboundLane::receive_message()`)
-            uint256 dispatch_results = entry.messages.dispatch_results << messages_count_opp >> messages_count_opp;
+            uint256 dispatch_results = (entry.messages.dispatch_results << hight_bits_opp) >> hight_bits_opp;
             // now we know that entry brings new confirmations
             // => let's extract dispatch results
             received_dispatch_result |= ((dispatch_results >> extend_begin) << padding);
-            padding += (messages_count_opp - extend_begin);
+            padding += (new_messages_end - new_messages_begin + 1 - extend_begin);
         }
     }
 
