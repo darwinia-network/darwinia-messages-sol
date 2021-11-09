@@ -187,7 +187,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
 
     /* Private Functions */
 
-	// Receive state of the corresponding outbound lane.
+    // Receive state of the corresponding outbound lane.
     function receive_state_update(uint256 latest_received_nonce) internal returns (uint256) {
         uint256 last_delivered_nonce = inboundLaneNonce.last_delivered_nonce;
         uint256 last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
@@ -215,7 +215,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         return latest_received_nonce;
     }
 
-	// Receive new message.
+    // Receive new message.
     function receive_message(Message[] memory messages) internal returns (uint256 dispatch_results) {
         if (messages.length == 0) {
             return;
@@ -251,7 +251,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         // update inbound lane nonce storage
         inboundLaneNonce.last_delivered_nonce = end;
 
-		// now let's update inbound lane storage
+        // now let's update inbound lane storage
         address pre_relayer = relayers_back();
         if (pre_relayer == relayer) {
             UnrewardedRelayer storage r = relayers[relayersRange.back];
