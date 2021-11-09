@@ -218,7 +218,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     // Receive new message.
     function receive_message(Message[] memory messages) internal returns (uint256 dispatch_results) {
         if (messages.length == 0) {
-            return;
+            return dispatch_results;
         }
         address payable relayer = msg.sender;
         uint256 begin = inboundLaneNonce.last_delivered_nonce + 1;
