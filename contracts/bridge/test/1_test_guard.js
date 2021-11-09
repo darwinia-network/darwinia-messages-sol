@@ -9,7 +9,7 @@ describe("Guard tests", () => {
   let lightClientBridge
 
   before(async () => {
-    const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
+    const LightClientBridge = await ethers.getContractFactory("contracts/ethereum/v2/LightClientBridge.sol:LightClientBridge");
     const crab = GuardFixture.network
     const vault = "0x0000000000000000000000000000000000000000"
     lightClientBridge = await LightClientBridge.deploy(

@@ -46,7 +46,7 @@ describe("Verification tests", () => {
   const proofs = [validator0PubKeyMerkleProof, validator1PubKeyMerkleProof, validator2PubKeyMerkleProof]
 
   before(async () => {
-    const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
+    const LightClientBridge = await ethers.getContractFactory("contracts/ethereum/v2/LightClientBridge.sol:LightClientBridge");
     const crab = "0x4372616200000000000000000000000000000000000000000000000000000000"
     const vault = "0x0000000000000000000000000000000000000000"
     lightClientBridge = await LightClientBridge.deploy(
