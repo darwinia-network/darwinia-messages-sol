@@ -25,6 +25,7 @@ contract BeefyCommitmentScheme {
     struct Payload {
         bytes32 network;
         bytes32 mmr;
+        bytes32 messageRoot;
         NextValidatorSet nextValidatorSet;
     }
 
@@ -52,23 +53,23 @@ contract BeefyCommitmentScheme {
     /**
      * Hash of the Payload Schema
      * keccak256(abi.encodePacked(
-     *     "Payload(bytes32 network,bytes32 mmr,NextValidatorSet nextValidatorSet)",
+     *     "Payload(bytes32 network,bytes32 mmr,bytes32 messageRoot,NextValidatorSet nextValidatorSet)",
      *     "NextValidatorSet(uint64 id,uint32 len,bytes32 root)",
      *     ")"
      * )
      */
-    bytes32 internal constant PAYLOAD_TYPEHASH = 0xe22bd99038907f2b6f08088cca39bfd3caba1b02d6adbf9e47869eb2ea61eba3;
+    bytes32 internal constant PAYLOAD_TYPEHASH = 0x62bbbb2624ffde1ec395c5f7f00ec3bec6217d975467b8deaf45d8dc276236a5;
 
     /**
      * Hash of the Commitment Schema
      * keccak256(abi.encodePacked(
      *     "Commitment(Payload payload,uint32 blockNumber,uint64 validatorSetId)",
-     *     "Payload(bytes32 network,bytes32 mmr,NextValidatorSet nextValidatorSet)",
+     *     "Payload(bytes32 network,bytes32 mmr,bytes32 messageRoot,NextValidatorSet nextValidatorSet)",
      *     "NextValidatorSet(uint64 id,uint32 len,bytes32 root)",
      *     ")"
      * )
      */
-    bytes32 internal constant COMMITMENT_TYPEHASH = 0xfb7618382249e6518a69252ccf86f0a991565f2a2cd2d7af9c6b59cb805b9f0b;
+    bytes32 internal constant COMMITMENT_TYPEHASH = 0xb962b25b1a6ae67dc9886e336d7136273db7f78be39c3b3a86664187b2807317;
 
     function hash(Commitment memory commitment)
         public
