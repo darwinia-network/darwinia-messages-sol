@@ -230,8 +230,6 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
             require(key.lane_id == lanePosition, "Lane: InvalidLaneID");
             // if there are more unconfirmed messages than we may accept, reject this message
             require(end - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "Lane: TooManyUnconfirmedMessages");
-            // check message delivery to the correct lane contract
-            require(message_payload.laneContract == address(this), "Lane: InvalidLaneContract");
 
             inboundLaneNonce.last_delivered_nonce = end;
 

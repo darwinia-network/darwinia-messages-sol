@@ -8,13 +8,11 @@ contract SourceChain {
      * The MessagePayload is the structure of DarwiniaRPC which should be delivery to Ethereum-like chain
      * @param sourceAccount The derived DVM address of pallet ID which send the message
      * @param targetContract The targe contract address which receive the message
-     * @param laneContract The inbound lane contract address which the message commuting to
      * @param encoded The calldata which encoded by ABI Encoding
      */
     struct MessagePayload {
         address sourceAccount;
         address targetContract;
-        address laneContract; //TODO: may not necessary
         bytes encoded; /*abi.encodePacked(SELECTOR, PARAMS)*/
     }
 
@@ -67,11 +65,11 @@ contract SourceChain {
      *     "Message(MessageKey key,MessageData data)",
      *     "MessageKey(uint256 chain_id,uint256 lane_id,uint256 nonce)",
      *     "MessageData(MessagePayload payload,uint256 fee)",
-     *     "MessagePayload(address sourceAccount,address targetContract,address laneContract,bytes encoded)"
+     *     "MessagePayload(address sourceAccount,address targetContract,bytes encoded)"
      *     ")"
      * )
      */
-    bytes32 internal constant MESSAGE_TYPEHASH = 0xbf061c47658829c8b578ca83b92b38baa29739ec8716bc73ff824f1615886a84;
+    bytes32 internal constant MESSAGE_TYPEHASH = 0xec534be7e9277b50ee93e3c8a16529824cdec6f69514996ee74862aefcf99258;
 
     /**
      * Hash of the MessageKey Schema
@@ -85,20 +83,21 @@ contract SourceChain {
     /**
      * Hash of the MessageData Schema
      * keccak256(abi.encodePacked(
-     *     "MessageData(MessagePayload payload,uint256 fee)"
+     *     "MessageData(MessagePayload payload,uint256 fee)",
+     *     "MessagePayload(address sourceAccount,address targetContract,bytes encoded)"
      *     ")"
      * )
      */
-    bytes32 internal constant MESSAGEDATA_TYPEHASH = 0xfbb4c6defc088226e5b8f7cf8a93938d3b205761bc122d067088d4ec27f1f04a;
+    bytes32 internal constant MESSAGEDATA_TYPEHASH = 0x6158c19ce509d2b577b8dc4529dc0519fdf45619f983f5a0e6e51136b0f1d363;
 
     /**
      * Hash of the MessagePayload Schema
      * keccak256(abi.encodePacked(
-     *     "MessagePayload(address sourceAccount,address targetContract,address laneContract,bytes encoded)"
+     *     "MessagePayload(address sourceAccount,address targetContract,bytes encoded)"
      *     ")"
      * )
      */
-    bytes32 internal constant MESSAGEPAYLOAD_TYPEHASH = 0xa2b843d52192ed322a0cda3ca8b407825100c01ffd3676529bc139bc847a12fb;
+    bytes32 internal constant MESSAGEPAYLOAD_TYPEHASH = 0x42e909341e89300b2354a544bf88d3a550ead1215f32330f71c0fb0462933569;
 
     function hash(OutboundLaneData memory subLandData)
         internal
@@ -172,7 +171,6 @@ contract SourceChain {
                 MESSAGEPAYLOAD_TYPEHASH,
                 payload.sourceAccount,
                 payload.targetContract,
-                payload.laneContract,
                 payload.encoded
             )
         );
