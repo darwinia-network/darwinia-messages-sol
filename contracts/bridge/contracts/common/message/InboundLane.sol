@@ -84,9 +84,11 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
 
     InboundLaneNonce public inboundLaneNonce;
 
-    // Range of UnrewardedRelayer
+    // Range of UnrewardedRelayers
     struct RelayersRange {
+        // Front index of the UnrewardedRelayers (inclusive).
         uint256 front;
+        // Back index of the UnrewardedRelayers (inclusive).
         uint256 back;
     }
 
@@ -150,7 +152,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         commit();
     }
 
-    function relayer_size() public view returns (uint256 size) {
+    function relayers_size() public view returns (uint256 size) {
         size = relayersRange.back - relayersRange.front + 1;
     }
 
@@ -162,13 +164,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
 
 	// Get lane data from the storage.
     function data() public view returns (InboundLaneData memory lane_data) {
-        uint256 size = relayer_size();
+        uint256 size = relayers_size();
         lane_data.relayers = new UnrewardedRelayer[](size);
         uint256 front = relayersRange.front;
         for (uint256 index = 0; index < size; index++) {
             lane_data.relayers[index] = relayers[front + index];
         }
         lane_data.last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
+        lane_data.last_delivered_nonce = inboundLaneNonce.last_delivered_nonce;
     }
 
     // storage proof issue: must use latest commitment in lightclient, cause we rm mmr root

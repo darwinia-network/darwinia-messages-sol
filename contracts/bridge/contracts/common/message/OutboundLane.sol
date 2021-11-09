@@ -162,16 +162,8 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
     /* Private Functions */
 
     function extract_substrate_inbound_lane_info(InboundLaneData memory lane_data) internal pure returns (uint256 total_unrewarded_messages, uint256 last_delivered_nonce) {
-        uint256 len = lane_data.relayers.length;
-        if(len > 0) {
-            UnrewardedRelayer memory front = lane_data.relayers[0];
-            UnrewardedRelayer memory back = lane_data.relayers[len-1];
-            total_unrewarded_messages = back.messages.end - front.messages.begin + 1;
-            last_delivered_nonce = back.messages.end;
-        } else {
-            total_unrewarded_messages = 0;
-            last_delivered_nonce = lane_data.last_confirmed_nonce;
-        }
+        total_unrewarded_messages = lane_data.last_delivered_nonce - lane_data.last_confirmed_nonce;
+        last_delivered_nonce = lane_data.last_confirmed_nonce;
     }
 
 	// Confirm messages delivery.

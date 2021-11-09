@@ -51,18 +51,20 @@ contract TargetChain {
         // This value is updated indirectly when an `OutboundLane` state of the source
         // chain is received alongside with new messages delivery.
         uint256 last_confirmed_nonce;
+        // Nonce of the latest received or has been delivered message to this inbound lane.
+        uint256 last_delivered_nonce;
     }
 
     /**
      * Hash of the InboundLaneData Schema
      * keccak256(abi.encodePacked(
-     *     "InboundLaneData(UnrewardedRelayer[] relayers,uint256 last_confirmed_nonce)",
+     *     "InboundLaneData(UnrewardedRelayer[] relayers,uint256 last_confirmed_nonce,uint256 last_delivered_nonce)",
      *     "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
      *     "DeliveredMessages(uint256 begin,uint256 end,uint256 dispatch_results)"
      *     ")"
      * )
      */
-    bytes32 internal constant INBOUNDLANEDATA_TYPETASH = 0xe0206b408dcea6820d150829d9cdbda81915a44d22dc7d582fbeaef4af0a7cc7;
+    bytes32 internal constant INBOUNDLANEDATA_TYPETASH = 0x04ed271fdf51968767c795bb92ad7840b73d71274e9ac035d700bb8d21104476;
 
     /**
      * Hash of the UnrewardedRelayer Schema
