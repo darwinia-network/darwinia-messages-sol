@@ -5,9 +5,8 @@ pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "../../interfaces/ILightClientBridge.sol";
-import "./LaneDataScheme.sol";
 
-contract MessageVerifier is LaneDataScheme {
+contract MessageVerifier {
 
     /* State */
     /**
@@ -53,14 +52,21 @@ contract MessageVerifier is LaneDataScheme {
         bytes32 outboundLaneDataHash,
         bytes32 inboundLaneDataHash,
         bytes memory messagesProof
-    )
-        internal
-        view
-    {
-        bytes32 laneHash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
+    ) internal view {
         require(
-            lightClientBridge.validate_messages_match_root(laneHash, thisChainPosition, lanePosition, messagesProof),
+            lightClientBridge.verify_messages_proof(outboundLaneDataHash, inboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
             "Lane: invalid proof"
+        );
+    }
+
+    function verify_messages_delivery_proof(
+        bytes32 outboundLaneDataHash,
+        bytes32 inboundLaneDataHash,
+        bytes memory messagesProof
+    ) internal view {
+        require(
+            lightClientBridge.verify_messages_delivery_proof(outboundLaneDataHash, inboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
+            "Lane: invalid delivery proof"
         );
     }
 }

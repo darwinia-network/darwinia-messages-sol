@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "../../interfaces/IMessageCommitment.sol";
-import "../../common/message/LaneDataScheme.sol";
+import "../../common/spec/LaneDataScheme.sol";
 
 contract LaneMessageCommitter is Ownable, LaneDataScheme {
     event Registry(address inboundLane, address outboundLane);

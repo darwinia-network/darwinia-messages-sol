@@ -9,6 +9,7 @@ import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "@darwinia/contracts-verify/contracts/KeccakMMR.sol";
 import "./ValidatorRegistry.sol";
 import "./GuardRegistry.sol";
+import "../spec/LaneDataScheme.sol";
 
 /**
  * @title A entry contract for the Ethereum-like light client
@@ -16,7 +17,7 @@ import "./GuardRegistry.sol";
  * @notice The light client is the trust layer of the bridge
  * @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
  */
-contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
+contract LightClientBridge is LaneDataScheme, Bitfield, ValidatorRegistry, GuardRegistry {
 
     /* Events */
 
@@ -316,12 +317,34 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
         );
     }
 
-    function validate_messages_match_root(
-        bytes32 lane_hash,
+    function verify_messages_proof(
+        bytes32 outboundLaneDataHash,
+        bytes32 inboundLaneDataHash,
         uint256 chain_pos,
         uint256 lane_pos,
         bytes calldata proof
     ) external view returns (bool) {
+        bytes32 lane_hash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
+        return validate_messages_match_root(lane_hash, chain_pos, lane_pos, proof);
+    }
+
+    function verify_messages_delivery_proof(
+        bytes32 outboundLaneDataHash,
+        bytes32 inboundLaneDataHash,
+        uint256 chain_pos,
+        uint256 lane_pos,
+        bytes calldata proof
+    ) external view returns (bool) {
+        bytes32 lane_hash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
+        return validate_messages_match_root(lane_hash, chain_pos, lane_pos, proof);
+    }
+
+    function validate_messages_match_root(
+        bytes32 lane_hash,
+        uint256 chain_pos,
+        uint256 lane_pos,
+        bytes memory proof
+    ) internal view returns (bool) {
         MessagesProof memory messages_proof = abi.decode(proof, (MessagesProof));
         // Validate that the commitment matches the commitment contents
         require(messages_proof.chainProof.root == latestChainMessagesRoot, "Lane: invalid ChainMessagesRoot");
