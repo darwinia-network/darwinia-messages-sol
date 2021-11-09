@@ -86,7 +86,6 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
         MessagePayload memory messagePayload = MessagePayload({
             sourceAccount: msg.sender,
             targetContract: targetContract,
-            laneContract: address(this),
             encoded: encoded
         });
         uint256 key = encodeMessageKey(nonce);
