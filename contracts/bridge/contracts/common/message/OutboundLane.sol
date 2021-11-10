@@ -16,13 +16,14 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../../interfaces/IOutboundLane.sol";
 import "./MessageVerifier.sol";
 import "./TargetChain.sol";
 import "./SourceChain.sol";
 
 // Everything about outgoing messages sending.
-contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetChain, SourceChain {
+contract OutboundLane is IOutboundLane, ReentrancyGuard, AccessControl, MessageVerifier, TargetChain, SourceChain {
     event MessageAccepted(uint256 bridgedChainPosition, uint256 lanePosition, uint256 nonce);
     event MessagesDelivered(uint256 bridgedChainPosition, uint256 lanePosition, uint256 begin, uint256 end, uint256 results);
     event MessagePruned(uint256 bridgedChainPosition, uint256 lanePosition, uint256 oldest_unpruned_nonce);
@@ -76,7 +77,7 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
     }
 
     // Send message over lane.
-    function send_message(address targetContract, bytes calldata encoded) external payable override returns (uint256) {
+    function send_message(address targetContract, bytes calldata encoded) external payable override nonReentrant returns (uint256) {
         require(hasRole(OUTBOUND_ROLE, msg.sender), "Lane: NotAuthorized");
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
         require(outboundLaneNonce.latest_generated_nonce < uint128(-1), "Lane: Overflow");
@@ -103,12 +104,8 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
         return nonce;
     }
 
-    function encodeMessageKey(uint256 nonce) public view returns (uint256 key) {
-        key = (bridgedChainPosition << 192) + (lanePosition << 128) + nonce;
-    }
-
     // Pay additional fee for the message.
-    function increase_message_fee(uint256 nonce) external payable {
+    function increase_message_fee(uint256 nonce) external payable nonReentrant {
         require(nonce > outboundLaneNonce.latest_received_nonce, "Lane: MessageIsAlreadyDelivered");
         require(nonce <= outboundLaneNonce.latest_generated_nonce, "Lane: MessageIsNotYetSent");
         uint256 key = encodeMessageKey(nonce);
@@ -122,12 +119,22 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
         bytes32 outboundLaneDataHash,
         InboundLaneData memory inboundLaneData,
         bytes memory messagesProof
-    ) public {
+    ) public nonReentrant {
         verify_messages_delivery_proof(outboundLaneDataHash, hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
         // TODO: callback `on_messages_delivered`
         pay_relayers_rewards(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
         commit();
+    }
+
+	/// commit lane data to the `commitment` storage.
+    function commit() public nonReentrant returns (bytes32) {
+        commitment = hash(data());
+        return commitment;
+    }
+
+    function encodeMessageKey(uint256 nonce) public view returns (uint256 key) {
+        key = (bridgedChainPosition << 192) + (lanePosition << 128) + nonce;
     }
 
     function message_size() public view returns (uint256 size) {
@@ -152,12 +159,6 @@ contract OutboundLane is IOutboundLane, AccessControl, MessageVerifier, TargetCh
             }
         }
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
-    }
-
-	/// commit lane data to the `commitment` storage.
-    function commit() public returns (bytes32) {
-        commitment = hash(data());
-        return commitment;
     }
 
     /* Private Functions */

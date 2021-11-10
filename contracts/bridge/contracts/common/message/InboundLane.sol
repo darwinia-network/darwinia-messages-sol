@@ -15,6 +15,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../../interfaces/ICrossChainFilter.sol";
 import "./MessageVerifier.sol";
 import "./SourceChain.sol";
@@ -26,7 +27,7 @@ import "./TargetChain.sol";
  * @notice The inbound lane is the message layer of the bridge
  * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
  */
-contract InboundLane is MessageVerifier, SourceChain, TargetChain {
+contract InboundLane is ReentrancyGuard, MessageVerifier, SourceChain, TargetChain {
     /**
      * @notice Notifies an observer that the message has dispatched
      * @param thisChainPosition The thisChainPosition of inbound lane
@@ -140,7 +141,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         OutboundLaneData memory outboundLaneData,
         bytes32 inboundLaneDataHash,
         bytes memory messagesProof
-    ) public {
+    ) public nonReentrant {
         verify_messages_proof(hash(outboundLaneData), inboundLaneDataHash, messagesProof);
         // Require there is enough gas to play all messages
         require(
@@ -150,6 +151,12 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         receive_state_update(outboundLaneData.latest_received_nonce);
         receive_message(outboundLaneData.messages);
         commit();
+    }
+
+    // storage proof issue: must use latest commitment in lightclient, cause we rm mmr root
+    function commit() public nonReentrant returns (bytes32) {
+        commitment = hash(data());
+        return commitment;
     }
 
     function relayers_size() public view returns (uint256 size) {
@@ -177,12 +184,6 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         }
         lane_data.last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
         lane_data.last_delivered_nonce = inboundLaneNonce.last_delivered_nonce;
-    }
-
-    // storage proof issue: must use latest commitment in lightclient, cause we rm mmr root
-    function commit() public returns (bytes32) {
-        commitment = hash(data());
-        return commitment;
     }
 
     /* Private Functions */
