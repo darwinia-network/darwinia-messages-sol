@@ -35,7 +35,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
      * @param result The message result
      * @param returndata The return data of message call, when return false, it's the reason of the error
      */
-    event MessageDispatched(uint256 thisChainPosition, uint256 lanePosition, uint256 nonce, bool indexed result, bytes returndata);
+    event MessageDispatched(uint256 thisChainPosition, uint256 lanePosition, uint256 nonce, bool result, bytes returndata);
 
     /* Constants */
 
@@ -264,22 +264,30 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     }
 
     function dispatch(MessagePayload memory payload) internal returns (bool dispatch_result, bytes memory returndata) {
+        bytes memory filterCallData = abi.encodeWithSelector(
+            ICrossChainFilter.crossChainFilter.selector,
+            payload.sourceAccount,
+            payload.encoded
+        );
+        bool canCall = filter(payload.targetContract, filterCallData);
+        if (canCall) {
+            // Deliver the message to the target
+            (dispatch_result, returndata) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
+        } else {
+            dispatch_result = false;
+            returndata = "Lane: MessageCallRejected";
+        }
+    }
+
+    function filter(address target, bytes memory callData) internal returns (bool canCall) {
         /**
          * @notice The app layer must implement the interface `ICrossChainFilter`
          */
-        try ICrossChainFilter(payload.targetContract).crossChainFilter(payload.sourceAccount, payload.encoded)
-            returns (bool ok)
-        {
-            if (ok) {
-                // Deliver the message to the target
-                (dispatch_result, returndata) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
-            } else {
-                dispatch_result = false;
-                returndata = "Lane: MessageCallRejected";
+        (bool ok, bytes memory result) = target.call{value: 0, gas: GAS_BUFFER}(callData);
+        if (ok) {
+            if (result.length == 32) {
+                canCall = abi.decode(result, (bool));
             }
-        } catch (bytes memory reason) {
-            dispatch_result = false;
-            returndata = reason;
         }
     }
 }
