@@ -5,10 +5,11 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
 import "@darwinia/contracts-utils/contracts/DailyLimit.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
+import "@darwinia/contracts-utils/contracts/Pausable.sol";
 import "../interfaces/IERC20.sol";
 import "./MappingTokenAddress.sol";
 
-contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, MappingTokenAddress {
+contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, MappingTokenAddress, Pausable {
     struct OriginalInfo {
         // 0 - NativeToken
         // 1 - Erc20Token
@@ -59,6 +60,14 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
     function setTokenContractLogic(uint32 tokenType, address logic) external onlyOwner {
         tokenType2Logic[tokenType] = logic;
         emit NewLogicSetted(tokenType, logic);
+    }
+    
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    function pause() external onlyOwner {
+        _pause();
     }
 
     function transferMappingTokenOwnership(address mapping_token, address new_owner) external onlyOwner {
@@ -118,7 +127,7 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
         uint8 decimals,
         address backing_address,
         address original_token
-    ) public virtual onlySystem returns (address mapping_token) {
+    ) public virtual onlySystem whenNotPaused returns (address mapping_token) {
         require(tokenType == 0 || tokenType == 1, "token type cannot mapping to erc20 token");
         // backing_address and original_token pack a unique new contract salt
         bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
@@ -141,7 +150,7 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
         emit IssuingERC20Created(backing_address, original_token, mapping_token);
     }
 
-    function issueMappingToken(address mapping_token, address recipient, uint256 amount) public virtual onlySystem {
+    function issueMappingToken(address mapping_token, address recipient, uint256 amount) public virtual onlySystem whenNotPaused {
         require(amount > 0, "can not receive amount zero");
         OriginalInfo memory info = mappingToken2OriginalInfo[mapping_token];
         require(info.original_token != address(0), "token is not created by factory");

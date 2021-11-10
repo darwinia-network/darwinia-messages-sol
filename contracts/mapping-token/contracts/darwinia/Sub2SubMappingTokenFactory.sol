@@ -39,7 +39,7 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
         address mapping_token,
         bytes memory recipient,
         uint256 amount
-    ) external payable {
+    ) external payable whenNotPaused {
         require(amount > 0, "can not transfer amount zero");
         OriginalInfo memory info = mappingToken2OriginalInfo[mapping_token];
         require(info.original_token != address(0), "token is not created by factory");
@@ -80,7 +80,7 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
     // Step 2: The remote backing's unlock result comes. The result is true(success) or false(failure).
     // True:  if event is verified and the origin token unlocked successfully on remote chain, then we burn the mapped token
     // False: if event is verified, but the origin token unlocked on remote chain failed, then we take back the mapped token to user.
-    function confirmBurnAndRemoteUnlock(bytes memory messageId, bool result) external onlySystem {
+    function confirmBurnAndRemoteUnlock(bytes memory messageId, bool result) external onlySystem whenNotPaused {
         UnconfirmedInfo memory info = transferUnconfirmed[messageId];
         require(info.amount > 0 && info.sender != address(0) && info.mapping_token != address(0), "invalid unconfirmed message");
         if (result) {
