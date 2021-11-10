@@ -71,8 +71,6 @@ const deployContract = async function () {
     const e2d_mapping_proxy = new web3.eth.Contract(e2d_mapping_logic.abi, e2d_mapping_proxy_addr);
 
     //await api.send(web3, mapping_contract, 'initialize', addr);
-    console.log("set admin");
-    await api.send(web3, e2d_mapping_proxy, 'setAdmin', addr, admin_addr);
     console.log("set erc20 logic");
     await api.send(web3, e2d_mapping_proxy, 'setTokenContractLogic', addr, 0, issuing_addr);
     await api.send(web3, e2d_mapping_proxy, 'setTokenContractLogic', addr, 1, issuing_addr);
@@ -82,8 +80,6 @@ const deployContract = async function () {
     const s2sproxyjson = require(abi_proxy);
     const s2s_mapping_proxy_addr = await deploy.deployJson(web3, s2sproxyjson, [s2s_mapping_logic_addr, admin_addr, s2s_mtf_calldata]);
     const s2s_mapping_proxy = new web3.eth.Contract(s2s_mapping_logic.abi, s2s_mapping_proxy_addr);
-    console.log("set admin");
-    await api.send(web3, s2s_mapping_proxy, 'setAdmin', addr, admin_addr);
     console.log("set erc20 logic");
     await api.send(web3, s2s_mapping_proxy, 'setTokenContractLogic', addr, 0, issuing_addr);
     await api.send(web3, s2s_mapping_proxy, 'setTokenContractLogic', addr, 1, issuing_addr);
