@@ -1,0 +1,9 @@
+{
+  "name": "@darwinia/contract-precompile",
+  "version": "1.0.0",
+  "description": "the standard darwinia precompile contract",
+  "main": "index.js",
+  "repository": "https://github.com/darwinia-network/darwinia-bridge-sol",
+  "author": "darwinia",
+  "license": "MIT"
+}
