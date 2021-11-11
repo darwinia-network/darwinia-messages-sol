@@ -14,11 +14,11 @@ interface SubToSubBridge {
     /// @dev get the sub<>sub outbound latest generated message id, this id combined by laneid and nonce. It's also
     /// the last sent message's id.
     /// @param laneid The lane id in which message sent. Use this params to distinguish different channel.
-    function outbound_latest_generated_message_id(bytes4 laneid) external view returns (bytes16);
+    function outbound_latest_generated_message_id(bytes4 laneid) external view returns (bytes memory);
 
     /// @dev get the sub<>sub inbound latest received message id, this id combined by laneid and nonce.
     /// #param laneid The land id in which message sent.
-    function inbound_latest_received_message_id(bytes4 laneid) external view returns (bytes16);
+    function inbound_latest_received_message_id(bytes4 laneid) external view returns (bytes memory);
 
     /// #dev get the scale encoded payload of the `unlock_from_remote` dispatch call which defined in s2s/issuing pallet
     /// this payload satisfy the standard format of the sub<>sub message payload
@@ -34,7 +34,7 @@ interface SubToSubBridge {
         uint32 token_type,
         address original_token,
         bytes memory recipient,
-        uint256 amount) external view;
+        uint256 amount) external view returns(bytes memory);
 
     /// @dev get the scale encoded stream of the sub<>sub send message dispatch call. then you can use dispatch precompile to
     /// call it to send sub<>sub message
@@ -42,6 +42,6 @@ interface SubToSubBridge {
     /// @param lane_id the bridge's lane id
     /// @param message the payload of the message
     /// @param fee the fee of the bridge, we can get this value from fee market
-    function encode_send_message_dispatch_call(uint32 msg_pallet_id, bytes4 lane_id, bytes memory message, uint256 fee) external view;
+    function encode_send_message_dispatch_call(uint32 msg_pallet_id, bytes4 lane_id, bytes memory message, uint256 fee) external view returns(bytes memory);
 }
 

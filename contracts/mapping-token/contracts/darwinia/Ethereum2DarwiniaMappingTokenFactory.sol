@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.10;
 import "./BasicMappingTokenFactory.sol";
 
 contract Ethereum2DarwiniaMappingTokenFactory is BasicMappingTokenFactory {
