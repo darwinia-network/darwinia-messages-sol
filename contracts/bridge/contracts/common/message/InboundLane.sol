@@ -153,12 +153,6 @@ contract InboundLane is ReentrancyGuard, MessageVerifier, SourceChain, TargetCha
         commit();
     }
 
-    // storage proof issue: must use latest commitment in lightclient, cause we rm mmr root
-    function commit() public nonReentrant returns (bytes32) {
-        commitment = hash(data());
-        return commitment;
-    }
-
     function relayers_size() public view returns (uint256 size) {
         if (relayersRange.back >= relayersRange.front) {
             size = relayersRange.back - relayersRange.front + 1;
@@ -187,6 +181,12 @@ contract InboundLane is ReentrancyGuard, MessageVerifier, SourceChain, TargetCha
     }
 
     /* Private Functions */
+
+    // storage proof issue: must use latest commitment in lightclient, cause we rm mmr root
+    function commit() internal returns (bytes32) {
+        commitment = hash(data());
+        return commitment;
+    }
 
     // Receive state of the corresponding outbound lane.
     function receive_state_update(uint256 latest_received_nonce) internal returns (uint256) {

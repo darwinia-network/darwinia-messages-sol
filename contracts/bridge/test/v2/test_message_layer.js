@@ -29,11 +29,11 @@ describe("OutboundLane tests", () => {
     const msg = await outbound.messages(key)
     const nonce = await outbound.outboundLaneNonce();
 
-    expect(tx)
+    await expect(tx)
       .to.emit(outbound, "MessageAccepted")
       .withArgs(1, 0, 1)
 
-    expect(tx)
+    await expect(tx)
       .to.emit(outbound, "MessagePruned")
       .withArgs(1, 0, 1)
 
@@ -49,11 +49,11 @@ describe("OutboundLane tests", () => {
     const msg = await outbound.messages(key)
     const nonce = await outbound.outboundLaneNonce();
 
-    expect(tx)
+    await expect(tx)
       .to.emit(outbound, "MessageAccepted")
       .withArgs(1, 0, 2)
 
-    expect(tx)
+    await expect(tx)
       .to.emit(outbound, "MessagePruned")
       .withArgs(1, 0, 1)
   });
@@ -61,10 +61,10 @@ describe("OutboundLane tests", () => {
   it("2", async function () {
     outboundData = await outbound.data()
     const tx = await inbound.receive_messages_proof(outboundData, "0x0000000000000000000000000000000000000000000000000000000000000000", "0x")
-    expect(tx)
+    await expect(tx)
       .to.emit(inbound, "MessageDispatched")
       .withArgs(1, 0, 1, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
-    expect(tx)
+    await expect(tx)
       .to.emit(inbound, "MessageDispatched")
       .withArgs(1, 0, 2, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
   });

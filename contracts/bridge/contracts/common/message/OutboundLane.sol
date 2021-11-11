@@ -127,12 +127,6 @@ contract OutboundLane is IOutboundLane, ReentrancyGuard, AccessControl, MessageV
         commit();
     }
 
-	/// commit lane data to the `commitment` storage.
-    function commit() public nonReentrant returns (bytes32) {
-        commitment = hash(data());
-        return commitment;
-    }
-
     function encodeMessageKey(uint256 nonce) public view returns (uint256 key) {
         key = (bridgedChainPosition << 192) + (lanePosition << 128) + nonce;
     }
@@ -162,6 +156,12 @@ contract OutboundLane is IOutboundLane, ReentrancyGuard, AccessControl, MessageV
     }
 
     /* Private Functions */
+
+	/// commit lane data to the `commitment` storage.
+    function commit() internal returns (bytes32) {
+        commitment = hash(data());
+        return commitment;
+    }
 
     function extract_substrate_inbound_lane_info(InboundLaneData memory lane_data) internal pure returns (uint256 total_unrewarded_messages, uint256 last_delivered_nonce) {
         total_unrewarded_messages = lane_data.last_delivered_nonce - lane_data.last_confirmed_nonce;
