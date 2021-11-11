@@ -28,6 +28,7 @@ contract OutboundLane is IOutboundLane, ReentrancyGuard, AccessControl, MessageV
     event MessagesDelivered(uint256 bridgedChainPosition, uint256 lanePosition, uint256 begin, uint256 end, uint256 results);
     event MessagePruned(uint256 bridgedChainPosition, uint256 lanePosition, uint256 oldest_unpruned_nonce);
     event MessageFeeIncreased(uint256 bridgedChainPosition, uint256 lanePosition, uint256 nonce, uint256 fee);
+    event RelayerReward(address relayer, uint256 reward);
 
     bytes32 internal constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
     uint256 internal constant MAX_PENDING_MESSAGES = 50;
@@ -315,6 +316,7 @@ contract OutboundLane is IOutboundLane, ReentrancyGuard, AccessControl, MessageV
     function pay_relayer_reward(address payable to, uint256 value) internal {
         if (value > 0) {
             to.transfer(value);
+            emit RelayerReward(to, value);
         }
     }
 
