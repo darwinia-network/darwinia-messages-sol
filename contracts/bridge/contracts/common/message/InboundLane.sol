@@ -189,9 +189,12 @@ contract InboundLane is ReentrancyGuard, MessageVerifier, SourceChain, TargetCha
     }
 
     // Receive state of the corresponding outbound lane.
+    // Syncing state from SourceChain::OutboundLane, deal with nonce and relayers.
     function receive_state_update(uint256 latest_received_nonce) internal returns (uint256) {
         uint256 last_delivered_nonce = inboundLaneNonce.last_delivered_nonce;
         uint256 last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
+        // SourceChain::OutboundLane::latest_received_nonce must less than or equal to TargetChain::InboundLane::last_delivered_nonce, otherwise it will receive the future nonce which has not delivery.
+        // This should never happen if proofs are correct
         require(latest_received_nonce <= last_delivered_nonce, "Lane: InvalidReceivedNonce");
         if (latest_received_nonce > last_confirmed_nonce) {
             uint256 new_confirmed_nonce = latest_received_nonce;

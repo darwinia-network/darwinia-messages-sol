@@ -127,6 +127,12 @@ contract OutboundLane is IOutboundLane, ReentrancyGuard, AccessControl, MessageV
         commit();
     }
 
+    // 32 bytes to identify an unique message
+    // MessageKey encoding:
+    // BridgedChainPosition | LanePosition | Nonce
+    // [0..8)   bytes ---- BridgedChainPosition
+    // [8..16)  bytes ---- LanePosition
+    // [16..32) bytes ---- Nonce, max of nonce is `uint128(-1)`
     function encodeMessageKey(uint256 nonce) public view returns (uint256 key) {
         key = (bridgedChainPosition << 192) + (lanePosition << 128) + nonce;
     }
