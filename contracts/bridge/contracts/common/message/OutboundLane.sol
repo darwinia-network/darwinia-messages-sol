@@ -266,8 +266,8 @@ contract OutboundLane is IOutboundLane, ReentrancyGuard, AccessControl, MessageV
         }
         if (anything_changed) {
             outboundLaneNonce = nonce;
+            emit MessagePruned(bridgedChainPosition, lanePosition, outboundLaneNonce.oldest_unpruned_nonce);
         }
-        emit MessagePruned(bridgedChainPosition, lanePosition, outboundLaneNonce.oldest_unpruned_nonce);
         return pruned_messages;
     }
 
