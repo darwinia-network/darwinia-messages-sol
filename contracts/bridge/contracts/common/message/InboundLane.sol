@@ -20,6 +20,7 @@ import "../../interfaces/ICrossChainFilter.sol";
 import "./MessageVerifier.sol";
 import "./SourceChain.sol";
 import "./TargetChain.sol";
+import "hardhat/console.sol";
 
 /**
  * @title Everything about incoming messages receival
@@ -227,31 +228,32 @@ contract InboundLane is ReentrancyGuard, MessageVerifier, SourceChain, TargetCha
         }
         address payable relayer = msg.sender;
         uint256 begin = inboundLaneNonce.last_delivered_nonce + 1;
-        uint256 end;
+        uint256 next = begin;
+        uint256 end = next;
         for (uint256 i = 0; i < messages.length; i++) {
             Message memory message = messages[i];
             MessageKey memory key = message.key;
             MessagePayload memory message_payload = message.data.payload;
-            if (key.nonce < end) {
+            if (key.nonce < next) {
                 continue;
             }
-            end = begin + i;
             // check message nonce is correct and increment nonce for replay protection
-            require(key.nonce == end, "Lane: InvalidNonce");
+            require(key.nonce == next, "Lane: InvalidNonce");
             // check message delivery to the correct chain position
             require(key.chain_id == thisChainPosition, "Lane: InvalidChainId");
             // check message delivery to the correct lane position
             require(key.lane_id == lanePosition, "Lane: InvalidLaneID");
             // if there are more unconfirmed messages than we may accept, reject this message
-            require(end - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "Lane: TooManyUnconfirmedMessages");
+            require(next - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "Lane: TooManyUnconfirmedMessages");
 
             // then, dispatch message
             (bool dispatch_result, bytes memory returndata) = dispatch(message_payload);
 
-            emit MessageDispatched(thisChainPosition, lanePosition, end, dispatch_result, returndata);
+            emit MessageDispatched(thisChainPosition, lanePosition, next, dispatch_result, returndata);
             // TODO: callback `pay_inbound_dispatch_fee_overhead`
             dispatch_results |= (dispatch_result ? uint256(1) : uint256(0)) << i;
-
+            end = next;
+            next += 1;
         }
         // update inbound lane nonce storage
         inboundLaneNonce.last_delivered_nonce = end;

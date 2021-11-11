@@ -110,7 +110,7 @@ module.exports = {
     only: [],
   },
   gasReporter: {
-    enabled: true
+    enabled: false
   }
 };
 

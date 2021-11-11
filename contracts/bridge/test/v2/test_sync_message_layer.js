@@ -4,7 +4,7 @@ const chai = require("chai");
 
 chai.use(solidity);
 
-describe("OutboundLane tests", () => {
+describe("sync message relay tests", () => {
   let outbound
   let inbound
   let outboundData
@@ -34,10 +34,6 @@ describe("OutboundLane tests", () => {
       .to.emit(outbound, "MessageAccepted")
       .withArgs(1, 0, 1)
 
-    await expect(tx)
-      .to.emit(outbound, "MessagePruned")
-      .withArgs(1, 0, 1)
-
   });
 
   it("1", async function () {
@@ -53,10 +49,6 @@ describe("OutboundLane tests", () => {
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
       .withArgs(1, 0, 2)
-
-    await expect(tx)
-      .to.emit(outbound, "MessagePruned")
-      .withArgs(1, 0, 1)
   });
 
   it("2", async function () {
