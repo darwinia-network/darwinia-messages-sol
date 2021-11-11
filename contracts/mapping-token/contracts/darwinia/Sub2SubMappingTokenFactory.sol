@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
-import "@darwinia/contract-precompile/contracts/sub2sub.sol";
+import "@darwinia/contracts-precompile/contracts/sub2sub.sol";
 import "./BasicMappingTokenFactory.sol";
 
 contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {

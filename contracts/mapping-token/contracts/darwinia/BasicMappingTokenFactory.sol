@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
+import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@darwinia/contracts-utils/contracts/DailyLimit.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "../interfaces/IERC20.sol";
