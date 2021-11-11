@@ -8,6 +8,7 @@ describe("OutboundLane tests", () => {
   let outbound
   let inbound
   let outboundData
+  let inboundData
 
   before(async () => {
     const [owner] = await ethers.getSigners();
@@ -67,6 +68,14 @@ describe("OutboundLane tests", () => {
     await expect(tx)
       .to.emit(inbound, "MessageDispatched")
       .withArgs(1, 0, 2, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
+  });
+
+  it("3", async function () {
+    inboundData = await inbound.data()
+    const tx = await outbound.receive_messages_delivery_proof("0x0000000000000000000000000000000000000000000000000000000000000000", inboundData, "0x")
+    await expect(tx)
+      .to.emit(outbound, "MessagesDelivered")
+      .withArgs(1, 0, 1, 2, 0)
   });
 
 });

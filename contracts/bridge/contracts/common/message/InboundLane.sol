@@ -128,6 +128,7 @@ contract InboundLane is ReentrancyGuard, MessageVerifier, SourceChain, TargetCha
         uint256 _last_delivered_nonce
     ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _bridgedChainPosition, _lanePosition) {
         inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce);
+        relayersRange = RelayersRange(1, 0);
     }
 
     /* Public Functions */

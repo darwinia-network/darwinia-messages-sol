@@ -171,7 +171,7 @@ contract OutboundLane is IOutboundLane, ReentrancyGuard, AccessControl, MessageV
 
     function extract_substrate_inbound_lane_info(InboundLaneData memory lane_data) internal pure returns (uint256 total_unrewarded_messages, uint256 last_delivered_nonce) {
         total_unrewarded_messages = lane_data.last_delivered_nonce - lane_data.last_confirmed_nonce;
-        last_delivered_nonce = lane_data.last_confirmed_nonce;
+        last_delivered_nonce = lane_data.last_delivered_nonce;
     }
 
 	// Confirm messages delivery.
