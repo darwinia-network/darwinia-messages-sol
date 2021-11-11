@@ -30,11 +30,11 @@ const deployContract = async function () {
     web3.eth.accounts.wallet.add(key);
     const _1e8 = web3.utils.toHex("0x52b7d2dcc80cd2e4000000");
 
-    const abi_proxy_admin = "./artifacts/@openzeppelin/contracts/proxy/ProxyAdmin.sol/ProxyAdmin.json";
+    const abi_proxy_admin = "./artifacts/@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol/ProxyAdmin.json";
     const abi_erc_20 = "./artifacts/contracts/darwinia/MappingERC20.sol/MappingERC20.json";
     const abi_e2d_mapping_token_factory = "./artifacts/contracts/darwinia/Ethereum2DarwiniaMappingTokenFactory.sol/Ethereum2DarwiniaMappingTokenFactory.json";
     const abi_s2s_mapping_token_factory = "./artifacts/contracts/darwinia/Sub2SubMappingTokenFactory.sol/Sub2SubMappingTokenFactory.json";
-    const abi_proxy = "./artifacts/@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol/TransparentUpgradeableProxy.json";
+    const abi_proxy = "./artifacts/@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol/TransparentUpgradeableProxy.json";
 
     // 1. proxy admin
     console.log("1. start to deploy proxy admin");
