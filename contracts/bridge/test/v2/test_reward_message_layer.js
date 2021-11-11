@@ -32,9 +32,9 @@ const logNonce = async () => {
   log(`(${out.latest_received_nonce}, ${out.latest_generated_nonce}]                                            ->     (${iin.last_confirmed_nonce}, ${iin.last_delivered_nonce}]`)
 }
 
-const receive_messages_proof = async (addr, nonce) => {
+const receive_messages_proof = async (nonce) => {
     laneData = await outbound.data()
-    const tx = await inbound.connect(addr).receive_messages_proof(laneData, "0x0000000000000000000000000000000000000000000000000000000000000000", "0x")
+    const tx = await inbound.connect(addr2).receive_messages_proof(laneData, "0x0000000000000000000000000000000000000000000000000000000000000000", "0x")
     const n = await inbound.inboundLaneNonce()
     const size = n.last_delivered_nonce - nonce
     for (let i = 0; i<size; i++) {
@@ -45,22 +45,28 @@ const receive_messages_proof = async (addr, nonce) => {
     await logNonce()
 }
 
-const receive_messages_delivery_proof = async (addr, begin, end) => {
+const receive_messages_delivery_proof = async (begin, end) => {
     laneData = await inbound.data()
-    const tx = await outbound.connect(addr).receive_messages_delivery_proof("0x0000000000000000000000000000000000000000000000000000000000000000", laneData, "0x")
+    const tx = await outbound.connect(addr1).receive_messages_delivery_proof("0x0000000000000000000000000000000000000000000000000000000000000000", laneData, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(bridgedChainPos, lanePos, begin, end, 0)
     await expect(tx)
       .to.emit(outbound, "RelayerReward")
-      .withArgs(addr1.address, ethers.utils.parseEther("1.2"))
+      .withArgs(addr1.address, ethers.utils.parseEther("0.1"))
     await expect(tx)
       .to.emit(outbound, "RelayerReward")
-      .withArgs(addr2.address, ethers.utils.parseEther("1.8"))
+      .withArgs(addr2.address, ethers.utils.parseEther("0.9"))
     await logNonce()
 }
 
-describe("multi message relay tests", () => {
+//   out bound lane                                    ->           in bound lane
+//   (latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]
+//0  (0, 1]   #send_message                            ->     (0, 0]
+//1  (0, 1]                                            ->     (0, 1]  #receive_messages_proof
+//2  (1, 1]   #receive_messages_delivery_proof         ->     (0, 1]
+//3  (1, 1]                                            ->     (1, 1]  #receive_messages_proof
+describe("reward message relay tests", () => {
 
   before(async () => {
     [owner, addr1, addr2] = await ethers.getSigners()
@@ -80,27 +86,32 @@ describe("multi message relay tests", () => {
   })
 
   it("1", async function () {
-    await receive_messages_proof(addr1, 1)
+    await receive_messages_proof(1)
   })
 
   it("2", async function () {
-    await send_message(2)
+    await receive_messages_delivery_proof(1, 1)
   })
 
   it("3", async function () {
-    await receive_messages_proof(addr2, 2)
+    await receive_messages_proof(1)
   })
-
 
   it("4", async function () {
-    await send_message(3)
-  })
-
-  it("5", async function () {
-    await receive_messages_proof(addr2, 3)
-  })
-
-  it("6", async function () {
-    await receive_messages_delivery_proof(addr1, 1, 3)
+    let overrides = {
+        value: ethers.utils.parseEther("1")
+    }
+    const tx = await outbound.send_message(
+      "0x0000000000000000000000000000000000000000",
+      "0x",
+      overrides
+    )
+    await expect(tx)
+      .to.emit(outbound, "MessageAccepted")
+      .withArgs(bridgedChainPos, lanePos, 2)
+    await expect(tx)
+      .to.emit(outbound, "MessagePruned")
+      .withArgs(bridgedChainPos, lanePos, 2)
+    await logNonce()
   })
 })
