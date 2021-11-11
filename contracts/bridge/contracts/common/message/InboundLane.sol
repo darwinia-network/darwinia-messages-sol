@@ -223,13 +223,10 @@ contract InboundLane is ReentrancyGuard, MessageVerifier, SourceChain, TargetCha
 
     // Receive new message.
     function receive_message(Message[] memory messages) internal returns (uint256 dispatch_results) {
-        if (messages.length == 0) {
-            return dispatch_results;
-        }
         address payable relayer = msg.sender;
         uint256 begin = inboundLaneNonce.last_delivered_nonce + 1;
         uint256 next = begin;
-        uint256 end = next;
+        uint256 end;
         for (uint256 i = 0; i < messages.length; i++) {
             Message memory message = messages[i];
             MessageKey memory key = message.key;
@@ -255,18 +252,20 @@ contract InboundLane is ReentrancyGuard, MessageVerifier, SourceChain, TargetCha
             end = next;
             next += 1;
         }
-        // update inbound lane nonce storage
-        inboundLaneNonce.last_delivered_nonce = end;
+        if (end > inboundLaneNonce.last_delivered_nonce) {
+            // update inbound lane nonce storage
+            inboundLaneNonce.last_delivered_nonce = end;
 
-        // now let's update inbound lane storage
-        address pre_relayer = relayers_back();
-        if (pre_relayer == relayer) {
-            UnrewardedRelayer storage r = relayers[relayersRange.back];
-            r.messages.dispatch_results |= dispatch_results << (r.messages.end - r.messages.begin + 1);
-            r.messages.end = end;
-        } else {
-            relayersRange.back += 1;
-            relayers[relayersRange.back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
+            // now let's update inbound lane storage
+            address pre_relayer = relayers_back();
+            if (pre_relayer == relayer) {
+                UnrewardedRelayer storage r = relayers[relayersRange.back];
+                r.messages.dispatch_results |= dispatch_results << (r.messages.end - r.messages.begin + 1);
+                r.messages.end = end;
+            } else {
+                relayersRange.back += 1;
+                relayers[relayersRange.back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
+            }
         }
     }
 
