@@ -18,7 +18,7 @@ import "../spec/BeefyCommitmentScheme.sol";
  * @notice The light client is the trust layer of the bridge
  * @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
  */
-contract LightClientBridge is LaneDataScheme, BeefyCommitmentScheme, Bitfield, ValidatorRegistry, GuardRegistry {
+contract DarwiniaLightClient is LaneDataScheme, BeefyCommitmentScheme, Bitfield, ValidatorRegistry, GuardRegistry {
 
     /* Events */
 

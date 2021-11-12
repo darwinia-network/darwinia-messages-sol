@@ -4,7 +4,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
-import "../../interfaces/ILightClientBridge.sol";
+import "../../interfaces/ILightClient.sol";
 
 contract MessageVerifier {
 
@@ -12,7 +12,7 @@ contract MessageVerifier {
     /**
      * @dev The contract address of on-chain light client
      */
-    ILightClientBridge public lightClientBridge;
+    ILightClient public lightClient;
 
     /**
      * @dev The this chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
@@ -35,12 +35,12 @@ contract MessageVerifier {
     bytes32 public commitment;
 
     constructor(
-        address _lightClientBridge,
+        address _lightClient,
         uint256 _thisChainPosition,
         uint256 _bridgedChainPosition,
         uint256 _lanePosition
     ) public {
-        lightClientBridge = ILightClientBridge(_lightClientBridge);
+        lightClient = ILightClient(_lightClient);
         thisChainPosition = _thisChainPosition;
         bridgedChainPosition = _bridgedChainPosition;
         lanePosition = _lanePosition;
@@ -54,7 +54,7 @@ contract MessageVerifier {
         bytes memory messagesProof
     ) internal view {
         require(
-            lightClientBridge.verify_messages_proof(outboundLaneDataHash, inboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
+            lightClient.verify_messages_proof(outboundLaneDataHash, inboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
             "Lane: invalid proof"
         );
     }
@@ -65,7 +65,7 @@ contract MessageVerifier {
         bytes memory messagesProof
     ) internal view {
         require(
-            lightClientBridge.verify_messages_delivery_proof(outboundLaneDataHash, inboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
+            lightClient.verify_messages_delivery_proof(outboundLaneDataHash, inboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
             "Lane: invalid delivery proof"
         );
     }
