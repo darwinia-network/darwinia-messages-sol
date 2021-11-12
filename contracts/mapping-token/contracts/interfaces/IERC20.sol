@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.8.10;
 
 interface IERC20 {
   function totalSupply() external view returns (uint256);
@@ -10,4 +10,8 @@ interface IERC20 {
   function mint(address _to, uint256 _value) external;
   function burn(address _from, uint256 _value) external;
   event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+interface IMappingToken {
+    function initialize(string memory name, string memory symbol, uint8 decimal) external;
 }

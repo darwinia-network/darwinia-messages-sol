@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 /// @title relay with daily limit - Allows the relay to mint token in a daily limit.
 contract DailyLimit {
@@ -50,8 +50,8 @@ contract DailyLimit {
         internal
         returns (bool)
     {
-        if (now > lastDay[token] + 24 hours) {
-            lastDay[token] = now;
+        if (block.timestamp > lastDay[token] + 24 hours) {
+            lastDay[token] = block.timestamp;
             spentToday[token] = 0;
         }
 
@@ -72,7 +72,7 @@ contract DailyLimit {
         view
         returns (uint)
     {
-        if (now > lastDay[token] + 24 hours) {
+        if (block.timestamp > lastDay[token] + 24 hours) {
           return dailyLimit[token];
         }
 
