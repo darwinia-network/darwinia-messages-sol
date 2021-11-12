@@ -48,15 +48,19 @@ const receive_messages_proof = async (addr, nonce) => {
 const receive_messages_delivery_proof = async (addr, begin, end) => {
     laneData = await inbound.data()
     const tx = await outbound.connect(addr).receive_messages_delivery_proof("0x0000000000000000000000000000000000000000000000000000000000000000", laneData, "0x")
+    const d = await tx.wait();
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(bridgedChainPos, lanePos, begin, end, 0)
     await expect(tx)
       .to.emit(outbound, "RelayerReward")
-      .withArgs(addr1.address, ethers.utils.parseEther("1.2"))
+      .withArgs(addr1.address, ethers.utils.parseEther("3.3"))
     await expect(tx)
       .to.emit(outbound, "RelayerReward")
       .withArgs(addr2.address, ethers.utils.parseEther("1.8"))
+    await expect(tx)
+      .to.emit(outbound, "RelayerReward")
+      .withArgs(addr2.address, ethers.utils.parseEther("0.9"))
     await logNonce()
 }
 
@@ -101,6 +105,26 @@ describe("multi message relay tests", () => {
   })
 
   it("6", async function () {
-    await receive_messages_delivery_proof(addr1, 1, 3)
+    await send_message(4)
+  })
+
+  it("7", async function () {
+    await send_message(5)
+  })
+
+  it("8", async function () {
+    await receive_messages_proof(addr1, 5)
+  })
+
+  it("9", async function () {
+    await send_message(6)
+  })
+
+  it("10", async function () {
+    await receive_messages_proof(addr2, 6)
+  })
+
+  it("11", async function () {
+    await receive_messages_delivery_proof(addr1, 1, 6)
   })
 })
