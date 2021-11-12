@@ -20,7 +20,6 @@ import "../../interfaces/ICrossChainFilter.sol";
 import "./MessageVerifier.sol";
 import "./SourceChain.sol";
 import "./TargetChain.sol";
-import "hardhat/console.sol";
 
 /**
  * @title Everything about incoming messages receival
@@ -28,7 +27,7 @@ import "hardhat/console.sol";
  * @notice The inbound lane is the message layer of the bridge
  * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
  */
-contract InboundLane is ReentrancyGuard, MessageVerifier, SourceChain, TargetChain {
+contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGuard {
     /**
      * @notice Notifies an observer that the message has dispatched
      * @param thisChainPosition The thisChainPosition of inbound lane

@@ -6,7 +6,7 @@ chai.use(solidity);
 const log = console.log
 const thisChainPos = 0
 const bridgedChainPos = 1
-const lanePos = 2
+const lanePos = 0
 let outbound, inbound
 let outboundData, inboundData
 

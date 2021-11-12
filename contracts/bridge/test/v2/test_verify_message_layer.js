@@ -1,35 +1,64 @@
-const { expect } = require("chai");
-const { solidity } = require("ethereum-waffle");
-const chai = require("chai");
+const { expect } = require("chai")
+const { solidity } = require("ethereum-waffle")
+const { keccakFromHexString } = require("ethereumjs-util");
+const chai = require("chai")
 
-chai.use(solidity);
+chai.use(solidity)
 const log = console.log
-const thisChainPos = 0
-const bridgedChainPos = 1
-const lanePos = 2
+const sourceChainPos = 0
+const targetChainPos = 1
+const lanePos = 0
+const OUTBOUND_COMMITMENT_POSITION = 4
+const INBOUND_COMMITMENT_POSITION = 4
 let sourceOutbound, sourceInbound
 let targetOutbound, targetInbound
+let darwiniaLaneCommitter0, darwiniaChainCommitter
+let sourceLightClient, targetLightClient
 
-const send_message = async (nonce) => {
+const build_proof = async () => {
+    const c0 = await darwiniaChainCommitter['commitment(uint256)'](sourceChainPos)
+    const c1 = await darwiniaChainCommitter['commitment(uint256)'](targetChainPos)
+    const c = await darwiniaChainCommitter['commitment()']()
+    const chainProof = {
+      root: c,
+      count: 2,
+      proof: [c0]
+    }
+    const laneProof = {
+      root: c1,
+      count: 1,
+      proof: []
+    }
+    return { chainProof, laneProof }
+}
+
+const generate_darwinia_proof = async () => {
+  const proof = await build_proof()
+  return ethers.utils.defaultAbiCoder.encode([
+    "tuple(tuple(bytes32,uint256,bytes32[]),tuple(bytes32,uint256,bytes32[]))"
+    ], [
+      [
+        [proof.chainProof.root, proof.chainProof.count, proof.chainProof.proof],
+        [proof.laneProof.root, proof.laneProof.count, proof.laneProof.proof]
+      ]
+    ])
+}
+
+const send_message = async (outbound, nonce) => {
     const tx = await outbound.send_message(
       "0x0000000000000000000000000000000000000000",
       "0x"
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(bridgedChainPos, lanePos, nonce)
-    await logNonce()
+      .withArgs(await outbound.bridgedChainPosition(), lanePos, nonce)
 }
 
-const logNonce = async () => {
-  const out = await outbound.outboundLaneNonce()
-  const iin = await inbound.inboundLaneNonce()
-  log(`(${out.latest_received_nonce}, ${out.latest_generated_nonce}]                                            ->     (${iin.last_confirmed_nonce}, ${iin.last_delivered_nonce}]`)
-}
-
-const receive_messages_proof = async (nonce) => {
-    laneData = await outbound.data()
-    const tx = await inbound.receive_messages_proof(laneData, "0x0000000000000000000000000000000000000000000000000000000000000000", "0x")
+const receive_messages_proof = async (inbound, srcoutbound, srcinbound, nonce) => {
+    const o = await srcoutbound.data()
+    const i = await srcinbound.commitment()
+    const proof = await generate_darwinia_proof()
+    const tx = await inbound.receive_messages_proof(o, i, proof)
     const n = await inbound.inboundLaneNonce()
     const size = n.last_delivered_nonce - nonce
     for (let i = 0; i<size; i++) {
@@ -37,53 +66,74 @@ const receive_messages_proof = async (nonce) => {
         .to.emit(inbound, "MessageDispatched")
         .withArgs(bridgedChainPos, lanePos, nonce+i, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
     }
-    await logNonce()
 }
 
-const receive_messages_delivery_proof = async (begin, end) => {
-    laneData = await inbound.data()
-    const tx = await outbound.receive_messages_delivery_proof("0x0000000000000000000000000000000000000000000000000000000000000000", laneData, "0x")
+const receive_messages_delivery_proof = async (outbound, tgtoutbound, tgtinbound, begin, end) => {
+    const i = await tgtinbound.data()
+    const o = await tgtoutbound.commitment()
+    // const proof = await generate_bsc_proof()
+    const tx = await outbound.receive_messages_delivery_proof(o, i, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
-      .withArgs(bridgedChainPos, lanePos, begin, end, 0)
-    await logNonce()
+      .withArgs(targetChainPos, lanePos, begin, end, 0)
 }
 
-//   out bound lane                                    ->           in bound lane
-//   (latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]
-//0  (0, 1]   #send_message                            ->     (0, 0]
-//1  (0, 1]                                            ->     (0, 1]  #receive_messages_proof
-//2  (1, 1]   #receive_messages_delivery_proof         ->     (0, 1]
-//3  (1, 1]                                            ->     (1, 1]  #receive_messages_proof
 describe("verify message relay tests", () => {
 
   before(async () => {
     const [owner] = await ethers.getSigners();
-    const MockLightClient = await ethers.getContractFactory("MockLightClient")
-    const lightClient = await MockLightClient.deploy()
+    const BSCLightClientMock = await ethers.getContractFactory("BSCLightClientMock")
+    const MockDarwiniaLightClient = await ethers.getContractFactory("MockDarwiniaLightClient")
     const OutboundLane = await ethers.getContractFactory("OutboundLane")
-    outbound = await OutboundLane.deploy(lightClient.address, thisChainPos, bridgedChainPos, lanePos, 1, 0, 0)
-    await outbound.grantRole("0x7bb193391dc6610af03bd9922e44c83b9fda893aeed61cf64297fb4473500dd1", owner.address)
     const InboundLane = await ethers.getContractFactory("InboundLane")
-    inbound = await InboundLane.deploy(lightClient.address, bridgedChainPos, thisChainPos, lanePos, 0, 0)
-    log(" out bound lane                                   ->      in bound lane")
-    log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")
+    const ChainMessageCommitter = await ethers.getContractFactory("ChainMessageCommitter")
+    const LaneMessageCommitter = await ethers.getContractFactory("LaneMessageCommitter")
+
+    targetLightClient = await BSCLightClientMock.deploy(OUTBOUND_COMMITMENT_POSITION, INBOUND_COMMITMENT_POSITION)
+    sourceOutbound = await OutboundLane.deploy(targetLightClient.address, sourceChainPos, targetChainPos, lanePos, 1, 0, 0)
+    await sourceOutbound.grantRole("0x7bb193391dc6610af03bd9922e44c83b9fda893aeed61cf64297fb4473500dd1", owner.address)
+    sourceInbound = await InboundLane.deploy(targetLightClient.address, sourceChainPos, targetChainPos, lanePos, 0, 0)
+    darwiniaLaneCommitter0 = await LaneMessageCommitter.deploy(sourceChainPos, targetChainPos)
+    await darwiniaLaneCommitter0.registry(sourceInbound.address, sourceOutbound.address)
+    darwiniaChainCommitter = await ChainMessageCommitter.deploy(sourceChainPos)
+    await darwiniaChainCommitter.registry(darwiniaLaneCommitter0.address)
+
+    sourceLightClient = await MockDarwiniaLightClient.deploy()
+    targetOutbound = await OutboundLane.deploy(sourceLightClient.address, targetChainPos, sourceChainPos, lanePos, 1, 0, 0)
+    await targetOutbound.grantRole("0x7bb193391dc6610af03bd9922e44c83b9fda893aeed61cf64297fb4473500dd1", owner.address)
+    targetInbound = await InboundLane.deploy(sourceLightClient.address, targetChainPos, sourceChainPos, lanePos, 0, 0)
+
+    await targetLightClient.setBound(sourceChainPos, lanePos, targetInbound.address, targetOutbound.address)
   });
 
   it("0", async function () {
-    await send_message(1)
+    await send_message(sourceOutbound, 1)
   });
 
   it("1", async function () {
-    await receive_messages_proof(1)
+    const c = await darwiniaChainCommitter['commitment()']()
+    await sourceLightClient.relayHeader(c)
   });
 
   it("2", async function () {
-    await receive_messages_delivery_proof(1, 1)
+    await receive_messages_proof(targetInbound, sourceOutbound, sourceInbound, 1)
   });
 
   it("3", async function () {
-    await receive_messages_proof(1)
+    await targetLightClient.relayHeader("0x0000000000000000000000000000000000000000000000000000000000000000")
+  });
+
+  it("4", async function () {
+    await receive_messages_delivery_proof(sourceOutbound, targetOutbound, targetInbound, 1, 1)
+  });
+
+  it("5", async function () {
+    const c = await darwiniaChainCommitter['commitment()']()
+    await sourceLightClient.relayHeader(c)
+  });
+
+  it("6", async function () {
+    await receive_messages_proof(targetInbound, sourceOutbound, sourceInbound, 1)
   });
 
 });

@@ -23,7 +23,7 @@ import "./TargetChain.sol";
 import "./SourceChain.sol";
 
 // Everything about outgoing messages sending.
-contract OutboundLane is IOutboundLane, ReentrancyGuard, AccessControl, MessageVerifier, TargetChain, SourceChain {
+contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChain, ReentrancyGuard, AccessControl {
     event MessageAccepted(uint256 bridgedChainPosition, uint256 lanePosition, uint256 nonce);
     event MessagesDelivered(uint256 bridgedChainPosition, uint256 lanePosition, uint256 begin, uint256 end, uint256 results);
     event MessagePruned(uint256 bridgedChainPosition, uint256 lanePosition, uint256 oldest_unpruned_nonce);

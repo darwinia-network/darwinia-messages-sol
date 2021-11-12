@@ -7,27 +7,26 @@ import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "../../interfaces/ILightClient.sol";
 
 contract MessageVerifier {
+    /**
+     * @dev The this chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
+     */
+    uint256 public immutable thisChainPosition;
+
+    /**
+     * @dev The bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
+     */
+    uint256 public immutable bridgedChainPosition;
+
+    /**
+     * @dev The position of the leaf in the `lane_message_merkle_tree`, index starting with 0
+     */
+    uint256 public immutable lanePosition;
 
     /* State */
     /**
      * @dev The contract address of on-chain light client
      */
     ILightClient public lightClient;
-
-    /**
-     * @dev The this chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-     */
-    uint256 public thisChainPosition;
-
-    /**
-     * @dev The bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-     */
-    uint256 public bridgedChainPosition;
-
-    /**
-     * @dev The position of the leaf in the `lane_message_merkle_tree`, index starting with 0
-     */
-    uint256 public lanePosition;
 
     /**
      * @dev The lane data storage commitment

@@ -3,23 +3,28 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "@darwinia/contracts-utils/contracts/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "../../interfaces/IMessageCommitment.sol";
 import "../../common/spec/LaneDataScheme.sol";
 
 contract LaneMessageCommitter is Ownable, LaneDataScheme {
     event Registry(address inboundLane, address outboundLane);
 
+    uint256 public immutable thisChainPosition;
     uint256 public immutable bridgedChainPosition;
     uint256 public laneCount;
     mapping(uint256 => address) public inboundLanes;
     mapping(uint256 => address) public outboundLanes;
 
-    constructor(uint256 _bridgedChainPosition) public {
+    constructor(uint256 _thisChainPosition, uint256 _bridgedChainPosition) public {
+        require(_thisChainPosition != _bridgedChainPosition, "invalid position");
+        thisChainPosition = _thisChainPosition;
         bridgedChainPosition = _bridgedChainPosition;
     }
 
     function registry(address inboundLane, address outboundLane) external onlyOwner {
+        require(thisChainPosition == IMessageCommitment(inboundLane).thisChainPosition(), "Message: invalid ThisChainPosition");
+        require(thisChainPosition == IMessageCommitment(outboundLane).thisChainPosition(), "Message: invalid ThisChainPosition");
         require(bridgedChainPosition == IMessageCommitment(inboundLane).bridgedChainPosition(), "Message: invalid chain position");
         require(bridgedChainPosition == IMessageCommitment(outboundLane).bridgedChainPosition(), "Message: invalid chain position");
         require(laneCount == IMessageCommitment(inboundLane).lanePosition(), "Message: invalid inlane position");

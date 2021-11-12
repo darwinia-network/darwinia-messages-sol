@@ -1,27 +1,26 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.6.0 <0.7.0;
-pragma experimental ABIEncoderV2;
 
-import "@darwinia/contracts-utils/contracts/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "../../interfaces/IMessageCommitment.sol";
 
 contract ChainMessageCommitter is Ownable {
     event Registry(uint256 position, address committer);
 
-    uint256 public immutable thisChainPositon;
+    uint256 public immutable thisChainPosition;
     uint256 public maxChainPosition;
     mapping(uint256 => address) public chains;
 
     constructor(uint256 _thisChainPosition) public {
-        thisChainPositon = _thisChainPosition;
+        thisChainPosition = _thisChainPosition;
         maxChainPosition = _thisChainPosition;
     }
 
     function registry(address laneCommitter) external onlyOwner {
         uint256 position = IMessageCommitment(laneCommitter).bridgedChainPosition();
-        require(thisChainPositon != position, "Message: invalid chain position");
-        require(thisChainPositon == IMessageCommitment(laneCommitter).thisChainPosition(), "Message: invalid chain position");
+        require(thisChainPosition != position, "Message: invalid ThisChainPosition");
+        require(thisChainPosition == IMessageCommitment(laneCommitter).thisChainPosition(), "Message: invalid ThisChainPosition");
         chains[position] = laneCommitter;
         maxChainPosition = max(maxChainPosition, position);
         emit Registry(position, laneCommitter);
