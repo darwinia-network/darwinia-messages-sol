@@ -6,7 +6,7 @@ pragma experimental ABIEncoderV2;
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "../../interfaces/ILightClientBridge.sol";
-import "../../interfaces/ICrossChainFilter.sol";
+import "../../interfaces/ICrossChainFilterOld.sol";
 
 /**
  * @title A entry contract for syncing message from Darwinia to Ethereum-like chain
@@ -186,7 +186,7 @@ contract BasicInboundChannel {
             /**
              * @notice The app layer must implement the interface `ICrossChainFilter`
              */
-            try ICrossChainFilter(message.targetContract).crossChainFilter(message.sourceAccount, message.payload) 
+            try ICrossChainFilterOld(message.targetContract).crossChainFilter(message.sourceAccount, message.payload) 
                 returns (bool ok) 
             {
                 if (ok) {

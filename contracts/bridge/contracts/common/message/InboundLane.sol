@@ -236,8 +236,10 @@ contract InboundLane is ReentrancyGuard, MessageVerifier, SourceChain, TargetCha
             }
             // check message nonce is correct and increment nonce for replay protection
             require(key.nonce == next, "Lane: InvalidNonce");
+            // check message is from the correct source chain position
+            require(key.this_chain_id == bridgedChainPosition, "Lane: InvalidSourceChainId");
             // check message delivery to the correct chain position
-            require(key.chain_id == thisChainPosition, "Lane: InvalidChainId");
+            require(key.bridged_chain_id == thisChainPosition, "Lane: InvalidTargetChainId");
             // check message delivery to the correct lane position
             require(key.lane_id == lanePosition, "Lane: InvalidLaneID");
             // if there are more unconfirmed messages than we may accept, reject this message
@@ -272,6 +274,7 @@ contract InboundLane is ReentrancyGuard, MessageVerifier, SourceChain, TargetCha
     function dispatch(MessagePayload memory payload) internal returns (bool dispatch_result, bytes memory returndata) {
         bytes memory filterCallData = abi.encodeWithSelector(
             ICrossChainFilter.crossChainFilter.selector,
+            bridgedChainPosition,
             payload.sourceAccount,
             payload.encoded
         );

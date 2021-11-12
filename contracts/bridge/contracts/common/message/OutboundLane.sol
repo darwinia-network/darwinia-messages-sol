@@ -130,12 +130,13 @@ contract OutboundLane is IOutboundLane, ReentrancyGuard, AccessControl, MessageV
 
     // 32 bytes to identify an unique message
     // MessageKey encoding:
-    // BridgedChainPosition | LanePosition | Nonce
-    // [0..8)   bytes ---- BridgedChainPosition
+    // ThisChainPosition | BridgedChainPosition | LanePosition | Nonce
+    // [0..4)   bytes ---- ThisChainPosition
+    // [4..8)   bytes ---- BridgedChainPosition
     // [8..16)  bytes ---- LanePosition
     // [16..32) bytes ---- Nonce, max of nonce is `uint128(-1)`
     function encodeMessageKey(uint256 nonce) public view returns (uint256 key) {
-        key = (bridgedChainPosition << 192) + (lanePosition << 128) + nonce;
+        key = (thisChainPosition << 224) + (bridgedChainPosition << 192) + (lanePosition << 128) + nonce;
     }
 
     function message_size() public view returns (uint256 size) {
@@ -156,7 +157,7 @@ contract OutboundLane is IOutboundLane, ReentrancyGuard, AccessControl, MessageV
             for (uint256 index = 0; index < size; index++) {
                 uint256 nonce = index + begin;
                 uint256 key = encodeMessageKey(nonce);
-                lane_data.messages[index] = Message(MessageKey(bridgedChainPosition, lanePosition, nonce), messages[key]);
+                lane_data.messages[index] = Message(MessageKey(thisChainPosition, bridgedChainPosition, lanePosition, nonce), messages[key]);
             }
         }
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
