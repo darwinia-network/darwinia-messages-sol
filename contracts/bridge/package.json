@@ -19,6 +19,7 @@
     "chai-as-promised": "^7.1.1",
     "doctoc": "^2.0.1",
     "dotenv": "^10.0.0",
+    "eth-proof": "^2.1.6",
     "ethereum-waffle": "^3.0.0",
     "ethereumjs-util": "^7.0.10",
     "ethers": "^5.0.0",

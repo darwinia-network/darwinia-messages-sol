@@ -1,19 +1,21 @@
 const { expect } = require("chai")
 const { solidity } = require("ethereum-waffle")
-const { keccakFromHexString } = require("ethereumjs-util");
 const chai = require("chai")
+const { GetAndVerify, GetProof, VerifyProof } = require('eth-proof')
 
 chai.use(solidity)
 const log = console.log
 const sourceChainPos = 0
 const targetChainPos = 1
 const lanePos = 0
-const OUTBOUND_COMMITMENT_POSITION = 4
-const INBOUND_COMMITMENT_POSITION = 4
+const OUTBOUND_COMMITMENT_POSITION = '0x1'
+const INBOUND_COMMITMENT_POSITION = '0x1'
 let sourceOutbound, sourceInbound
 let targetOutbound, targetInbound
 let darwiniaLaneCommitter0, darwiniaChainCommitter
 let sourceLightClient, targetLightClient
+
+let getAndVerify = new GetAndVerify("http://127.0.0.1:8545 ")
 
 const build_proof = async () => {
     const c0 = await darwiniaChainCommitter['commitment(uint256)'](sourceChainPos)
@@ -135,5 +137,16 @@ describe("verify message relay tests", () => {
   it("6", async function () {
     await receive_messages_proof(targetInbound, sourceOutbound, sourceInbound, 1)
   });
+
+  // it('storage verify', async () => {
+  //   let c = await targetInbound['commitment()']()
+  //   let block = await ethers.provider.getBlock()
+  //   let blockHash = block.hash
+  //   let accountAddress  = targetInbound.address
+  //   let position        = INBOUND_COMMITMENT_POSITION
+  //   let storageValue = await getAndVerify.storageAgainstBlockHash(accountAddress, position, blockHash)
+  //   let v = '0x' + storageValue.toString('hex')
+  //   expect(v).to.equal(c)
+  // });
 
 });

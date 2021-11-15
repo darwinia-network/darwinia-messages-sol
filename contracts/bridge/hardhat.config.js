@@ -68,7 +68,7 @@ module.exports = {
     cache: "./cache",
     artifacts: "./artifacts"
   },
-  defaultNetwork: 'hardhat',
+  defaultNetwork: 'dev',
   networks: {
     hardhat: {
       blockGasLimit: 30_000_000,
@@ -76,7 +76,7 @@ module.exports = {
       throwOnTransactionFailures: true,
     },
     dev: {
-      url: 'http://localhost:8545/',
+      url: 'http://127.0.0.1:8545/',
       network_id: "*",
       accounts: [PRIVATE_KEY]
     },
