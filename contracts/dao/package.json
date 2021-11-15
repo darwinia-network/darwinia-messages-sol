@@ -27,6 +27,6 @@
     "shx": "^0.3.3"
   },
   "dependencies": {
-    "@zeppelin-solidity-4.3.2/contracts": "npm:@openzeppelin/contracts@4.3.2"
+    "@zeppelin-solidity-4.4.0/contracts": "npm:@openzeppelin/contracts@4.4.0-rc.0"
   }
 }
