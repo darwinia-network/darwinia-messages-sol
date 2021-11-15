@@ -122,7 +122,8 @@ describe("verify message relay tests", () => {
   });
 
   it("3", async function () {
-    await targetLightClient.relayHeader("0x0000000000000000000000000000000000000000000000000000000000000000")
+    let c = await targetInbound['commitment()']()
+    await targetLightClient.relayHeader(c)
   });
 
   it("4", async function () {
