@@ -64,7 +64,7 @@ contract TargetChain {
      *     ")"
      * )
      */
-    bytes32 internal constant INBOUNDLANEDATA_TYPETASH = 0x04ed271fdf51968767c795bb92ad7840b73d71274e9ac035d700bb8d21104476;
+    bytes32 internal constant INBOUNDLANEDATA_TYPEHASH = 0x04ed271fdf51968767c795bb92ad7840b73d71274e9ac035d700bb8d21104476;
 
     /**
      * Hash of the UnrewardedRelayer Schema
@@ -91,7 +91,7 @@ contract TargetChain {
     {
         return keccak256(
             abi.encode(
-                INBOUNDLANEDATA_TYPETASH,
+                INBOUNDLANEDATA_TYPEHASH,
                 hash(inboundLaneData.relayers),
                 inboundLaneData.last_confirmed_nonce
             )

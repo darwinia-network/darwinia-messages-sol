@@ -5,8 +5,8 @@ pragma experimental ABIEncoderV2;
 
 contract SourceChain {
     /**
-     * The MessagePayload is the structure of DarwiniaRPC which should be delivery to Ethereum-like chain
-     * @param sourceAccount The derived DVM address of pallet ID which send the message
+     * The MessagePayload is the structure of RPC which should be delivery to target chain
+     * @param sourceAccount The source contract address which send the message
      * @param targetContract The targe contract address which receive the message
      * @param encoded The calldata which encoded by ABI Encoding
      */
@@ -59,7 +59,7 @@ contract SourceChain {
      *     ")"
      * )
      */
-    bytes32 internal constant OUTBOUNDLANEDATA_TYPETASH = 0x82446a31771d975201a71d0d87c46edcb4996361ca06e16208c5a001081dee55;
+    bytes32 internal constant OUTBOUNDLANEDATA_TYPEHASH = 0x82446a31771d975201a71d0d87c46edcb4996361ca06e16208c5a001081dee55;
 
     /**
      * Hash of the Message Schema
@@ -108,7 +108,7 @@ contract SourceChain {
     {
         return keccak256(
             abi.encode(
-                OUTBOUNDLANEDATA_TYPETASH,
+                OUTBOUNDLANEDATA_TYPEHASH,
                 subLandData.latest_received_nonce,
                 hash(subLandData.messages)
             )

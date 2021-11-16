@@ -68,7 +68,7 @@ module.exports = {
     cache: "./cache",
     artifacts: "./artifacts"
   },
-  defaultNetwork: 'dev',
+  defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
       blockGasLimit: 30_000_000,
