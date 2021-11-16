@@ -22,7 +22,7 @@ const send_message = async (nonce) => {
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(bridgedChainPos, lanePos, nonce)
+      .withArgs(nonce)
     await logNonce()
 }
 
@@ -40,7 +40,7 @@ const receive_messages_proof = async (nonce) => {
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(bridgedChainPos, lanePos, nonce+i, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
+        .withArgs(bridgedChainPos, thisChainPos, lanePos, nonce+i, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
     }
     await logNonce()
 }
@@ -50,7 +50,7 @@ const receive_messages_delivery_proof = async (begin, end) => {
     const tx = await outbound.connect(addr1).receive_messages_delivery_proof("0x0000000000000000000000000000000000000000000000000000000000000000", laneData, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
-      .withArgs(bridgedChainPos, lanePos, begin, end, 0)
+      .withArgs(begin, end, 0)
     await expect(tx)
       .to.emit(outbound, "RelayerReward")
       .withArgs(addr1.address, ethers.utils.parseEther("0.1"))
@@ -108,10 +108,10 @@ describe("reward message relay tests", () => {
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(bridgedChainPos, lanePos, 2)
+      .withArgs(2)
     await expect(tx)
       .to.emit(outbound, "MessagePruned")
-      .withArgs(bridgedChainPos, lanePos, 2)
+      .withArgs(2)
     await logNonce()
   })
 })

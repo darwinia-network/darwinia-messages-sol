@@ -30,13 +30,14 @@ import "./TargetChain.sol";
 contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGuard {
     /**
      * @notice Notifies an observer that the message has dispatched
-     * @param thisChainPosition The thisChainPosition of inbound lane
-     * @param lanePosition The lanePosition of inbound lane
+     * @param thisChainPosition The thisChainPosition of the message
+     * @param bridgedChainPosition The bridgedChainPosition of the message
+     * @param lanePosition The lanePosition of the message
      * @param nonce The message nonce
      * @param result The message result
      * @param returndata The return data of message call, when return false, it's the reason of the error
      */
-    event MessageDispatched(uint256 thisChainPosition, uint256 lanePosition, uint256 nonce, bool result, bytes returndata);
+    event MessageDispatched(uint256 thisChainPosition, uint256 bridgedChainPosition, uint256 lanePosition, uint256 nonce, bool result, bytes returndata);
 
     /* Constants */
 
@@ -247,9 +248,9 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
             // then, dispatch message
             (bool dispatch_result, bytes memory returndata) = dispatch(message_payload);
 
-            emit MessageDispatched(thisChainPosition, lanePosition, next, dispatch_result, returndata);
+            emit MessageDispatched(key.this_chain_id, key.bridged_chain_id, key.lane_id, key.nonce, dispatch_result, returndata);
             // TODO: callback `pay_inbound_dispatch_fee_overhead`
-            dispatch_results |= (dispatch_result ? uint256(1) : uint256(0)) << i;
+            dispatch_results |= (dispatch_result ? uint256(1) << i : uint256(0));
             end = next;
             next += 1;
         }

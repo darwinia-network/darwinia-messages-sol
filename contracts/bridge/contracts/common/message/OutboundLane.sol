@@ -24,10 +24,10 @@ import "./SourceChain.sol";
 
 // Everything about outgoing messages sending.
 contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChain, ReentrancyGuard, AccessControl {
-    event MessageAccepted(uint256 bridgedChainPosition, uint256 lanePosition, uint256 nonce);
-    event MessagesDelivered(uint256 bridgedChainPosition, uint256 lanePosition, uint256 begin, uint256 end, uint256 results);
-    event MessagePruned(uint256 bridgedChainPosition, uint256 lanePosition, uint256 oldest_unpruned_nonce);
-    event MessageFeeIncreased(uint256 bridgedChainPosition, uint256 lanePosition, uint256 nonce, uint256 fee);
+    event MessageAccepted(uint256 nonce);
+    event MessagesDelivered(uint256 begin, uint256 end, uint256 results);
+    event MessagePruned(uint256 oldest_unpruned_nonce);
+    event MessageFeeIncreased(uint256 nonce, uint256 fee);
     event RelayerReward(address relayer, uint256 reward);
 
     bytes32 internal constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
@@ -51,7 +51,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
 
     uint256 public confirmationFee = 0.1 ether; // how to set confirmation_fee
 
-    // MessageKey => MessageData
+    // nonce => MessageData
     mapping(uint256 => MessageData) public messages;
 
     /**
@@ -81,7 +81,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     function send_message(address targetContract, bytes calldata encoded) external payable override nonReentrant returns (uint256) {
         require(hasRole(OUTBOUND_ROLE, msg.sender), "Lane: NotAuthorized");
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
-        require(outboundLaneNonce.latest_generated_nonce < uint128(-1), "Lane: Overflow");
+        require(outboundLaneNonce.latest_generated_nonce < uint256(-1), "Lane: Overflow");
         uint256 nonce = outboundLaneNonce.latest_generated_nonce + 1;
         uint256 fee = msg.value;
         outboundLaneNonce.latest_generated_nonce = nonce;
@@ -90,9 +90,8 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             targetContract: targetContract,
             encoded: encoded
         });
-        uint256 key = encodeMessageKey(nonce);
         // finally, save messageData in outbound storage and emit `MessageAccepted` event
-        messages[key] = MessageData({
+        messages[nonce] = MessageData({
             payload: messagePayload,
             fee: fee  // a lowest fee may be required and how to set it
         });
@@ -101,7 +100,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
         prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
         commit();
-        emit MessageAccepted(bridgedChainPosition, lanePosition, nonce);
+        emit MessageAccepted(nonce);
         return nonce;
     }
 
@@ -109,10 +108,9 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     function increase_message_fee(uint256 nonce) external payable nonReentrant {
         require(nonce > outboundLaneNonce.latest_received_nonce, "Lane: MessageIsAlreadyDelivered");
         require(nonce <= outboundLaneNonce.latest_generated_nonce, "Lane: MessageIsNotYetSent");
-        uint256 key = encodeMessageKey(nonce);
-        messages[key].fee += msg.value;
+        messages[nonce].fee += msg.value;
         commit();
-        emit MessageFeeIncreased(bridgedChainPosition, lanePosition, nonce, messages[key].fee);
+        emit MessageFeeIncreased(nonce, messages[nonce].fee);
     }
 
     // Receive messages delivery proof from bridged chain.
@@ -128,24 +126,8 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         commit();
     }
 
-    // 32 bytes to identify an unique message
-    // MessageKey encoding:
-    // ThisChainPosition | BridgedChainPosition | LanePosition | Nonce
-    // [0..4)   bytes ---- ThisChainPosition
-    // [4..8)   bytes ---- BridgedChainPosition
-    // [8..16)  bytes ---- LanePosition
-    // [16..32) bytes ---- Nonce, max of nonce is `uint128(-1)`
-    function encodeMessageKey(uint256 nonce) public view returns (uint256 key) {
-        key = (thisChainPosition << 224) + (bridgedChainPosition << 192) + (lanePosition << 128) + nonce;
-    }
-
     function message_size() public view returns (uint256 size) {
         size = outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce;
-    }
-
-	/// Returns saved outbound message payload.
-    function message(uint256 nonce) public view returns (MessageData memory) {
-        return messages[encodeMessageKey(nonce)];
     }
 
 	// Get lane data from the storage.
@@ -156,8 +138,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             uint256 begin = outboundLaneNonce.latest_received_nonce + 1;
             for (uint256 index = 0; index < size; index++) {
                 uint256 nonce = index + begin;
-                uint256 key = encodeMessageKey(nonce);
-                lane_data.messages[index] = Message(MessageKey(thisChainPosition, bridgedChainPosition, lanePosition, nonce), messages[key]);
+                lane_data.messages[index] = Message(MessageKey(thisChainPosition, bridgedChainPosition, lanePosition, nonce), messages[nonce]);
             }
         }
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
@@ -171,18 +152,19 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         return commitment;
     }
 
-    function extract_substrate_inbound_lane_info(InboundLaneData memory lane_data) internal pure returns (uint256 total_unrewarded_messages, uint256 last_delivered_nonce) {
+    function extract_inbound_lane_info(InboundLaneData memory lane_data) internal pure returns (uint256 total_unrewarded_messages, uint256 last_delivered_nonce) {
         total_unrewarded_messages = lane_data.last_delivered_nonce - lane_data.last_confirmed_nonce;
         last_delivered_nonce = lane_data.last_delivered_nonce;
     }
 
 	// Confirm messages delivery.
-    function confirm_delivery(InboundLaneData memory subInboundLaneData) internal returns (DeliveredMessages memory confirmed_messages) {
-        (uint256 total_messages, uint256 latest_delivered_nonce) = extract_substrate_inbound_lane_info(subInboundLaneData);
+    function confirm_delivery(InboundLaneData memory inboundLaneData) internal returns (DeliveredMessages memory confirmed_messages) {
+        (uint256 total_messages, uint256 latest_delivered_nonce) = extract_inbound_lane_info(inboundLaneData);
         require(total_messages < 256, "Lane: InvalidNumberOfMessages");
 
-        UnrewardedRelayer[] memory relayers = subInboundLaneData.relayers;
+        UnrewardedRelayer[] memory relayers = inboundLaneData.relayers;
         OutboundLaneNonce memory nonce = outboundLaneNonce;
+        require(nonce.latest_received_nonce >= inboundLaneData.last_confirmed_nonce, "Lane: InvalidConfimedNonce");
         require(latest_delivered_nonce > nonce.latest_received_nonce, "Lane: NoNewConfirmations");
         require(latest_delivered_nonce <= nonce.latest_generated_nonce, "Lane: FailedToConfirmFutureMessages");
         // that the relayer has declared correct number of messages that the proof contains (it
@@ -199,7 +181,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             dispatch_results: dispatch_results
         });
         // emit 'MessagesDelivered' event
-        emit MessagesDelivered(bridgedChainPosition, lanePosition, confirmed_messages.begin, confirmed_messages.end, confirmed_messages.dispatch_results);
+        emit MessagesDelivered(confirmed_messages.begin, confirmed_messages.end, confirmed_messages.dispatch_results);
     }
 
     // Extract new dispatch results from the unrewarded relayers vec.
@@ -260,15 +242,14 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         while (pruned_messages < max_messages_to_prune &&
             nonce.oldest_unpruned_nonce <= nonce.latest_received_nonce)
         {
-            uint256 key = encodeMessageKey(nonce.oldest_unpruned_nonce);
-            delete messages[key];
+            delete messages[nonce.oldest_unpruned_nonce];
             anything_changed = true;
             pruned_messages += 1;
             nonce.oldest_unpruned_nonce += 1;
         }
         if (anything_changed) {
             outboundLaneNonce = nonce;
-            emit MessagePruned(bridgedChainPosition, lanePosition, outboundLaneNonce.oldest_unpruned_nonce);
+            emit MessagePruned(outboundLaneNonce.oldest_unpruned_nonce);
         }
         return pruned_messages;
     }
@@ -287,8 +268,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             uint256 delivery_reward = 0;
             uint256 confirmation_reward = 0;
             for (uint256 nonce = nonce_begin; nonce <= nonce_end; nonce++) {
-                uint256 key = encodeMessageKey(nonce);
-                delivery_reward += messages[key].fee;
+                delivery_reward += messages[nonce].fee;
                 confirmation_reward += confirmation_fee;
             }
             if (confirmation_relayer != delivery_relayer) {

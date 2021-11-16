@@ -17,7 +17,7 @@ const send_message = async (nonce) => {
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(bridgedChainPos, lanePos, nonce)
+      .withArgs(nonce)
     await logNonce()
 }
 
@@ -34,7 +34,7 @@ const receive_messages_proof = async (laneData, nonce) => {
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(bridgedChainPos, lanePos, nonce+i, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
+        .withArgs(bridgedChainPos, thisChainPos, lanePos, nonce+i, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
     }
     await logNonce()
 }
@@ -43,7 +43,7 @@ const receive_messages_delivery_proof = async (laneData, begin, end) => {
     const tx = await outbound.receive_messages_delivery_proof("0x0000000000000000000000000000000000000000000000000000000000000000", laneData, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
-      .withArgs(bridgedChainPos, lanePos, begin, end, 0)
+      .withArgs(begin, end, 0)
     await logNonce()
 }
 

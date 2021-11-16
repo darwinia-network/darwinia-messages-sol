@@ -53,7 +53,7 @@ const send_message = async (outbound, nonce) => {
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(await outbound.bridgedChainPosition(), lanePos, nonce)
+      .withArgs(nonce)
 }
 
 const receive_messages_proof = async (inbound, srcoutbound, srcinbound, nonce) => {
@@ -66,7 +66,7 @@ const receive_messages_proof = async (inbound, srcoutbound, srcinbound, nonce) =
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(bridgedChainPos, lanePos, nonce+i, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
+        .withArgs(bridgedChainPos, thisChainPos, lanePos, nonce+i, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
     }
 }
 
@@ -77,7 +77,7 @@ const receive_messages_delivery_proof = async (outbound, tgtoutbound, tgtinbound
     const tx = await outbound.receive_messages_delivery_proof(o, i, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
-      .withArgs(targetChainPos, lanePos, begin, end, 0)
+      .withArgs(begin, end, 0)
 }
 
 describe("verify message relay tests", () => {
