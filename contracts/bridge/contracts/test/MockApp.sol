@@ -10,7 +10,7 @@ contract MockApp is ICrossChainFilter {
         emit Unlocked(polkdotSender, recipient, amount);
     }
 
-    function crossChainFilter(uint256, address sourceAccount, bytes memory) public override view returns (bool) {
+    function crossChainFilter(address sourceAccount, bytes memory) public override view returns (bool) {
         require(sourceAccount == address(1), "invalid source account");
         return true;
     }

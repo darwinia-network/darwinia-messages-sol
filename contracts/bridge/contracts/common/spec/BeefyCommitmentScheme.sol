@@ -20,6 +20,7 @@ contract BeefyCommitmentScheme {
      * The payload being signed
      * @param network Source chain network identifier
      * @param mmr MMR root hash
+     * @param messageRoot Darwnia message root commitment hash
      * @param nextValidatorSet Next BEEFY authority set
     */
     struct Payload {

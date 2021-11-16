@@ -6,7 +6,7 @@ import "../interfaces/ICrossChainFilter.sol";
 
 contract DemoApp is ICrossChainFilter {
 
-    function crossChainFilter(uint256, address sourceAccount, bytes memory) public override view returns (bool) {
+    function crossChainFilter(address sourceAccount, bytes memory) public override view returns (bool) {
         require(sourceAccount == address(0), "invalid source account");
         return true;
     }

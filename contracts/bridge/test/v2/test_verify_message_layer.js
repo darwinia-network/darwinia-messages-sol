@@ -1,7 +1,7 @@
 const { expect } = require("chai")
 const { solidity } = require("ethereum-waffle")
 const chai = require("chai")
-const { GetAndVerify, GetProof, VerifyProof } = require('eth-proof')
+// const { GetAndVerify, GetProof, VerifyProof } = require('eth-proof')
 
 chai.use(solidity)
 const log = console.log
@@ -15,7 +15,7 @@ let targetOutbound, targetInbound
 let darwiniaLaneCommitter0, darwiniaChainCommitter
 let sourceLightClient, targetLightClient
 
-let getAndVerify = new GetAndVerify("http://127.0.0.1:8545 ")
+// let getAndVerify = new GetAndVerify("http://127.0.0.1:8545 ")
 
 const build_proof = async () => {
     const c0 = await darwiniaChainCommitter['commitment(uint256)'](sourceChainPos)
