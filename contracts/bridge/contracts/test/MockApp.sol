@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "../interfaces/ICrossChainFilter.sol";
+import "../ethereum/v2/interfaces/ICrossChainFilter.sol";
 
 contract MockApp is ICrossChainFilter {
     event Unlocked(bytes32 from, address to, uint256 amount);

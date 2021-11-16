@@ -6,7 +6,7 @@ pragma experimental ABIEncoderV2;
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "../../interfaces/ILightClientBridge.sol";
-import "../../interfaces/ICrossChainFilter.sol";
+import "./interfaces/ICrossChainFilter.sol";
 
 /**
  * @title A entry contract for syncing message from Darwinia to Ethereum-like chain

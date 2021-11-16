@@ -8,13 +8,13 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@darwinia/contracts-utils/contracts/Scale.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
-import "@darwinia/contracts-bridge/contracts/interfaces/IOutboundChannel.sol";
-import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilterOld.sol";
+import "@darwinia/contracts-bridge/contracts/ethereum/v2/interfaces/IOutboundChannel.sol";
+import "@darwinia/contracts-bridge/contracts/ethereum/v2/interfaces/ICrossChainFilter.sol";
 import "../interfaces/IERC20Option.sol";
 import "../interfaces/IERC20Bytes32Option.sol";
 import '../interfaces/IWETH.sol';
 
-contract Backing is ICrossChainFilterOld, Initializable, Ownable {
+contract Backing is ICrossChainFilter, Initializable, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
