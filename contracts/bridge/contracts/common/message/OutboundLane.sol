@@ -157,14 +157,13 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         last_delivered_nonce = lane_data.last_delivered_nonce;
     }
 
-	// Confirm messages delivery.
+    // Confirm messages delivery.
     function confirm_delivery(InboundLaneData memory inboundLaneData) internal returns (DeliveredMessages memory confirmed_messages) {
         (uint256 total_messages, uint256 latest_delivered_nonce) = extract_inbound_lane_info(inboundLaneData);
         require(total_messages < 256, "Lane: InvalidNumberOfMessages");
 
         UnrewardedRelayer[] memory relayers = inboundLaneData.relayers;
         OutboundLaneNonce memory nonce = outboundLaneNonce;
-        require(nonce.latest_received_nonce >= inboundLaneData.last_confirmed_nonce, "Lane: InvalidConfimedNonce");
         require(latest_delivered_nonce > nonce.latest_received_nonce, "Lane: NoNewConfirmations");
         require(latest_delivered_nonce <= nonce.latest_generated_nonce, "Lane: FailedToConfirmFutureMessages");
         // that the relayer has declared correct number of messages that the proof contains (it
