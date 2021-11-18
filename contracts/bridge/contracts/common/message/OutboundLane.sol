@@ -104,6 +104,10 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         return nonce;
     }
 
+    function messageKeyHash(uint256 nonce) external view returns (bytes32) {
+        return hash(MessageKey(thisChainPosition, bridgedChainPosition, lanePosition, nonce));
+    }
+
     // Pay additional fee for the message.
     function increase_message_fee(uint256 nonce) external payable nonReentrant {
         require(nonce > outboundLaneNonce.latest_received_nonce, "Lane: MessageIsAlreadyDelivered");
