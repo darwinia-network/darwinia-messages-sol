@@ -40,6 +40,7 @@ contract MessageVerifier {
         uint256 _lanePosition
     ) public {
         lightClient = ILightClient(_lightClient);
+        require(_thisChainPosition <= uint64(-1) && _bridgedChainPosition <= uint64(-1) && _lanePosition <= uint64(-1), "Verifer: Overflow");
         thisChainPosition = _thisChainPosition;
         bridgedChainPosition = _bridgedChainPosition;
         lanePosition = _lanePosition;
@@ -54,7 +55,7 @@ contract MessageVerifier {
     ) internal view {
         require(
             lightClient.verify_messages_proof(outboundLaneDataHash, inboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
-            "Lane: invalid proof"
+            "Verifer: InvalidProof"
         );
     }
 
@@ -65,7 +66,7 @@ contract MessageVerifier {
     ) internal view {
         require(
             lightClient.verify_messages_delivery_proof(outboundLaneDataHash, inboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
-            "Lane: invalid delivery proof"
+            "Verifer: InvalidDeliveryProof"
         );
     }
 }

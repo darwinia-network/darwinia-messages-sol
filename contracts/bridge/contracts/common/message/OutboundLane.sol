@@ -81,7 +81,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     function send_message(address targetContract, bytes calldata encoded) external payable override nonReentrant returns (uint256) {
         require(hasRole(OUTBOUND_ROLE, msg.sender), "Lane: NotAuthorized");
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
-        require(outboundLaneNonce.latest_generated_nonce < uint256(-1), "Lane: Overflow");
+        require(outboundLaneNonce.latest_generated_nonce < uint64(-1), "Lane: Overflow");
         uint256 nonce = outboundLaneNonce.latest_generated_nonce + 1;
         uint256 fee = msg.value;
         outboundLaneNonce.latest_generated_nonce = nonce;
@@ -104,8 +104,16 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         return nonce;
     }
 
-    function messageKeyHash(uint256 nonce) external view returns (bytes32) {
-        return hash(MessageKey(thisChainPosition, bridgedChainPosition, lanePosition, nonce));
+    // 32 bytes to identify an unique message
+    // MessageKey encoding:
+    // ThisChainPosition | BridgedChainPosition | LanePosition | Nonce
+    // [0..12)  bytes ---- Reserved
+    // [12..16) bytes ---- ThisChainPosition
+    // [16..20) bytes ---- BridgedChainPosition
+    // [20..24) bytes ---- LanePosition
+    // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
+    function encodeMessageKey(uint256 nonce) external view returns (uint256) {
+        return thisChainPosition << 128 + bridgedChainPosition << 96 + lanePosition << 64 + nonce;
     }
 
     // Pay additional fee for the message.

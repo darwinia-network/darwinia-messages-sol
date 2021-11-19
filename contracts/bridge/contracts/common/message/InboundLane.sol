@@ -148,7 +148,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         // Require there is enough gas to play all messages
         require(
             gasleft() >= outboundLaneData.messages.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
-            "Lane: insufficient gas for delivery of all messages"
+            "Lane: InsufficientGas"
         );
         receive_state_update(outboundLaneData.latest_received_nonce);
         receive_message(outboundLaneData.messages);
