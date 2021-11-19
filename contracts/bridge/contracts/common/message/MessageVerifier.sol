@@ -10,17 +10,17 @@ contract MessageVerifier {
     /**
      * @dev The this chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
      */
-    uint256 public immutable thisChainPosition;
+    uint32 public immutable thisChainPosition;
 
     /**
      * @dev The bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
      */
-    uint256 public immutable bridgedChainPosition;
+    uint32 public immutable bridgedChainPosition;
 
     /**
      * @dev The position of the leaf in the `lane_message_merkle_tree`, index starting with 0
      */
-    uint256 public immutable lanePosition;
+    uint32 public immutable lanePosition;
 
     /* State */
     /**
@@ -35,9 +35,9 @@ contract MessageVerifier {
 
     constructor(
         address _lightClient,
-        uint256 _thisChainPosition,
-        uint256 _bridgedChainPosition,
-        uint256 _lanePosition
+        uint32 _thisChainPosition,
+        uint32 _bridgedChainPosition,
+        uint32 _lanePosition
     ) public {
         lightClient = ILightClient(_lightClient);
         require(_thisChainPosition <= uint64(-1) && _bridgedChainPosition <= uint64(-1) && _lanePosition <= uint64(-1), "Verifer: Overflow");

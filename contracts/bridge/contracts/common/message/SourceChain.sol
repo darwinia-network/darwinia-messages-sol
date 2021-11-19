@@ -19,13 +19,13 @@ contract SourceChain {
     // Message key (unique message identifier) as it is stored in the storage.
     struct MessageKey {
         // This chain position
-        uint256 this_chain_id;
+        uint32 this_chain_id;
         // Bridged chain position
-        uint256 bridged_chain_id;
+        uint32 bridged_chain_id;
         // Position of the message lane.
-        uint256 lane_id;
+        uint32 lane_id;
         /// Nonce of the message.
-        uint256 nonce;
+        uint64 nonce;
     }
 
     // Message data as it is stored in the storage.
@@ -47,7 +47,7 @@ contract SourceChain {
     // Outbound lane data.
     struct OutboundLaneData {
         // Nonce of the latest message, received by bridged chain.
-        uint256 latest_received_nonce;
+        uint64 latest_received_nonce;
         // Messages sent through this lane.
         Message[] messages;
     }

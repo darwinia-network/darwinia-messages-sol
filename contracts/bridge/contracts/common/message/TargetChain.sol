@@ -7,9 +7,9 @@ contract TargetChain {
     // Delivered messages with their dispatch result.
     struct DeliveredMessages {
         // Nonce of the first message that has been delivered (inclusive).
-        uint256 begin;
+        uint64 begin;
         // Nonce of the last message that has been delivered (inclusive).
-        uint256 end;
+        uint64 end;
         // Dispatch result (`false`/`true`), returned by the message dispatcher for every
         // message in the `[end; begin]` range.
         // The `MAX_UNCONFIRMED_MESSAGES` parameter must lesser than 256 for gas saving
@@ -50,9 +50,9 @@ contract TargetChain {
         //
         // This value is updated indirectly when an `OutboundLane` state of the source
         // chain is received alongside with new messages delivery.
-        uint256 last_confirmed_nonce;
+        uint64 last_confirmed_nonce;
         // Nonce of the latest received or has been delivered message to this inbound lane.
-        uint256 last_delivered_nonce;
+        uint64 last_delivered_nonce;
     }
 
     /**
