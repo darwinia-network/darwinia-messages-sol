@@ -58,13 +58,13 @@ contract TargetChain {
     /**
      * Hash of the InboundLaneData Schema
      * keccak256(abi.encodePacked(
-     *     "InboundLaneData(UnrewardedRelayer[] relayers,uint256 last_confirmed_nonce,uint256 last_delivered_nonce)",
+     *     "InboundLaneData(UnrewardedRelayer[] relayers,uint64 last_confirmed_nonce,uint64 last_delivered_nonce)",
      *     "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
-     *     "DeliveredMessages(uint256 begin,uint256 end,uint256 dispatch_results)"
+     *     "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
      *     ")"
      * )
      */
-    bytes32 internal constant INBOUNDLANEDATA_TYPEHASH = 0x04ed271fdf51968767c795bb92ad7840b73d71274e9ac035d700bb8d21104476;
+    bytes32 internal constant INBOUNDLANEDATA_TYPEHASH = 0x921cbc4091014b23df7eb9bbd83d71accebac7afad7c1344d8b581e63b929a86;
 
     /**
      * Hash of the UnrewardedRelayer Schema
@@ -78,11 +78,11 @@ contract TargetChain {
     /**
      * Hash of the DeliveredMessages Schema
      * keccak256(abi.encodePacked(
-     *     "DeliveredMessages(uint256 begin,uint256 end,uint256 dispatch_results)"
+     *     "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
      *     ")"
      * )
      */
-    bytes32 internal constant DELIVEREDMESSAGES_TYPETASH = 0x4fac2cc6d2c4efd6e36dc917cf7d5c24157fff4118169c91ea05772cfc06f24d;
+    bytes32 internal constant DELIVEREDMESSAGES_TYPETASH = 0xaa6637cd9a4d6b5008a62cb1bef3d0ade9f8d8284cc2d4bf4eb1e15260726513;
 
     function hash(InboundLaneData memory inboundLaneData)
         internal

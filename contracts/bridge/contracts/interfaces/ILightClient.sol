@@ -5,16 +5,16 @@ interface ILightClient {
     function verify_messages_proof(
         bytes32 outboundLaneDataHash,
         bytes32 inboundLaneDataHash,
-        uint256 chain_pos,
-        uint256 lane_pos,
+        uint32 chain_pos,
+        uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool);
 
     function verify_messages_delivery_proof(
         bytes32 outboundLaneDataHash,
         bytes32 inboundLaneDataHash,
-        uint256 chain_pos,
-        uint256 lane_pos,
+        uint32 chain_pos,
+        uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool);
 }

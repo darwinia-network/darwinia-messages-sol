@@ -8,8 +8,8 @@ contract MockLightClient {
     function verify_messages_proof(
         bytes32 ,
         bytes32 ,
-        uint256 ,
-        uint256 ,
+        uint32 ,
+        uint32 ,
         bytes calldata
     ) external pure returns (bool) {
         return true;
@@ -18,8 +18,8 @@ contract MockLightClient {
     function verify_messages_delivery_proof(
         bytes32 ,
         bytes32 ,
-        uint256 ,
-        uint256 ,
+        uint32 ,
+        uint32 ,
         bytes calldata
     ) external pure returns (bool) {
         return true;

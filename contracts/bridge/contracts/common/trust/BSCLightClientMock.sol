@@ -17,16 +17,16 @@ contract BSCLightClientMock {
     uint256 public immutable INBOUND_COMMITMENT_POSITION;
 
     // bridgedChainPosition => lanePosition => bound
-    mapping(uint256 => mapping(uint256 => address)) inbounds;
-    mapping(uint256 => mapping(uint256 => address)) outbounds;
+    mapping(uint32 => mapping(uint32 => address)) inbounds;
+    mapping(uint32 => mapping(uint32 => address)) outbounds;
     bytes32 stateRoot;
 
-    constructor(uint256 outbound_commitment_position, uint256 inbound_commitment_position) public {
+    constructor(uint32 outbound_commitment_position, uint32 inbound_commitment_position) public {
         OUTBOUND_COMMITMENT_POSITION = outbound_commitment_position;
         INBOUND_COMMITMENT_POSITION = inbound_commitment_position;
     }
 
-    function setBound(uint256 bridgedChainPosition, uint256 lanePosition, address inbound, address outbound) public {
+    function setBound(uint32 bridgedChainPosition, uint32 lanePosition, address inbound, address outbound) public {
         inbounds[bridgedChainPosition][lanePosition] = inbound;
         outbounds[bridgedChainPosition][lanePosition] = outbound;
     }
@@ -38,8 +38,8 @@ contract BSCLightClientMock {
     function verify_messages_proof(
         bytes32 outboundLaneDataHash,
         bytes32 /*inboundLaneDataHash*/,
-        uint256 chain_pos,
-        uint256 lane_pos,
+        uint32 chain_pos,
+        uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool) {
         StorageProof memory storage_proof = abi.decode(proof, (StorageProof));
@@ -56,8 +56,8 @@ contract BSCLightClientMock {
     function verify_messages_delivery_proof(
         bytes32 /*outboundLaneDataHash*/,
         bytes32 inboundLaneDataHash,
-        uint256 chain_pos,
-        uint256 lane_pos,
+        uint32 chain_pos,
+        uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool) {
         // StorageProof memory storage_proof = abi.decode(proof, (StorageProof));

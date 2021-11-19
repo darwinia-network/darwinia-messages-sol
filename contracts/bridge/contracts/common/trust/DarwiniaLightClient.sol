@@ -201,8 +201,8 @@ contract DarwiniaLightClient is LaneDataScheme, BeefyCommitmentScheme, Bitfield,
     function verify_messages_proof(
         bytes32 outboundLaneDataHash,
         bytes32 inboundLaneDataHash,
-        uint256 chain_pos,
-        uint256 lane_pos,
+        uint32 chain_pos,
+        uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool) {
         bytes32 lane_hash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
@@ -212,8 +212,8 @@ contract DarwiniaLightClient is LaneDataScheme, BeefyCommitmentScheme, Bitfield,
     function verify_messages_delivery_proof(
         bytes32 outboundLaneDataHash,
         bytes32 inboundLaneDataHash,
-        uint256 chain_pos,
-        uint256 lane_pos,
+        uint32 chain_pos,
+        uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool) {
         bytes32 lane_hash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
@@ -222,8 +222,8 @@ contract DarwiniaLightClient is LaneDataScheme, BeefyCommitmentScheme, Bitfield,
 
     function validate_messages_match_root(
         bytes32 lane_hash,
-        uint256 chain_pos,
-        uint256 lane_pos,
+        uint32 chain_pos,
+        uint32 lane_pos,
         bytes memory proof
     ) internal view returns (bool) {
         MessagesProof memory messages_proof = abi.decode(proof, (MessagesProof));
