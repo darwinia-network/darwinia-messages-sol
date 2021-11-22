@@ -146,7 +146,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         OutboundLaneData memory outboundLaneData,
         bytes memory messagesProof
     ) public nonReentrant {
-        verify_messages_proof(hash(outboundLaneData), messagesProof);
+        verify_lane_data_proof(hash(outboundLaneData), messagesProof);
         // Require there is enough gas to play all messages
         require(
             gasleft() >= outboundLaneData.messages.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),

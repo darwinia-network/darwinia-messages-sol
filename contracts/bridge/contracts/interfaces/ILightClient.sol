@@ -2,7 +2,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 interface ILightClient {
-    function verify_messages_proof(
+    function verify_lane_data_proof(
         bytes32 laneDataHash,
         uint32 chain_pos,
         uint32 lane_pos,

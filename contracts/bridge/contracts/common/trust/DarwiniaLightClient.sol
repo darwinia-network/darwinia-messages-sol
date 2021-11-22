@@ -197,16 +197,16 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
         return createBitfield(bitsToSet, length);
     }
 
-    function verify_messages_proof(
+    function verify_lane_data_proof(
         bytes32 lane_hash,
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool) {
-        return validate_messages_match_root(lane_hash, chain_pos, lane_pos, proof);
+        return validate_lane_data_match_root(lane_hash, chain_pos, lane_pos, proof);
     }
 
-    function validate_messages_match_root(
+    function validate_lane_data_match_root(
         bytes32 lane_hash,
         uint32 chain_pos,
         uint32 lane_pos,
@@ -215,7 +215,7 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
         MessagesProof memory messages_proof = abi.decode(proof, (MessagesProof));
         // Validate that the commitment matches the commitment contents
         require(messages_proof.chainProof.root == latestChainMessagesRoot, "Lane: invalid ChainMessagesRoot");
-        return validateMessagesMatchRoot(
+        return validateLaneDataMatchRoot(
                 lane_hash,
                 chain_pos,
                 lane_pos,
@@ -224,7 +224,7 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
             );
     }
 
-    function validateMessagesMatchRoot(
+    function validateLaneDataMatchRoot(
         bytes32 laneHash,
         uint256 chainPosition,
         uint256 lanePosition,

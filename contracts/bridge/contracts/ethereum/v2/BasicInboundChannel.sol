@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
-import "../../interfaces/ILightClientBridge.sol";
+import "./interfaces/ILightClientBridge.sol";
 import "./interfaces/ICrossChainFilter.sol";
 
 /**

@@ -34,7 +34,7 @@ contract BSCLightClientMock {
         stateRoot = _stateRoot;
     }
 
-    function verify_messages_proof(
+    function verify_lane_data_proof(
         bytes32 lane_hash,
         uint32 chain_pos,
         uint32 lane_pos,

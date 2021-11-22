@@ -133,7 +133,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         InboundLaneData memory inboundLaneData,
         bytes memory messagesProof
     ) public nonReentrant {
-        verify_messages_proof(hash(inboundLaneData), messagesProof);
+        verify_lane_data_proof(hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
         // TODO: callback `on_messages_delivered`
         pay_relayers_rewards(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
