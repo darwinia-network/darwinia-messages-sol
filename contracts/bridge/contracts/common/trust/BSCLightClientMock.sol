@@ -3,6 +3,8 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
+// import "hardhat/console.sol";
+
 contract BSCLightClientMock {
     struct StorageProof {
         uint256 balance;
@@ -38,15 +40,17 @@ contract BSCLightClientMock {
         uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool) {
-        StorageProof memory storage_proof = abi.decode(proof, (StorageProof));
+        // StorageProof memory storage_proof = abi.decode(proof, (StorageProof));
         address lane = lanes[chain_pos][lane_pos];
         require(lane != address(0), "missing: lane addr");
-        return verify_storage_proof(
-            lane_hash,
-            lane,
-            LANE_COMMITMENT_POSITION,
-            storage_proof
-        );
+        // console.log(lane);
+        return true;
+        // return verify_storage_proof(
+        //     lane_hash,
+        //     lane,
+        //     LANE_COMMITMENT_POSITION,
+        //     storage_proof
+        // );
     }
 
     function verify_storage_proof(

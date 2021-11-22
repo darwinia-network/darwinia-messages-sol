@@ -58,8 +58,9 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
      * @notice Deploys the OutboundLane contract
      * @param _lightClientBridge The contract address of on-chain light client
      * @param _thisChainPosition The thisChainPosition of outbound lane
+     * @param _thisLanePosition The lanePosition of this outbound lane
      * @param _bridgedChainPosition The bridgedChainPosition of outbound lane
-     * @param _lanePosition The lanePosition of outbound lane
+     * @param _bridgedLanePosition The lanePosition of target inbound lane
      * @param _oldest_unpruned_nonce The oldest_unpruned_nonce of outbound lane
      * @param _latest_received_nonce The latest_received_nonce of outbound lane
      * @param _latest_generated_nonce The latest_generated_nonce of outbound lane
@@ -67,12 +68,13 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     constructor(
         address _lightClientBridge,
         uint32 _thisChainPosition,
+        uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,
-        uint32 _lanePosition,
+        uint32 _bridgedLanePosition,
         uint64 _oldest_unpruned_nonce,
         uint64 _latest_received_nonce,
         uint64 _latest_generated_nonce
-    ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _bridgedChainPosition, _lanePosition) {
+    ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
         outboundLaneNonce = OutboundLaneNonce(_oldest_unpruned_nonce, _latest_received_nonce, _latest_generated_nonce);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -106,14 +108,15 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
 
     // 32 bytes to identify an unique message
     // MessageKey encoding:
-    // ThisChainPosition | BridgedChainPosition | LanePosition | Nonce
-    // [0..12)  bytes ---- Reserved
-    // [12..16) bytes ---- ThisChainPosition
-    // [16..20) bytes ---- BridgedChainPosition
-    // [20..24) bytes ---- LanePosition
+    // ThisChainPosition | BridgedChainPosition | ThisLanePosition | BridgedLanePosition | Nonce
+    // [0..8)   bytes ---- Reserved
+    // [8..12)  bytes ---- ThisChainPosition
+    // [16..20) bytes ---- ThisLanePosition
+    // [12..16) bytes ---- BridgedChainPosition
+    // [20..24) bytes ---- BridgedLanePosition
     // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
     function encodeMessageKey(uint64 nonce) external view returns (uint256) {
-        return uint256(thisChainPosition) << 128 + uint256(bridgedChainPosition) << 96 + uint256(lanePosition) << 64 + uint256(nonce);
+        return uint256(thisChainPosition) << 160 + uint256(bridgedChainPosition) << 128 + uint256(thisLanePosition) << 96 + uint256(bridgedLanePosition) << 64 + uint256(nonce);
     }
 
     // Pay additional fee for the message.
@@ -149,7 +152,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             uint64 begin = outboundLaneNonce.latest_received_nonce + 1;
             for (uint64 index = 0; index < size; index++) {
                 uint64 nonce = index + begin;
-                lane_data.messages[index] = Message(MessageKey(thisChainPosition, bridgedChainPosition, lanePosition, nonce), messages[nonce]);
+                lane_data.messages[index] = Message(MessageKey(thisChainPosition, thisLanePosition, bridgedChainPosition, bridgedLanePosition, nonce), messages[nonce]);
             }
         }
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;

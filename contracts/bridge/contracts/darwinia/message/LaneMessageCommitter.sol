@@ -30,8 +30,8 @@ contract LaneMessageCommitter is Ownable {
         require(bridgedChainPosition == IMessageCommitment(inboundLane).bridgedChainPosition(), "Message: invalid chain position");
         uint256 outLanePos = laneCount;
         uint256 inLanePos = laneCount + 1;
-        require(outLanePos == IMessageCommitment(outboundLane).lanePosition(), "Message: invalid outlane position");
-        require(inLanePos == IMessageCommitment(inboundLane).lanePosition(), "Message: invalid inlane position");
+        require(outLanePos == IMessageCommitment(outboundLane).thisLanePosition(), "Message: invalid outlane position");
+        require(inLanePos == IMessageCommitment(inboundLane).thisLanePosition(), "Message: invalid inlane position");
         lanes[outLanePos] = outboundLane;
         lanes[inLanePos] = inboundLane;
         laneCount += 2;

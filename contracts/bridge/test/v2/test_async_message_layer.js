@@ -5,8 +5,9 @@ const chai = require("chai");
 chai.use(solidity);
 const log = console.log
 const thisChainPos = 0
+const thisLanePos = 0
 const bridgedChainPos = 1
-const lanePos = 0
+const bridgedLanePos = 1
 let outbound, inbound
 let outboundData, inboundData, a, b, c, d
 
@@ -28,19 +29,19 @@ const logNonce = async () => {
 }
 
 const receive_messages_proof = async (laneData, nonce) => {
-    const tx = await inbound.receive_messages_proof(laneData, "0x0000000000000000000000000000000000000000000000000000000000000000", "0x")
+    const tx = await inbound.receive_messages_proof(laneData, "0x")
     const n = await inbound.inboundLaneNonce()
     const size = n.last_delivered_nonce - nonce
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(bridgedChainPos, thisChainPos, lanePos, nonce+i, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
+        .withArgs(thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, nonce+i, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
     }
     await logNonce()
 }
 
 const receive_messages_delivery_proof = async (laneData, begin, end) => {
-    const tx = await outbound.receive_messages_delivery_proof("0x0000000000000000000000000000000000000000000000000000000000000000", laneData, "0x")
+    const tx = await outbound.receive_messages_delivery_proof(laneData, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 0)
@@ -74,10 +75,10 @@ describe("async message relay tests", () => {
     const MockLightClient = await ethers.getContractFactory("MockLightClient")
     const lightClient = await MockLightClient.deploy()
     const OutboundLane = await ethers.getContractFactory("OutboundLane")
-    outbound = await OutboundLane.deploy(lightClient.address, thisChainPos, bridgedChainPos, lanePos, 1, 0, 0)
+    outbound = await OutboundLane.deploy(lightClient.address, thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, 1, 0, 0)
     await outbound.grantRole("0x7bb193391dc6610af03bd9922e44c83b9fda893aeed61cf64297fb4473500dd1", owner.address)
     const InboundLane = await ethers.getContractFactory("InboundLane")
-    inbound = await InboundLane.deploy(lightClient.address, bridgedChainPos, thisChainPos, lanePos, 0, 0)
+    inbound = await InboundLane.deploy(lightClient.address, bridgedChainPos, bridgedLanePos, thisChainPos, thisLanePos, 0, 0)
     log(" out bound lane                                   ->      in bound lane")
     log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")
   });

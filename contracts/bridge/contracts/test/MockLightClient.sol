@@ -7,7 +7,6 @@ contract MockLightClient {
 
     function verify_messages_proof(
         bytes32 ,
-        bytes32 ,
         uint32 ,
         uint32 ,
         bytes calldata

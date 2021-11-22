@@ -20,10 +20,12 @@ contract SourceChain {
     struct MessageKey {
         // This chain position
         uint32 this_chain_id;
+        // Position of the message this lane.
+        uint32 this_lane_id;
         // Bridged chain position
         uint32 bridged_chain_id;
-        // Position of the message lane.
-        uint32 lane_id;
+        // Position of the message bridged lane.
+        uint32 bridged_lane_id;
         /// Nonce of the message.
         uint64 nonce;
     }
@@ -144,8 +146,9 @@ contract SourceChain {
             abi.encode(
                 MESSAGEKEY_TYPEHASH,
                 key.this_chain_id,
+                key.this_lane_id,
                 key.bridged_chain_id,
-                key.lane_id,
+                key.bridged_lane_id,
                 key.nonce
             )
         );

@@ -31,13 +31,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
     /**
      * @notice Notifies an observer that the message has dispatched
      * @param thisChainPosition The thisChainPosition of the message
+     * @param thisLanePosition The thisLanePosition of the message
      * @param bridgedChainPosition The bridgedChainPosition of the message
-     * @param lanePosition The lanePosition of the message
+     * @param bridgedLanePosition The bridgedLanePosition of the message
      * @param nonce The message nonce
      * @param result The message result
      * @param returndata The return data of message call, when return false, it's the reason of the error
      */
-    event MessageDispatched(uint32 thisChainPosition, uint32 bridgedChainPosition, uint32 lanePosition, uint64 nonce, bool result, bytes returndata);
+    event MessageDispatched(uint32 thisChainPosition, uint32 thisLanePosition, uint32 bridgedChainPosition, uint32 bridgedLanePosition, uint64 nonce, bool result, bytes returndata);
 
     /* Constants */
 
@@ -115,19 +116,21 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
      * @notice Deploys the InboundLane contract
      * @param _lightClientBridge The contract address of on-chain light client
      * @param _thisChainPosition The thisChainPosition of inbound lane
+     * @param _thisLanePosition The lanePosition of this inbound lane
      * @param _bridgedChainPosition The bridgedChainPosition of inbound lane
-     * @param _lanePosition The lanePosition of inbound lane
+     * @param _bridgedLanePosition The lanePosition of target outbound lane
      * @param _last_confirmed_nonce The last_confirmed_nonce of inbound lane
      * @param _last_delivered_nonce The last_delivered_nonce of inbound lane
      */
     constructor(
         address _lightClientBridge,
         uint32 _thisChainPosition,
+        uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,
-        uint32 _lanePosition,
+        uint32 _bridgedLanePosition,
         uint64 _last_confirmed_nonce,
         uint64 _last_delivered_nonce
-    ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _bridgedChainPosition, _lanePosition) {
+    ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
         inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce);
         relayersRange = RelayersRange(1, 0);
     }
@@ -237,17 +240,19 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
             require(key.nonce == next, "Lane: InvalidNonce");
             // check message is from the correct source chain position
             require(key.this_chain_id == bridgedChainPosition, "Lane: InvalidSourceChainId");
-            // check message delivery to the correct chain position
+            // check message is from the correct source lane position
+            require(key.this_lane_id == bridgedLanePosition, "Lane: InvalidSourceLaneId");
+            // check message delivery to the correct target chain position
             require(key.bridged_chain_id == thisChainPosition, "Lane: InvalidTargetChainId");
-            // check message delivery to the correct lane position
-            require(key.lane_id == lanePosition, "Lane: InvalidLaneID");
+            // check message delivery to the correct target lane position
+            require(key.bridged_lane_id == thisLanePosition, "Lane: InvalidTargetLaneId");
             // if there are more unconfirmed messages than we may accept, reject this message
             require(next - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "Lane: TooManyUnconfirmedMessages");
 
             // then, dispatch message
             (bool dispatch_result, bytes memory returndata) = dispatch(message_payload);
 
-            emit MessageDispatched(key.this_chain_id, key.bridged_chain_id, key.lane_id, key.nonce, dispatch_result, returndata);
+            emit MessageDispatched(key.this_chain_id, key.bridged_chain_id, key.this_lane_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
             // TODO: callback `pay_inbound_dispatch_fee_overhead`
             dispatch_results |= (dispatch_result ? uint256(1) << i : uint256(0));
             end = next;

@@ -8,19 +8,24 @@ import "../../interfaces/ILightClient.sol";
 
 contract MessageVerifier {
     /**
-     * @dev The this chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
+     * @dev This chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
      */
     uint32 public immutable thisChainPosition;
 
     /**
-     * @dev The bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
+     * @dev This lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
+     */
+    uint32 public immutable thisLanePosition;
+
+    /**
+     * @dev Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
      */
     uint32 public immutable bridgedChainPosition;
 
     /**
-     * @dev The position of the leaf in the `lane_message_merkle_tree`, index starting with 0
+     * @dev bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
      */
-    uint32 public immutable lanePosition;
+    uint32 public immutable bridgedLanePosition;
 
     /* State */
     /**
@@ -36,24 +41,25 @@ contract MessageVerifier {
     constructor(
         address _lightClient,
         uint32 _thisChainPosition,
+        uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,
-        uint32 _lanePosition
+        uint32 _bridgedLanePosition
     ) public {
         lightClient = ILightClient(_lightClient);
-        require(_thisChainPosition <= uint64(-1) && _bridgedChainPosition <= uint64(-1) && _lanePosition <= uint64(-1), "Verifer: Overflow");
         thisChainPosition = _thisChainPosition;
+        thisLanePosition = _thisLanePosition;
         bridgedChainPosition = _bridgedChainPosition;
-        lanePosition = _lanePosition;
+        bridgedLanePosition = _bridgedLanePosition;
     }
 
     /* Private Functions */
 
     function verify_messages_proof(
-        bytes32 laneDataHash,
+        bytes32 outboundLaneDataHash,
         bytes memory messagesProof
     ) internal view {
         require(
-            lightClient.verify_messages_proof(laneDataHash, thisChainPosition, lanePosition, messagesProof),
+            lightClient.verify_messages_proof(outboundLaneDataHash, thisChainPosition, bridgedLanePosition, messagesProof),
             "Verifer: InvalidProof"
         );
     }
