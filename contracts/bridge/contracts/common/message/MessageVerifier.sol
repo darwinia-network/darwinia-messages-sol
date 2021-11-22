@@ -55,11 +55,11 @@ contract MessageVerifier {
     /* Private Functions */
 
     function verify_lane_data_proof(
-        bytes32 outboundLaneDataHash,
+        bytes32 lane_data_hash,
         bytes memory messagesProof
     ) internal view {
         require(
-            lightClient.verify_lane_data_proof(outboundLaneDataHash, thisChainPosition, bridgedLanePosition, messagesProof),
+            lightClient.verify_lane_data_proof(lane_data_hash, thisChainPosition, bridgedLanePosition, messagesProof),
             "Verifer: InvalidProof"
         );
     }
