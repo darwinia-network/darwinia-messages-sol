@@ -228,7 +228,6 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         address payable relayer = msg.sender;
         uint64 begin = inboundLaneNonce.last_delivered_nonce + 1;
         uint64 next = begin;
-        uint64 end;
         for (uint256 i = 0; i < messages.length; i++) {
             Message memory message = messages[i];
             MessageKey memory key = message.key;
@@ -255,13 +254,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
             emit MessageDispatched(key.this_chain_id, key.bridged_chain_id, key.this_lane_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
             // TODO: callback `pay_inbound_dispatch_fee_overhead`
             dispatch_results |= (dispatch_result ? uint256(1) << i : uint256(0));
-            end = next;
+
+            // update inbound lane nonce storage
+            inboundLaneNonce.last_delivered_nonce = next;
+
             next += 1;
         }
-        if (end > inboundLaneNonce.last_delivered_nonce) {
-            // update inbound lane nonce storage
-            inboundLaneNonce.last_delivered_nonce = end;
-
+        if (inboundLaneNonce.last_delivered_nonce >= begin) {
+            uint64 end = inboundLaneNonce.last_delivered_nonce;
             // now let's update inbound lane storage
             address pre_relayer = relayers_back();
             if (pre_relayer == relayer) {
