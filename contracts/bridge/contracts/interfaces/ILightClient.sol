@@ -5,7 +5,7 @@ interface ILightClient {
     function verify_lane_data_proof(
         bytes32 lane_data_hash,
         uint32 chain_pos,
-        uint32 lane_pos,
+        uint32 lane_data_pos,
         bytes calldata proof
     ) external view returns (bool);
 }
