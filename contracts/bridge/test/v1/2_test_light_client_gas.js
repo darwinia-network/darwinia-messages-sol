@@ -99,7 +99,7 @@ describe("Light Client Gas Usage", function () {
     )
     const numOfGuards = 3;
     const guards = fixture.validatorAddresses.slice(0, numOfGuards)
-    const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
+    const LightClientBridge = await ethers.getContractFactory("contracts/ethereum/v2/LightClientBridge.sol:LightClientBridge");
     const crab = beefyFixture.commitment.payload.network
     const vault = "0x0000000000000000000000000000000000000000"
     beefyLightClient = await LightClientBridge.deploy(

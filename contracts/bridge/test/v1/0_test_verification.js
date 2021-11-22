@@ -46,12 +46,12 @@ describe("Verification tests", () => {
   const proofs = [validator0PubKeyMerkleProof, validator1PubKeyMerkleProof, validator2PubKeyMerkleProof]
 
   before(async () => {
-    const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
+    const LightClientBridge = await ethers.getContractFactory("contracts/ethereum/v2/LightClientBridge.sol:LightClientBridge");
     const crab = "0x4372616200000000000000000000000000000000000000000000000000000000"
     const vault = "0x0000000000000000000000000000000000000000"
     lightClientBridge = await LightClientBridge.deploy(
       crab,
-      vault, 
+      vault,
       beefyGuardAddresses,
       2,
       0,
@@ -101,7 +101,7 @@ describe("Verification tests", () => {
       completeValidatorProofs,
       sigs2
     );
-    expect(completeCommitment) 
+    expect(completeCommitment)
       .to.emit(lightClientBridge, "FinalVerificationSuccessful")
       .withArgs((await completeCommitment).from, lastId)
 
@@ -171,16 +171,15 @@ describe("Verification tests", () => {
       MessageFixture.mmrProofs.peaks,
       MessageFixture.mmrProofs.siblings
     );
-    expect(tx)
+    await expect(tx)
       .to.emit(inbound, "MessageDispatched")
       .withArgs(1, true, "0x")
-    expect(tx)
+    await expect(tx)
       .to.emit(inbound, "MessageDispatched")
       .withArgs(2, false, "0x08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000016696e76616c696420736f75726365206163636f756e7400000000000000000000")
-    expect(tx)
+    await expect(tx)
       .to.emit(app, "Unlocked")
       .withArgs(polkadotSender, userOne.address, ethers.utils.parseEther("2"))
-    expect(tx)
 
     const tx2 = await inbound2.submit(
       messages2,
@@ -195,7 +194,7 @@ describe("Verification tests", () => {
       MessageFixture.mmrProofs.peaks,
       MessageFixture.mmrProofs.siblings
     );
-    expect(tx2)
+    await expect(tx2)
       .to.emit(inbound2, "MessageDispatched")
       .withArgs(1, true, "0x")
 
@@ -221,7 +220,7 @@ describe("Verification tests", () => {
       testPayload
     );
 
-    expect(tx)
+    await expect(tx)
       .to.emit(outbound, "Message")
       .withArgs(tx.from, 1, testPayload)
   });
@@ -239,7 +238,7 @@ describe("Verification tests", () => {
       testPayload
     );
 
-    expect(tx3)
+    await expect(tx3)
       .to.emit(outbound, "Message")
       .withArgs(tx.from, 4, testPayload)
   });
