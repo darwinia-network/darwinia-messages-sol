@@ -8,9 +8,6 @@ import "../../interfaces/IMessageCommitment.sol";
 contract ChainMessageCommitter is Ownable {
     event Registry(uint256 position, address committer);
 
-    // keccak256(uint256(0))
-    bytes32 constant private DEFAULT_HASH0 = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
-
     uint256 public immutable thisChainPosition;
     uint256 public maxChainPosition;
     mapping(uint256 => address) public chains;

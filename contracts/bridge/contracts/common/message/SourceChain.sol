@@ -63,26 +63,27 @@ contract SourceChain {
      */
     bytes32 internal constant OUTBOUNDLANEDATA_TYPEHASH = 0x82446a31771d975201a71d0d87c46edcb4996361ca06e16208c5a001081dee55;
 
+
     /**
      * Hash of the Message Schema
      * keccak256(abi.encodePacked(
      *     "Message(MessageKey key,MessageData data)",
-     *     "MessageKey(uint32 this_chain_id,uint32 bridged_chain_id,uint32 lane_id,uint64 nonce)",
+     *     "MessageKey(uint32 this_chain_id,uint32 this_lane_id,uint32 bridged_chain_id,uint32 bridged_lane_id,uint64 nonce)",
      *     "MessageData(MessagePayload payload,uint256 fee)",
      *     "MessagePayload(address sourceAccount,address targetContract,bytes encoded)"
      *     ")"
      * )
      */
-    bytes32 internal constant MESSAGE_TYPEHASH = 0xb4b8716bb46c4798ce806f455f43fe4ff7c8c5b3718d945c8a1e0474e2895ce8;
+    bytes32 internal constant MESSAGE_TYPEHASH = 0x97e58b86e5cf0924dbc06e72d4760842af991c8f276d09034eae1738c5f4bab9;
 
     /**
      * Hash of the MessageKey Schema
      * keccak256(abi.encodePacked(
-     *     "MessageKey(uint32 this_chain_id,uint32 bridged_chain_id,uint32 lane_id,uint64 nonce)"
+     *     "MessageKey(uint32 this_chain_id,uint32 this_lane_id,uint32 bridged_chain_id,uint32 bridged_lane_id,uint64 nonce)"
      *     ")"
      * )
      */
-    bytes32 internal constant MESSAGEKEY_TYPEHASH = 0x5b5f0fd72aaf9e1fbd5260449c119b641a3e924742526764bd0b388e80307675;
+    bytes32 internal constant MESSAGEKEY_TYPEHASH = 0x585f05d88bd03c64597258f8336daadecf668cb7b708cb320742d432114d13ac;
 
     /**
      * Hash of the MessageData Schema
