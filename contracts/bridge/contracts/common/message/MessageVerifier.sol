@@ -49,22 +49,12 @@ contract MessageVerifier {
     /* Private Functions */
 
     function verify_messages_proof(
-        bytes32 outboundLaneDataHash,
+        bytes32 laneDataHash,
         bytes memory messagesProof
     ) internal view {
         require(
-            lightClient.verify_messages_proof(outboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
+            lightClient.verify_messages_proof(laneDataHash, thisChainPosition, lanePosition, messagesProof),
             "Verifer: InvalidProof"
-        );
-    }
-
-    function verify_messages_delivery_proof(
-        bytes32 outboundLaneDataHash,
-        bytes memory messagesProof
-    ) internal view {
-        require(
-            lightClient.verify_messages_delivery_proof(outboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
-            "Verifer: InvalidDeliveryProof"
         );
     }
 }

@@ -198,21 +198,12 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
     }
 
     function verify_messages_proof(
-        bytes32 outboundLaneDataHash,
+        bytes32 lane_hash,
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool) {
-        return validate_messages_match_root(outboundLaneDataHash, chain_pos, lane_pos, proof);
-    }
-
-    function verify_messages_delivery_proof(
-        bytes32 inboundLaneDataHash,
-        uint32 chain_pos,
-        uint32 lane_pos,
-        bytes calldata proof
-    ) external view returns (bool) {
-        return validate_messages_match_root(inboundLaneDataHash, chain_pos, lane_pos, proof);
+        return validate_messages_match_root(lane_hash, chain_pos, lane_pos, proof);
     }
 
     function validate_messages_match_root(

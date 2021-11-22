@@ -14,14 +14,4 @@ contract MockLightClient {
     ) external pure returns (bool) {
         return true;
     }
-
-    function verify_messages_delivery_proof(
-        bytes32 ,
-        bytes32 ,
-        uint32 ,
-        uint32 ,
-        bytes calldata
-    ) external pure returns (bool) {
-        return true;
-    }
 }
