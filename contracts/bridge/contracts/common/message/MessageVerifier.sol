@@ -50,22 +50,20 @@ contract MessageVerifier {
 
     function verify_messages_proof(
         bytes32 outboundLaneDataHash,
-        bytes32 inboundLaneDataHash,
         bytes memory messagesProof
     ) internal view {
         require(
-            lightClient.verify_messages_proof(outboundLaneDataHash, inboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
+            lightClient.verify_messages_proof(outboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
             "Verifer: InvalidProof"
         );
     }
 
     function verify_messages_delivery_proof(
         bytes32 outboundLaneDataHash,
-        bytes32 inboundLaneDataHash,
         bytes memory messagesProof
     ) internal view {
         require(
-            lightClient.verify_messages_delivery_proof(outboundLaneDataHash, inboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
+            lightClient.verify_messages_delivery_proof(outboundLaneDataHash, thisChainPosition, lanePosition, messagesProof),
             "Verifer: InvalidDeliveryProof"
         );
     }

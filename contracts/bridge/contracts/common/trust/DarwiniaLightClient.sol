@@ -9,7 +9,6 @@ import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "@darwinia/contracts-verify/contracts/KeccakMMR.sol";
 import "./ValidatorRegistry.sol";
 import "./GuardRegistry.sol";
-import "../spec/LaneDataScheme.sol";
 import "../spec/BeefyCommitmentScheme.sol";
 
 /**
@@ -18,7 +17,7 @@ import "../spec/BeefyCommitmentScheme.sol";
  * @notice The light client is the trust layer of the bridge
  * @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
  */
-contract DarwiniaLightClient is LaneDataScheme, BeefyCommitmentScheme, Bitfield, ValidatorRegistry, GuardRegistry {
+contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegistry, GuardRegistry {
 
     /* Events */
 
@@ -200,24 +199,20 @@ contract DarwiniaLightClient is LaneDataScheme, BeefyCommitmentScheme, Bitfield,
 
     function verify_messages_proof(
         bytes32 outboundLaneDataHash,
-        bytes32 inboundLaneDataHash,
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool) {
-        bytes32 lane_hash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
-        return validate_messages_match_root(lane_hash, chain_pos, lane_pos, proof);
+        return validate_messages_match_root(outboundLaneDataHash, chain_pos, lane_pos, proof);
     }
 
     function verify_messages_delivery_proof(
-        bytes32 outboundLaneDataHash,
         bytes32 inboundLaneDataHash,
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool) {
-        bytes32 lane_hash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
-        return validate_messages_match_root(lane_hash, chain_pos, lane_pos, proof);
+        return validate_messages_match_root(inboundLaneDataHash, chain_pos, lane_pos, proof);
     }
 
     function validate_messages_match_root(

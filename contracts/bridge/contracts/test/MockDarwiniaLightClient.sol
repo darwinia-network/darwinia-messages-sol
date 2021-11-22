@@ -4,9 +4,8 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
-import "../common/spec/LaneDataScheme.sol";
 
-contract MockDarwiniaLightClient is LaneDataScheme {
+contract MockDarwiniaLightClient {
     struct MessagesProof {
         MProof chainProof;
         MProof laneProof;
@@ -25,24 +24,20 @@ contract MockDarwiniaLightClient is LaneDataScheme {
 
     function verify_messages_proof(
         bytes32 outboundLaneDataHash,
-        bytes32 inboundLaneDataHash,
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool) {
-        bytes32 lane_hash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
-        return validate_messages_match_root(lane_hash, chain_pos, lane_pos, proof);
+        return validate_messages_match_root(outboundLaneDataHash, chain_pos, lane_pos, proof);
     }
 
     function verify_messages_delivery_proof(
-        bytes32 outboundLaneDataHash,
         bytes32 inboundLaneDataHash,
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata proof
     ) external view returns (bool) {
-        bytes32 lane_hash = hash(LaneData(outboundLaneDataHash, inboundLaneDataHash));
-        return validate_messages_match_root(lane_hash, chain_pos, lane_pos, proof);
+        return validate_messages_match_root(inboundLaneDataHash, chain_pos, lane_pos, proof);
     }
 
     function validate_messages_match_root(

@@ -37,7 +37,6 @@ contract BSCLightClientMock {
 
     function verify_messages_proof(
         bytes32 outboundLaneDataHash,
-        bytes32 /*inboundLaneDataHash*/,
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata proof
@@ -54,7 +53,6 @@ contract BSCLightClientMock {
     }
 
     function verify_messages_delivery_proof(
-        bytes32 /*outboundLaneDataHash*/,
         bytes32 inboundLaneDataHash,
         uint32 chain_pos,
         uint32 lane_pos,
