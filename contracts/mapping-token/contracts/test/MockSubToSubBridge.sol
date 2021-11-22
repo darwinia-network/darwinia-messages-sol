@@ -9,15 +9,13 @@ interface IDispatchCall {
 }
 
 contract MockSubToSubBridge is MappingTokenAddress {
-    function outbound_latest_generated_message_id(bytes4 laneid) external view returns (bytes memory) {
-        uint32 chainid = 1;
-        return abi.encodePacked(chainid, laneid, IDispatchCall(DISPATCH).generated_nonce());
+    function outbound_latest_generated_nonce(bytes4 laneid) external view returns (uint64) {
+        return IDispatchCall(DISPATCH).generated_nonce();
     }
 
-    function inbound_latest_received_message_id(bytes4 laneid) external view returns (bytes memory) {
+    function inbound_latest_received_nonce(bytes4 laneid) external view returns (uint64) {
         // suppose received nonce is generated nonce
-        uint32 chainid = 1;
-        return abi.encodePacked(chainid, laneid, IDispatchCall(DISPATCH).generated_nonce());
+        return IDispatchCall(DISPATCH).generated_nonce();
     }
 
     function encode_unlock_from_remote_dispatch_call(

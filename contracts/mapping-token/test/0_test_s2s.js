@@ -132,14 +132,14 @@ describe("sub<>sub mapping token tests", () => {
       expect(await mappingTokenProxy.balanceOf(mtf.address)).to.equal(300);
 
       // confirm burn process
-      // get message id
+      // get message nonce
       var precompile_bridger = await ethers.getContractAt("MockSubToSubBridge", "0x0000000000000000000000000000000000000018");
-      const message_id = await precompile_bridger.outbound_latest_generated_message_id("0x726f6c69");
+      const message_nonce = await precompile_bridger.outbound_latest_generated_nonce("0x726f6c69");
       // normal account has no right to call confirm
-      await expect(mtf.confirmBurnAndRemoteUnlock(message_id, false))
+      await expect(mtf.confirmBurnAndRemoteUnlock("0x726f6c69", message_nonce, false))
           .to.be.revertedWith("System: caller is not the system account");
       // confirm return false
-      await mtf.connect(system_signer).confirmBurnAndRemoteUnlock(message_id, false);
+      await mtf.connect(system_signer).confirmBurnAndRemoteUnlock("0x726f6c69", message_nonce, false);
       // the token returns to user
       expect(await mappingTokenProxy.balanceOf(owner.address)).to.equal(1000);
       expect(await mappingTokenProxy.balanceOf(mtf.address)).to.equal(0);
@@ -155,14 +155,14 @@ describe("sub<>sub mapping token tests", () => {
       // check balance
       expect(await mappingTokenProxy.balanceOf(owner.address)).to.equal(1000-100);
       expect(await mappingTokenProxy.balanceOf(mtf.address)).to.equal(100);
-      const message_id_02 = await precompile_bridger.outbound_latest_generated_message_id("0x726f6c69");
+      const message_nonce_02 = await precompile_bridger.outbound_latest_generated_nonce("0x726f6c69");
       // confirm return true
-      await mtf.connect(system_signer).confirmBurnAndRemoteUnlock(message_id_02, true);
+      await mtf.connect(system_signer).confirmBurnAndRemoteUnlock("0x726f6c69", message_nonce_02, true);
       // the token burnt
       expect(await mappingTokenProxy.balanceOf(owner.address)).to.equal(1000-100);
       expect(await mappingTokenProxy.balanceOf(mtf.address)).to.equal(0);
       // error if confirmed twice
-      await expect(mtf.connect(system_signer).confirmBurnAndRemoteUnlock(message_id_02, true))
+      await expect(mtf.connect(system_signer).confirmBurnAndRemoteUnlock("0x726f6c69", message_nonce_02, true))
           .to.be.revertedWith("invalid unconfirmed message");
   });
 });
