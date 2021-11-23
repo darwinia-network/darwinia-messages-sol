@@ -14,11 +14,11 @@ interface SubToSubBridge {
     /// @dev get the sub<>sub outbound latest generated message id, this id combined by laneid and nonce. It's also
     /// the last sent message's id.
     /// @param laneid The lane id in which message sent. Use this params to distinguish different channel.
-    function outbound_latest_generated_message_id(bytes4 laneid) external view returns (bytes memory);
+    function outbound_latest_generated_nonce(bytes4 laneid) external view returns (uint64);
 
     /// @dev get the sub<>sub inbound latest received message id, this id combined by laneid and nonce.
     /// #param laneid The land id in which message sent.
-    function inbound_latest_received_message_id(bytes4 laneid) external view returns (bytes memory);
+    function inbound_latest_received_nonce(bytes4 laneid) external view returns (uint64);
 
     /// #dev get the scale encoded payload of the `unlock_from_remote` dispatch call which defined in s2s/issuing pallet
     /// this payload satisfy the standard format of the sub<>sub message payload

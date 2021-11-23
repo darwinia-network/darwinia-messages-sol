@@ -81,9 +81,9 @@ export function handleDailyLimitChange(event: DailyLimitChange): void {}
 export function handleIssuingERC20Created(event: IssuingERC20Created): void {}
 
 export function handleIssuingMappingToken(event: IssuingMappingToken): void {
-    let entity = LockRecordEntity.load(event.params.message_id.toHexString())
+    let entity = LockRecordEntity.load(event.transaction.hash.toHexString())
     if (entity == null) {
-        entity = new LockRecordEntity(event.params.message_id.toHexString())
+        entity = new LockRecordEntity(event.transaction.hash.toHexString())
     }
     entity.message_id = event.params.message_id
     entity.mapping_token = event.params.mapping_token
