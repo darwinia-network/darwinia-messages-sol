@@ -96,8 +96,8 @@ describe("sub<>sub mapping token tests", () => {
       );
 
       // check issuing successed
-      var mappingTokenProxy = await ethers.getContractAt("MappingERC20", mappingToken0);
-      expect(await mappingTokenProxy.balanceOf(owner.address)).to.equal(1000);
+      var mappingRing = await ethers.getContractAt("MappingERC20", mappingToken0);
+      expect(await mappingRing.balanceOf(owner.address)).to.equal(1000);
 
       // test burn and remote unlock waiting confirm
       // must approve first
@@ -110,7 +110,7 @@ describe("sub<>sub mapping token tests", () => {
       )).to.be.revertedWith("ERC20: transfer amount exceeds allowance");
 
       // approve
-      await mappingTokenProxy.approve(mtf.address, 100000);
+      await mappingRing.approve(mtf.address, 100000);
       // not enough balance
       await expect(mtf.burnAndRemoteUnlockWaitingConfirm(
           26100,
@@ -128,8 +128,8 @@ describe("sub<>sub mapping token tests", () => {
           300
       );
       // check the balance locked in mapping token factory contract
-      expect(await mappingTokenProxy.balanceOf(owner.address)).to.equal(1000-300);
-      expect(await mappingTokenProxy.balanceOf(mtf.address)).to.equal(300);
+      expect(await mappingRing.balanceOf(owner.address)).to.equal(1000-300);
+      expect(await mappingRing.balanceOf(mtf.address)).to.equal(300);
 
       // confirm burn process
       // get message nonce
@@ -141,8 +141,8 @@ describe("sub<>sub mapping token tests", () => {
       // confirm return false
       await mtf.connect(system_signer).confirmBurnAndRemoteUnlock("0x726f6c69", message_nonce, false);
       // the token returns to user
-      expect(await mappingTokenProxy.balanceOf(owner.address)).to.equal(1000);
-      expect(await mappingTokenProxy.balanceOf(mtf.address)).to.equal(0);
+      expect(await mappingRing.balanceOf(owner.address)).to.equal(1000);
+      expect(await mappingRing.balanceOf(mtf.address)).to.equal(0);
 
       // burn another amount of mapping token
       await mtf.burnAndRemoteUnlockWaitingConfirm(
@@ -153,17 +153,82 @@ describe("sub<>sub mapping token tests", () => {
           100
       );
       // check balance
-      expect(await mappingTokenProxy.balanceOf(owner.address)).to.equal(1000-100);
-      expect(await mappingTokenProxy.balanceOf(mtf.address)).to.equal(100);
+      expect(await mappingRing.balanceOf(owner.address)).to.equal(1000-100);
+      expect(await mappingRing.balanceOf(mtf.address)).to.equal(100);
       const message_nonce_02 = await precompile_bridger.outbound_latest_generated_nonce("0x726f6c69");
       // confirm return true
       await mtf.connect(system_signer).confirmBurnAndRemoteUnlock("0x726f6c69", message_nonce_02, true);
       // the token burnt
-      expect(await mappingTokenProxy.balanceOf(owner.address)).to.equal(1000-100);
-      expect(await mappingTokenProxy.balanceOf(mtf.address)).to.equal(0);
+      expect(await mappingRing.balanceOf(owner.address)).to.equal(1000-100);
+      expect(await mappingRing.balanceOf(mtf.address)).to.equal(0);
       // error if confirmed twice
       await expect(mtf.connect(system_signer).confirmBurnAndRemoteUnlock("0x726f6c69", message_nonce_02, true))
           .to.be.revertedWith("invalid unconfirmed message");
+
+      // test pause
+      await mtf.pause();
+      // cannot register
+      const original_kton = "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b";
+      await expect(mtf.connect(system_signer).newErc20Contract(
+          0, // token type
+          "Darwinia Kton",
+          "KTON",
+          18,
+          backing,
+          original_kton
+      )).to.be.revertedWith("Pausable: paused");
+      // cannot issuing
+      await expect(mtf.connect(system_signer).issueMappingToken(
+          mappingToken0,
+          system_account,
+          1000
+      )).to.be.revertedWith("Pausable: paused");
+      // cannot redeem
+      await expect(mtf.burnAndRemoteUnlockWaitingConfirm(
+          26100,
+          62867101,
+          mappingToken0,
+          "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+          300
+      )).to.be.revertedWith("Pausable: paused");
+      // unpause
+      await mtf.unpause();
+      // unpause: register success
+      await mtf.connect(system_signer).newErc20Contract(
+          0, // token type
+          "Darwinia Kton",
+          "KTON",
+          18,
+          backing,
+          original_kton
+      );
+      expect(await mtf.tokenLength()).to.equal(2);
+
+      const mappingToken1 = await mtf.allMappingTokens(1);
+      // unpause: issuing from system
+      await mtf.setDailyLimit(mappingToken1, 1000);
+      await mtf.connect(system_signer).issueMappingToken(
+          mappingToken1,
+          owner.address,
+          999
+      );
+
+      // check issuing successed
+      var mappingKton = await ethers.getContractAt("MappingERC20", mappingToken1);
+      expect(await mappingKton.balanceOf(owner.address)).to.equal(999);
+
+      // unpause: burn mapping token
+      await mappingKton.approve(mtf.address, 100000);
+      await mtf.burnAndRemoteUnlockWaitingConfirm(
+          26100,
+          62867101,
+          mappingToken1,
+          "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+          100
+      );
+      // check balance
+      expect(await mappingKton.balanceOf(owner.address)).to.equal(999-100);
+      expect(await mappingKton.balanceOf(mtf.address)).to.equal(100);
   });
 });
 
