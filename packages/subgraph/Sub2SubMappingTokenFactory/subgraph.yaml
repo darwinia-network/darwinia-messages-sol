@@ -7,9 +7,9 @@ dataSources:
     network: pangolin
     source:
       #address: "0xCB48D99a252c0536109385982f4770d96115DCa2"
-      address: "0x63A1519eE99d1121780FFfa1726Ed2eCc6d1611B"
+      address: "0x61dc46385a09e7ed7688abe6f66bf3d8653618fd"
       abi: Sub2SubMappingTokenFactory
-      #startBlock: 1
+      startBlock: 1378573
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4

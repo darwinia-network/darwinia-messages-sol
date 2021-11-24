@@ -24,7 +24,7 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.6.9",
+        version: "0.8.10",
         settings: {
           evmVersion: "istanbul",
           optimizer: {
@@ -56,14 +56,20 @@ module.exports = {
     cache: "./cache",
     artifacts: "./artifacts"
   },
-  defaultNetwork: 'ropsten',
+  defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
+      blockGasLimit: 30000000,
+      accounts: [
+          {
+              privateKey: "10abcdef10abcdef10abcdef10abcdef10abcdef10abcdef10abcdef10abcdef",
+              balance: "100000000000000000000",
+          }
+      ]
     },
     dev: {
       url: 'http://localhost:8545/',
       network_id: "*",
-      accounts: [PRIVATE_KEY]
     },
     ropsten: {
       url: ROPSTEN_RPC_URL,

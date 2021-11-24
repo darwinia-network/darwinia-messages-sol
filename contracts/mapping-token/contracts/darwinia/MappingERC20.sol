@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/proxy/Initializable.sol";
+import "@zeppelin-solidity-4.4.0/contracts/token/ERC20/IERC20.sol";
+import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
+import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 
 contract MappingERC20 is IERC20, Ownable, Initializable {
@@ -15,31 +15,19 @@ contract MappingERC20 is IERC20, Ownable, Initializable {
 
     uint256 private _totalSupply;
 
-    string private _name;
-    string private _symbol;
-    uint8 private _decimals;
+    string public name;
+    string public symbol;
+    uint8 public decimals;
 
     function initialize (
-        string memory name,
-        string memory symbol,
-        uint8 decimals
+        string memory _name,
+        string memory _symbol,
+        uint8 _decimals
     ) public initializer {
         ownableConstructor();
-        _name = name;
-        _symbol = symbol;
-        _decimals = decimals;
-    }
-
-    function name() public view returns (string memory) {
-        return _name;
-    }
-
-    function symbol() public view returns (string memory) {
-        return _symbol;
-    }
-
-    function decimals() public view returns (uint8) {
-        return _decimals;
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
     }
 
     function totalSupply() public view override returns (uint256) {

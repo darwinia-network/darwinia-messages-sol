@@ -5,8 +5,8 @@ pragma experimental ABIEncoderV2;
 
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
-import "../interfaces/ILightClientBridge.sol";
-import "../interfaces/ICrossChainFilter.sol";
+import "./interfaces/ILightClientBridge.sol";
+import "./interfaces/ICrossChainFilter.sol";
 
 /**
  * @title A entry contract for syncing message from Darwinia to Ethereum-like chain
@@ -60,7 +60,7 @@ contract BasicInboundChannel {
      * @param result The message result
      * @param returndata The return data of message call, when return false, it's the reason of the error
      */
-    event MessageDispatched(uint256 indexed nonce, bool indexed result, bytes returndata);
+    event MessageDispatched(uint256 nonce, bool result, bytes returndata);
 
     /* State */
 

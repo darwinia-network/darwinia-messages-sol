@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/proxy/Initializable.sol";
-import "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
+import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@darwinia/contracts-utils/contracts/DailyLimit.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/Pausable.sol";
@@ -133,15 +133,10 @@ contract BasicMappingTokenFactory is Initializable, Ownable, DailyLimit, Mapping
         bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
         require(salt2MappingToken[salt] == address(0), "contract has been deployed");
         bytes memory bytecode = type(TransparentUpgradeableProxy).creationCode;
-        bytes memory erc20initdata = 
-            abi.encodeWithSignature(
-                "initialize(string,string,uint8)",
-                name,
-                symbol,
-                decimals);
-        // no admin can operate this erc20 contract
-        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(tokenType2Logic[tokenType], address(0), erc20initdata));
+        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(tokenType2Logic[tokenType], address(DEAD_ADDRESS), ""));
         mapping_token = deploy(salt, bytecodeWithInitdata);
+        IMappingToken(mapping_token).initialize(name, symbol, decimals);
+
         salt2MappingToken[salt] = mapping_token;
         // save the mapping tokens in an array so it can be listed
         allMappingTokens.push(mapping_token);

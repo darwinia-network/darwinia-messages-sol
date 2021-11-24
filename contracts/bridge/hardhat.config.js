@@ -71,10 +71,12 @@ module.exports = {
   defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
-      blockGasLimit: 30000000,
+      blockGasLimit: 30_000_000,
+      throwOnCallFailures: true,
+      throwOnTransactionFailures: true,
     },
     dev: {
-      url: 'http://localhost:8545/',
+      url: 'http://127.0.0.1:8545/',
       network_id: "*",
       accounts: [PRIVATE_KEY]
     },
@@ -106,6 +108,9 @@ module.exports = {
     clear: true,
     flat: false,
     only: [],
+  },
+  gasReporter: {
+    enabled: true
   }
 };
 
