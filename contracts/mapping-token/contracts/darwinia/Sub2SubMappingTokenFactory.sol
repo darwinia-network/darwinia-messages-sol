@@ -78,7 +78,7 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
     // Step 2: The remote backing's unlock result comes. The result is true(success) or false(failure).
     // True:  if event is verified and the origin token unlocked successfully on remote chain, then we burn the mapped token
     // False: if event is verified, but the origin token unlocked on remote chain failed, then we take back the mapped token to user.
-    function confirmBurnAndRemoteUnlock(bytes4 laneid, uint64 nonce, bool result) external onlySystem whenNotPaused {
+    function confirmBurnAndRemoteUnlock(bytes4 laneid, uint64 nonce, bool result) external onlySystem {
         bytes memory message_id = abi.encode(laneid, nonce);
         UnconfirmedInfo memory info = transferUnconfirmed[message_id];
         require(info.amount > 0 && info.sender != address(0) && info.mapping_token != address(0), "invalid unconfirmed message");
