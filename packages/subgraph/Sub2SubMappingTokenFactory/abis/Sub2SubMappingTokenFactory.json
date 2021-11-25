@@ -4,9 +4,15 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "bytes",
-        "name": "message_id",
-        "type": "bytes"
+        "internalType": "bytes4",
+        "name": "laneid",
+        "type": "bytes4"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "nonce",
+        "type": "uint64"
       },
       {
         "indexed": false,
@@ -85,9 +91,15 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "bytes",
-        "name": "message_id",
-        "type": "bytes"
+        "internalType": "bytes4",
+        "name": "laneid",
+        "type": "bytes4"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "nonce",
+        "type": "uint64"
       },
       {
         "indexed": false,
@@ -179,9 +191,15 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "bytes",
-        "name": "message_id",
-        "type": "bytes"
+        "internalType": "bytes4",
+        "name": "laneid",
+        "type": "bytes4"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "nonce",
+        "type": "uint64"
       },
       {
         "indexed": false,
@@ -210,6 +228,13 @@
     ],
     "name": "RemoteUnlockConfirmed",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "DEAD_ADDRESS",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -253,13 +278,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "admin",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "name": "allMappingTokens",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
@@ -300,7 +318,8 @@
   },
   {
     "inputs": [
-      { "internalType": "bytes", "name": "messageId", "type": "bytes" },
+      { "internalType": "bytes4", "name": "laneid", "type": "bytes4" },
+      { "internalType": "uint64", "name": "nonce", "type": "uint64" },
       { "internalType": "bool", "name": "result", "type": "bool" }
     ],
     "name": "confirmBurnAndRemoteUnlock",
@@ -363,7 +382,7 @@
   },
   {
     "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "name": "mappingToken2Info",
+    "name": "mappingToken2OriginalInfo",
     "outputs": [
       { "internalType": "uint32", "name": "tokenType", "type": "uint32" },
       {
@@ -426,15 +445,6 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "_admin", "type": "address" }
-    ],
-    "name": "setAdmin",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
       { "internalType": "address", "name": "mapping_token", "type": "address" },
       { "internalType": "uint256", "name": "amount", "type": "uint256" }
     ],
@@ -492,6 +502,16 @@
   },
   {
     "inputs": [
+      { "internalType": "address", "name": "mapping_token", "type": "address" },
+      { "internalType": "address", "name": "new_owner", "type": "address" }
+    ],
+    "name": "transferMappingTokenOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "newOwner", "type": "address" }
     ],
     "name": "transferOwnership",
@@ -522,7 +542,11 @@
         "name": "original_token",
         "type": "address"
       },
-      { "internalType": "address", "name": "mapping_token", "type": "address" },
+      {
+        "internalType": "address",
+        "name": "new_mapping_token",
+        "type": "address"
+      },
       { "internalType": "uint256", "name": "index", "type": "uint256" }
     ],
     "name": "updateMappingToken",

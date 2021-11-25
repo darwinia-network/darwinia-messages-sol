@@ -1,6 +1,7 @@
 type BurnRecordEntity @entity {
   id: ID!
-  message_id: Bytes! # bytes
+  lane_id: Bytes! # bytes
+  nonce: BigInt!
   request_transaction: Bytes! # bytes
   response_transaction: Bytes # bytes
   sender: Bytes! # address
@@ -14,7 +15,8 @@ type BurnRecordEntity @entity {
 
 type LockRecordEntity @entity {
   id: ID!
-  message_id: Bytes!
+  lane_id: Bytes!
+  nonce: BigInt!
   mapping_token: Bytes!
   recipient: Bytes!
   amount: BigInt!

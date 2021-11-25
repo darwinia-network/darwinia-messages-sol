@@ -18,16 +18,18 @@ export function handleBurnAndWaitingConfirm(
 ): void {
   // Entities can be loaded from the store using a string ID; this ID
   // needs to be unique across all entities of the same type
-  let entity = BurnRecordEntity.load(event.params.message_id.toHexString())
+  let message_id = event.params.laneid.toHexString() + event.params.nonce.toHexString()
+  let entity = BurnRecordEntity.load(message_id)
 
   // Entities only exist after they have been saved to the store;
   // `null` checks allow to create entities on demand
   if (entity == null) {
-    entity = new BurnRecordEntity(event.params.message_id.toHexString())
+    entity = new BurnRecordEntity(message_id)
   }
 
   // Entity fields can be set based on event parameters
-  entity.message_id = event.params.message_id
+  entity.lane_id = event.params.laneid
+  entity.nonce = event.params.nonce
   entity.sender = event.params.sender
   entity.recipient = event.params.recipient
   entity.token = event.params.token
@@ -81,11 +83,13 @@ export function handleDailyLimitChange(event: DailyLimitChange): void {}
 export function handleIssuingERC20Created(event: IssuingERC20Created): void {}
 
 export function handleIssuingMappingToken(event: IssuingMappingToken): void {
-    let entity = LockRecordEntity.load(event.transaction.hash.toHexString())
+    let message_id = event.params.laneid.toHexString() + event.params.nonce.toHexString()
+    let entity = LockRecordEntity.load(message_id)
     if (entity == null) {
-        entity = new LockRecordEntity(event.transaction.hash.toHexString())
+        entity = new LockRecordEntity(message_id)
     }
-    entity.message_id = event.params.message_id
+    entity.lane_id = event.params.laneid
+    entity.nonce = event.params.nonce
     entity.mapping_token = event.params.mapping_token
     entity.recipient = event.params.recipient
     entity.amount = event.params.amount
@@ -102,12 +106,13 @@ export function handleOwnershipTransferred(event: OwnershipTransferred): void {}
 export function handleRemoteUnlockConfirmed(
   event: RemoteUnlockConfirmed
 ): void {
-  let entity = new BurnRecordEntity(event.params.message_id.toHexString())
-  if (entity == null) {
-    return
-  }
-  entity.result = event.params.result ? 1 : 2
-  entity.response_transaction = event.transaction.hash
-  entity.end_timestamp = event.block.timestamp
-  entity.save()
+    let message_id = event.params.laneid.toHexString() + event.params.nonce.toHexString()
+    let entity = new BurnRecordEntity(message_id)
+    if (entity == null) {
+        return
+    }
+    entity.result = event.params.result ? 1 : 2
+    entity.response_transaction = event.transaction.hash
+    entity.end_timestamp = event.block.timestamp
+    entity.save()
 }
