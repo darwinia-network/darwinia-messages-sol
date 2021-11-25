@@ -279,6 +279,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         bytes memory filterCallData = abi.encodeWithSelector(
             ICrossChainFilter.crossChainFilter.selector,
             bridgedChainPosition,
+            bridgedLanePosition,
             payload.sourceAccount,
             payload.encoded
         );
