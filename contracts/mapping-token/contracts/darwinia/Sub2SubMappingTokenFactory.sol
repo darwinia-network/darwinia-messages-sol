@@ -40,7 +40,7 @@ contract Sub2SubMappingTokenFactory is BasicMappingTokenFactory {
         address mapping_token,
         bytes memory recipient,
         uint256 amount
-    ) external payable {
+    ) external payable whenNotPaused {
         require(amount > 0, "can not transfer amount zero");
         OriginalInfo memory info = mappingToken2OriginalInfo[mapping_token];
         require(info.original_token != address(0), "token is not created by factory");
