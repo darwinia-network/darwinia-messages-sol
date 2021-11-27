@@ -18,6 +18,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../../interfaces/IOutboundLane.sol";
+import "../../interfaces/IOnMessageDelivered.sol";
 import "./MessageVerifier.sol";
 import "./TargetChain.sol";
 import "./SourceChain.sol";
@@ -29,8 +30,10 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     event MessagePruned(uint64 oldest_unpruned_nonce);
     event MessageFeeIncreased(uint64 nonce, uint256 fee);
     event RelayerReward(address relayer, uint256 reward);
+    event CallbackMessageDelivered(uint64 nonce, bool result);
 
     bytes32 internal constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
+    uint256 internal constant MAX_GAS_PER_MESSAGE = 100000;
     uint64 internal constant MAX_PENDING_MESSAGES = 50;
     uint64 internal constant MAX_PRUNE_MESSAGES_ATONCE = 10;
 
@@ -135,7 +138,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     ) public nonReentrant {
         verify_lane_data_proof(hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
-        // TODO: callback `on_messages_delivered`
+        on_messages_delivered(confirmed_messages);
         pay_relayers_rewards(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
         commit();
     }
@@ -242,6 +245,21 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             // => let's extract dispatch results
             received_dispatch_result |= ((dispatch_results >> extend_begin) << padding);
             padding += (new_messages_end - new_messages_begin + 1 - extend_begin);
+        }
+    }
+
+    function on_messages_delivered(DeliveredMessages memory confirmed_messages) internal {
+        for (uint64 nonce = confirmed_messages.begin; nonce <= confirmed_messages.end; nonce ++) {
+            uint256 offset = nonce - confirmed_messages.begin;
+            bool dispatch_result = ((confirmed_messages.dispatch_results << offset) & 1) > 0;
+            address submitter = messages[nonce].payload.sourceAccount;
+            bytes memory deliveredCallbackData = abi.encodeWithSelector(
+                IOnMessageDelivered.onMessagesDelivered.selector,
+                nonce,
+                dispatch_result
+            );
+            (bool ok,) = submitter.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(deliveredCallbackData);
+            emit CallbackMessageDelivered(nonce, ok);
         }
     }
 
