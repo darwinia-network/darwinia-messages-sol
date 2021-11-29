@@ -13,5 +13,5 @@ interface IOnMessageDelivered {
      * @param nonce Nonce of the callback message
      * @param dispatch_result Dispatch result of cross chain message
      */
-    function onMessagesDelivered(uint64 nonce, bool dispatch_result) external;
+    function on_messages_delivered(uint64 nonce, bool dispatch_result) external;
 }
