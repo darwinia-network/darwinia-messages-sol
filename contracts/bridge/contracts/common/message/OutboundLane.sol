@@ -251,7 +251,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     function on_messages_delivered(DeliveredMessages memory confirmed_messages) internal {
         for (uint64 nonce = confirmed_messages.begin; nonce <= confirmed_messages.end; nonce ++) {
             uint256 offset = nonce - confirmed_messages.begin;
-            bool dispatch_result = ((confirmed_messages.dispatch_results << offset) & 1) > 0;
+            bool dispatch_result = ((confirmed_messages.dispatch_results >> offset) & 1) > 0;
             address submitter = messages[nonce].payload.sourceAccount;
             bytes memory deliveredCallbackData = abi.encodeWithSelector(
                 IOnMessageDelivered.onMessagesDelivered.selector,
