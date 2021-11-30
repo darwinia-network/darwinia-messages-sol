@@ -160,6 +160,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         on_messages_delivered(confirmed_messages);
         // Market the confirmed_messages delivered th fee market
         require(IFeeMarket(fee_market).delivery(confirmed_messages.begin, confirmed_messages.end), "Lane: CallFeeMarketFailted");
+        // Market the confirmed_messages delivered th fee market
         pay_relayers_rewards(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
         commit();
     }
