@@ -13,17 +13,13 @@ contract FeeMarket {
 
     address public immutable outbound;
     uint public constant immutable COLLATERAL_PERORDER;
-    uint public constant immutable MAX_RELAYERS;
     uint public constant immutable ASSIGNED_RELAYERS_NUMBER;
 
     struct Order {
         uint32 create_time;
         uint32 settle_time;
-        uint256 p1;
         address r1;
-        uint256 p2;
         address r2;
-        uint256 p3;
         address r3;
     }
 
@@ -96,10 +92,6 @@ contract FeeMarket {
         relayers[prev] = cur;
         relayer_fee[cur] = fee;
         relayer_count++;
-        if (relayer_count > MAX_RELAYERS) {
-            (address last2, address last1 = find_last2_relayer();
-            _remove_relayer(last2, last1);
-        }
         emit AddRelayer(cur, fee);
     }
 
@@ -110,6 +102,7 @@ contract FeeMarket {
     function _remove_relayer(address prev, address cur) private {
         require(cur != address(0) && cur != SENTINEL_RELAYERS, "!valid");
         require(relayers[prev] == cur, "!cur");
+        require(locked[cur] == 0, "!locked");
         relayers[prev] = relayers[cur];
         relayers[cur] = address(0);
         relayer_fee[cur] = 0;
