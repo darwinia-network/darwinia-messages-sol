@@ -49,6 +49,9 @@ contract FeeMarket {
     }
 
     function market_fee() external view returns (uint fee) {
+        address[] memory top_relayers = getTopRelayers();
+        address last = top_relayers[top_relayers.length - 1];
+        return relayer_fee[last];
     }
 
     function deposit() public payable {
@@ -67,9 +70,11 @@ contract FeeMarket {
         return address(this).balance;
     }
 
-    function assign(uint64 nonce) public payable onlyOutBound {
+    function assign(uint64 nonce) public payable onlyOutBound returns (bool) {
         //select assigned_relayers
         address[] memory top_relayers = getTopRelayers();
+        address last = top_relayers[top_relayers.length - 1];
+        require(msg.value >= relayer_fee[last]);
         for (uint i = 0; i < top_relayers.length; i++) {
             address r = top_relayers[i];
             require(is_relayer(r), "!relayer");
@@ -78,6 +83,7 @@ contract FeeMarket {
         }
         orders[nonce] = Order(block.timestamp, 0);
         emit OrderAssgigned(nonce, block.timestamp, top_relayers);
+        return true;
     }
 
     function delivery(uint64 nonce) public onlyOutBound {
