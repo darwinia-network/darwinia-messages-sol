@@ -82,7 +82,13 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    // Send message over lane.
+    /**
+     * @notice Send message over lane.
+     * Submitter could be a contract or just an EOA address.
+     * At the beginning of the launch, submmiter is permission, after the system is stable it will be permissionless.
+     * @param targetContract The target contract address which you would send cross chain message to
+     * @param encoded The calldata which encoded by ABI Encoding
+     */
     function send_message(address targetContract, bytes calldata encoded) external payable override nonReentrant returns (uint64) {
         require(hasRole(OUTBOUND_ROLE, msg.sender), "Lane: NotAuthorized");
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
@@ -252,6 +258,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         for (uint64 nonce = confirmed_messages.begin; nonce <= confirmed_messages.end; nonce ++) {
             uint256 offset = nonce - confirmed_messages.begin;
             bool dispatch_result = ((confirmed_messages.dispatch_results >> offset) & 1) > 0;
+            // Submitter could be a contract or just an EOA address.
             address submitter = messages[nonce].payload.sourceAccount;
             bytes memory deliveredCallbackData = abi.encodeWithSelector(
                 IOnMessageDelivered.on_messages_delivered.selector,
