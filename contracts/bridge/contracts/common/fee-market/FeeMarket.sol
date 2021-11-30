@@ -8,6 +8,8 @@ contract FeeMarket {
     event UnLocked(address indexed src, uint wad);
     event AddRelayer(address indexed relayer, uint fee);
     event RemoveRelayer(address indexed relayer);
+    event OrderAssgigned(uint64 indexed nonce, uint timestamp, address[] top_relayers);
+    event OrderDelivered(uint64 indexed nonce, uint timestamp);
 
     address internal constant SENTINEL_RELAYERS = address(0x1);
 
@@ -16,11 +18,8 @@ contract FeeMarket {
     uint public constant immutable ASSIGNED_RELAYERS_NUMBER;
 
     struct Order {
-        uint32 create_time;
-        uint32 settle_time;
-        address r1;
-        address r2;
-        address r3;
+        uint32 assigned_time;
+        uint32 delivered_time;
     }
 
     mapping(address => uint256) public balanceOf;
@@ -28,6 +27,7 @@ contract FeeMarket {
     mapping(address => address) public relayers;
     mapping(address => uint256) public relayer_fee;
     mapping(uint256 => Order) public orders;
+    mapping(uint256 => mapping(uint256 => address)) public assigned_relayers;
     uint public relayer_count;
 
     modifier onlyOutBound() {
@@ -67,13 +67,30 @@ contract FeeMarket {
         return address(this).balance;
     }
 
-    function assigned_relayers(uint nonce) public payable onlyOutBound {
-        //selecr assigned_relayers
-        _lock(relayer, wad);
-        _create_order();
+    function assign(uint64 nonce) public payable onlyOutBound {
+        //select assigned_relayers
+        address[] memory top_relayers = getTopRelayers();
+        for (uint i = 0; i < top_relayers.length; i++) {
+            address r = top_relayers[i];
+            require(is_relayer(r), "!relayer");
+            require(_lock(r, COLLATERAL_PERORDER), "!lock");
+            assigned_relayers[nonce][i] = r;
+        }
+        orders[nonce] = Order(block.timestamp, 0);
+        emit OrderAssgigned(nonce, block.timestamp, top_relayers);
     }
 
-    function enroll_and_lock_collateral(address prev, uint fee) public payable {
+    function delivery(uint64 nonce) public onlyOutBound {
+        orders[nonce].delivered_time = block.timestamp;
+        emit OrderAssgigned(nonce, block.timestamp);
+    }
+
+    function settle(uint64 nonce) public {
+        require(orders[nonce].delivered_time > 0, "!delivered");
+        pay_relayers_rewards();
+    }
+
+    function enroll(address prev, uint fee) public payable {
         deposit();
         add_relayer(prev, fee);
     }
@@ -115,17 +132,23 @@ contract FeeMarket {
         add_relayer(new_prev, new_fee);
     }
 
-    function find_last2_relayer() public view returns (address last2, address last1) {
-        last2 = SENTINEL_RELAYERS;
-        last1 = relayers[SENTINEL_RELAYERS];
-        while (relayers[last1] != SENTINEL_RELAYERS) {
-            last2 = last1;
-            last1 = relayers[last1];
-        }
-    }
-
     function getAllRelayers() public view returns (address[] memory) {
         return getRelayers(relayer_count);
+    }
+
+    function getTopRelayers() public view returns (address[] memory) {
+        require(ASSIGNED_RELAYERS_NUMBER <= relayer_count, "!count");
+        address[] memory array = new address[](ASSIGNED_RELAYERS_NUMBER);
+        uint index = 0;
+        address cur = relayers[SENTINEL_RELAYERS];
+        while (cur != SENTINEL_RELAYERS) {
+            if (balanceOf(cur) >= COLLATERAL_PERORDER) {
+                array[index] = cur;
+                index++;
+            }
+            cur = relayers[cur];
+        }
+        require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
     }
 
     function getRelayers(uint count) public view returns (address[] memory) {
