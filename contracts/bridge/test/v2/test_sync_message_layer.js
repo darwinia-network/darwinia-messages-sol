@@ -47,6 +47,11 @@ const receive_messages_delivery_proof = async (begin, end) => {
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 0)
+    for (let i = begin; i<=end; i++) {
+      await expect(tx)
+        .to.emit(outbound, "CallbackMessageDelivered")
+        .withArgs(i, true)
+    }
     await logNonce()
 }
 
