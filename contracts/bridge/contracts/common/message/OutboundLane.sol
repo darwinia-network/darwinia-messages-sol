@@ -18,6 +18,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../../interfaces/IOutboundLane.sol";
+import "../../interfaces/IFeeMarket.sol";
 import "./MessageVerifier.sol";
 import "./TargetChain.sol";
 import "./SourceChain.sol";
@@ -31,6 +32,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     event RelayerReward(address relayer, uint256 reward);
 
     bytes32 internal constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
+    bytes32 internal constant FEEMARKET_ROLE = keccak256("FEEMARKET_ROLE");
     uint64 internal constant MAX_PENDING_MESSAGES = 50;
     uint64 internal constant MAX_PRUNE_MESSAGES_ATONCE = 10;
 
@@ -53,6 +55,8 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
 
     // nonce => MessageData
     mapping(uint64 => MessageData) public messages;
+
+    address public fee_market;
 
     /**
      * @notice Deploys the OutboundLane contract
@@ -79,6 +83,12 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    function setFeeMarket(address _fee_market) external nonReentrant {
+        require(hasRole(FEEMARKET_ROLE, msg.sender), "Lane: NotAuthorized");
+        fee_market = _fee_market;
+        emit SetFeeMarket(_fee_market);
+    }
+
     // Send message over lane.
     function send_message(address targetContract, bytes calldata encoded) external payable override nonReentrant returns (uint64) {
         require(hasRole(OUTBOUND_ROLE, msg.sender), "Lane: NotAuthorized");
@@ -86,6 +96,10 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         require(outboundLaneNonce.latest_generated_nonce < uint64(-1), "Lane: Overflow");
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
         uint256 fee = msg.value;
+
+        // assign the message to top relayers
+        require(IFeeMarket(fee_market).assign(nonce), "Lane: AssignRelayersFailed");
+
         outboundLaneNonce.latest_generated_nonce = nonce;
         MessagePayload memory messagePayload = MessagePayload({
             sourceAccount: msg.sender,
@@ -97,7 +111,6 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             payload: messagePayload,
             fee: fee  // a lowest fee may be required and how to set it
         });
-        // TODO:: callback `on_messages_accepted`
 
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
         prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
@@ -135,7 +148,8 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     ) public nonReentrant {
         verify_lane_data_proof(hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
-        // TODO: callback `on_messages_delivered`
+        // Market the confirmed_messages delivered th fee market
+        require(IFeeMarket(fee_market).delivery(confirmed_messages.begin, confirmed_messages.end));
         pay_relayers_rewards(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
         commit();
     }
