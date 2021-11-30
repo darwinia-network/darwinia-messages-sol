@@ -86,7 +86,7 @@ describe("Light Client Gas Usage", function () {
   for (const testCase of testCases) {
     it(`runs full flow with ${testCase.totalNumberOfValidators} validators and ${testCase.totalNumberOfSignatures} signers with the complete transaction succeeding`,
       async function () {
-        this.timeout(1000 * 100);
+        this.timeout(1000 * 200);
         await runFlow(testCase.totalNumberOfValidators, testCase.totalNumberOfSignatures)
       });
   }
