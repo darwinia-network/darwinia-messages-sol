@@ -32,6 +32,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     event MessageFeeIncreased(uint64 nonce, uint256 fee);
     event RelayerReward(address relayer, uint256 reward);
     event CallbackMessageDelivered(uint64 nonce, bool result);
+    event SetFeeMarket(address fee_market);
 
     bytes32 internal constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
     bytes32 internal constant FEEMARKET_ROLE = keccak256("FEEMARKET_ROLE");
@@ -105,9 +106,14 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         require(outboundLaneNonce.latest_generated_nonce < uint64(-1), "Lane: Overflow");
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
         uint256 fee = msg.value;
-
+        uint256 marketFee = IFeeMarket(fee_market).market_fee();
+        require(fee >= marketFee, "Lane: TooLowFee");
         // assign the message to top relayers
-        require(IFeeMarket(fee_market).assign(nonce), "Lane: AssignRelayersFailed");
+        require(IFeeMarket(fee_market).assign{value: marketFee}(nonce), "Lane: AssignRelayersFailed");
+        // return remaining fee
+        if (fee > marketFee) {
+            msg.sender.transfer(fee - marketFee);
+        }
 
         outboundLaneNonce.latest_generated_nonce = nonce;
         MessagePayload memory messagePayload = MessagePayload({
@@ -158,8 +164,8 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         verify_lane_data_proof(hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
         on_messages_delivered(confirmed_messages);
-        // Market the confirmed_messages delivered th fee market
-        require(IFeeMarket(fee_market).delivery(confirmed_messages.begin, confirmed_messages.end), "Lane: CallFeeMarketFailted");
+        // settle the confirmed_messages at fee market
+        settle_messages(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
         commit();
     }
 
@@ -304,6 +310,17 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             emit MessagePruned(outboundLaneNonce.oldest_unpruned_nonce);
         }
         return pruned_messages;
+    }
+
+    function settle_messages(UnrewardedRelayer[] memory relayers, uint64 received_start, uint64 received_end) internal {
+        IFeeMarket.DeliveredRelayer[] memory delivery_relayers = new IFeeMarket.DeliveredRelayer[](relayers.length);
+        for (uint256 i = 0; i < relayers.length; i++) {
+            UnrewardedRelayer memory r = relayers[i];
+            uint64 nonce_begin = max(r.messages.begin, received_start);
+            uint64 nonce_end = min(r.messages.end, received_end);
+            delivery_relayers[i] = IFeeMarket.DeliveredRelayer(r.relayer, nonce_begin, nonce_end);
+        }
+        require(IFeeMarket(fee_market).settle(delivery_relayers, msg.sender), "Lane: SettleFailed");
     }
 
     // --- Math ---
