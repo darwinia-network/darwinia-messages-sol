@@ -160,8 +160,6 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         on_messages_delivered(confirmed_messages);
         // Market the confirmed_messages delivered th fee market
         require(IFeeMarket(fee_market).delivery(confirmed_messages.begin, confirmed_messages.end), "Lane: CallFeeMarketFailted");
-        // Market the confirmed_messages delivered th fee market
-        pay_relayers_rewards(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
         commit();
     }
 
@@ -306,53 +304,6 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             emit MessagePruned(outboundLaneNonce.oldest_unpruned_nonce);
         }
         return pruned_messages;
-    }
-
-    /// Pay rewards to given relayers, optionally rewarding confirmation relayer.
-    function pay_relayers_rewards(UnrewardedRelayer[] memory relayers, uint64 received_start, uint64 received_end) internal {
-        address payable confirmation_relayer = msg.sender;
-        uint256 confirmation_relayer_reward = 0;
-        uint256 confirmation_fee = confirmationFee;
-        // reward every relayer except `confirmation_relayer`
-        for (uint256 i = 0; i < relayers.length; i++) {
-            UnrewardedRelayer memory entry = relayers[i];
-            address payable delivery_relayer = entry.relayer;
-            uint64 nonce_begin = max(entry.messages.begin, received_start);
-            uint64 nonce_end = min(entry.messages.end, received_end);
-            uint256 delivery_reward = 0;
-            uint256 confirmation_reward = 0;
-            for (uint64 nonce = nonce_begin; nonce <= nonce_end; nonce++) {
-                delivery_reward += messages[nonce].fee;
-                confirmation_reward += confirmation_fee;
-            }
-            if (confirmation_relayer != delivery_relayer) {
-                // If delivery confirmation is submitted by other relayer, let's deduct confirmation fee
-                // from relayer reward.
-                //
-                // If confirmation fee has been increased (or if it was the only component of message
-                // fee), then messages relayer may receive zero reward.
-                if (confirmation_reward > delivery_reward) {
-                    confirmation_reward = delivery_reward;
-                }
-                delivery_reward = delivery_reward - confirmation_reward;
-                confirmation_relayer_reward = confirmation_relayer_reward + confirmation_reward;
-            } else {
-                // If delivery confirmation is submitted by this relayer, let's add confirmation fee
-                // from other relayers to this relayer reward.
-                confirmation_relayer_reward = confirmation_relayer_reward + delivery_reward;
-                continue;
-            }
-            pay_relayer_reward(delivery_relayer, delivery_reward);
-        }
-        // finally - pay reward to confirmation relayer
-        pay_relayer_reward(confirmation_relayer, confirmation_relayer_reward);
-    }
-
-    function pay_relayer_reward(address payable to, uint256 value) internal {
-        if (value > 0) {
-            to.transfer(value);
-            emit RelayerReward(to, value);
-        }
     }
 
     // --- Math ---
