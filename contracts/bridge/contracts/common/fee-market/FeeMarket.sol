@@ -15,7 +15,7 @@ contract FeeMarket is IFeeMarket {
     event OrderAssgigned(uint64 indexed nonce, uint timestamp, address[] top_relayers);
     event OrderSettled(uint64 indexed nonce, uint timestamp);
 
-    address internal constant SENTINEL_RELAYERS = address(0x1);
+    address private constant SENTINEL_RELAYERS = address(0x1);
 
     address public immutable outbound;
     address public immutable VAULT;
@@ -178,6 +178,11 @@ contract FeeMarket is IFeeMarket {
         }
     }
 
+    function getOrderFee(uint64 nonce) public view returns (uint256 fee) {
+        address last = assigned_relayers[nonce][ASSIGNED_RELAYERS_NUMBER - 1];
+        fee = feeOf[last];
+    }
+
     function isRelayer(address addr) public view returns (bool) {
         return addr != SENTINEL_RELAYERS && relayers[addr] != address(0);
     }
@@ -226,7 +231,7 @@ contract FeeMarket is IFeeMarket {
             for (uint64 nonce = entry.begin; nonce <= entry.end; nonce++) {
                 require(orderOf[nonce] > 0, "!exist");
                 uint256 diff_time = block.timestamp - orderOf[nonce];
-                // in time
+                // on time
                 if (diff_time < ASSIGNED_RELAYERS_NUMBER * RELAY_TIME) {
                     // reward and unlock each assign_relayer
                     (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) = _reward_and_unlock_ontime(nonce, diff_time,  entry.relayer, confirm_relayer);
@@ -258,8 +263,7 @@ contract FeeMarket is IFeeMarket {
         address delivery_relayer,
         address confirm_relayer
     ) internal returns (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) {
-        address last = assigned_relayers[nonce][ASSIGNED_RELAYERS_NUMBER - 1];
-        uint256 real_fee = feeOf[last];
+        uint256 real_fee = getOrderFee(nonce);
         for (uint256 slot = 0; slot < ASSIGNED_RELAYERS_NUMBER; slot++) {
             address assign_relayer = assigned_relayers[nonce][slot];
             if (diff_time < (slot + 1 ) * RELAY_TIME) {
@@ -271,8 +275,7 @@ contract FeeMarket is IFeeMarket {
     }
 
     function _slash_and_unlock_late(uint64 nonce, uint256 diff_time) internal returns (uint256 delivery_reward, uint256 confirm_reward) {
-        address last = assigned_relayers[nonce][ASSIGNED_RELAYERS_NUMBER - 1];
-        uint256 real_fee = feeOf[last];
+        uint256 real_fee = getOrderFee(nonce);
         uint256 slash_fee = diff_time >= SLASH_TIME ? COLLATERAL_PERORDER : (COLLATERAL_PERORDER * diff_time / SLASH_TIME);
         for (uint256 slot = 0; slot < ASSIGNED_RELAYERS_NUMBER; slot++) {
             address assign_relayer = assigned_relayers[nonce][slot];
