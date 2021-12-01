@@ -99,7 +99,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
      * @param backingAddress the remote backingAddress
      * @param inboundLane the inboundLane address
      */
-    function addInbound(address backingAddress, address inboundLane) external onlyOwner {
+    function addInboundLane(address backingAddress, address inboundLane) external onlyOwner {
         uint32 bridgedChainPosition = IMessageVerifier(inboundLane).bridgedChainPosition();
         uint32 bridgedLanePosition = IMessageVerifier(inboundLane).bridgedLanePosition();
         bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, backingAddress));
@@ -111,7 +111,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
      * @notice add new outboundLane to mapping-token-factory, remote backing module must add the corresponding InBoundLane
      * @param outboundLane the outboundLane address
      */
-    function addOutBound(address outboundLane) external onlyOwner {
+    function addOutBoundLane(address outboundLane) external onlyOwner {
         uint32 bridgedChainPosition = IMessageVerifier(outboundLane).bridgedChainPosition();
         uint32 bridgedLanePosition = IMessageVerifier(outboundLane).bridgedLanePosition();
         bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition));
@@ -317,6 +317,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
             IBacking.unlockFromRemote.selector,
             IMessageVerifier(outboundLane).thisChainPosition(),
             IMessageVerifier(outboundLane).thisLanePosition(),
+            address(this),
             info.originalToken,
             recipient,
             amount

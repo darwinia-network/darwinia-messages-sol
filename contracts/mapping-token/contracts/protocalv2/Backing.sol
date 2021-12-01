@@ -47,8 +47,8 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     event TokenRegisterFinished(bytes32 messageId, uint64 nonce, bool result);
     event TokenUnlocked(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address mappingTokenFactory, address token, address recipient, uint256 amount);
 
-    modifier onlyInBoundLane(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address backingAddress) {
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, backingAddress));
+    modifier onlyInBoundLane(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address mappingTokenFactoryAddress) {
+        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, mappingTokenFactoryAddress));
         require(inboundLanes[remoteId] == msg.sender, "MappingTokenFactory: caller is not the inboundLane account");
         _;
     }
@@ -73,8 +73,16 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         _pause();
     }
 
+    function setDailyLimit(address mappingToken, uint amount) public onlyOwner  {
+        _setDailyLimit(mappingToken, amount);
+    }
+
+    function changeDailyLimit(address mappingToken, uint amount) public onlyOwner  {
+        _changeDailyLimit(mappingToken, amount);
+    }
+
     // here add InBoundLane, and remote issuing module must add the corresponding OutBoundLane
-    function addInbound(address mappingTokenFactory, address inboundLane) external onlyOwner {
+    function addInboundLane(address mappingTokenFactory, address inboundLane) external onlyOwner {
         uint32 bridgedChainPosition = IMessageVerifier(inboundLane).bridgedChainPosition();
         uint32 bridgedLanePosition = IMessageVerifier(inboundLane).bridgedLanePosition();
         bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, mappingTokenFactory));
@@ -83,7 +91,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     }
 
     // here add OutBoundLane, and remote issuing module must add the corresponding InBoundLane
-    function addOutBound(address outboundLane) external onlyOwner {
+    function addOutboundLane(address outboundLane) external onlyOwner {
         uint32 bridgedChainPosition = IMessageVerifier(outboundLane).bridgedChainPosition();
         uint32 bridgedLanePosition = IMessageVerifier(outboundLane).bridgedLanePosition();
         bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition));
@@ -116,8 +124,8 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         require(outboundLane != address(0), "cannot find outboundLane to send message");
         bytes memory newErc20Contract = abi.encodeWithSelector(
             IMappingTokenFactory.newErc20Contract.selector,
-            bridgedChainPosition,
-            bridgedLanePosition,
+            IMessageVerifier(outboundLane).thisChainPosition(),
+            IMessageVerifier(outboundLane).thisLanePosition(),
             address(this),
             ERC20_TOKEN_TYPE,
             token,
@@ -133,6 +141,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
 
     /**
      * @notice lock original token and issuing mapping token from bridged chain
+     * @dev maybe some tokens will take some fee when transfer
      * @param bridgedChainPosition the bridged chain position, the mapping token will be issued on this target chain
      * @param bridgedLanePosition the bridged lane positon, this issuing message will be delived to this lane position
      * @param token the original token address
@@ -148,21 +157,26 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     ) external payable whenNotPaused {
         address mappingTokenFactory = tokens[token][bridgedChainPosition];
         require(mappingTokenFactory != address(0), "Backing: the token is not registed");
+
+        uint256 balanceBefore = IERC20(token).balanceOf(address(this));
+        require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer tokens failed");
+        uint256 balanceAfter = IERC20(token).balanceOf(address(this));
+        uint256 newAmount = balanceAfter - balanceBefore;
         address outboundLane = getOutBoundLane(bridgedChainPosition, bridgedLanePosition);
         require(outboundLane != address(0), "Backing: outboundLane not exist");
         bytes memory issueMappingToken = abi.encodeWithSelector(
             IMappingTokenFactory.issueMappingToken.selector,
-            bridgedChainPosition,
-            bridgedLanePosition,
+            IMessageVerifier(outboundLane).thisChainPosition(),
+            IMessageVerifier(outboundLane).thisLanePosition(),
             address(this),
             token,
             recipient,
-            amount
+            newAmount
         );
         uint64 nonce = IOutboundLane(outboundLane).send_message(mappingTokenFactory, issueMappingToken);
         bytes32 messageId = keccak256(abi.encodePacked(outboundLane, nonce));
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
-        emit TokenLocked(messageId, nonce, bridgedChainPosition, bridgedLanePosition, token, recipient, amount);
+        emit TokenLocked(messageId, nonce, bridgedChainPosition, bridgedLanePosition, token, recipient, newAmount);
     }
 
     /**
@@ -181,7 +195,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         if (lockedInfo.token != address(0)) {
             delete lockMessages[messageId];
             if (!result) {
-                IERC20(lockedInfo.token).transferFrom(address(this), lockedInfo.sender, lockedInfo.amount);
+                IERC20(lockedInfo.token).transfer(lockedInfo.sender, lockedInfo.amount);
             }
             emit TokenLockFinished(messageId, nonce, result);
             return;
@@ -223,7 +237,8 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         address recipient,
         uint256 amount
     ) public onlyInBoundLane(bridgedChainPosition, bridgedLanePosition, mappingTokenFactory) whenNotPaused {
-        IERC20(token).transferFrom(address(this), recipient, amount);
+        expendDailyLimit(token, amount);
+        require(IERC20(token).transfer(recipient, amount), "Backing: unlock transfer failed");
         emit TokenUnlocked(bridgedChainPosition, bridgedLanePosition, mappingTokenFactory, token, recipient, amount);
     }
 
