@@ -321,7 +321,7 @@ contract FeeMarket is IFeeMarket {
         for (uint256 slot = 0; slot < ASSIGNED_RELAYERS_NUMBER; slot++) {
             address assign_relayer = assigned_relayers[key][slot];
             // the message delivery in the `slot` assign_relayer
-            if (diff_time < (slot + 1 ) * RELAY_TIME) {
+            if (diff_time <= (slot + 1 ) * RELAY_TIME) {
                 uint256 base_fee = feeOf[assign_relayer];
                 (delivery_reward, confirm_reward, vault_reward) = _distribute_ontime(message_fee, base_fee, assign_relayer, delivery_relayer, confirm_relayer);
             }
