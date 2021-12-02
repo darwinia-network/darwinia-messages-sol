@@ -113,7 +113,7 @@ contract FeeMarket is IFeeMarket {
         return address(this).balance;
     }
 
-    function getRelayers(uint count) external view returns (uint256, address[] memory, uint256[] memory, uint256[] memory) {
+    function getOrderBook(uint count, bool flag) external view returns (uint256, address[] memory, uint256[] memory, uint256 [] memory) {
         require(count <= relayer_count, "!count");
         address[] memory array1 = new address[](count);
         uint256[] memory array2 = new uint256[](count);
@@ -121,24 +121,7 @@ contract FeeMarket is IFeeMarket {
         uint index = 0;
         address cur = relayers[SENTINEL_BEGIN];
         while (cur != SENTINEL_END) {
-            array1[index] = cur;
-            array2[index] = feeOf[cur];
-            array3[index] = balanceOf[cur];
-            cur = relayers[cur];
-            index++;
-        }
-        return (index, array1, array2, array3);
-    }
-
-    function getOrderBook(uint count) external view returns (uint256, address[] memory, uint256[] memory, uint256 [] memory) {
-        require(count <= relayer_count, "!count");
-        address[] memory array1 = new address[](count);
-        uint256[] memory array2 = new uint256[](count);
-        uint256[] memory array3 = new uint256[](count);
-        uint index = 0;
-        address cur = relayers[SENTINEL_BEGIN];
-        while (cur != SENTINEL_END) {
-            if (balanceOf[cur] >= COLLATERAL_PERORDER) {
+            if (flag || balanceOf[cur] >= COLLATERAL_PERORDER) {
                 array1[index] = cur;
                 array2[index] = feeOf[cur];
                 array3[index] = balanceOf[cur];
