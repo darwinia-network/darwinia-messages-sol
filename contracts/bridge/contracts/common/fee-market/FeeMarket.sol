@@ -285,13 +285,15 @@ contract FeeMarket is IFeeMarket {
                 // diff_time = settle_time - assign_time
                 uint256 diff_time = block.timestamp - orderOf[key];
                 // on time
-                if (diff_time <= ASSIGNED_RELAYERS_NUMBER * RELAY_TIME) {
+                // [0, slot * n)
+                if (diff_time < ASSIGNED_RELAYERS_NUMBER * RELAY_TIME) {
                     // reward and unlock each assign_relayer
                     (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) = _reward_and_unlock_ontime(key, diff_time,  entry.relayer, confirm_relayer);
                     every_delivery_reward += delivery_reward;
                     total_confirm_reward += confirm_reward;
                     total_vault_reward += vault_reward;
                 // too late
+                // [slot * n, +∞)
                 } else {
                     // slash and unlock each assign_relayer
                     (uint256 delivery_reward, uint256 confirm_reward) = _slash_and_unlock_late(key, diff_time);
@@ -321,7 +323,8 @@ contract FeeMarket is IFeeMarket {
         for (uint256 slot = 0; slot < ASSIGNED_RELAYERS_NUMBER; slot++) {
             address assign_relayer = assigned_relayers[key][slot];
             // the message delivery in the `slot` assign_relayer
-            if (slot * RELAY_TIME < diff_time && diff_time <= (slot + 1 ) * RELAY_TIME && diff_time) {
+            // [slot, slot+1)
+            if (slot * RELAY_TIME <= diff_time && diff_time < (slot + 1 ) * RELAY_TIME) {
                 uint256 base_fee = feeOf[assign_relayer];
                 (delivery_reward, confirm_reward, vault_reward) = _distribute_ontime(message_fee, base_fee, assign_relayer, delivery_relayer, confirm_relayer);
             }
