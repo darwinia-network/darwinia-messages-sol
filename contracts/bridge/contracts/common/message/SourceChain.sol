@@ -183,7 +183,7 @@ contract SourceChain {
         );
     }
 
-    function decodeMessageKey(uint256 encoded) public view returns (MessageKey memory key) {
+    function decodeMessageKey(uint256 encoded) public pure returns (MessageKey memory key) {
         key.this_chain_id = uint32(encoded >> 160);
         key.this_lane_id = uint32(encoded >> 128);
         key.bridged_chain_id = uint32(encoded >> 96);
