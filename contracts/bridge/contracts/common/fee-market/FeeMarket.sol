@@ -14,7 +14,7 @@ contract FeeMarket is IFeeMarket {
     event UnLocked(address indexed src, uint wad);
     event AddRelayer(address indexed relayer, uint fee);
     event RemoveRelayer(address indexed relayer);
-    event OrderAssgigned(uint256 indexed key, uint timestamp, address[] top_relayers);
+    event OrderAssgigned(uint256 indexed key, uint timestamp);
     event OrderSettled(uint256 indexed key, uint timestamp);
 
     address private constant SENTINEL_BEGIN = address(0x1);
@@ -225,7 +225,7 @@ contract FeeMarket is IFeeMarket {
         }
         // record the assigned time
         orderOf[key] = block.timestamp;
-        emit OrderAssgigned(key, block.timestamp, top_relayers);
+        emit OrderAssgigned(key, block.timestamp);
         return true;
     }
 
