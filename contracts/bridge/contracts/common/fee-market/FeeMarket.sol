@@ -253,12 +253,11 @@ contract FeeMarket is IFeeMarket {
         emit Locked(to, wad);
     }
 
-    function _unlock(address to, uint wad) internal returns (bool) {
+    function _unlock(address to, uint wad) internal {
         require(lockedOf[to] >= wad, "!unlock");
         lockedOf[to] -= wad;
         balanceOf[to] += wad;
         emit UnLocked(to, wad);
-        return true;
     }
 
     function _slash(address src, uint wad) internal {
