@@ -109,7 +109,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         uint256 marketFee = IFeeMarket(fee_market).market_fee();
         require(fee >= marketFee, "Lane: TooLowFee");
         // assign the message to top relayers
-        require(IFeeMarket(fee_market).assign{value: marketFee}(nonce), "Lane: AssignRelayersFailed");
+        require(IFeeMarket(fee_market).assign{value: marketFee}(encodeMessageKey(nonce)), "Lane: AssignRelayersFailed");
         // return remaining fee
         if (fee > marketFee) {
             msg.sender.transfer(fee - marketFee);
@@ -132,28 +132,6 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         commit();
         emit MessageAccepted(nonce);
         return nonce;
-    }
-
-    // 32 bytes to identify an unique message
-    // MessageKey encoding:
-    // ThisChainPosition | BridgedChainPosition | ThisLanePosition | BridgedLanePosition | Nonce
-    // [0..8)   bytes ---- Reserved
-    // [8..12)  bytes ---- ThisChainPosition
-    // [16..20) bytes ---- ThisLanePosition
-    // [12..16) bytes ---- BridgedChainPosition
-    // [20..24) bytes ---- BridgedLanePosition
-    // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
-    function encodeMessageKey(uint64 nonce) external view returns (uint256) {
-        return uint256(thisChainPosition) << 160 + uint256(bridgedChainPosition) << 128 + uint256(thisLanePosition) << 96 + uint256(bridgedLanePosition) << 64 + uint256(nonce);
-    }
-
-    // Pay additional fee for the message.
-    function increase_message_fee(uint64 nonce) external payable nonReentrant {
-        require(nonce > outboundLaneNonce.latest_received_nonce, "Lane: MessageIsAlreadyDelivered");
-        require(nonce <= outboundLaneNonce.latest_generated_nonce, "Lane: MessageIsNotYetSent");
-        messages[nonce].fee += msg.value;
-        commit();
-        emit MessageFeeIncreased(nonce, messages[nonce].fee);
     }
 
     // Receive messages delivery proof from bridged chain.
@@ -181,7 +159,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             uint64 begin = outboundLaneNonce.latest_received_nonce + 1;
             for (uint64 index = 0; index < size; index++) {
                 uint64 nonce = index + begin;
-                lane_data.messages[index] = Message(MessageKey(thisChainPosition, thisLanePosition, bridgedChainPosition, bridgedLanePosition, nonce), messages[nonce]);
+                lane_data.messages[index] = Message(encodeMessageKey(nonce), messages[nonce]);
             }
         }
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
@@ -318,7 +296,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             UnrewardedRelayer memory r = relayers[i];
             uint64 nonce_begin = max(r.messages.begin, received_start);
             uint64 nonce_end = min(r.messages.end, received_end);
-            delivery_relayers[i] = IFeeMarket.DeliveredRelayer(r.relayer, nonce_begin, nonce_end);
+            delivery_relayers[i] = IFeeMarket.DeliveredRelayer(r.relayer, encodeMessageKey(nonce_begin), encodeMessageKey(nonce_end));
         }
         require(IFeeMarket(fee_market).settle(delivery_relayers, msg.sender), "Lane: SettleFailed");
     }

@@ -63,5 +63,18 @@ contract MessageVerifier {
             "Verifer: InvalidProof"
         );
     }
+
+    // 32 bytes to identify an unique message
+    // MessageKey encoding:
+    // ThisChainPosition | BridgedChainPosition | ThisLanePosition | BridgedLanePosition | Nonce
+    // [0..8)   bytes ---- Reserved
+    // [8..12)  bytes ---- ThisChainPosition
+    // [16..20) bytes ---- ThisLanePosition
+    // [12..16) bytes ---- BridgedChainPosition
+    // [20..24) bytes ---- BridgedLanePosition
+    // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
+    function encodeMessageKey(uint64 nonce) public view returns (uint256) {
+        return uint256(thisChainPosition) << 160 + uint256(thisLanePosition) << 128 + uint256(bridgedChainPosition) << 96 + uint256(bridgedLanePosition) << 64 + uint256(nonce);
+    }
 }
 
