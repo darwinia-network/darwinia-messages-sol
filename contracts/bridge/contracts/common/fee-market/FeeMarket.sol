@@ -97,11 +97,15 @@ contract FeeMarket is IFeeMarket {
         emit SetOutbound(out, flag);
     }
 
+    // deposit native token for collateral to relay message
+    // after enroll the relayer and be assigned new message
+    // deposited token will be locked for relay the message
     function deposit() public payable {
         balanceOf[msg.sender] += msg.value;
         emit Deposit(msg.sender, msg.value);
     }
 
+    // withdraw your free/eared balance anytime.
     function withdraw(uint wad) public {
         require(balanceOf[msg.sender] >= wad);
         balanceOf[msg.sender] -= wad;
@@ -113,6 +117,9 @@ contract FeeMarket is IFeeMarket {
         return address(this).balance;
     }
 
+    // fetch the `count` of order book in fee-market
+    // if flag set true, will ignore their balance
+    // if flag set false, will ensure their balance is sufficient for lock `COLLATERAL_PERORDER`
     function getOrderBook(uint count, bool flag) external view returns (uint256, address[] memory, uint256[] memory, uint256 [] memory) {
         require(count <= relayer_count, "!count");
         address[] memory array1 = new address[](count);
@@ -132,6 +139,7 @@ contract FeeMarket is IFeeMarket {
         return (index, array1, array2, array3);
     }
 
+    // find top lowest maker fee relayers
     function getTopRelayers() public view returns (address[] memory) {
         require(ASSIGNED_RELAYERS_NUMBER <= relayer_count, "!count");
         address[] memory array = new address[](ASSIGNED_RELAYERS_NUMBER);
@@ -147,6 +155,7 @@ contract FeeMarket is IFeeMarket {
         require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
     }
 
+    // fetch the order fee by the encoded message key
     function getOrderFee(uint256 key) public view returns (uint256 fee) {
         address last = assigned_relayers[key][ASSIGNED_RELAYERS_NUMBER - 1];
         fee = feeOf[last];
@@ -156,17 +165,22 @@ contract FeeMarket is IFeeMarket {
         return addr != SENTINEL_BEGIN && addr != SENTINEL_END && relayers[addr] != address(0);
     }
 
+    // fetch the real time maket fee
     function market_fee() external view override returns (uint fee) {
         address[] memory top_relayers = getTopRelayers();
         address last = top_relayers[top_relayers.length - 1];
         return feeOf[last];
     }
 
+    // deposit native token, enroll to be a relayer
     function enroll(address prev, uint fee) public payable {
         deposit();
         add_relayer(prev, fee);
     }
 
+    // enroll to be a relayer
+    // `prev` is the previous relayer
+    // `fee` is the maker fee to set, PrevFee <= MakerFee <= NextFee
     function add_relayer(address prev, uint fee) public enoughBalance {
         address cur = msg.sender;
         address next = relayers[prev];
@@ -185,10 +199,12 @@ contract FeeMarket is IFeeMarket {
         emit AddRelayer(cur, fee);
     }
 
+    // unenroll the relayer to be free
     function remove_relayer(address prev) public {
         _remove_relayer(prev, msg.sender);
     }
 
+    // move your position in the fee-market orderbook
     function move_relayer(address old_prev, address new_prev, uint new_fee) public {
         remove_relayer(old_prev);
         add_relayer(new_prev, new_fee);
