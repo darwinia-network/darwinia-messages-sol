@@ -206,7 +206,7 @@ contract FeeMarket is IFeeMarket {
         _remove_relayer(prev, msg.sender);
     }
 
-    function swap_relayer(address old_prev, address new_prev, uint new_fee) public {
+    function move_relayer(address old_prev, address new_prev, uint new_fee) public {
         remove_relayer(old_prev);
         add_relayer(new_prev, new_fee);
     }
