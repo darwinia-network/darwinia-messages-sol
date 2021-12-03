@@ -172,10 +172,16 @@ contract FeeMarket is IFeeMarket {
         return feeOf[last];
     }
 
-    // deposit native token, enroll to be a relayer
+    // deposit native token and enroll to be a relayer at fee-market
     function enroll(address prev, uint fee) public payable {
         deposit();
         add_relayer(prev, fee);
+    }
+
+    // withdraw all balance and remove relayer role at fee-market
+    function unenroll(address prev) public {
+        withdraw(balanceOf[msg.sender]);
+        remove_relayer(prev);
     }
 
     // enroll to be a relayer
@@ -199,7 +205,7 @@ contract FeeMarket is IFeeMarket {
         emit AddRelayer(cur, fee);
     }
 
-    // unenroll the relayer to be free
+    // remove the relayer from the fee-market
     function remove_relayer(address prev) public {
         _remove_relayer(prev, msg.sender);
     }
