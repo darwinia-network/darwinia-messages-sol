@@ -77,8 +77,11 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
     /**
      * @dev Throws if called by any account other than the inboundlane account.
      */
-    modifier onlyInBoundLane(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address backingAddress) {
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, backingAddress));
+    modifier onlyInBoundLane(address backingAddress) {
+        bytes32 remoteId = keccak256(abi.encodePacked(
+            IMessageVerifier(msg.sender).bridgedChainPosition(),
+            IMessageVerifier(msg.sender).bridgedLanePosition(),
+            backingAddress));
         require(inboundLanes[remoteId] == msg.sender, "MappingTokenFactory: caller is not the inboundLane account");
         _;
     }
@@ -117,10 +120,6 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition));
         outboundLanes[remoteId] = outboundLane;
         emit NewOutBoundLaneAdded(outboundLane);
-    }
-
-    function setDailyLimit(address mappingToken, uint amount) public onlyOwner  {
-        _setDailyLimit(mappingToken, amount);
     }
 
     function changeDailyLimit(address mappingToken, uint amount) public onlyOwner  {
@@ -227,11 +226,8 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         return inboundLanes[remoteId] == msg.sender;
     }
 
-    // TODO the name/symbol need to convert to mapping token's name/symbol
     /**
      * @notice create new erc20 mapping contract, this can only be called by inboundLane
-     * @param bridgedChainPosition the bridged chain position
-     * @param bridgedLanePosition the bridged lane position
      * @param backingAddress the backingAddress which send this message
      * @param tokenType the original token type
      * @param originalToken the original token address
@@ -240,21 +236,24 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
      * @param decimals the decimals of the original erc20 token
      */
     function newErc20Contract(
-        uint32 bridgedChainPosition,
-        uint32 bridgedLanePosition,
         address backingAddress,
         uint32 tokenType,
         address originalToken,
+        string memory bridgedChainName,
         string memory name,
         string memory symbol,
         uint8 decimals
-    ) public onlyInBoundLane(bridgedChainPosition, bridgedLanePosition, backingAddress) whenNotPaused returns (address mappingToken) {
+    ) public onlyInBoundLane(backingAddress) whenNotPaused returns (address mappingToken) {
         require(tokenType == 0 || tokenType == 1, "token type cannot mapping to erc20 token");
         // (bridgeChainId, backingAddress, originalToken) pack a unique new contract salt
+        uint32 bridgedChainPosition = IMessageVerifier(msg.sender).bridgedChainPosition();
         bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
         require(salt2MappingToken[salt] == address(0), "contract has been deployed");
         mappingToken = deploy(salt, tokenType);
-        IMappingToken(mappingToken).initialize(name, symbol, decimals);
+        IMappingToken(mappingToken).initialize(
+            string(abi.encodePacked(name, "[", bridgedChainName, ">")),
+            string(abi.encodePacked("x", symbol)),
+            decimals);
 
         // save the mapping tokens in an array so it can be listed
         allMappingTokens.push(mappingToken);
@@ -267,21 +266,18 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
 
     /**
      * @notice issue mapping token, only can be called by inboundLane
-     * @param bridgedChainPosition the bridged chain position
-     * @param bridgedLanePosition the bridged lane position
      * @param backingAddress the backingAddress which send this message
      * @param originalToken the original token address
      * @param recipient the recipient of the issued mapping token
      * @param amount the amount of the issued mapping token
      */
     function issueMappingToken(
-        uint32 bridgedChainPosition,
-        uint32 bridgedLanePosition,
         address backingAddress,
         address originalToken,
         address recipient,
         uint256 amount
-    ) public onlyInBoundLane(bridgedChainPosition, bridgedLanePosition, backingAddress) whenNotPaused {
+    ) public onlyInBoundLane(backingAddress) whenNotPaused {
+        uint32 bridgedChainPosition = IMessageVerifier(msg.sender).bridgedChainPosition();
         address mappingToken = getMappingToken(bridgedChainPosition, backingAddress, originalToken);
         require(mappingToken != address(0), "mapping token has not created");
         require(amount > 0, "can not receive amount zero");

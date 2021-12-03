@@ -26,6 +26,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     }
     uint32 public constant NATIVE_TOKEN_TYPE = 0;
     uint32 public constant ERC20_TOKEN_TYPE = 1;
+    string public thisChainName;
 
     // bridge channel
     mapping(bytes32 => address) public inboundLanes;
@@ -61,7 +62,8 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         _;
     }
 
-    function initialize() public initializer {
+    function initialize(string memory _chainName) public initializer {
+        thisChainName = _chainName;
         ownableConstructor();
     }
 
@@ -124,11 +126,10 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         require(outboundLane != address(0), "cannot find outboundLane to send message");
         bytes memory newErc20Contract = abi.encodeWithSelector(
             IMappingTokenFactory.newErc20Contract.selector,
-            IMessageVerifier(outboundLane).thisChainPosition(),
-            IMessageVerifier(outboundLane).thisLanePosition(),
             address(this),
             ERC20_TOKEN_TYPE,
             token,
+            thisChainName,
             name,
             symbol,
             decimals
@@ -166,8 +167,6 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         require(outboundLane != address(0), "Backing: outboundLane not exist");
         bytes memory issueMappingToken = abi.encodeWithSelector(
             IMappingTokenFactory.issueMappingToken.selector,
-            IMessageVerifier(outboundLane).thisChainPosition(),
-            IMessageVerifier(outboundLane).thisLanePosition(),
             address(this),
             token,
             recipient,
