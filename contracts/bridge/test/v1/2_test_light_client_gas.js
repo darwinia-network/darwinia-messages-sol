@@ -86,7 +86,7 @@ describe("Light Client Gas Usage", function () {
   for (const testCase of testCases) {
     it(`runs full flow with ${testCase.totalNumberOfValidators} validators and ${testCase.totalNumberOfSignatures} signers with the complete transaction succeeding`,
       async function () {
-        this.timeout(1000 * 100);
+        this.timeout(1000 * 200);
         await runFlow(testCase.totalNumberOfValidators, testCase.totalNumberOfSignatures)
       });
   }
@@ -99,7 +99,7 @@ describe("Light Client Gas Usage", function () {
     )
     const numOfGuards = 3;
     const guards = fixture.validatorAddresses.slice(0, numOfGuards)
-    const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
+    const LightClientBridge = await ethers.getContractFactory("contracts/ethereum/v2/LightClientBridge.sol:LightClientBridge");
     const crab = beefyFixture.commitment.payload.network
     const vault = "0x0000000000000000000000000000000000000000"
     beefyLightClient = await LightClientBridge.deploy(

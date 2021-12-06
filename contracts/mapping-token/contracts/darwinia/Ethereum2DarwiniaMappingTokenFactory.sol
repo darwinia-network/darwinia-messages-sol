@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.10;
 import "./BasicMappingTokenFactory.sol";
 
 contract Ethereum2DarwiniaMappingTokenFactory is BasicMappingTokenFactory {
@@ -23,7 +23,7 @@ contract Ethereum2DarwiniaMappingTokenFactory is BasicMappingTokenFactory {
         );
         // send the register response message to backing
         (bool encodeSuccess, bytes memory register_response) = DISPATCH_ENCODER.call(
-            abi.encodePacked(bytes4(keccak256("e2d_token_register_response()")),
+            abi.encodePacked(bytes4(keccak256("token_register_response(address,address,address)")),
                              abi.encode(backing_address, original_token, mapping_token)));
         require(encodeSuccess, "create: encode e2d_token_register_response failed");
         (bool success, ) = DISPATCH.call(register_response);
@@ -35,7 +35,7 @@ contract Ethereum2DarwiniaMappingTokenFactory is BasicMappingTokenFactory {
     // so, here the user's token burned directly.
     function burnAndRemoteUnlock(address mapping_token, bytes memory recipient, uint256 amount) external {
         require(amount > 0, "can not transfer amount zero");
-        TokenInfo memory info = mappingToken2Info[mapping_token];
+        OriginalInfo memory info = mappingToken2OriginalInfo[mapping_token];
         require(info.original_token != address(0), "token is not created by factory");
         // Lock the fund in this before message on remote backing chain get dispatched successfully and burn finally
         // If remote backing chain unlock the origin token successfully, then this fund will be burned.
@@ -44,7 +44,7 @@ contract Ethereum2DarwiniaMappingTokenFactory is BasicMappingTokenFactory {
         IERC20(mapping_token).burn(address(this), amount);
 
         (bool encodeSuccess, bytes memory unlock_message) = DISPATCH_ENCODER.call(
-            abi.encodePacked(bytes4(keccak256("e2d_burn_and_remote_unlock()")),
+            abi.encodePacked(bytes4(keccak256("burn_and_remote_unlock(uint32,address,address,address,bytes,uint256)")),
                 abi.encode(
                     info.tokenType,
                     info.backing_address,

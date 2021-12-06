@@ -9,7 +9,7 @@ describe("Guard tests", () => {
   let lightClientBridge
 
   before(async () => {
-    const LightClientBridge = await ethers.getContractFactory("LightClientBridge");
+    const LightClientBridge = await ethers.getContractFactory("contracts/ethereum/v2/LightClientBridge.sol:LightClientBridge");
     const crab = GuardFixture.network
     const vault = "0x0000000000000000000000000000000000000000"
     lightClientBridge = await LightClientBridge.deploy(
@@ -27,7 +27,7 @@ describe("Guard tests", () => {
   it("should add new guard set correctly", async function () {
     let newGuard = "0xB13f16A6772C5A0b37d353C07068CA7B46297c43"
     let newThreshold = 3
-    const tx = lightClientBridge.addGuardWithThreshold(
+    const tx = await lightClientBridge.addGuardWithThreshold(
       newGuard,
       newThreshold,
       GuardFixture.signatures0
@@ -45,7 +45,7 @@ describe("Guard tests", () => {
     let prevGuard = "0x0000000000000000000000000000000000000001"
     let rmGuard = "0xB13f16A6772C5A0b37d353C07068CA7B46297c43"
     let newThreshold = 2
-    const tx = lightClientBridge.removeGuard(
+    const tx = await lightClientBridge.removeGuard(
       prevGuard,
       rmGuard,
       newThreshold,
@@ -64,7 +64,7 @@ describe("Guard tests", () => {
     let prevGuard = "0x0000000000000000000000000000000000000001"
     let oldGuard = "0xE78399B095Df195f10b56724DD22AA88fC295B4a"
     let newGuard = "0xB13f16A6772C5A0b37d353C07068CA7B46297c43"
-    const tx = lightClientBridge.swapGuard(
+    const tx = await lightClientBridge.swapGuard(
       prevGuard,
       oldGuard,
       newGuard,
@@ -81,7 +81,7 @@ describe("Guard tests", () => {
 
   it("should change the guard threshold correctly", async function () {
     let newThreshold = 3
-    const tx = lightClientBridge.changeThreshold(
+    const tx = await lightClientBridge.changeThreshold(
       newThreshold,
       GuardFixture.signatures3
     )

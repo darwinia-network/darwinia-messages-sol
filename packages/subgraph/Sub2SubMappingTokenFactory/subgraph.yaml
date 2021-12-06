@@ -1,0 +1,44 @@
+specVersion: 0.0.2
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Sub2SubMappingTokenFactory
+    network: pangolin
+    source:
+      address: "0x92496871560a01551E1B4fD04540D7A519D5C19e"
+      abi: Sub2SubMappingTokenFactory
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - BurnAndWaitingConfirm
+        - DailyLimitChange
+        - IssuingERC20Created
+        - IssuingMappingToken
+        - MappingTokenUpdated
+        - NewLogicSetted
+        - OwnershipTransferred
+        - RemoteUnlockConfirmed
+      abis:
+        - name: Sub2SubMappingTokenFactory
+          file: ./abis/Sub2SubMappingTokenFactory.json
+      eventHandlers:
+        - event: BurnAndWaitingConfirm(bytes4,uint64,address,bytes,address,uint256)
+          handler: handleBurnAndWaitingConfirm
+        - event: DailyLimitChange(address,uint256)
+          handler: handleDailyLimitChange
+        - event: IssuingERC20Created(address,address,address)
+          handler: handleIssuingERC20Created
+        - event: IssuingMappingToken(bytes4,uint64,address,address,uint256)
+          handler: handleIssuingMappingToken
+        - event: MappingTokenUpdated(bytes32,address,address)
+          handler: handleMappingTokenUpdated
+        - event: NewLogicSetted(uint32,address)
+          handler: handleNewLogicSetted
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: RemoteUnlockConfirmed(bytes4,uint64,address,address,uint256,bool)
+          handler: handleRemoteUnlockConfirmed
+      file: ./src/mapping.ts

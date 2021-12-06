@@ -25,6 +25,7 @@
     "hardhat": "^2.3.0",
     "hardhat-abi-exporter": "^2.2.1",
     "hardhat-gas-reporter": "^1.0.4",
+    "merkle-patricia-tree": "3.0.0",
     "merkletreejs": "^0.2.18",
     "shx": "^0.3.3",
     "solidity-docgen": "^0.5.13"
