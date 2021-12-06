@@ -17,8 +17,8 @@ contract FeeMarket is IFeeMarket {
     event OrderAssgigned(uint256 indexed key, uint timestamp);
     event OrderSettled(uint256 indexed key, uint timestamp);
 
-    address private constant SENTINEL_BEGIN = address(0x1);
-    address private constant SENTINEL_END = address(0x2);
+    address private constant SENTINEL_HEAD = address(0x1);
+    address private constant SENTINEL_TAIL = address(0x2);
 
     // System treasury
     address public immutable VAULT;
@@ -79,8 +79,8 @@ contract FeeMarket is IFeeMarket {
         ASSIGNED_RELAYERS_NUMBER = _assigned_relayers_number;
         SLASH_TIME = _slash_time;
         RELAY_TIME = _relay_time;
-        relayers[SENTINEL_BEGIN] = SENTINEL_END;
-        feeOf[SENTINEL_END] = uint256(-1);
+        relayers[SENTINEL_HEAD] = SENTINEL_TAIL;
+        feeOf[SENTINEL_TAIL] = uint256(-1);
     }
 
     receive() external payable {
@@ -126,8 +126,8 @@ contract FeeMarket is IFeeMarket {
         uint256[] memory array2 = new uint256[](count);
         uint256[] memory array3 = new uint256[](count);
         uint index = 0;
-        address cur = relayers[SENTINEL_BEGIN];
-        while (cur != SENTINEL_END) {
+        address cur = relayers[SENTINEL_HEAD];
+        while (cur != SENTINEL_TAIL) {
             if (flag || balanceOf[cur] >= COLLATERAL_PERORDER) {
                 array1[index] = cur;
                 array2[index] = feeOf[cur];
@@ -144,8 +144,8 @@ contract FeeMarket is IFeeMarket {
         require(ASSIGNED_RELAYERS_NUMBER <= relayer_count, "!count");
         address[] memory array = new address[](ASSIGNED_RELAYERS_NUMBER);
         uint index = 0;
-        address cur = relayers[SENTINEL_BEGIN];
-        while (cur != SENTINEL_END) {
+        address cur = relayers[SENTINEL_HEAD];
+        while (cur != SENTINEL_TAIL) {
             if (balanceOf[cur] >= COLLATERAL_PERORDER) {
                 array[index] = cur;
                 index++;
@@ -162,7 +162,7 @@ contract FeeMarket is IFeeMarket {
     }
 
     function isRelayer(address addr) public view returns (bool) {
-        return addr != SENTINEL_BEGIN && addr != SENTINEL_END && relayers[addr] != address(0);
+        return addr != SENTINEL_HEAD && addr != SENTINEL_TAIL && relayers[addr] != address(0);
     }
 
     // fetch the real time maket fee
@@ -190,7 +190,7 @@ contract FeeMarket is IFeeMarket {
     function add_relayer(address prev, uint fee) public enoughBalance {
         address cur = msg.sender;
         address next = relayers[prev];
-        require(cur != address(0) && cur != SENTINEL_BEGIN && cur != SENTINEL_END && cur != address(this), "!valid");
+        require(cur != address(0) && cur != SENTINEL_HEAD && cur != SENTINEL_TAIL && cur != address(this), "!valid");
         // No duplicate relayer allowed.
         require(relayers[cur] == address(0), "!new");
         // Prev relayer must in the list.
@@ -241,7 +241,7 @@ contract FeeMarket is IFeeMarket {
     }
 
     function _remove_relayer(address prev, address cur) private {
-        require(cur != address(0) && cur != SENTINEL_BEGIN && cur != SENTINEL_END, "!valid");
+        require(cur != address(0) && cur != SENTINEL_HEAD && cur != SENTINEL_TAIL, "!valid");
         require(relayers[prev] == cur, "!cur");
         require(lockedOf[cur] == 0, "!locked");
         relayers[prev] = relayers[cur];

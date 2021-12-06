@@ -1,8 +1,9 @@
-const { expect } = require("chai");
-const { solidity } = require("ethereum-waffle");
-const chai = require("chai");
+const { expect } = require("chai")
+const { solidity } = require("ethereum-waffle")
+const chai = require("chai")
+const { feeMaketFixure } = require("./shared/fixture")
 
-chai.use(solidity);
+chai.use(solidity)
 const log = console.log
 const thisChainPos = 0
 const thisLanePos = 0
@@ -10,6 +11,7 @@ const bridgedChainPos = 1
 const bridgedLanePos = 1
 let outbound, inbound
 let outboundData, inboundData
+let feeMarket
 
 const send_message = async (nonce) => {
     const tx = await outbound.send_message(
@@ -81,10 +83,16 @@ describe("sync message relay tests", () => {
     const OutboundLane = await ethers.getContractFactory("OutboundLane")
     outbound = await OutboundLane.deploy(lightClient.address, thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, 1, 0, 0)
     await outbound.grantRole("0x7bb193391dc6610af03bd9922e44c83b9fda893aeed61cf64297fb4473500dd1", owner.address)
+    await outbound.grantRole("0x8e856dd2c9de9abc810f3fbf5113d5a0f5eae2365cef39cc37905a5af78d68e6", owner.address)
     const InboundLane = await ethers.getContractFactory("InboundLane")
     inbound = await InboundLane.deploy(lightClient.address, bridgedChainPos, bridgedLanePos, thisChainPos, thisLanePos, 0, 0)
     log(" out bound lane                                   ->      in bound lane")
-    log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")
+    log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]");
+
+    ({ feeMarket } = await waffle.loadFixture(feeMaketFixure))
+    await feeMarket.totalSupply()
+    await feeMarket['setOutbound'](outbound.address, 1)
+    await outbound.setFeeMarket(feeMarket.address)
   });
 
   it("0", async function () {
