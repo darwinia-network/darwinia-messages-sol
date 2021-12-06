@@ -12,15 +12,26 @@ const bridgedLanePos = 1
 let outbound, inbound
 let outboundData, inboundData
 let feeMarket
+let overrides = { value: ethers.utils.parseEther("30") }
 
 const send_message = async (nonce) => {
     const tx = await outbound.send_message(
       "0x0000000000000000000000000000000000000000",
-      "0x"
+      "0x",
+      overrides
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
       .withArgs(nonce)
+    let block = await ethers.provider.getBlock(tx.blockNumber)
+    await expect(tx)
+      .to.emit(feeMarket, "OrderAssgigned")
+      .withArgs(await outbound.encodeMessageKey(nonce), block.timestamp)
+
+    const [one, two, three] = await ethers.getSigners();
+    await expect(tx)
+      .to.emit(feeMarket, "Locked")
+      .withArgs(three.address, await feeMarket.COLLATERAL_PERORDER())
     await logNonce()
 }
 
@@ -44,8 +55,9 @@ const receive_messages_proof = async (nonce) => {
 }
 
 const receive_messages_delivery_proof = async (begin, end) => {
+    const [one, two, three, four] = await ethers.getSigners();
     laneData = await inbound.data()
-    const tx = await outbound.receive_messages_delivery_proof(laneData, "0x")
+    const tx = await outbound.connect(four).receive_messages_delivery_proof(laneData, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 0)
@@ -53,6 +65,11 @@ const receive_messages_delivery_proof = async (begin, end) => {
       await expect(tx)
         .to.emit(outbound, "CallbackMessageDelivered")
         .withArgs(i, true)
+
+      let block = await ethers.provider.getBlock(tx.blockNumber)
+      await expect(tx)
+        .to.emit(feeMarket, "OrderSettled")
+        .withArgs(await outbound.encodeMessageKey(i), block.timestamp)
     }
     await logNonce()
 }
@@ -94,6 +111,34 @@ describe("sync message relay tests", () => {
     await feeMarket['setOutbound'](outbound.address, 1)
     await outbound.setFeeMarket(feeMarket.address)
   });
+
+  it("add relayer", async () => {
+    const [one, two, three, four] = await ethers.getSigners();
+    let overrides = { value: ethers.utils.parseEther("100") }
+    let tx = await feeMarket.connect(four).enroll(three.address, ethers.utils.parseEther("40"), overrides)
+    expect(tx)
+      .to.emit(feeMarket, "AddRelayer")
+      .withArgs(three.address, four.address, ethers.utils.parseEther("40"))
+    expect(tx)
+      .to.emit(feeMarket, "Deposit")
+      .withArgs(four.address, ethers.utils.parseEther("100"))
+  })
+
+  it("rm relayer", async () => {
+    const [one, two, three, four] = await ethers.getSigners();
+    let tx = await feeMarket.connect(four).unenroll(three.address)
+    expect(tx)
+      .to.emit(feeMarket, "RemoveRelayer")
+      .withArgs(three.address, four.address)
+    expect(tx)
+      .to.emit(feeMarket, "Withdrawal")
+      .withArgs(four.address, ethers.utils.parseEther("100"))
+  })
+
+  it("encodeMessageKey", async () => {
+    let messageKey = await outbound.encodeMessageKey(1)
+    expect(messageKey).to.eq("0x0000000000000000000000000000000000000001000000010000000000000001")
+  })
 
   it("0", async function () {
     await send_message(1)

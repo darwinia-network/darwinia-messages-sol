@@ -74,7 +74,7 @@ contract MessageVerifier {
     // [20..24) bytes ---- BridgedLanePosition
     // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
     function encodeMessageKey(uint64 nonce) public view returns (uint256) {
-        return uint256(thisChainPosition) << 160 + uint256(thisLanePosition) << 128 + uint256(bridgedChainPosition) << 96 + uint256(bridgedLanePosition) << 64 + uint256(nonce);
+        return (uint256(thisChainPosition) << 160) + (uint256(thisLanePosition) << 128) + (uint256(bridgedChainPosition) << 96) + (uint256(bridgedLanePosition) << 64) + uint256(nonce);
     }
 }
 

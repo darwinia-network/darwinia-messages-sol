@@ -10,11 +10,13 @@ const bridgedChainPos = 1
 const bridgedLanePos = 1
 let outbound, inbound
 let outboundData, inboundData, a, b, c, d
+let overrides = { value: ethers.utils.parseEther("30") }
 
 const send_message = async (nonce) => {
     const tx = await outbound.send_message(
       "0x0000000000000000000000000000000000000000",
-      "0x"
+      "0x",
+      overrides
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")

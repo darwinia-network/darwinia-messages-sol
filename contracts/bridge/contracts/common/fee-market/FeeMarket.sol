@@ -12,8 +12,8 @@ contract FeeMarket is IFeeMarket {
     event Withdrawal(address indexed src, uint wad);
     event Locked(address indexed src, uint wad);
     event UnLocked(address indexed src, uint wad);
-    event AddRelayer(address indexed relayer, uint fee);
-    event RemoveRelayer(address indexed relayer);
+    event AddRelayer(address indexed prev, address indexed cur, uint fee);
+    event RemoveRelayer(address indexed prev, address indexed cur);
     event OrderAssgigned(uint256 indexed key, uint timestamp);
     event OrderSettled(uint256 indexed key, uint timestamp);
 
@@ -145,7 +145,7 @@ contract FeeMarket is IFeeMarket {
         address[] memory array = new address[](ASSIGNED_RELAYERS_NUMBER);
         uint index = 0;
         address cur = relayers[SENTINEL_HEAD];
-        while (cur != SENTINEL_TAIL) {
+        while (cur != SENTINEL_TAIL && index < ASSIGNED_RELAYERS_NUMBER) {
             if (balanceOf[cur] >= COLLATERAL_PERORDER) {
                 array[index] = cur;
                 index++;
@@ -203,7 +203,7 @@ contract FeeMarket is IFeeMarket {
         relayers[prev] = cur;
         feeOf[cur] = fee;
         relayer_count++;
-        emit AddRelayer(cur, fee);
+        emit AddRelayer(prev, cur, fee);
     }
 
     // remove the relayer from the fee-market
@@ -253,7 +253,7 @@ contract FeeMarket is IFeeMarket {
         uint index = 0;
         address prev = SENTINEL_HEAD;
         address cur = relayers[SENTINEL_HEAD];
-        while (cur != SENTINEL_TAIL) {
+        while (cur != SENTINEL_TAIL && index < ASSIGNED_RELAYERS_NUMBER) {
             if (balanceOf[cur] >= COLLATERAL_PERORDER) {
                 array[index] = cur;
                 index++;
@@ -275,7 +275,7 @@ contract FeeMarket is IFeeMarket {
         relayers[cur] = address(0);
         feeOf[cur] = 0;
         relayer_count--;
-        emit RemoveRelayer(cur);
+        emit RemoveRelayer(prev, cur);
     }
 
     function _lock(address to, uint wad) internal {
