@@ -15,7 +15,9 @@ const feeMaketFixure = async () => {
     ethers.utils.parseEther("20"),
     ethers.utils.parseEther("30")
   ]
-  await feeMarket.connect(one).enroll(feeMarket.SENTINEL_HEAD, oneFee)
+  await feeMarket.connect(one).enroll("0x0000000000000000000000000000000000000001", oneFee)
+  await feeMarket.connect(two).enroll(one.address, twoFee)
+  await feeMarket.connect(three).enroll(two.address, threeFee)
   return {feeMarket}
 }
 
