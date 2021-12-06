@@ -153,25 +153,7 @@ contract FeeMarket is IFeeMarket {
             cur = relayers[cur];
         }
         require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
-    }
-
-    function _get_and_prune_top_relayers() internal returns (address[] memory) {
-        require(ASSIGNED_RELAYERS_NUMBER <= relayer_count, "!count");
-        address[] memory array = new address[](ASSIGNED_RELAYERS_NUMBER);
-        uint index = 0;
-        address prev = SENTINEL_HEAD;
-        address cur = relayers[SENTINEL_HEAD];
-        while (cur != SENTINEL_TAIL) {
-            if (balanceOf[cur] >= COLLATERAL_PERORDER) {
-                array[index] = cur;
-                index++;
-            } else {
-                prune_relayer(prev, cur);
-            }
-            prev = cur;
-            cur = relayers[cur];
-        }
-        require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
+        return array;
     }
 
     // fetch the order fee by the encoded message key
@@ -263,6 +245,26 @@ contract FeeMarket is IFeeMarket {
     function settle(DeliveredRelayer[] calldata delivery_relayers, address confirm_relayer) external override onlyOutBound returns (bool) {
         _pay_relayers_rewards(delivery_relayers, confirm_relayer);
         return true;
+    }
+
+    function _get_and_prune_top_relayers() internal returns (address[] memory) {
+        require(ASSIGNED_RELAYERS_NUMBER <= relayer_count, "!count");
+        address[] memory array = new address[](ASSIGNED_RELAYERS_NUMBER);
+        uint index = 0;
+        address prev = SENTINEL_HEAD;
+        address cur = relayers[SENTINEL_HEAD];
+        while (cur != SENTINEL_TAIL) {
+            if (balanceOf[cur] >= COLLATERAL_PERORDER) {
+                array[index] = cur;
+                index++;
+            } else {
+                prune_relayer(prev, cur);
+            }
+            prev = cur;
+            cur = relayers[cur];
+        }
+        require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
+        return array;
     }
 
     function _remove_relayer(address prev, address cur) private {
