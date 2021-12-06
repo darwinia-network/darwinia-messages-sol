@@ -155,6 +155,25 @@ contract FeeMarket is IFeeMarket {
         require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
     }
 
+    function _get_and_prune_top_relayers() internal returns (address[] memory) {
+        require(ASSIGNED_RELAYERS_NUMBER <= relayer_count, "!count");
+        address[] memory array = new address[](ASSIGNED_RELAYERS_NUMBER);
+        uint index = 0;
+        address prev = SENTINEL_HEAD;
+        address cur = relayers[SENTINEL_HEAD];
+        while (cur != SENTINEL_TAIL) {
+            if (balanceOf[cur] >= COLLATERAL_PERORDER) {
+                array[index] = cur;
+                index++;
+            } else {
+                prune_relayer(prev, cur);
+            }
+            prev = cur;
+            cur = relayers[cur];
+        }
+        require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
+    }
+
     // fetch the order fee by the encoded message key
     function getOrderFee(uint256 key) public view returns (uint256 fee) {
         address last = assigned_relayers[key][ASSIGNED_RELAYERS_NUMBER - 1];
@@ -210,6 +229,12 @@ contract FeeMarket is IFeeMarket {
         _remove_relayer(prev, msg.sender);
     }
 
+    function prune_relayer(address prev, address cur) public {
+        if (lockedOf[cur] == 0 && balanceOf[cur] < COLLATERAL_PERORDER) {
+            _remove_relayer(prev, cur);
+        }
+    }
+
     // move your position in the fee-market orderbook
     function move_relayer(address old_prev, address new_prev, uint new_fee) public {
         remove_relayer(old_prev);
@@ -219,7 +244,7 @@ contract FeeMarket is IFeeMarket {
     // Assign new message encoded key to top N relayers in fee-market
     function assign(uint256 key) public override payable onlyOutBound returns (bool) {
         //select top N relayers
-        address[] memory top_relayers = getTopRelayers();
+        address[] memory top_relayers = _get_and_prune_top_relayers();
         address last = top_relayers[top_relayers.length - 1];
         require(msg.value == feeOf[last], "!fee");
         for (uint slot = 0; slot < top_relayers.length; slot++) {
