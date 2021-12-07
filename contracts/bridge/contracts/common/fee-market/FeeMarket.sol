@@ -6,6 +6,8 @@ import "../../interfaces/IFeeMarket.sol";
 contract FeeMarket is IFeeMarket {
     event SetOwner(address indexed o, address indexed n);
     event SetOutbound(address indexed out, uint256 flag);
+    event SetParaTime(uint32 slash_time, uint32 relay_time);
+    event SetParaRelay(uint32 assigned_relayers_number, uint256 collateral);
     event Slash(address indexed src, uint wad);
     event Reward(address indexed dst, uint wad);
     event Deposit(address indexed dst, uint wad);
@@ -14,27 +16,27 @@ contract FeeMarket is IFeeMarket {
     event UnLocked(address indexed src, uint wad);
     event AddRelayer(address indexed prev, address indexed cur, uint fee);
     event RemoveRelayer(address indexed prev, address indexed cur);
-    event OrderAssgigned(uint256 indexed key, uint timestamp);
+    event OrderAssgigned(uint256 indexed key, uint256 timestamp, uint32 assigned_relayers_number, uint256 collateral);
     event OrderSettled(uint256 indexed key, uint timestamp);
 
     address private constant SENTINEL_HEAD = address(0x1);
     address private constant SENTINEL_TAIL = address(0x2);
-
     // System treasury
     address public immutable VAULT;
-    // The collateral relayer need to lock for each order.
-    uint256 public immutable COLLATERAL_PERORDER;
-    // Fee market assigned relayers numbers
-    uint256 public immutable ASSIGNED_RELAYERS_NUMBER;
-    // SLASH_AMOUNT = COLLATERAL_PERORDER * late_time / SLASH_TIME
-    uint256 public immutable SLASH_TIME;
-    // Time assigned relayer to relay messages
-    uint256 public immutable RELAY_TIME;
 
+    // SlashAmount = CollateralPerorder * LateTime / SlashTime
+    uint32 public SlashTime;
+    // Time assigned relayer to relay messages
+    uint32 public RelayTime;
+    // Fee market assigned relayers numbers
+    uint32 public AssignedRelayersNumber;
+    // The collateral relayer need to lock for each order.
+    uint256 public CollateralPerorder;
     // Governance role to decide which outbounds message to relay
     address public owner;
     // Outbounds which message will be relayed by relayers
     mapping(address => uint256) public outbounds;
+
     // Balance of the relayer including deposit and eared fee
     mapping(address => uint256) public balanceOf;
     // Locked balance of relayer for relay messages
@@ -45,9 +47,17 @@ contract FeeMarket is IFeeMarket {
     uint256 public relayer_count;
     // Maker fee of the relayer
     mapping(address => uint256) public feeOf;
-    // Assigned time of each message
-    // message_encoded_key => assigned_time
-    mapping(uint256 => uint256) public orderOf;
+
+    struct Order {
+        // Assigned time of the order
+        uint32 assigned_time;
+        // Assigned number of relayers
+        uint32 assigned_relayers_number;
+        // Assigned collateral of each relayer
+        uint256 collateral;
+    }
+    // message_encoded_key => Order
+    mapping(uint256 => Order) public orderOf;
     // message_encoded_key => assigned_slot => assigned_relayer
     mapping(uint256 => mapping(uint256 => address)) public assigned_relayers;
 
@@ -62,23 +72,25 @@ contract FeeMarket is IFeeMarket {
     }
 
     modifier enoughBalance() {
-        require(balanceOf[msg.sender] >= COLLATERAL_PERORDER, "!balance");
+        require(balanceOf[msg.sender] >= CollateralPerorder, "!balance");
         _;
     }
 
     constructor(
         address _vault,
         uint256 _collateral_perorder,
-        uint256 _assigned_relayers_number,
-        uint256 _slash_time,
-        uint256 _relay_time
+        uint32 _assigned_relayers_number,
+        uint32 _slash_time,
+        uint32 _relay_time
     ) public {
+        require(_assigned_relayers_number > 0, "!0");
+        require(_slash_time > 0 && _relay_time > 0, "!0");
         owner = msg.sender;
         VAULT = _vault;
-        COLLATERAL_PERORDER = _collateral_perorder;
-        ASSIGNED_RELAYERS_NUMBER = _assigned_relayers_number;
-        SLASH_TIME = _slash_time;
-        RELAY_TIME = _relay_time;
+        CollateralPerorder = _collateral_perorder;
+        AssignedRelayersNumber = _assigned_relayers_number;
+        SlashTime = _slash_time;
+        RelayTime = _relay_time;
         relayers[SENTINEL_HEAD] = SENTINEL_TAIL;
         feeOf[SENTINEL_TAIL] = uint256(-1);
     }
@@ -95,6 +107,20 @@ contract FeeMarket is IFeeMarket {
     function setOutbound(address out, uint256 flag) external onlyOwner {
         outbounds[out] = flag;
         emit SetOutbound(out, flag);
+    }
+
+    function setParaTime(uint32 slash_time, uint32 relay_time) external onlyOwner {
+        require(slash_time > 0 && relay_time > 0, "!0");
+        SlashTime = slash_time;
+        RelayTime = relay_time;
+        emit SetParaTime(slash_time, relay_time);
+    }
+
+    function setParaRelay(uint32 assigned_relayers_number, uint256 collateral_perorder) external onlyOwner {
+        require(assigned_relayers_number > 0, "!0");
+        AssignedRelayersNumber = assigned_relayers_number;
+        CollateralPerorder = collateral_perorder;
+        emit SetParaRelay(assigned_relayers_number, collateral_perorder);
     }
 
     // deposit native token for collateral to relay message
@@ -119,7 +145,7 @@ contract FeeMarket is IFeeMarket {
 
     // fetch the `count` of order book in fee-market
     // if flag set true, will ignore their balance
-    // if flag set false, will ensure their balance is sufficient for lock `COLLATERAL_PERORDER`
+    // if flag set false, will ensure their balance is sufficient for lock `CollateralPerorder`
     function getOrderBook(uint count, bool flag) external view returns (uint256, address[] memory, uint256[] memory, uint256 [] memory) {
         require(count <= relayer_count, "!count");
         address[] memory array1 = new address[](count);
@@ -128,7 +154,7 @@ contract FeeMarket is IFeeMarket {
         uint index = 0;
         address cur = relayers[SENTINEL_HEAD];
         while (cur != SENTINEL_TAIL) {
-            if (flag || balanceOf[cur] >= COLLATERAL_PERORDER) {
+            if (flag || balanceOf[cur] >= CollateralPerorder) {
                 array1[index] = cur;
                 array2[index] = feeOf[cur];
                 array3[index] = balanceOf[cur];
@@ -141,24 +167,25 @@ contract FeeMarket is IFeeMarket {
 
     // find top lowest maker fee relayers
     function getTopRelayers() public view returns (address[] memory) {
-        require(ASSIGNED_RELAYERS_NUMBER <= relayer_count, "!count");
-        address[] memory array = new address[](ASSIGNED_RELAYERS_NUMBER);
+        require(AssignedRelayersNumber <= relayer_count, "!count");
+        address[] memory array = new address[](AssignedRelayersNumber);
         uint index = 0;
         address cur = relayers[SENTINEL_HEAD];
-        while (cur != SENTINEL_TAIL && index < ASSIGNED_RELAYERS_NUMBER) {
-            if (balanceOf[cur] >= COLLATERAL_PERORDER) {
+        while (cur != SENTINEL_TAIL && index < AssignedRelayersNumber) {
+            if (balanceOf[cur] >= CollateralPerorder) {
                 array[index] = cur;
                 index++;
             }
             cur = relayers[cur];
         }
-        require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
+        require(index == AssignedRelayersNumber, "!assigned");
         return array;
     }
 
     // fetch the order fee by the encoded message key
     function getOrderFee(uint256 key) public view returns (uint256 fee) {
-        address last = assigned_relayers[key][ASSIGNED_RELAYERS_NUMBER - 1];
+        uint32 number = orderOf[key].assigned_relayers_number;
+        address last = assigned_relayers[key][number - 1];
         fee = feeOf[last];
     }
 
@@ -212,7 +239,7 @@ contract FeeMarket is IFeeMarket {
     }
 
     function prune_relayer(address prev, address cur) public {
-        if (lockedOf[cur] == 0 && balanceOf[cur] < COLLATERAL_PERORDER) {
+        if (lockedOf[cur] == 0 && balanceOf[cur] < CollateralPerorder) {
             _remove_relayer(prev, cur);
         }
     }
@@ -232,12 +259,12 @@ contract FeeMarket is IFeeMarket {
         for (uint slot = 0; slot < top_relayers.length; slot++) {
             address r = top_relayers[slot];
             require(isRelayer(r), "!relayer");
-            _lock(r, COLLATERAL_PERORDER);
+            _lock(r, CollateralPerorder);
             assigned_relayers[key][slot] = r;
         }
         // record the assigned time
-        orderOf[key] = block.timestamp;
-        emit OrderAssgigned(key, block.timestamp);
+        orderOf[key] = Order(uint32(block.timestamp), AssignedRelayersNumber, CollateralPerorder);
+        emit OrderAssgigned(key, block.timestamp, AssignedRelayersNumber, CollateralPerorder);
         return true;
     }
 
@@ -248,13 +275,13 @@ contract FeeMarket is IFeeMarket {
     }
 
     function _get_and_prune_top_relayers() internal returns (address[] memory) {
-        require(ASSIGNED_RELAYERS_NUMBER <= relayer_count, "!count");
-        address[] memory array = new address[](ASSIGNED_RELAYERS_NUMBER);
+        require(AssignedRelayersNumber <= relayer_count, "!count");
+        address[] memory array = new address[](AssignedRelayersNumber);
         uint index = 0;
         address prev = SENTINEL_HEAD;
         address cur = relayers[SENTINEL_HEAD];
-        while (cur != SENTINEL_TAIL && index < ASSIGNED_RELAYERS_NUMBER) {
-            if (balanceOf[cur] >= COLLATERAL_PERORDER) {
+        while (cur != SENTINEL_TAIL && index < AssignedRelayersNumber) {
+            if (balanceOf[cur] >= CollateralPerorder) {
                 array[index] = cur;
                 index++;
             } else {
@@ -263,7 +290,7 @@ contract FeeMarket is IFeeMarket {
             prev = cur;
             cur = relayers[cur];
         }
-        require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
+        require(index == AssignedRelayersNumber, "!assigned");
         return array;
     }
 
@@ -313,12 +340,13 @@ contract FeeMarket is IFeeMarket {
             DeliveredRelayer memory entry = delivery_relayers[i];
             uint256 every_delivery_reward = 0;
             for (uint256 key = entry.begin; key <= entry.end; key++) {
-                require(orderOf[key] > 0, "!exist");
+                require(orderOf[key].assigned_time > 0, "!exist");
                 // diff_time = settle_time - assign_time
-                uint256 diff_time = block.timestamp - orderOf[key];
+                uint256 diff_time = block.timestamp - orderOf[key].assigned_time;
                 // on time
                 // [0, slot * n)
-                if (diff_time < ASSIGNED_RELAYERS_NUMBER * RELAY_TIME) {
+                uint32 number = orderOf[key].assigned_relayers_number;
+                if (diff_time < number * RelayTime) {
                     // reward and unlock each assign_relayer
                     (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) = _reward_and_unlock_ontime(key, diff_time,  entry.relayer, confirm_relayer);
                     every_delivery_reward += delivery_reward;
@@ -328,7 +356,8 @@ contract FeeMarket is IFeeMarket {
                 // [slot * n, +∞)
                 } else {
                     // slash and unlock each assign_relayer
-                    (uint256 delivery_reward, uint256 confirm_reward) = _slash_and_unlock_late(key, diff_time);
+                    uint256 late_time = diff_time - number * RelayTime;
+                    (uint256 delivery_reward, uint256 confirm_reward) = _slash_and_unlock_late(key, late_time);
                     every_delivery_reward += delivery_reward;
                     total_confirm_reward += confirm_reward;
                 }
@@ -352,30 +381,35 @@ contract FeeMarket is IFeeMarket {
     ) internal returns (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) {
         // get the message fee from the last top N relayers
         uint256 message_fee = getOrderFee(key);
-        for (uint256 slot = 0; slot < ASSIGNED_RELAYERS_NUMBER; slot++) {
+        Order memory order = orderOf[key];
+        for (uint32 slot = 0; slot < order.assigned_relayers_number; slot++) {
             address assign_relayer = assigned_relayers[key][slot];
             // the message delivery in the `slot` assign_relayer
             // [slot, slot+1)
-            if (slot * RELAY_TIME <= diff_time && diff_time < (slot + 1 ) * RELAY_TIME) {
+            if (slot * RelayTime <= diff_time && diff_time < (slot + 1 ) * RelayTime) {
                 uint256 base_fee = feeOf[assign_relayer];
                 (delivery_reward, confirm_reward, vault_reward) = _distribute_ontime(message_fee, base_fee, assign_relayer, delivery_relayer, confirm_relayer);
             }
-            _unlock(assign_relayer, COLLATERAL_PERORDER);
+            uint256 collateral = order.collateral;
+            _unlock(assign_relayer, collateral);
+            delete assigned_relayers[key][slot];
         }
     }
 
-    function _slash_and_unlock_late(uint256 key, uint256 diff_time) internal returns (uint256 delivery_reward, uint256 confirm_reward) {
+    function _slash_and_unlock_late(uint256 key, uint256 late_time) internal returns (uint256 delivery_reward, uint256 confirm_reward) {
         uint256 message_fee = getOrderFee(key);
-        uint256 late_time = diff_time - ASSIGNED_RELAYERS_NUMBER * RELAY_TIME;
-        // slash fee is linear incremental, and the slop is `late_time / SLASH_TIME`
-        uint256 slash_fee = late_time >= SLASH_TIME ? COLLATERAL_PERORDER : (COLLATERAL_PERORDER * late_time / SLASH_TIME);
-        for (uint256 slot = 0; slot < ASSIGNED_RELAYERS_NUMBER; slot++) {
+        // slash fee is linear incremental, and the slop is `late_time / SlashTime`
+        Order memory order = orderOf[key];
+        uint256 collateral = order.collateral;
+        uint256 slash_fee = late_time >= SlashTime ? collateral : (collateral * late_time / SlashTime);
+        for (uint256 slot = 0; slot < order.assigned_relayers_number; slot++) {
             address assign_relayer = assigned_relayers[key][slot];
             _slash(assign_relayer, slash_fee);
-            _unlock(assign_relayer, (COLLATERAL_PERORDER - slash_fee));
+            _unlock(assign_relayer, (collateral - slash_fee));
+            delete assigned_relayers[key][slot];
         }
         // reward_fee = message_fee + slash_fee * ASSIGNED_RELAYERS_NUMBER
-        (delivery_reward, confirm_reward) = _distribute_fee(message_fee + slash_fee * ASSIGNED_RELAYERS_NUMBER);
+        (delivery_reward, confirm_reward) = _distribute_fee(message_fee + slash_fee * order.assigned_relayers_number);
     }
 
     function _distribute_ontime(
