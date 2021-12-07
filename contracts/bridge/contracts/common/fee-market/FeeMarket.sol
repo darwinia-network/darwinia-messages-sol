@@ -421,7 +421,6 @@ contract FeeMarket is IFeeMarket {
         if (base_fee > 0) {
             // 60% * base fee => assigned_relayers_rewards
             uint256 assign_reward = base_fee * 60 / 100;
-
             // 40% * base fee => other relayer
             uint256 other_reward = base_fee - assign_reward;
             (delivery_reward, confirm_reward) = _distribute_fee(other_reward);
