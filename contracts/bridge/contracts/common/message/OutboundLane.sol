@@ -30,7 +30,6 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     event MessagesDelivered(uint64 begin, uint64 end, uint256 results);
     event MessagePruned(uint64 oldest_unpruned_nonce);
     event MessageFeeIncreased(uint64 nonce, uint256 fee);
-    event RelayerReward(address relayer, uint256 reward);
     event CallbackMessageDelivered(uint64 nonce, bool result);
     event SetFeeMarket(address fee_market);
 
