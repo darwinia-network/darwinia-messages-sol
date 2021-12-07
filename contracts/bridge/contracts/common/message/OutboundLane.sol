@@ -106,15 +106,8 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         require(outboundLaneNonce.latest_generated_nonce < uint64(-1), "Lane: Overflow");
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
         uint256 fee = msg.value;
-        uint256 marketFee = IFeeMarket(fee_market).market_fee();
-        require(fee >= marketFee, "Lane: TooLowFee");
         // assign the message to top relayers
-        require(IFeeMarket(fee_market).assign{value: marketFee}(encodeMessageKey(nonce)), "Lane: AssignRelayersFailed");
-        // return remaining fee
-        if (fee > marketFee) {
-            msg.sender.transfer(fee - marketFee);
-        }
-
+        require(IFeeMarket(fee_market).assign{value: fee}(encodeMessageKey(nonce)), "Lane: AssignRelayersFailed");
         outboundLaneNonce.latest_generated_nonce = nonce;
         MessagePayload memory messagePayload = MessagePayload({
             sourceAccount: msg.sender,
