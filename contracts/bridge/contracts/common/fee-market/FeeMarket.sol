@@ -274,7 +274,7 @@ contract FeeMarket is IFeeMarket {
         return true;
     }
 
-    function _get_and_prune_top_relayers() internal returns (address[] memory) {
+    function _get_and_prune_top_relayers() private returns (address[] memory) {
         require(AssignedRelayersNumber <= relayer_count, "!count");
         address[] memory array = new address[](AssignedRelayersNumber);
         uint index = 0;
@@ -305,27 +305,27 @@ contract FeeMarket is IFeeMarket {
         emit RemoveRelayer(prev, cur);
     }
 
-    function _lock(address to, uint wad) internal {
+    function _lock(address to, uint wad) private {
         require(balanceOf[to] >= wad, "!lock");
         balanceOf[to] -= wad;
         lockedOf[to] += wad;
         emit Locked(to, wad);
     }
 
-    function _unlock(address to, uint wad) internal {
+    function _unlock(address to, uint wad) private {
         require(lockedOf[to] >= wad, "!unlock");
         lockedOf[to] -= wad;
         balanceOf[to] += wad;
         emit UnLocked(to, wad);
     }
 
-    function _slash(address src, uint wad) internal {
+    function _slash(address src, uint wad) private {
         require(lockedOf[src] >= wad, "!slash");
         lockedOf[src] -= wad;
         emit Slash(src, wad);
     }
 
-    function _reward(address dst, uint wad) internal {
+    function _reward(address dst, uint wad) private {
         if (wad > 0) {
             balanceOf[dst] += wad;
             emit Reward(dst, wad);
@@ -333,7 +333,7 @@ contract FeeMarket is IFeeMarket {
     }
 
     /// Pay rewards to given relayers, optionally rewarding confirmation relayer.
-    function _pay_relayers_rewards(DeliveredRelayer[] memory delivery_relayers, address confirm_relayer) internal {
+    function _pay_relayers_rewards(DeliveredRelayer[] memory delivery_relayers, address confirm_relayer) private {
         uint256 total_confirm_reward = 0;
         uint256 total_vault_reward = 0;
         for (uint256 i = 0; i < delivery_relayers.length; i++) {
@@ -378,11 +378,11 @@ contract FeeMarket is IFeeMarket {
         uint256 diff_time,
         address delivery_relayer,
         address confirm_relayer
-    ) internal returns (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) {
+    ) private returns (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) {
         // get the message fee from the last top N relayers
         uint256 message_fee = getOrderFee(key);
         Order memory order = orderOf[key];
-        for (uint32 slot = 0; slot < order.assigned_relayers_number; slot++) {
+        for (uint slot = 0; slot < order.assigned_relayers_number; slot++) {
             address assign_relayer = assigned_relayers[key][slot];
             // the message delivery in the `slot` assign_relayer
             // [slot, slot+1)
@@ -396,13 +396,13 @@ contract FeeMarket is IFeeMarket {
         }
     }
 
-    function _slash_and_unlock_late(uint256 key, uint256 late_time) internal returns (uint256 delivery_reward, uint256 confirm_reward) {
+    function _slash_and_unlock_late(uint256 key, uint256 late_time) private returns (uint256 delivery_reward, uint256 confirm_reward) {
         uint256 message_fee = getOrderFee(key);
         // slash fee is linear incremental, and the slop is `late_time / SlashTime`
         Order memory order = orderOf[key];
         uint256 collateral = order.collateral;
         uint256 slash_fee = late_time >= SlashTime ? collateral : (collateral * late_time / SlashTime);
-        for (uint256 slot = 0; slot < order.assigned_relayers_number; slot++) {
+        for (uint slot = 0; slot < order.assigned_relayers_number; slot++) {
             address assign_relayer = assigned_relayers[key][slot];
             _slash(assign_relayer, slash_fee);
             _unlock(assign_relayer, (collateral - slash_fee));
@@ -418,7 +418,7 @@ contract FeeMarket is IFeeMarket {
         address assign_relayer,
         address delivery_relayer,
         address confirm_relayer
-    ) internal returns (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) {
+    ) private returns (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) {
         if (base_fee > 0) {
             // 60% * base fee => assigned_relayers_rewards
             uint256 assign_reward = base_fee * 60 / 100;
@@ -441,7 +441,7 @@ contract FeeMarket is IFeeMarket {
         vault_reward = message_fee - base_fee;
     }
 
-    function _distribute_fee(uint256 fee) internal pure returns (uint256 delivery_reward, uint256 confirm_reward) {
+    function _distribute_fee(uint256 fee) private pure returns (uint256 delivery_reward, uint256 confirm_reward) {
         // 80% * fee => delivery relayer
         delivery_reward = fee * 80 / 100;
         // 20% * fee => confirm relayer
