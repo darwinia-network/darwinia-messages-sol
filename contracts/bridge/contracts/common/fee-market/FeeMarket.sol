@@ -390,8 +390,7 @@ contract FeeMarket is IFeeMarket {
                 uint256 base_fee = feeOf[assign_relayer];
                 (delivery_reward, confirm_reward, vault_reward) = _distribute_ontime(message_fee, base_fee, assign_relayer, delivery_relayer, confirm_relayer);
             }
-            uint256 collateral = order.collateral;
-            _unlock(assign_relayer, collateral);
+            _unlock(assign_relayer, order.collateral);
             delete assigned_relayers[key][slot];
         }
     }
@@ -408,7 +407,7 @@ contract FeeMarket is IFeeMarket {
             _unlock(assign_relayer, (collateral - slash_fee));
             delete assigned_relayers[key][slot];
         }
-        // reward_fee = message_fee + slash_fee * ASSIGNED_RELAYERS_NUMBER
+        // reward_fee = message_fee + slash_fee * AssignedRelayersNumber
         (delivery_reward, confirm_reward) = _distribute_fee(message_fee + slash_fee * order.assigned_relayers_number);
     }
 
