@@ -17,18 +17,18 @@ contract MerkleMultiProofTest is DSTest {
         return MerkleMultiProof.verifyMultiProof(root, leafs, proofs, proofFlag);
     }
 
-    function verifyMultiProofWithDict(
-        bytes32 root,
-        uint256 depth,
-        uint256[] memory indices,
-        bytes32[] memory leafs,
-        bytes32[] memory decommitments
-    )
-        public
-        pure
-        returns (bool)
-    {
-        return MerkleMultiProof.verify(root, depth, indices, leafs, decommitments);
-    }
+    // function verifyMultiProofWithDict(
+    //     bytes32 root,
+    //     uint256 depth,
+    //     uint256[] memory indices,
+    //     bytes32[] memory leafs,
+    //     bytes32[] memory decommitments
+    // )
+    //     public
+    //     pure
+    //     returns (bool)
+    // {
+    //     return MerkleMultiProof.verify(root, depth, indices, leafs, decommitments);
+    // }
 
 }

@@ -34,7 +34,7 @@ describe('MerkleMultiProofTest', function () {
       expect(result).to.equal(true)
     })
 
-    it('Simple merkle multi proof with indices', async () => {
+    it.skip('Simple merkle multi proof with indices', async () => {
       let leafs = ['a', 'b', 'c', 'd'].map(x => keccak(Buffer.from(x)))
       leafs = leafs.sort(Buffer.compare)
       const tree = new MerkleTree(leafs, keccak)
@@ -63,7 +63,7 @@ describe('MerkleMultiProofTest', function () {
       expect(result).to.equal(true)
     })
 
-    it('Simple merkle multi proof with indices 2', async () => {
+    it.skip('Simple merkle multi proof with indices 2', async () => {
       let beefyValidatorPubKey = [
         "0x049346ec0021405ec103c2baac8feff9d6fb75851318fb03781edf29f05f2ffeb794c7f5140cce7745a91d45027df5b421342bc2446f39beaf65f705ef864841ed",
         "0x04fe6b333420b90689158643ccad94e62d707de1a80726d53aa04657fec14afd3e441e67f48e61b4e67b4c4ab17713c0737abe7ddad63bb97b1138302e1a776723",
