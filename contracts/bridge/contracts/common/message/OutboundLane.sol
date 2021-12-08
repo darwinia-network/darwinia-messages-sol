@@ -19,6 +19,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../../interfaces/IOutboundLane.sol";
 import "../../interfaces/IOnMessageDelivered.sol";
+import "../../interfaces/IFeeMarket.sol";
 import "./MessageVerifier.sol";
 import "./TargetChain.sol";
 import "./SourceChain.sol";
@@ -29,10 +30,11 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     event MessagesDelivered(uint64 begin, uint64 end, uint256 results);
     event MessagePruned(uint64 oldest_unpruned_nonce);
     event MessageFeeIncreased(uint64 nonce, uint256 fee);
-    event RelayerReward(address relayer, uint256 reward);
     event CallbackMessageDelivered(uint64 nonce, bool result);
+    event SetFeeMarket(address fee_market);
 
     bytes32 internal constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
+    bytes32 internal constant FEEMARKET_ROLE = keccak256("FEEMARKET_ROLE");
     uint256 internal constant MAX_GAS_PER_MESSAGE = 100000;
     uint64 internal constant MAX_PENDING_MESSAGES = 50;
     uint64 internal constant MAX_PRUNE_MESSAGES_ATONCE = 10;
@@ -56,6 +58,8 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
 
     // nonce => MessageData
     mapping(uint64 => MessageData) public messages;
+
+    address public fee_market;
 
     /**
      * @notice Deploys the OutboundLane contract
@@ -82,6 +86,12 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    function setFeeMarket(address _fee_market) external nonReentrant {
+        require(hasRole(FEEMARKET_ROLE, msg.sender), "Lane: NotAuthorized");
+        fee_market = _fee_market;
+        emit SetFeeMarket(_fee_market);
+    }
+
     /**
      * @notice Send message over lane.
      * Submitter could be a contract or just an EOA address.
@@ -95,6 +105,8 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         require(outboundLaneNonce.latest_generated_nonce < uint64(-1), "Lane: Overflow");
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
         uint256 fee = msg.value;
+        // assign the message to top relayers
+        require(IFeeMarket(fee_market).assign{value: fee}(encodeMessageKey(nonce)), "Lane: AssignRelayersFailed");
         outboundLaneNonce.latest_generated_nonce = nonce;
         MessagePayload memory messagePayload = MessagePayload({
             sourceAccount: msg.sender,
@@ -106,35 +118,12 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             payload: messagePayload,
             fee: fee  // a lowest fee may be required and how to set it
         });
-        // TODO:: callback `on_messages_accepted`
 
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
         prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
         commit();
         emit MessageAccepted(nonce);
         return nonce;
-    }
-
-    // 32 bytes to identify an unique message
-    // MessageKey encoding:
-    // ThisChainPosition | BridgedChainPosition | ThisLanePosition | BridgedLanePosition | Nonce
-    // [0..8)   bytes ---- Reserved
-    // [8..12)  bytes ---- ThisChainPosition
-    // [16..20) bytes ---- ThisLanePosition
-    // [12..16) bytes ---- BridgedChainPosition
-    // [20..24) bytes ---- BridgedLanePosition
-    // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
-    function encodeMessageKey(uint64 nonce) external view returns (uint256) {
-        return uint256(thisChainPosition) << 160 + uint256(bridgedChainPosition) << 128 + uint256(thisLanePosition) << 96 + uint256(bridgedLanePosition) << 64 + uint256(nonce);
-    }
-
-    // Pay additional fee for the message.
-    function increase_message_fee(uint64 nonce) external payable nonReentrant {
-        require(nonce > outboundLaneNonce.latest_received_nonce, "Lane: MessageIsAlreadyDelivered");
-        require(nonce <= outboundLaneNonce.latest_generated_nonce, "Lane: MessageIsNotYetSent");
-        messages[nonce].fee += msg.value;
-        commit();
-        emit MessageFeeIncreased(nonce, messages[nonce].fee);
     }
 
     // Receive messages delivery proof from bridged chain.
@@ -145,7 +134,8 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         verify_lane_data_proof(hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
         on_messages_delivered(confirmed_messages);
-        pay_relayers_rewards(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
+        // settle the confirmed_messages at fee market
+        settle_messages(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
         commit();
     }
 
@@ -161,7 +151,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             uint64 begin = outboundLaneNonce.latest_received_nonce + 1;
             for (uint64 index = 0; index < size; index++) {
                 uint64 nonce = index + begin;
-                lane_data.messages[index] = Message(MessageKey(thisChainPosition, thisLanePosition, bridgedChainPosition, bridgedLanePosition, nonce), messages[nonce]);
+                lane_data.messages[index] = Message(encodeMessageKey(nonce), messages[nonce]);
             }
         }
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
@@ -292,51 +282,15 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         return pruned_messages;
     }
 
-    /// Pay rewards to given relayers, optionally rewarding confirmation relayer.
-    function pay_relayers_rewards(UnrewardedRelayer[] memory relayers, uint64 received_start, uint64 received_end) internal {
-        address payable confirmation_relayer = msg.sender;
-        uint256 confirmation_relayer_reward = 0;
-        uint256 confirmation_fee = confirmationFee;
-        // reward every relayer except `confirmation_relayer`
+    function settle_messages(UnrewardedRelayer[] memory relayers, uint64 received_start, uint64 received_end) internal {
+        IFeeMarket.DeliveredRelayer[] memory delivery_relayers = new IFeeMarket.DeliveredRelayer[](relayers.length);
         for (uint256 i = 0; i < relayers.length; i++) {
-            UnrewardedRelayer memory entry = relayers[i];
-            address payable delivery_relayer = entry.relayer;
-            uint64 nonce_begin = max(entry.messages.begin, received_start);
-            uint64 nonce_end = min(entry.messages.end, received_end);
-            uint256 delivery_reward = 0;
-            uint256 confirmation_reward = 0;
-            for (uint64 nonce = nonce_begin; nonce <= nonce_end; nonce++) {
-                delivery_reward += messages[nonce].fee;
-                confirmation_reward += confirmation_fee;
-            }
-            if (confirmation_relayer != delivery_relayer) {
-                // If delivery confirmation is submitted by other relayer, let's deduct confirmation fee
-                // from relayer reward.
-                //
-                // If confirmation fee has been increased (or if it was the only component of message
-                // fee), then messages relayer may receive zero reward.
-                if (confirmation_reward > delivery_reward) {
-                    confirmation_reward = delivery_reward;
-                }
-                delivery_reward = delivery_reward - confirmation_reward;
-                confirmation_relayer_reward = confirmation_relayer_reward + confirmation_reward;
-            } else {
-                // If delivery confirmation is submitted by this relayer, let's add confirmation fee
-                // from other relayers to this relayer reward.
-                confirmation_relayer_reward = confirmation_relayer_reward + delivery_reward;
-                continue;
-            }
-            pay_relayer_reward(delivery_relayer, delivery_reward);
+            UnrewardedRelayer memory r = relayers[i];
+            uint64 nonce_begin = max(r.messages.begin, received_start);
+            uint64 nonce_end = min(r.messages.end, received_end);
+            delivery_relayers[i] = IFeeMarket.DeliveredRelayer(r.relayer, encodeMessageKey(nonce_begin), encodeMessageKey(nonce_end));
         }
-        // finally - pay reward to confirmation relayer
-        pay_relayer_reward(confirmation_relayer, confirmation_relayer_reward);
-    }
-
-    function pay_relayer_reward(address payable to, uint256 value) internal {
-        if (value > 0) {
-            to.transfer(value);
-            emit RelayerReward(to, value);
-        }
+        require(IFeeMarket(fee_market).settle(delivery_relayers, msg.sender), "Lane: SettleFailed");
     }
 
     // --- Math ---
