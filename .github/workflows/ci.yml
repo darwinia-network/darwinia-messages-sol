@@ -47,7 +47,9 @@ jobs:
         run: PKG=@darwinia/contracts-verify yarn test
 
       - name: merge-gas-report
-        run: yarn merge
+        run: |
+          yarn mv-reporter
+          yarn merge
 
       - name: codechecks
         env:
