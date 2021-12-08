@@ -2,15 +2,9 @@ pragma solidity >=0.6.0 <0.7.0;
 
 library SparseMerkleMultiProof {
 
-    function hash_leaf(uint256 value)
-        internal pure
-        returns (bytes32 hash)
-    {
-        return bytes32(value);
-    }
-
     function hash_node(bytes32 left, bytes32 right)
         internal
+        pure
         returns (bytes32 hash)
     {
         assembly {
@@ -26,12 +20,14 @@ library SparseMerkleMultiProof {
         bytes32 root,
         uint256 depth,
         uint256[] memory indices,
-        uint256[] memory values,
+        bytes32[] memory leaves,
         bytes32[] memory decommitments
     )
         internal
+        pure
+        returns (bool)
     {
-        require(indices.length == values.length, "LENGTH_MISMATCH");
+        require(indices.length == leaves.length, "LENGTH_MISMATCH");
         uint256 n = indices.length;
 
         // Dynamically allocate index and hash queue
@@ -44,7 +40,7 @@ library SparseMerkleMultiProof {
         // Queue the leafs
         for(; tail < n; ++tail) {
             tree_indices[tail] = 2**depth + indices[tail];
-            hashes[tail] = hash_leaf(values[tail]);
+            hashes[tail] = leaves[tail];
         }
 
         // Itterate the queue until we hit the root
@@ -55,8 +51,7 @@ library SparseMerkleMultiProof {
 
             // Merkle root
             if (index == 1) {
-                //require(hash == root, "INVALID_MERKLE_PROOF");
-                return;
+                return hash == root;
             // Even node, take sibbling from decommitments
             } else if (index & 1 == 0) {
                 hash = hash_node(hash, decommitments[di++]);
