@@ -44,7 +44,7 @@ jobs:
 
       - name: test
           # yarn test
-          PKG=@darwinia/contracts-verify yarn test
+        run: PKG=@darwinia/contracts-verify yarn test
 
       - name: codechecks
         env:
