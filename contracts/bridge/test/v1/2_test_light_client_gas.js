@@ -25,62 +25,62 @@ describe("Light Client Gas Usage", function () {
       totalNumberOfValidators: 10,
       totalNumberOfSignatures: 7,
     },
-    {
-      totalNumberOfValidators: 15,
-      totalNumberOfSignatures: 15,
-    },
-    {
-      totalNumberOfValidators: 25,
-      totalNumberOfSignatures: 25,
-    },
-    {
-      totalNumberOfValidators: 30,
-      totalNumberOfSignatures: 30,
-    },
-    {
-      totalNumberOfValidators: 35,
-      totalNumberOfSignatures: 35,
-    },
-    {
-      totalNumberOfValidators: 36,
-      totalNumberOfSignatures: 36,
-    },
-    {
-      totalNumberOfValidators: 40,
-      totalNumberOfSignatures: 40,
-    },
-    {
-      totalNumberOfValidators: 50,
-      totalNumberOfSignatures: 50,
-    },
-    {
-      totalNumberOfValidators: 100,
-      totalNumberOfSignatures: 100,
-    },
-    {
-      totalNumberOfValidators: 128,
-      totalNumberOfSignatures: 128,
-    },
-    {
-      totalNumberOfValidators: 257,
-      totalNumberOfSignatures: 257,
-    },
-    {
-      totalNumberOfValidators: 1000,
-      totalNumberOfSignatures: 1000,
-    },
-    {
-      totalNumberOfValidators: 1000,
-      totalNumberOfSignatures: 667,
-    },
-    {
-      totalNumberOfValidators: 1025,
-      totalNumberOfSignatures: 684,
-    },
-    {
-      totalNumberOfValidators: 2048,
-      totalNumberOfSignatures: 1366,
-    },
+    // {
+    //   totalNumberOfValidators: 15,
+    //   totalNumberOfSignatures: 15,
+    // },
+    // {
+    //   totalNumberOfValidators: 25,
+    //   totalNumberOfSignatures: 25,
+    // },
+    // {
+    //   totalNumberOfValidators: 30,
+    //   totalNumberOfSignatures: 30,
+    // },
+    // {
+    //   totalNumberOfValidators: 35,
+    //   totalNumberOfSignatures: 35,
+    // },
+    // {
+    //   totalNumberOfValidators: 36,
+    //   totalNumberOfSignatures: 36,
+    // },
+    // {
+    //   totalNumberOfValidators: 40,
+    //   totalNumberOfSignatures: 40,
+    // },
+    // {
+    //   totalNumberOfValidators: 50,
+    //   totalNumberOfSignatures: 50,
+    // },
+    // {
+    //   totalNumberOfValidators: 100,
+    //   totalNumberOfSignatures: 100,
+    // },
+    // {
+    //   totalNumberOfValidators: 128,
+    //   totalNumberOfSignatures: 128,
+    // },
+    // {
+    //   totalNumberOfValidators: 257,
+    //   totalNumberOfSignatures: 257,
+    // },
+    // {
+    //   totalNumberOfValidators: 1000,
+    //   totalNumberOfSignatures: 1000,
+    // },
+    // {
+    //   totalNumberOfValidators: 1000,
+    //   totalNumberOfSignatures: 667,
+    // },
+    // {
+    //   totalNumberOfValidators: 1025,
+    //   totalNumberOfSignatures: 684,
+    // },
+    // {
+    //   totalNumberOfValidators: 2048,
+    //   totalNumberOfSignatures: 1366,
+    // },
   ]
 
   for (const testCase of testCases) {

@@ -43,8 +43,7 @@ jobs:
           # yarn build:contracts
 
       - name: test
-          # yarn test
-        run: PKG=@darwinia/contracts-verify yarn test
+        run: yarn test
 
       - name: merge-gas-report
         run: |
