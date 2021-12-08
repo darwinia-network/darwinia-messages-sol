@@ -40,11 +40,14 @@ jobs:
         run: |
           yarn install
           yarn build
-          yarn build:contracts
+          # yarn build:contracts
 
       - name: test
           # yarn test
         run: PKG=@darwinia/contracts-verify yarn test
+
+      - name: merge-gas-report
+        run: yarn merge
 
       - name: codechecks
         env:

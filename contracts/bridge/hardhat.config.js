@@ -72,7 +72,6 @@ module.exports = {
   defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
-      blockGasLimit: 30_000_000,
       throwOnCallFailures: true,
       throwOnTransactionFailures: true,
     },
@@ -111,7 +110,7 @@ module.exports = {
     only: [],
   },
   gasReporter: {
-    enabled: REPORT_GAS
+    enabled: REPORT_GAS,
   }
 };
 

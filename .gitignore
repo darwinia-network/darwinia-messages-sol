@@ -86,3 +86,6 @@ TODO.md
 
 # VSCode file
 .vscode
+
+# Gas reporter
+gasReporterOutput*.json
