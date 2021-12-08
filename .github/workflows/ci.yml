@@ -45,6 +45,7 @@ jobs:
           # yarn test
           PKG=@darwinia/contracts-verify yarn test
 
-      - name: gas-reporter
-        run: |
-          PKG=@darwinia/contracts-verify yarn codechecks
+      - name: codechecks
+        env:
+          CC_SECRET: ${{ secrets.CC_SECRET }}
+        run: npx codechecks
