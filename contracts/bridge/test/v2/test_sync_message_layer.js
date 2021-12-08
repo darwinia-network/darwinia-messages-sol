@@ -25,12 +25,12 @@ const send_message = async (nonce) => {
     let block = await ethers.provider.getBlock(tx.blockNumber)
     await expect(tx)
       .to.emit(feeMarket, "OrderAssgigned")
-      .withArgs(await outbound.encodeMessageKey(nonce), block.timestamp, await feeMarket.AssignedRelayersNumber(), await feeMarket.CollateralPerorder())
+      .withArgs(await outbound.encodeMessageKey(nonce), block.timestamp, await feeMarket.assignedRelayersNumber(), await feeMarket.collateralPerorder())
 
     const [one, two, three] = await ethers.getSigners();
     await expect(tx)
       .to.emit(feeMarket, "Locked")
-      .withArgs(three.address, await feeMarket.CollateralPerorder())
+      .withArgs(three.address, await feeMarket.collateralPerorder())
     await logNonce()
 }
 
