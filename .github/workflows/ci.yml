@@ -33,6 +33,7 @@ jobs:
           envkey_KOVAN_RPC_URL: https://kovan.infura.io/v3/${{ secrets.API_KEY }}
           envkey_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           envkey_ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          envkey_REPORT_GAS: ${{secrets.REPORT_GAS}}
           file_name: .env
 
       - name: build
