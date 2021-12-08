@@ -5,6 +5,6 @@ require("hardhat-gas-reporter");
 module.exports = {
   gasReporter: {
     enabled: true,
-    outputFile: "gasReporterOutput.json"
+    maxMethodDiff: 10,
   }
 };
