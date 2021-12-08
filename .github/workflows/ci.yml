@@ -41,3 +41,7 @@ jobs:
           yarn build
           yarn build:contracts
           yarn test
+
+      - name: gas-reporter
+        run: |
+          PKG=@darwinia-contracts-bridge yarn codechecks
