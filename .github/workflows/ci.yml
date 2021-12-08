@@ -40,8 +40,9 @@ jobs:
           yarn install
           yarn build
           yarn build:contracts
-          yarn test
+          # yarn test
+          PKG=@darwinia/contracts-verify yarn test
 
       - name: gas-reporter
         run: |
-          PKG=@darwinia-contracts-bridge yarn codechecks
+          PKG=@darwinia/contracts-verify yarn codechecks
