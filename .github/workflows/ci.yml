@@ -40,6 +40,8 @@ jobs:
           yarn install
           yarn build
           yarn build:contracts
+
+      - name: test
           # yarn test
           PKG=@darwinia/contracts-verify yarn test
 
