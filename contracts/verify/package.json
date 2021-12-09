@@ -8,6 +8,8 @@
   "scripts": {
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
+    "ci": "CI=true npx hardhat test && yarn mv-reporter",
+    "mv-reporter": "mv gasReporterOutput.json ../../gasReporterOutput-verify.json",
     "gas": "npx hardhat gasUsage",
     "benchmark:single": "npx hardhat test test/test_merkle_proof.js test/test_compact_merkle_proof.js",
     "benchmark:multi": "npx hardhat test test/test_merkle_multi_proof.js test/test_compact_merkle_multi_proof.js",
@@ -24,7 +26,7 @@
     "ethers": "^5.0.0",
     "hardhat": "^2.3.0",
     "hardhat-abi-exporter": "^2.2.1",
-    "hardhat-gas-reporter": "^1.0.4",
+    "hardhat-gas-reporter": "^1.0.6",
     "merkletreejs": "^0.2.18",
     "shx": "^0.3.3"
   }
