@@ -58,8 +58,14 @@ contract FeeMarket is IFeeMarket {
     }
     // message_encoded_key => Order
     mapping(uint256 => Order) public orderOf;
+    struct OrderExt {
+        // assigned_relayer
+        address assignedRelayer;
+        // assigned_relayer_maker_fee
+        uint256 makerFee;
+    }
     // message_encoded_key => assigned_slot => assigned_relayer
-    mapping(uint256 => mapping(uint256 => address)) public assignedRelayers;
+    mapping(uint256 => mapping(uint256 => OrderExt)) public assignedRelayers;
 
     modifier onlyOwner {
         require(msg.sender == owner, "!owner");
@@ -185,8 +191,16 @@ contract FeeMarket is IFeeMarket {
     // fetch the order fee by the encoded message key
     function getOrderFee(uint256 key) public view returns (uint256 fee) {
         uint32 number = orderOf[key].assignedRelayersNumber;
-        address last = assignedRelayers[key][number - 1];
-        fee = feeOf[last];
+        fee =  assignedRelayers[key][number - 1].makerFee;
+    }
+
+    function getOrder(uint256 key) external view returns (Order memory, OrderExt[] memory) {
+        Order memory order = orderOf[key];
+        OrderExt[] memory assigned_relayers = new OrderExt[](order.assignedRelayersNumber);
+        for (uint slot = 0; slot < order.assignedRelayersNumber; slot++) {
+            assigned_relayers[slot] = assignedRelayers[key][slot];
+        }
+        return (order, assigned_relayers);
     }
 
     function isRelayer(address addr) public view returns (bool) {
@@ -260,7 +274,7 @@ contract FeeMarket is IFeeMarket {
             address r = top_relayers[slot];
             require(isRelayer(r), "!relayer");
             _lock(r, collateralPerorder);
-            assignedRelayers[key][slot] = r;
+            assignedRelayers[key][slot] = OrderExt(r, feeOf[r]);
         }
         // record the assigned time
         orderOf[key] = Order(uint32(block.timestamp), assignedRelayersNumber, collateralPerorder);
@@ -297,7 +311,6 @@ contract FeeMarket is IFeeMarket {
     function _remove_relayer(address prev, address cur) private {
         require(cur != address(0) && cur != SENTINEL_HEAD && cur != SENTINEL_TAIL, "!valid");
         require(relayers[prev] == cur, "!cur");
-        require(lockedOf[cur] == 0, "!locked");
         relayers[prev] = relayers[cur];
         relayers[cur] = address(0);
         feeOf[cur] = 0;
@@ -383,11 +396,11 @@ contract FeeMarket is IFeeMarket {
         uint256 message_fee = getOrderFee(key);
         Order memory order = orderOf[key];
         for (uint slot = 0; slot < order.assignedRelayersNumber; slot++) {
-            address assign_relayer = assignedRelayers[key][slot];
+            address assign_relayer = assignedRelayers[key][slot].assignedRelayer;
             // the message delivery in the `slot` assign_relayer
             // [slot, slot+1)
             if (slot * relayTime <= diff_time && diff_time < (slot + 1 ) * relayTime) {
-                uint256 base_fee = feeOf[assign_relayer];
+                uint256 base_fee = assignedRelayers[key][slot].makerFee;
                 (delivery_reward, confirm_reward, vault_reward) = _distribute_ontime(message_fee, base_fee, assign_relayer, delivery_relayer, confirm_relayer);
             }
             _unlock(assign_relayer, order.collateral);
@@ -402,7 +415,7 @@ contract FeeMarket is IFeeMarket {
         uint256 collateral = order.collateral;
         uint256 slash_fee = late_time >= slashTime ? collateral : (collateral * late_time / slashTime);
         for (uint slot = 0; slot < order.assignedRelayersNumber; slot++) {
-            address assign_relayer = assignedRelayers[key][slot];
+            address assign_relayer = assignedRelayers[key][slot].assignedRelayer;
             _slash(assign_relayer, slash_fee);
             _unlock(assign_relayer, (collateral - slash_fee));
             delete assignedRelayers[key][slot];
