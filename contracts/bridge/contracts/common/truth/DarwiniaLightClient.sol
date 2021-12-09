@@ -6,6 +6,7 @@ pragma experimental ABIEncoderV2;
 import "@darwinia/contracts-utils/contracts/ECDSA.sol";
 import "@darwinia/contracts-utils/contracts/Bitfield.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
+import "@darwinia/contracts-verify/contracts/SparseMerkleMultiProof.sol";
 import "@darwinia/contracts-verify/contracts/KeccakMMR.sol";
 import "./ValidatorRegistry.sol";
 import "./GuardRegistry.sol";
@@ -68,6 +69,13 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
         uint256[] positions;
         address[] signers;
         bytes32[][] signerProofs;
+    }
+
+    struct MultiProof {
+        uint256 depth;
+        bytes[] signatures;
+        uint256[] positions;
+        bytes32[] decommitments;
     }
 
     /**
@@ -341,7 +349,7 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
     function completeSignatureCommitment(
         uint256 id,
         Commitment memory commitment,
-        Proof memory validatorProof,
+        MultiProof memory validatorProof,
         bytes[] memory guardSignatures
     ) public {
         // only current epoch
@@ -381,7 +389,7 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
     function verifyCommitment(
         uint256 id,
         Commitment memory commitment,
-        Proof memory validatorProof,
+        MultiProof memory validatorProof,
         bytes[] memory guardSignatures
     ) private view {
         ValidationData storage data = validationData[id];
@@ -425,7 +433,7 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
 
     function verifyValidatorProofSignatures(
         uint256[] memory randomBitfield,
-        Proof memory proof,
+        MultiProof memory proof,
         uint256 requiredNumOfSignatures,
         bytes32 commitmentHash
     ) private view {
@@ -443,17 +451,18 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
         bytes32 root,
         uint256 width,
         uint256[] memory bitfield,
-        Proof memory proof,
+        MultiProof memory proof,
         uint256 requiredNumOfSignatures,
         bytes32 commitmentHash
     ) private pure {
 
-        verifyProofLengths(requiredNumOfSignatures, proof);
+        verifyMultiProofLengths(requiredNumOfSignatures, proof);
 
         /**
          *  @dev For each randomSignature, do:
          */
-        for (uint256 i = 0; i < requiredNumOfSignatures; i++) {
+        bytes32[] memory leaves = new bytes32[](requiredNumOfSignatures);
+        for (uint256 i = requiredNumOfSignatures - 1; i >= 0; i--) {
             uint256 pos = proof.positions[i];
             /**
              * @dev Check if validator in bitfield
@@ -468,16 +477,35 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
              */
             clear(bitfield, pos);
 
-            verifySignature(
-                proof.signatures[i],
-                root,
-                proof.signers[i],
-                width,
-                pos,
-                proof.signerProofs[i],
-                commitmentHash
-            );
+            address signer = ECDSA.recover(commitmentHash, proof.signatures[i]);
+            leaves[i] = keccak256(abi.encodePacked(signer));
         }
+
+        require(1 << proof.depth == width, "Bridge: invalid depth");
+        require(
+            SparseMerkleMultiProof.verify(
+                root,
+                proof.depth,
+                proof.positions,
+                leaves,
+                proof.decommitments
+            ),
+            "Bridge: invalid multi proof"
+        );
+    }
+
+    function verifyMultiProofLengths(
+        uint256 requiredNumOfSignatures,
+        MultiProof memory proof
+    ) private pure {
+        require(
+            proof.signatures.length == requiredNumOfSignatures,
+            "Bridge: Number of signatures does not match required"
+        );
+        require(
+            proof.positions.length == requiredNumOfSignatures,
+            "Bridge: Number of validator positions does not match required"
+        );
     }
 
     function verifyProofLengths(
