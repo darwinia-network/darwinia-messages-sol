@@ -311,7 +311,6 @@ contract FeeMarket is IFeeMarket {
     function _remove_relayer(address prev, address cur) private {
         require(cur != address(0) && cur != SENTINEL_HEAD && cur != SENTINEL_TAIL, "!valid");
         require(relayers[prev] == cur, "!cur");
-        require(lockedOf[cur] == 0, "!locked");
         relayers[prev] = relayers[cur];
         relayers[cur] = address(0);
         feeOf[cur] = 0;
