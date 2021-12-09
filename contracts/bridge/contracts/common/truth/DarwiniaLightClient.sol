@@ -7,7 +7,6 @@ import "@darwinia/contracts-utils/contracts/ECDSA.sol";
 import "@darwinia/contracts-utils/contracts/Bitfield.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "@darwinia/contracts-verify/contracts/SparseMerkleMultiProof.sol";
-import "@darwinia/contracts-verify/contracts/KeccakMMR.sol";
 import "./ValidatorRegistry.sol";
 import "./GuardRegistry.sol";
 import "../spec/BeefyCommitmentScheme.sol";
@@ -254,32 +253,6 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
                 chainPosition,
                 chainProof.count,
                 chainProof.proof
-            );
-    }
-
-    /**
-     * @notice Executed by the apps in order to verify commitment
-     * @param beefyMMRLeafHash contains the merkle leaf hash
-     * @param beefyMMRLeafIndex contains the merkle leaf index
-     * @param beefyMMRLeafCount contains the merkle leaf count
-     * @param peaks contains the merkle maintain range peaks
-     * @param siblings contains the merkle maintain range siblings
-     */
-    function verifyBeefyMerkleLeaf(
-        bytes32 beefyMMRLeafHash,
-        uint256 beefyMMRLeafIndex,
-        uint256 beefyMMRLeafCount,
-        bytes32[] calldata peaks,
-        bytes32[] calldata siblings
-    ) external view returns (bool) {
-        return
-            KeccakMMR.inclusionProof(
-                latestMMRRoot,
-                beefyMMRLeafCount,
-                beefyMMRLeafIndex,
-                beefyMMRLeafHash,
-                peaks,
-                siblings
             );
     }
 
