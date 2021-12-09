@@ -8,6 +8,7 @@
   "license": "MIT",
   "scripts": {
     "build": "echo 0",
+    "test": "echo 0",
     "clean": "echo 0"
   }
 }
