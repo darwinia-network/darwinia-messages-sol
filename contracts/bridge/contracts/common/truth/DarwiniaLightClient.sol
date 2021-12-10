@@ -404,6 +404,11 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
         checkGuardSignatures(commitmentHash, guardSignatures);
     }
 
+    function roundUpToPow2(uint256 len) internal pure returns (uint256) {
+        if (len <= 1) return 1;
+        else return 2 * roundUpToPow2((len + 1) / 2);
+    }
+
     function verifyValidatorProofSignatures(
         uint256[] memory randomBitfield,
         MultiProof memory proof,
@@ -412,7 +417,7 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
     ) private view {
         verifyProofSignatures(
             validatorSetRoot,
-            validatorSetLen,
+            roundUpToPow2(validatorSetLen),
             randomBitfield,
             proof,
             requiredNumOfSignatures,

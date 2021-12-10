@@ -7,11 +7,14 @@ const largeValidatorAddresses = require("./data/large-validator-data")
 use(solidity);
 
 describe('MerkleMultiProofTest', function () {
-    let merkleProof;
+    let merkleProof
+    let sparseMerkleProof
 
     before(async () => {
-      const MerkleProof = await ethers.getContractFactory("MerkleMultiProofTest");
-      merkleProof = await MerkleProof.deploy();
+      const MerkleProof = await ethers.getContractFactory("MerkleMultiProofTest")
+      merkleProof = await MerkleProof.deploy()
+      const SpaseMerkleMultiProof = await ethers.getContractFactory("SparseMerkleMultiProofTest")
+      sparseMerkleProof = await SpaseMerkleMultiProof.deploy()
     });
 
     it('Simple merkle multi proof', async () => {
@@ -20,7 +23,7 @@ describe('MerkleMultiProofTest', function () {
         "0x04fe6b333420b90689158643ccad94e62d707de1a80726d53aa04657fec14afd3e441e67f48e61b4e67b4c4ab17713c0737abe7ddad63bb97b1138302e1a776723",
         "0x048c49b70d152e7f9bfbfc4a7c53fb13d8855dbc221e68f7ef734f0af394d86bf1a3b28bf6c6fd814ed8772e41e7a19c2bfc261bff67b46e065d2767a547079139",
         "0x046c4a9704d28c9e009550a9a836aff5e99bbebb73bad6a478af44d45c42101d86216242753b216330e6037b23748d26ed99207d2e7b48cba2a5e3461ff9ded54e"
-      ].sort() 
+      ].sort()
       const leavesHashed = beefyValidatorPubKey.map(leaf => keccakFromHexString(leaf)).sort(Buffer.compare);
       const tree = new MerkleTree(leavesHashed, keccak, { sort:true });
       const root = tree.getRoot()
@@ -34,7 +37,7 @@ describe('MerkleMultiProofTest', function () {
       expect(result).to.equal(true)
     })
 
-    it.skip('Simple merkle multi proof with indices', async () => {
+    it('Simple merkle multi proof with indices', async () => {
       let leafs = ['a', 'b', 'c', 'd'].map(x => keccak(Buffer.from(x)))
       leafs = leafs.sort(Buffer.compare)
       const tree = new MerkleTree(leafs, keccak)
@@ -57,19 +60,19 @@ describe('MerkleMultiProofTest', function () {
       // const proofFlags = tree.getProofFlags(leaves, proof)
       // console.log(proofFlags)
 
-      const result = await merkleProof.verifyMultiProofWithDict(
-        root, depth, indices, leaves, proof 
+      const result = await sparseMerkleProof.verifyMultiProofWithDict(
+        root, depth, indices, leaves, proof
       )
       expect(result).to.equal(true)
     })
 
-    it.skip('Simple merkle multi proof with indices 2', async () => {
+    it('Simple merkle multi proof with indices 2', async () => {
       let beefyValidatorPubKey = [
         "0x049346ec0021405ec103c2baac8feff9d6fb75851318fb03781edf29f05f2ffeb794c7f5140cce7745a91d45027df5b421342bc2446f39beaf65f705ef864841ed",
         "0x04fe6b333420b90689158643ccad94e62d707de1a80726d53aa04657fec14afd3e441e67f48e61b4e67b4c4ab17713c0737abe7ddad63bb97b1138302e1a776723",
         "0x048c49b70d152e7f9bfbfc4a7c53fb13d8855dbc221e68f7ef734f0af394d86bf1a3b28bf6c6fd814ed8772e41e7a19c2bfc261bff67b46e065d2767a547079139",
         "0x049cae155ab0892c730cf99a62005c2d37dd72b56fb1d5c4d399b1fa5d70dfa80dceb905729958329711aa1a2d75dec02db18c1568c6d1e5b4a270a9ac75d79d3b",
-      ] 
+      ]
       const leafs = beefyValidatorPubKey.map(leaf => keccakFromHexString(leaf)).sort(Buffer.compare);
       const tree = new MerkleTree(leafs, keccak);
       // tree.print()
@@ -78,7 +81,7 @@ describe('MerkleMultiProofTest', function () {
       // console.log(treeFlat.map(x => x.toString('hex')))
       const depth = tree.getDepth()
       // console.log(depth)
-      const indices = [3, 2]
+      const indices = [2, 1]
       // console.log(indices)
       // console.log(leafs.map(x => x.toString('hex')))
       const leaves = indices.map(i => leafs[i])
@@ -88,8 +91,8 @@ describe('MerkleMultiProofTest', function () {
       // const proofFlags = tree.getProofFlags(leaves, proof)
       // console.log(proofFlags)
 
-      const result = await merkleProof.verifyMultiProofWithDict(
-        root, depth, indices, leaves, proof 
+      const result = await sparseMerkleProof.verifyMultiProofWithDict(
+        root, depth, indices, leaves, proof
       )
       expect(result).to.equal(true)
     })
@@ -139,8 +142,8 @@ describe('MerkleMultiProofTest', function () {
       const verified = tree.verifyMultiProof(root, indices, leaves, depth, proof)
       expect(verified).to.equal(true)
 
-      const result = await merkleProof.verifyMultiProofWithDict(
-        root, depth, indices, leaves, proof 
+      const result = await sparseMerkleProof.verifyMultiProofWithDict(
+        root, depth, indices, leaves, proof
       )
       // expect(result).to.equal(true)
     })
