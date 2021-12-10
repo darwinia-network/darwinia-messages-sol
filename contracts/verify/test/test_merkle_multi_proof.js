@@ -156,4 +156,27 @@ describe('MerkleMultiProofTest', function () {
       )
       expect(result).to.equal(true)
     })
+
+    it('Large sparse merkle multi proof with full indices', async () => {
+      let beefyValidatorPubKey = largeValidatorAddresses.sort();
+
+      const leavesHashed = beefyValidatorPubKey.map(leaf => keccakFromHexString(leaf)).sort(Buffer.compare);
+      const tree = new SparseMerkleTree(leavesHashed)
+      // tree.print()
+      let indices = [...Array(512).keys()].reverse()
+      const proof = tree.proof(indices)
+      let values ={}
+      for (let index of indices) {
+        values[index] = leavesHashed[index]
+      }
+      const verified = tree.verify(values, proof)
+      expect(verified).to.equal(true)
+
+      const leaves = indices.map(i => leavesHashed[i])
+      // console.log(leaves.map(x => x.toString('hex')))
+      const result = await sparseMerkleProof.verifyMultiProofWithDict(
+        tree.rootHex(), tree.height(), indices, leaves, tree.proofHex(indices)
+      )
+      expect(result).to.equal(true)
+    })
 });
