@@ -58,7 +58,7 @@ library SparseMerkleMultiProof {
             // Odd node with sibbling in the queue
             } else if (head != tail && tree_indices[head] == index - 1) {
                 hash = hash_node(hashes[head], hash);
-                head = (head + 1) % n;
+                head = (head + 1) % (n + 1);
             // Odd node with sibbling from decommitments
             } else {
                 hash = hash_node(decommitments[di++], hash);

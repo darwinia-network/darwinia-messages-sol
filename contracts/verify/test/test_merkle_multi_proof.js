@@ -1,8 +1,9 @@
 const {expect, use} = require('chai');
 const { solidity }  = require("ethereum-waffle");
-const { keccakFromHexString, keccak } = require("ethereumjs-util");
+const { keccakFromHexString, keccak, bufferToHex } = require("ethereumjs-util");
 const { MerkleTree } = require("merkletreejs");
 const largeValidatorAddresses = require("./data/large-validator-data")
+const { SparseMerkleTree } = require("../src/utils/sparseMerkleTree.js")
 
 use(solidity);
 
@@ -37,9 +38,31 @@ describe('MerkleMultiProofTest', function () {
       expect(result).to.equal(true)
     })
 
+    it('Simple sparse merkle multi proof with indices', async () => {
+      let leafs = ['a', 'b', 'c', 'd'].map(x => keccak(Buffer.from(x)))
+      const tree = new SparseMerkleTree(leafs)
+      // tree.print()
+      const indices = [2, 1]
+      // console.log(indices)
+      const proof = tree.proof(indices)
+      // console.log(tree.proofHex(indices))
+      let values ={}
+      for (let index of indices) {
+        values[index] = leafs[index]
+      }
+      const verified = tree.verify(values, proof)
+      expect(verified).to.equal(true)
+      let leaves = indices.map(i => bufferToHex(leafs[i]))
+      // console.log(leaves)
+      const result = await sparseMerkleProof.verifyMultiProofWithDict(
+        tree.rootHex(), tree.height(), indices, leaves, tree.proofHex(indices)
+      )
+      expect(result).to.equal(true)
+    })
+
     it('Simple merkle multi proof with indices', async () => {
       let leafs = ['a', 'b', 'c', 'd'].map(x => keccak(Buffer.from(x)))
-      leafs = leafs.sort(Buffer.compare)
+      // leafs = leafs.sort(Buffer.compare)
       const tree = new MerkleTree(leafs, keccak)
       // tree.print()
       const root = tree.getRoot()
@@ -74,25 +97,16 @@ describe('MerkleMultiProofTest', function () {
         "0x049cae155ab0892c730cf99a62005c2d37dd72b56fb1d5c4d399b1fa5d70dfa80dceb905729958329711aa1a2d75dec02db18c1568c6d1e5b4a270a9ac75d79d3b",
       ]
       const leafs = beefyValidatorPubKey.map(leaf => keccakFromHexString(leaf)).sort(Buffer.compare);
-      const tree = new MerkleTree(leafs, keccak);
+      const tree = new SparseMerkleTree(leafs)
       // tree.print()
-      const root = tree.getRoot()
-      const treeFlat = tree.getLayersFlat()
-      // console.log(treeFlat.map(x => x.toString('hex')))
-      const depth = tree.getDepth()
-      // console.log(depth)
       const indices = [2, 1]
       // console.log(indices)
       // console.log(leafs.map(x => x.toString('hex')))
       const leaves = indices.map(i => leafs[i])
       // console.log(leaves.map(x => x.toString('hex')))
-      const proof = tree.getMultiProof(treeFlat, indices)
-      // console.log(tree.getHexMultiProof(treeFlat, indices))
-      // const proofFlags = tree.getProofFlags(leaves, proof)
-      // console.log(proofFlags)
-
+      const proof = tree.proofHex(indices)
       const result = await sparseMerkleProof.verifyMultiProofWithDict(
-        root, depth, indices, leaves, proof
+        tree.rootHex(), tree.height(), indices, leaves, proof
       )
       expect(result).to.equal(true)
     })
@@ -101,50 +115,45 @@ describe('MerkleMultiProofTest', function () {
       let beefyValidatorPubKey = largeValidatorAddresses.sort();
 
       const leavesHashed = beefyValidatorPubKey.map(leaf => keccakFromHexString(leaf)).sort(Buffer.compare);
-      const tree = new MerkleTree(leavesHashed, keccak, { sort: true });
-
-      const root = tree.getRoot()
-      const treeFlat = tree.getLayersFlat()
-      const depth = tree.getDepth()
-      const indices = [ 2,   4,   5,   6,   7,   8,  34,  36,  37,  38,  39,  40, 66,  68,  69,  70,  71,  72,  98, 100, 101, 102, 103, 104, 130, 132, 133, 134, 135, 136, 162, 164, 165, 166, 167, 168, 194, 196, 197, 198, 199, 200, 226, 228, 229, 230, 231, 232, 258, 260, 261, 262, 263, 264, 290, 292, 293, 294, 295, 296, 322, 324, 325, 326, 327, 328, 354, 356, 357, 358, 359, 360, 386, 388, 389, 390, 391, 392, 418, 420, 421, 422, 423, 424, 450, 452, 453, 454, 455, 456, 482, 484, 485, 486, 487, 488 ]
-      const leaves = indices.map(i => leavesHashed[i])
-      const proof = tree.getMultiProof(treeFlat, indices)
-      const verified = tree.verifyMultiProof(root, indices, leaves, depth, proof)
+      const tree = new SparseMerkleTree(leavesHashed)
+      let indices = [ 2,   4,   5,   6,   7,   8,  34,  36,  37,  38,  39,  40, 66,  68,  69,  70,  71,  72,  98, 100, 101, 102, 103, 104, 130, 132, 133, 134, 135, 136, 162, 164, 165, 166, 167, 168, 194, 196, 197, 198, 199, 200, 226, 228, 229, 230, 231, 232, 258, 260, 261, 262, 263, 264, 290, 292, 293, 294, 295, 296, 322, 324, 325, 326, 327, 328, 354, 356, 357, 358, 359, 360, 386, 388, 389, 390, 391, 392, 418, 420, 421, 422, 423, 424, 450, 452, 453, 454, 455, 456, 482, 484, 485, 486, 487, 488 ]
+      indices = indices.reverse()
+      const proof = tree.proof(indices)
+      let values ={}
+      for (let index of indices) {
+        values[index] = leavesHashed[index]
+      }
+      const verified = tree.verify(values, proof)
       expect(verified).to.equal(true)
 
-      const proofS = tree.getMultiProof(leaves)
-      // console.log(tree.getHexMultiProof(treeFlat, indices))
-      // console.log(tree.getHexMultiProof(leaves))
-      const proofFlags = tree.getProofFlags(leaves, proofS)
-      const result = await merkleProof.verifyMultiProof(
-        root, leaves, proofS, proofFlags
+      const leaves = indices.map(i => leavesHashed[i])
+      const result = await sparseMerkleProof.verifyMultiProofWithDict(
+        tree.rootHex(), tree.height(), indices, leaves, tree.proofHex(indices)
       )
       expect(result).to.equal(true)
     })
 
 
-    it.skip('Large sparse merkle multi proof with indices', async () => {
+    it('Large sparse merkle multi proof with indices', async () => {
       let beefyValidatorPubKey = largeValidatorAddresses.sort();
 
       const leavesHashed = beefyValidatorPubKey.map(leaf => keccakFromHexString(leaf)).sort(Buffer.compare);
-      const tree = new MerkleTree(leavesHashed, keccak);
+      const tree = new SparseMerkleTree(leavesHashed)
       // tree.print()
-      const root = tree.getRoot()
-      // console.log(root.toString('hex'))
-      const treeFlat = tree.getLayersFlat()
-      const depth = tree.getDepth()
       const indices = [8 , 7,  6,  5,  4,  1]
-      const leaves = indices.map(i => leavesHashed[i])
-      // console.log(leaves.map(x => x.toString('hex')))
-      let proof = tree.getHexMultiProof(treeFlat, indices)
-      // proof.push(treeFlat[3])
-      // console.log(proof.map(x => x.toString('hex')))
-      const verified = tree.verifyMultiProof(root, indices, leaves, depth, proof)
+      const proof = tree.proof(indices)
+      let values ={}
+      for (let index of indices) {
+        values[index] = leavesHashed[index]
+      }
+      const verified = tree.verify(values, proof)
       expect(verified).to.equal(true)
 
+      const leaves = indices.map(i => leavesHashed[i])
+      // console.log(leaves.map(x => x.toString('hex')))
       const result = await sparseMerkleProof.verifyMultiProofWithDict(
-        root, depth, indices, leaves, proof
+        tree.rootHex(), tree.height(), indices, leaves, tree.proofHex(indices)
       )
-      // expect(result).to.equal(true)
+      expect(result).to.equal(true)
     })
 });
