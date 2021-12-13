@@ -23,7 +23,7 @@ class SparseMerkleTree {
   }
 
   hash_leaf(leaf) {
-    return Buffer.from(leaf)
+    return leaf
   }
 
   hash_node(left, right) {

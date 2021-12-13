@@ -417,7 +417,7 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
     ) private view {
         verifyProofSignatures(
             validatorSetRoot,
-            roundUpToPow2(validatorSetLen),
+            validatorSetLen,
             randomBitfield,
             proof,
             requiredNumOfSignatures,
@@ -427,7 +427,7 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
 
     function verifyProofSignatures(
         bytes32 root,
-        uint256 width,
+        uint256 len,
         uint256[] memory bitfield,
         MultiProof memory proof,
         uint256 requiredNumOfSignatures,
@@ -436,12 +436,15 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
 
         verifyMultiProofLengths(requiredNumOfSignatures, proof);
 
+        uint256 width = roundUpToPow2(len);
         /**
          *  @dev For each randomSignature, do:
          */
         bytes32[] memory leaves = new bytes32[](requiredNumOfSignatures);
-        for (uint256 i = requiredNumOfSignatures - 1; i >= 0; i--) {
+        for (uint256 i = 0; i < requiredNumOfSignatures; i++) {
             uint256 pos = proof.positions[i];
+
+            require(pos < len, "Bridge: invalid signer position");
             /**
              * @dev Check if validator in bitfield
              */
@@ -516,11 +519,13 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
         bytes memory signature,
         bytes32 root,
         address signer,
-        uint256 width,
+        uint256 len,
         uint256 position,
         bytes32[] memory addrMerkleProof,
         bytes32 commitmentHash
     ) private pure {
+        require(position < len, "Bridge: invalid signer position");
+        uint256 width = roundUpToPow2(len);
 
         /**
          * @dev Check if merkle proof is valid
