@@ -59,17 +59,9 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
      * each new justification.
      * @param signatures an array of signatures from the chosen signers
      * @param positions an array of the positions of the chosen signers
-     * @param signers an array of the address of each signer
-     * @param signerProofs an array of merkle proofs from the chosen validators proving that their addresses
+     * @param decommitments multi merkle proof from the chosen validators proving that their addresses
      * are in the validator set
      */
-    struct Proof {
-        bytes[] signatures;
-        uint256[] positions;
-        address[] signers;
-        bytes32[][] signerProofs;
-    }
-
     struct MultiProof {
         uint256 depth;
         bytes[] signatures;
@@ -486,32 +478,6 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
         require(
             proof.positions.length == requiredNumOfSignatures,
             "Bridge: Number of validator positions does not match required"
-        );
-    }
-
-    function verifyProofLengths(
-        uint256 requiredNumOfSignatures,
-        Proof memory proof
-    ) private pure {
-        /**
-         * @dev verify that required number of signatures, positions, public keys and merkle proofs are
-         * submitted
-         */
-        require(
-            proof.signatures.length == requiredNumOfSignatures,
-            "Bridge: Number of signatures does not match required"
-        );
-        require(
-            proof.positions.length == requiredNumOfSignatures,
-            "Bridge: Number of validator positions does not match required"
-        );
-        require(
-            proof.signers.length == requiredNumOfSignatures,
-            "Bridge: Number of validator public keys does not match required"
-        );
-        require(
-            proof.signerProofs.length == requiredNumOfSignatures,
-            "Bridge: Number of validator public keys does not match required"
         );
     }
 
