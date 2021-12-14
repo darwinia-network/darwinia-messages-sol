@@ -10,5 +10,10 @@
     "3": {
         "ring": "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
         "kton": "0x1994100c58753793D52c6f457f189aa3ce9cEe94"
+    },
+    "44": {
+        "S2sMappingTokenFactoryProxyAdmin": "0x9f5098Dc064F6ca8D7f7Eb9e722706256b35bb37",
+        "S2sMappingTokenFactoryLogic": "0xA1Ea474716fBe0f5101BA1ACF442201A97768aa4",
+        "S2sMappingTokenFactoryProxy": "0x3CC8913088F79831c8335f0307f4FC92d79C1ac7"
     }
 }
