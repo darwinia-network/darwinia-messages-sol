@@ -14,6 +14,8 @@
     "44": {
         "S2sMappingTokenFactoryProxyAdmin": "0x9f5098Dc064F6ca8D7f7Eb9e722706256b35bb37",
         "S2sMappingTokenFactoryLogic": "0xA1Ea474716fBe0f5101BA1ACF442201A97768aa4",
-        "S2sMappingTokenFactoryProxy": "0x3CC8913088F79831c8335f0307f4FC92d79C1ac7"
+        "S2sMappingTokenFactoryProxy": "0x3CC8913088F79831c8335f0307f4FC92d79C1ac7",
+        "dar/dvmp": "0x6d6f646c6461722f64766d700000000000000000",
+        "xRING": "0x7399Ea6C9d35124d893B8d9808930e9d3F211501"
     }
 }
