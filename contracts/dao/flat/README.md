@@ -1,4 +1,4 @@
-# Dao Faltten Files
+# Dao Flatten Files
 
 ## solc params
 ```json
