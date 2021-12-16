@@ -121,7 +121,6 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
 
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
         prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
-        commit();
         emit MessageAccepted(nonce);
         return nonce;
     }
@@ -136,7 +135,6 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         on_messages_delivered(confirmed_messages);
         // settle the confirmed_messages at fee market
         settle_messages(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
-        commit();
     }
 
     function message_size() public view returns (uint64 size) {
@@ -157,13 +155,12 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
     }
 
-    /* Private Functions */
-
-	/// commit lane data to the `commitment` storage.
-    function commit() internal returns (bytes32) {
-        commitment = hash(data());
-        return commitment;
+	// commit lane data to the `commitment` storage.
+    function commitment() external view returns (bytes32) {
+        return hash(data());
     }
+
+    /* Private Functions */
 
     function extract_inbound_lane_info(InboundLaneData memory lane_data) internal pure returns (uint64 total_unrewarded_messages, uint64 last_delivered_nonce) {
         total_unrewarded_messages = lane_data.last_delivered_nonce - lane_data.last_confirmed_nonce;
@@ -260,9 +257,9 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         }
     }
 
-	/// Prune at most `max_messages_to_prune` already received messages.
-	///
-	/// Returns number of pruned messages.
+	// Prune at most `max_messages_to_prune` already received messages.
+	//
+	// Returns number of pruned messages.
     function prune_messages(uint64 max_messages_to_prune) internal returns (uint64) {
         uint64 pruned_messages = 0;
         bool anything_changed = false;

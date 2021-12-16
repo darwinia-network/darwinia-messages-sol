@@ -154,7 +154,6 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         );
         receive_state_update(outboundLaneData.latest_received_nonce);
         receive_message(outboundLaneData.messages);
-        commit();
     }
 
     function relayers_size() public view returns (uint64 size) {
@@ -184,13 +183,12 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         lane_data.last_delivered_nonce = inboundLaneNonce.last_delivered_nonce;
     }
 
-    /* Private Functions */
-
-    // storage proof issue: must use latest commitment in lightclient, cause we rm mmr root
-    function commit() internal returns (bytes32) {
-        commitment = hash(data());
-        return commitment;
+	// commit lane data to the `commitment` storage.
+    function commitment() external view returns (bytes32) {
+        return hash(data());
     }
+
+    /* Private Functions */
 
     // Receive state of the corresponding outbound lane.
     // Syncing state from SourceChain::OutboundLane, deal with nonce and relayers.

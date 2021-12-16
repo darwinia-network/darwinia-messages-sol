@@ -33,11 +33,6 @@ contract MessageVerifier {
      */
     ILightClient public lightClient;
 
-    /**
-     * @dev The lane data storage commitment
-     */
-    bytes32 public commitment;
-
     constructor(
         address _lightClient,
         uint32 _thisChainPosition,
