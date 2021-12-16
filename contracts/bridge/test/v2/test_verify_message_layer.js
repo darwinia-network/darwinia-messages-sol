@@ -87,14 +87,14 @@ describe("verify message relay tests", () => {
 
   before(async () => {
     const [owner] = await ethers.getSigners();
-    const BSCLightClientMock = await ethers.getContractFactory("BSCLightClientMock")
+    const MockBSCLightClient = await ethers.getContractFactory("MockBSCLightClient")
     const MockDarwiniaLightClient = await ethers.getContractFactory("MockDarwiniaLightClient")
     const OutboundLane = await ethers.getContractFactory("OutboundLane")
     const InboundLane = await ethers.getContractFactory("InboundLane")
     const ChainMessageCommitter = await ethers.getContractFactory("ChainMessageCommitter")
     const LaneMessageCommitter = await ethers.getContractFactory("LaneMessageCommitter")
 
-    targetLightClient = await BSCLightClientMock.deploy(LANE_COMMITMENT_POSITION)
+    targetLightClient = await MockBSCLightClient.deploy(LANE_COMMITMENT_POSITION)
     sourceOutbound = await OutboundLane.deploy(targetLightClient.address, sourceChainPos, sourceOutLanePos, targetChainPos, targetInLanePos, 1, 0, 0)
     await sourceOutbound.grantRole("0x7bb193391dc6610af03bd9922e44c83b9fda893aeed61cf64297fb4473500dd1", owner.address)
     await sourceOutbound.grantRole("0x8e856dd2c9de9abc810f3fbf5113d5a0f5eae2365cef39cc37905a5af78d68e6", owner.address)

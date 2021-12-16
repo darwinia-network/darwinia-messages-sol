@@ -155,7 +155,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
     }
 
-	// commit lane data to the `commitment` storage.
+    // commit lane data to the `commitment` storage.
     function commitment() external view returns (bytes32) {
         return hash(data());
     }
@@ -257,9 +257,9 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         }
     }
 
-	// Prune at most `max_messages_to_prune` already received messages.
-	//
-	// Returns number of pruned messages.
+    // Prune at most `max_messages_to_prune` already received messages.
+    //
+    // Returns number of pruned messages.
     function prune_messages(uint64 max_messages_to_prune) internal returns (uint64) {
         uint64 pruned_messages = 0;
         bool anything_changed = false;

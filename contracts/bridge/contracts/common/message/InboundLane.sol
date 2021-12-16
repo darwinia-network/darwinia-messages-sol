@@ -183,7 +183,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         lane_data.last_delivered_nonce = inboundLaneNonce.last_delivered_nonce;
     }
 
-	// commit lane data to the `commitment` storage.
+    // commit lane data to the `commitment` storage.
     function commitment() external view returns (bytes32) {
         return hash(data());
     }

@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 
 // import "hardhat/console.sol";
 
-contract BSCLightClientMock {
+contract MockBSCLightClient {
     struct StorageProof {
         uint256 balance;
         bytes32 codeHash;
