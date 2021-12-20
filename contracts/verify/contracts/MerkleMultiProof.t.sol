@@ -10,25 +10,10 @@ contract MerkleMultiProofTest is DSTest {
         bytes32[] memory proofs,
         bool[] memory proofFlag
     )
-        public 
-        pure 
-        returns (bool)
-    {
-        return MerkleMultiProof.verifyMultiProof(root, leafs, proofs, proofFlag);
-    }
-
-    function verifyMultiProofWithDict(
-        bytes32 root,
-        uint256 depth,
-        uint256[] memory indices,
-        bytes32[] memory leafs,
-        bytes32[] memory decommitments
-    )
         public
         pure
         returns (bool)
     {
-        return MerkleMultiProof.verify(root, depth, indices, leafs, decommitments);
+        return MerkleMultiProof.verifyMultiProof(root, leafs, proofs, proofFlag);
     }
-
 }
