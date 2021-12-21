@@ -2,10 +2,17 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 interface ILightClient {
-    function verify_lane_data_proof(
-        bytes32 lane_data_hash,
+    function verify_messages_proof(
+        bytes32 outlane_data_hash,
         uint32 chain_pos,
-        uint32 lane_data_pos,
-        bytes calldata proof
+        uint32 lane_pos,
+        bytes calldata encoded_proof
+    ) external view returns (bool);
+
+    function verify_messages_delivery_proof(
+        bytes32 inlane_data_hash,
+        uint32 chain_pos,
+        uint32 lane_pos,
+        bytes calldata encoded_proof
     ) external view returns (bool);
 }

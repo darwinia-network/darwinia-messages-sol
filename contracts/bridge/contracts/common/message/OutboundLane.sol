@@ -150,7 +150,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         InboundLaneData memory inboundLaneData,
         bytes memory messagesProof
     ) public lock {
-        verify_lane_data_proof(hash(inboundLaneData), messagesProof);
+        verify_messages_delivery_proof(hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
         on_messages_delivered(confirmed_messages);
         // settle the confirmed_messages at fee market

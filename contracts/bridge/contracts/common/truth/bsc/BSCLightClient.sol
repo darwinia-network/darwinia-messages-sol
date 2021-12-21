@@ -3,6 +3,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
+import "../../../interfaces/ILightClient.sol";
 import "../../spec/SourceChain.sol";
 import "../../spec/TargetChain.sol";
 
@@ -22,7 +23,7 @@ interface IBSCBridge {
     ) external pure returns (bytes32[] memory values);
 }
 
-contract BSCLightClient is SourceChain, TargetChain {
+contract BSCLightClient is ILightClient, SourceChain, TargetChain {
     event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
 
     struct ReceiveProof {
@@ -85,7 +86,7 @@ contract BSCLightClient is SourceChain, TargetChain {
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata encoded_proof
-    ) external view returns (bool) {
+    ) external override view returns (bool) {
         address lane = lanes[chain_pos][lane_pos];
         require(lane != address(0), "BSCLightClient: missing outlane addr");
         ReceiveProof memory proof = abi.decode(encoded_proof, (ReceiveProof));
@@ -159,7 +160,7 @@ contract BSCLightClient is SourceChain, TargetChain {
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata encoded_proof
-    ) external view returns (bool) {
+    ) external override view returns (bool) {
         address lane = lanes[chain_pos][lane_pos];
         require(lane != address(0), "BSCLightClient: missing outlane addr");
         DeliveryProof memory proof = abi.decode(encoded_proof, (DeliveryProof));

@@ -42,12 +42,22 @@ contract MessageVerifier {
 
     /* Private Functions */
 
-    function verify_lane_data_proof(
-        bytes32 lane_data_hash,
-        bytes memory messagesProof
+    function verify_messages_proof(
+        bytes32 outlane_data_hash,
+        bytes memory encoded_proof
     ) internal view {
         require(
-            lightClient.verify_lane_data_proof(lane_data_hash, thisChainPosition, bridgedLanePosition, messagesProof),
+            lightClient.verify_messages_proof(outlane_data_hash, thisChainPosition, bridgedLanePosition, encoded_proof),
+            "Verifer: InvalidProof"
+        );
+    }
+
+    function verify_messages_delivery_proof(
+        bytes32 inlane_data_hash,
+        bytes memory encoded_proof
+    ) internal view {
+        require(
+            lightClient.verify_messages_delivery_proof(inlane_data_hash, thisChainPosition, bridgedLanePosition, encoded_proof),
             "Verifer: InvalidProof"
         );
     }

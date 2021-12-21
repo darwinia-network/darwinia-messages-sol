@@ -156,7 +156,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         bytes[] memory messagesCallData,
         bytes memory messagesProof
     ) public lock {
-        verify_lane_data_proof(hash(outboundLaneData), messagesProof);
+        verify_messages_proof(hash(outboundLaneData), messagesProof);
         // Require there is enough gas to play all messages
         require(
             gasleft() >= outboundLaneData.messages.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
