@@ -230,7 +230,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         uint64 next = begin;
         for (uint256 i = 0; i < messages.length; i++) {
             Message memory message = messages[i];
-            MessageKey memory key = message.key;
+            MessageKey memory key = decodeMessageKey(message.encoded_key);
             MessagePayload memory message_payload = message.data.payload;
             if (key.nonce < next) {
                 continue;

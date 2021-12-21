@@ -1,7 +1,7 @@
 {
-  "name": "@darwinia/contracts-utils",
+  "name": "@darwinia/contracts-dao",
   "version": "1.0.0",
-  "description": "Smart contract utils of darwinia",
+  "description": "Darwinia governance",
   "main": "index.js",
   "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
   "author": "Darwinia dev",
@@ -9,6 +9,7 @@
   "scripts": {
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
+    "gas": "npx hardhat gasUsage",
     "clean": "shx rm -rf cache artifacts abi"
   },
   "devDependencies": {
@@ -18,10 +19,14 @@
     "chai": "^4.3.4",
     "dotenv": "^10.0.0",
     "ethereum-waffle": "^3.0.0",
+    "ethereumjs-util": "^7.0.10",
     "ethers": "^5.0.0",
     "hardhat": "^2.3.0",
     "hardhat-abi-exporter": "^2.2.1",
     "hardhat-gas-reporter": "^1.0.6",
     "shx": "^0.3.3"
+  },
+  "dependencies": {
+    "@zeppelin-solidity-4.4.0/contracts": "npm:@openzeppelin/contracts@4.4.0-rc.0"
   }
 }

@@ -10,19 +10,26 @@
   "author": "Darwinia dev",
   "license": "MIT",
   "scripts": {
+    "ci": "wsrun -r --stages --fast-exit --exclude-missing -p $PKG -c ci",
+    "mv-reporter": "wsrun -r --stages --fast-exit --exclude-missing -p $PKG -c mv-reporter",
+    "merge": "npx hardhat gas-reporter:merge 'gasReporterOutput*.json'",
     "wsrun": "wsrun",
     "build": "wsrun -r --stages --fast-exit --exclude-missing -p $PKG -c build",
     "test": "wsrun -r --stages --fast-exit --exclude-missing -p $PKG -c test",
+    "codechecks": "wsrun -r --stages --fast-exit --exclude-missing -p $PKG -c codechecks",
     "build:contracts": "wsrun -p ${npm_package_config_contractsPackages} --fast-exit -r --stages --exclude-missing -c build",
     "clean": "wsrun --fast-exit -r --parallel --exclude-missing -p $PKG -c clean",
     "clean:contracts": "wsrun --fast-exit -r --parallel --exclude-missing -p ${npm_package_config_contractsPackages} -c clean",
     "rebuild": "run-s clean build"
   },
   "config": {
-    "contractsPackages": "@darwinia/contracts-bridge @darwinia/contracts-issuing-backing @darwinia/contracts-mapping-token @darwinia/contracts-tokens @darwinia/contracts-util @darwinia/contracts-verify @darwinia/contracts-precompile",
+    "contractsPackages": "@darwinia/contracts-bridge @darwinia/contracts-issuing-backing @darwinia/contracts-mapping-token @darwinia/contracts-tokens @darwinia/contracts-util @darwinia/contracts-verify @darwinia/contracts-precompile @darwinia/contracts-dao",
     "nonContractsPackages": "@darwinia/addresses @darwinia/assets"
   },
   "devDependencies": {
+    "hardhat": "^2.3.0",
+    "hardhat-gas-reporter": "^1.0.6",
+    "@codechecks/client": "^0.1.12",
     "npm-run-all": "^4.1.5",
     "wsrun": "^5.2.4"
   }

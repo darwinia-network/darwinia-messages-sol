@@ -6,7 +6,7 @@ pragma experimental ABIEncoderV2;
 import "@darwinia/contracts-utils/contracts/ECDSA.sol";
 import "@darwinia/contracts-utils/contracts/Bitfield.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
-import "@darwinia/contracts-verify/contracts/KeccakMMR.sol";
+import "@darwinia/contracts-verify/contracts/SparseMerkleMultiProof.sol";
 import "./ValidatorRegistry.sol";
 import "./GuardRegistry.sol";
 import "../spec/BeefyCommitmentScheme.sol";
@@ -59,15 +59,14 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
      * each new justification.
      * @param signatures an array of signatures from the chosen signers
      * @param positions an array of the positions of the chosen signers
-     * @param signers an array of the address of each signer
-     * @param signerProofs an array of merkle proofs from the chosen validators proving that their addresses
+     * @param decommitments multi merkle proof from the chosen validators proving that their addresses
      * are in the validator set
      */
-    struct Proof {
+    struct MultiProof {
+        uint256 depth;
         bytes[] signatures;
         uint256[] positions;
-        address[] signers;
-        bytes32[][] signerProofs;
+        bytes32[] decommitments;
     }
 
     /**
@@ -250,32 +249,6 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
     }
 
     /**
-     * @notice Executed by the apps in order to verify commitment
-     * @param beefyMMRLeafHash contains the merkle leaf hash
-     * @param beefyMMRLeafIndex contains the merkle leaf index
-     * @param beefyMMRLeafCount contains the merkle leaf count
-     * @param peaks contains the merkle maintain range peaks
-     * @param siblings contains the merkle maintain range siblings
-     */
-    function verifyBeefyMerkleLeaf(
-        bytes32 beefyMMRLeafHash,
-        uint256 beefyMMRLeafIndex,
-        uint256 beefyMMRLeafCount,
-        bytes32[] calldata peaks,
-        bytes32[] calldata siblings
-    ) external view returns (bool) {
-        return
-            KeccakMMR.inclusionProof(
-                latestMMRRoot,
-                beefyMMRLeafCount,
-                beefyMMRLeafIndex,
-                beefyMMRLeafHash,
-                peaks,
-                siblings
-            );
-    }
-
-    /**
      * @notice Executed by the prover in order to begin the process of block
      * acceptance by the light client
      * @param commitmentHash contains the commitmentHash signed by the validator(s)
@@ -341,7 +314,7 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
     function completeSignatureCommitment(
         uint256 id,
         Commitment memory commitment,
-        Proof memory validatorProof,
+        MultiProof memory validatorProof,
         bytes[] memory guardSignatures
     ) public {
         // only current epoch
@@ -381,7 +354,7 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
     function verifyCommitment(
         uint256 id,
         Commitment memory commitment,
-        Proof memory validatorProof,
+        MultiProof memory validatorProof,
         bytes[] memory guardSignatures
     ) private view {
         ValidationData storage data = validationData[id];
@@ -423,9 +396,14 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
         checkGuardSignatures(commitmentHash, guardSignatures);
     }
 
+    function roundUpToPow2(uint256 len) internal pure returns (uint256) {
+        if (len <= 1) return 1;
+        else return 2 * roundUpToPow2((len + 1) / 2);
+    }
+
     function verifyValidatorProofSignatures(
         uint256[] memory randomBitfield,
-        Proof memory proof,
+        MultiProof memory proof,
         uint256 requiredNumOfSignatures,
         bytes32 commitmentHash
     ) private view {
@@ -441,20 +419,24 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
 
     function verifyProofSignatures(
         bytes32 root,
-        uint256 width,
+        uint256 len,
         uint256[] memory bitfield,
-        Proof memory proof,
+        MultiProof memory proof,
         uint256 requiredNumOfSignatures,
         bytes32 commitmentHash
     ) private pure {
 
-        verifyProofLengths(requiredNumOfSignatures, proof);
+        verifyMultiProofLengths(requiredNumOfSignatures, proof);
 
+        uint256 width = roundUpToPow2(len);
         /**
          *  @dev For each randomSignature, do:
          */
+        bytes32[] memory leaves = new bytes32[](requiredNumOfSignatures);
         for (uint256 i = 0; i < requiredNumOfSignatures; i++) {
             uint256 pos = proof.positions[i];
+
+            require(pos < len, "Bridge: invalid signer position");
             /**
              * @dev Check if validator in bitfield
              */
@@ -468,26 +450,27 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
              */
             clear(bitfield, pos);
 
-            verifySignature(
-                proof.signatures[i],
-                root,
-                proof.signers[i],
-                width,
-                pos,
-                proof.signerProofs[i],
-                commitmentHash
-            );
+            address signer = ECDSA.recover(commitmentHash, proof.signatures[i]);
+            leaves[i] = keccak256(abi.encodePacked(signer));
         }
+
+        require(1 << proof.depth == width, "Bridge: invalid depth");
+        require(
+            SparseMerkleMultiProof.verify(
+                root,
+                proof.depth,
+                proof.positions,
+                leaves,
+                proof.decommitments
+            ),
+            "Bridge: invalid multi proof"
+        );
     }
 
-    function verifyProofLengths(
+    function verifyMultiProofLengths(
         uint256 requiredNumOfSignatures,
-        Proof memory proof
+        MultiProof memory proof
     ) private pure {
-        /**
-         * @dev verify that required number of signatures, positions, public keys and merkle proofs are
-         * submitted
-         */
         require(
             proof.signatures.length == requiredNumOfSignatures,
             "Bridge: Number of signatures does not match required"
@@ -496,25 +479,19 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
             proof.positions.length == requiredNumOfSignatures,
             "Bridge: Number of validator positions does not match required"
         );
-        require(
-            proof.signers.length == requiredNumOfSignatures,
-            "Bridge: Number of validator public keys does not match required"
-        );
-        require(
-            proof.signerProofs.length == requiredNumOfSignatures,
-            "Bridge: Number of validator public keys does not match required"
-        );
     }
 
     function verifySignature(
         bytes memory signature,
         bytes32 root,
         address signer,
-        uint256 width,
+        uint256 len,
         uint256 position,
         bytes32[] memory addrMerkleProof,
         bytes32 commitmentHash
     ) private pure {
+        require(position < len, "Bridge: invalid signer position");
+        uint256 width = roundUpToPow2(len);
 
         /**
          * @dev Check if merkle proof is valid

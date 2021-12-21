@@ -191,10 +191,10 @@ describe('MerkleMountainRange', () => {
       const index = 2
       const proof = tree.getMerkleProof(index)
       const leaf = leaves[index-1]
-      console.log(tree.getHexRoot())
-      console.log(proof.root.toString('hex'))
-      console.log(proof.peakBagging.map(x => x.toString('hex')))
-      console.log(proof.siblings.map(x => x.toString('hex')))
+      // console.log(tree.getHexRoot())
+      // console.log(proof.root.toString('hex'))
+      // console.log(proof.peakBagging.map(x => x.toString('hex')))
+      // console.log(proof.siblings.map(x => x.toString('hex')))
       const verified = tree.verify(proof.root, proof.width, index, leaf, proof.peakBagging, proof.siblings)
       expect(verified).to.be.true
       const ret = await mmrLib.verifyProof(

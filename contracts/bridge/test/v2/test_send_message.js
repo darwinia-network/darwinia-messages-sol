@@ -60,43 +60,50 @@ const receive_messages_delivery_proof = async (begin, end) => {
 //1  (0, 1]                                            ->     (0, 1]  #receive_messages_proof
 //2  (1, 1]   #receive_messages_delivery_proof         ->     (0, 1]
 //3  (1, 1]                                            ->     (1, 1]  #receive_messages_proof
-describe("reward message relay tests", () => {
+describe("send message tests", () => {
 
   before(async () => {
     ({ feeMarket, outbound, inbound } = await waffle.loadFixture(Fixure));
     [owner, addr1, addr2] = await ethers.getSigners();
+
+    let overrides = { value: ethers.utils.parseEther("3000") }
+    await feeMarket.connect(owner).deposit(overrides)
+    await feeMarket.connect(addr1).deposit(overrides)
+    await feeMarket.connect(addr2).deposit(overrides)
     log(" out bound lane                                   ->      in bound lane")
     log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")
   })
 
   it("0", async function () {
-    await send_message(1)
+    for(let i=1; i <50; i++) {
+      await send_message(i)
+    }
   })
 
-  it("1", async function () {
-    await receive_messages_proof(1)
-  })
+  // it("1", async function () {
+  //   await receive_messages_proof(1)
+  // })
 
-  it("2", async function () {
-    await receive_messages_delivery_proof(1, 1)
-  })
+  // it("2", async function () {
+  //   await receive_messages_delivery_proof(1, 1)
+  // })
 
-  it("3", async function () {
-    await receive_messages_proof(1)
-  })
+  // it("3", async function () {
+  //   await receive_messages_proof(1)
+  // })
 
-  it("4", async function () {
-    const tx = await outbound.send_message(
-      "0x0000000000000000000000000000000000000000",
-      "0x",
-      overrides
-    )
-    await expect(tx)
-      .to.emit(outbound, "MessageAccepted")
-      .withArgs(2)
-    await expect(tx)
-      .to.emit(outbound, "MessagePruned")
-      .withArgs(2)
-    await logNonce()
-  })
+  // it("4", async function () {
+  //   const tx = await outbound.send_message(
+  //     "0x0000000000000000000000000000000000000000",
+  //     "0x",
+  //     overrides
+  //   )
+  //   await expect(tx)
+  //     .to.emit(outbound, "MessageAccepted")
+  //     .withArgs(2)
+  //   await expect(tx)
+  //     .to.emit(outbound, "MessagePruned")
+  //     .withArgs(2)
+  //   await logNonce()
+  // })
 })

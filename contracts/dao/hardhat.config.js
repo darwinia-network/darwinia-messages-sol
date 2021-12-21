@@ -1,7 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require('hardhat-abi-exporter');
-require("hardhat-gas-reporter");
 
 require('dotenv').config({ path: '../../.env' })
 
@@ -11,18 +10,6 @@ const ROPSTEN_RPC_URL = process.env.ROPSTEN_RPC_URL
 const KOVAN_RPC_URL = process.env.KOVAN_RPC_URL 
 const PRIVATE_KEY = process.env.PRIVATE_KEY 
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY 
-const REPORT_GAS = process.env.REPORT_GAS ? true : false
-
-
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
-task("accounts", "Prints the list of accounts", async () => {
-  const accounts = await ethers.getSigners();
-
-  for (const account of accounts) {
-    console.log(account.address);
-  }
-});
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -37,9 +24,9 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.6.7",
+        version: "0.8.6",
         settings: {
-          evmVersion: "istanbul",
+          evmVersion: "berlin",
           optimizer: {
             enabled: true,
             runs: 999999
@@ -60,6 +47,16 @@ module.exports = {
             }
           }
         }
+      },
+      {
+        version: "0.4.24",
+        settings: {
+          evmVersion: "byzantium",
+          optimizer: {
+            enabled: true,
+            runs: 999999
+          },
+        }
       }
     ]
   },
@@ -69,14 +66,12 @@ module.exports = {
     cache: "./cache",
     artifacts: "./artifacts"
   },
-  defaultNetwork: 'hardhat',
+  defaultNetwork: 'ropsten',
   networks: {
     hardhat: {
-      throwOnCallFailures: true,
-      throwOnTransactionFailures: true,
     },
     dev: {
-      url: 'http://127.0.0.1:8545/',
+      url: 'http://localhost:8545/',
       network_id: "*",
       accounts: [PRIVATE_KEY]
     },
@@ -105,12 +100,9 @@ module.exports = {
   },
   abiExporter: {
     path: './abi/',
-    clear: true,
+    clear: false,
     flat: false,
     only: [],
-  },
-  gasReporter: {
-    enabled: REPORT_GAS,
   }
 };
 

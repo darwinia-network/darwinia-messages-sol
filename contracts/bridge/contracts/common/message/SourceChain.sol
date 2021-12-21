@@ -40,8 +40,8 @@ contract SourceChain {
 
     // Message as it is stored in the storage.
     struct Message {
-        // Message key.
-        MessageKey key;
+        // Encoded message key.
+        uint256 encoded_key;
         // Message data.
         MessageData data;
     }
@@ -67,14 +67,13 @@ contract SourceChain {
     /**
      * Hash of the Message Schema
      * keccak256(abi.encodePacked(
-     *     "Message(MessageKey key,MessageData data)",
-     *     "MessageKey(uint32 this_chain_id,uint32 this_lane_id,uint32 bridged_chain_id,uint32 bridged_lane_id,uint64 nonce)",
+     *     "Message(uint256 encoded_key,MessageData data)",
      *     "MessageData(MessagePayload payload,uint256 fee)",
      *     "MessagePayload(address sourceAccount,address targetContract,bytes encoded)"
      *     ")"
      * )
      */
-    bytes32 internal constant MESSAGE_TYPEHASH = 0x97e58b86e5cf0924dbc06e72d4760842af991c8f276d09034eae1738c5f4bab9;
+    bytes32 internal constant MESSAGE_TYPEHASH = 0xd71e134eb63429389e340ef0242aedc243cd42c6b9f91f4c3fd39c9bab2a9beb;
 
     /**
      * Hash of the MessageKey Schema
@@ -130,7 +129,7 @@ contract SourceChain {
                 encoded,
                 abi.encode(
                     MESSAGE_TYPEHASH,
-                    hash(message.key),
+                    message.encoded_key,
                     hash(message.data)
                 )
             );
@@ -182,5 +181,13 @@ contract SourceChain {
                 payload.encoded
             )
         );
+    }
+
+    function decodeMessageKey(uint256 encoded) public pure returns (MessageKey memory key) {
+        key.this_chain_id = uint32(encoded >> 160);
+        key.this_lane_id = uint32(encoded >> 128);
+        key.bridged_chain_id = uint32(encoded >> 96);
+        key.bridged_lane_id = uint32(encoded >> 64);
+        key.nonce = uint64(encoded);
     }
 }
