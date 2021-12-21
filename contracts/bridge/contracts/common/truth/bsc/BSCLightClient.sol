@@ -10,7 +10,7 @@ interface IBSCBridge {
     function verify_single_storage_proof(
         address account,
         bytes[] calldata accountProof,
-        bytes32 calldata storageKey,
+        bytes32 storageKey,
         bytes[] calldata storageProof
     ) external pure returns (bytes32 value);
 
@@ -27,25 +27,23 @@ contract BSCLightClient is SourceChain, TargetChain {
 
     struct ReceiveProof {
         bytes[] accountProof;
-        bytes[][] outlaneNonceProof;
-        bytes[][] outlaneMessagesProof;
+        bytes[] laneIDProof;
+        bytes[] laneNonceProof;
+        bytes[][] laneMessagesProof;
     }
 
     struct DeliveryProof {
-        uint64 last_confirmed_nonce;
-        uint64 last_delivered_nonce;
-        uint64[] relayerKey;
         bytes[] accountProof;
-        bytes[][] storageProof;
+        bytes[] laneNonceProof;
+        bytes[][] laneRelayersProof;
     }
 
     address internal constant BSC_BRIDGE_PRECOMPILE = address(0x26);
 
     uint256 public immutable THIS_CHAIN_POSITION;
-    uint256 public immutable OUTLANE_NONCE_POSITION;
-    uint256 public immutable OUTLANE_MESSAGES_POSITION;
-    uint256 public immutable INLANE_NONCE_POSITION;
-    uint256 public immutable INLANE_RELAYERS_POSITION;
+    uint256 public immutable LANE_IDENTIFY_SLOT;
+    uint256 public immutable LANE_NONCE_SLOT;
+    uint256 public immutable LANE_MESSAGE_SLOT;
 
     // bridgedChainPosition => lanePosition => lanes
     mapping(uint32 => mapping(uint32 => address)) lanes;
@@ -63,16 +61,14 @@ contract BSCLightClient is SourceChain, TargetChain {
 
     constructor(
         uint32 this_chain_position,
-        uint256 outlane_nonce_position,
-        uint256 outlane_messages_position,
-        uint256 inlane_nonce_position,
-        uint256 inlane_relayers_position
+        uint256 lane_identify_slot,
+        uint256 lane_nonce_slot,
+        uint256 lane_message_slot
     ) public {
         THIS_CHAIN_POSITION = this_chain_position;
-        OUTLANE_NONCE_POSITION = outlane_nonce_position;
-        OUTLANE_MESSAGES_POSITION = outlane_messages_position;
-        INLANE_NONCE_POSITION = inlane_nonce_position;
-        INLANE_RELAYERS_POSITION = inlane_relayers_position;
+        LANE_IDENTIFY_SLOT = lane_identify_slot;
+        LANE_NONCE_SLOT = lane_nonce_slot;
+        LANE_MESSAGE_SLOT = lane_message_slot;
         setter = msg.sender;
     }
 
@@ -94,16 +90,24 @@ contract BSCLightClient is SourceChain, TargetChain {
         require(lane != address(0), "BSCLightClient: missing outlane addr");
         ReceiveProof memory proof = abi.decode(encoded_proof, (ReceiveProof));
 
-        // extract nonce storage value from proof
-        bytes32 nonce = IBSCBridge(BSC_BRIDGE_PRECOMPILE).verify_single_storage_proof(
+        // extract identify storage value from proof
+        bytes32 identify_storage = IBSCBridge(BSC_BRIDGE_PRECOMPILE).verify_single_storage_proof(
             lane,
             proof.accountProof,
-            bytes32(OUTLANE_NONCE_POSITION),
-            proof.outlaneNonceProof
+            bytes32(LANE_IDENTIFY_SLOT),
+            proof.laneIDProof
         );
 
-        uint64 latest_received_nonce = uint64(uint256(nonce));
-        uint64 latest_generated_nonce = uint64(uint256(nonce) >> 64);
+        // extract nonce storage value from proof
+        bytes32 nonce_storage = IBSCBridge(BSC_BRIDGE_PRECOMPILE).verify_single_storage_proof(
+            lane,
+            proof.accountProof,
+            bytes32(LANE_NONCE_SLOT),
+            proof.laneNonceProof
+        );
+
+        uint64 latest_received_nonce = uint64(uint256(nonce_storage));
+        uint64 latest_generated_nonce = uint64(uint256(nonce_storage) >> 64);
         uint256 size = latest_generated_nonce - latest_received_nonce;
         // restruct the outlane data
         OutboundLaneData memory lane_data;
@@ -111,20 +115,21 @@ contract BSCLightClient is SourceChain, TargetChain {
             uint256 len = 3 * size;
             // find all messages storage keys
             bytes32[] memory storage_keys = new bytes32[](len);
-            for (uint64 i=0; i < len; i++) {
-                MessageKey memory key = decodeMessageKey(proof.messageKey[i]);
-                uint256 messagesLocation = mapLocation(OUTLANE_MESSAGES_POSITION, key.nonce);
-                storage_keys[i] = bytes32(messagesLocation);
-                storage_keys[i+1] = bytes32(messagesLocation + 1);
-                storage_keys[i+2] = bytes32(messagesLocation + 2);
+            uint64 begin = latest_received_nonce + 1;
+            for (uint64 index=0; index < size; index++) {
+                uint64 nonce = begin + index;
+                uint256 messagesLocation = mapLocation(LANE_MESSAGE_SLOT, nonce);
+                storage_keys[index] = bytes32(messagesLocation);
+                storage_keys[index+1] = bytes32(messagesLocation + 1);
+                storage_keys[index+2] = bytes32(messagesLocation + 2);
             }
 
             // extract messages storage value from proof
-            bytes32[] memory values = IBSCBridge(BSC_BRIDGE_PRECOMPILE).verify_storage_proof(
+            bytes32[] memory values = IBSCBridge(BSC_BRIDGE_PRECOMPILE).verify_multi_storage_proof(
                 lane,
                 proof.accountProof,
                 storage_keys,
-                proof.storageProof
+                proof.laneMessagesProof
             );
 
             require(len == values.length, "BSCLightClient: invalid values length");
@@ -135,7 +140,8 @@ contract BSCLightClient is SourceChain, TargetChain {
                    address(uint160(uint256(values[3*i+1]))),
                    values[3*i+2]
                );
-               messages[i] = Message(proof.messageKey[i], payload);
+               uint256 key = uint256(identify_storage) << 64 + begin + i;
+               messages[i] = Message(key, payload);
             }
             lane_data.messages = messages;
         }
@@ -155,44 +161,60 @@ contract BSCLightClient is SourceChain, TargetChain {
         bytes calldata encoded_proof
     ) external view returns (bool) {
         address lane = lanes[chain_pos][lane_pos];
-        require(lane != address(0), "BSCLightClient: missing inlane addr");
+        require(lane != address(0), "BSCLightClient: missing outlane addr");
         DeliveryProof memory proof = abi.decode(encoded_proof, (DeliveryProof));
-        // what if len = 0
-        uint256 size = proof.relayerKey.length;
-        require(size > 0 && size == proof.storageProof.length, "BSCLightClient: invalid length");
-        uint256 len = 3 * size;
-        // find all relayers storage keys
-        bytes32[] memory storage_keys = new bytes32[](len);
-        for (uint64 i=0; i < len; i++) {
-            uint64 key = proof.relayerKey[i];
-            uint256 relayersLocation = mapLocation(INLANE_RELAYERS_POSITION, key);
-            storage_keys[i] = bytes32(relayersLocation);
-            storage_keys[i+1] = bytes32(relayersLocation + 1);
-            storage_keys[i+2] = bytes32(relayersLocation + 2);
-        }
 
-        // extract storage value from proof
-        bytes32[] memory values = IBSCBridge(BSC_BRIDGE_PRECOMPILE).verify_storage_proof(
+        // extract nonce storage value from proof
+        bytes32 nonce_storage = IBSCBridge(BSC_BRIDGE_PRECOMPILE).verify_single_storage_proof(
             lane,
             proof.accountProof,
-            storage_keys,
-            proof.storageProof
+            bytes32(LANE_NONCE_SLOT),
+            proof.laneNonceProof
         );
 
-        require(len == values.length, "BSCLightClient: invalid values length");
-        UnrewardedRelayer[] memory unrewarded_relayers = new UnrewardedRelayer[](size);
-        for (uint64 i=0; i < size; i++) {
-           bytes32 slot2 = values[3*i+1];
-           uint64 begin = uint64(uint256(slot2));
-           uint64 end = uint64(uint256(slot2 >> 64));
-           unrewarded_relayers[i] = UnrewardedRelayer(
-               address(uint160(uint256(values[3*i]))),
-               DeliveredMessages(begin, end, uint256(values[3*i+2]))
-           );
-        }
-        // restruct the inlane data
-        InboundLaneData memory lane_data = InboundLaneData(unrewarded_relayers, proof.last_confirmed_nonce, proof.last_delivered_nonce);
+        uint64 last_confirmed_nonce = uint64(uint256(nonce_storage));
+        uint64 last_delivered_nonce = uint64(uint256(nonce_storage) >> 64);
+        uint64 front = uint64(uint256(nonce_storage) >> 128);
+        uint64 back = uint64(uint256(nonce_storage) >> 192);
+        uint256 size = back >= front ? back - front + 1 : 0;
+        // restruct the in lane data
+        InboundLaneData memory lane_data;
+        if (size > 0) {
+            uint256 len = 3 * size;
+            // find all messages storage keys
+            bytes32[] memory storage_keys = new bytes32[](len);
+            for (uint64 index=0; index < size; index++) {
+                uint256 relayersLocation = mapLocation(LANE_MESSAGE_SLOT, front + index);
+                storage_keys[index] = bytes32(relayersLocation);
+                storage_keys[index+1] = bytes32(relayersLocation + 1);
+                storage_keys[index+2] = bytes32(relayersLocation + 2);
+            }
 
+            // extract messages storage value from proof
+            bytes32[] memory values = IBSCBridge(BSC_BRIDGE_PRECOMPILE).verify_multi_storage_proof(
+                lane,
+                proof.accountProof,
+                storage_keys,
+                proof.laneRelayersProof
+            );
+
+            require(len == values.length, "BSCLightClient: invalid values length");
+            UnrewardedRelayer[] memory unrewarded_relayers = new UnrewardedRelayer[](size);
+            for (uint64 i=0; i < size; i++) {
+               bytes32 slot2 = values[3*i+1];
+               unrewarded_relayers[i] = UnrewardedRelayer(
+                   address(uint160(uint256(values[3*i]))),
+                   DeliveredMessages(
+                       uint64(uint256(slot2)),
+                       uint64(uint256(slot2 >> 64)),
+                       uint256(values[3*i+2])
+                   )
+               );
+            }
+            lane_data.relayers = unrewarded_relayers;
+        }
+        lane_data.last_confirmed_nonce = last_confirmed_nonce;
+        lane_data.last_delivered_nonce = last_delivered_nonce;
         // check the lane_data_hash
         return inlane_hash == hash(lane_data);
     }
