@@ -50,10 +50,10 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
     mapping(uint32 => address) public tokenType2Logic;
 
     // bridge channel
-    mapping(bytes32 => InBoundLaneInfo) public inboundLanes;
-    mapping(bytes32 => address) public outboundLanes;
+    mapping(uint256 => InBoundLaneInfo) public inboundLanes;
+    mapping(uint256 => address) public outboundLanes;
 
-    mapping(bytes32 => UnconfirmedInfo) public unlockRemoteUnconfirmed;
+    mapping(uint256 => UnconfirmedInfo) public unlockRemoteUnconfirmed;
 
     event NewLogicSetted(uint32 tokenType, address addr);
     event IssuingERC20Created(address backingAddress, address originalToken, address mappingToken);
@@ -82,10 +82,10 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
      * @dev Throws if called by any account other than the inboundlane account.
      */
     modifier onlyInBoundLane(address backingAddress) {
-        bytes32 remoteId = keccak256(abi.encodePacked(
+        uint256 remoteId = encodeBridgedBackingId(
             IMessageVerifier(msg.sender).bridgedChainPosition(),
             IMessageVerifier(msg.sender).bridgedLanePosition(),
-            backingAddress));
+            backingAddress);
         require(inboundLanes[remoteId].inBoundLaneAddress == msg.sender, "MappingTokenFactory: caller is not the inboundLane account");
         require(inboundLanes[remoteId].remoteSender == backingAddress, "MappingTokenFactory: remote caller is not the backing account");
         _;
@@ -97,9 +97,34 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
     modifier onlyOutBoundLane() {
         uint32 bridgedChainPosition = IMessageVerifier(msg.sender).bridgedChainPosition();
         uint32 bridgedLanePosition = IMessageVerifier(msg.sender).bridgedLanePosition();
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition));
-        require(outboundLanes[remoteId] == msg.sender, "MappingTokenFactory: caller is not the outboundLane account");
+        uint256 outBoundId = encodeBridgedBoundId(bridgedChainPosition, bridgedLanePosition);
+        require(outboundLanes[outBoundId] == msg.sender, "MappingTokenFactory: caller is not the outboundLane account");
         _;
+    }
+
+    // 32 bytes
+    // [0, 16)  bytes: Reserved
+    // [16, 20) bytes: BridgedChainPosition
+    // [20, 24) bytes: BridgedLanePosition
+    // [24, 32) bytes: Nonce
+    function encodeMessageId(uint32 bridgedChainPosition, uint32 bridgedLanePosition, uint64 nonce) public pure returns (uint256) {
+        return uint256(bridgedChainPosition) << 96 + uint256(bridgedLanePosition) << 64 + uint256(nonce);
+    }
+
+    // 32 bytes
+    // [0, 24)  bytes: Reserved
+    // [24, 28) bytes: BridgedChainPosition
+    // [28, 32) bytes: BridgedLanePosition
+    function encodeBridgedBoundId(uint32 bridgedChainPosition, uint32 bridgedLanePosition) public pure returns (uint256) {
+        return uint256(bridgedChainPosition) << 32 + uint256(bridgedLanePosition);
+    }
+
+    // 32 bytes
+    // [0, 4)   bytes: Reserved
+    // [4, 12)  bytes: BridgedBoundId
+    // [12, 32) bytes: BackingAddress
+    function encodeBridgedBackingId(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address backingAddress) public pure returns (uint256) {
+        return encodeBridgedBoundId(bridgedChainPosition, bridgedLanePosition) << 160 + uint256(uint160(backingAddress));
     }
 
     /**
@@ -110,7 +135,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
     function addInboundLane(address backingAddress, address inboundLane) external onlyOwner {
         uint32 bridgedChainPosition = IMessageVerifier(inboundLane).bridgedChainPosition();
         uint32 bridgedLanePosition = IMessageVerifier(inboundLane).bridgedLanePosition();
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, backingAddress));
+        uint256 remoteId = encodeBridgedBackingId(bridgedChainPosition, bridgedLanePosition, backingAddress);
         inboundLanes[remoteId] = InBoundLaneInfo(backingAddress, inboundLane);
         emit NewInBoundLaneAdded(backingAddress, inboundLane);
     }
@@ -122,8 +147,8 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
     function addOutBoundLane(address outboundLane) external onlyOwner {
         uint32 bridgedChainPosition = IMessageVerifier(outboundLane).bridgedChainPosition();
         uint32 bridgedLanePosition = IMessageVerifier(outboundLane).bridgedLanePosition();
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition));
-        outboundLanes[remoteId] = outboundLane;
+        uint256 outBoundId = encodeBridgedBoundId(bridgedChainPosition, bridgedLanePosition);
+        outboundLanes[outBoundId] = outboundLane;
         emit NewOutBoundLaneAdded(outboundLane);
     }
 
@@ -175,17 +200,6 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         }
     }
 
-    // view
-    function getInBoundLane(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address backingAddress) public view returns(address) {
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, backingAddress));
-        return inboundLanes[remoteId].inBoundLaneAddress;
-    }
-
-    function getOutBoundLane(uint32 bridgedChainPosition, uint32 bridgedLanePosition) public view returns(address) {
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition));
-        return outboundLanes[remoteId];
-    }
-
     function tokenLength() public view returns (uint) {
         return allMappingTokens.length;
     }
@@ -207,7 +221,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         address backingAddress,
         bytes calldata
     ) external view returns (bool) {
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, backingAddress));
+        uint256 remoteId = encodeBridgedBackingId(bridgedChainPosition, bridgedLanePosition, backingAddress);
         return inboundLanes[remoteId].inBoundLaneAddress == msg.sender && inboundLanes[remoteId].remoteSender == backingAddress;
     }
 
@@ -291,8 +305,8 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         // Otherwise, this fund will be transfered back to the msg.sender.
         require(IERC20(mappingToken).transferFrom(msg.sender, address(this), amount), "transfer token failed");
 
-        bytes32 remoteId = keccak256(abi.encodePacked(info.bridgedChainPosition, bridgedLanePosition));
-        address outboundLane = outboundLanes[remoteId];
+        uint256 outBoundId = encodeBridgedBoundId(info.bridgedChainPosition, bridgedLanePosition);
+        address outboundLane = outboundLanes[outBoundId];
         require(outboundLane != address(0), "the outbound lane is not exist");
         bytes memory unlockFromRemote = abi.encodeWithSelector(
             IBacking.unlockFromRemote.selector,
@@ -304,7 +318,8 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
             amount
         );
         uint64 nonce = IOutboundLane(outboundLane).send_message(info.backingAddress, unlockFromRemote);
-        bytes32 messageId = keccak256(abi.encodePacked(outboundLane, nonce));
+
+        uint256 messageId = encodeMessageId(info.bridgedChainPosition, bridgedLanePosition, nonce);
 
         unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, amount);
         emit BurnAndWaitingConfirm(outboundLane, nonce, msg.sender, recipient, mappingToken, amount);
@@ -320,7 +335,10 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         bool result
     ) external onlyOutBoundLane {
         address outboundLane = msg.sender;
-        bytes32 messageId = keccak256(abi.encodePacked(outboundLane, nonce));
+        uint256 messageId = encodeMessageId(
+            IMessageVerifier(outboundLane).bridgedChainPosition(),
+            IMessageVerifier(outboundLane).bridgedLanePosition(),
+            nonce);
         UnconfirmedInfo memory info = unlockRemoteUnconfirmed[messageId];
         require(info.amount > 0 && info.sender != address(0) && info.mappingToken != address(0), "invalid unconfirmed message");
         if (result) {
