@@ -2,22 +2,28 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "../../../interfaces/IMessageCommitment.sol";
 
-contract ChainMessageCommitter is Ownable {
+contract ChainMessageCommitter {
     event Registry(uint256 position, address committer);
 
     uint256 public immutable thisChainPosition;
     uint256 public maxChainPosition;
     mapping(uint256 => address) public chains;
 
+    address public setter;
+
+    modifier onlySetter {
+        require(msg.sender == setter, "BSCLightClient: forbidden");
+        _;
+    }
+
     constructor(uint256 _thisChainPosition) public {
         thisChainPosition = _thisChainPosition;
         maxChainPosition = _thisChainPosition;
     }
 
-    function registry(address laneCommitter) external onlyOwner {
+    function registry(address laneCommitter) external onlySetter {
         uint256 position = IMessageCommitment(laneCommitter).bridgedChainPosition();
         require(thisChainPosition != position, "Message: invalid ThisChainPosition");
         require(thisChainPosition == IMessageCommitment(laneCommitter).thisChainPosition(), "Message: invalid ThisChainPosition");

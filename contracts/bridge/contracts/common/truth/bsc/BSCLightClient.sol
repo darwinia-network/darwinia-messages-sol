@@ -3,7 +3,6 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "../../spec/SourceChain.sol";
 import "../../spec/TargetChain.sol";
 
@@ -16,7 +15,7 @@ interface IBSCBridge {
     ) external pure returns (bytes32[] memory values);
 }
 
-contract BSCLightClient is SourceChain, TargetChain, Ownable {
+contract BSCLightClient is SourceChain, TargetChain {
     event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
 
     struct ReceiveProof {
@@ -43,13 +42,25 @@ contract BSCLightClient is SourceChain, TargetChain, Ownable {
     // bridgedChainPosition => lanePosition => lanes
     mapping(uint32 => mapping(uint32 => address)) lanes;
 
+    address public setter;
+
+    modifier onlySetter {
+        require(msg.sender == setter, "BSCLightClient: forbidden");
+        _;
+    }
+
+    function changeSetter(address _setter) external onlySetter {
+        setter = _setter;
+    }
+
     constructor(uint32 this_chain_position,  uint32 outlane_messages_position, uint32 inlane_relayers_position) public {
         THIS_CHAIN_POSITION = this_chain_position;
         OUTLANE_MESSAGES_POSITION = outlane_messages_position;
         INLANE_RELAYERS_POSITION = inlane_relayers_position;
+        setter = msg.sender;
     }
 
-    function setBound(uint32 bridgedChainPosition, uint32 outboundPosition, address outbound, uint32 inboundPositon, address inbound) external onlyOwner {
+    function registry(uint32 bridgedChainPosition, uint32 outboundPosition, address outbound, uint32 inboundPositon, address inbound) external onlySetter {
         require(bridgedChainPosition != THIS_CHAIN_POSITION, "BSCLightClient: invalid");
         lanes[bridgedChainPosition][outboundPosition] = outbound;
         lanes[bridgedChainPosition][inboundPositon] = inbound;

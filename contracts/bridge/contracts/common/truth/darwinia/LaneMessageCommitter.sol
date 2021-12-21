@@ -3,10 +3,9 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "../../../interfaces/IMessageCommitment.sol";
 
-contract LaneMessageCommitter is Ownable {
+contract LaneMessageCommitter {
     event Registry(uint256 outLanePos, address outboundLane, uint256 inLanePos, address inboundLane);
 
     uint256 public immutable thisChainPosition;
@@ -14,13 +13,20 @@ contract LaneMessageCommitter is Ownable {
     uint256 public laneCount;
     mapping(uint256 => address) public lanes;
 
+    address public setter;
+
+    modifier onlySetter {
+        require(msg.sender == setter, "BSCLightClient: forbidden");
+        _;
+    }
+
     constructor(uint256 _thisChainPosition, uint256 _bridgedChainPosition) public {
         require(_thisChainPosition != _bridgedChainPosition, "invalid position");
         thisChainPosition = _thisChainPosition;
         bridgedChainPosition = _bridgedChainPosition;
     }
 
-    function registry(address outboundLane, address inboundLane) external onlyOwner {
+    function registry(address outboundLane, address inboundLane) external onlySetter {
         require(thisChainPosition == IMessageCommitment(outboundLane).thisChainPosition(), "Message: invalid ThisChainPosition");
         require(thisChainPosition == IMessageCommitment(inboundLane).thisChainPosition(), "Message: invalid ThisChainPosition");
         require(bridgedChainPosition == IMessageCommitment(outboundLane).bridgedChainPosition(), "Message: invalid chain position");
