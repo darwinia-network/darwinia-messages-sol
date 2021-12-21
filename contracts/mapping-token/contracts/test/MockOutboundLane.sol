@@ -18,7 +18,7 @@ contract MockOutboundLane is MockMessageVerifier {
         uint32 _bridgedChainPosition,
         uint32 _bridgedLanePosition,
         address _remoteInboundLane
-    ) public MockMessageVerifier(
+    ) MockMessageVerifier(
         _thisChainPosition,
         _thisLanePosition,
         _bridgedChainPosition,
@@ -35,10 +35,10 @@ contract MockOutboundLane is MockMessageVerifier {
         return nonce;
     }
 
-    function mock_confirm(uint64 nonce) external {
-        ConfirmInfo memory info = responses[nonce];
-        IOnMessageDelivered(info.sender).on_messages_delivered(nonce, info.result);
-        delete responses[nonce];
+    function mock_confirm(uint64 _nonce) external {
+        ConfirmInfo memory info = responses[_nonce];
+        IOnMessageDelivered(info.sender).on_messages_delivered(_nonce, info.result);
+        delete responses[_nonce];
     }
 }
  

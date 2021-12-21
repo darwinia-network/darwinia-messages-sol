@@ -10,7 +10,7 @@ contract MockInboundLane is MockMessageVerifier {
         uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,
         uint32 _bridgedLanePosition
-    ) public MockMessageVerifier(
+    ) MockMessageVerifier(
         _thisChainPosition,
         _thisLanePosition,
         _bridgedChainPosition,

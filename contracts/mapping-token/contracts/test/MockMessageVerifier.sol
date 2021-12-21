@@ -13,7 +13,7 @@ contract MockMessageVerifier is IMessageVerifier {
         uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,
         uint32 _bridgedLanePosition
-    ) public {
+    ) {
         thisChainPosition = _thisChainPosition;
         thisLanePosition = _thisLanePosition;
         bridgedChainPosition = _bridgedChainPosition;

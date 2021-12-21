@@ -14,11 +14,6 @@ import "../interfaces/IMessageVerifier.sol";
 import "../interfaces/IMappingTokenFactory.sol";
 
 contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBacking, Pausable {
-    struct RegisterInfo {
-        address token;
-        uint32 bridgedChainPosition;
-        address mappingTokenFactory;
-    }
     struct LockedInfo {
         address token;
         address sender;
@@ -31,44 +26,50 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     uint32 public constant NATIVE_TOKEN_TYPE = 0;
     uint32 public constant ERC20_TOKEN_TYPE = 1;
     string public thisChainName;
+    uint32 public remoteChainPosition;
+    address public remoteMappingTokenFactory;
 
     // bridge channel
-    mapping(bytes32 => InBoundLaneInfo) public inboundLanes;
-    mapping(bytes32 => address) public outboundLanes;
+    // bridgedLanePosition => inBoundLaneAddress
+    mapping(uint32 => address) public inboundLanes;
+    // bridgedLanePosition => outBoundLaneAddress
+    mapping(uint32 => address) public outboundLanes;
 
-    // tokenAddress => remoteChainId => mappingTokenFactory
-    mapping(address => mapping(uint32 => address)) public tokens;
+    // tokenAddress => reistered
+    mapping(address => bool) public registeredTokens;
 
-    // (messageId => RegisterInfo)
-    mapping(bytes32 => RegisterInfo) public registerMessages;
+    // (messageId => tokenAddress)
+    mapping(uint256 => address) public registerMessages;
     // (messageId => lockedInfo)
-    mapping(bytes32 => LockedInfo) public lockMessages;
+    mapping(uint256 => LockedInfo) public lockMessages;
 
     event NewInBoundLaneAdded(address backingAddress, address inboundLane);
-    event NewOutBoundLaneAdded(address outboundLane);
-    event NewErc20TokenRegistered(bytes32 messageId, uint32 bridgedChainPosition, uint32 bridgedLanePosition, address mappingTokenFactory, address token);
-    event TokenLocked(bytes32 messageId, uint64 nonce, uint32 bridgedChainPosition, uint32 bridgedLanePosition, address token, address recipient, uint256 amount);
-    event TokenLockFinished(bytes32 messageId, uint64 nonce, bool result);
-    event TokenRegisterFinished(bytes32 messageId, uint64 nonce, bool result);
-    event TokenUnlocked(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address mappingTokenFactory, address token, address recipient, uint256 amount);
+    event NewOutBoundLaneAdded(uint32 bridgedLanePosition, address outboundLane);
+    event NewErc20TokenRegistered(uint256 messageId, uint32 bridgedLanePosition, address token);
+    event TokenLocked(uint256 messageId, uint64 nonce, uint32 bridgedLanePosition, address token, address recipient, uint256 amount);
+    event TokenLockFinished(uint256 messageId, uint64 nonce, bool result);
+    event TokenRegisterFinished(uint256 messageId, uint64 nonce, bool result);
+    event TokenUnlocked(uint32 bridgedLanePosition, address token, address recipient, uint256 amount);
 
     modifier onlyInBoundLane(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address mappingTokenFactoryAddress) {
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, mappingTokenFactoryAddress));
-        require(inboundLanes[remoteId].remoteSender == mappingTokenFactoryAddress, "MappingTokenFactory: remote caller is not issuing account");
-        require(inboundLanes[remoteId].inBoundLaneAddress == msg.sender, "MappingTokenFactory: caller is not the inboundLane account");
+        require(remoteChainPosition == bridgedChainPosition, "Invalid bridged chain position");
+        require(remoteMappingTokenFactory == mappingTokenFactoryAddress, "MappingTokenFactory: remote caller is not issuing account");
+        require(inboundLanes[bridgedLanePosition] == msg.sender, "MappingTokenFactory: caller is not the inboundLane account");
         _;
     }
 
     modifier onlyOutBoundLane() {
         uint32 bridgedChainPosition = IMessageVerifier(msg.sender).bridgedChainPosition();
+        require(remoteChainPosition == bridgedChainPosition, "Invalid bridged chain position");
         uint32 bridgedLanePosition = IMessageVerifier(msg.sender).bridgedLanePosition();
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition));
-        require(outboundLanes[remoteId] == msg.sender, "MappingTokenFactory: caller is not the outboundLane account");
+        require(outboundLanes[bridgedLanePosition] == msg.sender, "caller is not the outboundLane account");
         _;
     }
 
-    function initialize(string memory _chainName) public initializer {
+    function initialize(string memory _chainName, uint32 _bridgedChainPosition, address _remoteMappingTokenFactory) public initializer {
         thisChainName = _chainName;
+        remoteChainPosition = _bridgedChainPosition;
+        remoteMappingTokenFactory = _remoteMappingTokenFactory;
         ownableConstructor();
     }
 
@@ -88,46 +89,51 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         _changeDailyLimit(mappingToken, amount);
     }
 
+    // 32 bytes
+    // [0, 16)  bytes: Reserved
+    // [16, 20) bytes: BridgedChainPosition
+    // [20, 24) bytes: BridgedLanePosition
+    // [24, 32) bytes: Nonce
+    function encodeMessageId(uint32 bridgedLanePosition, uint64 nonce) public view returns (uint256) {
+        return uint256(remoteChainPosition) << 96 + uint256(bridgedLanePosition) << 64 + uint256(nonce);
+    }
+
     // here add InBoundLane, and remote issuing module must add the corresponding OutBoundLane
     function addInboundLane(address mappingTokenFactory, address inboundLane) external onlyOwner {
         uint32 bridgedChainPosition = IMessageVerifier(inboundLane).bridgedChainPosition();
+        require(remoteChainPosition == bridgedChainPosition, "Invalid bridged chain position");
         uint32 bridgedLanePosition = IMessageVerifier(inboundLane).bridgedLanePosition();
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, mappingTokenFactory));
-        inboundLanes[remoteId] = InBoundLaneInfo(mappingTokenFactory, inboundLane);
+        inboundLanes[bridgedLanePosition] = inboundLane;
         emit NewInBoundLaneAdded(mappingTokenFactory, inboundLane);
     }
 
     // here add OutBoundLane, and remote issuing module must add the corresponding InBoundLane
     function addOutboundLane(address outboundLane) external onlyOwner {
         uint32 bridgedChainPosition = IMessageVerifier(outboundLane).bridgedChainPosition();
+        require(remoteChainPosition == bridgedChainPosition, "Invalid bridged chain position");
         uint32 bridgedLanePosition = IMessageVerifier(outboundLane).bridgedLanePosition();
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition));
-        outboundLanes[remoteId] = outboundLane;
-        emit NewOutBoundLaneAdded(outboundLane);
+        outboundLanes[bridgedLanePosition] = outboundLane;
+        emit NewOutBoundLaneAdded(bridgedLanePosition, outboundLane);
     }
 
     /**
      * @notice reigister new erc20 token to the bridge. Only owner can do this.
-     * @param bridgedChainPosition the bridged chain position, the mapping token will be created on this target chain
      * @param bridgedLanePosition the bridged lane positon, this register message will be delived to this lane position
-     * @param mappingTokenFactory the bridged mappingTokenFactory address who will receive this message
      * @param token the original token address
      * @param name the name of the original token
      * @param symbol the symbol of the original token
      * @param decimals the decimals of the original token
      */
     function registerErc20Token(
-        uint32 bridgedChainPosition,
         uint32 bridgedLanePosition,
-        address mappingTokenFactory,
         address token,
         string memory name,
         string memory symbol,
         uint8 decimals
     ) external payable onlyOwner {
-        require(tokens[token][bridgedChainPosition] == address(0), "Backing: token has been registered");
+        require(registeredTokens[token] == false, "Backing: token has been registered");
 
-        address outboundLane = getOutBoundLane(bridgedChainPosition, bridgedLanePosition);
+        address outboundLane = outboundLanes[bridgedLanePosition];
         require(outboundLane != address(0), "cannot find outboundLane to send message");
         bytes memory newErc20Contract = abi.encodeWithSelector(
             IMappingTokenFactory.newErc20Contract.selector,
@@ -139,36 +145,33 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
             symbol,
             decimals
         );
-        uint64 nonce = IOutboundLane(outboundLane).send_message(mappingTokenFactory, newErc20Contract);
-        bytes32 messageId = keccak256(abi.encodePacked(outboundLane, nonce));
-        registerMessages[messageId] = RegisterInfo(token, bridgedChainPosition, mappingTokenFactory);
-        emit NewErc20TokenRegistered(messageId, bridgedChainPosition, bridgedLanePosition, mappingTokenFactory, token);
+        uint64 nonce = IOutboundLane(outboundLane).send_message(remoteMappingTokenFactory, newErc20Contract);
+        uint256 messageId = encodeMessageId(bridgedLanePosition, nonce);
+        registerMessages[messageId] = token;
+        emit NewErc20TokenRegistered(messageId, bridgedLanePosition, token);
     }
 
     /**
      * @notice lock original token and issuing mapping token from bridged chain
      * @dev maybe some tokens will take some fee when transfer
-     * @param bridgedChainPosition the bridged chain position, the mapping token will be issued on this target chain
      * @param bridgedLanePosition the bridged lane positon, this issuing message will be delived to this lane position
      * @param token the original token address
      * @param recipient the recipient who will receive the issued mapping token
      * @param amount amount of the locked token
      */
     function lockAndRemoteIssuing(
-        uint32 bridgedChainPosition,
         uint32 bridgedLanePosition,
         address token,
         address recipient,
         uint256 amount
     ) external payable whenNotPaused {
-        address mappingTokenFactory = tokens[token][bridgedChainPosition];
-        require(mappingTokenFactory != address(0), "Backing: the token is not registed");
+        require(registeredTokens[token], "Backing: the token is not registed");
 
         uint256 balanceBefore = IERC20(token).balanceOf(address(this));
         require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer tokens failed");
         uint256 balanceAfter = IERC20(token).balanceOf(address(this));
         uint256 newAmount = balanceAfter - balanceBefore;
-        address outboundLane = getOutBoundLane(bridgedChainPosition, bridgedLanePosition);
+        address outboundLane = outboundLanes[bridgedLanePosition];
         require(outboundLane != address(0), "Backing: outboundLane not exist");
         bytes memory issueMappingToken = abi.encodeWithSelector(
             IMappingTokenFactory.issueMappingToken.selector,
@@ -177,10 +180,10 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
             recipient,
             newAmount
         );
-        uint64 nonce = IOutboundLane(outboundLane).send_message(mappingTokenFactory, issueMappingToken);
-        bytes32 messageId = keccak256(abi.encodePacked(outboundLane, nonce));
+        uint64 nonce = IOutboundLane(outboundLane).send_message(remoteMappingTokenFactory, issueMappingToken);
+        uint256 messageId = encodeMessageId(bridgedLanePosition, nonce);
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
-        emit TokenLocked(messageId, nonce, bridgedChainPosition, bridgedLanePosition, token, recipient, newAmount);
+        emit TokenLocked(messageId, nonce, bridgedLanePosition, token, recipient, newAmount);
     }
 
     /**
@@ -192,8 +195,8 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         uint64 nonce,
         bool result
     ) external onlyOutBoundLane {
-        address outboundLane = msg.sender;
-        bytes32 messageId = keccak256(abi.encodePacked(outboundLane, nonce));
+        uint32 bridgedLanePosition = IMessageVerifier(msg.sender).bridgedLanePosition();
+        uint256 messageId = encodeMessageId(bridgedLanePosition, nonce);
         LockedInfo memory lockedInfo = lockMessages[messageId];
         // it is lock message, if result is false, need to transfer back to the user, otherwise will be locked here
         if (lockedInfo.token != address(0)) {
@@ -204,12 +207,12 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
             emit TokenLockFinished(messageId, nonce, result);
             return;
         }
-        RegisterInfo memory registerInfo = registerMessages[messageId];
+        address registerToken = registerMessages[messageId];
         // it is register message, if result is true, need to save the token
-        if (registerInfo.token != address(0)) {
+        if (registerToken != address(0)) {
             delete registerMessages[messageId];
             if (result) {
-                tokens[registerInfo.token][registerInfo.bridgedChainPosition] = registerInfo.mappingTokenFactory;
+                registeredTokens[registerToken] = true;
             }
             emit TokenRegisterFinished(messageId, nonce, result);
         }
@@ -218,11 +221,10 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     function crossChainFilter(
         uint32 bridgedChainPosition,
         uint32 bridgedLanePosition,
-        address mappingTokenFactory,
+        address sourceAccount,
         bytes calldata
     ) external view returns (bool) {
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, mappingTokenFactory));
-        return inboundLanes[remoteId].inBoundLaneAddress == msg.sender && inboundLanes[remoteId].remoteSender == mappingTokenFactory;
+        return remoteChainPosition == bridgedChainPosition && inboundLanes[bridgedLanePosition] == msg.sender && remoteMappingTokenFactory == sourceAccount;
     }
 
     /**
@@ -243,12 +245,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     ) public onlyInBoundLane(bridgedChainPosition, bridgedLanePosition, mappingTokenFactory) whenNotPaused {
         expendDailyLimit(token, amount);
         require(IERC20(token).transfer(recipient, amount), "Backing: unlock transfer failed");
-        emit TokenUnlocked(bridgedChainPosition, bridgedLanePosition, mappingTokenFactory, token, recipient, amount);
-    }
-
-    function getOutBoundLane(uint32 bridgedChainPosition, uint32 bridgedLanePosition) public view returns(address) {
-        bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition));
-        return outboundLanes[remoteId];
+        emit TokenUnlocked(bridgedLanePosition, token, recipient, amount);
     }
 }
  
