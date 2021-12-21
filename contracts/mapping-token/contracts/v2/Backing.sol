@@ -5,6 +5,7 @@ import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilter.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IOutboundLane.sol";
+import "@darwinia/contracts-bridge/contracts/interfaces/IFeeMarket.sol";
 import "@darwinia/contracts-utils/contracts/DailyLimit.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/Pausable.sol";
@@ -25,6 +26,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     }
     uint32 public constant NATIVE_TOKEN_TYPE = 0;
     uint32 public constant ERC20_TOKEN_TYPE = 1;
+    address public feeMarket;
     string public thisChainName;
     uint32 public remoteChainPosition;
     address public remoteMappingTokenFactory;
@@ -66,8 +68,9 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         _;
     }
 
-    function initialize(string memory _chainName, uint32 _bridgedChainPosition, address _remoteMappingTokenFactory) public initializer {
+    function initialize(string memory _chainName, uint32 _bridgedChainPosition, address _remoteMappingTokenFactory, address _feeMarket) public initializer {
         thisChainName = _chainName;
+        feeMarket = _feeMarket;
         remoteChainPosition = _bridgedChainPosition;
         remoteMappingTokenFactory = _remoteMappingTokenFactory;
         ownableConstructor();
@@ -87,6 +90,10 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
 
     function changeDailyLimit(address mappingToken, uint amount) public onlyOwner  {
         _changeDailyLimit(mappingToken, amount);
+    }
+
+    function updateFeeMarket(address newFeeMarket) external onlyOwner {
+        feeMarket = newFeeMarket;
     }
 
     // 32 bytes
@@ -145,9 +152,14 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
             symbol,
             decimals
         );
-        uint64 nonce = IOutboundLane(outboundLane).send_message(remoteMappingTokenFactory, newErc20Contract);
+        uint256 fee = IFeeMarket(feeMarket).market_fee();
+        require(msg.value >= fee, "not enough fee to pay");
+        uint64 nonce = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, newErc20Contract);
         uint256 messageId = encodeMessageId(bridgedLanePosition, nonce);
         registerMessages[messageId] = token;
+        if (msg.value > fee) {
+            require(payable(msg.sender).send(msg.value - fee), "transfer back fee failed");
+        }
         emit NewErc20TokenRegistered(messageId, bridgedLanePosition, token);
     }
 
@@ -180,9 +192,14 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
             recipient,
             newAmount
         );
-        uint64 nonce = IOutboundLane(outboundLane).send_message(remoteMappingTokenFactory, issueMappingToken);
+        uint256 fee = IFeeMarket(feeMarket).market_fee();
+        require(msg.value >= fee, "not enough fee to pay");
+        uint64 nonce = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, issueMappingToken);
         uint256 messageId = encodeMessageId(bridgedLanePosition, nonce);
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
+        if (msg.value > fee) {
+            require(payable(msg.sender).send(msg.value - fee), "transfer back fee failed");
+        }
         emit TokenLocked(messageId, nonce, bridgedLanePosition, token, recipient, newAmount);
     }
 
