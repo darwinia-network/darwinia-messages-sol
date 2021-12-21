@@ -14,19 +14,24 @@ contract ChainMessageCommitter {
     address public setter;
 
     modifier onlySetter {
-        require(msg.sender == setter, "BSCLightClient: forbidden");
+        require(msg.sender == setter, "Commit: forbidden");
         _;
     }
 
     constructor(uint256 _thisChainPosition) public {
         thisChainPosition = _thisChainPosition;
         maxChainPosition = _thisChainPosition;
+        setter = msg.sender;
+    }
+
+    function changeSetter(address _setter) external onlySetter {
+        setter = _setter;
     }
 
     function registry(address laneCommitter) external onlySetter {
         uint256 position = IMessageCommitment(laneCommitter).bridgedChainPosition();
-        require(thisChainPosition != position, "Message: invalid ThisChainPosition");
-        require(thisChainPosition == IMessageCommitment(laneCommitter).thisChainPosition(), "Message: invalid ThisChainPosition");
+        require(thisChainPosition != position, "Commit: invalid ThisChainPosition");
+        require(thisChainPosition == IMessageCommitment(laneCommitter).thisChainPosition(), "Commit: invalid ThisChainPosition");
         chains[position] = laneCommitter;
         maxChainPosition = max(maxChainPosition, position);
         emit Registry(position, laneCommitter);

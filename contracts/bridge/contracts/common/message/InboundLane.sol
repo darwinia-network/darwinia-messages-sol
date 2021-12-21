@@ -261,7 +261,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
             // then, dispatch message
             (bool dispatch_result, bytes memory returndata) = dispatch(message_payload, messagesCallData[i]);
 
-            emit MessageDispatched(key.this_chain_id, key.bridged_chain_id, key.this_lane_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
+            emit MessageDispatched(key.this_chain_id, key.this_lane_id, key.bridged_chain_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
             // TODO: callback `pay_inbound_dispatch_fee_overhead`
             dispatch_results |= (dispatch_result ? uint256(1) << i : uint256(0));
 

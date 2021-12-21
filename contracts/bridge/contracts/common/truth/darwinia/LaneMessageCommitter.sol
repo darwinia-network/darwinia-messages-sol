@@ -16,25 +16,30 @@ contract LaneMessageCommitter {
     address public setter;
 
     modifier onlySetter {
-        require(msg.sender == setter, "BSCLightClient: forbidden");
+        require(msg.sender == setter, "Commit: forbidden");
         _;
     }
 
     constructor(uint256 _thisChainPosition, uint256 _bridgedChainPosition) public {
-        require(_thisChainPosition != _bridgedChainPosition, "invalid position");
+        require(_thisChainPosition != _bridgedChainPosition, "Commit: invalid position");
         thisChainPosition = _thisChainPosition;
         bridgedChainPosition = _bridgedChainPosition;
+        setter = msg.sender;
+    }
+
+    function changeSetter(address _setter) external onlySetter {
+        setter = _setter;
     }
 
     function registry(address outboundLane, address inboundLane) external onlySetter {
-        require(thisChainPosition == IMessageCommitment(outboundLane).thisChainPosition(), "Message: invalid ThisChainPosition");
-        require(thisChainPosition == IMessageCommitment(inboundLane).thisChainPosition(), "Message: invalid ThisChainPosition");
-        require(bridgedChainPosition == IMessageCommitment(outboundLane).bridgedChainPosition(), "Message: invalid chain position");
-        require(bridgedChainPosition == IMessageCommitment(inboundLane).bridgedChainPosition(), "Message: invalid chain position");
+        require(thisChainPosition == IMessageCommitment(outboundLane).thisChainPosition(), "Commit: invalid ThisChainPosition");
+        require(thisChainPosition == IMessageCommitment(inboundLane).thisChainPosition(), "Commit: invalid ThisChainPosition");
+        require(bridgedChainPosition == IMessageCommitment(outboundLane).bridgedChainPosition(), "Commit: invalid chain position");
+        require(bridgedChainPosition == IMessageCommitment(inboundLane).bridgedChainPosition(), "Commit: invalid chain position");
         uint256 outLanePos = laneCount;
         uint256 inLanePos = laneCount + 1;
-        require(outLanePos == IMessageCommitment(outboundLane).thisLanePosition(), "Message: invalid outlane position");
-        require(inLanePos == IMessageCommitment(inboundLane).thisLanePosition(), "Message: invalid inlane position");
+        require(outLanePos == IMessageCommitment(outboundLane).thisLanePosition(), "Commit: invalid outlane position");
+        require(inLanePos == IMessageCommitment(inboundLane).thisLanePosition(), "Commit: invalid inlane position");
         lanes[outLanePos] = outboundLane;
         lanes[inLanePos] = inboundLane;
         laneCount += 2;

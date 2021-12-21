@@ -58,15 +58,16 @@ const send_message = async (outbound, nonce) => {
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(nonce)
+      .withArgs(nonce, "0x")
 }
 
 const receive_messages_proof = async (inbound, srcoutbound, srcinbound, nonce) => {
     const o = await srcoutbound.data()
     const proof = await generate_darwinia_proof()
-    const tx = await inbound.receive_messages_proof(o, proof)
+    const calldata = Array(o.messages.length).fill("0x")
+    const tx = await inbound.receive_messages_proof(o, calldata, proof)
     const n = await inbound.inboundLaneNonce()
-    const size = n.last_delivered_nonce - nonce
+    const size = nonce - n.last_delivered_nonce
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
@@ -96,8 +97,7 @@ describe("verify message relay tests", () => {
 
     targetLightClient = await MockBSCLightClient.deploy(LANE_COMMITMENT_POSITION)
     sourceOutbound = await OutboundLane.deploy(targetLightClient.address, sourceChainPos, sourceOutLanePos, targetChainPos, targetInLanePos, 1, 0, 0)
-    await sourceOutbound.grantRole("0x7bb193391dc6610af03bd9922e44c83b9fda893aeed61cf64297fb4473500dd1", owner.address)
-    await sourceOutbound.grantRole("0x8e856dd2c9de9abc810f3fbf5113d5a0f5eae2365cef39cc37905a5af78d68e6", owner.address)
+    await sourceOutbound.rely(owner.address)
     sourceInbound = await InboundLane.deploy(targetLightClient.address, sourceChainPos, sourceInLanePos, targetChainPos, targetOutLanePos, 0, 0)
     darwiniaLaneCommitter0 = await LaneMessageCommitter.deploy(sourceChainPos, targetChainPos)
     await darwiniaLaneCommitter0.registry(sourceOutbound.address, sourceInbound.address)
@@ -106,7 +106,7 @@ describe("verify message relay tests", () => {
 
     sourceLightClient = await MockDarwiniaLightClient.deploy()
     targetOutbound = await OutboundLane.deploy(sourceLightClient.address, targetChainPos, targetOutLanePos, sourceChainPos, sourceInLanePos, 1, 0, 0)
-    await targetOutbound.grantRole("0x7bb193391dc6610af03bd9922e44c83b9fda893aeed61cf64297fb4473500dd1", owner.address)
+    await targetOutbound.rely(owner.address)
     targetInbound = await InboundLane.deploy(sourceLightClient.address, targetChainPos, targetInLanePos, sourceChainPos, sourceOutLanePos, 0, 0)
 
     await targetLightClient.setBound(sourceChainPos, targetOutLanePos, targetOutbound.address, targetInLanePos, targetInbound.address)
