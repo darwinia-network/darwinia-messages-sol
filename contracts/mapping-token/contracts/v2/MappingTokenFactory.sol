@@ -8,6 +8,7 @@ pragma solidity ^0.8.10;
 import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilter.sol";
+import "@darwinia/contracts-bridge/contracts/interfaces/IFeeMarket.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IOutboundLane.sol";
 import "@darwinia/contracts-utils/contracts/DailyLimit.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
@@ -37,6 +38,8 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         address remoteSender;
         address inBoundLaneAddress;
     }
+    // fee market
+    address public feeMarket;
     // the mapping token list
     address[] public allMappingTokens;
     // salt=>mappingToken, the salt is derived from origin token on backing chain
@@ -66,7 +69,8 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
     receive() external payable {
     }
 
-    function initialize() public initializer {
+    function initialize(address _feeMarket) public initializer {
+        feeMarket = _feeMarket;
         ownableConstructor();
     }
 
@@ -76,6 +80,10 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
 
     function pause() external onlyOwner {
         _pause();
+    }
+
+    function updateFeeMarket(address newFeeMarket) external onlyOwner {
+        feeMarket = newFeeMarket;
     }
 
     /**
@@ -317,7 +325,12 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
             recipient,
             amount
         );
-        uint64 nonce = IOutboundLane(outboundLane).send_message(info.backingAddress, unlockFromRemote);
+        uint256 fee = IFeeMarket(feeMarket).market_fee();
+        require(msg.value >= fee, "not enough fee to pay");
+        uint64 nonce = IOutboundLane(outboundLane).send_message{value: fee}(info.backingAddress, unlockFromRemote);
+        if (msg.value > fee) {
+            require(payable(msg.sender).send(msg.value - fee), "transfer back fee failed");
+        }
 
         uint256 messageId = encodeMessageId(info.bridgedChainPosition, bridgedLanePosition, nonce);
 

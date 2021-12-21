@@ -61,7 +61,7 @@ describe("darwinia<>bsc mapping token tests", () => {
 
       //********** configure mapping-token-factory ***********
       // init owner
-      await mtf.initialize();
+      await mtf.initialize(feeMarket.address);
       // set logic mapping token
       await mtf.setTokenContractLogic(0, mappingToken.address);
       await mtf.setTokenContractLogic(1, mappingToken.address);
@@ -155,7 +155,7 @@ describe("darwinia<>bsc mapping token tests", () => {
       //approve to mapping-token-factory
       await mappedToken.approve(mtf.address, 1000);
       await backing.changeDailyLimit(originalToken.address, 1000);
-      await mtf.burnAndRemoteUnlockWaitingConfirm(1, mappingTokenAddress, owner.address, 21);
+      await mtf.burnAndRemoteUnlockWaitingConfirm(1, mappingTokenAddress, owner.address, 21, {value: ethers.utils.parseEther("10.0")});
       expect(await originalToken.balanceOf(owner.address)).to.equal(1000 - 100 + 21);
       // before confirmed
       expect(await mappedToken.balanceOf(owner.address)).to.equal(100 - 21);
@@ -167,7 +167,22 @@ describe("darwinia<>bsc mapping token tests", () => {
 
       // test burn and unlock failed(daily limited)
       await backing.changeDailyLimit(originalToken.address, 0);
-      await mtf.burnAndRemoteUnlockWaitingConfirm(1, mappingTokenAddress, owner.address, 7);
+
+      const balanceBurnBefore = await ethers.provider.getBalance(owner.address);
+      const tx = await mtf.burnAndRemoteUnlockWaitingConfirm(
+          1,
+          mappingTokenAddress,
+          owner.address,
+          7,
+          {
+              value: ethers.utils.parseEther("10.0"),
+              gasPrice: 20000000000
+          }
+      );
+      const balanceBurnAfter = await ethers.provider.getBalance(owner.address);
+      const receipt = await tx.wait();
+      const gasUsed = receipt.gasUsed;
+      expect(balanceBurnBefore - balanceBurnAfter).to.equal(10000000000000000000 + gasUsed * 20000000000);
       expect(await originalToken.balanceOf(owner.address)).to.equal(1000 - 100 + 21);
       // before confirmed
       expect(await mappedToken.balanceOf(owner.address)).to.equal(100 - 21 - 7);
