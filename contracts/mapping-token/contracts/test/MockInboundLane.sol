@@ -18,7 +18,7 @@ contract MockInboundLane is MockMessageVerifier {
     ) {
     }
 
-    function receive_message(address sender, address targetContract, bytes calldata encoded) external returns(bool) {
+    function mock_dispatch(address sender, address targetContract, bytes calldata encoded) external returns(bool) {
         if (targetContract == address(0)) {
             return false;
         }

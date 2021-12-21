@@ -88,7 +88,7 @@ describe("darwinia<>bsc mapping token tests", () => {
       // check not exist
       expect(await backing.tokens(originalToken.address, 2)).to.equal(zeroAddress);
       // confirmed
-      await darwiniaOutboundLane.triggerConfirmed(1);
+      await darwiniaOutboundLane.mock_confirm(1);
       // check register successed
       expect(await backing.tokens(originalToken.address, 2)).to.equal(mtf.address);
       expect(await mtf.tokenLength()).to.equal(1);
@@ -96,7 +96,7 @@ describe("darwinia<>bsc mapping token tests", () => {
       
       //test register failed
       await backing.registerErc20Token(2, 2, zeroAddress, zeroAddress, "invalid token", "INV", 9);
-      await darwiniaOutboundLane.triggerConfirmed(2);
+      await darwiniaOutboundLane.mock_confirm(2);
       // check unregistered
       expect(await backing.tokens(zeroAddress, 2)).to.equal(zeroAddress);
       expect(await mtf.tokenLength()).to.equal(1);
@@ -109,7 +109,7 @@ describe("darwinia<>bsc mapping token tests", () => {
       // test lock successful
       await mtf.changeDailyLimit(mappingTokenAddress, 1000);
       await backing.lockAndRemoteIssuing(2, 2, originalToken.address, owner.address, 100);
-      await darwiniaOutboundLane.triggerConfirmed(3);
+      await darwiniaOutboundLane.mock_confirm(3);
       // check lock and remote successed
       expect(await originalToken.balanceOf(backing.address)).to.equal(100);
       expect(await originalToken.balanceOf(owner.address)).to.equal(1000 - 100);
@@ -122,7 +122,7 @@ describe("darwinia<>bsc mapping token tests", () => {
       await backing.lockAndRemoteIssuing(2, 2, originalToken.address, owner.address, 100);
       expect(await originalToken.balanceOf(backing.address)).to.equal(200);
       expect(await originalToken.balanceOf(owner.address)).to.equal(1000 - 200);
-      await darwiniaOutboundLane.triggerConfirmed(4);
+      await darwiniaOutboundLane.mock_confirm(4);
       expect(await originalToken.balanceOf(backing.address)).to.equal(100);
       expect(await originalToken.balanceOf(owner.address)).to.equal(1000 - 100);
 
@@ -136,7 +136,7 @@ describe("darwinia<>bsc mapping token tests", () => {
       expect(await mappedToken.balanceOf(owner.address)).to.equal(100 - 21);
       expect(await mappedToken.balanceOf(mtf.address)).to.equal(21);
       // after confirmed
-      await bscOutboundLane.triggerConfirmed(1);
+      await bscOutboundLane.mock_confirm(1);
       expect(await mappedToken.balanceOf(owner.address)).to.equal(100 - 21);
       expect(await mappedToken.balanceOf(mtf.address)).to.equal(0);
 
@@ -148,7 +148,7 @@ describe("darwinia<>bsc mapping token tests", () => {
       expect(await mappedToken.balanceOf(owner.address)).to.equal(100 - 21 - 7);
       expect(await mappedToken.balanceOf(mtf.address)).to.equal(7);
       // after confirmed
-      await bscOutboundLane.triggerConfirmed(2);
+      await bscOutboundLane.mock_confirm(2);
       expect(await mappedToken.balanceOf(owner.address)).to.equal(100 - 21);
       expect(await mappedToken.balanceOf(mtf.address)).to.equal(0);
 
