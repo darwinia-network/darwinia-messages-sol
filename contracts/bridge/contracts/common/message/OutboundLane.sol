@@ -140,7 +140,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         });
 
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
-        // prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
+        prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
         emit MessageAccepted(nonce, encoded);
         return nonce;
     }
