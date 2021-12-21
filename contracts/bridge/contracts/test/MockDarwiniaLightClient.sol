@@ -22,13 +22,22 @@ contract MockDarwiniaLightClient {
         latestChainMessagesRoot = message_root;
     }
 
-    function verify_lane_data_proof(
-        bytes32 lane_hash,
+    function verify_messages_proof(
+        bytes32 outlane_data_hash,
         uint32 chain_pos,
         uint32 lane_pos,
-        bytes calldata proof
+        bytes calldata encoded_proof
     ) external view returns (bool) {
-        return validate_lane_data_match_root(lane_hash, chain_pos, lane_pos, proof);
+        return validate_lane_data_match_root(outlane_data_hash, chain_pos, lane_pos, encoded_proof);
+    }
+
+    function verify_messages_delivery_proof(
+        bytes32 inlane_data_hash,
+        uint32 chain_pos,
+        uint32 lane_pos,
+        bytes calldata encoded_proof
+    ) external view returns (bool) {
+        return validate_lane_data_match_root(inlane_data_hash, chain_pos, lane_pos, encoded_proof);
     }
 
     function validate_lane_data_match_root(
