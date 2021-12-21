@@ -9,7 +9,7 @@ import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "@darwinia/contracts-verify/contracts/SparseMerkleMultiProof.sol";
 import "./ValidatorRegistry.sol";
 import "./GuardRegistry.sol";
-import "../spec/BeefyCommitmentScheme.sol";
+import "../../spec/BeefyCommitmentScheme.sol";
 
 /**
  * @title A entry contract for the Ethereum-like light client

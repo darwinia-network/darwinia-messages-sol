@@ -35,10 +35,10 @@ contract MockBSCLightClient {
     }
 
     function verify_lane_data_proof(
-        bytes32 lane_hash,
+        bytes32 /*lane_hash*/,
         uint32 chain_pos,
         uint32 lane_pos,
-        bytes calldata proof
+        bytes calldata /*proof*/
     ) external view returns (bool) {
         // StorageProof memory storage_proof = abi.decode(proof, (StorageProof));
         address lane = lanes[chain_pos][lane_pos];

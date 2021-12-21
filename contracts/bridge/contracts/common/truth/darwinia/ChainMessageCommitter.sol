@@ -3,7 +3,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../../interfaces/IMessageCommitment.sol";
+import "../../../interfaces/IMessageCommitment.sol";
 
 contract ChainMessageCommitter is Ownable {
     event Registry(uint256 position, address committer);

@@ -4,7 +4,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../../interfaces/IMessageCommitment.sol";
+import "../../../interfaces/IMessageCommitment.sol";
 
 contract LaneMessageCommitter is Ownable {
     event Registry(uint256 outLanePos, address outboundLane, uint256 inLanePos, address inboundLane);

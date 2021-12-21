@@ -4,8 +4,8 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../spec/SourceChain.sol";
-import "../spec/TargetChain.sol";
+import "../../spec/SourceChain.sol";
+import "../../spec/TargetChain.sol";
 
 interface IBSCBridge {
     function verify_storage_proof(
