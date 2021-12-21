@@ -24,12 +24,16 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         address sender;
         uint256 amount;
     }
+    struct InBoundLaneInfo {
+        address remoteSender;
+        address inBoundLaneAddress;
+    }
     uint32 public constant NATIVE_TOKEN_TYPE = 0;
     uint32 public constant ERC20_TOKEN_TYPE = 1;
     string public thisChainName;
 
     // bridge channel
-    mapping(bytes32 => address) public inboundLanes;
+    mapping(bytes32 => InBoundLaneInfo) public inboundLanes;
     mapping(bytes32 => address) public outboundLanes;
 
     // tokenAddress => remoteChainId => mappingTokenFactory
@@ -50,7 +54,8 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
 
     modifier onlyInBoundLane(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address mappingTokenFactoryAddress) {
         bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, mappingTokenFactoryAddress));
-        require(inboundLanes[remoteId] == msg.sender, "MappingTokenFactory: caller is not the inboundLane account");
+        require(inboundLanes[remoteId].remoteSender == mappingTokenFactoryAddress, "MappingTokenFactory: remote caller is not issuing account");
+        require(inboundLanes[remoteId].inBoundLaneAddress == msg.sender, "MappingTokenFactory: caller is not the inboundLane account");
         _;
     }
 
@@ -88,7 +93,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         uint32 bridgedChainPosition = IMessageVerifier(inboundLane).bridgedChainPosition();
         uint32 bridgedLanePosition = IMessageVerifier(inboundLane).bridgedLanePosition();
         bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, mappingTokenFactory));
-        inboundLanes[remoteId] = inboundLane;
+        inboundLanes[remoteId] = InBoundLaneInfo(mappingTokenFactory, inboundLane);
         emit NewInBoundLaneAdded(mappingTokenFactory, inboundLane);
     }
 
@@ -217,7 +222,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         bytes calldata
     ) external view returns (bool) {
         bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, mappingTokenFactory));
-        return inboundLanes[remoteId] == msg.sender;
+        return inboundLanes[remoteId].inBoundLaneAddress == msg.sender && inboundLanes[remoteId].remoteSender == mappingTokenFactory;
     }
 
     /**

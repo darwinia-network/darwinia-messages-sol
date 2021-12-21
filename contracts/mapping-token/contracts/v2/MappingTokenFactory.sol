@@ -33,6 +33,10 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         address mappingToken;
         uint256 amount;
     }
+    struct InBoundLaneInfo {
+        address remoteSender;
+        address inBoundLaneAddress;
+    }
     // the mapping token list
     address[] public allMappingTokens;
     // salt=>mappingToken, the salt is derived from origin token on backing chain
@@ -46,7 +50,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
     mapping(uint32 => address) public tokenType2Logic;
 
     // bridge channel
-    mapping(bytes32 => address) public inboundLanes;
+    mapping(bytes32 => InBoundLaneInfo) public inboundLanes;
     mapping(bytes32 => address) public outboundLanes;
 
     mapping(bytes32 => UnconfirmedInfo) public unlockRemoteUnconfirmed;
@@ -82,7 +86,8 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
             IMessageVerifier(msg.sender).bridgedChainPosition(),
             IMessageVerifier(msg.sender).bridgedLanePosition(),
             backingAddress));
-        require(inboundLanes[remoteId] == msg.sender, "MappingTokenFactory: caller is not the inboundLane account");
+        require(inboundLanes[remoteId].inBoundLaneAddress == msg.sender, "MappingTokenFactory: caller is not the inboundLane account");
+        require(inboundLanes[remoteId].remoteSender == backingAddress, "MappingTokenFactory: remote caller is not the backing account");
         _;
     }
 
@@ -106,7 +111,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         uint32 bridgedChainPosition = IMessageVerifier(inboundLane).bridgedChainPosition();
         uint32 bridgedLanePosition = IMessageVerifier(inboundLane).bridgedLanePosition();
         bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, backingAddress));
-        inboundLanes[remoteId] = inboundLane;
+        inboundLanes[remoteId] = InBoundLaneInfo(backingAddress, inboundLane);
         emit NewInBoundLaneAdded(backingAddress, inboundLane);
     }
 
@@ -159,26 +164,6 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         emit MappingTokenUpdated(salt, existed, mappingToken);
     }
 
-    // update the mapping token address when the mapping token contract deployed before
-    function updateMappingToken(
-        uint32 bridgedChainPosition,
-        address backingAddress,
-        address originalToken,
-        address newMappingToken,
-        uint index
-    ) external onlyOwner {
-        bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
-        address existed = salt2MappingToken[salt];
-        require(salt2MappingToken[salt] != address(0), "the mapping token not exist");
-        require(tokenLength() > index && allMappingTokens[index] == existed, "invalid index");
-        allMappingTokens[index] = newMappingToken;
-        OriginalInfo memory info = mappingToken2OriginalInfo[existed];
-        delete mappingToken2OriginalInfo[existed];
-        mappingToken2OriginalInfo[newMappingToken] = info;
-        salt2MappingToken[salt] = newMappingToken;
-        emit MappingTokenUpdated(salt, existed, newMappingToken);
-    }
-
     // internal
     function deploy(bytes32 salt, uint32 tokenType) internal returns (address addr) {
         bytes memory bytecode = type(TransparentUpgradeableProxy).creationCode;
@@ -193,7 +178,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
     // view
     function getInBoundLane(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address backingAddress) public view returns(address) {
         bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, backingAddress));
-        return inboundLanes[remoteId];
+        return inboundLanes[remoteId].inBoundLaneAddress;
     }
 
     function getOutBoundLane(uint32 bridgedChainPosition, uint32 bridgedLanePosition) public view returns(address) {
@@ -223,7 +208,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         bytes calldata
     ) external view returns (bool) {
         bytes32 remoteId = keccak256(abi.encodePacked(bridgedChainPosition, bridgedLanePosition, backingAddress));
-        return inboundLanes[remoteId] == msg.sender;
+        return inboundLanes[remoteId].inBoundLaneAddress == msg.sender && inboundLanes[remoteId].remoteSender == backingAddress;
     }
 
     /**
