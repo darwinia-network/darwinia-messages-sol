@@ -102,7 +102,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         uint64 _latest_received_nonce,
         uint64 _latest_generated_nonce
     ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
-        outboundLaneNonce = OutboundLaneNonce(_oldest_unpruned_nonce, _latest_received_nonce, _latest_generated_nonce);
+        outboundLaneNonce = OutboundLaneNonce(_latest_received_nonce, _latest_generated_nonce, _oldest_unpruned_nonce);
         setter = msg.sender;
     }
 
@@ -140,7 +140,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         });
 
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
-        prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
+        // prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
         emit MessageAccepted(nonce, encoded);
         return nonce;
     }
