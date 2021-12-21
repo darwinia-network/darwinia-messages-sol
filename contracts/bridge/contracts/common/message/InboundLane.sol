@@ -66,6 +66,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
 
     /* State */
 
+    // Range of UnrewardedRelayers
+    struct RelayersRange {
+        // Front index of the UnrewardedRelayers (inclusive).
+        uint64 front;
+        // Back index of the UnrewardedRelayers (inclusive).
+        uint64 back;
+    }
+
     /**
      * @dev ID of the next message, which is incremented in strict order
      * @notice When upgrading the lane, this value must be synchronized
@@ -82,20 +90,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         uint64 last_confirmed_nonce;
         // Nonce of the latest received or has been delivered message to this inbound lane.
         uint64 last_delivered_nonce;
+
+        RelayersRange relayer_range;
     }
 
+    // slot 2
     InboundLaneNonce public inboundLaneNonce;
 
-    // Range of UnrewardedRelayers
-    struct RelayersRange {
-        // Front index of the UnrewardedRelayers (inclusive).
-        uint64 front;
-        // Back index of the UnrewardedRelayers (inclusive).
-        uint64 back;
-    }
-
-    RelayersRange public relayersRange;
-
+    // slot 3
     // index => UnrewardedRelayer
     // indexes to relayers and messages that they have delivered to this lane (ordered by
     // message nonce).
@@ -139,8 +141,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         uint64 _last_confirmed_nonce,
         uint64 _last_delivered_nonce
     ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
-        inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce);
-        relayersRange = RelayersRange(1, 0);
+        inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce, RelayersRange(1, 0));
     }
 
     /* Public Functions */
@@ -166,14 +167,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     }
 
     function relayers_size() public view returns (uint64 size) {
-        if (relayersRange.back >= relayersRange.front) {
-            size = relayersRange.back - relayersRange.front + 1;
+        if (inboundLaneNonce.relayersRange.back >= inboundLaneNonce.relayersRange.front) {
+            size = inboundLaneNonce.relayersRange.back - inboundLaneNonce.relayersRange.front + 1;
         }
     }
 
     function relayers_back() public view returns (address pre_relayer) {
         if (relayers_size() > 0) {
-            uint64 back = relayersRange.back;
+            uint64 back = inboundLaneNonce.relayersRange.back;
             pre_relayer = relayers[back].relayer;
         }
     }
@@ -183,7 +184,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         uint64 size = relayers_size();
         if (size > 0) {
             lane_data.relayers = new UnrewardedRelayer[](size);
-            uint64 front = relayersRange.front;
+            uint64 front = inboundLaneNonce.relayersRange.front;
             for (uint64 index = 0; index < size; index++) {
                 lane_data.relayers[index] = relayers[front + index];
             }
@@ -209,14 +210,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         require(latest_received_nonce <= last_delivered_nonce, "Lane: InvalidReceivedNonce");
         if (latest_received_nonce > last_confirmed_nonce) {
             uint64 new_confirmed_nonce = latest_received_nonce;
-            uint64 front = relayersRange.front;
-            uint64 back = relayersRange.back;
+            uint64 front = inboundLaneNonce.relayersRange.front;
+            uint64 back = inboundLaneNonce.relayersRange.back;
             for (uint64 index = front; index <= back; index++) {
                 UnrewardedRelayer storage entry = relayers[index];
                 if (entry.messages.end <= new_confirmed_nonce) {
                     // Firstly, remove all of the records where higher nonce <= new confirmed nonce
                     delete relayers[index];
-                    relayersRange.front = index + 1;
+                    inboundLaneNonce.relayersRange.front = index + 1;
                 } else if (entry.messages.begin < new_confirmed_nonce) {
                     // Secondly, update the next record with lower nonce equal to new confirmed nonce if needed.
                     // Note: There will be max. 1 record to update as we don't allow messages from relayers to
@@ -275,12 +276,12 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
             // now let's update inbound lane storage
             address pre_relayer = relayers_back();
             if (pre_relayer == relayer) {
-                UnrewardedRelayer storage r = relayers[relayersRange.back];
+                UnrewardedRelayer storage r = relayers[inboundLaneNonce.relayersRange.back];
                 r.messages.dispatch_results |= dispatch_results << (r.messages.end - r.messages.begin + 1);
                 r.messages.end = end;
             } else {
-                relayersRange.back += 1;
-                relayers[relayersRange.back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
+                inboundLaneNonce.relayersRange.back += 1;
+                relayers[inboundLaneNonce.relayersRange.back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
             }
         }
     }
