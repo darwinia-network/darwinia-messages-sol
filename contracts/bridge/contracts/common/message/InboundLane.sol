@@ -18,8 +18,8 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../../interfaces/ICrossChainFilter.sol";
 import "./MessageVerifier.sol";
-import "./SourceChain.sol";
-import "./TargetChain.sol";
+import "../spec/SourceChain.sol";
+import "../spec/TargetChain.sol";
 
 /**
  * @title Everything about incoming messages receival
@@ -144,6 +144,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
     // this data in the transaction, so reward confirmations lags should be minimal.
     function receive_messages_proof(
         OutboundLaneData memory outboundLaneData,
+        bytes[] memory messagesCallData,
         bytes memory messagesProof
     ) public nonReentrant {
         verify_lane_data_proof(hash(outboundLaneData), messagesProof);
@@ -153,7 +154,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
             "Lane: InsufficientGas"
         );
         receive_state_update(outboundLaneData.latest_received_nonce);
-        receive_message(outboundLaneData.messages);
+        receive_message(outboundLaneData.messages, messagesCallData);
     }
 
     function relayers_size() public view returns (uint64 size) {
@@ -222,14 +223,15 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
     }
 
     // Receive new message.
-    function receive_message(Message[] memory messages) internal returns (uint256 dispatch_results) {
-        address payable relayer = msg.sender;
+    function receive_message(Message[] memory messages, bytes[] memory messagesCallData) internal returns (uint256 dispatch_results) {
+        require(messages.length == messagesCallData.length, "Lane: InvalidLength");
+        address relayer = msg.sender;
         uint64 begin = inboundLaneNonce.last_delivered_nonce + 1;
         uint64 next = begin;
         for (uint256 i = 0; i < messages.length; i++) {
             Message memory message = messages[i];
             MessageKey memory key = decodeMessageKey(message.encoded_key);
-            MessagePayload memory message_payload = message.data.payload;
+            MessagePayload memory message_payload = message.data;
             if (key.nonce < next) {
                 continue;
             }
@@ -245,9 +247,11 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
             require(key.bridged_lane_id == thisLanePosition, "Lane: InvalidTargetLaneId");
             // if there are more unconfirmed messages than we may accept, reject this message
             require(next - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "Lane: TooManyUnconfirmedMessages");
+            // check the message call data is correct
+            require(message_payload.encodedHash == keccak256(messagesCallData[i]));
 
             // then, dispatch message
-            (bool dispatch_result, bytes memory returndata) = dispatch(message_payload);
+            (bool dispatch_result, bytes memory returndata) = dispatch(message_payload, messagesCallData[i]);
 
             emit MessageDispatched(key.this_chain_id, key.bridged_chain_id, key.this_lane_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
             // TODO: callback `pay_inbound_dispatch_fee_overhead`
@@ -273,29 +277,29 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         }
     }
 
-    function dispatch(MessagePayload memory payload) internal returns (bool dispatch_result, bytes memory returndata) {
+    function dispatch(MessagePayload memory payload, bytes memory encoded) internal returns (bool dispatch_result, bytes memory returndata) {
         bytes memory filterCallData = abi.encodeWithSelector(
             ICrossChainFilter.crossChainFilter.selector,
             bridgedChainPosition,
             bridgedLanePosition,
             payload.sourceAccount,
-            payload.encoded
+            encoded
         );
         bool canCall = filter(payload.targetContract, filterCallData);
         if (canCall) {
             // Deliver the message to the target
-            (dispatch_result, returndata) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
+            (dispatch_result, returndata) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(encoded);
         } else {
             dispatch_result = false;
             returndata = "Lane: MessageCallRejected";
         }
     }
 
-    function filter(address target, bytes memory callData) internal returns (bool canCall) {
+    function filter(address target, bytes memory encoded) internal returns (bool canCall) {
         /**
          * @notice The app layer must implement the interface `ICrossChainFilter`
          */
-        (bool ok, bytes memory result) = target.call{value: 0, gas: GAS_BUFFER}(callData);
+        (bool ok, bytes memory result) = target.call{value: 0, gas: GAS_BUFFER}(encoded);
         if (ok) {
             if (result.length == 32) {
                 canCall = abi.decode(result, (bool));

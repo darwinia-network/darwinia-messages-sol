@@ -21,12 +21,12 @@ import "../../interfaces/IOutboundLane.sol";
 import "../../interfaces/IOnMessageDelivered.sol";
 import "../../interfaces/IFeeMarket.sol";
 import "./MessageVerifier.sol";
-import "./TargetChain.sol";
-import "./SourceChain.sol";
+import "../spec/SourceChain.sol";
+import "../spec/TargetChain.sol";
 
 // Everything about outgoing messages sending.
 contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChain, ReentrancyGuard, AccessControl {
-    event MessageAccepted(uint64 nonce);
+    event MessageAccepted(uint64 nonce, bytes encoded);
     event MessagesDelivered(uint64 begin, uint64 end, uint256 results);
     event MessagePruned(uint64 oldest_unpruned_nonce);
     event MessageFeeIncreased(uint64 nonce, uint256 fee);
@@ -36,6 +36,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     bytes32 internal constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
     bytes32 internal constant FEEMARKET_ROLE = keccak256("FEEMARKET_ROLE");
     uint256 internal constant MAX_GAS_PER_MESSAGE = 100000;
+    uint256 internal constant MAX_CALLDATA_LENGTH = 2**14 + 2**13;
     uint64 internal constant MAX_PENDING_MESSAGES = 50;
     uint64 internal constant MAX_PRUNE_MESSAGES_ATONCE = 10;
 
@@ -56,8 +57,8 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
 
     uint256 public confirmationFee = 0.1 ether; // how to set confirmation_fee
 
-    // nonce => MessageData
-    mapping(uint64 => MessageData) public messages;
+    // nonce => MessagePayload
+    mapping(uint64 => MessagePayload) public messages;
 
     address public fee_market;
 
@@ -107,21 +108,17 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         uint256 fee = msg.value;
         // assign the message to top relayers
         require(IFeeMarket(fee_market).assign{value: fee}(encodeMessageKey(nonce)), "Lane: AssignRelayersFailed");
+        require(encoded.length < MAX_CALLDATA_LENGTH, "Lane: Calldata is too large");
         outboundLaneNonce.latest_generated_nonce = nonce;
-        MessagePayload memory messagePayload = MessagePayload({
+        messages[nonce] = MessagePayload({
             sourceAccount: msg.sender,
             targetContract: targetContract,
-            encoded: encoded
-        });
-        // finally, save messageData in outbound storage and emit `MessageAccepted` event
-        messages[nonce] = MessageData({
-            payload: messagePayload,
-            fee: fee  // a lowest fee may be required and how to set it
+            encodedHash: keccak256(encoded)
         });
 
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
         prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
-        emit MessageAccepted(nonce);
+        emit MessageAccepted(nonce, encoded);
         return nonce;
     }
 
@@ -246,7 +243,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             uint256 offset = nonce - confirmed_messages.begin;
             bool dispatch_result = ((confirmed_messages.dispatch_results >> offset) & 1) > 0;
             // Submitter could be a contract or just an EOA address.
-            address submitter = messages[nonce].payload.sourceAccount;
+            address submitter = messages[nonce].sourceAccount;
             bytes memory deliveredCallbackData = abi.encodeWithSelector(
                 IOnMessageDelivered.on_messages_delivered.selector,
                 nonce,

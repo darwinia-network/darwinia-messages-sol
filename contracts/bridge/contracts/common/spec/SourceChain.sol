@@ -8,12 +8,12 @@ contract SourceChain {
      * The MessagePayload is the structure of RPC which should be delivery to target chain
      * @param sourceAccount The source contract address which send the message
      * @param targetContract The targe contract address which receive the message
-     * @param encoded The calldata which encoded by ABI Encoding
+     * @param encoded The calldata hash which encoded by ABI Encoding
      */
     struct MessagePayload {
         address sourceAccount;
         address targetContract;
-        bytes encoded; /*abi.encodePacked(SELECTOR, PARAMS)*/
+        bytes32 encodedHash; /*keccak256(abi.encodePacked(SELECTOR, PARAMS))*/
     }
 
     // Message key (unique message identifier) as it is stored in the storage.
@@ -30,20 +30,12 @@ contract SourceChain {
         uint64 nonce;
     }
 
-    // Message data as it is stored in the storage.
-    struct MessageData {
-        // Message payload.
-        MessagePayload payload;
-        // Message delivery and dispatch fee, paid by the submitter.
-        uint256 fee;
-    }
-
     // Message as it is stored in the storage.
     struct Message {
         // Encoded message key.
         uint256 encoded_key;
         // Message data.
-        MessageData data;
+        MessagePayload data;
     }
 
     // Outbound lane data.
@@ -83,16 +75,6 @@ contract SourceChain {
      * )
      */
     bytes32 internal constant MESSAGEKEY_TYPEHASH = 0x585f05d88bd03c64597258f8336daadecf668cb7b708cb320742d432114d13ac;
-
-    /**
-     * Hash of the MessageData Schema
-     * keccak256(abi.encodePacked(
-     *     "MessageData(MessagePayload payload,uint256 fee)",
-     *     "MessagePayload(address sourceAccount,address targetContract,bytes encoded)"
-     *     ")"
-     * )
-     */
-    bytes32 internal constant MESSAGEDATA_TYPEHASH = 0x6158c19ce509d2b577b8dc4529dc0519fdf45619f983f5a0e6e51136b0f1d363;
 
     /**
      * Hash of the MessagePayload Schema
@@ -154,20 +136,6 @@ contract SourceChain {
         );
     }
 
-    function hash(MessageData memory data)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(
-            abi.encode(
-                MESSAGEDATA_TYPEHASH,
-                hash(data.payload),
-                data.fee
-            )
-        );
-    }
-
     function hash(MessagePayload memory payload)
         internal
         pure
@@ -178,7 +146,7 @@ contract SourceChain {
                 MESSAGEPAYLOAD_TYPEHASH,
                 payload.sourceAccount,
                 payload.targetContract,
-                payload.encoded
+                payload.encodedHash
             )
         );
     }

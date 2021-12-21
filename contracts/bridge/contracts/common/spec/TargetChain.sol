@@ -22,7 +22,7 @@ contract TargetChain {
     // relayer and whose confirmations are still pending.
     struct UnrewardedRelayer {
         // Address of the relayer.
-        address payable relayer;
+        address relayer;
         // Messages range, delivered by this relayer.
         DeliveredMessages messages;
     }
