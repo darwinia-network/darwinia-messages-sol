@@ -15,7 +15,6 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../../interfaces/ICrossChainFilter.sol";
 import "./MessageVerifier.sol";
 import "../spec/SourceChain.sol";
@@ -27,7 +26,7 @@ import "../spec/TargetChain.sol";
  * @notice The inbound lane is the message layer of the bridge
  * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
  */
-contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGuard {
+contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     /**
      * @notice Notifies an observer that the message has dispatched
      * @param thisChainPosition The thisChainPosition of the message
@@ -112,6 +111,15 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
     // highest nonce. Multiple dispatches from the same relayer are allowed.
     mapping(uint64 => UnrewardedRelayer) public relayers;
 
+    uint256 internal locked;
+    // --- Synchronization ---
+    modifier lock {
+        require(locked == 0, "Lane: locked");
+        locked = 1;
+        _;
+        locked = 0;
+    }
+
     /**
      * @notice Deploys the InboundLane contract
      * @param _lightClientBridge The contract address of on-chain light client
@@ -146,7 +154,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         OutboundLaneData memory outboundLaneData,
         bytes[] memory messagesCallData,
         bytes memory messagesProof
-    ) public nonReentrant {
+    ) public lock {
         verify_lane_data_proof(hash(outboundLaneData), messagesProof);
         // Require there is enough gas to play all messages
         require(

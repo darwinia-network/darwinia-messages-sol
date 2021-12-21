@@ -6,7 +6,6 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
-// import "hardhat/console.sol";
 
 interface IBSCBridge {
     function verify_storage_proof(

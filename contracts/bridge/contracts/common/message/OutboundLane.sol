@@ -15,8 +15,6 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../../interfaces/IOutboundLane.sol";
 import "../../interfaces/IOnMessageDelivered.sol";
 import "../../interfaces/IFeeMarket.sol";
@@ -25,13 +23,15 @@ import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 
 // Everything about outgoing messages sending.
-contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChain, ReentrancyGuard, AccessControl {
-    event MessageAccepted(uint64 nonce, bytes encoded);
-    event MessagesDelivered(uint64 begin, uint64 end, uint256 results);
-    event MessagePruned(uint64 oldest_unpruned_nonce);
-    event MessageFeeIncreased(uint64 nonce, uint256 fee);
-    event CallbackMessageDelivered(uint64 nonce, bool result);
-    event SetFeeMarket(address fee_market);
+contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChain {
+    event MessageAccepted(uint64 indexed nonce, bytes encoded);
+    event MessagesDelivered(uint64 indexed begin, uint64 indexed end, uint256 results);
+    event MessagePruned(uint64 indexed oldest_unpruned_nonce);
+    event MessageFeeIncreased(uint64 indexed nonce, uint256 fee);
+    event CallbackMessageDelivered(uint64 indexed nonce, bool result);
+    event SetFeeMarket(address indexed fee_market);
+    event Rely(address indexed usr);
+    event Deny(address indexed usr);
 
     bytes32 internal constant OUTBOUND_ROLE = keccak256("OUTBOUND_ROLE");
     bytes32 internal constant FEEMARKET_ROLE = keccak256("FEEMARKET_ROLE");
@@ -55,12 +55,32 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
 
     OutboundLaneNonce public outboundLaneNonce;
 
-    uint256 public confirmationFee = 0.1 ether; // how to set confirmation_fee
-
     // nonce => MessagePayload
     mapping(uint64 => MessagePayload) public messages;
 
+    // white list who can send meesage over lane, will remove in the future
+    mapping (address => uint256) public wards;
     address public fee_market;
+    address public setter;
+
+    uint256 internal locked;
+    // --- Synchronization ---
+    modifier lock {
+        require(locked == 0, "Lane: locked");
+        locked = 1;
+        _;
+        locked = 0;
+    }
+
+    modifier auth {
+        require(wards[msg.sender] == 1, "Lane: NotAuthorized");
+        _;
+    }
+
+    modifier onlySetter {
+        require(msg.sender == setter, "Lane: NotAuthorized");
+        _;
+    }
 
     /**
      * @notice Deploys the OutboundLane contract
@@ -84,11 +104,13 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         uint64 _latest_generated_nonce
     ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
         outboundLaneNonce = OutboundLaneNonce(_oldest_unpruned_nonce, _latest_received_nonce, _latest_generated_nonce);
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        setter = msg.sender;
     }
 
-    function setFeeMarket(address _fee_market) external nonReentrant {
-        require(hasRole(FEEMARKET_ROLE, msg.sender), "Lane: NotAuthorized");
+    function rely(address usr) external onlySetter lock { wards[usr] = 1; emit Rely(usr); }
+    function deny(address usr) external onlySetter lock { wards[usr] = 0; emit Deny(usr); }
+
+    function setFeeMarket(address _fee_market) external onlySetter lock {
         fee_market = _fee_market;
         emit SetFeeMarket(_fee_market);
     }
@@ -100,8 +122,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
      * @param targetContract The target contract address which you would send cross chain message to
      * @param encoded The calldata which encoded by ABI Encoding
      */
-    function send_message(address targetContract, bytes calldata encoded) external payable override nonReentrant returns (uint64) {
-        require(hasRole(OUTBOUND_ROLE, msg.sender), "Lane: NotAuthorized");
+    function send_message(address targetContract, bytes calldata encoded) external payable override auth lock returns (uint64) {
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
         require(outboundLaneNonce.latest_generated_nonce < uint64(-1), "Lane: Overflow");
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
@@ -126,7 +147,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     function receive_messages_delivery_proof(
         InboundLaneData memory inboundLaneData,
         bytes memory messagesProof
-    ) public nonReentrant {
+    ) public lock {
         verify_lane_data_proof(hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
         on_messages_delivered(confirmed_messages);
