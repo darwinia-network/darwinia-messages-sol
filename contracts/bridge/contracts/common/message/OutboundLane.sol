@@ -29,7 +29,6 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     event MessagePruned(uint64 indexed oldest_unpruned_nonce);
     event MessageFeeIncreased(uint64 indexed nonce, uint256 fee);
     event CallbackMessageDelivered(uint64 indexed nonce, bool result);
-    event SetFeeMarket(address indexed fee_market);
     event Rely(address indexed usr);
     event Deny(address indexed usr);
 
@@ -112,7 +111,10 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
 
     function setFeeMarket(address _fee_market) external onlySetter lock {
         fee_market = _fee_market;
-        emit SetFeeMarket(_fee_market);
+    }
+
+    function changeSetter(address _setter) external onlySetter lock {
+        setter = _setter;
     }
 
     /**
