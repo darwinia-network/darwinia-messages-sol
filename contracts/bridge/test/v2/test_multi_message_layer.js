@@ -35,13 +35,13 @@ const logNonce = async () => {
 const receive_messages_proof = async (addr, nonce) => {
     laneData = await outbound.data()
     const calldata = Array(laneData.messages.length).fill("0x")
+    const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
+    const size = nonce - from
     const tx = await inbound.connect(addr).receive_messages_proof(laneData, calldata, "0x")
-    const n = await inbound.inboundLaneNonce()
-    const size = nonce - n.last_delivered_nonce
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, nonce+i, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
+        .withArgs(thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, from+i+1, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
     }
     await logNonce()
 }
