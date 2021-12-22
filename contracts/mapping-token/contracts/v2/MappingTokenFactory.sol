@@ -329,7 +329,8 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         require(msg.value >= fee, "not enough fee to pay");
         uint64 nonce = IOutboundLane(outboundLane).send_message{value: fee}(info.backingAddress, unlockFromRemote);
         if (msg.value > fee) {
-            require(payable(msg.sender).send(msg.value - fee), "transfer back fee failed");
+            (bool sent,) = msg.sender.call{value: msg.value - fee}("");
+            require(sent, "transfer back fee failed");
         }
 
         uint256 messageId = encodeMessageId(info.bridgedChainPosition, bridgedLanePosition, nonce);

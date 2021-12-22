@@ -158,7 +158,8 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         uint256 messageId = encodeMessageId(bridgedLanePosition, nonce);
         registerMessages[messageId] = token;
         if (msg.value > fee) {
-            require(payable(msg.sender).send(msg.value - fee), "transfer back fee failed");
+            (bool sent,) = msg.sender.call{value: msg.value - fee}("");
+            require(sent, "transfer back fee failed");
         }
         emit NewErc20TokenRegistered(messageId, bridgedLanePosition, token);
     }
@@ -198,7 +199,8 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         uint256 messageId = encodeMessageId(bridgedLanePosition, nonce);
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
         if (msg.value > fee) {
-            require(payable(msg.sender).send(msg.value - fee), "transfer back fee failed");
+            (bool sent,) = msg.sender.call{value: msg.value - fee}("");
+            require(sent, "transfer back fee failed");
         }
         emit TokenLocked(messageId, nonce, bridgedLanePosition, token, recipient, newAmount);
     }
