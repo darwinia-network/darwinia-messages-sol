@@ -4,6 +4,7 @@ pragma solidity ^0.8.10;
 import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@zeppelin-solidity-4.4.0/contracts/security/ReentrancyGuard.sol";
+import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilter.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IFeeMarket.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IOutboundLane.sol";
@@ -16,6 +17,8 @@ import "../interfaces/IMessageVerifier.sol";
 import "../interfaces/IMappingTokenFactory.sol";
 
 contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBacking, Pausable, ReentrancyGuard {
+    using SafeMath for uint256;
+
     struct LockedInfo {
         address token;
         address sender;
@@ -149,7 +152,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, newErc20Contract);
         registerMessages[messageId] = token;
         if (msg.value > fee) {
-            (bool sent,) = msg.sender.call{value: msg.value - fee}("");
+            (bool sent,) = msg.sender.call{value: msg.value.sub(fee)}("");
             require(sent, "transfer back fee failed");
         }
         emit NewErc20TokenRegistered(messageId, token);
@@ -174,7 +177,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         uint256 balanceBefore = IERC20(token).balanceOf(address(this));
         require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer tokens failed");
         uint256 balanceAfter = IERC20(token).balanceOf(address(this));
-        uint256 newAmount = balanceAfter - balanceBefore;
+        require(balanceBefore.add(amount) == balanceAfter, "Transfer amount is invalid");
         address outboundLane = outboundLanes[bridgedLanePosition];
         require(outboundLane != address(0), "Backing: outboundLane not exist");
         bytes memory issueMappingToken = abi.encodeWithSelector(
@@ -182,17 +185,17 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
             address(this),
             token,
             recipient,
-            newAmount
+            amount
         );
         uint256 fee = IFeeMarket(feeMarket).market_fee();
         require(msg.value >= fee, "not enough fee to pay");
         uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, issueMappingToken);
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
         if (msg.value > fee) {
-            (bool sent,) = msg.sender.call{value: msg.value - fee}("");
+            (bool sent,) = msg.sender.call{value: msg.value.sub(fee)}("");
             require(sent, "transfer back fee failed");
         }
-        emit TokenLocked(messageId, token, recipient, newAmount);
+        emit TokenLocked(messageId, token, recipient, amount);
     }
 
     /**
