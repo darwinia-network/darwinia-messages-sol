@@ -3,6 +3,7 @@ pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import "@zeppelin-solidity-4.4.0/contracts/security/ReentrancyGuard.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilter.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IFeeMarket.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IOutboundLane.sol";
@@ -14,7 +15,7 @@ import "../interfaces/IERC20.sol";
 import "../interfaces/IMessageVerifier.sol";
 import "../interfaces/IMappingTokenFactory.sol";
 
-contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBacking, Pausable {
+contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBacking, Pausable, ReentrancyGuard {
     struct LockedInfo {
         address token;
         address sender;
@@ -47,10 +48,10 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
 
     event NewInBoundLaneAdded(address backingAddress, address inboundLane);
     event NewOutBoundLaneAdded(uint32 bridgedLanePosition, address outboundLane);
-    event NewErc20TokenRegistered(uint256 messageId, uint32 bridgedLanePosition, address token);
-    event TokenLocked(uint256 messageId, uint64 nonce, uint32 bridgedLanePosition, address token, address recipient, uint256 amount);
-    event TokenLockFinished(uint256 messageId, uint64 nonce, bool result);
-    event TokenRegisterFinished(uint256 messageId, uint64 nonce, bool result);
+    event NewErc20TokenRegistered(uint256 messageId, address token);
+    event TokenLocked(uint256 messageId, address token, address recipient, uint256 amount);
+    event TokenLockFinished(uint256 messageId, bool result);
+    event TokenRegisterFinished(uint256 messageId, bool result);
     event TokenUnlocked(uint32 bridgedLanePosition, address token, address recipient, uint256 amount);
 
     modifier onlyInBoundLane(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address mappingTokenFactoryAddress) {
@@ -96,15 +97,6 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         feeMarket = newFeeMarket;
     }
 
-    // 32 bytes
-    // [0, 16)  bytes: Reserved
-    // [16, 20) bytes: BridgedChainPosition
-    // [20, 24) bytes: BridgedLanePosition
-    // [24, 32) bytes: Nonce
-    function encodeMessageId(uint32 bridgedLanePosition, uint64 nonce) public view returns (uint256) {
-        return uint256(remoteChainPosition) << 96 + uint256(bridgedLanePosition) << 64 + uint256(nonce);
-    }
-
     // here add InBoundLane, and remote issuing module must add the corresponding OutBoundLane
     function addInboundLane(address mappingTokenFactory, address inboundLane) external onlyOwner {
         uint32 bridgedChainPosition = IMessageVerifier(inboundLane).bridgedChainPosition();
@@ -137,7 +129,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         string memory name,
         string memory symbol,
         uint8 decimals
-    ) external payable onlyOwner {
+    ) external payable onlyOwner nonReentrant {
         require(registeredTokens[token] == false, "Backing: token has been registered");
 
         address outboundLane = outboundLanes[bridgedLanePosition];
@@ -154,14 +146,13 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         );
         uint256 fee = IFeeMarket(feeMarket).market_fee();
         require(msg.value >= fee, "not enough fee to pay");
-        uint64 nonce = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, newErc20Contract);
-        uint256 messageId = encodeMessageId(bridgedLanePosition, nonce);
+        uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, newErc20Contract);
         registerMessages[messageId] = token;
         if (msg.value > fee) {
             (bool sent,) = msg.sender.call{value: msg.value - fee}("");
             require(sent, "transfer back fee failed");
         }
-        emit NewErc20TokenRegistered(messageId, bridgedLanePosition, token);
+        emit NewErc20TokenRegistered(messageId, token);
     }
 
     /**
@@ -177,7 +168,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         address token,
         address recipient,
         uint256 amount
-    ) external payable whenNotPaused {
+    ) external payable whenNotPaused nonReentrant {
         require(registeredTokens[token], "Backing: the token is not registed");
 
         uint256 balanceBefore = IERC20(token).balanceOf(address(this));
@@ -195,27 +186,24 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         );
         uint256 fee = IFeeMarket(feeMarket).market_fee();
         require(msg.value >= fee, "not enough fee to pay");
-        uint64 nonce = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, issueMappingToken);
-        uint256 messageId = encodeMessageId(bridgedLanePosition, nonce);
+        uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, issueMappingToken);
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
         if (msg.value > fee) {
             (bool sent,) = msg.sender.call{value: msg.value - fee}("");
             require(sent, "transfer back fee failed");
         }
-        emit TokenLocked(messageId, nonce, bridgedLanePosition, token, recipient, newAmount);
+        emit TokenLocked(messageId, token, recipient, newAmount);
     }
 
     /**
      * @notice this will be called by outboundLane when the register/lock message confirmed
-     * @param nonce message nonce to identify the register/lock message
+     * @param messageId message id to identify the register/lock message
      * @param result the result of the remote call
      */
     function on_messages_delivered(
-        uint64 nonce,
+        uint256 messageId,
         bool result
     ) external onlyOutBoundLane {
-        uint32 bridgedLanePosition = IMessageVerifier(msg.sender).bridgedLanePosition();
-        uint256 messageId = encodeMessageId(bridgedLanePosition, nonce);
         LockedInfo memory lockedInfo = lockMessages[messageId];
         // it is lock message, if result is false, need to transfer back to the user, otherwise will be locked here
         if (lockedInfo.token != address(0)) {
@@ -223,7 +211,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
             if (!result) {
                 IERC20(lockedInfo.token).transfer(lockedInfo.sender, lockedInfo.amount);
             }
-            emit TokenLockFinished(messageId, nonce, result);
+            emit TokenLockFinished(messageId, result);
             return;
         }
         address registerToken = registerMessages[messageId];
@@ -233,7 +221,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
             if (result) {
                 registeredTokens[registerToken] = true;
             }
-            emit TokenRegisterFinished(messageId, nonce, result);
+            emit TokenRegisterFinished(messageId, result);
         }
     }
 

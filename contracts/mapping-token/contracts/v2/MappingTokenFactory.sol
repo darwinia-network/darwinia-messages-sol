@@ -7,6 +7,7 @@ pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import "@zeppelin-solidity-4.4.0/contracts/security/ReentrancyGuard.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilter.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IFeeMarket.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IOutboundLane.sol";
@@ -18,7 +19,7 @@ import "../interfaces/IERC20.sol";
 import "../interfaces/IMessageVerifier.sol";
 import "../interfaces/IMappingTokenFactory.sol";
 
-contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainFilter, IMappingTokenFactory, Pausable {
+contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainFilter, IMappingTokenFactory, Pausable, ReentrancyGuard {
     address public constant BLACK_HOLE_ADDRESS = 0x000000000000000000000000000000000000dEaD;
     struct OriginalInfo {
         uint32  bridgedChainPosition;
@@ -60,11 +61,11 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
 
     event NewLogicSetted(uint32 tokenType, address addr);
     event IssuingERC20Created(address backingAddress, address originalToken, address mappingToken);
-    event MappingTokenUpdated(bytes32 salt, address old_address, address new_address);
+    event MappingTokenUpdated(bytes32 salt, address oldAddress, address newAddress);
     event NewInBoundLaneAdded(address backing, address inboundLane);
     event NewOutBoundLaneAdded(address outboundLane);
-    event BurnAndWaitingConfirm(address outboundLane, uint64 nonce, address sender, address recipient, address token, uint256 amount);
-    event RemoteUnlockConfirmed(address outboundLane, uint64 nonce, address sender, address token, uint256 amount, bool result);
+    event BurnAndWaitingConfirm(uint256 messageId, address sender, address recipient, address token, uint256 amount);
+    event RemoteUnlockConfirmed(uint256 messageId, address sender, address token, uint256 amount, bool result);
 
     receive() external payable {
     }
@@ -108,15 +109,6 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         uint256 outBoundId = encodeBridgedBoundId(bridgedChainPosition, bridgedLanePosition);
         require(outboundLanes[outBoundId] == msg.sender, "MappingTokenFactory: caller is not the outboundLane account");
         _;
-    }
-
-    // 32 bytes
-    // [0, 16)  bytes: Reserved
-    // [16, 20) bytes: BridgedChainPosition
-    // [20, 24) bytes: BridgedLanePosition
-    // [24, 32) bytes: Nonce
-    function encodeMessageId(uint32 bridgedChainPosition, uint32 bridgedLanePosition, uint64 nonce) public pure returns (uint256) {
-        return uint256(bridgedChainPosition) << 96 + uint256(bridgedLanePosition) << 64 + uint256(nonce);
     }
 
     // 32 bytes
@@ -304,7 +296,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         address mappingToken,
         address recipient,
         uint256 amount
-    ) external payable whenNotPaused {
+    ) external payable whenNotPaused nonReentrant {
         require(amount > 0, "can not transfer amount zero");
         OriginalInfo memory info = mappingToken2OriginalInfo[mappingToken];
         require(info.originalToken != address(0), "token is not created by factory");
@@ -327,32 +319,25 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         );
         uint256 fee = IFeeMarket(feeMarket).market_fee();
         require(msg.value >= fee, "not enough fee to pay");
-        uint64 nonce = IOutboundLane(outboundLane).send_message{value: fee}(info.backingAddress, unlockFromRemote);
+        uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(info.backingAddress, unlockFromRemote);
         if (msg.value > fee) {
             (bool sent,) = msg.sender.call{value: msg.value - fee}("");
             require(sent, "transfer back fee failed");
         }
 
-        uint256 messageId = encodeMessageId(info.bridgedChainPosition, bridgedLanePosition, nonce);
-
         unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, amount);
-        emit BurnAndWaitingConfirm(outboundLane, nonce, msg.sender, recipient, mappingToken, amount);
+        emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mappingToken, amount);
     }
 
     /**
      * @notice this will be called when the burn and unlock from remote message confirmed
-     * @param nonce the message nonce, is used to identify the unlocked message
+     * @param messageId the message id, is used to identify the unlocked message
      * @param result the result of the remote backing's unlock, if false, the mapping token need to transfer back to the user, otherwise burt
      */
     function on_messages_delivered(
-        uint64 nonce,
+        uint256 messageId,
         bool result
     ) external onlyOutBoundLane {
-        address outboundLane = msg.sender;
-        uint256 messageId = encodeMessageId(
-            IMessageVerifier(outboundLane).bridgedChainPosition(),
-            IMessageVerifier(outboundLane).bridgedLanePosition(),
-            nonce);
         UnconfirmedInfo memory info = unlockRemoteUnconfirmed[messageId];
         require(info.amount > 0 && info.sender != address(0) && info.mappingToken != address(0), "invalid unconfirmed message");
         if (result) {
@@ -361,7 +346,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
             require(IERC20(info.mappingToken).transfer(info.sender, info.amount), "transfer back failed");
         }
         delete unlockRemoteUnconfirmed[messageId];
-        emit RemoteUnlockConfirmed(outboundLane, nonce, info.sender, info.mappingToken, info.amount, result);
+        emit RemoteUnlockConfirmed(messageId, info.sender, info.mappingToken, info.amount, result);
     }
 }
 

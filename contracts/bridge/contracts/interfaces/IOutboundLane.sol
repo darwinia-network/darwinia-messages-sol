@@ -2,5 +2,5 @@
 pragma solidity >=0.6.0;
 
 interface IOutboundLane {
-    function send_message(address targetContract, bytes calldata encoded) external payable returns (uint64);
+    function send_message(address targetContract, bytes calldata encoded) external payable returns (uint256);
 }

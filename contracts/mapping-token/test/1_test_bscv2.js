@@ -168,7 +168,7 @@ describe("darwinia<>bsc mapping token tests", () => {
       // test burn and unlock failed(daily limited)
       await backing.changeDailyLimit(originalToken.address, 0);
 
-      const balanceBurnBefore = await ethers.provider.getBalance(owner.address);
+      //const balanceBurnBefore = await ethers.provider.getBalance(owner.address);
       const tx = await mtf.burnAndRemoteUnlockWaitingConfirm(
           1,
           mappingTokenAddress,
@@ -179,10 +179,10 @@ describe("darwinia<>bsc mapping token tests", () => {
               gasPrice: 20000000000
           }
       );
-      const balanceBurnAfter = await ethers.provider.getBalance(owner.address);
-      const receipt = await tx.wait();
-      const gasUsed = receipt.gasUsed;
-      expect(balanceBurnBefore - balanceBurnAfter).to.equal(10000000000000000000 + gasUsed * 20000000000);
+      //const balanceBurnAfter = await ethers.provider.getBalance(owner.address);
+      //const receipt = await tx.wait();
+      //const gasUsed = receipt.gasUsed;
+      //expect(balanceBurnBefore - balanceBurnAfter).to.equal(10000000000000000000 + gasUsed * 20000000000);
       expect(await originalToken.balanceOf(owner.address)).to.equal(1000 - 100 + 21);
       // before confirmed
       expect(await mappedToken.balanceOf(owner.address)).to.equal(100 - 21 - 7);

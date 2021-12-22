@@ -7,4 +7,5 @@ interface IMessageVerifier {
     function bridgedLanePosition() external view returns(uint32);
     function thisChainPosition() external view returns(uint32);
     function thisLanePosition() external view returns(uint32);
+    function encodeMessageKey(uint64 nonce) external view returns (uint256);
 }
