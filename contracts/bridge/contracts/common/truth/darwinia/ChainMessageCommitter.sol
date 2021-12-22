@@ -2,25 +2,36 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "../../interfaces/IMessageCommitment.sol";
+import "../../../interfaces/IMessageCommitment.sol";
 
-contract ChainMessageCommitter is Ownable {
+contract ChainMessageCommitter {
     event Registry(uint256 position, address committer);
 
     uint256 public immutable thisChainPosition;
     uint256 public maxChainPosition;
     mapping(uint256 => address) public chains;
 
+    address public setter;
+
+    modifier onlySetter {
+        require(msg.sender == setter, "Commit: forbidden");
+        _;
+    }
+
     constructor(uint256 _thisChainPosition) public {
         thisChainPosition = _thisChainPosition;
         maxChainPosition = _thisChainPosition;
+        setter = msg.sender;
     }
 
-    function registry(address laneCommitter) external onlyOwner {
+    function changeSetter(address _setter) external onlySetter {
+        setter = _setter;
+    }
+
+    function registry(address laneCommitter) external onlySetter {
         uint256 position = IMessageCommitment(laneCommitter).bridgedChainPosition();
-        require(thisChainPosition != position, "Message: invalid ThisChainPosition");
-        require(thisChainPosition == IMessageCommitment(laneCommitter).thisChainPosition(), "Message: invalid ThisChainPosition");
+        require(thisChainPosition != position, "Commit: invalid ThisChainPosition");
+        require(thisChainPosition == IMessageCommitment(laneCommitter).thisChainPosition(), "Commit: invalid ThisChainPosition");
         chains[position] = laneCommitter;
         maxChainPosition = max(maxChainPosition, position);
         emit Registry(position, laneCommitter);
