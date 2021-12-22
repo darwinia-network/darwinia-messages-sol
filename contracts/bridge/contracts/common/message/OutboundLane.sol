@@ -64,7 +64,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
 
     uint256 internal locked;
     // --- Synchronization ---
-    modifier lock {
+    modifier nonReentrant {
         require(locked == 0, "Lane: locked");
         locked = 1;
         _;
@@ -106,14 +106,14 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         setter = msg.sender;
     }
 
-    function rely(address usr) external onlySetter lock { wards[usr] = 1; emit Rely(usr); }
-    function deny(address usr) external onlySetter lock { wards[usr] = 0; emit Deny(usr); }
+    function rely(address usr) external onlySetter nonReentrant { wards[usr] = 1; emit Rely(usr); }
+    function deny(address usr) external onlySetter nonReentrant { wards[usr] = 0; emit Deny(usr); }
 
-    function setFeeMarket(address _fee_market) external onlySetter lock {
+    function setFeeMarket(address _fee_market) external onlySetter nonReentrant {
         fee_market = _fee_market;
     }
 
-    function changeSetter(address _setter) external onlySetter lock {
+    function changeSetter(address _setter) external onlySetter nonReentrant {
         setter = _setter;
     }
 
@@ -124,7 +124,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
      * @param targetContract The target contract address which you would send cross chain message to
      * @param encoded The calldata which encoded by ABI Encoding
      */
-    function send_message(address targetContract, bytes calldata encoded) external payable override auth lock returns (uint64) {
+    function send_message(address targetContract, bytes calldata encoded) external payable override auth nonReentrant returns (uint64) {
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
         require(outboundLaneNonce.latest_generated_nonce < uint64(-1), "Lane: Overflow");
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
@@ -149,7 +149,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     function receive_messages_delivery_proof(
         InboundLaneData memory inboundLaneData,
         bytes memory messagesProof
-    ) public lock {
+    ) public nonReentrant {
         verify_messages_delivery_proof(hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
         on_messages_delivered(confirmed_messages);

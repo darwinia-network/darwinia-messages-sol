@@ -115,7 +115,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
 
     uint256 internal locked;
     // --- Synchronization ---
-    modifier lock {
+    modifier nonReentrant {
         require(locked == 0, "Lane: locked");
         locked = 1;
         _;
@@ -155,7 +155,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         OutboundLaneData memory outboundLaneData,
         bytes[] memory messagesCallData,
         bytes memory messagesProof
-    ) public lock {
+    ) public nonReentrant {
         verify_messages_proof(hash(outboundLaneData), messagesProof);
         // Require there is enough gas to play all messages
         require(
