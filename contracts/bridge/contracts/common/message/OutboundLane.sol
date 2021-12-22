@@ -33,15 +33,9 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
     event Deny(address indexed usr);
 
     uint256 internal constant MAX_GAS_PER_MESSAGE = 100000;
-<<<<<<< HEAD
     uint256 internal constant MAX_CALLDATA_LENGTH = 4096;
     uint64 internal constant MAX_PENDING_MESSAGES = 30;
     uint64 internal constant MAX_PRUNE_MESSAGES_ATONCE = 5;
-=======
-    uint256 internal constant MAX_CALLDATA_LENGTH = 2**14 + 2**13;
-    uint64 internal constant MAX_PENDING_MESSAGES = 50;
-    uint64 internal constant MAX_PRUNE_MESSAGES_ATONCE = 10;
->>>>>>> master
 
     // Outbound lane nonce.
     struct OutboundLaneNonce {
@@ -137,11 +131,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         uint256 fee = msg.value;
         // assign the message to top relayers
         require(IFeeMarket(fee_market).assign{value: fee}(encodeMessageKey(nonce)), "Lane: AssignRelayersFailed");
-<<<<<<< HEAD
         require(encoded.length <= MAX_CALLDATA_LENGTH, "Lane: Calldata is too large");
-=======
-        require(encoded.length < MAX_CALLDATA_LENGTH, "Lane: Calldata is too large");
->>>>>>> master
         outboundLaneNonce.latest_generated_nonce = nonce;
         messages[nonce] = MessagePayload({
             sourceAccount: msg.sender,
