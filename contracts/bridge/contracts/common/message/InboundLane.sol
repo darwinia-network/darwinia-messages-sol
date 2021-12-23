@@ -15,11 +15,10 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../../interfaces/ICrossChainFilter.sol";
 import "./MessageVerifier.sol";
-import "./SourceChain.sol";
-import "./TargetChain.sol";
+import "../spec/SourceChain.sol";
+import "../spec/TargetChain.sol";
 
 /**
  * @title Everything about incoming messages receival
@@ -27,7 +26,7 @@ import "./TargetChain.sol";
  * @notice The inbound lane is the message layer of the bridge
  * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
  */
-contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGuard {
+contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     /**
      * @notice Notifies an observer that the message has dispatched
      * @param thisChainPosition The thisChainPosition of the message
@@ -67,6 +66,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
 
     /* State */
 
+    // Range of UnrewardedRelayers
+    struct RelayersRange {
+        // Front index of the UnrewardedRelayers (inclusive).
+        uint64 front;
+        // Back index of the UnrewardedRelayers (inclusive).
+        uint64 back;
+    }
+
     /**
      * @dev ID of the next message, which is incremented in strict order
      * @notice When upgrading the lane, this value must be synchronized
@@ -83,20 +90,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         uint64 last_confirmed_nonce;
         // Nonce of the latest received or has been delivered message to this inbound lane.
         uint64 last_delivered_nonce;
+
+        RelayersRange relayer_range;
     }
 
+    // slot 2
     InboundLaneNonce public inboundLaneNonce;
 
-    // Range of UnrewardedRelayers
-    struct RelayersRange {
-        // Front index of the UnrewardedRelayers (inclusive).
-        uint64 front;
-        // Back index of the UnrewardedRelayers (inclusive).
-        uint64 back;
-    }
-
-    RelayersRange public relayersRange;
-
+    // slot 3
     // index => UnrewardedRelayer
     // indexes to relayers and messages that they have delivered to this lane (ordered by
     // message nonce).
@@ -111,6 +112,15 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
     // When relayer sends messages in a batch, the first arg is the lowest nonce, second arg the
     // highest nonce. Multiple dispatches from the same relayer are allowed.
     mapping(uint64 => UnrewardedRelayer) public relayers;
+
+    uint256 internal locked;
+    // --- Synchronization ---
+    modifier nonReentrant {
+        require(locked == 0, "Lane: locked");
+        locked = 1;
+        _;
+        locked = 0;
+    }
 
     /**
      * @notice Deploys the InboundLane contract
@@ -131,8 +141,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         uint64 _last_confirmed_nonce,
         uint64 _last_delivered_nonce
     ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
-        inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce);
-        relayersRange = RelayersRange(1, 0);
+        inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce, RelayersRange(1, 0));
     }
 
     /* Public Functions */
@@ -144,28 +153,28 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
     // this data in the transaction, so reward confirmations lags should be minimal.
     function receive_messages_proof(
         OutboundLaneData memory outboundLaneData,
+        bytes[] memory messagesCallData,
         bytes memory messagesProof
     ) public nonReentrant {
-        verify_lane_data_proof(hash(outboundLaneData), messagesProof);
+        verify_messages_proof(hash(outboundLaneData), messagesProof);
         // Require there is enough gas to play all messages
         require(
             gasleft() >= outboundLaneData.messages.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
             "Lane: InsufficientGas"
         );
         receive_state_update(outboundLaneData.latest_received_nonce);
-        receive_message(outboundLaneData.messages);
-        commit();
+        receive_message(outboundLaneData.messages, messagesCallData);
     }
 
     function relayers_size() public view returns (uint64 size) {
-        if (relayersRange.back >= relayersRange.front) {
-            size = relayersRange.back - relayersRange.front + 1;
+        if (inboundLaneNonce.relayer_range.back >= inboundLaneNonce.relayer_range.front) {
+            size = inboundLaneNonce.relayer_range.back - inboundLaneNonce.relayer_range.front + 1;
         }
     }
 
     function relayers_back() public view returns (address pre_relayer) {
         if (relayers_size() > 0) {
-            uint64 back = relayersRange.back;
+            uint64 back = inboundLaneNonce.relayer_range.back;
             pre_relayer = relayers[back].relayer;
         }
     }
@@ -175,7 +184,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         uint64 size = relayers_size();
         if (size > 0) {
             lane_data.relayers = new UnrewardedRelayer[](size);
-            uint64 front = relayersRange.front;
+            uint64 front = inboundLaneNonce.relayer_range.front;
             for (uint64 index = 0; index < size; index++) {
                 lane_data.relayers[index] = relayers[front + index];
             }
@@ -184,13 +193,12 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         lane_data.last_delivered_nonce = inboundLaneNonce.last_delivered_nonce;
     }
 
-    /* Private Functions */
-
-    // storage proof issue: must use latest commitment in lightclient, cause we rm mmr root
-    function commit() internal returns (bytes32) {
-        commitment = hash(data());
-        return commitment;
+    // commit lane data to the `commitment` storage.
+    function commitment() external view returns (bytes32) {
+        return hash(data());
     }
+
+    /* Private Functions */
 
     // Receive state of the corresponding outbound lane.
     // Syncing state from SourceChain::OutboundLane, deal with nonce and relayers.
@@ -202,14 +210,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
         require(latest_received_nonce <= last_delivered_nonce, "Lane: InvalidReceivedNonce");
         if (latest_received_nonce > last_confirmed_nonce) {
             uint64 new_confirmed_nonce = latest_received_nonce;
-            uint64 front = relayersRange.front;
-            uint64 back = relayersRange.back;
+            uint64 front = inboundLaneNonce.relayer_range.front;
+            uint64 back = inboundLaneNonce.relayer_range.back;
             for (uint64 index = front; index <= back; index++) {
                 UnrewardedRelayer storage entry = relayers[index];
                 if (entry.messages.end <= new_confirmed_nonce) {
                     // Firstly, remove all of the records where higher nonce <= new confirmed nonce
                     delete relayers[index];
-                    relayersRange.front = index + 1;
+                    inboundLaneNonce.relayer_range.front = index + 1;
                 } else if (entry.messages.begin < new_confirmed_nonce) {
                     // Secondly, update the next record with lower nonce equal to new confirmed nonce if needed.
                     // Note: There will be max. 1 record to update as we don't allow messages from relayers to
@@ -224,14 +232,15 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
     }
 
     // Receive new message.
-    function receive_message(Message[] memory messages) internal returns (uint256 dispatch_results) {
-        address payable relayer = msg.sender;
+    function receive_message(Message[] memory messages, bytes[] memory messagesCallData) internal returns (uint256 dispatch_results) {
+        require(messages.length == messagesCallData.length, "Lane: InvalidLength");
+        address relayer = msg.sender;
         uint64 begin = inboundLaneNonce.last_delivered_nonce + 1;
         uint64 next = begin;
         for (uint256 i = 0; i < messages.length; i++) {
             Message memory message = messages[i];
             MessageKey memory key = decodeMessageKey(message.encoded_key);
-            MessagePayload memory message_payload = message.data.payload;
+            MessagePayload memory message_payload = message.data;
             if (key.nonce < next) {
                 continue;
             }
@@ -247,11 +256,13 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
             require(key.bridged_lane_id == thisLanePosition, "Lane: InvalidTargetLaneId");
             // if there are more unconfirmed messages than we may accept, reject this message
             require(next - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "Lane: TooManyUnconfirmedMessages");
+            // check message call data is correct
+            require(message_payload.encodedHash == keccak256(messagesCallData[i]));
 
             // then, dispatch message
-            (bool dispatch_result, bytes memory returndata) = dispatch(message_payload);
+            (bool dispatch_result, bytes memory returndata) = dispatch(message_payload, messagesCallData[i]);
 
-            emit MessageDispatched(key.this_chain_id, key.bridged_chain_id, key.this_lane_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
+            emit MessageDispatched(key.this_chain_id, key.this_lane_id, key.bridged_chain_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
             // TODO: callback `pay_inbound_dispatch_fee_overhead`
             dispatch_results |= (dispatch_result ? uint256(1) << i : uint256(0));
 
@@ -265,39 +276,39 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain, ReentrancyGua
             // now let's update inbound lane storage
             address pre_relayer = relayers_back();
             if (pre_relayer == relayer) {
-                UnrewardedRelayer storage r = relayers[relayersRange.back];
+                UnrewardedRelayer storage r = relayers[inboundLaneNonce.relayer_range.back];
                 r.messages.dispatch_results |= dispatch_results << (r.messages.end - r.messages.begin + 1);
                 r.messages.end = end;
             } else {
-                relayersRange.back += 1;
-                relayers[relayersRange.back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
+                inboundLaneNonce.relayer_range.back += 1;
+                relayers[inboundLaneNonce.relayer_range.back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
             }
         }
     }
 
-    function dispatch(MessagePayload memory payload) internal returns (bool dispatch_result, bytes memory returndata) {
+    function dispatch(MessagePayload memory payload, bytes memory encoded) internal returns (bool dispatch_result, bytes memory returndata) {
         bytes memory filterCallData = abi.encodeWithSelector(
             ICrossChainFilter.crossChainFilter.selector,
             bridgedChainPosition,
             bridgedLanePosition,
             payload.sourceAccount,
-            payload.encoded
+            encoded
         );
         bool canCall = filter(payload.targetContract, filterCallData);
         if (canCall) {
             // Deliver the message to the target
-            (dispatch_result, returndata) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
+            (dispatch_result, returndata) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(encoded);
         } else {
             dispatch_result = false;
             returndata = "Lane: MessageCallRejected";
         }
     }
 
-    function filter(address target, bytes memory callData) internal returns (bool canCall) {
+    function filter(address target, bytes memory encoded) internal returns (bool canCall) {
         /**
          * @notice The app layer must implement the interface `ICrossChainFilter`
          */
-        (bool ok, bytes memory result) = target.call{value: 0, gas: GAS_BUFFER}(callData);
+        (bool ok, bytes memory result) = target.call{value: 0, gas: GAS_BUFFER}(encoded);
         if (ok) {
             if (result.length == 32) {
                 canCall = abi.decode(result, (bool));

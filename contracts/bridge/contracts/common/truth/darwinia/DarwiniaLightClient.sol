@@ -9,7 +9,8 @@ import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "@darwinia/contracts-verify/contracts/SparseMerkleMultiProof.sol";
 import "./ValidatorRegistry.sol";
 import "./GuardRegistry.sol";
-import "../spec/BeefyCommitmentScheme.sol";
+import "../../spec/BeefyCommitmentScheme.sol";
+import "../../../interfaces/ILightClient.sol";
 
 /**
  * @title A entry contract for the Ethereum-like light client
@@ -17,7 +18,7 @@ import "../spec/BeefyCommitmentScheme.sol";
  * @notice The light client is the trust layer of the bridge
  * @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
  */
-contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegistry, GuardRegistry {
+contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, ValidatorRegistry, GuardRegistry {
 
     /* Events */
 
@@ -196,13 +197,22 @@ contract DarwiniaLightClient is BeefyCommitmentScheme, Bitfield, ValidatorRegist
         return createBitfield(bitsToSet, length);
     }
 
-    function verify_lane_data_proof(
-        bytes32 lane_hash,
+    function verify_messages_proof(
+        bytes32 outlane_data_hash,
         uint32 chain_pos,
         uint32 lane_pos,
-        bytes calldata proof
-    ) external view returns (bool) {
-        return validate_lane_data_match_root(lane_hash, chain_pos, lane_pos, proof);
+        bytes calldata encoded_proof
+    ) external override view returns (bool) {
+        return validate_lane_data_match_root(outlane_data_hash, chain_pos, lane_pos, encoded_proof);
+    }
+
+    function verify_messages_delivery_proof(
+        bytes32 inlane_data_hash,
+        uint32 chain_pos,
+        uint32 lane_pos,
+        bytes calldata encoded_proof
+    ) external override view returns (bool) {
+        return validate_lane_data_match_root(inlane_data_hash, chain_pos, lane_pos, encoded_proof);
     }
 
     function validate_lane_data_match_root(

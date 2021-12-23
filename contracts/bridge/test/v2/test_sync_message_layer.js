@@ -21,7 +21,7 @@ const send_message = async (nonce) => {
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(nonce)
+      .withArgs(nonce, "0x")
     let block = await ethers.provider.getBlock(tx.blockNumber)
     await expect(tx)
       .to.emit(feeMarket, "OrderAssgigned")
@@ -42,9 +42,10 @@ const logNonce = async () => {
 
 const receive_messages_proof = async (nonce) => {
     laneData = await outbound.data()
-    const tx = await inbound.receive_messages_proof(laneData, "0x")
+    const calldata = Array(laneData.messages.length).fill("0x")
+    const tx = await inbound.receive_messages_proof(laneData, calldata, "0x")
     const n = await inbound.inboundLaneNonce()
-    const size = n.last_delivered_nonce - nonce
+    const size = nonce - n.last_delivered_nonce
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")

@@ -8,4 +8,5 @@ interface IMessageCommitment {
     function bridgedChainPosition() external view returns (uint32);
     function bridgedLanePosition() external view returns (uint32);
     function commitment() external view returns (bytes32);
+    function getLaneInfo() external view returns (uint32,uint32,uint32,uint32);
 }

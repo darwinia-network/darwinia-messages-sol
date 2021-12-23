@@ -7,36 +7,24 @@ import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "../../interfaces/ILightClient.sol";
 
 contract MessageVerifier {
-    /**
-     * @dev This chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-     */
+    /* State */
+    // indentify slot
+    // slot 0 ------------------------------------------------------------
+    // @dev bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
+    uint32 public immutable bridgedLanePosition;
+    // @dev Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
+    uint32 public immutable bridgedChainPosition;
+    // @dev This lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
+    uint32 public immutable thisLanePosition;
+    // @dev This chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
     uint32 public immutable thisChainPosition;
 
-    /**
-     * @dev This lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
-     */
-    uint32 public immutable thisLanePosition;
+    // ------------------------------------------------------------------
 
-    /**
-     * @dev Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-     */
-    uint32 public immutable bridgedChainPosition;
-
-    /**
-     * @dev bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
-     */
-    uint32 public immutable bridgedLanePosition;
-
-    /* State */
     /**
      * @dev The contract address of on-chain light client
      */
     ILightClient public lightClient;
-
-    /**
-     * @dev The lane data storage commitment
-     */
-    bytes32 public commitment;
 
     constructor(
         address _lightClient,
@@ -54,14 +42,28 @@ contract MessageVerifier {
 
     /* Private Functions */
 
-    function verify_lane_data_proof(
-        bytes32 lane_data_hash,
-        bytes memory messagesProof
+    function verify_messages_proof(
+        bytes32 outlane_data_hash,
+        bytes memory encoded_proof
     ) internal view {
         require(
-            lightClient.verify_lane_data_proof(lane_data_hash, thisChainPosition, bridgedLanePosition, messagesProof),
+            lightClient.verify_messages_proof(outlane_data_hash, thisChainPosition, bridgedLanePosition, encoded_proof),
             "Verifer: InvalidProof"
         );
+    }
+
+    function verify_messages_delivery_proof(
+        bytes32 inlane_data_hash,
+        bytes memory encoded_proof
+    ) internal view {
+        require(
+            lightClient.verify_messages_delivery_proof(inlane_data_hash, thisChainPosition, bridgedLanePosition, encoded_proof),
+            "Verifer: InvalidProof"
+        );
+    }
+
+    function getLaneInfo() external view returns (uint32,uint32,uint32,uint32) {
+        return (thisChainPosition,thisLanePosition,bridgedChainPosition,bridgedLanePosition);
     }
 
     // 32 bytes to identify an unique message
