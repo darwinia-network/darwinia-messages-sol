@@ -7,7 +7,6 @@ pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "@zeppelin-solidity-4.4.0/contracts/security/ReentrancyGuard.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilter.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IFeeMarket.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IOutboundLane.sol";
@@ -16,10 +15,10 @@ import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/Pausable.sol";
 import "../interfaces/IBacking.sol";
 import "../interfaces/IERC20.sol";
-import "../interfaces/IMessageVerifier.sol";
 import "../interfaces/IMappingTokenFactory.sol";
+import "../interfaces/IMessageVerifier.sol";
 
-contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainFilter, IMappingTokenFactory, Pausable, ReentrancyGuard {
+contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainFilter, IMappingTokenFactory, Pausable {
     address public constant BLACK_HOLE_ADDRESS = 0x000000000000000000000000000000000000dEaD;
     struct OriginalInfo {
         uint32  bridgedChainPosition;
@@ -296,7 +295,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         address mappingToken,
         address recipient,
         uint256 amount
-    ) external payable whenNotPaused nonReentrant {
+    ) external payable whenNotPaused {
         require(amount > 0, "can not transfer amount zero");
         OriginalInfo memory info = mappingToken2OriginalInfo[mappingToken];
         require(info.originalToken != address(0), "token is not created by factory");
@@ -318,12 +317,10 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         uint256 fee = IFeeMarket(feeMarket).market_fee();
         require(msg.value >= fee, "not enough fee to pay");
         uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(info.backingAddress, unlockFromRemote);
-        if (msg.value > fee) {
-            (bool sent,) = msg.sender.call{value: msg.value - fee}("");
-            require(sent, "transfer back fee failed");
-        }
-
         unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, amount);
+        if (msg.value > fee) {
+            payable(msg.sender).transfer(msg.value - fee);
+        }
         emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mappingToken, amount);
     }
 

@@ -3,7 +3,6 @@ pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "@zeppelin-solidity-4.4.0/contracts/security/ReentrancyGuard.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilter.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IFeeMarket.sol";
@@ -16,7 +15,7 @@ import "../interfaces/IERC20.sol";
 import "../interfaces/IMessageVerifier.sol";
 import "../interfaces/IMappingTokenFactory.sol";
 
-contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBacking, Pausable, ReentrancyGuard {
+contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBacking, Pausable {
     using SafeMath for uint256;
 
     struct LockedInfo {
@@ -129,7 +128,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         string memory name,
         string memory symbol,
         uint8 decimals
-    ) external payable onlyOwner nonReentrant {
+    ) external payable onlyOwner {
         require(registeredTokens[token] == false, "Backing:token has been registered");
 
         address outboundLane = outboundLanes[bridgedLanePosition];
@@ -149,8 +148,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, newErc20Contract);
         registerMessages[messageId] = token;
         if (msg.value > fee) {
-            (bool sent,) = msg.sender.call{value: msg.value.sub(fee)}("");
-            require(sent, "Backing:transfer back fee failed");
+            payable(msg.sender).transfer(msg.value.sub(fee));
         }
         emit NewErc20TokenRegistered(messageId, token);
     }
@@ -168,7 +166,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         address token,
         address recipient,
         uint256 amount
-    ) external payable whenNotPaused nonReentrant {
+    ) external payable whenNotPaused {
         require(registeredTokens[token], "Backing:the token is not registed");
 
         uint256 balanceBefore = IERC20(token).balanceOf(address(this));
@@ -189,8 +187,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, issueMappingToken);
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
         if (msg.value > fee) {
-            (bool sent,) = msg.sender.call{value: msg.value.sub(fee)}("");
-            require(sent, "Backing:transfer back fee failed");
+            payable(msg.sender).transfer(msg.value.sub(fee));
         }
         emit TokenLocked(messageId, token, recipient, amount);
     }
