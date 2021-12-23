@@ -55,10 +55,11 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     event TokenLocked(uint256 messageId, address token, address recipient, uint256 amount);
     event TokenLockFinished(uint256 messageId, bool result);
     event TokenRegisterFinished(uint256 messageId, bool result);
-    event TokenUnlocked(uint32 bridgedLanePosition, address token, address recipient, uint256 amount);
+    event TokenUnlocked(address token, address recipient, uint256 amount);
 
-    modifier onlyInBoundLane(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address mappingTokenFactoryAddress) {
-        require(remoteChainPosition == bridgedChainPosition, "Invalid bridged chain position");
+    modifier onlyInBoundLane(address mappingTokenFactoryAddress) {
+        uint32 bridgedLanePosition = IMessageVerifier(msg.sender).bridgedLanePosition();
+        require(remoteChainPosition == IMessageVerifier(msg.sender).bridgedChainPosition(), "Invalid bridged chain position");
         require(remoteMappingTokenFactory == mappingTokenFactoryAddress, "MappingTokenFactory: remote caller is not issuing account");
         require(inboundLanes[bridgedLanePosition] == msg.sender, "MappingTokenFactory: caller is not the inboundLane account");
         _;
@@ -239,23 +240,19 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
 
     /**
      * @notice this will be called by inboundLane when the remote mapping token burned and want to unlock the original token
-     * @param bridgedChainPosition the bridged chain position
-     * @param bridgedLanePosition the bridged lane positon
      * @param token the original token address
      * @param recipient the recipient who will receive the unlocked token
      * @param amount amount of the unlocked token
      */
     function unlockFromRemote(
-        uint32 bridgedChainPosition,
-        uint32 bridgedLanePosition,
         address mappingTokenFactory,
         address token,
         address recipient,
         uint256 amount
-    ) public onlyInBoundLane(bridgedChainPosition, bridgedLanePosition, mappingTokenFactory) whenNotPaused {
+    ) public onlyInBoundLane(mappingTokenFactory) whenNotPaused {
         expendDailyLimit(token, amount);
         require(IERC20(token).transfer(recipient, amount), "Backing: unlock transfer failed");
-        emit TokenUnlocked(bridgedLanePosition, token, recipient, amount);
+        emit TokenUnlocked(token, recipient, amount);
     }
 }
  

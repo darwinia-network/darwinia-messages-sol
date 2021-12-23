@@ -310,8 +310,6 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         require(outboundLane != address(0), "the outbound lane is not exist");
         bytes memory unlockFromRemote = abi.encodeWithSelector(
             IBacking.unlockFromRemote.selector,
-            IMessageVerifier(outboundLane).thisChainPosition(),
-            IMessageVerifier(outboundLane).thisLanePosition(),
             address(this),
             info.originalToken,
             recipient,
