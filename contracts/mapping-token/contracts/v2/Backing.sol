@@ -6,13 +6,13 @@ import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradea
 import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilter.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IFeeMarket.sol";
+import "@darwinia/contracts-bridge/contracts/interfaces/IMessageCommitment.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IOutboundLane.sol";
 import "@darwinia/contracts-utils/contracts/DailyLimit.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/Pausable.sol";
 import "../interfaces/IBacking.sol";
 import "../interfaces/IERC20.sol";
-import "../interfaces/IMessageVerifier.sol";
 import "../interfaces/IMappingTokenFactory.sol";
 
 contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBacking, Pausable {
@@ -57,17 +57,16 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     event TokenUnlocked(address token, address recipient, uint256 amount);
 
     modifier onlyInBoundLane(address mappingTokenFactoryAddress) {
-        require(remoteChainPosition == IMessageVerifier(msg.sender).bridgedChainPosition(), "Backing:Invalid bridged chain position");
+        (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(msg.sender).getLaneInfo();
+        require(remoteChainPosition == bridgedChainPosition, "Backing:Invalid bridged chain position");
         require(remoteMappingTokenFactory == mappingTokenFactoryAddress, "Backing:remote caller is not issuing account");
-        uint32 bridgedLanePosition = IMessageVerifier(msg.sender).bridgedLanePosition();
         require(inboundLanes[bridgedLanePosition] == msg.sender, "Backing:caller is not the inboundLane account");
         _;
     }
 
     modifier onlyOutBoundLane() {
-        uint32 bridgedChainPosition = IMessageVerifier(msg.sender).bridgedChainPosition();
+        (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(msg.sender).getLaneInfo();
         require(remoteChainPosition == bridgedChainPosition, "Backing:Invalid bridged chain position");
-        uint32 bridgedLanePosition = IMessageVerifier(msg.sender).bridgedLanePosition();
         require(outboundLanes[bridgedLanePosition] == msg.sender, "Backing:caller is not the outboundLane account");
         _;
     }
@@ -98,18 +97,16 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
 
     // here add InBoundLane, and remote issuing module must add the corresponding OutBoundLane
     function addInboundLane(address mappingTokenFactory, address inboundLane) external onlyOwner {
-        uint32 bridgedChainPosition = IMessageVerifier(inboundLane).bridgedChainPosition();
+        (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(inboundLane).getLaneInfo();
         require(remoteChainPosition == bridgedChainPosition, "Backing:Invalid bridged chain position");
-        uint32 bridgedLanePosition = IMessageVerifier(inboundLane).bridgedLanePosition();
         inboundLanes[bridgedLanePosition] = inboundLane;
         emit NewInBoundLaneAdded(mappingTokenFactory, inboundLane);
     }
 
     // here add OutBoundLane, and remote issuing module must add the corresponding InBoundLane
     function addOutboundLane(address outboundLane) external onlyOwner {
-        uint32 bridgedChainPosition = IMessageVerifier(outboundLane).bridgedChainPosition();
+        (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(outboundLane).getLaneInfo();
         require(remoteChainPosition == bridgedChainPosition, "Backing:Invalid bridged chain position");
-        uint32 bridgedLanePosition = IMessageVerifier(outboundLane).bridgedLanePosition();
         outboundLanes[bridgedLanePosition] = outboundLane;
         emit NewOutBoundLaneAdded(bridgedLanePosition, outboundLane);
     }

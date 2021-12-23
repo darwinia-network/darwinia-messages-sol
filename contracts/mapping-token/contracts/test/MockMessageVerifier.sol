@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0;
-import "../interfaces/IMessageVerifier.sol";
 
-contract MockMessageVerifier is IMessageVerifier {
+contract MockMessageVerifier {
     uint32 public immutable thisChainPosition;
     uint32 public immutable thisLanePosition;
     uint32 public immutable bridgedChainPosition;
@@ -18,6 +17,10 @@ contract MockMessageVerifier is IMessageVerifier {
         thisLanePosition = _thisLanePosition;
         bridgedChainPosition = _bridgedChainPosition;
         bridgedLanePosition = _bridgedLanePosition;
+    }
+
+    function getLaneInfo() public view returns (uint256, uint256, uint256, uint256) {
+        return (thisChainPosition, thisLanePosition, bridgedChainPosition, bridgedLanePosition);
     }
     
     function encodeMessageKey(uint64 nonce) public view returns (uint256) {

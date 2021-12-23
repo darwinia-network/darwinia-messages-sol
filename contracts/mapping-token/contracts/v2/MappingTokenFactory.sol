@@ -9,6 +9,7 @@ import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilter.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IFeeMarket.sol";
+import "@darwinia/contracts-bridge/contracts/interfaces/IMessageCommitment.sol";
 import "@darwinia/contracts-bridge/contracts/interfaces/IOutboundLane.sol";
 import "@darwinia/contracts-utils/contracts/DailyLimit.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
@@ -16,7 +17,6 @@ import "@darwinia/contracts-utils/contracts/Pausable.sol";
 import "../interfaces/IBacking.sol";
 import "../interfaces/IERC20.sol";
 import "../interfaces/IMappingTokenFactory.sol";
-import "../interfaces/IMessageVerifier.sol";
 
 contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainFilter, IMappingTokenFactory, Pausable {
     address public constant BLACK_HOLE_ADDRESS = 0x000000000000000000000000000000000000dEaD;
@@ -90,9 +90,10 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
      * @dev Throws if called by any account other than the inboundlane account.
      */
     modifier onlyInBoundLane(address backingAddress) {
+        (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(msg.sender).getLaneInfo();
         uint256 remoteId = encodeBridgedBackingId(
-            IMessageVerifier(msg.sender).bridgedChainPosition(),
-            IMessageVerifier(msg.sender).bridgedLanePosition(),
+            bridgedChainPosition,
+            bridgedLanePosition,
             backingAddress);
         require(inboundLanes[remoteId].inBoundLaneAddress == msg.sender, "MappingTokenFactory:caller is not the inboundLane account");
         require(inboundLanes[remoteId].remoteSender == backingAddress, "MappingTokenFactory:remote caller is not the backing account");
@@ -103,8 +104,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
      * @dev Throws if called by any account other than the outboundlane account.
      */
     modifier onlyOutBoundLane() {
-        uint32 bridgedChainPosition = IMessageVerifier(msg.sender).bridgedChainPosition();
-        uint32 bridgedLanePosition = IMessageVerifier(msg.sender).bridgedLanePosition();
+        (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(msg.sender).getLaneInfo();
         uint256 outBoundId = encodeBridgedBoundId(bridgedChainPosition, bridgedLanePosition);
         require(outboundLanes[outBoundId] == msg.sender, "MappingTokenFactory:caller is not the outboundLane account");
         _;
@@ -132,8 +132,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
      * @param inboundLane the inboundLane address
      */
     function addInboundLane(address backingAddress, address inboundLane) external onlyOwner {
-        uint32 bridgedChainPosition = IMessageVerifier(inboundLane).bridgedChainPosition();
-        uint32 bridgedLanePosition = IMessageVerifier(inboundLane).bridgedLanePosition();
+        (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(inboundLane).getLaneInfo();
         uint256 remoteId = encodeBridgedBackingId(bridgedChainPosition, bridgedLanePosition, backingAddress);
         inboundLanes[remoteId] = InBoundLaneInfo(backingAddress, inboundLane);
         emit NewInBoundLaneAdded(backingAddress, inboundLane);
@@ -144,8 +143,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
      * @param outboundLane the outboundLane address
      */
     function addOutBoundLane(address outboundLane) external onlyOwner {
-        uint32 bridgedChainPosition = IMessageVerifier(outboundLane).bridgedChainPosition();
-        uint32 bridgedLanePosition = IMessageVerifier(outboundLane).bridgedLanePosition();
+        (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(outboundLane).getLaneInfo();
         uint256 outBoundId = encodeBridgedBoundId(bridgedChainPosition, bridgedLanePosition);
         outboundLanes[outBoundId] = outboundLane;
         emit NewOutBoundLaneAdded(outboundLane);
@@ -244,7 +242,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
     ) public onlyInBoundLane(backingAddress) whenNotPaused returns (address mappingToken) {
         require(tokenType == 0 || tokenType == 1, "MappingTokenFactory:token type cannot mapping to erc20 token");
         // (bridgeChainId, backingAddress, originalToken) pack a unique new contract salt
-        uint32 bridgedChainPosition = IMessageVerifier(msg.sender).bridgedChainPosition();
+        uint32 bridgedChainPosition = IMessageCommitment(msg.sender).bridgedChainPosition();
         bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
         require(salt2MappingToken[salt] == address(0), "MappingTokenFactory:contract has been deployed");
         mappingToken = deploy(salt, tokenType);
@@ -275,7 +273,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         address recipient,
         uint256 amount
     ) public onlyInBoundLane(backingAddress) whenNotPaused {
-        uint32 bridgedChainPosition = IMessageVerifier(msg.sender).bridgedChainPosition();
+        uint32 bridgedChainPosition = IMessageCommitment(msg.sender).bridgedChainPosition();
         address mappingToken = getMappingToken(bridgedChainPosition, backingAddress, originalToken);
         require(mappingToken != address(0), "MappingTokenFactory:mapping token has not created");
         require(amount > 0, "MappingTokenFactory:can not receive amount zero");
