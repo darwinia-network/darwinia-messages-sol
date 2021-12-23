@@ -62,6 +62,10 @@ contract MessageVerifier {
         );
     }
 
+    function getLaneInfo() external view returns (uint32,uint32,uint32,uint32) {
+        return (thisChainPosition,thisLanePosition,bridgedChainPosition,bridgedLanePosition);
+    }
+
     // 32 bytes to identify an unique message
     // MessageKey encoding:
     // ThisChainPosition | BridgedChainPosition | ThisLanePosition | BridgedLanePosition | Nonce
