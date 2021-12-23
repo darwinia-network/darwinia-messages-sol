@@ -61,10 +61,10 @@ const receive_messages_delivery_proof = async (begin, end) => {
 
 //   out bound lane                                    ->           in bound lane
 //   (latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]
-//0  (0, 1]   #send_message                            ->     (0, 0]
-//1  (0, 1]                                            ->     (0, 1]  #receive_messages_proof
-//2  (1, 1]   #receive_messages_delivery_proof         ->     (0, 1]
-//3  (1, 1]                                            ->     (1, 1]  #receive_messages_proof
+//0  (0,  30]   #send_message                            ->     (0, 0]
+//1  (0,  30]                                            ->     (0, 30]  #receive_messages_proof
+//2  (30, 30]   #receive_messages_delivery_proof         ->     (0, 30]
+//3  (30, 30]                                            ->     (30, 30]  #receive_messages_proof
 describe("send message tests", () => {
 
   before(async () => {
@@ -90,26 +90,11 @@ describe("send message tests", () => {
     await receive_messages_proof(batch)
   })
 
-  // it("2", async function () {
-  //   await receive_messages_delivery_proof(1, 1)
-  // })
+  it("2", async function () {
+    await receive_messages_delivery_proof(1, 30)
+  })
 
-  // it("3", async function () {
-  //   await receive_messages_proof(1)
-  // })
-
-  // it("4", async function () {
-  //   const tx = await outbound.send_message(
-  //     "0x0000000000000000000000000000000000000000",
-  //     "0x",
-  //     overrides
-  //   )
-  //   await expect(tx)
-  //     .to.emit(outbound, "MessageAccepted")
-  //     .withArgs(2)
-  //   await expect(tx)
-  //     .to.emit(outbound, "MessagePruned")
-  //     .withArgs(2)
-  //   await logNonce()
-  // })
+  it("3", async function () {
+    await receive_messages_proof(30)
+  })
 })
