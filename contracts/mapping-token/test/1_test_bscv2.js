@@ -72,7 +72,7 @@ describe("darwinia<>bsc mapping token tests", () => {
 
       //********* configure backing **************************
       // init owner
-      await backing.initialize("Darwinia", 2, mtf.address, feeMarket.address);
+      await backing.initialize(2, mtf.address, feeMarket.address, "Darwinia");
       // add inboundLane
       await backing.addInboundLane(mtf.address, darwiniaInboundLane.address);
       // add outboundLane
