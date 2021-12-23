@@ -124,7 +124,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
      * @param targetContract The target contract address which you would send cross chain message to
      * @param encoded The calldata which encoded by ABI Encoding
      */
-    function send_message(address targetContract, bytes calldata encoded) external payable override auth nonReentrant returns (uint64) {
+    function send_message(address targetContract, bytes calldata encoded) external payable override auth nonReentrant returns (uint256) {
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
         require(outboundLaneNonce.latest_generated_nonce < uint64(-1), "Lane: Overflow");
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
@@ -142,7 +142,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
         prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
         emit MessageAccepted(nonce, encoded);
-        return nonce;
+        return encodeMessageKey(nonce);
     }
 
     // Receive messages delivery proof from bridged chain.
@@ -269,7 +269,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
             address submitter = messages[nonce].sourceAccount;
             bytes memory deliveredCallbackData = abi.encodeWithSelector(
                 IOnMessageDelivered.on_messages_delivered.selector,
-                nonce,
+                encodeMessageKey(nonce),
                 dispatch_result
             );
             (bool ok,) = submitter.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(deliveredCallbackData);
