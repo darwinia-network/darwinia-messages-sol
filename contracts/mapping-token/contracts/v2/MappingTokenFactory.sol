@@ -64,7 +64,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
     event NewInBoundLaneAdded(address backing, address inboundLane);
     event NewOutBoundLaneAdded(address outboundLane);
     event BurnAndWaitingConfirm(uint256 messageId, address sender, address recipient, address token, uint256 amount);
-    event RemoteUnlockConfirmed(uint256 messageId, address sender, address token, uint256 amount, bool result);
+    event RemoteUnlockConfirmed(uint256 messageId, bool result);
 
     receive() external payable {
     }
@@ -94,8 +94,8 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
             IMessageVerifier(msg.sender).bridgedChainPosition(),
             IMessageVerifier(msg.sender).bridgedLanePosition(),
             backingAddress);
-        require(inboundLanes[remoteId].inBoundLaneAddress == msg.sender, "MappingTokenFactory: caller is not the inboundLane account");
-        require(inboundLanes[remoteId].remoteSender == backingAddress, "MappingTokenFactory: remote caller is not the backing account");
+        require(inboundLanes[remoteId].inBoundLaneAddress == msg.sender, "MappingTokenFactory:caller is not the inboundLane account");
+        require(inboundLanes[remoteId].remoteSender == backingAddress, "MappingTokenFactory:remote caller is not the backing account");
         _;
     }
 
@@ -106,7 +106,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         uint32 bridgedChainPosition = IMessageVerifier(msg.sender).bridgedChainPosition();
         uint32 bridgedLanePosition = IMessageVerifier(msg.sender).bridgedLanePosition();
         uint256 outBoundId = encodeBridgedBoundId(bridgedChainPosition, bridgedLanePosition);
-        require(outboundLanes[outBoundId] == msg.sender, "MappingTokenFactory: caller is not the outboundLane account");
+        require(outboundLanes[outBoundId] == msg.sender, "MappingTokenFactory:caller is not the outboundLane account");
         _;
     }
 
@@ -242,11 +242,11 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         string memory symbol,
         uint8 decimals
     ) public onlyInBoundLane(backingAddress) whenNotPaused returns (address mappingToken) {
-        require(tokenType == 0 || tokenType == 1, "token type cannot mapping to erc20 token");
+        require(tokenType == 0 || tokenType == 1, "MappingTokenFactory:token type cannot mapping to erc20 token");
         // (bridgeChainId, backingAddress, originalToken) pack a unique new contract salt
         uint32 bridgedChainPosition = IMessageVerifier(msg.sender).bridgedChainPosition();
         bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
-        require(salt2MappingToken[salt] == address(0), "contract has been deployed");
+        require(salt2MappingToken[salt] == address(0), "MappingTokenFactory:contract has been deployed");
         mappingToken = deploy(salt, tokenType);
         IMappingToken(mappingToken).initialize(
             string(abi.encodePacked(name, "[", bridgedChainName, ">")),
@@ -277,8 +277,8 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
     ) public onlyInBoundLane(backingAddress) whenNotPaused {
         uint32 bridgedChainPosition = IMessageVerifier(msg.sender).bridgedChainPosition();
         address mappingToken = getMappingToken(bridgedChainPosition, backingAddress, originalToken);
-        require(mappingToken != address(0), "mapping token has not created");
-        require(amount > 0, "can not receive amount zero");
+        require(mappingToken != address(0), "MappingTokenFactory:mapping token has not created");
+        require(amount > 0, "MappingTokenFactory:can not receive amount zero");
         expendDailyLimit(mappingToken, amount);
         IERC20(mappingToken).mint(recipient, amount);
     }
@@ -296,17 +296,17 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         address recipient,
         uint256 amount
     ) external payable whenNotPaused {
-        require(amount > 0, "can not transfer amount zero");
+        require(amount > 0, "MappingTokenFactory:can not transfer amount zero");
         OriginalInfo memory info = mappingToken2OriginalInfo[mappingToken];
-        require(info.originalToken != address(0), "token is not created by factory");
+        require(info.originalToken != address(0), "MappingTokenFactory:token is not created by factory");
         // Lock the fund in this before message on remote backing chain get dispatched successfully and burn finally
         // If remote backing chain unlock the origin token successfully, then this fund will be burned.
         // Otherwise, this fund will be transfered back to the msg.sender.
-        require(IERC20(mappingToken).transferFrom(msg.sender, address(this), amount), "transfer token failed");
+        require(IERC20(mappingToken).transferFrom(msg.sender, address(this), amount), "MappingTokenFactory:transfer token failed");
 
         uint256 outBoundId = encodeBridgedBoundId(info.bridgedChainPosition, bridgedLanePosition);
         address outboundLane = outboundLanes[outBoundId];
-        require(outboundLane != address(0), "the outbound lane is not exist");
+        require(outboundLane != address(0), "MappingTokenFactory:the outbound lane is not exist");
         bytes memory unlockFromRemote = abi.encodeWithSelector(
             IBacking.unlockFromRemote.selector,
             address(this),
@@ -315,7 +315,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
             amount
         );
         uint256 fee = IFeeMarket(feeMarket).market_fee();
-        require(msg.value >= fee, "not enough fee to pay");
+        require(msg.value >= fee, "MappingTokenFactory:not enough fee to pay");
         uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(info.backingAddress, unlockFromRemote);
         unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, amount);
         if (msg.value > fee) {
@@ -334,14 +334,14 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         bool result
     ) external onlyOutBoundLane {
         UnconfirmedInfo memory info = unlockRemoteUnconfirmed[messageId];
-        require(info.amount > 0 && info.sender != address(0) && info.mappingToken != address(0), "invalid unconfirmed message");
+        require(info.amount > 0 && info.sender != address(0) && info.mappingToken != address(0), "MappingTokenFactory:invalid unconfirmed message");
         if (result) {
             IERC20(info.mappingToken).burn(address(this), info.amount);
         } else {
-            require(IERC20(info.mappingToken).transfer(info.sender, info.amount), "transfer back failed");
+            require(IERC20(info.mappingToken).transfer(info.sender, info.amount), "MappingTokenFactory:transfer back failed");
         }
         delete unlockRemoteUnconfirmed[messageId];
-        emit RemoteUnlockConfirmed(messageId, info.sender, info.mappingToken, info.amount, result);
+        emit RemoteUnlockConfirmed(messageId, result);
     }
 }
 

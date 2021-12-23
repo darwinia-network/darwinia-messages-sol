@@ -97,7 +97,7 @@ describe("darwinia<>bsc mapping token tests", () => {
           tokenSymbol,
           9,
           {value: ethers.utils.parseEther("9.9999999999")}
-      )).to.be.revertedWith("not enough fee to pay");
+      )).to.be.revertedWith("Backing:not enough fee to pay");
       // test register successed
       await backing.registerErc20Token(2, originalToken.address, tokenName, tokenSymbol, 9, {value: ethers.utils.parseEther("10.0")});
       // check not exist
