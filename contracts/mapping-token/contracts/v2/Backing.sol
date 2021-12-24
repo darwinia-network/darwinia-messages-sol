@@ -102,7 +102,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         _changeDailyLimit(mappingToken, amount);
     }
 
-    function updateFeeMarket(address newFeeMarket) external onlyOperatorOrOwner {
+    function updateFeeMarket(address newFeeMarket) external onlyOwner {
         feeMarket = newFeeMarket;
     }
 

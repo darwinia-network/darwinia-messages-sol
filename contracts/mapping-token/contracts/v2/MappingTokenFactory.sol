@@ -84,7 +84,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         _pause();
     }
 
-    function updateFeeMarket(address newFeeMarket) external onlyOperatorOrOwner {
+    function updateFeeMarket(address newFeeMarket) external onlyOwner {
         feeMarket = newFeeMarket;
     }
 
@@ -164,7 +164,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         _changeDailyLimit(mappingToken, amount);
     }
 
-    function setTokenContractLogic(uint32 tokenType, address logic) external onlyOperatorOrOwner {
+    function setTokenContractLogic(uint32 tokenType, address logic) external onlyOwner {
         tokenType2Logic[tokenType] = logic;
         emit NewLogicSetted(tokenType, logic);
     }
@@ -187,7 +187,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         address originalToken,
         address mappingToken,
         uint32 tokenType
-    ) external onlyOperatorOrOwner {
+    ) external onlyOwner {
         bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
         address existed = salt2MappingToken[salt];
         require(existed == address(0), "the mapping token exist");
