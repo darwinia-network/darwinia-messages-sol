@@ -65,13 +65,13 @@ const receive_messages_proof = async (inbound, srcoutbound, srcinbound, nonce) =
     const o = await srcoutbound.data()
     const proof = await generate_darwinia_proof()
     const calldata = Array(o.messages.length).fill("0x")
+    const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
+    const size = nonce - from
     const tx = await inbound.receive_messages_proof(o, calldata, proof)
-    const n = await inbound.inboundLaneNonce()
-    const size = nonce - n.last_delivered_nonce
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(sourceChainPos, sourceOutLanePos, targetChainPos, targetInLanePos, nonce+i, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
+        .withArgs(sourceChainPos, sourceOutLanePos, targetChainPos, targetInLanePos, from+i+1, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
     }
 }
 

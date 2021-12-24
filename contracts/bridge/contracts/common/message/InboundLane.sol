@@ -48,7 +48,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
     /**
      * @dev Gas buffer for executing `send_message` tx
      */
-    uint256 public constant GAS_BUFFER = 60000;
+    uint256 public constant GAS_BUFFER = 3000;
     /**
      * @notice This parameter must lesser than 256
      * Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
@@ -62,7 +62,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
      * Transaction that is declaring more messages than this value, will be rejected. Even if
      * these messages are from different lanes.
      */
-    uint256 public constant MAX_UNCONFIRMED_MESSAGES = 50;
+    uint256 public constant MAX_UNCONFIRMED_MESSAGES = 30;
 
     /* State */
 
@@ -304,11 +304,11 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         }
     }
 
-    function filter(address target, bytes memory encoded) internal returns (bool canCall) {
+    function filter(address target, bytes memory encoded) internal view returns (bool canCall) {
         /**
          * @notice The app layer must implement the interface `ICrossChainFilter`
          */
-        (bool ok, bytes memory result) = target.call{value: 0, gas: GAS_BUFFER}(encoded);
+        (bool ok, bytes memory result) = target.staticcall{gas: GAS_BUFFER}(encoded);
         if (ok) {
             if (result.length == 32) {
                 canCall = abi.decode(result, (bool));
