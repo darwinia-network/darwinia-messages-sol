@@ -38,6 +38,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         address remoteSender;
         address inBoundLaneAddress;
     }
+    address public operator;
     // fee market
     address public feeMarket;
     // the mapping token list
@@ -71,18 +72,19 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
 
     function initialize(address _feeMarket) public initializer {
         feeMarket = _feeMarket;
+        operator = msg.sender;
         ownableConstructor();
     }
 
-    function unpause() external onlyOwner {
+    function unpause() external onlyOperatorOrOwner {
         _unpause();
     }
 
-    function pause() external onlyOwner {
+    function pause() external onlyOperatorOrOwner {
         _pause();
     }
 
-    function updateFeeMarket(address newFeeMarket) external onlyOwner {
+    function updateFeeMarket(address newFeeMarket) external onlyOperatorOrOwner {
         feeMarket = newFeeMarket;
     }
 
@@ -108,6 +110,15 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         uint256 outBoundId = encodeBridgedBoundId(bridgedChainPosition, bridgedLanePosition);
         require(outboundLanes[outBoundId] == msg.sender, "MappingTokenFactory:caller is not the outboundLane account");
         _;
+    }
+
+    modifier onlyOperatorOrOwner() {
+        require(operator == msg.sender || owner() == msg.sender, "MappingTokenFactory:caller is not the owner or operator");
+        _;
+    }
+
+    function updateOperator(address _operator) external onlyOperatorOrOwner {
+        operator = _operator;
     }
 
     // 32 bytes
@@ -153,7 +164,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         _changeDailyLimit(mappingToken, amount);
     }
 
-    function setTokenContractLogic(uint32 tokenType, address logic) external onlyOwner {
+    function setTokenContractLogic(uint32 tokenType, address logic) external onlyOperatorOrOwner {
         tokenType2Logic[tokenType] = logic;
         emit NewLogicSetted(tokenType, logic);
     }
@@ -176,7 +187,7 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         address originalToken,
         address mappingToken,
         uint32 tokenType
-    ) external onlyOwner {
+    ) external onlyOperatorOrOwner {
         bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
         address existed = salt2MappingToken[salt];
         require(existed == address(0), "the mapping token exist");

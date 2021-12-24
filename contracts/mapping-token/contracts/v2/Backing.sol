@@ -33,6 +33,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     string public thisChainName;
     uint32 public remoteChainPosition;
     address public remoteMappingTokenFactory;
+    address public operator;
 
     // bridge channel
     // bridgedLanePosition => inBoundLaneAddress
@@ -71,19 +72,29 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         _;
     }
 
+    modifier onlyOperatorOrOwner() {
+        require(operator == msg.sender || owner() == msg.sender, "Backing:caller is not the owner or operator");
+        _;
+    }
+
+    function updateOperator(address _operator) external onlyOperatorOrOwner {
+        operator = _operator;
+    }
+
     function initialize(uint32 _bridgedChainPosition, address _remoteMappingTokenFactory, address _feeMarket, string memory _chainName) public initializer {
         feeMarket = _feeMarket;
         remoteChainPosition = _bridgedChainPosition;
         remoteMappingTokenFactory = _remoteMappingTokenFactory;
         thisChainName = _chainName;
+        operator = msg.sender;
         ownableConstructor();
     }
 
-    function unpause() external onlyOwner {
+    function unpause() external onlyOperatorOrOwner {
         _unpause();
     }
 
-    function pause() external onlyOwner {
+    function pause() external onlyOperatorOrOwner {
         _pause();
     }
 
@@ -91,7 +102,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         _changeDailyLimit(mappingToken, amount);
     }
 
-    function updateFeeMarket(address newFeeMarket) external onlyOwner {
+    function updateFeeMarket(address newFeeMarket) external onlyOperatorOrOwner {
         feeMarket = newFeeMarket;
     }
 
@@ -125,7 +136,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         string memory name,
         string memory symbol,
         uint8 decimals
-    ) external payable onlyOwner {
+    ) external payable onlyOperatorOrOwner {
         require(registeredTokens[token] == false, "Backing:token has been registered");
 
         address outboundLane = outboundLanes[bridgedLanePosition];
