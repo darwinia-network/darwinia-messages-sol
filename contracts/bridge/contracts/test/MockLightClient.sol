@@ -9,7 +9,7 @@ contract MockLightClient {
         uint32,
         uint32,
         bytes calldata
-    ) external view returns (bool) {
+    ) external pure returns (bool) {
         return true;
     }
 
@@ -18,7 +18,7 @@ contract MockLightClient {
         uint32,
         uint32,
         bytes calldata
-    ) external view returns (bool) {
+    ) external pure returns (bool) {
         return true;
     }
 }

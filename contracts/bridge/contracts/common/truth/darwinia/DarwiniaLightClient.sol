@@ -8,7 +8,6 @@ import "@darwinia/contracts-utils/contracts/Bitfield.sol";
 import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "@darwinia/contracts-verify/contracts/SparseMerkleMultiProof.sol";
 import "./ValidatorRegistry.sol";
-import "./GuardRegistry.sol";
 import "../../spec/BeefyCommitmentScheme.sol";
 import "../../../interfaces/ILightClient.sol";
 
@@ -18,7 +17,7 @@ import "../../../interfaces/ILightClient.sol";
  * @notice The light client is the trust layer of the bridge
  * @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
  */
-contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, ValidatorRegistry, GuardRegistry {
+contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, ValidatorRegistry {
 
     /* Events */
 
@@ -122,11 +121,14 @@ contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, V
     address payable public immutable SLASH_VAULT;
 
     /**
+     * @dev NETWORK Source chain network identify ('Crab', 'Darwinia', 'Pangolin')
+     */
+    bytes32 public immutable NETWORK;
+
+    /**
      * @notice Deploys the LightClientBridge contract
      * @param network source chain network name
      * @param slashVault initial SLASH_VAULT
-     * @param guards initial guards of guard set
-     * @param threshold initial threshold of guard set
      * @param validatorSetId initial validator set id
      * @param validatorSetLen length of initial validator set
      * @param validatorSetRoot initial validator set merkle tree root
@@ -134,13 +136,12 @@ contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, V
     constructor(
         bytes32 network,
         address payable slashVault,
-        address[] memory guards,
-        uint256 threshold,
         uint256 validatorSetId,
         uint256 validatorSetLen,
         bytes32 validatorSetRoot
-    ) public GuardRegistry(network, guards, threshold) {
+    ) public {
         SLASH_VAULT = slashVault;
+        NETWORK = network;
         _updateValidatorSet(validatorSetId, validatorSetLen, validatorSetRoot);
     }
 
@@ -319,18 +320,16 @@ contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, V
      * @param id an identifying value generated in the previous transaction
      * @param commitment contains the full commitment that was used for the commitmentHash
      * @param validatorProof a struct containing the data needed to verify all validator signatures
-     * @param guardSignatures The signatures of the guards which to double-check the commitmentHash
      */
     function completeSignatureCommitment(
         uint256 id,
         Commitment memory commitment,
-        MultiProof memory validatorProof,
-        bytes[] memory guardSignatures
+        MultiProof memory validatorProof
     ) public {
         // only current epoch
         require(commitment.validatorSetId == validatorSetId, "Bridge: Invalid validator set id");
 
-        verifyCommitment(id, commitment, validatorProof, guardSignatures);
+        verifyCommitment(id, commitment, validatorProof);
 
         processPayload(commitment.payload, commitment.blockNumber);
 
@@ -364,8 +363,7 @@ contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, V
     function verifyCommitment(
         uint256 id,
         Commitment memory commitment,
-        MultiProof memory validatorProof,
-        bytes[] memory guardSignatures
+        MultiProof memory validatorProof
     ) private view {
         ValidationData storage data = validationData[id];
 
@@ -401,9 +399,6 @@ contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, V
             requiredNumberOfValidatorSigs(),
             commitmentHash
         );
-
-        // Guard Registry double-check the commitmentHash
-        checkGuardSignatures(commitmentHash, guardSignatures);
     }
 
     function roundUpToPow2(uint256 len) internal pure returns (uint256) {

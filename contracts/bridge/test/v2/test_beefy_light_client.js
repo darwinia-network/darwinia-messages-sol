@@ -5,7 +5,6 @@ const {
   createRandomPositions,
   createAllValidatorProofs,
   createCompleteValidatorProofs,
-  createAllGuardProofs,
   createSingleValidatorProof,
 } = require("./shared/helpers");
 const beefyFixture = require('./shared/beefy-data.json');
@@ -95,16 +94,12 @@ describe("Light Client Gas Usage", function () {
     const fixture = await createBeefyValidatorFixture(
       totalNumberOfValidators
     )
-    const numOfGuards = 3;
-    const guards = fixture.validatorAddresses.slice(0, numOfGuards)
     const LightClientBridge = await ethers.getContractFactory("DarwiniaLightClient");
     const crab = beefyFixture.commitment.payload.network
     const vault = "0x0000000000000000000000000000000000000000"
     beefyLightClient = await LightClientBridge.deploy(
       crab,
       vault,
-      guards,
-      2,
       0,
       totalNumberOfValidators,
       fixture.root,
@@ -120,11 +115,7 @@ describe("Light Client Gas Usage", function () {
 
     const commitmentHash = await beefyLightClient.hash(beefyFixture.commitment);
 
-    const domainSeparator = await beefyLightClient.domainSeparator();
-
     const allValidatorProofs = await createAllValidatorProofs(commitmentHash, fixture);
-
-    const allGuardProofs = await createAllGuardProofs(commitmentHash, fixture, domainSeparator, guards)
 
     const firstProof = await createSingleValidatorProof(firstPosition, fixture)
 
@@ -152,8 +143,7 @@ describe("Light Client Gas Usage", function () {
     const completeSigTxPromise = beefyLightClient.completeSignatureCommitment(
       lastId,
       beefyFixture.commitment,
-      completeValidatorProofs,
-      allGuardProofs
+      completeValidatorProofs
     )
     await printTxPromiseGas("2-step", await completeSigTxPromise)
     await completeSigTxPromise.should.be.fulfilled
