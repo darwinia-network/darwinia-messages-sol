@@ -1,0 +1,11 @@
+type ProposalItem @entity {
+  id: ID!
+  index: BigInt!
+  target: Bytes!
+  value: BigInt!
+  data: Bytes!
+  predecessor: Bytes!
+  delay: BigInt!
+  timestamp: BigInt!
+  status: Int!
+}
