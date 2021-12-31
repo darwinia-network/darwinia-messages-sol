@@ -1,0 +1,26 @@
+specVersion: 0.0.2
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: mmr
+    network: ropsten
+    source:
+      address: "0x0000000000000000000000000000000000000000"
+      abi: mmr
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Test
+      abis:
+        - name: mmr
+          file: ./abis/mmr.json
+      eventHandlers:
+        - event: Test(address)
+          handler: handleTest
+      blockHandlers:
+        - handler: handleBlock
+      file: ./src/mapping.ts
