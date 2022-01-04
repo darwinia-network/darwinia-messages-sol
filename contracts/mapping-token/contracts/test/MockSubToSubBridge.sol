@@ -43,5 +43,41 @@ contract MockSubToSubBridge is MappingTokenAddress {
             fee
         );
     }
+
+    function encode_register_from_remote_dispatch_call(
+        uint32 spec_version,
+        uint64 weight,
+        uint32 token_type,
+        address original_token,
+        string memory name,
+        string memory symbol,
+        uint8 decimals
+    ) external pure returns(bytes memory) {
+        return abi.encode(
+            spec_version,
+            weight,
+            token_type,
+            original_token,
+            name,
+            symbol,
+            decimals
+        );
+    }
+
+    function encode_issue_from_remote_dispatch_call(
+        uint32 spec_version,
+        uint64 weight,
+        address token,
+        address recipient,
+        uint256 amount
+    ) external pure returns(bytes memory) {
+        return abi.encode(
+            spec_version,
+            weight,
+            token,
+            recipient,
+            amount
+        );
+    }
 }
 
