@@ -11,6 +11,10 @@
         "ring": "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
         "kton": "0x1994100c58753793D52c6f457f189aa3ce9cEe94"
     },
+    "43": {
+        "WormholeDaoTimeLock": "0xED1d1d219f85Bc634f250db5e77E0330Cddc9b2a",
+        "WormholeDaoMultisig": "0xc8C1680B18D432732D07c044669915726fAF67D0"
+    },
     "44": {
         "S2sMappingTokenFactoryProxyAdmin": "0x9f5098Dc064F6ca8D7f7Eb9e722706256b35bb37",
         "S2sMappingTokenFactoryLogic": "0xA1Ea474716fBe0f5101BA1ACF442201A97768aa4",
