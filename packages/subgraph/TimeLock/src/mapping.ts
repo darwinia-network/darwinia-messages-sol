@@ -1,13 +1,9 @@
-import { concat } from "@graphprotocol/graph-ts/helper-functions"
+import { BigInt } from "@graphprotocol/graph-ts"
 import {
   TimeLock,
   CallExecuted,
   CallScheduled,
-  Cancelled,
-  MinDelayChange,
-  RoleAdminChanged,
-  RoleGranted,
-  RoleRevoked
+  Cancelled
 } from "../generated/TimeLock/TimeLock"
 import { Proposal, Operation } from "../generated/schema"
 
@@ -49,5 +45,6 @@ export function handleCancelled(event: Cancelled): void {
     return
   }
   entity.status = 'Cancelled'
+  entity.timestamp = BigInt.zero()
   entity.save()
 }
