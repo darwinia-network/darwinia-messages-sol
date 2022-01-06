@@ -20,8 +20,6 @@ import "./MessageVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Everything about incoming messages receival
  * @author echo
@@ -267,11 +265,6 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
             emit MessageDispatched(key.this_chain_id, key.this_lane_id, key.bridged_chain_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
             dispatch_results |= (dispatch_result ? uint256(1) << (next - begin) : uint256(0));
 
-            console.log("---------------------------------------------");
-            console.logUint(key.nonce);
-            console.logBool(dispatch_result);
-            console.logUint(dispatch_results);
-
             // update inbound lane nonce storage
             inboundLaneNonce.last_delivered_nonce = next;
 
@@ -283,7 +276,6 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
             address pre_relayer = relayers_back();
             if (pre_relayer == relayer) {
                 UnrewardedRelayer storage r = relayers[inboundLaneNonce.relayer_range.back];
-                console.logUint(r.messages.dispatch_results);
                 r.messages.dispatch_results |= dispatch_results << (r.messages.end - r.messages.begin + 1);
                 r.messages.end = end;
             } else {
