@@ -61,7 +61,6 @@ const receive_messages_delivery_proof = async (addr, begin, end) => {
     laneData = await inbound.data()
     const tx = await outbound.connect(addr).receive_messages_delivery_proof(laneData, "0x")
     const d = await tx.wait();
-    log((await tx.wait()).events[0].args)
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, "0x2a")
