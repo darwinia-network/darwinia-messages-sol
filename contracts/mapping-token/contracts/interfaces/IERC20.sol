@@ -3,6 +3,7 @@
 pragma solidity >=0.8.10;
 
 interface IERC20 {
+  function approve(address _spender, uint256 _value) external returns (bool);
   function totalSupply() external view returns (uint256);
   function balanceOf(address _who) external view returns (uint256);
   function transfer(address _to, uint256 _value) external returns (bool);
