@@ -218,7 +218,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
                     // Firstly, remove all of the records where higher nonce <= new confirmed nonce
                     delete relayers[index];
                     inboundLaneNonce.relayer_range.front = index + 1;
-                } else if (entry.messages.begin < new_confirmed_nonce) {
+                } else if (entry.messages.begin <= new_confirmed_nonce) {
                     // Secondly, update the next record with lower nonce equal to new confirmed nonce if needed.
                     // Note: There will be max. 1 record to update as we don't allow messages from relayers to
                     // overlap.
