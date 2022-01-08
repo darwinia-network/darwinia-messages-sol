@@ -259,15 +259,15 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             // check message call data is correct
             require(message_payload.encodedHash == keccak256(messagesCallData[i]));
 
+            // update inbound lane nonce storage
+            inboundLaneNonce.last_delivered_nonce = next;
+
             // then, dispatch message
             (bool dispatch_result, bytes memory returndata) = dispatch(message_payload, messagesCallData[i]);
 
             emit MessageDispatched(key.this_chain_id, key.this_lane_id, key.bridged_chain_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
             // TODO: callback `pay_inbound_dispatch_fee_overhead`
             dispatch_results |= (dispatch_result ? uint256(1) << i : uint256(0));
-
-            // update inbound lane nonce storage
-            inboundLaneNonce.last_delivered_nonce = next;
 
             next += 1;
         }
