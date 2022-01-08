@@ -17,6 +17,7 @@ import "@darwinia/contracts-utils/contracts/Pausable.sol";
 import "../interfaces/IBacking.sol";
 import "../interfaces/IERC20.sol";
 import "../interfaces/IGuard.sol";
+import "../interfaces/IInboundLane.sol";
 import "../interfaces/IMappingTokenFactory.sol";
 
 contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainFilter, IMappingTokenFactory, Pausable {
@@ -299,7 +300,10 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         if (guard != address(0)) {
             IERC20(mappingToken).mint(address(this), amount);
             require(IERC20(mappingToken).approve(guard, amount), "MappingTokenFactory:approve token transfer to guard failed");
-            IGuard(guard).deposit(mappingToken, recipient, amount);
+            IInboundLane.InboundLaneNonce memory inboundLaneNonce = IInboundLane(msg.sender).inboundLaneNonce();
+            // todo we should transform this messageId to bridged outboundLane messageId
+            uint256 messageId = IInboundLane(msg.sender).encodeMessageKey(inboundLaneNonce.last_delivered_nonce);
+            IGuard(guard).deposit(messageId, mappingToken, recipient, amount);
         } else {
             IERC20(mappingToken).mint(recipient, amount);
         }

@@ -14,6 +14,7 @@ import "@darwinia/contracts-utils/contracts/Pausable.sol";
 import "../interfaces/IBacking.sol";
 import "../interfaces/IERC20.sol";
 import "../interfaces/IGuard.sol";
+import "../interfaces/IInboundLane.sol";
 import "../interfaces/IMappingTokenFactory.sol";
 
 contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBacking, Pausable {
@@ -260,7 +261,10 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         expendDailyLimit(token, amount);
         if (guard != address(0)) {
             require(IERC20(token).approve(guard, amount), "Backing:approve token transfer to guard failed");
-            IGuard(guard).deposit(token, recipient, amount);
+            IInboundLane.InboundLaneNonce memory inboundLaneNonce = IInboundLane(msg.sender).inboundLaneNonce();
+            // todo we should transform this messageId to bridged outboundLane messageId
+            uint256 messageId = IInboundLane(msg.sender).encodeMessageKey(inboundLaneNonce.last_delivered_nonce);
+            IGuard(guard).deposit(messageId, token, recipient, amount);
         } else {
             require(IERC20(token).transfer(recipient, amount), "Backing:unlock transfer failed");
         }
