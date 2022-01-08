@@ -3,28 +3,27 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
 import "../../interfaces/ILightClient.sol";
 
-contract MessageVerifier {
+contract OutboundLaneVerifier {
+    /**
+     * @dev The contract address of on-chain light client
+     */
+    ILightClient public immutable lightClient;
+
     /* State */
     // indentify slot
     // slot 0 ------------------------------------------------------------
     // @dev bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
-    uint32 public immutable bridgedLanePosition;
+    uint32 public bridgedLanePosition;
     // @dev Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-    uint32 public immutable bridgedChainPosition;
+    uint32 public bridgedChainPosition;
     // @dev This lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
-    uint32 public immutable thisLanePosition;
+    uint32 public thisLanePosition;
     // @dev This chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-    uint32 public immutable thisChainPosition;
+    uint32 public thisChainPosition;
 
     // ------------------------------------------------------------------
-
-    /**
-     * @dev The contract address of on-chain light client
-     */
-    ILightClient public lightClient;
 
     constructor(
         address _lightClient,
@@ -42,16 +41,6 @@ contract MessageVerifier {
 
     /* Private Functions */
 
-    function verify_messages_proof(
-        bytes32 outlane_data_hash,
-        bytes memory encoded_proof
-    ) internal view {
-        require(
-            lightClient.verify_messages_proof(outlane_data_hash, thisChainPosition, bridgedLanePosition, encoded_proof),
-            "Verifer: InvalidProof"
-        );
-    }
-
     function verify_messages_delivery_proof(
         bytes32 inlane_data_hash,
         bytes memory encoded_proof
@@ -66,9 +55,9 @@ contract MessageVerifier {
         return (thisChainPosition,thisLanePosition,bridgedChainPosition,bridgedLanePosition);
     }
 
-    // 32 bytes to identify an unique message
+    // 32 bytes to identify an unique message from source chain
     // MessageKey encoding:
-    // ThisChainPosition | BridgedChainPosition | ThisLanePosition | BridgedLanePosition | Nonce
+    // ThisChainPosition | ThisLanePosition | BridgedChainPosition | BridgedLanePosition | Nonce
     // [0..8)   bytes ---- Reserved
     // [8..12)  bytes ---- ThisChainPosition
     // [16..20) bytes ---- ThisLanePosition

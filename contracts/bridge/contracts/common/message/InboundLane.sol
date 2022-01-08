@@ -16,7 +16,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "../../interfaces/ICrossChainFilter.sol";
-import "./MessageVerifier.sol";
+import "./InboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 
@@ -26,7 +26,7 @@ import "../spec/TargetChain.sol";
  * @notice The inbound lane is the message layer of the bridge
  * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
  */
-contract InboundLane is MessageVerifier, SourceChain, TargetChain {
+contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /**
      * @notice Notifies an observer that the message has dispatched
      * @param thisChainPosition The thisChainPosition of the message
@@ -94,10 +94,10 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         RelayersRange relayer_range;
     }
 
-    // slot 2
+    // slot 1
     InboundLaneNonce public inboundLaneNonce;
 
-    // slot 3
+    // slot 2
     // index => UnrewardedRelayer
     // indexes to relayers and messages that they have delivered to this lane (ordered by
     // message nonce).
@@ -140,7 +140,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         uint32 _bridgedLanePosition,
         uint64 _last_confirmed_nonce,
         uint64 _last_delivered_nonce
-    ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
+    ) public InboundLaneVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
         inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce, RelayersRange(1, 0));
     }
 
