@@ -12,8 +12,8 @@
 // The assigned nonce is reported using `MessageAccepted` event. When message is
 // delivered to the the bridged chain, it is reported using `MessagesDelivered` event.
 
-pragma solidity >=0.6.0 <0.7.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.0;
+pragma abicoder v2;
 
 import "../../interfaces/ICrossChainFilter.sol";
 import "./MessageVerifier.sol";
@@ -140,7 +140,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         uint32 _bridgedLanePosition,
         uint64 _last_confirmed_nonce,
         uint64 _last_delivered_nonce
-    ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
+    ) MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
         inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce, RelayersRange(1, 0));
     }
 

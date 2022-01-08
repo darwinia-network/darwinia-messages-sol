@@ -1,11 +1,11 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Code from https://github.com/ethereum/solidity-examples
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 pragma experimental ABIEncoderV2;
 
 library Bits {
     uint256 internal constant ONE = uint256(1);
-    uint256 internal constant ONES = uint256(~0);
+    uint256 internal constant ONES = type(uint256).max;
 
     // Sets the bit at the given 'index' in 'self' to '1'.
     // Returns the modified value.

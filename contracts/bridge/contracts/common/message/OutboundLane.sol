@@ -12,8 +12,8 @@
 // The assigned nonce is reported using `MessageAccepted` event. When message is
 // delivered to the the bridged chain, it is reported using `MessagesDelivered` event.
 
-pragma solidity >=0.6.0 <0.7.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.0;
+pragma abicoder v2;
 
 import "../../interfaces/IOutboundLane.sol";
 import "../../interfaces/IOnMessageDelivered.sol";
@@ -101,7 +101,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         uint64 _oldest_unpruned_nonce,
         uint64 _latest_received_nonce,
         uint64 _latest_generated_nonce
-    ) public MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
+    ) MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
         outboundLaneNonce = OutboundLaneNonce(_latest_received_nonce, _latest_generated_nonce, _oldest_unpruned_nonce);
         setter = msg.sender;
     }
@@ -126,7 +126,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
      */
     function send_message(address targetContract, bytes calldata encoded) external payable override auth nonReentrant returns (uint256) {
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
-        require(outboundLaneNonce.latest_generated_nonce < uint64(-1), "Lane: Overflow");
+        require(outboundLaneNonce.latest_generated_nonce < type(uint64).max, "Lane: Overflow");
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
         uint256 fee = msg.value;
         // assign the message to top relayers

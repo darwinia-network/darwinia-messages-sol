@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-pragma solidity >=0.6.0 <0.7.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.0;
+pragma abicoder v2;
 
 import "../../../interfaces/ILightClient.sol";
 import "../../spec/SourceChain.sol";
@@ -65,7 +65,7 @@ contract BSCLightClient is ILightClient, SourceChain, TargetChain {
         uint256 lane_identify_slot,
         uint256 lane_nonce_slot,
         uint256 lane_message_slot
-    ) public {
+    ) {
         THIS_CHAIN_POSITION = this_chain_position;
         LANE_IDENTIFY_SLOT = lane_identify_slot;
         LANE_NONCE_SLOT = lane_nonce_slot;

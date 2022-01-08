@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import "../interfaces/ICrossChainFilter.sol";
 import "../interfaces/IOnMessageDelivered.sol";
@@ -8,7 +8,7 @@ import "../interfaces/IOutboundLane.sol";
 
 contract MalicousApp is ICrossChainFilter, IOnMessageDelivered {
 
-    function crossChainFilter(uint32, uint32, address, bytes calldata) external override view returns (bool) {
+    function crossChainFilter(uint32, uint32, address, bytes calldata) external override pure returns (bool) {
         return true;
     }
 
@@ -17,7 +17,7 @@ contract MalicousApp is ICrossChainFilter, IOnMessageDelivered {
         IOutboundLane(outlane).send_message{value: msg.value}(address(this), encoded);
     }
 
-    function on_messages_delivered(uint256, bool) override external {
+    function on_messages_delivered(uint256, bool) override pure external {
         loop("");
     }
 
