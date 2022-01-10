@@ -26,11 +26,11 @@ contract Guard is GuardRegistry, Pausable {
     event TokenDeposit(uint256 id, address token, address recipient, uint256 amount);
     event TokenClaimed(uint256 id);
 
-    constructor(bytes32 _network, address[] memory _guards, uint256 _threshold, uint256 _maxUnclaimableTime, address _depositor) public {
+    constructor(address[] memory _guards, uint256 _threshold, uint256 _maxUnclaimableTime, address _depositor) public {
         maxUnclaimableTime = _maxUnclaimableTime;
         depositor = _depositor;
         operator = msg.sender;
-        initialize(_network, _guards, _threshold);
+        initialize(_guards, _threshold);
     }
 
     modifier onlyDepositor() {

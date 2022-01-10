@@ -20,17 +20,7 @@ contract GuardRegistry {
     // );
     bytes32 internal constant DOMAIN_SEPARATOR_TYPEHASH = 0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
 
-    // keccak256(
-    //     "ChangeGuard(bytes32 network,bytes4 sig,bytes params,uint256 nonce)"
-    // );
-    bytes32 internal constant GUARD_TYPEHASH = 0x20823b509c0ff3e2ea0853237833f25b5c32c94d52327fd569cf245995a8206b;
-
     address internal constant SENTINEL_GUARDS = address(0x1);
-
-    /**
-     * @dev NETWORK Source chain network identifier ('Crab', 'Darwinia', 'Pangolin')
-     */
-    bytes32 public NETWORK;
 
     /**
      * @dev Nonce to prevent replay of update operations
@@ -51,11 +41,10 @@ contract GuardRegistry {
 
     /**
      * @dev Sets initial storage of contract.
-     * @param _network source chain network name
      * @param _guards List of Safe guards.
      * @param _threshold Number of required confirmations for check commitment or change guards.
      */
-    function initialize(bytes32 _network, address[] memory _guards, uint256 _threshold) internal {
+    function initialize(address[] memory _guards, uint256 _threshold) internal {
         // Threshold can only be 0 at initialization.
         // Check ensures that setup function can only be called once.
         require(threshold == 0, "Guard: Guards have already been setup");
@@ -78,7 +67,6 @@ contract GuardRegistry {
         guards[currentGuard] = SENTINEL_GUARDS;
         guardCount = _guards.length;
         threshold = _threshold;
-        NETWORK = _network;
     }
 
     /**
@@ -221,8 +209,6 @@ contract GuardRegistry {
         bytes32 structHash =
             keccak256(
                 abi.encode(
-                    GUARD_TYPEHASH,
-                    NETWORK,
                     methodID,
                     params,
                     nonce
@@ -290,7 +276,7 @@ contract GuardRegistry {
         return keccak256(abi.encode(DOMAIN_SEPARATOR_TYPEHASH, getChainId(), address(this)));
     }
 
-    function encodeDataHash(bytes32 structHash) internal view returns (bytes32) {
+    function encodeDataHash(bytes32 structHash) public view returns (bytes32) {
         return keccak256(abi.encodePacked(hex"1901", domainSeparator(), structHash));
     }
 }
