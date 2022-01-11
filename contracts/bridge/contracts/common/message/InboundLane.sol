@@ -218,7 +218,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
                     // Firstly, remove all of the records where higher nonce <= new confirmed nonce
                     delete relayers[index];
                     inboundLaneNonce.relayer_range.front = index + 1;
-                } else if (entry.messages.begin < new_confirmed_nonce) {
+                } else if (entry.messages.begin <= new_confirmed_nonce) {
                     // Secondly, update the next record with lower nonce equal to new confirmed nonce if needed.
                     // Note: There will be max. 1 record to update as we don't allow messages from relayers to
                     // overlap.
@@ -266,8 +266,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             (bool dispatch_result, bytes memory returndata) = dispatch(message_payload, messagesCallData[i]);
 
             emit MessageDispatched(key.this_chain_id, key.this_lane_id, key.bridged_chain_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
-            // TODO: callback `pay_inbound_dispatch_fee_overhead`
-            dispatch_results |= (dispatch_result ? uint256(1) << i : uint256(0));
+            dispatch_results |= (dispatch_result ? uint256(1) << (next - begin) : uint256(0));
 
             next += 1;
         }
