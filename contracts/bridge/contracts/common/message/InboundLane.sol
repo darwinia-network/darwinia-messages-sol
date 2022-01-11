@@ -16,7 +16,7 @@ pragma solidity ^0.8.0;
 pragma abicoder v2;
 
 import "../../interfaces/ICrossChainFilter.sol";
-import "./MessageVerifier.sol";
+import "./InboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 
@@ -26,7 +26,7 @@ import "../spec/TargetChain.sol";
  * @notice The inbound lane is the message layer of the bridge
  * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
  */
-contract InboundLane is MessageVerifier, SourceChain, TargetChain {
+contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /**
      * @notice Notifies an observer that the message has dispatched
      * @param thisChainPosition The thisChainPosition of the message
@@ -94,10 +94,10 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         RelayersRange relayer_range;
     }
 
-    // slot 2
+    // slot 1
     InboundLaneNonce public inboundLaneNonce;
 
-    // slot 3
+    // slot 2
     // index => UnrewardedRelayer
     // indexes to relayers and messages that they have delivered to this lane (ordered by
     // message nonce).
@@ -140,7 +140,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
         uint32 _bridgedLanePosition,
         uint64 _last_confirmed_nonce,
         uint64 _last_delivered_nonce
-    ) MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
+    ) InboundLaneVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
         inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce, RelayersRange(1, 0));
     }
 
@@ -218,7 +218,7 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
                     // Firstly, remove all of the records where higher nonce <= new confirmed nonce
                     delete relayers[index];
                     inboundLaneNonce.relayer_range.front = index + 1;
-                } else if (entry.messages.begin < new_confirmed_nonce) {
+                } else if (entry.messages.begin <= new_confirmed_nonce) {
                     // Secondly, update the next record with lower nonce equal to new confirmed nonce if needed.
                     // Note: There will be max. 1 record to update as we don't allow messages from relayers to
                     // overlap.
@@ -259,15 +259,14 @@ contract InboundLane is MessageVerifier, SourceChain, TargetChain {
             // check message call data is correct
             require(message_payload.encodedHash == keccak256(messagesCallData[i]));
 
+            // update inbound lane nonce storage
+            inboundLaneNonce.last_delivered_nonce = next;
+
             // then, dispatch message
             (bool dispatch_result, bytes memory returndata) = dispatch(message_payload, messagesCallData[i]);
 
             emit MessageDispatched(key.this_chain_id, key.this_lane_id, key.bridged_chain_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
-            // TODO: callback `pay_inbound_dispatch_fee_overhead`
-            dispatch_results |= (dispatch_result ? uint256(1) << i : uint256(0));
-
-            // update inbound lane nonce storage
-            inboundLaneNonce.last_delivered_nonce = next;
+            dispatch_results |= (dispatch_result ? uint256(1) << (next - begin) : uint256(0));
 
             next += 1;
         }

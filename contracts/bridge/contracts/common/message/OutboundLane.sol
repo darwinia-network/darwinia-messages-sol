@@ -18,12 +18,12 @@ pragma abicoder v2;
 import "../../interfaces/IOutboundLane.sol";
 import "../../interfaces/IOnMessageDelivered.sol";
 import "../../interfaces/IFeeMarket.sol";
-import "./MessageVerifier.sol";
+import "./OutboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 
 // Everything about outgoing messages sending.
-contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChain {
+contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, SourceChain {
     event MessageAccepted(uint64 indexed nonce, bytes encoded);
     event MessagesDelivered(uint64 indexed begin, uint64 indexed end, uint256 results);
     event MessagePruned(uint64 indexed oldest_unpruned_nonce);
@@ -50,10 +50,10 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
 
     /* State */
 
-    // slot 2
+    // slot 1
     OutboundLaneNonce public outboundLaneNonce;
 
-    // slot 3
+    // slot 2
     // nonce => MessagePayload
     mapping(uint64 => MessagePayload) public messages;
 
@@ -101,7 +101,7 @@ contract OutboundLane is IOutboundLane, MessageVerifier, TargetChain, SourceChai
         uint64 _oldest_unpruned_nonce,
         uint64 _latest_received_nonce,
         uint64 _latest_generated_nonce
-    ) MessageVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
+    ) OutboundLaneVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
         outboundLaneNonce = OutboundLaneNonce(_latest_received_nonce, _latest_generated_nonce, _oldest_unpruned_nonce);
         setter = msg.sender;
     }

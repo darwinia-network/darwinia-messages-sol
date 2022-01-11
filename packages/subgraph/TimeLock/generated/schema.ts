@@ -11,35 +11,33 @@ import {
   BigDecimal
 } from "@graphprotocol/graph-ts";
 
-export class ProposalItem extends Entity {
+export class Operation extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
 
+    this.set("proposal", Value.fromString(""));
     this.set("index", Value.fromBigInt(BigInt.zero()));
     this.set("target", Value.fromBytes(Bytes.empty()));
     this.set("value", Value.fromBigInt(BigInt.zero()));
     this.set("data", Value.fromBytes(Bytes.empty()));
-    this.set("predecessor", Value.fromBytes(Bytes.empty()));
-    this.set("delay", Value.fromBigInt(BigInt.zero()));
-    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
   }
 
   save(): void {
     let id = this.get("id");
-    assert(id != null, "Cannot save ProposalItem entity without an ID");
+    assert(id != null, "Cannot save Operation entity without an ID");
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
-        "Cannot save ProposalItem entity with non-string ID. " +
+        "Cannot save Operation entity with non-string ID. " +
           'Considering using .toHex() to convert the "id" to a string.'
       );
-      store.set("ProposalItem", id.toString(), this);
+      store.set("Operation", id.toString(), this);
     }
   }
 
-  static load(id: string): ProposalItem | null {
-    return changetype<ProposalItem | null>(store.get("ProposalItem", id));
+  static load(id: string): Operation | null {
+    return changetype<Operation | null>(store.get("Operation", id));
   }
 
   get id(): string {
@@ -49,6 +47,15 @@ export class ProposalItem extends Entity {
 
   set id(value: string) {
     this.set("id", Value.fromString(value));
+  }
+
+  get proposal(): string {
+    let value = this.get("proposal");
+    return value!.toString();
+  }
+
+  set proposal(value: string) {
+    this.set("proposal", Value.fromString(value));
   }
 
   get index(): BigInt {
@@ -86,6 +93,53 @@ export class ProposalItem extends Entity {
   set data(value: Bytes) {
     this.set("data", Value.fromBytes(value));
   }
+}
+
+export class Proposal extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("predecessor", Value.fromBytes(Bytes.empty()));
+    this.set("delay", Value.fromBigInt(BigInt.zero()));
+    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
+    this.set("status", Value.fromString(""));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save Proposal entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        "Cannot save Proposal entity with non-string ID. " +
+          'Considering using .toHex() to convert the "id" to a string.'
+      );
+      store.set("Proposal", id.toString(), this);
+    }
+  }
+
+  static load(id: string): Proposal | null {
+    return changetype<Proposal | null>(store.get("Proposal", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get operations(): Array<string> {
+    let value = this.get("operations");
+    return value!.toStringArray();
+  }
+
+  set operations(value: Array<string>) {
+    this.set("operations", Value.fromStringArray(value));
+  }
 
   get predecessor(): Bytes {
     let value = this.get("predecessor");
@@ -114,12 +168,12 @@ export class ProposalItem extends Entity {
     this.set("timestamp", Value.fromBigInt(value));
   }
 
-  get status(): i32 {
+  get status(): string {
     let value = this.get("status");
-    return value!.toI32();
+    return value!.toString();
   }
 
-  set status(value: i32) {
-    this.set("status", Value.fromI32(value));
+  set status(value: string) {
+    this.set("status", Value.fromString(value));
   }
 }
