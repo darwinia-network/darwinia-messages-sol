@@ -6,7 +6,7 @@ dataSources:
     name: TimeLock
     network: crab
     source:
-      startBlock: 8317180
+      startBlock: 8317455
       address: "0x2401224012bAE7C2f217392665CA7abC16dCDE1e"
       abi: TimeLock
     mapping:
