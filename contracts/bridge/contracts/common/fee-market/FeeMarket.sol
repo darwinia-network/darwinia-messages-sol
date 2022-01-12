@@ -1,5 +1,7 @@
-pragma solidity >=0.6.0 <0.7.0;
-pragma experimental ABIEncoderV2;
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+pragma abicoder v2;
 
 import "../../interfaces/IFeeMarket.sol";
 
@@ -88,7 +90,7 @@ contract FeeMarket is IFeeMarket {
         uint32 _assigned_relayers_number,
         uint32 _slash_time,
         uint32 _relay_time
-    ) public {
+    ) {
         require(_assigned_relayers_number > 0, "!0");
         require(_slash_time > 0 && _relay_time > 0, "!0");
         owner = msg.sender;
@@ -98,7 +100,7 @@ contract FeeMarket is IFeeMarket {
         slashTime = _slash_time;
         relayTime = _relay_time;
         relayers[SENTINEL_HEAD] = SENTINEL_TAIL;
-        feeOf[SENTINEL_TAIL] = uint256(-1);
+        feeOf[SENTINEL_TAIL] = type(uint256).max;
     }
 
     receive() external payable {
@@ -141,7 +143,7 @@ contract FeeMarket is IFeeMarket {
     function withdraw(uint wad) public {
         require(balanceOf[msg.sender] >= wad);
         balanceOf[msg.sender] -= wad;
-        msg.sender.transfer(wad);
+        payable(msg.sender).transfer(wad);
         emit Withdrawal(msg.sender, wad);
     }
 

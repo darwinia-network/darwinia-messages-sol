@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.7.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.0;
+pragma abicoder v2;
 
 import "../../../interfaces/IMessageCommitment.sol";
 
@@ -20,7 +20,7 @@ contract LaneMessageCommitter {
         _;
     }
 
-    constructor(uint256 _thisChainPosition, uint256 _bridgedChainPosition) public {
+    constructor(uint256 _thisChainPosition, uint256 _bridgedChainPosition) {
         require(_thisChainPosition != _bridgedChainPosition, "Commit: invalid position");
         thisChainPosition = _thisChainPosition;
         bridgedChainPosition = _bridgedChainPosition;

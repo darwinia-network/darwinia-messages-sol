@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-pragma solidity >=0.6.0 <0.7.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.0;
+pragma abicoder v2;
 
 import "@darwinia/contracts-utils/contracts/ECDSA.sol";
 import "@darwinia/contracts-utils/contracts/Bitfield.sol";
@@ -77,7 +77,7 @@ contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, V
      * @param validatorClaimsBitfield a bitfield signalling which validators they claim have signed
      */
     struct ValidationData {
-        address payable senderAddress;
+        address senderAddress;
         bytes32 commitmentHash;
         uint256 blockNumber;
         uint256[] validatorClaimsBitfield;
@@ -118,7 +118,7 @@ contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, V
     /**
      * @dev A vault to store expired commitment or malicious commitment slashed asset
      */
-    address payable public immutable SLASH_VAULT;
+    address public immutable SLASH_VAULT;
 
     /**
      * @dev NETWORK Source chain network identify ('Crab', 'Darwinia', 'Pangolin')
@@ -135,11 +135,11 @@ contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, V
     */
     constructor(
         bytes32 network,
-        address payable slashVault,
+        address slashVault,
         uint256 validatorSetId,
         uint256 validatorSetLen,
         bytes32 validatorSetRoot
-    ) public {
+    ) {
         SLASH_VAULT = slashVault;
         NETWORK = network;
         _updateValidatorSet(validatorSetId, validatorSetLen, validatorSetRoot);
@@ -341,7 +341,7 @@ contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, V
         /**
          * @notice If relayer do `completeSignatureCommitment` late or failed, `MIN_SUPPORT` will be slashed
          */
-        msg.sender.transfer(MIN_SUPPORT);
+        payable(msg.sender).transfer(MIN_SUPPORT);
 
         emit FinalVerificationSuccessful(msg.sender, id);
     }
@@ -353,7 +353,7 @@ contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, V
     function cleanExpiredCommitment(uint256 id) public {
         ValidationData storage data = validationData[id];
         require(block.number > data.blockNumber + BLOCK_WAIT_PERIOD + 256, "Bridge: Only expired");
-        SLASH_VAULT.transfer(MIN_SUPPORT);
+        payable(SLASH_VAULT).transfer(MIN_SUPPORT);
         delete validationData[id];
         emit CleanExpiredCommitment(id);
     }

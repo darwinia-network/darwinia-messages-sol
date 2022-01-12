@@ -8,7 +8,7 @@ contract NormalApp is ICrossChainFilter {
 
     fallback() external {}
 
-    function crossChainFilter(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address sourceAccount, bytes calldata payload) override external view returns (bool) {
+    function crossChainFilter(uint32, uint32, address, bytes calldata) override external view returns (bool) {
         return true;
     }
 }

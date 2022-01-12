@@ -132,13 +132,13 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     /* Constants */
 
     /**
-     * Hash of the NextValidatorSet Schema
+     * @dev Hash of the NextValidatorSet Schema
      * keccak256("NextValidatorSet(uint64 id,uint32 len,bytes32 root)")
      */
     bytes32 internal constant NEXTVALIDATORSET_TYPEHASH = 0x599882aa3cf9166c2c8867b0e7c41899bd7c26ee7898f261a5f495738da7dbd0;
 
     /**
-     * Hash of the Payload Schema
+     * @dev Hash of the Payload Schema
      * keccak256(abi.encodePacked(
      *     "Payload(bytes32 network,bytes32 mmr,NextValidatorSet nextValidatorSet)",
      *     "NextValidatorSet(uint64 id,uint32 len,bytes32 root)",
@@ -148,7 +148,7 @@ contract LightClientBridge is Bitfield, ValidatorRegistry, GuardRegistry {
     bytes32 internal constant PAYLOAD_TYPEHASH = 0xe22bd99038907f2b6f08088cca39bfd3caba1b02d6adbf9e47869eb2ea61eba3;
 
     /**
-     * Hash of the Commitment Schema
+     *  @dev Hash of the Commitment Schema
      * keccak256(abi.encodePacked(
      *     "Commitment(Payload payload,uint32 blockNumber,uint64 validatorSetId)",
      *     "Payload(bytes32 network,bytes32 mmr,NextValidatorSet nextValidatorSet)",

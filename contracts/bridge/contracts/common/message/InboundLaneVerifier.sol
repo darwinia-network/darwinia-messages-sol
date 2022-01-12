@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.7.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.0;
+pragma abicoder v2;
 
 import "../../interfaces/ILightClient.sol";
 
@@ -31,7 +31,7 @@ contract InboundLaneVerifier {
         uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,
         uint32 _bridgedLanePosition
-    ) public {
+    ) {
         lightClient = ILightClient(_lightClient);
         thisChainPosition = _thisChainPosition;
         thisLanePosition = _thisLanePosition;

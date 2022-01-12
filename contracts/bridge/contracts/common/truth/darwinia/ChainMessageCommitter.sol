@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity ^0.8.0;
+pragma abicoder v2;
 
 import "../../../interfaces/IMessageCommitment.sol";
 
@@ -18,7 +19,7 @@ contract ChainMessageCommitter {
         _;
     }
 
-    constructor(uint256 _thisChainPosition) public {
+    constructor(uint256 _thisChainPosition) {
         thisChainPosition = _thisChainPosition;
         maxChainPosition = _thisChainPosition;
         setter = msg.sender;

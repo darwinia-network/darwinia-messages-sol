@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 pragma experimental ABIEncoderV2;
 
 // import "hardhat/console.sol";
@@ -21,7 +21,7 @@ contract MockBSCLightClient {
     mapping(uint32 => mapping(uint32 => address)) lanes;
     bytes32 stateRoot;
 
-    constructor(uint32 lane_commitment_position) public {
+    constructor(uint32 lane_commitment_position) {
         LANE_COMMITMENT_POSITION = lane_commitment_position;
     }
 
