@@ -1,5 +1,6 @@
 # Make dependencies available
 export DAPP_REMAPPINGS=$(cat remappings.txt)
+export DAPP_OUT=out
 
 export DAPP_SOLC_VERSION=0.8.11
 # If you're getting an "invalid character at offset" error, comment this out.
