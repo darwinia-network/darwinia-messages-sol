@@ -4,10 +4,10 @@
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ shadow/mmr",
-    "create-local": "graph create --node http://localhost:8020/ shadow/mmr",
-    "remove-local": "graph remove --node http://localhost:8020/ shadow/mmr",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 shadow/mmr"
+    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ darwinia-network/Mmr",
+    "create-local": "graph create --node http://localhost:8020/ darwinia-network/Mmr",
+    "remove-local": "graph remove --node http://localhost:8020/ darwinia-network/Mmr",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 darwinia-network/Mmr"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.21.1",

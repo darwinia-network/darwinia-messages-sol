@@ -62,6 +62,7 @@ function saveRecord(position: u64, hash: Bytes): void {
     record.save();
 }
 
+// we can select a checkpoint from subgraph/mmr/checkpoint.json to initialize this peaks.
 function init(): void {
     saveRecord(14, Bytes.fromHexString("0xc3a8ce843d747b2ce3b0551e0a21de2340351e598282de4dca3aac0f9e7d1f59") as Bytes);
     saveRecord(17, Bytes.fromHexString("0xf7c0b157923da200c3b0ecbbf549a219a475494c819bc74ad4fa8dfb6b3a1cb0") as Bytes);
