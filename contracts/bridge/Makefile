@@ -1,6 +1,11 @@
+.PHONY: all install update npm solc
+.PHONY: build test clean lint estimate size
+.PHONY: deploy deploy-mainnet deploy-rinkeby verify check-api-key
 # include .env file and export its env vars
 # (-include to ignore error if it does not exist)
 -include .env
+
+all: build
 
 install: solc update npm
 
