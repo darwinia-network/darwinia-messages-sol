@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0;
 import "./MockMessageVerifier.sol";
-import "@darwinia/contracts-bridge/contracts/interfaces/ICrossChainFilter.sol";
+import "../interfaces/ICrossChainFilter.sol";
 import "hardhat/console.sol";
 
 contract MockInboundLane is MockMessageVerifier {

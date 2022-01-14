@@ -1,15 +1,12 @@
 {
-  "name": "@darwinia/contracts-dao",
+  "name": "@darwinia/wormhole",
   "version": "1.0.0",
-  "description": "Darwinia governance",
   "main": "index.js",
-  "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
   "author": "Darwinia dev",
   "license": "MIT",
   "scripts": {
-    "build": "npx hardhat compile",
+    "build": "hardhat compile",
     "test": "npx hardhat test",
-    "gas": "npx hardhat gasUsage",
     "clean": "shx rm -rf cache artifacts abi"
   },
   "devDependencies": {
@@ -17,16 +14,17 @@
     "@nomiclabs/hardhat-etherscan": "^2.1.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
     "dotenv": "^10.0.0",
     "ethereum-waffle": "^3.0.0",
-    "ethereumjs-util": "^7.0.10",
     "ethers": "^5.0.0",
-    "hardhat": "^2.3.0",
+    "hardhat": "^2.6.8",
     "hardhat-abi-exporter": "^2.2.1",
-    "hardhat-gas-reporter": "^1.0.6",
-    "shx": "^0.3.3"
+    "shx": "^0.3.3",
+    "readline-sync": "^1.4.10"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "3.3.0",
     "@zeppelin-solidity-4.4.0/contracts": "npm:@openzeppelin/contracts@4.4.0-rc.0"
   }
 }

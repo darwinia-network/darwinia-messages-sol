@@ -4,7 +4,7 @@ pragma solidity ^0.8.10;
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC20/IERC20.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
 import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
-import "@darwinia/contracts-utils/contracts/Ownable.sol";
+import "../../utils/Ownable.sol";
 
 contract MappingERC20 is IERC20, Ownable, Initializable {
     using SafeMath for uint256;

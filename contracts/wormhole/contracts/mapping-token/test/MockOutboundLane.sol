@@ -2,7 +2,7 @@
 pragma solidity >=0.6.0;
 import "./MockMessageVerifier.sol";
 import "./MockInboundLane.sol";
-import "@darwinia/contracts-bridge/contracts/interfaces/IOnMessageDelivered.sol";
+import "../interfaces/IOnMessageDelivered.sol";
 
 contract MockOutboundLane is MockMessageVerifier {
     struct ConfirmInfo {
