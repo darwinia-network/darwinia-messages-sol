@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
+import "../common/utils/MerkleProof.sol";
 
 contract MockDarwiniaLightClient {
     struct MessagesProof {
