@@ -3,11 +3,11 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-import "@darwinia/contracts-utils/contracts/ECDSA.sol";
-import "@darwinia/contracts-utils/contracts/Bitfield.sol";
-import "@darwinia/contracts-verify/contracts/MerkleProof.sol";
-import "@darwinia/contracts-verify/contracts/SparseMerkleMultiProof.sol";
 import "./ValidatorRegistry.sol";
+import "../../utils/ECDSA.sol";
+import "../../utils/Bitfield.sol";
+import "../../utils/MerkleProof.sol";
+import "../../utils/SparseMerkleMultiProof.sol";
 import "../../spec/BeefyCommitmentScheme.sol";
 import "../../../interfaces/ILightClient.sol";
 

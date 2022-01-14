@@ -6,10 +6,10 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/Pausable.sol";
 import "@darwinia/contracts-utils/contracts/DailyLimit.sol";
-import "@darwinia/contracts-bridge/contracts/interfaces/IRelay.sol";
 import "@darwinia/contracts-utils/contracts/Scale.sol";
 import "@darwinia/contracts-utils/contracts/SafeMath.sol";
 import { ScaleStruct } from "@darwinia/contracts-utils/contracts/Scale.struct.sol";
+import "../interfaces/IRelay.sol";
 import "../interfaces/IERC20.sol";
 import "../interfaces/ISettingsRegistry.sol";
 

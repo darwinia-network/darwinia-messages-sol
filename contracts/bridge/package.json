@@ -8,7 +8,7 @@
     "test": "npx hardhat test",
     "ci": "CI=true npx hardhat test && yarn mv-reporter",
     "mv-reporter": "mv gasReporterOutput.json ../../gasReporterOutput-bridge.json",
-    "docs": "solidity-docgen -t docs/templates && doctoc ./docs/ --maxlevel 3",
+    "docs": "solidity-docgen --solc-module solc-0.8 -t docs/templates && doctoc ./docs/ --maxlevel 3",
     "clean": "shx rm -rf cache artifacts abi"
   },
   "author": "Darwinia dev",
@@ -30,6 +30,7 @@
     "merkle-patricia-tree": "3.0.0",
     "merkletreejs": "^0.2.18",
     "shx": "^0.3.3",
+    "solc-0.8": "npm:solc@^0.8.11",
     "solidity-docgen": "^0.5.13"
   }
 }

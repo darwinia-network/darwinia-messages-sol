@@ -81,7 +81,7 @@ contract Bitfield {
     }
 
     function createBitfield(uint256[] memory bitsToSet, uint256 length)
-        internal 
+        internal
         pure
         returns (uint256[] memory bitfield)
     {
