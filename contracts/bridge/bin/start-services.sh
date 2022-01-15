@@ -26,18 +26,16 @@ strat_drml() {
     --tmp
 }
 
-# deploy_evm_contracts() {
-#   echo "Deploying evm contracts"
-#   (
-#     npx hardhat deploy --network localhost:evm --reset --export "$output_dir/evm_contracts.json"
-#   )
-#   echo "Exported contract artifacts: $output_dir/evm_contracts.json"
-# }
+deploy_evm_contracts() {
+  echo "Deploying evm contracts"
+  (
+    make deploy network_name=local-evm
+  )
+}
 
-# deploy_dvm_contracts() {
-#   echo "Deploying dvm contracts"
-#   (
-#     npx hardhat deploy --network localhost:evm --reset --export "$output_dir/dvm_contracts.json"
-#   )
-#   echo "Exported contract artifacts: $output_dir/dvm_contracts.json"
-# }
+deploy_dvm_contracts() {
+  echo "Deploying dvm contracts"
+  (
+    make deploy network_name=local-dvm
+  )
+}
