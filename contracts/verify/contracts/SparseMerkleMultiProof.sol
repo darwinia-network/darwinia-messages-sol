@@ -1,4 +1,6 @@
-pragma solidity >=0.6.0 <0.7.0;
+// SPDX-License-Identifier: MIT
+
+pragma solidity >=0.6.0;
 
 library SparseMerkleMultiProof {
 
@@ -67,5 +69,8 @@ library SparseMerkleMultiProof {
             hashes[tail] = hash;
             tail = (tail + 1) % (n + 1);
         }
+
+        // resolve warning
+        return false;
     }
 }
