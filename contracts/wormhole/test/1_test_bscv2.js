@@ -1,6 +1,9 @@
 const { expect } = require("chai");
 const { solidity } = require("ethereum-waffle");
 const chai = require("chai");
+const ethUtil = require('ethereumjs-util');
+const abi = require('ethereumjs-abi');
+const secp256k1 = require('secp256k1');
 
 chai.use(solidity);
 
@@ -194,6 +197,62 @@ describe("darwinia<>bsc mapping token tests", () => {
 
       expect(await mappedToken.name()).to.equal(tokenName + "[Darwinia>");
       expect(await mappedToken.symbol()).to.equal("x" + tokenSymbol);
-   });
+  });
+  it("test_bsc_guard", async function () {
+      const tokenName = "Darwinia Native Ring";
+      const tokenSymbol = "RING";
+      const originalContract = await ethers.getContractFactory("MappingERC20");
+      const originalToken = await originalContract.deploy();
+      await originalToken.deployed();
+      await originalToken.initialize(tokenName, tokenSymbol, 9);
+      const [owner] = await ethers.getSigners();
+      await originalToken.mint(owner.address, 1000);
+
+      // test guard
+      let wallets = [];
+      for (let i = 0; i < 3; i++) {
+          const wallet = ethers.Wallet.createRandom();
+          wallets.push(wallet);
+      }
+      wallets = wallets.sort((x, y) => {
+          return x.address.toLowerCase().localeCompare(y.address.toLowerCase())
+      });
+      const guardContract = await ethers.getContractFactory("Guard");
+      const guard = await guardContract.deploy([wallets[0].address, wallets[1].address, wallets[2].address], 3, 60, owner.address);
+      await guard.deployed();
+
+      await originalToken.approve(guard.address, 1000);
+      await guard.deposit(1, originalToken.address, wallets[1].address, 100);
+      await guard.deposit(2, originalToken.address, wallets[2].address, 200);
+
+      // encode value
+      const structHash =
+          ethUtil.keccak256(
+              abi.rawEncode(
+                  ['bytes4', 'bytes', 'uint256'],
+                  [abi.methodID('claim', [ 'uint256[]', 'bytes[]' ]),
+                  abi.rawEncode(['uint256[]'], [[1, 2]]),
+                  0]
+              )
+          );
+      // cannot claim without signatures
+      await expect(guard.claimByTimeout(2)).to.be.revertedWith("Guard: claim at invalid time");
+
+      const dataHash = await guard.encodeDataHash(structHash);
+      console.log("data hash", dataHash);
+      const signatures = wallets.map((wallet) => {
+          const address = wallet.address;
+          const privateKey = ethers.utils.arrayify(wallet.privateKey);
+          const signatureECDSA = secp256k1.ecdsaSign(ethers.utils.arrayify(dataHash), privateKey);
+          const ethRecID = signatureECDSA.recid + 27;
+          const signature = Uint8Array.from(
+              signatureECDSA.signature.join().split(',').concat(ethRecID)
+          );
+          return ethers.utils.hexlify(signature);
+      });
+      await guard.claim([1, 2], signatures);
+      expect(await originalToken.balanceOf(wallets[1].address)).to.equal(100);
+      expect(await originalToken.balanceOf(wallets[2].address)).to.equal(200);
+  });
 });
 

@@ -16,6 +16,8 @@ import "../../utils/Ownable.sol";
 import "../../utils/Pausable.sol";
 import "../interfaces/IBacking.sol";
 import "../interfaces/IERC20.sol";
+import "../interfaces/IGuard.sol";
+import "../interfaces/IInboundLane.sol";
 import "../interfaces/IMappingTokenFactory.sol";
 
 contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainFilter, IMappingTokenFactory, Pausable {
@@ -41,6 +43,8 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
     address public operator;
     // fee market
     address public feeMarket;
+    // guard
+    address public guard;
     // the mapping token list
     address[] public allMappingTokens;
     // salt=>mappingToken, the salt is derived from origin token on backing chain
@@ -86,6 +90,10 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
 
     function updateFeeMarket(address newFeeMarket) external onlyOwner {
         feeMarket = newFeeMarket;
+    }
+
+    function updateGuard(address newGuard) external onlyOwner {
+        guard = newGuard;
     }
 
     /**
@@ -289,7 +297,16 @@ contract MappingTokenFactory is Initializable, Ownable, DailyLimit, ICrossChainF
         require(mappingToken != address(0), "MappingTokenFactory:mapping token has not created");
         require(amount > 0, "MappingTokenFactory:can not receive amount zero");
         expendDailyLimit(mappingToken, amount);
-        IERC20(mappingToken).mint(recipient, amount);
+        if (guard != address(0)) {
+            IERC20(mappingToken).mint(address(this), amount);
+            require(IERC20(mappingToken).approve(guard, amount), "MappingTokenFactory:approve token transfer to guard failed");
+            IInboundLane.InboundLaneNonce memory inboundLaneNonce = IInboundLane(msg.sender).inboundLaneNonce();
+            // todo we should transform this messageId to bridged outboundLane messageId
+            uint256 messageId = IInboundLane(msg.sender).encodeMessageKey(inboundLaneNonce.last_delivered_nonce);
+            IGuard(guard).deposit(messageId, mappingToken, recipient, amount);
+        } else {
+            IERC20(mappingToken).mint(recipient, amount);
+        }
     }
 
     /**
