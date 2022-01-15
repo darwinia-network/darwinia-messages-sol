@@ -1,0 +1,24 @@
+enum Status {
+    Pending
+    Ready
+    Executed
+    Cancelled
+}
+
+type Operation @entity {
+  id: ID!
+  proposal: Proposal!
+  index: BigInt!
+  target: Bytes!
+  value: BigInt!
+  data: Bytes!
+}
+
+type Proposal @entity {
+  id: ID!
+  operations: [Operation!]! @derivedFrom(field: "proposal")
+  predecessor: Bytes!
+  delay: BigInt!
+  timestamp: BigInt!
+  status: Status!
+}

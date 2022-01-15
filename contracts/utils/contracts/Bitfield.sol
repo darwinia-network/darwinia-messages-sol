@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity >=0.6.0 <0.7.0;
+
+pragma solidity >=0.6.0;
 
 import "./Bits.sol";
 
@@ -80,7 +81,7 @@ contract Bitfield {
     }
 
     function createBitfield(uint256[] memory bitsToSet, uint256 length)
-        internal 
+        internal
         pure
         returns (uint256[] memory bitfield)
     {
