@@ -27,6 +27,8 @@ Generally, app layer cross-chain messages require validation of sourceAccount
 #### Declaration
 ```solidity
   function crossChainFilter(
+    uint32 bridgedChainPosition,
+    uint32 bridgedLanePosition,
     address sourceAccount,
     bytes payload
   ) external returns (bool)
@@ -38,7 +40,9 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`sourceAccount` | address | The derived DVM address of pallet ID which send the message
+|`bridgedChainPosition` | uint32 | The source chain position which send the message
+|`bridgedLanePosition` | uint32 | The source lane position which send the message
+|`sourceAccount` | address | The source contract address which send the message
 |`payload` | bytes | The calldata which encoded by ABI Encoding
 
 #### Returns:
