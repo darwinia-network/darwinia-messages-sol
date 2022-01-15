@@ -6,17 +6,18 @@ if [[ ${DEBUG} ]]; then
 	set -x
 fi
 
-# All contracts are output to `bin/addr/addresses.json` by default
-OUT_DIR=${OUT_DIR:-$PWD/bin/addr}
-ADDRESSES_FILE=${ADDRESSES_FILE:-$OUT_DIR/"addresses.json"}
-# default to localhost rpc
-ETH_RPC_URL=${ETH_RPC_URL:-http://localhost:8545}
+# All contracts are output to `bin/addr/{chain}/addresses.json` by default
+network_name=${NETWORK_NAME?}
+root_dir=$(realpath .)
+ADDRESSES_FILE=${ADDRESSES_FILE:-"${root_dir}/bin/addr/${network_name}.json"}
+CONFIG_FILE=${CONFIG_FILE:-"${root_dir}/bin/conf/${network_name}.json"}
+OUT_DIR=${DAPP_OUT-$root_dir/out}
 
 # green log helper
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 log() {
-	printf '%b\n' "${GREEN}${*}${NC}"
+	printf '%b\n' "${GREEN}${*}${NC}" >&2
 	echo ""
 }
 
@@ -53,7 +54,7 @@ cat >"$ADDRESSES_FILE" <<EOF
 }
 EOF
 
-# Call as `ETH_FROM=0x... ETH_RPC_URL=<url> deploy ContractName arg1 arg2 arg3`
+# Call as `ETH_FROM=0x... deploy ContractName arg1 arg2 arg3`
 # (or omit the env vars if you have already set them)
 deploy() {
 	NAME=$1
@@ -67,29 +68,31 @@ deploy() {
 	PATTERN=".contracts[\"$CONTRACT_PATH\"].$NAME"
 
 	# get the constructor's signature
-	ABI=$(jq -r "$PATTERN.abi" out/dapp.sol.json)
+	ABI=$(jq -r "$PATTERN.abi" $OUT_DIR/dapp.sol.json)
 	SIG=$(echo "$ABI" | seth --abi-constructor)
 
 	# get the bytecode from the compiled file
-	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" out/dapp.sol.json)
+	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
 
 	# estimate gas
-	GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --rpc-url "$ETH_RPC_URL")
+	GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --chain "$network_name")
 
 	# deploy
-	ADDRESS=$(dapp create "$NAME" $ARGS -- --gas "$GAS" --rpc-url "$ETH_RPC_URL")
+	ADDRESS=$(dapp create "$NAME" $ARGS -- --gas "$GAS" --chain "$network_name")
 
 	# save the addrs to the json
 	# TODO: It'd be nice if we could evolve this into a minimal versioning system
 	# e.g. via commit / chainid etc.
-	saveContract "$NAME" "$ADDRESS"
+	save_contract "$NAME" "$ADDRESS"
+
+  log "$NAME deployed at" $ADDRESS
 
 	echo "$ADDRESS"
 }
 
-# Call as `saveContract ContractName 0xYourAddress` to store the contract name
+# Call as `save_contract ContractName 0xYourAddress` to store the contract name
 # & address to the addresses json file
-saveContract() {
+save_contract() {
 	# create an empty json if it does not exist
 	if [[ ! -e $ADDRESSES_FILE ]]; then
 		echo "{}" >"$ADDRESSES_FILE"
@@ -105,13 +108,13 @@ estimate_gas() {
 	PATTERN=".contracts[\"src/$NAME.sol\"].$NAME"
 
 	# get the constructor's signature
-	ABI=$(jq -r "$PATTERN.abi" out/dapp.sol.json)
+	ABI=$(jq -r "$PATTERN.abi" $OUT_DIR/dapp.sol.json)
 	SIG=$(echo "$ABI" | seth --abi-constructor)
 
 	# get the bytecode from the compiled file
-	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" out/dapp.sol.json)
+	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
 	# estimate gas
-	GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --rpc-url "$ETH_RPC_URL")
+	GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --chain "$network_name")
 
 	TXPRICE_RESPONSE=$(curl -sL https://api.txprice.com/v1)
 	response=$(jq '.code' <<<"$TXPRICE_RESPONSE")
@@ -153,7 +156,17 @@ contract_size() {
 	PATTERN=".contracts[\"src/$NAME.sol\"].$NAME"
 
 	# get the bytecode from the compiled file
-	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" out/dapp.sol.json)
+	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
 	length=$(echo "$BYTECODE" | wc -m)
 	echo $(($length / 2))
+}
+
+load_conf() {
+  if [ -z "$1" ]
+    then
+      echo "conf: Invalid key"
+      exit 1
+  fi
+  local key; key=$1
+  jq -r "${key}" "$CONFIG_FILE"
 }

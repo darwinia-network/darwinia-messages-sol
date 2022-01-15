@@ -1,0 +1,23 @@
+{
+    "ChainMessageCommitter": {
+        "LaneMessageCommitters": [
+            {
+                "bridged_chain_pos": 0,
+                "lanes": [
+                    {
+                        "this_lane_pos": 0,
+                        "bridged_lane_pos": 1,
+                        "type": "out"
+                    },
+                    {
+                        "this_lane_pos": 1,
+                        "bridged_lane_pos": 0,
+                        "type": "in"
+                    }
+                ]
+            },
+            {}
+        ],
+        "this_chain_pos": 1
+    }
+}
