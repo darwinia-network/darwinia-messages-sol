@@ -60,11 +60,11 @@ contract Sub2SubBacking is Initializable, Ownable, DailyLimit, Pausable, Mapping
         _changeDailyLimit(token, amount);
     }
 
-    function unpause() external onlyOwner {
+    function unpause() external onlyOperatorOrOwner {
         _unpause();
     }
 
-    function pause() external onlyOwner {
+    function pause() external onlyOperatorOrOwner {
         _pause();
     }
 
