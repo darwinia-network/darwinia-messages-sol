@@ -25,7 +25,7 @@ describe("sub<>sub mapping token tests", () => {
       ]);
   });
 
-  it("test_s2s_flow", async function () {
+  it("test_s2s_native", async function () {
       // deploy erc20 logic
       const mappingTokenContract = await ethers.getContractFactory("MappingERC20");
       const mappingToken = await mappingTokenContract.deploy();
@@ -229,6 +229,117 @@ describe("sub<>sub mapping token tests", () => {
       // check balance
       expect(await mappingKton.balanceOf(owner.address)).to.equal(999-100);
       expect(await mappingKton.balanceOf(mtf.address)).to.equal(100);
+  });
+
+  it("test_s2s_erc20", async function () {
+      // deploy kton contract
+      const ktonContract = await ethers.getContractFactory("MappingERC20");
+      const wkton = await ktonContract.deploy();
+      await wkton.deployed();
+      await wkton.initialize("Darwinia wkton", "WKTON", 18);
+
+      const [owner] = await ethers.getSigners();
+      wkton.mint(owner.address, 10000);
+
+      // deploy backing
+      const s2s_backing = await ethers.getContractFactory("Sub2SubBacking");
+      const backing = await s2s_backing.deploy();
+      await backing.deployed();
+
+      // init owner
+      await backing.initialize();
+      // owner set some params
+      await backing.setMessagePalletIndex(43);
+      //await backing.changeDailyLimit(1000000000);
+
+      // impersonate system account
+      const system_account = await backing.SYSTEM_ACCOUNT();
+      await hre.network.provider.request({
+          method: "hardhat_impersonateAccount",
+          params: [system_account],
+      });
+      const system_signer = await ethers.getSigner(system_account)
+
+      // register
+      await backing.registerErc20Token(
+          1180,
+          100000000,
+          0x726f6c69,
+          wkton.address,
+          await wkton.name(),
+          await wkton.symbol(),
+          await wkton.decimals()
+      );
+      expect(await backing.registeredTokens(wkton.address)).to.equal(false);
+      var precompile_bridger = await ethers.getContractAt("MockSubToSubBridge", "0x0000000000000000000000000000000000000018");
+      const message_nonce = await precompile_bridger.outbound_latest_generated_nonce("0x726f6c69");
+      await backing.connect(system_signer).confirmRemoteLockOrRegister(
+          0x726f6c69,
+          message_nonce,
+          true
+      );
+      expect(await backing.registeredTokens(wkton.address)).to.equal(true);
+
+      // lock and remote issue
+      await expect(backing.lockAndRemoteIssuing(
+        1180,
+        1000000000,
+        0x726f6c69,
+        wkton.address,
+        "0x0000000000000000000000000000000000000001",
+        1000)).to.be.revertedWith("ERC20: transfer amount exceeds allowance");
+      // must approve first
+      await wkton.approve(backing.address, 100000);
+      await backing.lockAndRemoteIssuing(
+        1180,
+        1000000000,
+        0x726f6c69,
+        wkton.address,
+        "0x0000000000000000000000000000000000000001",
+        1000);
+      expect(await wkton.balanceOf(owner.address)).to.equal(10000 - 1000);
+      // confirm failed
+      const lock_nonce = await precompile_bridger.outbound_latest_generated_nonce("0x726f6c69");
+      await backing.connect(system_signer).confirmRemoteLockOrRegister(
+          0x726f6c69,
+          lock_nonce,
+          false
+      );
+      expect(await wkton.balanceOf(owner.address)).to.equal(10000);
+      // confirm successed
+      await backing.lockAndRemoteIssuing(
+        1180,
+        1000000000,
+        0x726f6c69,
+        wkton.address,
+        "0x0000000000000000000000000000000000000001",
+        1000);
+      expect(await wkton.balanceOf(owner.address)).to.equal(10000 - 1000);
+      const lock_success_nonce = await precompile_bridger.outbound_latest_generated_nonce("0x726f6c69");
+      await backing.connect(system_signer).confirmRemoteLockOrRegister(
+          0x726f6c69,
+          lock_success_nonce,
+          true
+      )
+      expect(await wkton.balanceOf(owner.address)).to.equal(10000 - 1000);
+
+      await expect(backing.connect(system_signer).unlockFromRemote(
+        wkton.address,
+        owner.address,
+        500
+      )).to.be.revertedWith("DailyLimit:: expendDailyLimit: Out ot daily limit.");
+      await backing.changeDailyLimit(wkton.address, 100000);
+      await backing.connect(system_signer).unlockFromRemote(
+          wkton.address,
+          owner.address,
+          500
+      );
+      expect(await wkton.balanceOf(owner.address)).to.equal(10000 - 1000 + 500);
+      await expect(backing.connect(system_signer).unlockFromRemote(
+        wkton.address,
+        owner.address,
+        600
+      )).to.be.revertedWith("ERC20: transfer amount exceeds balance");
   });
 });
 
