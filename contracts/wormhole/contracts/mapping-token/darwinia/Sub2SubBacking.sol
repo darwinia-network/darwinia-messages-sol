@@ -2,9 +2,9 @@
 pragma solidity ^0.8.10;
 import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
-import "@darwinia/contracts-utils/contracts/DailyLimit.sol";
-import "@darwinia/contracts-utils/contracts/Ownable.sol";
-import "@darwinia/contracts-utils/contracts/Pausable.sol";
+import "../../utils/DailyLimit.sol";
+import "../../utils/Ownable.sol";
+import "../../utils/Pausable.sol";
 import "../../precompile/sub2sub.sol";
 import "../interfaces/IERC20.sol";
 import "./MappingTokenAddress.sol";
