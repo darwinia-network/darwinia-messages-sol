@@ -21,6 +21,17 @@ class SubClient {
 
     const InboundLane = await artifacts.readArtifact("InboundLane")
     this.inboundLane = new ethers.Contract(addresses.InboundLane, InboundLane.abi, this.provider)
+
+    let overrides = {
+        value: ethers.utils.parseEther("100")
+    }
+    let prev = "0x0000000000000000000000000000000000000001"
+    privs.forEach(async (priv, i) => {
+      let fee = fees[i]
+      let signer = new ethers.Wallet(priv, this.provider)
+      await this.feeMarket.connect(signer).enroll(prev, fee, overrides)
+      prev = signer.address
+    })
   }
 
 }

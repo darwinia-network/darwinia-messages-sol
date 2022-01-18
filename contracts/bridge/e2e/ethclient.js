@@ -1,4 +1,5 @@
 const addresses = require("../bin/addr/local-evm.json")
+
 /**
  * The Ethereum client for Bridge interaction
  */
@@ -8,7 +9,7 @@ class EthClient {
     this.provider = new ethers.providers.JsonRpcProvider(endpoint)
   }
 
-  async init() {
+  async init(privs, fees) {
     const FeeMarket = await artifacts.readArtifact("FeeMarket");
     this.feeMarket = new ethers.Contract(addresses.FeeMarket, FeeMarket.abi, this.provider)
 
@@ -20,6 +21,17 @@ class EthClient {
 
     const InboundLane = await artifacts.readArtifact("InboundLane")
     this.inboundLane = new ethers.Contract(addresses.InboundLane, InboundLane.abi, this.provider)
+
+    let overrides = {
+        value: ethers.utils.parseEther("100")
+    }
+    let prev = "0x0000000000000000000000000000000000000001"
+    privs.forEach(async (priv, i) => {
+      let fee = fees[i]
+      let signer = new ethers.Wallet(priv, this.provider)
+      await this.feeMarket.connect(signer).enroll(prev, fee, overrides)
+      prev = signer.address
+    })
   }
 
 }
