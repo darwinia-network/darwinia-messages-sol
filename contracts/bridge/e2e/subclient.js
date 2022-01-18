@@ -10,6 +10,12 @@ class SubClient {
   }
 
   async init() {
+    const ChainMessageCommitter = await artifacts.readArtifact("ChainMessageCommitter");
+    this.chainMessageCommitter = new ethers.Contract(addresses.ChainMessageCommitter, ChainMessageCommitter.abi, this.provider)
+
+    const LaneMessageCommitter = await artifacts.readArtifact("LaneMessageCommitter");
+    this.laneMessageCommitter = new ethers.Contract(addresses.LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
+
     const FeeMarket = await artifacts.readArtifact("FeeMarket");
     this.feeMarket = new ethers.Contract(addresses.FeeMarket, FeeMarket.abi, this.provider)
 
@@ -17,10 +23,10 @@ class SubClient {
     this.lightClient = new ethers.Contract(addresses.BSCLightClient, BSCLightClient.abi, this.provider)
 
     const OutboundLane = await artifacts.readArtifact("OutboundLane")
-    this.outboundLane = new ethers.Contract(addresses.OutboundLane, OutboundLane.abi, this.provider)
+    this.outbound = new ethers.Contract(addresses.OutboundLane, OutboundLane.abi, this.provider)
 
     const InboundLane = await artifacts.readArtifact("InboundLane")
-    this.inboundLane = new ethers.Contract(addresses.InboundLane, InboundLane.abi, this.provider)
+    this.inbound = new ethers.Contract(addresses.InboundLane, InboundLane.abi, this.provider)
 
     let overrides = {
         value: ethers.utils.parseEther("100")
