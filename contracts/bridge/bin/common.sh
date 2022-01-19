@@ -11,7 +11,8 @@ network_name=${NETWORK_NAME?}
 root_dir=$(realpath .)
 ADDRESSES_FILE=${ADDRESSES_FILE:-"${root_dir}/bin/addr/${network_name}.json"}
 CONFIG_FILE=${CONFIG_FILE:-"${root_dir}/bin/conf/${network_name}.json"}
-OUT_DIR=${DAPP_OUT-$root_dir/out}
+OUT_DIR=$root_dir/out
+
 
 ETH_RPC_URL=${ETH_RPC_URL:-http://localhost:8545}
 
@@ -63,7 +64,7 @@ deploy() {
 	ARGS=${@:2}
 
 	# find file path
-	CONTRACT_PATH=$(find . -name $NAME.sol)
+	CONTRACT_PATH=$(find ./src -name $NAME.sol)
 	CONTRACT_PATH=${CONTRACT_PATH:2}
 
 	# select the filename and the contract in it
@@ -77,10 +78,10 @@ deploy() {
 	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
 
 	# estimate gas
-	GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --rpc-url "$ETH_RPC_URL")
+	GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
 
 	# deploy
-	ADDRESS=$(dapp create "$NAME" $ARGS -- --gas "$GAS" --rpc-url "$ETH_RPC_URL")
+	ADDRESS=$(dapp create "$NAME" $ARGS -- --gas "$GAS" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
 
 	# save the addrs to the json
 	# TODO: It'd be nice if we could evolve this into a minimal versioning system
@@ -116,7 +117,7 @@ estimate_gas() {
 	# get the bytecode from the compiled file
 	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
 	# estimate gas
-	GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --rpc-url "$ETH_RPC_URL")
+	GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
 
 	TXPRICE_RESPONSE=$(curl -sL https://api.txprice.com/v1)
 	response=$(jq '.code' <<<"$TXPRICE_RESPONSE")

@@ -1,5 +1,6 @@
 # Make dependencies available
 export DAPP_REMAPPINGS=$(cat remappings.txt)
+export DAPP_SRC=src
 export DAPP_OUT=out
 
 export DAPP_SOLC_VERSION=0.8.11

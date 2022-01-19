@@ -10,19 +10,17 @@ start_geth() {
 }
 
 strat_drml() {
-  drml \
-    --chain=template-dev \
-    --validator \
-    --execution=Native \
-    --no-telemetry \
-    --no-prometheus \
-    --sealing=Manual \
-    --no-grandpa \
-    --force-authoring \
-    -levm=debug \
+  ./drml \
+    --rpc-cors all \
+    --allow-private-ipv4 \
     --port=30333 \
+    --unsafe-rpc-external \
+    --unsafe-ws-external \
+    --rpc-methods=Unsafe \
     --rpc-port=9933 \
     --ws-port=9944 \
+    -levm=debug \
+    --dev \
     --tmp
 }
 

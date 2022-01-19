@@ -29,9 +29,9 @@ const generate_storage_proof = async (nonce) => {
       utils.hexZeroPad(nonce, 32),
       LANE_MESSAGE_SLOT,
   ])
-  console.log("New Key Preimage:", ethers.utils.hexlify(newKeyPreimage))
+  log("New Key Preimage:", ethers.utils.hexlify(newKeyPreimage))
   const key = ethers.utils.keccak256(newKeyPreimage)
-  console.log("New Key:", key)
+  log("New Key:", key)
   const laneMessageProof = await get_storage_proof([key])
   const proof = {
     "accountProof": laneIdProof.accountProof,
@@ -96,7 +96,9 @@ describe("bridge e2e test: verify message storage proof", () => {
   })
 
   it("1", async function () {
-    // await subClient.lightClient.relayHeader(c)
+    const header = ethClient.provider.getBlock("latest")
+    log(header)
+    // await subClient.relay_header(header.hash)
   })
 
   it("2", async function () {

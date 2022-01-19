@@ -2,6 +2,9 @@
 
 set -eo pipefail
 
+export ETH_RPC_URL=http://192.168.2.100:8545
+export ETH_FROM=0x7D5aC8FFc242B4bAB89B77Beacc4d88ED7BDB2c0
+
 # import the deployment helpers
 . $(dirname $0)/common.sh
 
