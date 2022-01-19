@@ -7,6 +7,8 @@
   "scripts": {
     "build": "hardhat compile",
     "test": "npx hardhat test",
+    "deploy-local": "npx hardhat run --network localhost",
+    "deploy-remote": "npx hardhat run --network",
     "clean": "shx rm -rf cache artifacts abi"
   },
   "devDependencies": {

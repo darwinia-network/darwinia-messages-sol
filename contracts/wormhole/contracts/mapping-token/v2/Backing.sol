@@ -52,7 +52,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     // (messageId => lockedInfo)
     mapping(uint256 => LockedInfo) public lockMessages;
 
-    event NewInBoundLaneAdded(address backingAddress, address inboundLane);
+    event NewInBoundLaneAdded(address inboundLane);
     event NewOutBoundLaneAdded(uint32 bridgedLanePosition, address outboundLane);
     event NewErc20TokenRegistered(uint256 messageId, address token);
     event TokenLocked(uint256 messageId, address token, address recipient, uint256 amount);
@@ -114,11 +114,11 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
     }
 
     // here add InBoundLane, and remote issuing module must add the corresponding OutBoundLane
-    function addInboundLane(address mappingTokenFactory, address inboundLane) external onlyOwner {
+    function addInboundLane(address inboundLane) external onlyOwner {
         (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(inboundLane).getLaneInfo();
         require(remoteChainPosition == bridgedChainPosition, "Backing:Invalid bridged chain position");
         inboundLanes[bridgedLanePosition] = inboundLane;
-        emit NewInBoundLaneAdded(mappingTokenFactory, inboundLane);
+        emit NewInBoundLaneAdded(inboundLane);
     }
 
     // here add OutBoundLane, and remote issuing module must add the corresponding InBoundLane
