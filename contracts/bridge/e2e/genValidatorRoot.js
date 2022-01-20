@@ -1,5 +1,5 @@
 const { keccakFromHexString } = require("ethereumjs-util");
-const { addrs } = require("./fixture")
+const { addrs, privs } = require("./fixture")
 const { SparseMerkleTree } = require('@darwinia/contracts-verify/src/utils/sparseMerkleTree')
 
 function roundUpToPow2(len) {
@@ -11,6 +11,13 @@ function roundUpToPow2(len) {
 }
 
 async function genValidatorRoot() {
+  const walletsByLeaf = privs.reduce((accum, priv) => {
+    const wallet = new ethers.Wallet(priv)
+    const leaf = '0x' + keccakFromHexString(wallet.address).toString('hex')
+    accum[leaf] = wallet
+    return accum
+  }, {})
+
   let leafs = addrs
   let len = addrs.length
   let width = roundUpToPow2(len)
@@ -21,7 +28,7 @@ async function genValidatorRoot() {
   const leavesHashed = leafs.map(addr => keccakFromHexString(addr));
   const validatorsMerkleTree = new SparseMerkleTree(leavesHashed);
   const root = validatorsMerkleTree.rootHex()
-  return root
+  return {validatorsMerkleTree, leavesHashed, addrsByLeaf, root}
 }
 
 genValidatorRoot().then(console.log)

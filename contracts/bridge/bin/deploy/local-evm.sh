@@ -2,8 +2,10 @@
 
 set -eo pipefail
 
+export NETWORK_NAME=local-evm
 export ETH_RPC_URL=http://192.168.2.100:8545
-export ETH_FROM=0x7D5aC8FFc242B4bAB89B77Beacc4d88ED7BDB2c0
+export ETH_FROM=0x56d64Ae2FC5B4845098fe87cC3928E88eee22174
+export ETH_RPC_ACCOUNTS=true
 
 # import the deployment helpers
 . $(dirname $0)/common.sh

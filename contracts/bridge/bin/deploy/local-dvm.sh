@@ -2,6 +2,7 @@
 
 set -eo pipefail
 
+export NETWORK_NAME=local-dvm
 export ETH_RPC_URL=http://192.168.2.100:9933
 export ETH_FROM=0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b
 

@@ -9,8 +9,8 @@ fi
 # All contracts are output to `bin/addr/{chain}/addresses.json` by default
 network_name=${NETWORK_NAME?}
 root_dir=$(realpath .)
-ADDRESSES_FILE=${ADDRESSES_FILE:-"${root_dir}/bin/addr/${network_name}.json"}
-CONFIG_FILE=${CONFIG_FILE:-"${root_dir}/bin/conf/${network_name}.json"}
+ADDRESSES_FILE="${root_dir}/bin/addr/${network_name}.json"
+CONFIG_FILE="${root_dir}/bin/conf/${network_name}.json"
 OUT_DIR=$root_dir/out
 
 

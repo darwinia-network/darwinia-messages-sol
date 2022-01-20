@@ -29,7 +29,8 @@ estimate :; ./bin/estimate-gas.sh ${contract}
 size     :; ./bin/contract-size.sh ${contract}
 
 # Deployment helpers
-deploy :; @./bin/deploy.sh $(network_name)
+deploy       :; @./bin/deploy.sh $(network_name)
+deploy-local :; @./bin/deploy-local.sh
 
 # verify on Etherscan
 verify:; ETH_RPC_URL=$(call network,$(network_name)) dapp verify-contract src/Greeter.sol:Greeter $(contract_address)

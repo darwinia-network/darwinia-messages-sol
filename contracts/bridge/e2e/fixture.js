@@ -32,5 +32,6 @@ async function bootstrap() {
 
 module.exports = {
   addrs,
+  privs,
   bootstrap
 }

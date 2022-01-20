@@ -98,7 +98,7 @@ describe("bridge e2e test: verify message storage proof", () => {
   it("1", async function () {
     const header = ethClient.provider.getBlock("latest")
     log(header)
-    // await subClient.relay_header(header.hash)
+    await subClient.relay_header(header.hash)
   })
 
   it("2", async function () {
@@ -120,7 +120,8 @@ describe("bridge e2e test: verify message storage proof", () => {
   })
 
   it("3", async function () {
-    // await subClient.lightClient.relayHeader(c)
+    const blockNumber = await subClient.block_header()
+    await ethClient.relay_header(c)
   })
 
   it("4", async function () {
