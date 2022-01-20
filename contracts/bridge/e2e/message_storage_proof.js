@@ -9,15 +9,15 @@ const log = console.log
 const LANE_IDENTIFY_SLOT="0x0000000000000000000000000000000000000000000000000000000000000000"
 const LANE_NONCE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000001"
 const LANE_MESSAGE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000002"
+const overrides = { value: ethers.utils.parseEther("30") }
 let ethClient, subClient
-let overrides = { value: ethers.utils.parseEther("30") }
 
 const get_storage_proof = async (storageKeys, blockNumber = 'latest') => {
   return await ethClient.provider.send("eth_getProof",
     [
       ethClient.outbound.address,
       storageKeys,
-      ethers.utils.hexlify(blockNumber)
+      blockNumber
     ]
   )
 }
@@ -26,19 +26,21 @@ const generate_storage_proof = async (nonce) => {
   const laneIdProof = await get_storage_proof([LANE_IDENTIFY_SLOT])
   const laneNonceProof = await get_storage_proof([LANE_NONCE_SLOT])
   const newKeyPreimage = ethers.utils.concat([
-      utils.hexZeroPad(nonce, 32),
+      ethers.utils.hexZeroPad(nonce, 32),
       LANE_MESSAGE_SLOT,
   ])
-  log("New Key Preimage:", ethers.utils.hexlify(newKeyPreimage))
-  const key = ethers.utils.keccak256(newKeyPreimage)
-  log("New Key:", key)
-  const laneMessageProof = await get_storage_proof([key])
+  const key0 = ethers.utils.keccak256(newKeyPreimage)
+  const key1 = BigNumber.from(key0).add(1).toHexString()
+  const key2 = BigNumber.from(key0).add(2).toHexString()
+  const laneMessageProof = await get_storage_proof([key0, key1, key2])
   const proof = {
     "accountProof": laneIdProof.accountProof,
-    "laneIDProof": laneIdProof.storageProof,
-    "laneNonceProof": laneNonceProof.storageProof,
-    "laneMessagesProof": laneMessageProof.storageProof,
+    "laneIDProof": laneIdProof.storageProof[0].proof,
+    "laneNonceProof": laneNonceProof.storageProof[0].proof,
+    "laneMessagesProof": laneMessageProof.storageProof.map((p) => p.proof),
   }
+  log(JSON.stringify(laneIdProof, null, 2))
+  // log(JSON.stringify(proof, null, 2))
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(bytes[] accountProof, bytes[] laneIDProof, bytes[] laneNonceProof, bytes[][] laneMessagesProof)"
     ], [ proof ])
@@ -79,6 +81,9 @@ const generate_message_proof = async () => {
 describe("bridge e2e test: verify message storage proof", () => {
 
   before(async () => {
+  })
+
+  it("bootstrap", async () => {
     const clients = await bootstrap()
     ethClient = clients.ethClient
     subClient = clients.subClient
@@ -96,16 +101,18 @@ describe("bridge e2e test: verify message storage proof", () => {
   })
 
   it("1", async function () {
-    const header = ethClient.provider.getBlock("latest")
-    log(header)
-    await subClient.relay_header(header.hash)
+    const header = await ethClient.block_header()
+    await subClient.relay_header(header.stateRoot)
   })
 
   it("2", async function () {
+    const overrides = { gasLimit: 1000000 }
     const o = await ethClient.outbound.data()
     const calldata = Array(o.messages.length).fill("0x")
-    const proof = await generate_storage_proof()
-    const tx = await subClient.inbound.receive_messages_proof(o, calldata, proof)
+    const proof = await generate_storage_proof(1)
+    log(proof)
+    const tx = await subClient.inbound.receive_messages_proof(o, calldata, proof, overrides)
+    log(tx)
     await expect(tx)
       .to.emit(subClient.inbound, "MessageDispatched")
       .withArgs(
@@ -120,8 +127,9 @@ describe("bridge e2e test: verify message storage proof", () => {
   })
 
   it("3", async function () {
-    const blockNumber = await subClient.block_header()
-    await ethClient.relay_header(c)
+    const header = await subClient.block_header()
+    const message_root = await subClient.chainMessageCommitter['commitment()']()
+    await ethClient.relay_header(message_root, header.number.toString())
   })
 
   it("4", async function () {

@@ -12,7 +12,7 @@ class SubClient {
     this.sub_provider = new WsProvider(ws_endpoint)
   }
 
-  async init() {
+  async init(wallets, fees) {
     this.api = await ApiPromise.create({
       provider: this.sub_provider
     })
@@ -29,35 +29,39 @@ class SubClient {
     this.feeMarket = new ethers.Contract(addresses.FeeMarket, FeeMarket.abi, this.dvm_provider)
 
     const BSCLightClient = await artifacts.readArtifact("BSCLightClient")
-    this.lightClient = new ethers.Contract(addresses.BSCLightClient, BSCLightClient.abi, this.dvm_provider)
+    const lightClient = new ethers.Contract(addresses.BSCLightClient, BSCLightClient.abi, this.dvm_provider)
 
     const OutboundLane = await artifacts.readArtifact("OutboundLane")
-    this.outbound = new ethers.Contract(addresses.OutboundLane, OutboundLane.abi, this.dvm_provider)
+    const outbound = new ethers.Contract(addresses.OutboundLane, OutboundLane.abi, this.dvm_provider)
 
     const InboundLane = await artifacts.readArtifact("InboundLane")
-    this.inbound = new ethers.Contract(addresses.InboundLane, InboundLane.abi, this.dvm_provider)
+    const inbound = new ethers.Contract(addresses.InboundLane, InboundLane.abi, this.dvm_provider)
 
-    let overrides = {
-        value: ethers.utils.parseEther("100")
-    }
     let prev = "0x0000000000000000000000000000000000000001"
-    privs.forEach(async (priv, i) => {
+    for(let i=0; i<wallets.length; i++) {
       let fee = fees[i]
-      let signer = new ethers.Wallet(priv, this.dvm_provider)
-      await this.feeMarket.connect(signer).enroll(prev, fee, overrides)
+      let signer = wallets[i]
+      await this.feeMarket.connect(signer.connect(this.dvm_provider)).enroll(prev, fee, {
+        value: ethers.utils.parseEther("100")
+      })
       prev = signer.address
-    })
+    }
+
+    let signer = wallets[0].connect(this.dvm_provider)
+    this.lightClient = lightClient.connect(signer)
+    this.outbound = outbound.connect(signer)
+    this.inbound = inbound.connect(signer)
   }
 
   async relay_header(state_root) {
     const tx = await this.api.tx.bsc.setStateRoot(state_root).signAndSend(this.alice)
-    console.log(`Submitted with hash: ${tx}`)
+    console.log(`Header relay tx submitted with hash: ${tx}`)
   }
 
-  async block_header(hash) {
-    const header = await api.derive.chain.getHeader()
-    console.log(`#${header.number}: ${header.author}`)
-    return header.number
+  async block_header() {
+    const header = await this.api.rpc.chain.getHeader();
+    console.log(`last block #${header.number} has hash ${header.hash}`);
+    return header
   }
 
 }
