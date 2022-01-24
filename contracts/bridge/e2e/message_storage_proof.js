@@ -89,21 +89,21 @@ describe("bridge e2e test: verify message storage proof", () => {
     subClient = clients.subClient
   })
 
-  it("0", async function () {
-    const tx = await ethClient.outbound.send_message(
-      "0x0000000000000000000000000000000000000000",
-      "0x",
-      overrides
-    )
-    await expect(tx)
-      .to.emit(ethClient.outbound, "MessageAccepted")
-      .withArgs(1, "0x")
-  })
+  // it("0", async function () {
+  //   const tx = await ethClient.outbound.send_message(
+  //     "0x0000000000000000000000000000000000000000",
+  //     "0x",
+  //     overrides
+  //   )
+  //   await expect(tx)
+  //     .to.emit(ethClient.outbound, "MessageAccepted")
+  //     .withArgs(1, "0x")
+  // })
 
-  it("1", async function () {
-    const header = await ethClient.block_header()
-    await subClient.relay_header(header.stateRoot)
-  })
+  // it("1", async function () {
+  //   const header = await ethClient.block_header()
+  //   await subClient.relay_header(header.stateRoot)
+  // })
 
   it("2", async function () {
     const overrides = { gasLimit: 1000000 }
@@ -126,20 +126,20 @@ describe("bridge e2e test: verify message storage proof", () => {
       )
   })
 
-  it("3", async function () {
-    const header = await subClient.block_header()
-    const message_root = await subClient.chainMessageCommitter['commitment()']()
-    await ethClient.relay_header(message_root, header.number.toString())
-  })
+  // it("3", async function () {
+  //   const header = await subClient.block_header()
+  //   const message_root = await subClient.chainMessageCommitter['commitment()']()
+  //   await ethClient.relay_header(message_root, header.number.toString())
+  // })
 
-  it("4", async function () {
-    await receive_messages_delivery_proof(sourceOutbound, targetOutbound, targetInbound, 1, 1)
-    const i = await subClient.inbound.data()
-    const proof = await generate_message_proof()
-    const tx = ethClient.outbound.receive_messages_delivery_proof(i, proof)
-    await expect(tx)
-      .to.emit(ethClient.outbound, "MessagesDelivered")
-      .withArgs(1, 1, 0)
-  })
+  // it("4", async function () {
+  //   await receive_messages_delivery_proof(sourceOutbound, targetOutbound, targetInbound, 1, 1)
+  //   const i = await subClient.inbound.data()
+  //   const proof = await generate_message_proof()
+  //   const tx = ethClient.outbound.receive_messages_delivery_proof(i, proof)
+  //   await expect(tx)
+  //     .to.emit(ethClient.outbound, "MessagesDelivered")
+  //     .withArgs(1, 1, 0)
+  // })
 
 })
