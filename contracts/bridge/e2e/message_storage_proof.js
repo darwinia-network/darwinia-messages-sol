@@ -47,13 +47,13 @@ const generate_storage_proof = async (nonce) => {
 }
 
 const get_message_proof = async () => {
-  const thisChainPos = subClient.inbound.thisChainPosition()
-  const bridgedChainPos = subClient.inbound.bridgedChainPosition()
+  const thisChainPos = await subClient.inbound.thisChainPosition()
+  const bridgedChainPos = await subClient.inbound.bridgedChainPosition()
   const c0 = await subClient.chainMessageCommitter['commitment(uint256)'](thisChainPos)
   const c1 = await subClient.chainMessageCommitter['commitment(uint256)'](bridgedChainPos)
-  const c = await subClient.chainMessageCommitter['commitment()']
-  const thisInLanePos = await subClient.inbound.thisLanePosition()
-  const inb = await subClient.laneMessageCommitter['commitment(uint256)'](thisInLanePos)
+  const c = await subClient.chainMessageCommitter['commitment()']()
+  const thisOutLanePos = await subClient.outbound.thisLanePosition()
+  const outb = await subClient.laneMessageCommitter['commitment(uint256)'](thisOutLanePos)
   const chainProof = {
     root: c,
     count: 2,
@@ -62,20 +62,22 @@ const get_message_proof = async () => {
   const laneProof = {
     root: c1,
     count: 2,
-    proof: [inb]
+    proof: [outb]
   }
   return {chainProof, laneProof}
 }
 
 const generate_message_proof = async () => {
   const proof = await get_message_proof()
+  log(proof)
   return ethers.utils.defaultAbiCoder.encode([
-    "tuple(tuple(bytes32 root, uint256 count, bytes32[] proof) chainProof, tuple(bytes32 root, uint256 count, bytes32[] root) laneProof)"
-  ],[
-    [
-      proof
-    ]
-  ])
+    "tuple(tuple(bytes32,uint256,bytes32[]),tuple(bytes32,uint256,bytes32[]))"
+    ], [
+      [
+        [proof.chainProof.root, proof.chainProof.count, proof.chainProof.proof],
+        [proof.laneProof.root, proof.laneProof.count, proof.laneProof.proof]
+      ]
+    ])
 }
 
 describe("bridge e2e test: verify message storage proof", () => {
@@ -89,59 +91,60 @@ describe("bridge e2e test: verify message storage proof", () => {
     subClient = clients.subClient
   })
 
-  // it("0", async function () {
-  //   const tx = await ethClient.outbound.send_message(
-  //     "0x0000000000000000000000000000000000000000",
-  //     "0x",
-  //     overrides
-  //   )
-  //   await expect(tx)
-  //     .to.emit(ethClient.outbound, "MessageAccepted")
-  //     .withArgs(1, "0x")
-  // })
+  it("0", async function () {
+    const tx = await ethClient.outbound.send_message(
+      "0x0000000000000000000000000000000000000000",
+      "0x",
+      overrides
+    )
+    await expect(tx)
+      .to.emit(ethClient.outbound, "MessageAccepted")
+      .withArgs(1, "0x")
+  })
 
-  // it("1", async function () {
-  //   const header = await ethClient.block_header()
-  //   await subClient.relay_header(header.stateRoot)
-  // })
+  it("1", async function () {
+    const header = await ethClient.block_header()
+    await subClient.relay_header(header.stateRoot)
+  })
 
   it("2", async function () {
-    const overrides = { gasLimit: 10000000 }
+    const overrides = { gasLimit: 6000000 }
     const o = await ethClient.outbound.data()
     const calldata = Array(o.messages.length).fill("0x")
     const proof = await generate_storage_proof(1)
-    log(JSON.stringify(o, null, 2))
+    log(JSON.stringify(o, null, 1))
     log(await ethClient.outbound.commitment())
     // log(proof)
     const tx = await subClient.inbound.receive_messages_proof(o, calldata, proof, overrides)
-    log(tx)
+    log(await tx.wait())
     await expect(tx)
       .to.emit(subClient.inbound, "MessageDispatched")
       .withArgs(
-        ethClient.outbound.thisChainPosition(),
-        ethClient.outbound.thisLanePosition(),
-        ethClient.outbound.bridgedChainPosition(),
-        ethClient.outbound.bridgedLanePosition(),
+        await ethClient.outbound.thisChainPosition(),
+        await ethClient.outbound.thisLanePosition(),
+        await ethClient.outbound.bridgedChainPosition(),
+        await ethClient.outbound.bridgedLanePosition(),
         1,
         false,
         "0x4c616e653a204d65737361676543616c6c52656a6563746564"
       )
   })
 
-  // it("3", async function () {
-  //   const header = await subClient.block_header()
-  //   const message_root = await subClient.chainMessageCommitter['commitment()']()
-  //   await ethClient.relay_header(message_root, header.number.toString())
-  // })
+  it("3", async function () {
+    const header = await subClient.block_header()
+    const message_root = await subClient.chainMessageCommitter['commitment()']()
+    await ethClient.relay_header(message_root, header.number.toString())
+  })
 
-  // it("4", async function () {
-  //   await receive_messages_delivery_proof(sourceOutbound, targetOutbound, targetInbound, 1, 1)
-  //   const i = await subClient.inbound.data()
-  //   const proof = await generate_message_proof()
-  //   const tx = ethClient.outbound.receive_messages_delivery_proof(i, proof)
-  //   await expect(tx)
-  //     .to.emit(ethClient.outbound, "MessagesDelivered")
-  //     .withArgs(1, 1, 0)
-  // })
+  it("4", async function () {
+    const overrides = { gasLimit: 6000000 }
+    const i = await subClient.inbound.data()
+    const proof = await generate_message_proof()
+    const tx = await ethClient.outbound.receive_messages_delivery_proof(i, proof, overrides)
+    log(tx)
+    await expect(tx)
+      .to.emit(ethClient.outbound, "MessagesDelivered")
+      .withArgs(1, 1, 0)
+  })
 
 })
