@@ -13,18 +13,20 @@ interface IBSCBridge {
         bytes[] calldata accountProof,
         bytes32 storageKey,
         bytes[] calldata storageProof
-    ) external pure returns (bytes memory value);
+    ) external view returns (bytes memory value);
 
     function verify_multi_storage_proof(
         address account,
         bytes[] calldata accountProof,
         bytes32[] calldata storageKeys,
         bytes[][] calldata storageProof
-    ) external pure returns (bytes[] memory values);
+    ) external view returns (bytes[] memory values);
 }
 
-contract BSCLightClient is ILightClient, SourceChain, TargetChain {
+contract BSCLightClient is SourceChain, TargetChain {
     event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
+
+    event Debug(uint64 indexed latest_received_nonce, uint256 indexed key, address indexed sourceAccount, address targetContract, bytes32 encodedHash);
 
     struct ReceiveProof {
         bytes[] accountProof;
@@ -86,7 +88,7 @@ contract BSCLightClient is ILightClient, SourceChain, TargetChain {
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata encoded_proof
-    ) external override view returns (bool) {
+    ) external returns (bool) {
         address lane = lanes[chain_pos][lane_pos];
         require(lane != address(0), "BSCLightClient: missing outlane addr");
         ReceiveProof memory proof = abi.decode(encoded_proof, (ReceiveProof));
@@ -107,23 +109,18 @@ contract BSCLightClient is ILightClient, SourceChain, TargetChain {
             proof.laneNonceProof
         ));
 
-        uint64 latest_received_nonce = uint64(nonce_storage);
-        uint64 latest_generated_nonce = uint64(nonce_storage >> 64);
-        uint256 size = latest_generated_nonce - latest_received_nonce;
+        OutboundLaneData memory lane_data = build_outlane(identify_storage, nonce_storage, lane, proof);
+        // check the lane_data_hash
+        return outlane_hash == hash(lane_data);
+    }
+
+    function build_outlane(uint identify_storage, uint nonce_storage, address lane, ReceiveProof memory proof) internal returns (OutboundLaneData memory lane_data) {
         // restruct the outlane data
-        OutboundLaneData memory lane_data;
+        uint64 latest_received_nonce = uint64(nonce_storage);
+        uint256 size = uint64(nonce_storage >> 64) - latest_received_nonce;
         if (size > 0) {
-            uint256 len = 3 * size;
             // find all messages storage keys
-            bytes32[] memory storage_keys = new bytes32[](len);
-            uint64 begin = latest_received_nonce + 1;
-            for (uint64 index=0; index < size; index++) {
-                uint64 nonce = begin + index;
-                uint256 messagesLocation = mapLocation(LANE_MESSAGE_SLOT, nonce);
-                storage_keys[index] = bytes32(messagesLocation);
-                storage_keys[index+1] = bytes32(messagesLocation + 1);
-                storage_keys[index+2] = bytes32(messagesLocation + 2);
-            }
+            bytes32[] memory storage_keys = build_message_keys(latest_received_nonce, size);
 
             // extract messages storage value from proof
             bytes[] memory values = IBSCBridge(BSC_BRIDGE_PRECOMPILE).verify_multi_storage_proof(
@@ -133,7 +130,7 @@ contract BSCLightClient is ILightClient, SourceChain, TargetChain {
                 proof.laneMessagesProof
             );
 
-            require(len == values.length, "BSCLightClient: invalid values length");
+            require((3 * size) == values.length, "BSCLightClient: invalid values length");
             Message[] memory messages = new Message[](size);
             for (uint64 i=0; i < size; i++) {
                MessagePayload memory payload = MessagePayload(
@@ -141,14 +138,26 @@ contract BSCLightClient is ILightClient, SourceChain, TargetChain {
                    address(uint160(toUint(values[3*i+1]))),
                    toBytes32(values[3*i+2])
                );
-               uint256 key = identify_storage << 64 + begin + i;
+               uint256 key = (identify_storage << 64) + latest_received_nonce + 1 + i;
                messages[i] = Message(key, payload);
+               emit Debug(latest_received_nonce, key, payload.sourceAccount, payload.targetContract, payload.encodedHash);
             }
             lane_data.messages = messages;
         }
         lane_data.latest_received_nonce = latest_received_nonce;
-        // check the lane_data_hash
-        return outlane_hash == hash(lane_data);
+    }
+
+    function build_message_keys(uint64 latest_received_nonce, uint size) internal view returns (bytes32[] memory) {
+        bytes32[] memory storage_keys = new bytes32[](3 * size);
+        uint64 begin = latest_received_nonce + 1;
+        for (uint64 index=0; index < size; index++) {
+            uint64 nonce = begin + index;
+            uint256 messagesLocation = mapLocation(LANE_MESSAGE_SLOT, nonce);
+            storage_keys[index] = bytes32(messagesLocation);
+            storage_keys[index+1] = bytes32(messagesLocation + 1);
+            storage_keys[index+2] = bytes32(messagesLocation + 2);
+        }
+        return storage_keys;
     }
 
     function verify_messages_delivery_proof(
@@ -156,7 +165,7 @@ contract BSCLightClient is ILightClient, SourceChain, TargetChain {
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata encoded_proof
-    ) external override view returns (bool) {
+    ) external view returns (bool) {
         address lane = lanes[chain_pos][lane_pos];
         require(lane != address(0), "BSCLightClient: missing outlane addr");
         DeliveryProof memory proof = abi.decode(encoded_proof, (DeliveryProof));
@@ -218,16 +227,16 @@ contract BSCLightClient is ILightClient, SourceChain, TargetChain {
 
     function toUint(bytes memory bts) internal pure returns (uint data) {
         uint len = bts.length;
+        if (len == 0) {
+            return 0;
+        }
         assembly {
             data := div(mload(add(bts, 32)), exp(256, sub(32, len)))
         }
     }
 
     function toBytes32(bytes memory bts) internal pure returns (bytes32 data) {
-        uint len = bts.length;
-        assembly {
-            data := div(mload(add(bts, 32)), exp(256, sub(32, len)))
-        }
+        return bytes32(toUint(bts));
     }
 
     function mapLocation(uint256 slot, uint256 key) internal pure returns (uint256) {

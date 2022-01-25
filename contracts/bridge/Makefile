@@ -1,6 +1,7 @@
 .PHONY: all install update npm solc
 .PHONY: build test clean lint estimate size
 .PHONY: deploy deploy-mainnet deploy-rinkeby verify check-api-key
+.PHONY: migrate-local
 # include .env file and export its env vars
 # (-include to ignore error if it does not exist)
 -include .env
@@ -31,6 +32,9 @@ size     :; ./bin/contract-size.sh ${contract}
 # Deployment helpers
 deploy       :; @./bin/deploy.sh $(network_name)
 deploy-local :; @./bin/deploy-local.sh
+
+# Migration
+migrate-local :; @./bin/migrate-local.sh
 
 # verify on Etherscan
 verify:; ETH_RPC_URL=$(call network,$(network_name)) dapp verify-contract src/Greeter.sol:Greeter $(contract_address)

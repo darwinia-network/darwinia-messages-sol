@@ -39,7 +39,7 @@ const generate_storage_proof = async (nonce) => {
     "laneNonceProof": laneNonceProof.storageProof[0].proof,
     "laneMessagesProof": laneMessageProof.storageProof.map((p) => p.proof),
   }
-  log(JSON.stringify(laneIdProof, null, 2))
+  log(JSON.stringify(laneMessageProof, null, 2))
   // log(JSON.stringify(proof, null, 2))
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(bytes[] accountProof, bytes[] laneIDProof, bytes[] laneNonceProof, bytes[][] laneMessagesProof)"
@@ -106,11 +106,13 @@ describe("bridge e2e test: verify message storage proof", () => {
   // })
 
   it("2", async function () {
-    const overrides = { gasLimit: 1000000 }
+    const overrides = { gasLimit: 10000000 }
     const o = await ethClient.outbound.data()
     const calldata = Array(o.messages.length).fill("0x")
     const proof = await generate_storage_proof(1)
-    log(proof)
+    log(JSON.stringify(o, null, 2))
+    log(await ethClient.outbound.commitment())
+    // log(proof)
     const tx = await subClient.inbound.receive_messages_proof(o, calldata, proof, overrides)
     log(tx)
     await expect(tx)

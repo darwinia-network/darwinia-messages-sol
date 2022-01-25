@@ -4,7 +4,7 @@ set -eo pipefail
 
 export NETWORK_NAME=local-evm
 export ETH_RPC_URL=http://192.168.2.100:8545
-export ETH_FROM=0x5dc385535f8ec47B870D182CA0215ff1f10deE98
+export ETH_FROM=0xa762C41814122230bf2b50796548B4A52E15fE41
 export ETH_RPC_ACCOUNTS=true
 
 # import the deployment helpers
@@ -44,7 +44,7 @@ seth send $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
 BSCLightClient=$(jq -r ".BSCLightClient" "$PWD/bin/addr/local-dvm.json")
 (ETH_FROM=0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b ETH_RPC_URL=http://192.168.2.100:9933 seth send $BSCLightClient "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane)
 
-amount=$(seth --to-wei 10000 ether)
+amount=$(seth --to-wei 1000 ether)
 seth send -F $ETH_FROM -V $amount 0x3DFe30fb7b46b99e234Ed0F725B5304257F78992
 seth send -F $ETH_FROM -V $amount 0xB3c5310Dcf15A852b81d428b8B6D5Fb684300DF9
 seth send -F $ETH_FROM -V $amount 0xf4F07AAe298E149b902993B4300caB06D655f430
