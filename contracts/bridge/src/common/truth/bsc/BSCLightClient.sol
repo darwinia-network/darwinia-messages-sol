@@ -88,7 +88,7 @@ contract BSCLightClient is SourceChain, TargetChain {
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata encoded_proof
-    ) external returns (bool) {
+    ) external view returns (bool) {
         address lane = lanes[chain_pos][lane_pos];
         require(lane != address(0), "BSCLightClient: missing outlane addr");
         ReceiveProof memory proof = abi.decode(encoded_proof, (ReceiveProof));
@@ -114,7 +114,7 @@ contract BSCLightClient is SourceChain, TargetChain {
         return outlane_hash == hash(lane_data);
     }
 
-    function build_outlane(uint identify_storage, uint nonce_storage, address lane, ReceiveProof memory proof) internal returns (OutboundLaneData memory lane_data) {
+    function build_outlane(uint identify_storage, uint nonce_storage, address lane, ReceiveProof memory proof) internal view returns (OutboundLaneData memory lane_data) {
         // restruct the outlane data
         uint64 latest_received_nonce = uint64(nonce_storage);
         uint256 size = uint64(nonce_storage >> 64) - latest_received_nonce;
@@ -140,7 +140,6 @@ contract BSCLightClient is SourceChain, TargetChain {
                );
                uint256 key = (identify_storage << 64) + latest_received_nonce + 1 + i;
                messages[i] = Message(key, payload);
-               emit Debug(latest_received_nonce, key, payload.sourceAccount, payload.targetContract, payload.encodedHash);
             }
             lane_data.messages = messages;
         }
