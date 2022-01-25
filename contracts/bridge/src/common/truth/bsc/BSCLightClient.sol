@@ -26,8 +26,6 @@ interface IBSCBridge {
 contract BSCLightClient is SourceChain, TargetChain {
     event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
 
-    event Debug(uint64 indexed latest_received_nonce, uint256 indexed key, address indexed sourceAccount, address targetContract, bytes32 encodedHash);
-
     struct ReceiveProof {
         bytes[] accountProof;
         bytes[] laneIDProof;
