@@ -37,6 +37,16 @@ class EvmClient {
       prev = signer.address
     }
   }
+
+  async deposit() {
+    for(let i=0; i<this.wallets.length; i++) {
+      let signer = this.wallets[i]
+      await this.feeMarket.connect(signer.connect(this.provider)).deposit({
+        value: ethers.utils.parseEther("100"),
+        gasLimit: 300000
+      })
+    }
+  }
 }
 
 module.exports.EvmClient = EvmClient

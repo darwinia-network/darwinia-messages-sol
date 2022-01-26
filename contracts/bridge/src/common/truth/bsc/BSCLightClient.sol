@@ -115,7 +115,7 @@ contract BSCLightClient is SourceChain, TargetChain {
     function build_outlane(uint identify_storage, uint nonce_storage, address lane, ReceiveProof memory proof) internal view returns (OutboundLaneData memory lane_data) {
         // restruct the outlane data
         uint64 latest_received_nonce = uint64(nonce_storage);
-        uint256 size = uint64(nonce_storage >> 64) - latest_received_nonce;
+        uint64 size = uint64(nonce_storage >> 64) - latest_received_nonce;
         if (size > 0) {
             // find all messages storage keys
             bytes32[] memory storage_keys = build_message_keys(latest_received_nonce, size);
@@ -144,15 +144,16 @@ contract BSCLightClient is SourceChain, TargetChain {
         lane_data.latest_received_nonce = latest_received_nonce;
     }
 
-    function build_message_keys(uint64 latest_received_nonce, uint size) internal view returns (bytes32[] memory) {
-        bytes32[] memory storage_keys = new bytes32[](3 * size);
+    function build_message_keys(uint64 latest_received_nonce, uint64 size) internal view returns (bytes32[] memory) {
+        uint64 len = 3 * size;
+        bytes32[] memory storage_keys = new bytes32[](len);
         uint64 begin = latest_received_nonce + 1;
-        for (uint64 index=0; index < size; index++) {
-            uint64 nonce = begin + index;
+        for (uint64 index=0; index < len;) {
+            uint64 nonce = begin + index/3;
             uint256 messagesLocation = mapLocation(LANE_MESSAGE_SLOT, nonce);
-            storage_keys[index] = bytes32(messagesLocation);
-            storage_keys[index+1] = bytes32(messagesLocation + 1);
-            storage_keys[index+2] = bytes32(messagesLocation + 2);
+            storage_keys[index++] = bytes32(messagesLocation);
+            storage_keys[index++] = bytes32(messagesLocation + 1);
+            storage_keys[index++] = bytes32(messagesLocation + 2);
         }
         return storage_keys;
     }
@@ -179,18 +180,18 @@ contract BSCLightClient is SourceChain, TargetChain {
         uint64 last_delivered_nonce = uint64(nonce_storage >> 64);
         uint64 front = uint64(nonce_storage >> 128);
         uint64 back = uint64(nonce_storage >> 192);
-        uint256 size = back >= front ? back - front + 1 : 0;
+        uint64 size = back >= front ? back - front + 1 : 0;
         // restruct the in lane data
         InboundLaneData memory lane_data;
         if (size > 0) {
-            uint256 len = 3 * size;
+            uint64 len = 3 * size;
             // find all messages storage keys
             bytes32[] memory storage_keys = new bytes32[](len);
-            for (uint64 index=0; index < size; index++) {
-                uint256 relayersLocation = mapLocation(LANE_MESSAGE_SLOT, front + index);
-                storage_keys[index] = bytes32(relayersLocation);
-                storage_keys[index+1] = bytes32(relayersLocation + 1);
-                storage_keys[index+2] = bytes32(relayersLocation + 2);
+            for (uint64 index=0; index < len;) {
+                uint256 relayersLocation = mapLocation(LANE_MESSAGE_SLOT, front + index/3);
+                storage_keys[index++] = bytes32(relayersLocation);
+                storage_keys[index++] = bytes32(relayersLocation + 1);
+                storage_keys[index++] = bytes32(relayersLocation + 2);
             }
 
             // extract messages storage value from proof
