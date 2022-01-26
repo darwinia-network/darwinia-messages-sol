@@ -66,14 +66,6 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
 
     /* State */
 
-    // Range of UnrewardedRelayers
-    struct RelayersRange {
-        // Front index of the UnrewardedRelayers (inclusive).
-        uint64 front;
-        // Back index of the UnrewardedRelayers (inclusive).
-        uint64 back;
-    }
-
     /**
      * @dev ID of the next message, which is incremented in strict order
      * @notice When upgrading the lane, this value must be synchronized
@@ -91,7 +83,11 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         // Nonce of the latest received or has been delivered message to this inbound lane.
         uint64 last_delivered_nonce;
 
-        RelayersRange relayer_range;
+        // Range of UnrewardedRelayers
+        // Front index of the UnrewardedRelayers (inclusive).
+        uint64 relayer_range_front;
+        // Back index of the UnrewardedRelayers (inclusive).
+        uint64 relayer_range_back;
     }
 
     // slot 1
@@ -141,7 +137,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         uint64 _last_confirmed_nonce,
         uint64 _last_delivered_nonce
     ) InboundLaneVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
-        inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce, RelayersRange(1, 0));
+        inboundLaneNonce = InboundLaneNonce(_last_confirmed_nonce, _last_delivered_nonce, 1, 0);
     }
 
     /* Public Functions */
@@ -167,14 +163,14 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     }
 
     function relayers_size() public view returns (uint64 size) {
-        if (inboundLaneNonce.relayer_range.back >= inboundLaneNonce.relayer_range.front) {
-            size = inboundLaneNonce.relayer_range.back - inboundLaneNonce.relayer_range.front + 1;
+        if (inboundLaneNonce.relayer_range_back >= inboundLaneNonce.relayer_range_front) {
+            size = inboundLaneNonce.relayer_range_back - inboundLaneNonce.relayer_range_front + 1;
         }
     }
 
     function relayers_back() public view returns (address pre_relayer) {
         if (relayers_size() > 0) {
-            uint64 back = inboundLaneNonce.relayer_range.back;
+            uint64 back = inboundLaneNonce.relayer_range_back;
             pre_relayer = relayers[back].relayer;
         }
     }
@@ -184,7 +180,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         uint64 size = relayers_size();
         if (size > 0) {
             lane_data.relayers = new UnrewardedRelayer[](size);
-            uint64 front = inboundLaneNonce.relayer_range.front;
+            uint64 front = inboundLaneNonce.relayer_range_front;
             for (uint64 index = 0; index < size; index++) {
                 lane_data.relayers[index] = relayers[front + index];
             }
@@ -210,14 +206,14 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         require(latest_received_nonce <= last_delivered_nonce, "Lane: InvalidReceivedNonce");
         if (latest_received_nonce > last_confirmed_nonce) {
             uint64 new_confirmed_nonce = latest_received_nonce;
-            uint64 front = inboundLaneNonce.relayer_range.front;
-            uint64 back = inboundLaneNonce.relayer_range.back;
+            uint64 front = inboundLaneNonce.relayer_range_front;
+            uint64 back = inboundLaneNonce.relayer_range_back;
             for (uint64 index = front; index <= back; index++) {
                 UnrewardedRelayer storage entry = relayers[index];
                 if (entry.messages.end <= new_confirmed_nonce) {
                     // Firstly, remove all of the records where higher nonce <= new confirmed nonce
                     delete relayers[index];
-                    inboundLaneNonce.relayer_range.front = index + 1;
+                    inboundLaneNonce.relayer_range_front = index + 1;
                 } else if (entry.messages.begin <= new_confirmed_nonce) {
                     // Secondly, update the next record with lower nonce equal to new confirmed nonce if needed.
                     // Note: There will be max. 1 record to update as we don't allow messages from relayers to
@@ -275,12 +271,12 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             // now let's update inbound lane storage
             address pre_relayer = relayers_back();
             if (pre_relayer == relayer) {
-                UnrewardedRelayer storage r = relayers[inboundLaneNonce.relayer_range.back];
+                UnrewardedRelayer storage r = relayers[inboundLaneNonce.relayer_range_back];
                 r.messages.dispatch_results |= dispatch_results << (r.messages.end - r.messages.begin + 1);
                 r.messages.end = end;
             } else {
-                inboundLaneNonce.relayer_range.back += 1;
-                relayers[inboundLaneNonce.relayer_range.back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
+                inboundLaneNonce.relayer_range_back += 1;
+                relayers[inboundLaneNonce.relayer_range_back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
             }
         }
     }
