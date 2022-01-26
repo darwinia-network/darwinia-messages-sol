@@ -1,5 +1,5 @@
 let { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
-const addresses = require("../bin/addr/local-dvm.json")
+const addresses = require("../../bin/addr/local-dvm.json")
 
 /**
  * The Substrate client for Bridge interaction
@@ -42,15 +42,17 @@ class SubClient {
     this.outbound = outbound.connect(signer)
     this.inbound = inbound.connect(signer)
     this.wallets = wallets
+    this.fees = fees
   }
 
   async enroll_relayer() {
     let prev = "0x0000000000000000000000000000000000000001"
     for(let i=0; i<this.wallets.length; i++) {
-      let fee = fees[i]
+      let fee = this.fees[i]
       let signer = this.wallets[i]
-      await this.feeMarket.connect(signer.connect(this.provider)).enroll(prev, fee, {
-        value: ethers.utils.parseEther("100")
+      const tx = await this.feeMarket.connect(signer.connect(this.dvm_provider)).enroll(prev, fee, {
+        value: ethers.utils.parseEther("100"),
+        gasLimit: 300000
       })
       prev = signer.address
     }
