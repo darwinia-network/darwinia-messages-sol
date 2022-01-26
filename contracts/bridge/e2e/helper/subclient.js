@@ -1,18 +1,20 @@
 let { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
 const addresses = require("../../bin/addr/local-dvm.json")
+const { EvmClient } = require('./evmclient')
 
 /**
  * The Substrate client for Bridge interaction
  */
-class SubClient {
+class SubClient extends EvmClient {
 
   constructor(http_endpoint, ws_endpoint) {
-    this.dvm_provider = new ethers.providers.JsonRpcProvider(http_endpoint)
-    console.log(ws_endpoint)
+    super(http_endpoint)
     this.sub_provider = new WsProvider(ws_endpoint)
   }
 
   async init(wallets, fees) {
+    await super.init(addresses, wallets, fees)
+
     this.api = await ApiPromise.create({
       provider: this.sub_provider
     })
@@ -20,42 +22,15 @@ class SubClient {
     this.alice = this.keyring.addFromUri('//Alice', { name: 'Alice' });
 
     const ChainMessageCommitter = await artifacts.readArtifact("ChainMessageCommitter");
-    this.chainMessageCommitter = new ethers.Contract(addresses.ChainMessageCommitter, ChainMessageCommitter.abi, this.dvm_provider)
+    this.chainMessageCommitter = new ethers.Contract(addresses.ChainMessageCommitter, ChainMessageCommitter.abi, this.provider)
 
     const LaneMessageCommitter = await artifacts.readArtifact("LaneMessageCommitter");
-    this.laneMessageCommitter = new ethers.Contract(addresses.LaneMessageCommitter, LaneMessageCommitter.abi, this.dvm_provider)
-
-    const FeeMarket = await artifacts.readArtifact("FeeMarket");
-    this.feeMarket = new ethers.Contract(addresses.FeeMarket, FeeMarket.abi, this.dvm_provider)
+    this.laneMessageCommitter = new ethers.Contract(addresses.LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
 
     const BSCLightClient = await artifacts.readArtifact("BSCLightClient")
-    const lightClient = new ethers.Contract(addresses.BSCLightClient, BSCLightClient.abi, this.dvm_provider)
+    const lightClient = new ethers.Contract(addresses.BSCLightClient, BSCLightClient.abi, this.provider)
 
-    const OutboundLane = await artifacts.readArtifact("OutboundLane")
-    const outbound = new ethers.Contract(addresses.OutboundLane, OutboundLane.abi, this.dvm_provider)
-
-    const InboundLane = await artifacts.readArtifact("InboundLane")
-    const inbound = new ethers.Contract(addresses.InboundLane, InboundLane.abi, this.dvm_provider)
-
-    let signer = wallets[0].connect(this.dvm_provider)
-    this.lightClient = lightClient.connect(signer)
-    this.outbound = outbound.connect(signer)
-    this.inbound = inbound.connect(signer)
-    this.wallets = wallets
-    this.fees = fees
-  }
-
-  async enroll_relayer() {
-    let prev = "0x0000000000000000000000000000000000000001"
-    for(let i=0; i<this.wallets.length; i++) {
-      let fee = this.fees[i]
-      let signer = this.wallets[i]
-      const tx = await this.feeMarket.connect(signer.connect(this.dvm_provider)).enroll(prev, fee, {
-        value: ethers.utils.parseEther("100"),
-        gasLimit: 300000
-      })
-      prev = signer.address
-    }
+    this.lightClient = lightClient.connect(this.signer)
   }
 
   async relay_header(state_root) {

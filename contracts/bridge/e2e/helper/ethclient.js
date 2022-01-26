@@ -1,4 +1,5 @@
 const addresses = require("../../bin/addr/local-evm.json")
+const { EvmClient } = require('./evmclient')
 const {
   genValidatorRoot,
   createAllValidatorProofs,
@@ -11,44 +12,19 @@ const {
 /**
  * The Ethereum client for Bridge interaction
  */
-class EthClient {
+class EthClient extends EvmClient {
 
   constructor(endpoint) {
-    this.provider = new ethers.providers.JsonRpcProvider(endpoint)
+    super(endpoint)
   }
 
   async init(wallets, fees) {
-    this.wallets = wallets
-    const FeeMarket = await artifacts.readArtifact("FeeMarket");
-    this.feeMarket = new ethers.Contract(addresses.FeeMarket, FeeMarket.abi, this.provider)
+    await super.init(addresses, wallets, fees)
 
     const DarwiniaLightClient = await artifacts.readArtifact("DarwiniaLightClient")
     const lightClient = new ethers.Contract(addresses.DarwiniaLightClient, DarwiniaLightClient.abi, this.provider)
 
-    const OutboundLane = await artifacts.readArtifact("OutboundLane")
-    const outbound = new ethers.Contract(addresses.OutboundLane, OutboundLane.abi,  this.provider)
-
-    const InboundLane = await artifacts.readArtifact("InboundLane")
-    const inbound = new ethers.Contract(addresses.InboundLane, InboundLane.abi, this.provider)
-
-    let signer = wallets[0].connect(this.provider)
-    this.lightClient = lightClient.connect(signer)
-    this.outbound = outbound.connect(signer)
-    this.inbound = inbound.connect(signer)
-    this.wallets = wallets
-    this.fees = fees
-  }
-
-  async enroll_relayer() {
-    let prev = "0x0000000000000000000000000000000000000001"
-    for(let i=0; i<this.wallets.length; i++) {
-      let fee = this.fees[i]
-      let signer = this.wallets[i]
-      await this.feeMarket.connect(signer.connect(this.provider)).enroll(prev, fee, {
-        value: ethers.utils.parseEther("100")
-      })
-      prev = signer.address
-    }
+    this.lightClient = lightClient.connect(this.signer)
   }
 
   async block_header(block_number = 'latest') {
