@@ -89,6 +89,8 @@ describe("bridge e2e test: verify message storage proof", () => {
     const clients = await bootstrap()
     ethClient = clients.ethClient
     subClient = clients.subClient
+    await ethClient.enroll_relayer()
+    await subClient.enroll_relayer()
   })
 
   it("0", async function () {

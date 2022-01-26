@@ -37,20 +37,23 @@ class SubClient {
     const InboundLane = await artifacts.readArtifact("InboundLane")
     const inbound = new ethers.Contract(addresses.InboundLane, InboundLane.abi, this.dvm_provider)
 
-    // let prev = "0x0000000000000000000000000000000000000001"
-    // for(let i=0; i<wallets.length; i++) {
-    //   let fee = fees[i]
-    //   let signer = wallets[i]
-    //   await this.feeMarket.connect(signer.connect(this.dvm_provider)).enroll(prev, fee, {
-    //     value: ethers.utils.parseEther("100")
-    //   })
-    //   prev = signer.address
-    // }
-
     let signer = wallets[0].connect(this.dvm_provider)
     this.lightClient = lightClient.connect(signer)
     this.outbound = outbound.connect(signer)
     this.inbound = inbound.connect(signer)
+    this.wallets = wallets
+  }
+
+  async enroll_relayer() {
+    let prev = "0x0000000000000000000000000000000000000001"
+    for(let i=0; i<this.wallets.length; i++) {
+      let fee = fees[i]
+      let signer = this.wallets[i]
+      await this.feeMarket.connect(signer.connect(this.provider)).enroll(prev, fee, {
+        value: ethers.utils.parseEther("100")
+      })
+      prev = signer.address
+    }
   }
 
   async relay_header(state_root) {
