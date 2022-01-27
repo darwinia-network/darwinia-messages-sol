@@ -2,26 +2,29 @@
 
 set -e
 
-output_dir=$(mktemp -d)
+oops() {
+  echo >&2 "${0##*/}: error:" "$@"
+  exit 1
+}
 
+have() { command -v "$1" >/dev/null; }
 
 start_geth() {
-  dapp testnet
+  echo "Starting geth"
+  { have dapp && have seth; } && {
+    . $(dirname $0)/run-evm-testnet.sh
+  }
 }
 
 strat_drml() {
-  ./drml \
-    --rpc-cors all \
-    --allow-private-ipv4 \
-    --port=30333 \
-    --unsafe-rpc-external \
-    --unsafe-ws-external \
-    --rpc-methods=Unsafe \
-    --rpc-port=9933 \
-    --ws-port=9944 \
-    -levm=debug \
-    --dev \
-    --tmp
+  echo "Starting drml"
+  { have drml; } || oops "you need to install drml before running this script"
+  . $(dirname $0)/run-dvm-testnet.sh
+}
+
+compile_contracts() {
+  echo "Compiling contracts"
+  make
 }
 
 deploy_evm_contracts() {
@@ -37,3 +40,12 @@ deploy_dvm_contracts() {
     make deploy network_name=local-dvm
   )
 }
+
+start_geth
+strat_drml
+
+compile_contracts
+deploy_dvm_contracts
+deploy_evm_contracts
+
+echo "Testnet has been initialized"
