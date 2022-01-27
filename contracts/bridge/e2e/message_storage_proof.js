@@ -164,12 +164,12 @@ describe("bridge e2e test: verify message/storage proof", () => {
     subClient = clients.subClient
   })
 
-  it.skip("enroll", async () => {
+  it("enroll", async () => {
     await ethClient.enroll_relayer()
     await subClient.enroll_relayer()
   })
 
-  it.skip("deposit", async () => {
+  it("deposit", async () => {
     await ethClient.deposit()
     await subClient.deposit()
   })

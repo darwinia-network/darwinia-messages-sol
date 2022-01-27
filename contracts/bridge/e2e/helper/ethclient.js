@@ -48,14 +48,10 @@ class EthClient extends EvmClient {
       "blockNumber": block_number,
       "validatorSetId": 0
     }
-    console.log(commitment)
     const commitmentHash = await this.lightClient.hash(commitment)
-    console.log(commitmentHash)
     const initialBitfieldPositions = await createRandomPositions(3, 3)
-    console.log(initialBitfieldPositions)
 
     const firstPosition = initialBitfieldPositions[0]
-    console.log(firstPosition)
     const firstProof = await createSingleValidatorProof(firstPosition, this.wallets)
     const allValidatorProofs = await createAllValidatorProofs(commitmentHash, this.wallets);
     const initialBitfield = await this.lightClient.createInitialBitfield(
@@ -73,8 +69,8 @@ class EthClient extends EvmClient {
       }
     )
     const lastId = (await this.lightClient.currentId()).sub(1)
-    console.log("Phase-1: ", newSigTx.hash)
-    console.log("lastID: ", lastId.toString())
+    // console.log("Phase-1: ", newSigTx.hash)
+    // console.log("lastID: ", lastId.toString())
 
     await this.mine(20)
 
@@ -85,7 +81,7 @@ class EthClient extends EvmClient {
       commitment,
       completeValidatorProofs
     )
-    console.log("Phase-2: ", completeSigTx.hash)
+    // console.log("Phase-2: ", completeSigTx.hash)
   }
 
   async mine(n) {

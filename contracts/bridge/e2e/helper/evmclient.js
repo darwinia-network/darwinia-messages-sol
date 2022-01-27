@@ -38,7 +38,6 @@ class EvmClient {
         value: ethers.utils.parseEther("100"),
         gasLimit: 300000
       })
-      console.log(tx)
       prev = signer.address
     }
   }
