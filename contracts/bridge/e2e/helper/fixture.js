@@ -1,5 +1,6 @@
 const EthClient = require('./ethclient').EthClient
 const SubClient = require('./subclient').SubClient
+const Bridge    = require('./bridge').Bridge
 
 // const evm_endpoint = "http://127.0.0.1:8545"
 // const dvm_endpoint = "http://127.0.0.1:9933"
@@ -31,9 +32,10 @@ const fees = [
 async function bootstrap() {
   const ethClient = new EthClient(evm_endpoint)
   const subClient = new SubClient(dvm_endpoint, sub_endpoint)
+  const bridge = new Bridge(ethClient, subClient)
   await ethClient.init(wallets, fees)
   await subClient.init(wallets, fees)
-  return { ethClient, subClient }
+  return { ethClient, subClient, bridge }
 }
 
 module.exports = {

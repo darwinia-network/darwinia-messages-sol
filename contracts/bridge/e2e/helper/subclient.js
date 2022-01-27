@@ -46,4 +46,4 @@ class SubClient extends EvmClient {
 
 }
 
-module.exports.SubClient = SubClient;
+module.exports.SubClient = SubClient
