@@ -43,7 +43,7 @@ make install
 
 ## Launch the testnet
 ```sh
-local-testnet
+make local-testnet
 ```
 Wait until the "Testnet has been initialized" message
 
