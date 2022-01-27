@@ -4,7 +4,7 @@ set -eo pipefail
 
 export NETWORK_NAME=local-evm
 export ETH_RPC_URL=http://192.168.2.100:8545
-export ETH_FROM=0x71C7E24491eD49e4fc8fc20ef9B6F392CCfA654F
+export ETH_FROM=0x0903e61Fdbdf96594f8562E58b251563F8451061
 export ETH_RPC_ACCOUNTS=true
 
 # import the deployment helpers

@@ -25,15 +25,20 @@ class EvmClient {
     this.fees = fees
   }
 
+  get_signer(index) {
+    return this.wallets[index].connect(this.provider)
+  }
+
   async enroll_relayer() {
     let prev = "0x0000000000000000000000000000000000000001"
     for(let i=0; i<this.wallets.length; i++) {
       let fee = this.fees[i]
       let signer = this.wallets[i]
-      await this.feeMarket.connect(signer.connect(this.provider)).enroll(prev, fee, {
+      const tx = await this.feeMarket.connect(signer.connect(this.provider)).enroll(prev, fee, {
         value: ethers.utils.parseEther("100"),
         gasLimit: 300000
       })
+      console.log(tx)
       prev = signer.address
     }
   }

@@ -47,10 +47,6 @@ const generate_storage_proof = async (begin, end) => {
     "laneNonceProof": laneNonceProof.storageProof[0].proof,
     "laneMessagesProof": laneMessageProof.storageProof.map((p) => p.proof),
   }
-  // log(JSON.stringify(laneNonceProof, null, 2))
-  // log(JSON.stringify(laneMessageProof, null, 2))
-  // log(laneMessageProof.storageProof.length)
-  // log(JSON.stringify(proof, null, 2))
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(bytes[] accountProof, bytes[] laneIDProof, bytes[] laneNonceProof, bytes[][] laneMessagesProof)"
     ], [ proof ])
@@ -79,8 +75,6 @@ const generate_storage_delivery_proof = async (front, end) => {
     "laneNonceProof": laneNonceProof.storageProof[0].proof,
     "laneRelayersProof": laneRelayersProof.storageProof.map((p) => p.proof),
   }
-  // log(JSON.stringify(laneRelayersProof, null, 2))
-  // log(JSON.stringify(proof, null, 2))
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(bytes[] accountProof, bytes[] laneNonceProof, bytes[][] laneRelayersProof)"
     ], [ proof ])
@@ -109,7 +103,6 @@ const get_message_delivery_proof = async () => {
 
 const generate_message_delivery_proof = async () => {
   const proof = await get_message_delivery_proof()
-  // log(proof)
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(tuple(bytes32,uint256,bytes32[]),tuple(bytes32,uint256,bytes32[]))"
     ], [
@@ -143,7 +136,6 @@ const get_message_proof = async () => {
 
 const generate_message_proof = async () => {
   const proof = await get_message_proof()
-  // log(proof)
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(tuple(bytes32,uint256,bytes32[]),tuple(bytes32,uint256,bytes32[]))"
     ], [
@@ -172,17 +164,29 @@ describe("bridge e2e test: verify message/storage proof", () => {
     subClient = clients.subClient
   })
 
-  it("enroll", async () => {
+  it.skip("enroll", async () => {
     await ethClient.enroll_relayer()
     await subClient.enroll_relayer()
   })
 
-  it("deposit", async () => {
+  it.skip("deposit", async () => {
     await ethClient.deposit()
     await subClient.deposit()
   })
 
-  it("0", async function () {
+  it("0.1", async function () {
+    const nonce = await ethClient.outbound.outboundLaneNonce()
+    const tx = await ethClient.outbound.send_message(
+      "0x0000000000000000000000000000000000000000",
+      "0x",
+      overrides
+    )
+    await expect(tx)
+      .to.emit(ethClient.outbound, "MessageAccepted")
+      .withArgs(nonce.latest_generated_nonce.add(1), "0x")
+  })
+
+  it("0.2", async function () {
     const nonce = await ethClient.outbound.outboundLaneNonce()
     const tx = await ethClient.outbound.send_message(
       "0x0000000000000000000000000000000000000000",
@@ -208,11 +212,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
     const begin = nonce.latest_received_nonce.add(1)
     const end = nonce.latest_generated_nonce
     const proof = await generate_storage_proof(begin.toHexString(), end.toHexString())
-    // log(JSON.stringify(o, null, 2))
-    // log(await ethClient.outbound.commitment())
-    // log(proof)
     const tx = await subClient.inbound.receive_messages_proof(o, calldata, proof, { gasLimit: 10000000 })
-    // log(await tx.wait())
     for (let i=begin; i<=end; i++) {
       await expect(tx)
         .to.emit(subClient.inbound, "MessageDispatched")
@@ -238,8 +238,6 @@ describe("bridge e2e test: verify message/storage proof", () => {
     const i = await subClient.inbound.data()
     const o = await ethClient.outbound.outboundLaneNonce()
     const proof = await generate_message_delivery_proof()
-    // log(JSON.stringify(i, null, 2))
-    // log(JSON.stringify(o, null, 2))
     const tx = await ethClient.outbound.receive_messages_delivery_proof(i, proof)
     await expect(tx)
       .to.emit(ethClient.outbound, "MessagesDelivered")
@@ -267,13 +265,11 @@ describe("bridge e2e test: verify message/storage proof", () => {
 
   it("7", async function () {
     const o = await subClient.outbound.data()
-    // log(JSON.stringify(o, null, 2))
     const calldata = Array(o.messages.length).fill("0x")
     const proof = await generate_message_proof()
     const begin = (await subClient.inbound.inboundLaneNonce()).last_delivered_nonce.add(1)
     const tx = await ethClient.inbound.receive_messages_proof(o, calldata, proof)
     const end = (await subClient.inbound.inboundLaneNonce()).last_delivered_nonce
-    // log(await tx.wait())
     for (let i=begin; i<=end; i++) {
       await expect(tx)
         .to.emit(ethClient.inbound, "MessageDispatched")
@@ -290,20 +286,60 @@ describe("bridge e2e test: verify message/storage proof", () => {
   })
 
   it("8", async function () {
+    const nonce = await subClient.outbound.outboundLaneNonce()
+    const tx = await subClient.outbound.send_message(
+      "0x0000000000000000000000000000000000000000",
+      "0x",
+      overrides
+    )
+
+    await expect(tx)
+      .to.emit(subClient.outbound, "MessageAccepted")
+      .withArgs(nonce.latest_generated_nonce.add(1), "0x")
+  })
+
+  it("9", async function () {
+    const header = await subClient.block_header()
+    const message_root = await subClient.chainMessageCommitter['commitment()']()
+    await ethClient.relay_header(message_root, header.number.toString())
+  })
+
+  it("10", async function () {
+    const o = await subClient.outbound.data()
+    const calldata = Array(o.messages.length).fill("0x")
+    const proof = await generate_message_proof()
+    const begin = (await subClient.inbound.inboundLaneNonce()).last_delivered_nonce.add(1)
+    let signer = ethClient.get_signer(1)
+    const tx = await ethClient.inbound.connect(signer).receive_messages_proof(o, calldata, proof)
+    const end = (await subClient.inbound.inboundLaneNonce()).last_delivered_nonce
+    for (let i=begin; i<=end; i++) {
+      await expect(tx)
+        .to.emit(ethClient.inbound, "MessageDispatched")
+        .withArgs(
+          await subClient.outbound.thisChainPosition(),
+          await subClient.outbound.thisLanePosition(),
+          await subClient.outbound.bridgedChainPosition(),
+          await subClient.outbound.bridgedLanePosition(),
+          i,
+          false,
+          "0x4c616e653a204d65737361676543616c6c52656a6563746564"
+        )
+    }
+  })
+
+  it("11", async function () {
     const header = await ethClient.block_header()
     await subClient.relay_header(header.stateRoot)
     await sleep(3000)
   })
 
-  it("9", async function () {
+  it("12", async function () {
     await sleep(3000)
     const i = await ethClient.inbound.data()
     const nonce = await ethClient.inbound.inboundLaneNonce()
-    // log(JSON.stringify(i, null, 2))
     const o = await subClient.outbound.outboundLaneNonce()
     const proof = await generate_storage_delivery_proof(nonce.relayer_range_front.toHexString(), nonce.relayer_range_back.toHexString())
     const tx = await subClient.outbound.receive_messages_delivery_proof(i, proof, { gasLimit: 6000000 })
-    // log(await tx.wait())
     await expect(tx)
       .to.emit(subClient.outbound, "MessagesDelivered")
       .withArgs(o.latest_received_nonce.add(1), i.last_delivered_nonce, 0)
