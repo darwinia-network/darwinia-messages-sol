@@ -29,7 +29,7 @@ class EthClient extends EvmClient {
 
   async block_header(block_number = 'latest') {
     const block = await this.provider.send('eth_getBlockByNumber', ['latest', false]);
-    console.log(`#${block.number}: ${block.stateRoot}`)
+    // console.log(`#${block.number}: ${block.stateRoot}`)
     return block
   }
 

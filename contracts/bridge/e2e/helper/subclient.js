@@ -35,12 +35,12 @@ class SubClient extends EvmClient {
 
   async relay_header(state_root) {
     const tx = await this.api.tx.bsc.setStateRoot(state_root).signAndSend(this.alice)
-    console.log(`Header relay tx submitted with hash: ${tx}`)
+    // console.log(`Header relay tx submitted with hash: ${tx}`)
   }
 
   async block_header() {
     const header = await this.api.rpc.chain.getHeader();
-    console.log(`last block #${header.number} has hash ${header.hash}`);
+    // console.log(`last block #${header.number} has hash ${header.hash}`);
     return header
   }
 

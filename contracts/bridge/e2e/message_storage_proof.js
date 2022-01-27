@@ -66,11 +66,11 @@ describe("bridge e2e test: verify message/storage proof", () => {
 
   it("1", async function () {
     await bridge.relay_eth_header()
-    await sleep(3000)
+    await sleep(4000)
   })
 
   it("2", async function () {
-    await sleep(3000)
+    await sleep(4000)
     const nonce = await ethClient.outbound.outboundLaneNonce()
     const begin = nonce.latest_received_nonce.add(1)
     const end = nonce.latest_generated_nonce
