@@ -6,24 +6,30 @@ var MappingTokenDeployer = {
         const backingContract = await ethers.getContractFactory("Backing");
         const backingLogic = await backingContract.deploy();
         console.log("deploy backing logic", backingLogic.address);
-        return await ProxyDeployer.deployProxyContract(
-            proxyAdminAddr,
-            backingContract,
-            backingLogic.address,
-            [bridgeChainPosition, remoteMappingTokenFactoryAddress, feeMarketAddress, chainName]
-        );
+        return {
+            "logic": backingLogic,
+            "proxy": await ProxyDeployer.deployProxyContract(
+                proxyAdminAddr,
+                backingContract,
+                backingLogic.address,
+                [bridgeChainPosition, remoteMappingTokenFactoryAddress, feeMarketAddress, chainName]
+            )
+        };
     },
     deployMappingTokenFactory: async function(proxyAdminAddr, feeMarketAddress) {
         console.log("deploy mapping token factory contract, it's a proxy contract");
         const mtfContract = await ethers.getContractFactory("MappingTokenFactory");
         const mtfLogic = await mtfContract.deploy();
         console.log("deploy mtf logic", mtfLogic.address);
-        return await ProxyDeployer.deployProxyContract(
-            proxyAdminAddr,
-            mtfContract,
-            mtfLogic.address,
-            [feeMarketAddress]
-        );
+        return {
+            "logic": mtfLogic,
+            "proxy": await ProxyDeployer.deployProxyContract(
+                proxyAdminAddr,
+                mtfContract,
+                mtfLogic.address,
+                [feeMarketAddress]
+            )
+        };
     },
     deployGuard: async function(guards, threshold, maxUnclaimableTime, depositor) {
         console.log("deploy guard");
