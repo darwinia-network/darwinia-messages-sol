@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
-    "test:e2e": "npx hardhat test e2e/*.js",
+    "test:e2e": "npx hardhat test --no-compile e2e/*.js",
     "ci": "CI=true npx hardhat test && yarn mv-reporter",
     "mv-reporter": "mv gasReporterOutput.json ../../gasReporterOutput-bridge.json",
     "docs": "solidity-docgen --solc-module solc-0.8 -t docs/templates && doctoc ./docs/ --maxlevel 3",
