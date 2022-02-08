@@ -84,7 +84,7 @@ contract SourceChain {
      */
     bytes32 internal constant MESSAGEPAYLOAD_TYPEHASH = 0x870c0499a698e69972afc2f00023f601b894f5731a45364e4d3ed7fd7304d9c7;
 
-    function hash(OutboundLaneData memory subLandData)
+    function hash(OutboundLaneData memory landData)
         internal
         pure
         returns (bytes32)
@@ -92,8 +92,8 @@ contract SourceChain {
         return keccak256(
             abi.encode(
                 OUTBOUNDLANEDATA_TYPEHASH,
-                subLandData.latest_received_nonce,
-                hash(subLandData.messages)
+                landData.latest_received_nonce,
+                hash(landData.messages)
             )
         );
     }

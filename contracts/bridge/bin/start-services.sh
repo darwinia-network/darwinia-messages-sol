@@ -2,42 +2,50 @@
 
 set -e
 
-output_dir=$(mktemp -d)
+oops() {
+  echo >&2 "${0##*/}: error:" "$@"
+  exit 1
+}
 
+have() { command -v "$1" >/dev/null; }
 
 start_geth() {
-  dapp testnet
+  echo "Starting geth"
+  { have dapp && have seth; } && {
+    . $(dirname $0)/run-evm-testnet.sh
+  }
 }
 
 strat_drml() {
-  drml \
-    --chain=template-dev \
-    --validator \
-    --execution=Native \
-    --no-telemetry \
-    --no-prometheus \
-    --sealing=Manual \
-    --no-grandpa \
-    --force-authoring \
-    -levm=debug \
-    --port=30333 \
-    --rpc-port=9933 \
-    --ws-port=9944 \
-    --tmp
+  echo "Starting drml"
+  { have drml; } || oops "you need to install drml before running this script"
+  . $(dirname $0)/run-dvm-testnet.sh
 }
 
-# deploy_evm_contracts() {
-#   echo "Deploying evm contracts"
-#   (
-#     npx hardhat deploy --network localhost:evm --reset --export "$output_dir/evm_contracts.json"
-#   )
-#   echo "Exported contract artifacts: $output_dir/evm_contracts.json"
-# }
+compile_contracts() {
+  echo "Compiling contracts"
+  make
+}
 
-# deploy_dvm_contracts() {
-#   echo "Deploying dvm contracts"
-#   (
-#     npx hardhat deploy --network localhost:evm --reset --export "$output_dir/dvm_contracts.json"
-#   )
-#   echo "Exported contract artifacts: $output_dir/dvm_contracts.json"
-# }
+deploy_evm_contracts() {
+  echo "Deploying evm contracts"
+  (
+    make deploy network_name=local-evm
+  )
+}
+
+deploy_dvm_contracts() {
+  echo "Deploying dvm contracts"
+  (
+    make deploy network_name=local-dvm
+  )
+}
+
+start_geth
+strat_drml
+
+compile_contracts
+deploy_dvm_contracts
+deploy_evm_contracts
+
+echo "Testnet has been initialized"

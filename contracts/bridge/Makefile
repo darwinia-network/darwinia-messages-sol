@@ -1,6 +1,7 @@
 .PHONY: all install update npm solc
-.PHONY: build test clean lint estimate size
+.PHONY: build test clean lint estimate size e2e
 .PHONY: deploy deploy-mainnet deploy-rinkeby verify check-api-key
+.PHONY: local-testnet migrate-local
 # include .env file and export its env vars
 # (-include to ignore error if it does not exist)
 -include .env
@@ -25,31 +26,18 @@ build    :; dapp build
 test     :; dapp test # --ffi # enable if you need the `ffi` cheat code on HEVM
 clean    :; dapp clean
 lint     :; yarn run lint
-estimate :; ./scripts/estimate-gas.sh ${contract}
-size     :; ./scripts/contract-size.sh ${contract}
+estimate :; @./bin/estimate-gas.sh ${contract}
+size     :; @./bin/contract-size.sh ${contract}
 
 # Deployment helpers
-deploy :; @./scripts/deploy.sh
+deploy       :; @./bin/deploy.sh $(network_name)
+deploy-local :; @./bin/deploy-local.sh
 
-# mainnet
-deploy-mainnet: export ETH_RPC_URL = $(call network,mainnet)
-deploy-mainnet: check-api-key deploy
+# Local testnet starter
+local-testnet :; @./bin/start-services.sh
 
-# rinkeby
-deploy-rinkeby: export ETH_RPC_URL = $(call network,rinkeby)
-deploy-rinkeby: check-api-key deploy
+# Migration
+migrate-local :; @./bin/migrate-local.sh
 
 # verify on Etherscan
 verify:; ETH_RPC_URL=$(call network,$(network_name)) dapp verify-contract src/Greeter.sol:Greeter $(contract_address)
-
-check-api-key:
-ifndef ALCHEMY_API_KEY
-	$(error ALCHEMY_API_KEY is undefined)
-endif
-
-# Returns the URL to deploy to a hosted node.
-# Requires the ALCHEMY_API_KEY env var to be set.
-# The first argument determines the network (mainnet / rinkeby / ropsten / kovan / goerli)
-define network
-https://eth-$1.alchemyapi.io/v2/${ALCHEMY_API_KEY}
-endef

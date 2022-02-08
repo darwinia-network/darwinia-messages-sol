@@ -2,9 +2,6 @@
 
 set -eo pipefail
 
-# import the deployment helpers
-. $(dirname $0)/common.sh
+export NETWORK_NAME=${1?}
 
-# Deploy.
-GreeterAddr=$(deploy Greeter)
-log "Greeter deployed at:" $GreeterAddr
+. $(dirname $0)/deploy/${NETWORK_NAME}.sh
