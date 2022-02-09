@@ -3,7 +3,11 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
+import "../utils/ScaleCodec.sol";
+
 contract BeefyCommitmentScheme {
+    using ScaleCodec for uint32;
+    using ScaleCodec for uint64;
     /**
      * Next BEEFY authority set
      * @param id ID of the next set
@@ -41,36 +45,11 @@ contract BeefyCommitmentScheme {
      */
     struct Commitment {
         Payload payload;
-        uint32 blockNumber;
-        uint64 validatorSetId;
+        uint64 blockNumber;
+        uint32 validatorSetId;
     }
 
-    /**
-     * Hash of the NextValidatorSet Schema
-     * keccak256("NextValidatorSet(uint64 id,uint32 len,bytes32 root)")
-     */
-    bytes32 internal constant NEXTVALIDATORSET_TYPEHASH = 0x599882aa3cf9166c2c8867b0e7c41899bd7c26ee7898f261a5f495738da7dbd0;
-
-    /**
-     * Hash of the Payload Schema
-     * keccak256(abi.encodePacked(
-     *     "Payload(bytes32 network,bytes32 mmr,bytes32 messageRoot,NextValidatorSet nextValidatorSet)",
-     *     "NextValidatorSet(uint64 id,uint32 len,bytes32 root)",
-     *     ")"
-     * )
-     */
-    bytes32 internal constant PAYLOAD_TYPEHASH = 0x62bbbb2624ffde1ec395c5f7f00ec3bec6217d975467b8deaf45d8dc276236a5;
-
-    /**
-     * Hash of the Commitment Schema
-     * keccak256(abi.encodePacked(
-     *     "Commitment(Payload payload,uint32 blockNumber,uint64 validatorSetId)",
-     *     "Payload(bytes32 network,bytes32 mmr,bytes32 messageRoot,NextValidatorSet nextValidatorSet)",
-     *     "NextValidatorSet(uint64 id,uint32 len,bytes32 root)",
-     *     ")"
-     * )
-     */
-    bytes32 internal constant COMMITMENT_TYPEHASH = 0xb962b25b1a6ae67dc9886e336d7136273db7f78be39c3b3a86664187b2807317;
+    bytes3 internal constant PAYLOAD_SCALE_ENCOD_PREFIX = 0x046462;
 
     function hash(Commitment memory commitment)
         public
@@ -81,11 +60,11 @@ contract BeefyCommitmentScheme {
          * Encode and hash the Commitment
          */
         return keccak256(
-            abi.encode(
-                COMMITMENT_TYPEHASH,
+            abi.encodePacked(
+                PAYLOAD_SCALE_ENCOD_PREFIX,
                 hash(commitment.payload),
-                commitment.blockNumber,
-                commitment.validatorSetId
+                commitment.blockNumber.encode64(),
+                commitment.validatorSetId.encode32()
             )
         );
     }
@@ -99,32 +78,28 @@ contract BeefyCommitmentScheme {
          * Encode and hash the Payload
          */
         return keccak256(
-            abi.encode(
-                PAYLOAD_TYPEHASH,
+            abi.encodePacked(
                 payload.network,
                 payload.mmr,
                 payload.messageRoot,
-                hash(payload.nextValidatorSet)
+                encode(payload.nextValidatorSet)
             )
         );
     }
 
-    function hash(NextValidatorSet memory nextValidatorSet)
+    function encode(NextValidatorSet memory nextValidatorSet)
         internal
         pure
-        returns (bytes32)
+        returns (bytes memory)
     {
         /**
-         * Encode and hash the NextValidatorSet
+         * Encode the NextValidatorSet
          */
-        return keccak256(
-            abi.encode(
-                NEXTVALIDATORSET_TYPEHASH,
-                nextValidatorSet.id,
-                nextValidatorSet.len,
+        return abi.encodePacked(
+                nextValidatorSet.id.encode64(),
+                nextValidatorSet.len.encode32(),
                 nextValidatorSet.root
-            )
-        );
+            );
     }
 
 }
