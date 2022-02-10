@@ -45,8 +45,8 @@ contract BeefyCommitmentScheme {
      */
     struct Commitment {
         Payload payload;
-        uint64 blockNumber;
-        uint32 validatorSetId;
+        uint32 blockNumber;
+        uint64 validatorSetId;
     }
 
     bytes3 internal constant PAYLOAD_SCALE_ENCOD_PREFIX = 0x046462;
@@ -63,8 +63,8 @@ contract BeefyCommitmentScheme {
             abi.encodePacked(
                 PAYLOAD_SCALE_ENCOD_PREFIX,
                 hash(commitment.payload),
-                commitment.blockNumber.encode64(),
-                commitment.validatorSetId.encode32()
+                commitment.blockNumber.encode32(),
+                commitment.validatorSetId.encode64()
             )
         );
     }
