@@ -49,14 +49,14 @@ describe("darwinia<>bsc mapping token tests", () => {
       await mappingToken.deployed();
       console.log("deploy erc20 logic success");
       // deploy mapping token factory
-      const mapping_token_factory = await ethers.getContractFactory("MappingTokenFactory");
+      const mapping_token_factory = await ethers.getContractFactory("FungibleMappingTokenFactory");
       const mtf = await mapping_token_factory.deploy();
       await mtf.deployed();
       console.log("mapping-token-factory address", mtf.address);
       /******* deploy mapping token factory  end *******/
 
       /******* deploy backing at darwinia ********/
-      backingContract = await ethers.getContractFactory("Backing");
+      backingContract = await ethers.getContractFactory("FungibleTokenBacking");
       const backing = await backingContract.deploy();
       await backing.deployed();
       console.log("backing address", backing.address);
