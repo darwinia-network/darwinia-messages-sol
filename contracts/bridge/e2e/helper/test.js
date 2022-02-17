@@ -13,11 +13,8 @@ const key = {
     BeefyCommitment: {
       payload: 'BeefyPayload',
       blockNumber: 'u32',
-      validatorSetId: 'ValidatorSetId'
+      validatorSetId: 'u64'
     },
-    BeefyId: '[u8; 2]',
-    Payload: '(BeefyId, Vec<u8>)',
-    BeefyIdPayload: 'Vec<Payload>',
     BeefySignedCommitment: {
       commitment: 'BeefyCommitment',
       signatures: 'Vec<Option<EcdsaSignature>>'
@@ -27,7 +24,9 @@ const key = {
       len: 'u32',
       root: 'H256'
     },
-    BeefyPayload: 'BeefyIdPayload',
+    BeefyId: '[u8; 2]',
+    Payload: '(BeefyId, Vec<u8>)',
+    BeefyPayload: 'Vec<Payload>',
     ValidatorSetId: 'u64',
     EcdsaSignature: '[u8; 70]',
   }
