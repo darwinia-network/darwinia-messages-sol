@@ -31,6 +31,16 @@ class SubClient extends EvmClient {
     const lightClient = new ethers.Contract(addresses.BSCLightClient, BSCLightClient.abi, this.provider)
 
     this.lightClient = lightClient.connect(this.signer)
+
+    await this.set_chain_committer()
+  }
+
+  async set_chain_committer() {
+    const call = await this.api.tx.beefyGadget.setCommitmentContract(addresses.ChainMessageCommitter)
+    const tx = await this.api.tx.sudo.sudo(call).signAndSend(this.alice)
+    console.log(`Set chain committer tx submitted with hash: ${tx}`)
+    const res = await this.api.query.beefyGadget.commitmentContract()
+    console.log(`Get chain committer: ${res}`)
   }
 
   async relay_header(state_root) {
@@ -39,9 +49,19 @@ class SubClient extends EvmClient {
   }
 
   async block_header() {
-    const header = await this.api.rpc.chain.getHeader();
-    // console.log(`last block #${header.number} has hash ${header.hash}`);
+    const header = await this.api.rpc.chain.getHeader()
+    // console.log(`last block #${header.number} has hash ${header.hash}`)
     return header
+  }
+
+  async beefy_block() {
+    // const hash = await this.api.rpc.chain.getFinalizedHead()
+    // const hash = await this.api.rpc.beefy.getFinalizedHead()
+    const hash = '0x80beb0a11463c73e97be98a578ffcff1a1560065ec47a9b7acd50bd0ef75eb4c';
+    console.log(`Finalized head hash ${hash}`)
+    const block = await this.api.rpc.chain.getBlock(hash)
+    console.log(`Finalized block #${block.block.header.number} has ${block}`)
+    return block
   }
 
 }

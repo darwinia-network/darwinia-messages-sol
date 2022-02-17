@@ -36,7 +36,7 @@ class EthClient extends EvmClient {
   async relay_header(message_root, block_number) {
     const commitment = {
       "payload": {
-        "network": "0x6c6f63616c2d65766d0000000000000000000000000000000000000000000000",
+        "network": "0x50616e676f6c696e000000000000000000000000000000000000000000000000",
         "mmr": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "messageRoot": message_root,
         "nextValidatorSet": {

@@ -37,14 +37,14 @@ LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chai
 OutboundLane=$(deploy OutboundLane $BSCLightClient $this_chain_pos $this_out_lane_pos $bridged_chain_pos $bridged_in_lane_pos 1 0 0)
 InboundLane=$(deploy InboundLane $BSCLightClient $this_chain_pos $this_in_lane_pos $bridged_chain_pos $bridged_out_lane_pos 0 0)
 
-seth send $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
-seth send $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
-seth send $OutboundLane "setFeeMarket(address)" $FeeMarket
-seth send $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
+seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
+seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
+seth send -F $ETH_FROM $OutboundLane "setFeeMarket(address)" $FeeMarket
+seth send -F $ETH_FROM $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
 
 amount=$(seth --to-wei 1000 ether)
 seth send -F $ETH_FROM -V $amount 0x3DFe30fb7b46b99e234Ed0F725B5304257F78992
 seth send -F $ETH_FROM -V $amount 0xB3c5310Dcf15A852b81d428b8B6D5Fb684300DF9
 seth send -F $ETH_FROM -V $amount 0xf4F07AAe298E149b902993B4300caB06D655f430
 
-seth send $OutboundLane "rely(address)" 0x3DFe30fb7b46b99e234Ed0F725B5304257F78992
+seth send -F $ETH_FROM $OutboundLane "rely(address)" 0x3DFe30fb7b46b99e234Ed0F725B5304257F78992

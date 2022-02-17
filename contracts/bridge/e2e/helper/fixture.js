@@ -7,7 +7,9 @@ const Bridge    = require('./bridge').Bridge
 // const sub_endpoint = "ws://127.0.0.1:9944"
 const evm_endpoint = "http://192.168.2.100:8545"
 const dvm_endpoint = "http://192.168.2.100:9933"
+// const sub_endpoint = "wss://rococo-rpc.polkadot.io"
 const sub_endpoint = "ws://192.168.2.100:9944"
+
 
 const addr1 = "0x3DFe30fb7b46b99e234Ed0F725B5304257F78992"
 const addr2 = "0xB3c5310Dcf15A852b81d428b8B6D5Fb684300DF9"
