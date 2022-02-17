@@ -54,6 +54,19 @@ class SubClient extends EvmClient {
     return header
   }
 
+  async beefy_payload(block_number, block_hash) {
+    const messageRoot = await this.chainMessageCommitter['commitment()']({ blockTag: block_number })
+    const network = "0x50616e676f6c696e000000000000000000000000000000000000000000000000"
+    const next_authority_set = await this.api.query.mmrLeaf.beefyNextAuthorities.at(block_hash)
+    const mmr = await this.api.query.mmr.rootHash.at(block_hash)
+    return {
+        network,
+        mmr: mmr.toHex(),
+        messageRoot,
+        nextValidatorSet: next_authority_set.toJSON()
+    }
+  }
+
   async beefy_block() {
     // const hash = await this.api.rpc.chain.getFinalizedHead()
     // const hash = await this.api.rpc.beefy.getFinalizedHead()

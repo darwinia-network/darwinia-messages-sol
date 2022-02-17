@@ -33,6 +33,11 @@ class EthClient extends EvmClient {
     return block
   }
 
+  async relay_real_head(commitment) {
+    const commitmentHash = await this.lightClient.hash(commitment)
+    console.log(commitmentHash)
+  }
+
   async relay_header(message_root, block_number) {
     const commitment = {
       "payload": {
