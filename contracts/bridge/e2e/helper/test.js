@@ -24,9 +24,7 @@ const key = {
       len: 'u32',
       root: 'H256'
     },
-    BeefyId: '[u8; 2]',
-    Payload: '(BeefyId, Vec<u8>)',
-    BeefyPayload: 'Vec<Payload>',
+    BeefyPayload: 'Vec<([u8; 2], Vec<u8>)>',
     ValidatorSetId: 'u64',
     EcdsaSignature: '[u8; 70]',
   }
