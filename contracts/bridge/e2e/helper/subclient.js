@@ -1,6 +1,7 @@
 let { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
 const addresses = require("../../bin/addr/local-dvm.json")
 const { EvmClient } = require('./evmclient')
+const { encodeNextAuthoritySet } = require('./encode')
 
 /**
  * The Substrate client for Bridge interaction
@@ -54,23 +55,25 @@ class SubClient extends EvmClient {
     return header
   }
 
+
   async beefy_payload(block_number, block_hash) {
-    const messageRoot = await this.chainMessageCommitter['commitment()']({ blockTag: block_number })
-    const network = "0x50616e676f6c696e000000000000000000000000000000000000000000000000"
-    const next_authority_set = await this.api.query.mmrLeaf.beefyNextAuthorities.at(block_hash)
+    const network = "0x50414e474f4c494e000000000000000000000000000000000000000000000000"
     const mmr = await this.api.query.mmr.rootHash.at(block_hash)
+    const messageRoot = await this.chainMessageCommitter['commitment()']({ blockTag: block_number })
+    const next_authority_set = await this.api.query.mmrLeaf.beefyNextAuthorities.at(block_hash)
+    const encoded_next_authority_set = encodeNextAuthoritySet(next_authority_set)
     return {
         network,
         mmr: mmr.toHex(),
         messageRoot,
-        nextValidatorSet: next_authority_set.toJSON()
+        nextValidatorSet: next_authority_set.toHex()
     }
   }
 
   async beefy_block() {
     // const hash = await this.api.rpc.chain.getFinalizedHead()
     // const hash = await this.api.rpc.beefy.getFinalizedHead()
-    const hash = '0x80beb0a11463c73e97be98a578ffcff1a1560065ec47a9b7acd50bd0ef75eb4c';
+    const hash = '0x250e10e5db16ba1bec29fece3f304d258a6406d38cadf78044bdbf611763ebaa';
     console.log(`Finalized head hash ${hash}`)
     const block = await this.api.rpc.chain.getBlock(hash)
     console.log(`Finalized block #${block.block.header.number} has ${block}`)

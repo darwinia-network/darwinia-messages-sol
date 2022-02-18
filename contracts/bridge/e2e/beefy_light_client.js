@@ -5,7 +5,7 @@ const { bootstrap } = require("./helper/fixture")
 const chai = require("chai")
 const { solidity } = waffle;
 const { decodeJustification } = require("./helper/decode")
-const { encodeCommitment } = require("./helper/encode")
+const { encodeCommitment, encodeBeefyPayload } = require("./helper/encode")
 const { u8aToBuffer, u8aToHex } = require('@polkadot/util')
 
 chai.use(solidity)
@@ -35,7 +35,7 @@ describe("bridge e2e test: beefy light client", () => {
     while (!c) {
       const block = await subClient.beefy_block()
       hash = block.block.header.hash.toHex()
-      if (block.justifications) {
+      if (block.justifications != null) {
         log(`BEEFY: ${block.block.header.number}, ${block.justifications.toString()}`)
         let js = JSON.parse(block.justifications.toString())
         for (let j of js) {
@@ -58,12 +58,14 @@ describe("bridge e2e test: beefy light client", () => {
     }
     log(c)
     const beefy_payload = await subClient.beefy_payload(c.blockNumber, hash)
+    const p = encodeBeefyPayload(beefy_payload)
+    log(`Encoded beefy payload: ${p.toHex()}`)
     const beefy_commitment = {
       payload: beefy_payload,
       blockNumber: c.blockNumber,
       validatorSetId: c.validatorSetId
     }
     log(beefy_payload)
-    await ethClient.relay_real_head(beefy_commitment)
+    // await ethClient.relay_real_head(beefy_commitment)
   })
 })

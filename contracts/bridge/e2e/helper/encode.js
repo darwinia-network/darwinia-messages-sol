@@ -13,6 +13,12 @@ function encodeNextAuthoritySet(c) {
   return createType(registry, 'BeefyNextAuthoritySet', c)
 }
 
+function encodeBeefyPayload(c) {
+  return createType(registry, 'BeefyPayload', c)
+}
+
 module.exports = {
-  encodeCommitment
+  encodeCommitment,
+  encodeBeefyPayload,
+  encodeNextAuthoritySet,
 }
