@@ -78,6 +78,10 @@ class SubClient extends EvmClient {
     return block
   }
 
+  async beefy_authorities() {
+    return this.api.query.beefy.authorities()
+  }
+
 }
 
 module.exports.SubClient = SubClient

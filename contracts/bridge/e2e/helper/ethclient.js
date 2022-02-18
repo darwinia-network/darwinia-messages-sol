@@ -36,11 +36,10 @@ class EthClient extends EvmClient {
   async relay_real_head(commitment, signature, address) {
     const commitmentHash = await this.lightClient.hash(commitment)
     console.log(commitmentHash)
-    return
 
     const newSigTx = await this.lightClient.newSignatureCommitment(
       commitmentHash,
-      [0],
+      [1],
       signature,
       0,
       address,
@@ -49,7 +48,7 @@ class EthClient extends EvmClient {
         value: ethers.utils.parseEther("4")
       }
     )
-    // console.log("Phase-1: ", newSigTx.hash)
+    console.log("Phase-1: ", newSigTx.hash)
     const lastId = (await this.lightClient.currentId()).sub(1)
 
     await this.mine(20)
@@ -65,7 +64,7 @@ class EthClient extends EvmClient {
       commitment,
       completeValidatorProofs
     )
-    // console.log("Phase-2: ", completeSigTx.hash)
+    console.log("Phase-2: ", completeSigTx.hash)
   }
 
   async relay_header(message_root, block_number) {

@@ -66,6 +66,8 @@ describe("bridge e2e test: beefy light client", () => {
       validatorSetId: c.validatorSetId
     }
     log(beefy_payload)
-    await ethClient.relay_real_head(beefy_commitment)
+    const authoritirs = await subClient.beefy_authorities()
+    const addr = ethers.utils.computeAddress(authoritirs[0])
+    await ethClient.relay_real_head(beefy_commitment, s, addr)
   })
 })
