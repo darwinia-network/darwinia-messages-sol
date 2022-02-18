@@ -36,6 +36,7 @@ class EthClient extends EvmClient {
   async relay_real_head(commitment, signature, address) {
     const commitmentHash = await this.lightClient.hash(commitment)
     console.log(commitmentHash)
+    return
 
     const newSigTx = await this.lightClient.newSignatureCommitment(
       commitmentHash,

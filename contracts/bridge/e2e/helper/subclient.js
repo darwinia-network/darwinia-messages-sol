@@ -55,25 +55,23 @@ class SubClient extends EvmClient {
     return header
   }
 
-
   async beefy_payload(block_number, block_hash) {
-    const network = "0x50414e474f4c494e000000000000000000000000000000000000000000000000"
+    const network = "0x50616e676f6c696e000000000000000000000000000000000000000000000000"
     const mmr = await this.api.query.mmr.rootHash.at(block_hash)
     const messageRoot = await this.chainMessageCommitter['commitment()']({ blockTag: block_number })
     const next_authority_set = await this.api.query.mmrLeaf.beefyNextAuthorities.at(block_hash)
-    const encoded_next_authority_set = encodeNextAuthoritySet(next_authority_set)
     return {
         network,
         mmr: mmr.toHex(),
         messageRoot,
-        nextValidatorSet: next_authority_set.toHex()
+        nextValidatorSet: next_authority_set.toJSON()
     }
   }
 
   async beefy_block() {
     // const hash = await this.api.rpc.chain.getFinalizedHead()
     // const hash = await this.api.rpc.beefy.getFinalizedHead()
-    const hash = '0x250e10e5db16ba1bec29fece3f304d258a6406d38cadf78044bdbf611763ebaa';
+    const hash = '0x721cad72e9310e009bb17b48b03a1cf3667b232c7938c5decd3a382c2335f71f';
     console.log(`Finalized head hash ${hash}`)
     const block = await this.api.rpc.chain.getBlock(hash)
     console.log(`Finalized block #${block.block.header.number} has ${block}`)

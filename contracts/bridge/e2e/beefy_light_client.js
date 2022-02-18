@@ -35,7 +35,7 @@ describe("bridge e2e test: beefy light client", () => {
     while (!c) {
       const block = await subClient.beefy_block()
       hash = block.block.header.hash.toHex()
-      if (block.justifications != null) {
+      if (block.justifications.toString()) {
         log(`BEEFY: ${block.block.header.number}, ${block.justifications.toString()}`)
         let js = JSON.parse(block.justifications.toString())
         for (let j of js) {
@@ -54,7 +54,7 @@ describe("bridge e2e test: beefy light client", () => {
       } else {
         log(`Skip block: ${block.block.header.number}`)
       }
-      await sleep(6000)
+      await sleep(3000)
     }
     log(c)
     const beefy_payload = await subClient.beefy_payload(c.blockNumber, hash)
@@ -66,6 +66,6 @@ describe("bridge e2e test: beefy light client", () => {
       validatorSetId: c.validatorSetId
     }
     log(beefy_payload)
-    // await ethClient.relay_real_head(beefy_commitment)
+    await ethClient.relay_real_head(beefy_commitment)
   })
 })

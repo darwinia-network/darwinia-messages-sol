@@ -25,7 +25,7 @@ module.exports = {
       network: '[u8; 32]',
       mmr: 'H256',
       messageRoot: 'H256',
-      nextValidatorSet: 'Vec<u8>'
+      nextValidatorSet: 'BeefyNextAuthoritySet'
     },
     EcdsaSignature: {
       b: 'BitVec',
