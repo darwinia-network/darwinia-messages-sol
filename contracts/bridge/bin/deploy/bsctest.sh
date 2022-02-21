@@ -4,6 +4,7 @@ set -eo pipefail
 
 export NETWORK_NAME=bsctest
 export ETH_RPC_URL=https://data-seed-prebsc-1-s1.binance.org:8545
+export VERIFY_CONTRACT=yes
 
 echo "ETH_FROM: ${ETH_FROM}"
 
