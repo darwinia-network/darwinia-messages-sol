@@ -6,7 +6,6 @@
 pragma solidity ^0.8.10;
 
 import "../interfaces/IMessageCommitment.sol";
-import "../interfaces/IOutboundLane.sol";
 import "../../utils/DailyLimit.sol";
 import "../interfaces/IBacking.sol";
 import "../interfaces/IERC20.sol";
@@ -129,9 +128,6 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
         // Otherwise, this fund will be transfered back to the msg.sender.
         require(IERC20(mappingToken).transferFrom(msg.sender, address(this), amount), "MappingTokenFactory:transfer token failed");
 
-        uint256 outBoundId = encodeBridgedBoundId(info.bridgedChainPosition, bridgedLanePosition);
-        address outboundLane = outboundLanes[outBoundId];
-        require(outboundLane != address(0), "MappingTokenFactory:the outbound lane is not exist");
         bytes memory unlockFromRemote = abi.encodeWithSelector(
             IBacking.unlockFromRemote.selector,
             address(this),
@@ -139,13 +135,9 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
             recipient,
             amount
         );
-        uint256 fee = IFeeMarket(feeMarket).market_fee();
-        require(msg.value >= fee, "MappingTokenFactory:not enough fee to pay");
-        uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(info.backingAddress, unlockFromRemote);
+
+        uint256 messageId = sendMessage(info.bridgedChainPosition, bridgedLanePosition, info.backingAddress, unlockFromRemote);
         unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, amount);
-        if (msg.value > fee) {
-            payable(msg.sender).transfer(msg.value - fee);
-        }
         emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mappingToken, amount);
     }
 

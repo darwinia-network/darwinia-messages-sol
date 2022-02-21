@@ -6,9 +6,9 @@
 pragma solidity ^0.8.10;
 
 import "../interfaces/IMessageCommitment.sol";
-import "../interfaces/IOutboundLane.sol";
 import "../../utils/DailyLimit.sol";
 import "../interfaces/IERC721.sol";
+import "../interfaces/IErc721AttrSerializer.sol";
 import "../interfaces/IErc721Backing.sol";
 import "../interfaces/IGuard.sol";
 import "../interfaces/IInboundLane.sol";
@@ -22,7 +22,6 @@ contract Erc721MappingTokenFactory is DailyLimit, MappingTokenFactory {
         uint256[] ids;
     }
     mapping(uint256 => UnconfirmedInfo) public unlockRemoteUnconfirmed;
-    uint256 maxAllowTransferSize;
 
     event IssuingERC721Created(address backingAddress, address originalToken, address mappingToken);
     event BurnAndWaitingConfirm(uint256 messageId, address sender, address recipient, address token, uint256[] ids);
@@ -75,7 +74,8 @@ contract Erc721MappingTokenFactory is DailyLimit, MappingTokenFactory {
         address backingAddress,
         address originalToken,
         address recipient,
-        uint256[] calldata ids
+        uint256[] calldata ids,
+        bytes[] calldata attrs
     ) public onlyInBoundLane(backingAddress) whenNotPaused {
         uint32 bridgedChainPosition = IMessageCommitment(msg.sender).bridgedChainPosition();
         address mappingToken = getMappingToken(bridgedChainPosition, backingAddress, originalToken);
@@ -83,6 +83,7 @@ contract Erc721MappingTokenFactory is DailyLimit, MappingTokenFactory {
         require(ids.length > 0, "MappingTokenFactory:can not receive empty ids");
         for (uint idx = 0; idx < ids.length; idx++) {
             IErc721MappingToken(mappingToken).mint(recipient, ids[idx]);
+            IErc721AttrSerializer(mappingToken).Deserialize(ids[idx], attrs[idx]);
         }
     }
 
@@ -99,14 +100,16 @@ contract Erc721MappingTokenFactory is DailyLimit, MappingTokenFactory {
         address recipient,
         uint256[] memory ids 
     ) external payable whenNotPaused {
-        require(ids.length > 0 && ids.length <= maxAllowTransferSize, "MappingTokenFactory:can not transfer empty id");
+        require(ids.length > 0, "MappingTokenFactory:can not transfer empty id");
         OriginalInfo memory info = mappingToken2OriginalInfo[mappingToken];
         require(info.originalToken != address(0), "MappingTokenFactory:token is not created by factory");
         // Lock the fund in this before message on remote backing chain get dispatched successfully and burn finally
         // If remote backing chain unlock the origin token successfully, then this fund will be burned.
         // Otherwise, these tokens will be transfered back to the msg.sender.
+        bytes[] memory attrs = new bytes[](ids.length);
         for (uint256 idx = 0; idx < ids.length; idx++) {
             IERC721(mappingToken).transferFrom(msg.sender, address(this), ids[idx]);
+            attrs[idx] = IErc721AttrSerializer(mappingToken).Serialize(ids[idx]);
         }
 
         bytes memory unlockFromRemote = abi.encodeWithSelector(
@@ -114,7 +117,8 @@ contract Erc721MappingTokenFactory is DailyLimit, MappingTokenFactory {
             address(this),
             info.originalToken,
             recipient,
-            ids
+            ids,
+            attrs
         );
         uint256 messageId = sendMessage(info.bridgedChainPosition, bridgedLanePosition, info.backingAddress, unlockFromRemote);
         unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, ids);

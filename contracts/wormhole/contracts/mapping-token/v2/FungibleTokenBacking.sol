@@ -21,6 +21,12 @@ contract FungibleTokenBacking is DailyLimit, IBacking, Backing {
     uint32 public constant ERC20_TOKEN_TYPE = 1;
     address public guard;
 
+    // (messageId => tokenAddress)
+    mapping(uint256 => address) public registerMessages;
+
+    // tokenAddress => reistered
+    mapping(address => bool) public registeredTokens;
+
     // (messageId => lockedInfo)
     mapping(uint256 => LockedInfo) public lockMessages;
 

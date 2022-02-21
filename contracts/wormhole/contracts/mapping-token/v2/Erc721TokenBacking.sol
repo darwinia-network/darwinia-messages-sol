@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
+import "../interfaces/IErc721AttrSerializer.sol";
 import "../interfaces/IErc721Backing.sol";
 import "../interfaces/IErc721MappingTokenFactory.sol";
 import "../interfaces/IERC721.sol";
@@ -15,6 +16,17 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
         address sender;
         uint256[] ids;
     }
+
+    struct TokenInfo {
+        address token;
+        address serializer;
+    }
+
+    // (messageId => tokenAddress)
+    mapping(uint256 => TokenInfo) public registerMessages;
+
+    // tokenAddress => reistered
+    mapping(address => TokenInfo) public registeredTokens;
 
     // (messageId => lockedInfo)
     mapping(uint256 => LockedInfo) public lockMessages;
@@ -37,9 +49,10 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
         uint32 bridgedLanePosition,
         address token,
         string memory name,
-        string memory symbol
+        string memory symbol,
+        address attributesSerializer
     ) external payable onlyOperatorOrOwner {
-        require(registeredTokens[token] == false, "Backing:token has been registered");
+        require(registeredTokens[token].token == address(0), "Backing:token has been registered");
         bytes memory newErc721Contract = abi.encodeWithSelector(
             IErc721MappingTokenFactory.newErc721Contract.selector,
             address(this),
@@ -50,7 +63,7 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
             symbol
         );
         uint256 messageId = sendMessage(bridgedLanePosition, remoteMappingTokenFactory, newErc721Contract);
-        registerMessages[messageId] = token;
+        registerMessages[messageId] = TokenInfo(token, attributesSerializer);
         emit NewErc721TokenRegistered(messageId, token);
     }
 
@@ -68,10 +81,15 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
         address recipient,
         uint256[] calldata ids
     ) external payable whenNotPaused {
-        require(registeredTokens[token], "Backing:the token is not registed");
+        TokenInfo memory info = registeredTokens[token];
+        require(info.token != address(0), "Backing:the token is not registed");
 
+        bytes[] memory attrs = new bytes[](ids.length);
         for (uint idx = 0; idx < ids.length; idx++) {
             IERC721(token).transferFrom(msg.sender, address(this), ids[idx]);
+            if (info.serializer != address(0)) {
+                attrs[idx] = IErc721AttrSerializer(info.serializer).Serialize(ids[idx]);
+            }
         }
 
         bytes memory issueMappingToken = abi.encodeWithSelector(
@@ -79,7 +97,8 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
             address(this),
             token,
             recipient,
-            ids
+            ids,
+            attrs
         );
         uint256 messageId = sendMessage(bridgedLanePosition, remoteMappingTokenFactory, issueMappingToken);
         lockMessages[messageId] = LockedInfo(token, msg.sender, ids);
@@ -107,12 +126,12 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
             emit TokenLockFinished(messageId, result);
             return;
         }
-        address registerToken = registerMessages[messageId];
+        TokenInfo memory info = registerMessages[messageId];
         // it is register message, if result is true, need to save the token
-        if (registerToken != address(0)) {
+        if (info.token != address(0)) {
             delete registerMessages[messageId];
             if (result) {
-                registeredTokens[registerToken] = true;
+                registeredTokens[info.token] = info;
             }
             emit TokenRegisterFinished(messageId, result);
         }
@@ -128,10 +147,16 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
         address mappingTokenFactory,
         address token,
         address recipient,
-        uint256[] calldata ids 
+        uint256[] calldata ids,
+        bytes[] calldata attrs
     ) public onlyInBoundLane(mappingTokenFactory) whenNotPaused {
+        TokenInfo memory info = registeredTokens[token];
+        require(info.token != address(0), "the token is not registered");
         for (uint idx = 0; idx < ids.length; idx++) {
             IERC721(token).transferFrom(address(this), recipient, ids[idx]);
+            if (info.serializer != address(0)) {
+                IErc721AttrSerializer(info.serializer).Deserialize(ids[idx], attrs[idx]);
+            }
         }
         emit TokenUnlocked(token, recipient, ids);
     }

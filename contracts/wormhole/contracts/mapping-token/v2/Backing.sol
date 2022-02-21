@@ -30,12 +30,6 @@ contract Backing is Initializable, Ownable, ICrossChainFilter, Pausable {
     // bridgedLanePosition => outBoundLaneAddress
     mapping(uint32 => address) public outboundLanes;
 
-    // tokenAddress => reistered
-    mapping(address => bool) public registeredTokens;
-
-    // (messageId => tokenAddress)
-    mapping(uint256 => address) public registerMessages;
-
     event NewInBoundLaneAdded(address backingAddress, address inboundLane);
     event NewOutBoundLaneAdded(uint32 bridgedLanePosition, address outboundLane);
 

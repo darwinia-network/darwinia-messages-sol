@@ -7,5 +7,7 @@ interface IErc721Backing {
         address mappingTokenFactory,
         address originalToken,
         address recipient,
-        uint256[] calldata ids) external;
+        uint256[] calldata ids,
+        bytes[] calldata attrs
+    ) external;
 }
