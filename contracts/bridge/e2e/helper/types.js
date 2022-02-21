@@ -28,8 +28,7 @@ module.exports = {
       nextValidatorSet: 'BeefyNextAuthoritySet'
     },
     EcdsaSignature: {
-      b: 'BitVec',
-      i: 'u32',
+      i: '[u8; 5]',
       s: '[u8; 65]'
     }
   }
