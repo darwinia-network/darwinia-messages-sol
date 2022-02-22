@@ -5,11 +5,9 @@ pragma solidity >=0.8.10;
 interface IErc721MappingTokenFactory {
     function newErc721Contract(
         address backingAddress,
-        uint32 tokenType,
         address originalToken,
-        string memory bridgedChainName,
-        string memory name,
-        string memory symbol
+        address attrSerializer,
+        string memory bridgedChainName
     ) external returns (address mappingToken);
 
     function issueMappingToken(

@@ -105,14 +105,14 @@ contract Backing is Initializable, Ownable, ICrossChainFilter, Pausable {
 
     function sendMessage(
         uint32 bridgedLanePosition,
-        address remoteMappingTokenFactory,
+        address remoteContract,
         bytes memory message
     ) internal returns(uint256) {
         address outboundLane = outboundLanes[bridgedLanePosition];
         require(outboundLane != address(0), "Backing:cannot find outboundLane to send message");
         uint256 fee = IFeeMarket(feeMarket).market_fee();
         require(msg.value >= fee, "Backing:not enough fee to pay");
-        uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, message);
+        uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(remoteContract, message);
         if (msg.value > fee) {
             payable(msg.sender).transfer(msg.value.sub(fee));
         }

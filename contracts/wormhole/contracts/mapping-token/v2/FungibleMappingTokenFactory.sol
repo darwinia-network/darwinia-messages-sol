@@ -5,6 +5,7 @@
 // Only we need is to verify the sourceAccount is expected. And we add it to the Filter.
 pragma solidity ^0.8.10;
 
+import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "../interfaces/IMessageCommitment.sol";
 import "../../utils/DailyLimit.sol";
 import "../interfaces/IBacking.sol";
@@ -15,6 +16,7 @@ import "../interfaces/IMappingTokenFactory.sol";
 import "./MappingTokenFactory.sol";
 
 contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, MappingTokenFactory {
+    address public constant BLACK_HOLE_ADDRESS = 0x000000000000000000000000000000000000dEaD;
     struct UnconfirmedInfo {
         address sender;
         address mappingToken;
@@ -24,6 +26,11 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
     address public guard;
     mapping(uint256 => UnconfirmedInfo) public unlockRemoteUnconfirmed;
 
+    // tokenType=>Logic
+    // tokenType comes from original token, the logic contract is used to create the mapping-token contract
+    mapping(uint32 => address) public tokenType2Logic;
+
+    event NewLogicSetted(uint32 tokenType, address addr);
     event IssuingERC20Created(address backingAddress, address originalToken, address mappingToken);
     event BurnAndWaitingConfirm(uint256 messageId, address sender, address recipient, address token, uint256 amount);
     event RemoteUnlockConfirmed(uint256 messageId, bool result);
@@ -37,6 +44,12 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
 
     function changeDailyLimit(address mappingToken, uint amount) public onlyOwner  {
         _changeDailyLimit(mappingToken, amount);
+    }
+
+
+    function setTokenContractLogic(uint32 tokenType, address logic) external onlyOwner {
+        tokenType2Logic[tokenType] = logic;
+        emit NewLogicSetted(tokenType, logic);
     }
 
     /**
@@ -62,7 +75,7 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
         uint32 bridgedChainPosition = IMessageCommitment(msg.sender).bridgedChainPosition();
         bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
         require(salt2MappingToken[salt] == address(0), "MappingTokenFactory:contract has been deployed");
-        mappingToken = deploy(salt, tokenType);
+        mappingToken = deployErc20Contract(salt, tokenType);
         IMappingToken(mappingToken).initialize(
             string(abi.encodePacked(name, "[", bridgedChainName, ">")),
             string(abi.encodePacked("x", symbol)),
@@ -73,8 +86,17 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
         // map the originToken to mappingInfo
         salt2MappingToken[salt] = mappingToken;
         // map the mappingToken to origin info
-        mappingToken2OriginalInfo[mappingToken] = OriginalInfo(bridgedChainPosition, tokenType, backingAddress, originalToken);
+        mappingToken2OriginalInfo[mappingToken] = OriginalInfo(bridgedChainPosition, backingAddress, originalToken);
         emit IssuingERC20Created(backingAddress, originalToken, mappingToken);
+    }
+
+    function deployErc20Contract(
+        bytes32 salt,
+        uint32 tokenType
+    ) internal returns(address) {
+        bytes memory bytecode = type(TransparentUpgradeableProxy).creationCode;
+        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(tokenType2Logic[tokenType], address(BLACK_HOLE_ADDRESS), ""));
+        return deploy(salt, bytecodeWithInitdata);
     }
 
     /**

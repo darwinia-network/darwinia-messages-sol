@@ -6,7 +6,6 @@
 pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
-import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "../interfaces/ICrossChainFilter.sol";
 import "../interfaces/IFeeMarket.sol";
 import "../interfaces/IMessageCommitment.sol";
@@ -16,13 +15,11 @@ import "../../utils/Pausable.sol";
 import "../interfaces/IInboundLane.sol";
 
 contract MappingTokenFactory is Initializable, Ownable, ICrossChainFilter, Pausable {
-    address public constant BLACK_HOLE_ADDRESS = 0x000000000000000000000000000000000000dEaD;
     struct OriginalInfo {
         uint32  bridgedChainPosition;
         // 0 - NativeToken
         // 1 - Erc20Token
         // ...
-        uint32  tokenType;
         address backingAddress;
         address originalToken;
     }
@@ -41,15 +38,11 @@ contract MappingTokenFactory is Initializable, Ownable, ICrossChainFilter, Pausa
     // mappingToken=>info the info is the original token info
     // so this is a mapping from mappingToken to original token
     mapping(address => OriginalInfo) public mappingToken2OriginalInfo;
-    // tokenType=>Logic
-    // tokenType comes from original token, the logic contract is used to create the mapping-token contract
-    mapping(uint32 => address) public tokenType2Logic;
 
     // bridge channel
     mapping(uint256 => InBoundLaneInfo) public inboundLanes;
     mapping(uint256 => address) public outboundLanes;
 
-    event NewLogicSetted(uint32 tokenType, address addr);
     event MappingTokenUpdated(bytes32 salt, address oldAddress, address newAddress);
     event NewInBoundLaneAdded(address backing, address inboundLane);
     event NewOutBoundLaneAdded(address outboundLane);
@@ -144,11 +137,6 @@ contract MappingTokenFactory is Initializable, Ownable, ICrossChainFilter, Pausa
         emit NewOutBoundLaneAdded(outboundLane);
     }
 
-    function setTokenContractLogic(uint32 tokenType, address logic) external onlyOwner {
-        tokenType2Logic[tokenType] = logic;
-        emit NewLogicSetted(tokenType, logic);
-    }
-
     function transferMappingTokenOwnership(address mappingToken, address new_owner) external onlyOwner {
         Ownable(mappingToken).transferOwnership(new_owner);
     }
@@ -159,14 +147,12 @@ contract MappingTokenFactory is Initializable, Ownable, ICrossChainFilter, Pausa
      * @param backingAddress the remote backingAddress
      * @param originalToken the original token address
      * @param mappingToken the mapping token address
-     * @param tokenType the token type of the original token
      */
     function addMappingToken(
         uint32 bridgedChainPosition,
         address backingAddress,
         address originalToken,
-        address mappingToken,
-        uint32 tokenType
+        address mappingToken
     ) external onlyOwner {
         bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
         address existed = salt2MappingToken[salt];
@@ -177,15 +163,12 @@ contract MappingTokenFactory is Initializable, Ownable, ICrossChainFilter, Pausa
         // map the originToken to mappingInfo
         salt2MappingToken[salt] = mappingToken;
         // map the mappingToken to origin info
-        mappingToken2OriginalInfo[mappingToken] = OriginalInfo(bridgedChainPosition, tokenType, backingAddress, originalToken);
+        mappingToken2OriginalInfo[mappingToken] = OriginalInfo(bridgedChainPosition, backingAddress, originalToken);
         emit MappingTokenUpdated(salt, existed, mappingToken);
     }
 
     // internal
-    function deploy(bytes32 salt, uint32 tokenType) internal returns (address addr) {
-        bytes memory bytecode = type(TransparentUpgradeableProxy).creationCode;
-        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(tokenType2Logic[tokenType], address(BLACK_HOLE_ADDRESS), ""));
-
+    function deploy(bytes32 salt, bytes memory bytecodeWithInitdata) internal returns (address addr) {
         assembly {
             addr := create2(0, add(bytecodeWithInitdata, 0x20), mload(bytecodeWithInitdata), salt)
             if iszero(extcodesize(addr)) { revert(0, 0) }

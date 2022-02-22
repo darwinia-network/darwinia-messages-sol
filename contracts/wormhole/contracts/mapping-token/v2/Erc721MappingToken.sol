@@ -11,17 +11,13 @@ import "@zeppelin-solidity-4.4.0/contracts/utils/Strings.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/introspection/ERC165.sol";
 import "../../utils/Ownable.sol";
 import "../interfaces/IERC721.sol";
-import "../interfaces/IErc721AttrSerializer.sol";
 
-contract Erc721MappingToken is ERC165, IERC721, IERC721Metadata, IErc721MappingToken, Ownable, Initializable, IErc721AttrSerializer {
+contract Erc721MappingToken is ERC165, IERC721Metadata, IErc721MappingToken, Ownable {
     using Address for address;
     using Strings for uint256;
 
-    // Token name
-    string private _name;
-
-    // Token symbol
-    string private _symbol;
+    string public bridgedChainName;
+    address public attributeSerializer;
 
     // Mapping from token ID to owner address
     mapping(uint256 => address) private _owners;
@@ -35,10 +31,10 @@ contract Erc721MappingToken is ERC165, IERC721, IERC721Metadata, IErc721MappingT
     // Mapping from owner to operator approvals
     mapping(address => mapping(address => bool)) private _operatorApprovals;
 
-    function initialize(string memory name_, string memory symbol_) external {
+    constructor(string memory _bridgedChainName, address _attributeSerializer) {
         ownableConstructor();
-        _name = name_;
-        _symbol = symbol_;
+        bridgedChainName = _bridgedChainName;
+        attributeSerializer = _attributeSerializer;
     }
 
     /**
@@ -53,14 +49,6 @@ contract Erc721MappingToken is ERC165, IERC721, IERC721Metadata, IErc721MappingT
      */
     function mint(address recipient, uint256 tokenId) external onlyOwner {
         _mint(recipient, tokenId);
-    }
-
-
-    function Serialize(uint256 id) external virtual returns(bytes memory) {
-        return "";
-    }
-
-    function Deserialize(uint256 id, bytes memory data) external virtual {
     }
 
     /**
@@ -94,33 +82,21 @@ contract Erc721MappingToken is ERC165, IERC721, IERC721Metadata, IErc721MappingT
      * @dev See {IERC721Metadata-name}.
      */
     function name() public view virtual override returns (string memory) {
-        return _name;
+        return IERC721Metadata(attributeSerializer).name();
     }
 
     /**
      * @dev See {IERC721Metadata-symbol}.
      */
     function symbol() public view virtual override returns (string memory) {
-        return _symbol;
+        return IERC721Metadata(attributeSerializer).symbol();
     }
 
     /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
-
-        string memory baseURI = _baseURI();
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : "";
-    }
-
-    /**
-     * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
-     * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
-     * by default, can be overriden in child contracts.
-     */
-    function _baseURI() internal view virtual returns (string memory) {
-        return "";
+        return IERC721Metadata(attributeSerializer).tokenURI(tokenId);
     }
 
     /**

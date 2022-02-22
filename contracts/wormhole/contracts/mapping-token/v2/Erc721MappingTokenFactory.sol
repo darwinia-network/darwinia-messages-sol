@@ -13,6 +13,7 @@ import "../interfaces/IErc721Backing.sol";
 import "../interfaces/IGuard.sol";
 import "../interfaces/IInboundLane.sol";
 import "../interfaces/IMappingTokenFactory.sol";
+import "./Erc721MappingToken.sol";
 import "./MappingTokenFactory.sol";
 
 contract Erc721MappingTokenFactory is DailyLimit, MappingTokenFactory {
@@ -30,36 +31,27 @@ contract Erc721MappingTokenFactory is DailyLimit, MappingTokenFactory {
     /**
      * @notice create new erc20 mapping contract, this can only be called by inboundLane
      * @param backingAddress the backingAddress which send this message
-     * @param tokenType the original token type
      * @param originalToken the original token address
-     * @param name the name of the original erc20 token
-     * @param symbol the symbol of the original erc20 token
      */
     function newErc721Contract(
         address backingAddress,
-        uint32 tokenType,
         address originalToken,
-        string memory bridgedChainName,
-        string memory name,
-        string memory symbol
+        address attrSerializer,
+        string memory bridgedChainName
     ) public onlyInBoundLane(backingAddress) whenNotPaused returns (address mappingToken) {
-        require(tokenType == 0, "MappingTokenFactory:token type cannot mapping to erc721 token");
         // (bridgeChainId, backingAddress, originalToken) pack a unique new contract salt
         uint32 bridgedChainPosition = IMessageCommitment(msg.sender).bridgedChainPosition();
         bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
         require(salt2MappingToken[salt] == address(0), "MappingTokenFactory:contract has been deployed");
-        mappingToken = deploy(salt, tokenType);
-        IErc721MappingToken(mappingToken).initialize(
-            string(abi.encodePacked(name, "[", bridgedChainName, ">")),
-            string(abi.encodePacked("x", symbol))
-            );
-
+        bytes memory bytecode = type(Erc721MappingToken).creationCode;
+        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(bridgedChainName, attrSerializer));
+        mappingToken = deploy(salt, bytecodeWithInitdata);
         // save the mapping tokens in an array so it can be listed
         allMappingTokens.push(mappingToken);
         // map the originToken to mappingInfo
         salt2MappingToken[salt] = mappingToken;
         // map the mappingToken to origin info
-        mappingToken2OriginalInfo[mappingToken] = OriginalInfo(bridgedChainPosition, tokenType, backingAddress, originalToken);
+        mappingToken2OriginalInfo[mappingToken] = OriginalInfo(bridgedChainPosition, backingAddress, originalToken);
         emit IssuingERC721Created(backingAddress, originalToken, mappingToken);
     }
 
@@ -81,9 +73,12 @@ contract Erc721MappingTokenFactory is DailyLimit, MappingTokenFactory {
         address mappingToken = getMappingToken(bridgedChainPosition, backingAddress, originalToken);
         require(mappingToken != address(0), "MappingTokenFactory:mapping token has not created");
         require(ids.length > 0, "MappingTokenFactory:can not receive empty ids");
+        address serializer = IErc721MappingToken(mappingToken).attributeSerializer();
         for (uint idx = 0; idx < ids.length; idx++) {
             IErc721MappingToken(mappingToken).mint(recipient, ids[idx]);
-            IErc721AttrSerializer(mappingToken).Deserialize(ids[idx], attrs[idx]);
+            if (serializer != address(0)) {
+                IErc721AttrSerializer(serializer).Deserialize(ids[idx], attrs[idx]);
+            }
         }
     }
 
@@ -107,9 +102,12 @@ contract Erc721MappingTokenFactory is DailyLimit, MappingTokenFactory {
         // If remote backing chain unlock the origin token successfully, then this fund will be burned.
         // Otherwise, these tokens will be transfered back to the msg.sender.
         bytes[] memory attrs = new bytes[](ids.length);
+        address serializer = IErc721MappingToken(mappingToken).attributeSerializer();
         for (uint256 idx = 0; idx < ids.length; idx++) {
             IERC721(mappingToken).transferFrom(msg.sender, address(this), ids[idx]);
-            attrs[idx] = IErc721AttrSerializer(mappingToken).Serialize(ids[idx]);
+            if (serializer != address(0)) {
+                attrs[idx] = IErc721AttrSerializer(serializer).Serialize(ids[idx]);
+            }
         }
 
         bytes memory unlockFromRemote = abi.encodeWithSelector(

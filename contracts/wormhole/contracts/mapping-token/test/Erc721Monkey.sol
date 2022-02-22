@@ -7,7 +7,7 @@ import "../../utils/Ownable.sol";
 import "../interfaces/IERC721.sol";
 import "../v2/Erc721MappingToken.sol";
 
-contract Erc721Monkey is Erc721MappingToken {
+contract Erc721MonkeyAttributeSerializer is IErc721AttrSerializer {
     // some changable attributes
     struct Attributes {
         uint age;
@@ -27,11 +27,23 @@ contract Erc721Monkey is Erc721MappingToken {
         return _attributes[id].weight;
     }
 
-    function Serialize(uint256 id) external override returns(bytes memory) {
+    function name() external pure returns(string memory) {
+        return "Monkey";
+    }
+
+    function symbol() external pure returns(string memory) {
+        return "MKY";
+    }
+
+    function tokenURI(uint256 tokenId) external pure returns(string memory) {
+        return "";
+    }
+
+    function Serialize(uint256 id) external view returns(bytes memory) {
         return abi.encode(_attributes[id]);
     }
 
-    function Deserialize(uint256 id, bytes memory data) external override onlyOwner {
+    function Deserialize(uint256 id, bytes memory data) external {
         Attributes memory attr = abi.decode(data, (Attributes));
         _attributes[id] = attr;
     }

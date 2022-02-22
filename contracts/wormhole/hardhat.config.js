@@ -24,7 +24,7 @@ module.exports = {
           evmVersion: "istanbul",
           optimizer: {
             enabled: true,
-            runs: 999999
+            runs: 200
           },
           outputSelection: {
             "*": {

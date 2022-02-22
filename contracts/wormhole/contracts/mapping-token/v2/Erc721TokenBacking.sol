@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+import "@zeppelin-solidity-4.4.0/contracts/token/ERC721/IERC721.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
 import "../interfaces/IErc721AttrSerializer.sol";
 import "../interfaces/IErc721Backing.sol";
 import "../interfaces/IErc721MappingTokenFactory.sol";
-import "../interfaces/IERC721.sol";
 import "./Backing.sol";
 
 contract Erc721TokenBacking is IErc721Backing, Backing {
@@ -41,26 +41,20 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
      * @notice reigister new erc721 token to the bridge. Only owner can do this.
      * @param bridgedLanePosition the bridged lane positon, this register message will be delived to this lane position
      * @param token the original token address
-     * @param name the name of the original token
-     * @param symbol the symbol of the original token
      */
     function registerErc721Token(
-        uint32 tokenType,
         uint32 bridgedLanePosition,
         address token,
-        string memory name,
-        string memory symbol,
-        address attributesSerializer
+        address attributesSerializer,
+        address remoteAttributesSerializer
     ) external payable onlyOperatorOrOwner {
         require(registeredTokens[token].token == address(0), "Backing:token has been registered");
         bytes memory newErc721Contract = abi.encodeWithSelector(
             IErc721MappingTokenFactory.newErc721Contract.selector,
             address(this),
-            tokenType,
             token,
-            thisChainName,
-            name,
-            symbol
+            remoteAttributesSerializer,
+            thisChainName
         );
         uint256 messageId = sendMessage(bridgedLanePosition, remoteMappingTokenFactory, newErc721Contract);
         registerMessages[messageId] = TokenInfo(token, attributesSerializer);
