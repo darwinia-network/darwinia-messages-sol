@@ -31,6 +31,16 @@ class SubClient extends EvmClient {
     const lightClient = new ethers.Contract(addresses.BSCLightClient, BSCLightClient.abi, this.provider)
 
     this.lightClient = lightClient.connect(this.signer)
+
+    await this.set_chain_committer()
+  }
+
+  async set_chain_committer() {
+    const call = await this.api.tx.beefyGadget.setCommitmentContract(addresses.ChainMessageCommitter)
+    const tx = await this.api.tx.sudo.sudo(call).signAndSend(this.alice)
+    console.log(`Set chain committer tx submitted with hash: ${tx}`)
+    const res = await this.api.query.beefyGadget.commitmentContract()
+    console.log(`Get chain committer: ${res}`)
   }
 
   async set_chain_committer() {
@@ -68,11 +78,10 @@ class SubClient extends EvmClient {
   async beefy_block() {
     const hash = await this.api.rpc.chain.getFinalizedHead()
     // const hash = await this.api.rpc.beefy.getFinalizedHead()
-
-    // const hash = '0x65b47c8bdc1269eac323607e7c4db31ccacd1db406431b2fe831c95896b14220';
+    // const hash = '0x721cad72e9310e009bb17b48b03a1cf3667b232c7938c5decd3a382c2335f71f';
     console.log(`Finalized head hash ${hash}`)
     const block = await this.api.rpc.chain.getBlock(hash)
-    // console.log(`Finalized block #${block.block.header.number} has ${block}`)
+    console.log(`Finalized block #${block.block.header.number} has ${block}`)
     return block
   }
 
