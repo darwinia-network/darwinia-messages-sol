@@ -122,6 +122,7 @@ describe("darwinia<>bsc erc721 mapping token tests", () => {
       await originalToken.mint(owner.address, 1001);
       await originalToken.approve(backing.address, 1001);
       
+      var mappedToken = await ethers.getContractAt("Erc721MappingToken", mappingTokenAddress);
       // test lock successful
       await expect(backing.lockAndRemoteIssuing(
           2,
@@ -132,12 +133,15 @@ describe("darwinia<>bsc erc721 mapping token tests", () => {
       )).to.be.revertedWith("not enough fee to pay");
       // balance before
       expect(await originalToken.ownerOf(1001)).to.equal(owner.address);
+      expect(await mappedToken.totalSupply()).to.equal(0);
       await backing.lockAndRemoteIssuing(2, originalToken.address, owner.address, [1001], {value: ethers.utils.parseEther("10.0")});
       await darwiniaOutboundLane.mock_confirm(2);
       // check lock and remote successed
       expect(await originalToken.ownerOf(1001)).to.equal(backing.address);
+      expect(await mappedToken.totalSupply()).to.equal(1);
+      expect(await mappedToken.tokenOfOwnerByIndex(owner.address, 0)).to.equal(1001);
+      expect(await mappedToken.tokenByIndex(0)).to.equal(1001);
       // check issuing successed
-      var mappedToken = await ethers.getContractAt("Erc721MappingToken", mappingTokenAddress);
       expect(await mappedToken.ownerOf(1001)).to.equal(owner.address);
       expect(await monkeyAttrContractOnBsc.getAge(1001)).to.equal(18);
       expect(await monkeyAttrContractOnBsc.getWeight(1001)).to.equal(60);
@@ -155,6 +159,7 @@ describe("darwinia<>bsc erc721 mapping token tests", () => {
       expect(await mappedToken.ownerOf(1001)).to.equal(mtf.address);
       // after confirmed
       await bscOutboundLane.mock_confirm(1);
+      expect(await mappedToken.totalSupply()).to.equal(0);
       expect(await originalToken.ownerOf(1001)).to.equal(owner.address);
       expect(await monkeyAttrContractOnDarwinia.getAge(1001)).to.equal(19);
       expect(await monkeyAttrContractOnDarwinia.getWeight(1001)).to.equal(70);
