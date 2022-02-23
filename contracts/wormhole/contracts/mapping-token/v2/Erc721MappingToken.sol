@@ -10,7 +10,7 @@ import "@zeppelin-solidity-4.4.0/contracts/utils/Address.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/Strings.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/introspection/ERC165.sol";
 import "../../utils/Ownable.sol";
-import "../interfaces/IERC721.sol";
+import "../interfaces/IErc721MappingToken.sol";
 
 contract Erc721MappingToken is ERC165, IERC721Metadata, IErc721MappingToken, Ownable {
     using Address for address;

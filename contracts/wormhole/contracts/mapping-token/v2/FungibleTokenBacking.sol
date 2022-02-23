@@ -71,7 +71,7 @@ contract FungibleTokenBacking is DailyLimit, IBacking, Backing {
             symbol,
             decimals
         );
-        uint256 messageId = sendMessage(bridgedLanePosition, remoteMappingTokenFactory, newErc20Contract);
+        uint256 messageId = _sendMessage(bridgedLanePosition, remoteMappingTokenFactory, newErc20Contract);
         registerMessages[messageId] = token;
         emit NewErc20TokenRegistered(messageId, token);
     }
@@ -103,7 +103,7 @@ contract FungibleTokenBacking is DailyLimit, IBacking, Backing {
             recipient,
             amount
         );
-        uint256 messageId = sendMessage(bridgedLanePosition, remoteMappingTokenFactory, issueMappingToken);
+        uint256 messageId = _sendMessage(bridgedLanePosition, remoteMappingTokenFactory, issueMappingToken);
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
         emit TokenLocked(messageId, token, recipient, amount);
     }
@@ -140,6 +140,7 @@ contract FungibleTokenBacking is DailyLimit, IBacking, Backing {
 
     /**
      * @notice this will be called by inboundLane when the remote mapping token burned and want to unlock the original token
+     * @param mappingTokenFactory the remote mapping token factory address
      * @param token the original token address
      * @param recipient the recipient who will receive the unlocked token
      * @param amount amount of the unlocked token

@@ -158,7 +158,7 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
             amount
         );
 
-        uint256 messageId = sendMessage(info.bridgedChainPosition, bridgedLanePosition, info.backingAddress, unlockFromRemote);
+        uint256 messageId = _sendMessage(info.bridgedChainPosition, bridgedLanePosition, info.backingAddress, unlockFromRemote);
         unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, amount);
         emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mappingToken, amount);
     }

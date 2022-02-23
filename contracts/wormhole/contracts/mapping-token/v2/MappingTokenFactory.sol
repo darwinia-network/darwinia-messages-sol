@@ -17,9 +17,6 @@ import "../interfaces/IInboundLane.sol";
 contract MappingTokenFactory is Initializable, Ownable, ICrossChainFilter, Pausable {
     struct OriginalInfo {
         uint32  bridgedChainPosition;
-        // 0 - NativeToken
-        // 1 - Erc20Token
-        // ...
         address backingAddress;
         address originalToken;
     }
@@ -200,8 +197,7 @@ contract MappingTokenFactory is Initializable, Ownable, ICrossChainFilter, Pausa
         return inboundLanes[remoteId].inBoundLaneAddress == msg.sender && inboundLanes[remoteId].remoteSender == backingAddress;
     }
 
-
-    function sendMessage(
+    function _sendMessage(
         uint32 bridgedChainPosition,
         uint32 bridgedLanePosition,
         address receiver,

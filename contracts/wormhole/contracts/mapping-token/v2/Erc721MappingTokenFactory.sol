@@ -3,11 +3,12 @@
 // We trust the inboundLane/outboundLane when we add them to the module.
 // It means that each message from the inboundLane is verified correct and truthly from the sourceAccount.
 // Only we need is to verify the sourceAccount is expected. And we add it to the Filter.
+
 pragma solidity ^0.8.10;
 
 import "../interfaces/IMessageCommitment.sol";
 import "../../utils/DailyLimit.sol";
-import "../interfaces/IERC721.sol";
+import "../interfaces/IErc721MappingToken.sol";
 import "../interfaces/IErc721AttrSerializer.sol";
 import "../interfaces/IErc721Backing.sol";
 import "../interfaces/IGuard.sol";
@@ -32,6 +33,8 @@ contract Erc721MappingTokenFactory is DailyLimit, MappingTokenFactory {
      * @notice create new erc20 mapping contract, this can only be called by inboundLane
      * @param backingAddress the backingAddress which send this message
      * @param originalToken the original token address
+     * @param attrSerializer the serializer address of the attributes
+     * @param bridgedChainName bridged chain name
      */
     function newErc721Contract(
         address backingAddress,
@@ -61,6 +64,7 @@ contract Erc721MappingTokenFactory is DailyLimit, MappingTokenFactory {
      * @param originalToken the original token address
      * @param recipient the recipient of the issued mapping token
      * @param ids the ids of the issued mapping tokens
+     * @param attrs the serialized data of the original token's attributes
      */
     function issueMappingToken(
         address backingAddress,
@@ -118,7 +122,7 @@ contract Erc721MappingTokenFactory is DailyLimit, MappingTokenFactory {
             ids,
             attrs
         );
-        uint256 messageId = sendMessage(info.bridgedChainPosition, bridgedLanePosition, info.backingAddress, unlockFromRemote);
+        uint256 messageId = _sendMessage(info.bridgedChainPosition, bridgedLanePosition, info.backingAddress, unlockFromRemote);
         unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, ids);
         emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mappingToken, ids);
     }

@@ -103,7 +103,7 @@ contract Backing is Initializable, Ownable, ICrossChainFilter, Pausable {
         return remoteChainPosition == bridgedChainPosition && inboundLanes[bridgedLanePosition] == msg.sender && remoteMappingTokenFactory == sourceAccount;
     }
 
-    function sendMessage(
+    function _sendMessage(
         uint32 bridgedLanePosition,
         address remoteContract,
         bytes memory message

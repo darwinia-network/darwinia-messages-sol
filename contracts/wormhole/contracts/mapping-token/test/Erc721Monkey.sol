@@ -4,7 +4,7 @@ pragma solidity >=0.8.10;
 
 import "../interfaces/IErc721AttrSerializer.sol";
 import "../../utils/Ownable.sol";
-import "../interfaces/IERC721.sol";
+import "../interfaces/IErc721MappingToken.sol";
 import "../v2/Erc721MappingToken.sol";
 
 contract Erc721MonkeyAttributeSerializer is IErc721AttrSerializer {

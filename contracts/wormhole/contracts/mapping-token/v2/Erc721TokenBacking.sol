@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+// This is the backing contract for Erc721 token
+// Before the new Erc721 token registered, user should create two AttributesSerializer contract first
+// One is deployed on the source chain to serialize the attributes of the token when lock_and_remote_issuing,
+// and deserialize the attributes of the mapping token when unlock_from_remote
+// The other is deployed on the target chain to deserialize the attributes of the token when the mapping token minted,
+// and serialize the attributes of the mapping token when burn_and_unlock
+// The AttributesSerializer must implement interfaces in IErc721AttrSerializer.
+
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC721/IERC721.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
 import "../interfaces/IErc721AttrSerializer.sol";
@@ -41,6 +49,8 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
      * @notice reigister new erc721 token to the bridge. Only owner can do this.
      * @param bridgedLanePosition the bridged lane positon, this register message will be delived to this lane position
      * @param token the original token address
+     * @param attributesSerializer local serializer address of the token's attributes
+     * @param remoteAttributesSerializer remote serializer address of the mapping token's attributes
      */
     function registerErc721Token(
         uint32 bridgedLanePosition,
@@ -56,7 +66,7 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
             remoteAttributesSerializer,
             thisChainName
         );
-        uint256 messageId = sendMessage(bridgedLanePosition, remoteMappingTokenFactory, newErc721Contract);
+        uint256 messageId = _sendMessage(bridgedLanePosition, remoteMappingTokenFactory, newErc721Contract);
         registerMessages[messageId] = TokenInfo(token, attributesSerializer);
         emit NewErc721TokenRegistered(messageId, token);
     }
@@ -94,7 +104,7 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
             ids,
             attrs
         );
-        uint256 messageId = sendMessage(bridgedLanePosition, remoteMappingTokenFactory, issueMappingToken);
+        uint256 messageId = _sendMessage(bridgedLanePosition, remoteMappingTokenFactory, issueMappingToken);
         lockMessages[messageId] = LockedInfo(token, msg.sender, ids);
         emit TokenLocked(messageId, token, recipient, ids);
     }
@@ -133,9 +143,11 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
 
     /**
      * @notice this will be called by inboundLane when the remote mapping token burned and want to unlock the original token
+     * @param mappingTokenFactory the remote mapping token factory address
      * @param token the original token address
      * @param recipient the recipient who will receive the unlocked token
      * @param ids ids of the unlocked token
+     * @param attrs the serialized data of the token's attributes may be updated from mapping token
      */
     function unlockFromRemote(
         address mappingTokenFactory,
