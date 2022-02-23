@@ -3,12 +3,12 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-import "./ValidatorRegistry.sol";
+import "./BEEFYAuthorityRegistry.sol";
 import "../../utils/ECDSA.sol";
 import "../../utils/Bitfield.sol";
 import "../../utils/MerkleProof.sol";
 import "../../utils/SparseMerkleMultiProof.sol";
-import "../../spec/BeefyCommitmentScheme.sol";
+import "../../spec/BEEFYCommitmentScheme.sol";
 import "../../../interfaces/ILightClient.sol";
 
 /**
@@ -17,7 +17,7 @@ import "../../../interfaces/ILightClient.sol";
  * @notice The light client is the trust layer of the bridge
  * @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
  */
-contract DarwiniaLightClient is ILightClient, BeefyCommitmentScheme, Bitfield, ValidatorRegistry {
+contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, BEEFYAuthorityRegistry {
 
     /* Events */
 

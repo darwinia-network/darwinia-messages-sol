@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 import "../utils/ScaleCodec.sol";
 
-contract BeefyCommitmentScheme {
+contract BEEFYCommitmentScheme {
     using ScaleCodec for uint32;
     using ScaleCodec for uint64;
     /**
