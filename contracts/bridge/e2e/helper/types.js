@@ -13,7 +13,10 @@ module.exports = {
     },
     BeefySignedCommitment: {
       commitment: 'BeefyCommitment',
-      signatures: 'Vec<Option<EcdsaSignature>>'
+      signatures: {
+        hack: '[u8; 6]',
+        sigs: 'Vec<EcdsaSignature>'
+      }
     },
     BeefyNextAuthoritySet: {
       id: 'u64',
@@ -27,9 +30,6 @@ module.exports = {
       messageRoot: 'H256',
       nextValidatorSet: 'BeefyNextAuthoritySet'
     },
-    EcdsaSignature: {
-      i: '[u8; 5]',
-      s: '[u8; 65]'
-    }
+    EcdsaSignature: '[u8; 65]'
   }
 }
