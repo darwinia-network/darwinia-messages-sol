@@ -1,6 +1,11 @@
 const EthClient = require('./ethclient').EthClient
 const SubClient = require('./subclient').SubClient
 const Bridge    = require('./bridge').Bridge
+const evm_addresses = require("../../bin/addr/local-evm.json")
+const dvm_addresses = require("../../bin/addr/local-dvm.json")
+
+// const evm_addresses = require("../../bin/addr/bsctest.json")
+// const dvm_addresses = require("../../bin/addr/pangolin.json")
 
 // const evm_endpoint = "http://127.0.0.1:8545"
 // const dvm_endpoint = "http://127.0.0.1:9933"
@@ -8,6 +13,9 @@ const Bridge    = require('./bridge').Bridge
 const evm_endpoint = "http://192.168.2.100:8545"
 const dvm_endpoint = "http://192.168.2.100:9933"
 const sub_endpoint = "ws://192.168.2.100:9944"
+// const evm_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
+// const dvm_endpoint = "http://34.69.228.225:9933"
+// const sub_endpoint = "ws://34.69.228.225:9944"
 
 
 const addr1 = "0x3DFe30fb7b46b99e234Ed0F725B5304257F78992"
@@ -34,8 +42,8 @@ async function bootstrap() {
   const ethClient = new EthClient(evm_endpoint)
   const subClient = new SubClient(dvm_endpoint, sub_endpoint)
   const bridge = new Bridge(ethClient, subClient)
-  await ethClient.init(wallets, fees)
-  await subClient.init(wallets, fees)
+  await ethClient.init(wallets, fees, evm_addresses)
+  await subClient.init(wallets, fees, dvm_addresses)
   return { ethClient, subClient, bridge }
 }
 

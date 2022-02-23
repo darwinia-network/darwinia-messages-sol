@@ -28,6 +28,15 @@ describe("bridge e2e test: beefy light client", () => {
     ethClient = clients.ethClient
     subClient = clients.subClient
     bridge = clients.bridge
+    // const unsubscribe = await subClient.api.rpc.beefy.subscribeJustifications((b) => {
+    //   console.log(`BEEFY: #${b}`);
+    //   unsubscribe();
+    //   process.exit(0);
+    // });
+  })
+
+  it("set committer", async () => {
+    subClient.set_chain_committer()
   })
 
   it("beefy", async () => {
@@ -54,7 +63,7 @@ describe("bridge e2e test: beefy light client", () => {
       } else {
         log(`Skip block: ${block.block.header.number}`)
       }
-      await sleep(3000)
+      await sleep(1000)
     }
     log(c)
     const beefy_payload = await subClient.beefy_payload(c.blockNumber, hash)
@@ -69,5 +78,7 @@ describe("bridge e2e test: beefy light client", () => {
     const authoritirs = await subClient.beefy_authorities()
     const addr = ethers.utils.computeAddress(authoritirs[0])
     await ethClient.relay_real_head(beefy_commitment, s, addr)
+    const message_root = await ethClient.lightClient.latestChainMessagesRoot()
+    expect(message_root).to.eq(beefy_payload.messageRoot)
   })
 })

@@ -1,4 +1,3 @@
-const addresses = require("../../bin/addr/local-evm.json")
 const { EvmClient } = require('./evmclient')
 const {
   genValidatorRoot,
@@ -18,8 +17,8 @@ class EthClient extends EvmClient {
     super(endpoint)
   }
 
-  async init(wallets, fees) {
-    await super.init(addresses, wallets, fees)
+  async init(wallets, fees, addresses) {
+    await super.init(wallets, fees, addresses)
 
     const DarwiniaLightClient = await artifacts.readArtifact("DarwiniaLightClient")
     const lightClient = new ethers.Contract(addresses.DarwiniaLightClient, DarwiniaLightClient.abi, this.provider)

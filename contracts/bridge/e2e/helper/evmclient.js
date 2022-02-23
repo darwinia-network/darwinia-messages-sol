@@ -7,7 +7,7 @@ class EvmClient {
     this.provider = new ethers.providers.JsonRpcProvider(endpoint)
   }
 
-  async init(addresses, wallets, fees) {
+  async init(wallets, fees, addresses) {
     this.wallets = wallets
     const FeeMarket = await artifacts.readArtifact("FeeMarket");
     this.feeMarket = new ethers.Contract(addresses.FeeMarket, FeeMarket.abi, this.provider)

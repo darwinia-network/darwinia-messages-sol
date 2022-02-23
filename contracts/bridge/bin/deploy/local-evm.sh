@@ -43,7 +43,7 @@ seth send -F $ETH_FROM $OutboundLane "setFeeMarket(address)" $FeeMarket
 seth send -F $ETH_FROM $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
 
 BSCLightClient=$(jq -r ".BSCLightClient" "$PWD/bin/addr/local-dvm.json")
-(ETH_FROM=0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b ETH_RPC_URL=http://192.168.2.100:9933 seth send $BSCLightClient "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane)
+(set -x; seth send -F 0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b $BSCLightClient "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url http://192.168.2.100:9933)
 
 amount=$(seth --to-wei 1000 ether)
 seth send -F $ETH_FROM -V $amount 0x3DFe30fb7b46b99e234Ed0F725B5304257F78992
