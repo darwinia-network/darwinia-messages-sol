@@ -20,7 +20,7 @@ bridged_out_lane_pos=0
 
 # fee market config
 FEEMARKET_VAULT=0x0000000000000000000000000000000000000000
-COLLATERAL_PERORDER=$(seth --to-wei 10 ether)
+COLLATERAL_PERORDER=$(seth --to-wei 1 ether)
 ASSIGNED_RELAYERS_NUMBER=3
 SLASH_TIME=86400
 RELAY_TIME=86400
@@ -28,18 +28,19 @@ RELAY_TIME=86400
 FeeMarket=$(deploy FeeMarket $FEEMARKET_VAULT $COLLATERAL_PERORDER $ASSIGNED_RELAYERS_NUMBER $SLASH_TIME $RELAY_TIME)
 
 # darwinia beefy light client config
-NETWORK=0x6c6f63616c2d65766d0000000000000000000000000000000000000000000000
+# Pangolin
+NETWORK=0x50616e676f6c696e000000000000000000000000000000000000000000000000
 BEEFY_SLASH_VALUT=0x0000000000000000000000000000000000000000
 BEEFY_VALIDATOR_SET_ID=0
-BEEFY_VALIDATOR_SET_LEN=3
-BEEFY_VALIDATOR_SET_ROOT=0x0fce66177491ecd5bd4a87b419f494a0592884d6786aa498dce6190f0d179b5d
+BEEFY_VALIDATOR_SET_LEN=1
+BEEFY_VALIDATOR_SET_ROOT=0xaeb47a269393297f4b0a3c9c9cfd00c7a4195255274cf39d83dabc2fcc9ff3d7
 DarwiniaLightClient=$(deploy DarwiniaLightClient $NETWORK $BEEFY_SLASH_VALUT $BEEFY_VALIDATOR_SET_ID $BEEFY_VALIDATOR_SET_LEN $BEEFY_VALIDATOR_SET_ROOT)
 
 OutboundLane=$(deploy OutboundLane $DarwiniaLightClient $this_chain_pos $this_out_lane_pos $bridged_chain_pos $bridged_in_lane_pos 1 0 0)
 InboundLane=$(deploy InboundLane $DarwiniaLightClient $this_chain_pos $this_in_lane_pos $bridged_chain_pos $bridged_out_lane_pos 0 0)
 
-seth send $OutboundLane "setFeeMarket(address)" $FeeMarket
-seth send $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
+seth send -F $ETH_FROM $OutboundLane "setFeeMarket(address)" $FeeMarket
+seth send -F $ETH_FROM $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
 
 BSCLightClient=$(jq -r ".BSCLightClient" "$PWD/bin/addr/local-dvm.json")
 (ETH_FROM=0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b ETH_RPC_URL=http://192.168.2.100:9933 seth send $BSCLightClient "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane)
@@ -49,4 +50,4 @@ seth send -F $ETH_FROM -V $amount 0x3DFe30fb7b46b99e234Ed0F725B5304257F78992
 seth send -F $ETH_FROM -V $amount 0xB3c5310Dcf15A852b81d428b8B6D5Fb684300DF9
 seth send -F $ETH_FROM -V $amount 0xf4F07AAe298E149b902993B4300caB06D655f430
 
-seth send $OutboundLane "rely(address)" 0x3DFe30fb7b46b99e234Ed0F725B5304257F78992
+seth send -F $ETH_FROM $OutboundLane "rely(address)" 0x3DFe30fb7b46b99e234Ed0F725B5304257F78992

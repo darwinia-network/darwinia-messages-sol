@@ -49,7 +49,7 @@ contract BeefyCommitmentScheme {
         uint64 validatorSetId;
     }
 
-    bytes3 internal constant PAYLOAD_SCALE_ENCOD_PREFIX = 0x046462;
+    bytes4 internal constant PAYLOAD_SCALE_ENCOD_PREFIX = 0x04646280;
 
     function hash(Commitment memory commitment)
         public
