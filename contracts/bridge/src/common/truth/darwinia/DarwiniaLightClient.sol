@@ -136,13 +136,17 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     constructor(
         bytes32 network,
         address slashVault,
-        AuthoritySet memory current,
-        AuthoritySet memory next
+        uint64 currentAuthoritySetId,
+        uint32 currentAuthoritySetLen,
+        bytes32 currentAuthoritySetRoot,
+        uint64 nextAuthoritySetId,
+        uint32 nextAuthoritySetLen,
+        bytes32 nextAuthoritySetRoot
     ) {
         SLASH_VAULT = slashVault;
         NETWORK = network;
-        _updateCurrentAuthoritySet(current);
-        _updateNextAuthoritySet(next);
+        _updateCurrentAuthoritySet(AuthoritySet(currentAuthoritySetId, currentAuthoritySetLen, currentAuthoritySetRoot));
+        _updateNextAuthoritySet(AuthoritySet(nextAuthoritySetId, nextAuthoritySetLen, nextAuthoritySetRoot));
     }
 
     /* Public Functions */
