@@ -28,9 +28,9 @@ contract BEEFYAuthorityRegistry {
     /* State */
 
     // current authority set
-    AuthoritySet current;
+    AuthoritySet public current;
     // next authority set
-    AuthoritySet next;
+    AuthoritySet public next;
 
     function _updateCurrentAuthoritySet(AuthoritySet memory set) internal {
         current.id = set.id;

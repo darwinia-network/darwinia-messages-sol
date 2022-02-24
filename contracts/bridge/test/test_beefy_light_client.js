@@ -97,12 +97,16 @@ describe("Light Client Gas Usage", function () {
     const LightClientBridge = await ethers.getContractFactory("DarwiniaLightClient");
     const crab = beefyFixture.commitment.payload.network
     const vault = "0x0000000000000000000000000000000000000000"
+    const authority_set = {
+      id: 0,
+      len: totalNumberOfValidators,
+      root: fixture.root
+    }
     beefyLightClient = await LightClientBridge.deploy(
       crab,
       vault,
-      0,
-      totalNumberOfValidators,
-      fixture.root,
+      authority_set,
+      authority_set
     );
 
     const initialBitfieldPositions = await createRandomPositions(totalNumberOfSignatures, totalNumberOfValidators)
@@ -123,7 +127,7 @@ describe("Light Client Gas Usage", function () {
         value: ethers.utils.parseEther("4")
     };
     const newSigTxPromise = beefyLightClient.newSignatureCommitment(
-      commitmentHash,
+      beefyFixture.commitment,
       initialBitfield,
       allValidatorProofs[firstPosition].signature,
       firstPosition,
