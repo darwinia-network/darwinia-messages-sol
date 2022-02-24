@@ -45,12 +45,15 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      */
     event FinalVerificationSuccessful(
         address prover,
-        uint256 id
+        uint256 id,
+        bool isNew
     );
 
     event CleanExpiredCommitment(uint256 id);
 
     event NewMMRRoot(bytes32 mmrRoot, uint256 blockNumber);
+
+    event NewMessageRoot(bytes32 messageRoot, uint256 blockNumber);
 
     /* Types */
 
@@ -129,20 +132,17 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @notice Deploys the LightClientBridge contract
      * @param network source chain network name
      * @param slashVault initial SLASH_VAULT
-     * @param validatorSetId initial validator set id
-     * @param validatorSetLen length of initial validator set
-     * @param validatorSetRoot initial validator set merkle tree root
     */
     constructor(
         bytes32 network,
         address slashVault,
-        uint256 validatorSetId,
-        uint256 validatorSetLen,
-        bytes32 validatorSetRoot
+        AuthoritySet memory current,
+        AuthoritySet memory next
     ) {
         SLASH_VAULT = slashVault;
         NETWORK = network;
-        _updateValidatorSet(validatorSetId, validatorSetLen, validatorSetRoot);
+        _updateCurrentAuthoritySet(current);
+        _updateNextAuthoritySet(next);
     }
 
     /* Public Functions */
@@ -159,23 +159,23 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         return validationData[id].validatorClaimsBitfield;
     }
 
-    function requiredNumberOfValidatorSigs() public view returns (uint256) {
-        if (validatorSetLen < 36) {
-            return validatorSetLen * 2 / 3 + 1;
+    function requiredNumberOfValidatorSigs(uint256 len) public pure returns (uint256) {
+        if (len < 36) {
+            return len * 2 / 3 + 1;
         }
         return 25;
     }
 
-    function createRandomBitfield(uint256 id)
+    function createRandomBitfield(uint256 id, uint256 len)
         public
         view
         returns (uint256[] memory)
     {
         ValidationData storage data = validationData[id];
-        return _createRandomBitfield(data);
+        return _createRandomBitfield(data, len);
     }
 
-    function _createRandomBitfield(ValidationData storage data)
+    function _createRandomBitfield(ValidationData storage data, uint256 authoritySetLen)
         internal
         view
         returns (uint256[] memory)
@@ -185,8 +185,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
             randomNBitsWithPriorCheck(
                 getSeed(data.blockNumber),
                 data.validatorClaimsBitfield,
-                requiredNumberOfValidatorSigs(),
-                validatorSetLen
+                requiredNumberOfValidatorSigs(authoritySetLen),
+                authoritySetLen
             );
     }
 
@@ -262,7 +262,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     /**
      * @notice Executed by the prover in order to begin the process of block
      * acceptance by the light client
-     * @param commitmentHash contains the commitmentHash signed by the validator(s)
+     * @param commitment contains the full commitment
      * @param validatorClaimsBitfield a bitfield containing a membership status of each
      * validator who has claimed to have signed the commitmentHash
      * @param validatorSignature the signature of one validator
@@ -271,26 +271,28 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param validatorAddressMerkleProof proof required for validation of the public key in the validator merkle tree
      */
     function newSignatureCommitment(
-        bytes32 commitmentHash,
+        Commitment memory commitment,
         uint256[] memory validatorClaimsBitfield,
         bytes memory validatorSignature,
         uint256 validatorPosition,
         address validatorAddress,
         bytes32[] memory validatorAddressMerkleProof
     ) public payable returns (uint256) {
+        bytes32 commitmentHash = hash(commitment);
+        AuthoritySet memory set = signedCommitmentAuthoritySet(commitment.payload.nextValidatorSet.id);
         /**
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, > 2/3
          */
         require(
-            countSetBits(validatorClaimsBitfield) > (validatorSetLen * 2) / 3,
+            countSetBits(validatorClaimsBitfield) > (set.len * 2) / 3,
             "Bridge: Bitfield not enough validators"
         );
 
         verifySignature(
             validatorSignature,
-            validatorSetRoot,
+            set.root,
             validatorAddress,
-            validatorSetLen,
+            set.len,
             validatorPosition,
             validatorAddressMerkleProof,
             commitmentHash
@@ -315,6 +317,15 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         return currentId;
     }
 
+    function signedCommitmentAuthoritySet(uint64 nextAuthoritySetId) internal view returns (AuthoritySet memory set) {
+        require(nextAuthoritySetId == next.id || nextAuthoritySetId == next.id + 1, "Bridge: Invalid NextAuthoritySetId");
+        if (nextAuthoritySetId == next.id) {
+            set = current;
+        } else if (nextAuthoritySetId == next.id + 1) {
+            set = next;
+        }
+    }
+
     /**
      * @notice Performs the second step in the validation logic
      * @param id an identifying value generated in the previous transaction
@@ -326,12 +337,11 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         Commitment memory commitment,
         MultiProof memory validatorProof
     ) public {
-        // only current epoch
-        require(commitment.validatorSetId == validatorSetId, "Bridge: Invalid validator set id");
+        AuthoritySet memory set = signedCommitmentAuthoritySet(commitment.payload.nextValidatorSet.id);
 
-        verifyCommitment(id, commitment, validatorProof);
+        verifyCommitment(id, commitment, validatorProof, set);
 
-        processPayload(commitment.payload, commitment.blockNumber);
+        bool isNew = processPayload(commitment.payload, commitment.blockNumber, set);
 
         /**
          * @dev We no longer need the data held in state, so delete it for a gas refund
@@ -343,7 +353,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
          */
         payable(msg.sender).transfer(MIN_SUPPORT);
 
-        emit FinalVerificationSuccessful(msg.sender, id);
+        emit FinalVerificationSuccessful(msg.sender, id, isNew);
     }
 
     /**
@@ -363,7 +373,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     function verifyCommitment(
         uint256 id,
         Commitment memory commitment,
-        MultiProof memory validatorProof
+        MultiProof memory validatorProof,
+        AuthoritySet memory set
     ) private view {
         ValidationData storage data = validationData[id];
 
@@ -383,7 +394,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
             "Bridge: Sender address does not match original validation data"
         );
 
-        uint256[] memory randomBitfield = _createRandomBitfield(data);
+        uint256[] memory randomBitfield = _createRandomBitfield(data, set.len);
 
         // Encode and hash the commitment
         bytes32 commitmentHash = hash(commitment);
@@ -396,8 +407,9 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         verifyValidatorProofSignatures(
             randomBitfield,
             validatorProof,
-            requiredNumberOfValidatorSigs(),
-            commitmentHash
+            requiredNumberOfValidatorSigs(set.len),
+            commitmentHash,
+            set
         );
     }
 
@@ -410,11 +422,12 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         uint256[] memory randomBitfield,
         MultiProof memory proof,
         uint256 requiredNumOfSignatures,
-        bytes32 commitmentHash
-    ) private view {
+        bytes32 commitmentHash,
+        AuthoritySet memory set
+    ) private pure {
         verifyProofSignatures(
-            validatorSetRoot,
-            validatorSetLen,
+            set.root,
+            set.len,
             randomBitfield,
             proof,
             requiredNumOfSignatures,
@@ -586,44 +599,30 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param payload The payload variable passed in via the initial function
      * @param blockNumber The blockNumber variable passed in via the initial function
      */
-    function processPayload(Payload memory payload, uint256 blockNumber) private {
-        // Check the payload is newer than the latest
-        // Check that payload.leaf.block_number is > last_known_block_number;
-        require(blockNumber > latestBlockNumber, "Bridge: Import old block");
+    function processPayload(Payload memory payload, uint256 blockNumber, AuthoritySet memory set) private returns (bool) {
+        if (blockNumber > latestBlockNumber) {
+            latestMMRRoot = payload.mmr;
+            latestChainMessagesRoot = payload.messageRoot;
+            latestBlockNumber = blockNumber;
 
-        latestMMRRoot = payload.mmr;
-        latestChainMessagesRoot = payload.messageRoot;
-        latestBlockNumber = blockNumber;
-
-        applyValidatorSetChanges(
-            payload.nextValidatorSet.id,
-            payload.nextValidatorSet.len,
-            payload.nextValidatorSet.root
-        );
-        emit NewMMRRoot(latestMMRRoot, blockNumber);
+            applyAuthoritySetChanges(set);
+            emit NewMMRRoot(latestMMRRoot, blockNumber);
+            emit NewMessageRoot(latestChainMessagesRoot, blockNumber);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
      * @notice Check if the payload includes a new validator set,
      * and if it does then update the new validator set
-     * @dev This function should call out to the validator registry contract
-     * @param nextValidatorSetId The id of the next validator set
-     * @param nextValidatorSetLen The number of validators in the next validator set
-     * @param nextValidatorSetRoot The merkle root of the merkle tree of the next validators
+     * @param set The next validator set
      */
-    function applyValidatorSetChanges(
-        uint64 nextValidatorSetId,
-        uint32 nextValidatorSetLen,
-        bytes32 nextValidatorSetRoot
-    ) private {
-        // TODO: check nextValidatorSet can null or not
-        require(nextValidatorSetId == 0 || nextValidatorSetId == validatorSetId + 1, "Bridge: Invalid next validator set id");
-        if (nextValidatorSetId == validatorSetId + 1) {
-            _updateValidatorSet(
-                nextValidatorSetId,
-                nextValidatorSetLen,
-                nextValidatorSetRoot
-            );
+    function applyAuthoritySetChanges(AuthoritySet memory set) private {
+        if (set.id == next.id + 1) {
+            _updateCurrentAuthoritySet(next);
+            _updateNextAuthoritySet(set);
         }
     }
 
