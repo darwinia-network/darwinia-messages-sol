@@ -21,7 +21,7 @@ if (target == 'local') {
 
   evm_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
   dvm_endpoint = "https://pangoro-rpc.darwinia.network"
-  sub_endpoint = "ws://34.69.228.225:9944"
+  sub_endpoint = "wss://pangoro-rpc.darwinia.network"
 }
 
 const addr1 = "0x3DFe30fb7b46b99e234Ed0F725B5304257F78992"
