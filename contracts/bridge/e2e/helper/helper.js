@@ -120,5 +120,6 @@ module.exports = {
   createSingleValidatorProof,
   createCompleteValidatorProofs,
   createRandomPositions,
-  printBitfield
+  printBitfield,
+  roundUpToPow2
 }

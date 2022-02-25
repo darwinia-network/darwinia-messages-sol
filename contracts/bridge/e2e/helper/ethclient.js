@@ -1,3 +1,5 @@
+const { SparseMerkleTree } = require('@darwinia/contracts-verify/src/utils/sparseMerkleTree')
+const { keccakFromHexString } = require("ethereumjs-util");
 const { EvmClient } = require('./evmclient')
 const {
   genValidatorRoot,
@@ -5,8 +7,20 @@ const {
   createSingleValidatorProof,
   createCompleteValidatorProofs,
   createRandomPositions,
-  printBitfield
+  printBitfield,
+  roundUpToPow2
 } = require("./helper")
+
+function createMerkleTree(addrs) {
+  const len = addrs.length
+  const width = roundUpToPow2(len)
+  let validatorAddresses = addrs
+  for (let i = len; i < width; i++) {
+    validatorAddresses.push("0x0000000000000000000000000000000000000000")
+  }
+  const leavesHashed = validatorAddresses.map(addr => keccakFromHexString(addr));
+  return new SparseMerkleTree(leavesHashed);
+}
 
 /**
  * The Ethereum client for Bridge interaction
@@ -32,17 +46,20 @@ class EthClient extends EvmClient {
     return block
   }
 
-  async relay_real_head(commitment, signature, address) {
+  async relay_real_head(commitment, indices, sigs, raddrs, addrs) {
     const commitmentHash = await this.lightClient.hash(commitment)
     console.log(commitmentHash)
 
+    const tree = createMerkleTree(addrs)
+    const proof = tree.proofHex([indices[0]])
+
     const newSigTx = await this.lightClient.newSignatureCommitment(
-      commitmentHash,
-      [1],
-      signature,
-      0,
-      address,
-      [],
+      commitment,
+      indices,
+      sigs[0],
+      indices[0],
+      raddrs[0],
+      proof,
       {
         value: ethers.utils.parseEther("4")
       }
@@ -53,11 +70,26 @@ class EthClient extends EvmClient {
     await this.mine(20)
 
     const completeValidatorProofs = {
-      depth: 0,
-      signatures: [signature],
-      positions: [0],
+      depth: tree.height(),
+      signatures: [],
+      positions: [],
       decommitments: [],
     }
+    const current = await this.lightClient.current()
+    const bitfieldInts = await this.lightClient.createRandomBitfield(lastId, current.len);
+    const bitfieldString = printBitfield(bitfieldInts);
+    const ascendingBitfield = bitfieldString.split('').reverse().join('');
+    for (let position = 0; position < ascendingBitfield.length; position++) {
+      const bit = ascendingBitfield[position]
+      if (bit === '1') {
+        completeValidatorProofs.signatures.push(sigs[position])
+        completeValidatorProofs.positions.push(position)
+      }
+    }
+    completeValidatorProofs.decommitments = tree.proofHex(completeValidatorProofs.positions)
+    completeValidatorProofs.positions.reverse()
+    completeValidatorProofs.signatures.reverse()
+
     const completeSigTx = await this.lightClient.completeSignatureCommitment(
       lastId,
       commitment,

@@ -63,7 +63,7 @@ class SubClient extends EvmClient {
   }
 
   async beefy_payload(block_number, block_hash) {
-    const network = "0x50616e676f6c696e000000000000000000000000000000000000000000000000"
+    const network = "0x50616e676f726f00000000000000000000000000000000000000000000000000"
     const mmr = await this.api.query.mmr.rootHash.at(block_hash)
     const messageRoot = await this.chainMessageCommitter['commitment()']({ blockTag: block_number })
     const next_authority_set = await this.api.query.mmrLeaf.beefyNextAuthorities.at(block_hash)
@@ -81,7 +81,7 @@ class SubClient extends EvmClient {
     // const hash = '0x721cad72e9310e009bb17b48b03a1cf3667b232c7938c5decd3a382c2335f71f';
     console.log(`Finalized head hash ${hash}`)
     const block = await this.api.rpc.chain.getBlock(hash)
-    console.log(`Finalized block #${block.block.header.number} has ${block}`)
+    // console.log(`Finalized block #${block.block.header.number} has ${block}`)
     return block
   }
 
