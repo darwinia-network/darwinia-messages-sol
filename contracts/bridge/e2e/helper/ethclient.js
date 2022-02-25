@@ -48,17 +48,21 @@ class EthClient extends EvmClient {
 
   async relay_real_head(commitment, indices, sigs, raddrs, addrs) {
     const commitmentHash = await this.lightClient.hash(commitment)
-    console.log(commitmentHash)
+    console.log("commitmentHash: ", commitmentHash)
 
+    const z = indices.reduce((o, e, i) => ((o[e] = sigs[i]), o), {});
+    const first = indices[0]
     const tree = createMerkleTree(addrs)
-    const proof = tree.proofHex([indices[0]])
+    const proof = tree.proofHex([first])
+
+    const initialBitfield = await this.lightClient.createInitialBitfield(indices, addrs.length)
 
     const newSigTx = await this.lightClient.newSignatureCommitment(
       commitment,
-      indices,
+      initialBitfield,
       sigs[0],
-      indices[0],
-      raddrs[0],
+      first,
+      addrs[first],
       proof,
       {
         value: ethers.utils.parseEther("4")
@@ -82,13 +86,14 @@ class EthClient extends EvmClient {
     for (let position = 0; position < ascendingBitfield.length; position++) {
       const bit = ascendingBitfield[position]
       if (bit === '1') {
-        completeValidatorProofs.signatures.push(sigs[position])
+        completeValidatorProofs.signatures.push(z[position])
         completeValidatorProofs.positions.push(position)
       }
     }
     completeValidatorProofs.decommitments = tree.proofHex(completeValidatorProofs.positions)
     completeValidatorProofs.positions.reverse()
     completeValidatorProofs.signatures.reverse()
+    console.log(completeValidatorProofs)
 
     const completeSigTx = await this.lightClient.completeSignatureCommitment(
       lastId,
@@ -123,7 +128,7 @@ class EthClient extends EvmClient {
       initialBitfieldPositions, 3
     )
     const newSigTx = await this.lightClient.newSignatureCommitment(
-      commitmentHash,
+      commitment,
       initialBitfield,
       allValidatorProofs[firstPosition].signature,
       firstPosition,

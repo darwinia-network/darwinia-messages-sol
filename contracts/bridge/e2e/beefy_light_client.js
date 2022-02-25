@@ -46,11 +46,11 @@ describe("bridge e2e test: beefy light client", () => {
     // });
   })
 
-  it.skip("set committer", async () => {
-    subClient.set_chain_committer()
+  it("set committer", async () => {
+    await subClient.set_chain_committer()
   })
 
-  it("beefy", async () => {
+  it("beefy header relay", async () => {
     let c, cc, s, hash
     while (!c) {
       const block = await subClient.beefy_block()
@@ -91,9 +91,6 @@ describe("bridge e2e test: beefy light client", () => {
     log(beefy_payload)
     const authorities = await subClient.beefy_authorities()
     const raddrs = s.map(signature => {
-      log(`Data: ${cc}`)
-      log(`arrayify Data: ${ethers.utils.arrayify(cc)}`)
-      log(`Signed: ${signature}`)
       return verifyMessage(ethers.utils.arrayify(cc), signature)
     })
     const addrs = authorities.map(authority => {
@@ -104,9 +101,14 @@ describe("bridge e2e test: beefy light client", () => {
     })
     log(s)
     log(raddrs)
+    log(addrs)
     log(indices)
     await ethClient.relay_real_head(beefy_commitment, indices, s, raddrs, addrs)
     const message_root = await ethClient.lightClient.latestChainMessagesRoot()
+    log(message_root)
     expect(message_root).to.eq(beefy_payload.messageRoot)
+  })
+
+  it.skip("beefy authority change", async () => {
   })
 })

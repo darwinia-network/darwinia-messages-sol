@@ -1,4 +1,5 @@
 const { TypeRegistry, createType } = require('@polkadot/types')
+const { u8aToHex } = require('@polkadot/util')
 const key = require('./types')
 
 const registry = new TypeRegistry();
@@ -12,3 +13,10 @@ console.log(a.toString())
 const c = createType(registry, 'BeefyCommitment', a.toJSON().v1.commitment)
 console.log(c.toJSON())
 console.log(c.toHex())
+
+ // 🥩 encoded_payload: 🥩 payload_hash: 0x011d12969411b75f1252c4e09dd80a69e511911909a9c4e8859852a62ea61a72
+
+const p = new Uint8Array([80, 97, 110, 103, 111, 108, 105, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 176, 77, 165, 2, 250, 80, 226, 210, 74, 139, 93, 78, 174, 147, 2, 87, 212, 88, 170, 182, 46, 145, 50, 1, 228, 171, 87, 217, 4, 74, 232, 134, 160, 157, 221, 90, 101, 148, 137, 224, 127, 33, 139, 31, 186, 126, 38, 9, 71, 228, 40, 38, 71, 197, 119, 115, 209, 25, 186, 49, 56, 137, 191, 1, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 161, 206, 141, 248, 21, 23, 150, 171, 96, 21, 126, 12, 96, 117, 163, 164, 204, 23, 9, 39, 177, 177, 252, 15, 51, 189, 224, 226, 116, 232, 243, 152])
+
+const payload = createType(registry, 'BeefyPayload', u8aToHex(p))
+console.log(payload.toString())

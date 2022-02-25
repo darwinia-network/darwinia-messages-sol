@@ -283,7 +283,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         bytes32[] memory validatorAddressMerkleProof
     ) public payable returns (uint256) {
         bytes32 commitmentHash = hash(commitment);
-        AuthoritySet memory set = signedCommitmentAuthoritySet(commitment.payload.nextValidatorSet.id);
+        require(commitment.validatorSetId + 1 == commitment.payload.nextValidatorSet.id, "Bridge: Invalid AuthoritySetId");
+        AuthoritySet memory set = signedCommitmentAuthoritySet(commitment.validatorSetId);
         /**
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, > 2/3
          */
@@ -321,11 +322,11 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         return currentId;
     }
 
-    function signedCommitmentAuthoritySet(uint64 nextAuthoritySetId) internal view returns (AuthoritySet memory set) {
-        require(nextAuthoritySetId == next.id || nextAuthoritySetId == next.id + 1, "Bridge: Invalid NextAuthoritySetId");
-        if (nextAuthoritySetId == next.id) {
+    function signedCommitmentAuthoritySet(uint64 currentAuthoritySetId) internal view returns (AuthoritySet memory set) {
+        require(currentAuthoritySetId == current.id || currentAuthoritySetId == next.id, "Bridge: Invalid CurrentAuthoritySetId");
+        if (currentAuthoritySetId == current.id) {
             set = current;
-        } else if (nextAuthoritySetId == next.id + 1) {
+        } else if (currentAuthoritySetId == next.id) {
             set = next;
         }
     }
@@ -341,7 +342,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         Commitment memory commitment,
         MultiProof memory validatorProof
     ) public {
-        AuthoritySet memory set = signedCommitmentAuthoritySet(commitment.payload.nextValidatorSet.id);
+        require(commitment.validatorSetId + 1 == commitment.payload.nextValidatorSet.id, "Bridge: Invalid AuthoritySetId");
+        AuthoritySet memory set = signedCommitmentAuthoritySet(commitment.validatorSetId);
 
         verifyCommitment(id, commitment, validatorProof, set);
 
@@ -624,7 +626,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param set The next validator set
      */
     function applyAuthoritySetChanges(AuthoritySet memory set) private {
-        if (set.id == next.id + 1) {
+        if (set.id == next.id) {
             _updateCurrentAuthoritySet(next);
             _updateNextAuthoritySet(set);
         }

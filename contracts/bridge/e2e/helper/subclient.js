@@ -31,8 +31,6 @@ class SubClient extends EvmClient {
     const lightClient = new ethers.Contract(addresses.BSCLightClient, BSCLightClient.abi, this.provider)
 
     this.lightClient = lightClient.connect(this.signer)
-
-    await this.set_chain_committer()
   }
 
   async set_chain_committer() {
@@ -47,8 +45,8 @@ class SubClient extends EvmClient {
     const call = await this.api.tx.beefyGadget.setCommitmentContract(this.chainMessageCommitter.address)
     const tx = await this.api.tx.sudo.sudo(call).signAndSend(this.alice)
     console.log(`Set chain committer tx submitted with hash: ${tx}`)
-    // const res = await this.api.query.beefyGadget.commitmentContract()
-    // console.log(`Get chain committer: ${res}`)
+    const res = await this.api.query.beefyGadget.commitmentContract()
+    console.log(`Get chain committer: ${res}`)
   }
 
   async relay_header(state_root) {
@@ -63,7 +61,7 @@ class SubClient extends EvmClient {
   }
 
   async beefy_payload(block_number, block_hash) {
-    const network = "0x50616e676f726f00000000000000000000000000000000000000000000000000"
+    const network = "0x50616e676f6c696e000000000000000000000000000000000000000000000000"
     const mmr = await this.api.query.mmr.rootHash.at(block_hash)
     const messageRoot = await this.chainMessageCommitter['commitment()']({ blockTag: block_number })
     const next_authority_set = await this.api.query.mmrLeaf.beefyNextAuthorities.at(block_hash)

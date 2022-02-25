@@ -9,12 +9,12 @@ if (target == 'local') {
   evm_addresses = require("../../bin/addr/local-evm.json")
   dvm_addresses = require("../../bin/addr/local-dvm.json")
 
-  evm_endpoint = "http://127.0.0.1:8545"
-  dvm_endpoint = "http://127.0.0.1:9933"
-  sub_endpoint = "ws://127.0.0.1:9944"
-  // evm_endpoint = "http://192.168.2.100:8545"
-  // dvm_endpoint = "http://192.168.2.100:9933"
-  // sub_endpoint = "ws://192.168.2.100:9944"
+  // evm_endpoint = "http://127.0.0.1:8545"
+  // dvm_endpoint = "http://127.0.0.1:9933"
+  // sub_endpoint = "ws://127.0.0.1:9944"
+  evm_endpoint = "http://192.168.2.100:8545"
+  dvm_endpoint = "http://192.168.2.100:10033"
+  sub_endpoint = "ws://192.168.2.100:10044"
 } else if (target == 'test') {
   evm_addresses = require("../../bin/addr/bsctest.json")
   dvm_addresses = require("../../bin/addr/pangoro.json")
