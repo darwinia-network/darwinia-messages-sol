@@ -163,9 +163,9 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         return validationData[id].validatorClaimsBitfield;
     }
 
-    function requiredNumberOfValidatorSigs(uint256 len) public pure returns (uint256) {
-        if (len < 36) {
-            return len * 2 / 3 + 1;
+    function threshold(uint256 len) public pure returns (uint256) {
+        if (len <= 36) {
+            return len - len / 3;
         }
         return 25;
     }
@@ -189,7 +189,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
             randomNBitsWithPriorCheck(
                 getSeed(data.blockNumber),
                 data.validatorClaimsBitfield,
-                requiredNumberOfValidatorSigs(authoritySetLen),
+                threshold(authoritySetLen),
                 authoritySetLen
             );
     }
@@ -286,10 +286,10 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         require(commitment.validatorSetId + 1 == commitment.payload.nextValidatorSet.id, "Bridge: Invalid AuthoritySetId");
         AuthoritySet memory set = signedCommitmentAuthoritySet(commitment.validatorSetId);
         /**
-         * @dev Check that the bitfield actually contains enough claims to be succesful, ie, > 2/3
+         * @dev Check that the bitfield actually contains enough claims to be succesful, ie, >= 2/3
          */
         require(
-            countSetBits(validatorClaimsBitfield) > (set.len * 2) / 3,
+            countSetBits(validatorClaimsBitfield) >= threshold(set.len),
             "Bridge: Bitfield not enough validators"
         );
 
@@ -413,7 +413,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         verifyValidatorProofSignatures(
             randomBitfield,
             validatorProof,
-            requiredNumberOfValidatorSigs(set.len),
+            threshold(set.len),
             commitmentHash,
             set
         );

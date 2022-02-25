@@ -109,6 +109,6 @@ describe("bridge e2e test: beefy light client", () => {
     expect(message_root).to.eq(beefy_payload.messageRoot)
   })
 
-  it.skip("beefy authority change", async () => {
+  it("beefy authority change", async () => {
   })
 })
