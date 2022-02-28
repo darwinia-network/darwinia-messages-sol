@@ -4,7 +4,7 @@ const { BigNumber } = require("ethers");
 const { bootstrap } = require("./helper/fixture")
 const chai = require("chai")
 const { solidity } = waffle;
-const { decodeJustification } = require("./helper/decode")
+const { decodeJustification, decodeConsensusLog } = require("./helper/decode")
 const { encodeCommitment, encodeBeefyPayload } = require("./helper/encode")
 const { u8aToBuffer, u8aToHex } = require('@polkadot/util')
 
@@ -29,34 +29,14 @@ function verifyMessage(message, signature) {
   return ethers.utils.recoverAddress(hashMessage(message), signature);
 }
 
-describe("bridge e2e test: beefy light client", () => {
-
-  before(async () => {
-  })
-
-  it("bootstrap", async () => {
-    const clients = await bootstrap()
-    ethClient = clients.ethClient
-    subClient = clients.subClient
-    bridge = clients.bridge
-    // const unsubscribe = await subClient.api.rpc.beefy.subscribeJustifications((b) => {
-    //   console.log(`BEEFY: #${b}`);
-    //   unsubscribe();
-    //   process.exit(0);
-    // });
-  })
-
-  it("set committer", async () => {
-    await subClient.set_chain_committer()
-  })
-
-  it("beefy header relay", async () => {
+async function test_beefy() {
+    log(await ethClient.authority_set())
     let c, cc, s, hash
     while (!c) {
       const block = await subClient.beefy_block()
       hash = block.block.header.hash.toHex()
       if (block.justifications.toString()) {
-        log(`BEEFY: ${block.block.header.number}, ${block.justifications.toString()}`)
+        log(`Justifications: ${block.block.header.number}, ${block.justifications.toString()}`)
         let js = JSON.parse(block.justifications.toString())
         for (let j of js) {
           if (j[0] == '0x42454546') {
@@ -89,7 +69,7 @@ describe("bridge e2e test: beefy light client", () => {
       validatorSetId: c.validatorSetId
     }
     log(beefy_payload)
-    const authorities = await subClient.beefy_authorities()
+    const authorities = await subClient.beefy_authorities(hash)
     const raddrs = s.map(signature => {
       return verifyMessage(ethers.utils.arrayify(cc), signature)
     })
@@ -107,8 +87,95 @@ describe("bridge e2e test: beefy light client", () => {
     const message_root = await ethClient.lightClient.latestChainMessagesRoot()
     log(message_root)
     expect(message_root).to.eq(beefy_payload.messageRoot)
+    log(await ethClient.authority_set())
+}
+
+describe("bridge e2e test: beefy light client", () => {
+
+  before(async () => {
   })
 
-  it("beefy authority change", async () => {
+  it("bootstrap", async () => {
+    const clients = await bootstrap()
+    ethClient = clients.ethClient
+    subClient = clients.subClient
+    bridge = clients.bridge
+
+    // const unsubscribe = await subClient.api.rpc.beefy.subscribeJustifications((b) => {
+    //   console.log(`BEEFY: #${b}`);
+    //   unsubscribe()
+    // });
+    const unsubscribe = await subClient.api.rpc.chain.subscribeNewHeads((header) => {
+      console.log(`Chain is at block: #${header.number}`);
+
+    });
+  })
+
+  it.skip("set committer", async () => {
+    await subClient.set_chain_committer()
+  })
+
+  it.skip("beefy header relay", async () => {
+    await test_beefy()
+  })
+
+  it.skip("beefy authority change", async () => {
+    subClient.chill()
+    let authorities
+    while (!authorities) {
+      const block = await subClient.beefy_block()
+      let logs = block.block.header.digest.logs
+      if (logs.toString()) {
+        for(let l of logs) {
+          if(l.toJSON().consensus) {
+            const css = l.toJSON().consensus
+            if(css[0] == '0x42454546') {
+              log(css)
+              authorities = decodeConsensusLog(log[1]).toJSON().authoritiesChange
+              if (authorities) {
+                log(authorities)
+                await test_beefy()
+                break
+              }
+            }
+          }
+        }
+      } else {
+        log(`Skip block: ${block.block.header.number}`)
+      }
+      await sleep(1000)
+    }
   })
 })
+
+//   A                   B          C
+// (0,1)               (0,1)      (1,2)
+// alice               alice      alice
+// bob   -> bob.chill  ~bob~
+// charlie             charlie    charlie
+// dave                dave       dave
+//
+// (B) next authority set 变更.           (a, b, c, d) -> (a, c, d)
+// (C) current authority set change 变更. (a, b, c, d) -> (a, c, d)
+// 故 (B, C) 区间也必须要relay, 问题: 这区间一定会有BEEFY Justification吗?
+//
+//  必须relay的情况如下:
+//  1. next authority set change.
+//  2. current authority set change.
+//  3. message root change.
+//
+//  current = {
+//    id: 0
+//    len: 4
+//    root: 0xa1ce8df8151796ab60157e0c6075a3a4cc170927b1b1fc0f33bde0e274e8f398
+//  }
+//  next = {
+//    id: 1
+//    len: 4
+//    root: 0xa1ce8df8151796ab60157e0c6075a3a4cc170927b1b1fc0f33bde0e274e8f398
+//  }
+//  next = {
+//    id: 1
+//    len: 3
+//    root: 0xe1bb72ea2d1d59192cf960a896eeeaed4f514ebc25ca6f43bc04c1d57338c8c9
+//  }

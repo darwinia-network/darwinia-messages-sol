@@ -46,6 +46,10 @@ class EthClient extends EvmClient {
     return block
   }
 
+  async authority_set() {
+    return [await this.lightClient.current(), await this.lightClient.next()]
+  }
+
   async relay_real_head(commitment, indices, sigs, raddrs, addrs) {
     const commitmentHash = await this.lightClient.hash(commitment)
     console.log("commitmentHash: ", commitmentHash)

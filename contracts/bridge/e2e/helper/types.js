@@ -30,6 +30,16 @@ module.exports = {
       messageRoot: 'H256',
       nextValidatorSet: 'BeefyNextAuthoritySet'
     },
-    EcdsaSignature: '[u8; 65]'
+    EcdsaSignature: '[u8; 65]',
+    ConsensusLog: {
+      _enum: {
+        0: null,
+        AuthoritiesChange: {
+          validators: 'Vec<AuthorityId>',
+          id: 'ValidatorSetId'
+        }
+      }
+    },
+    AuthorityId: '[u8; 33]'
   }
 }

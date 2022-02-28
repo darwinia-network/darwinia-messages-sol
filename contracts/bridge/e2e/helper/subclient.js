@@ -20,6 +20,7 @@ class SubClient extends EvmClient {
     })
     this.keyring = new Keyring({ type: 'sr25519' });
     this.alice = this.keyring.addFromUri('//Alice', { name: 'Alice' });
+    this.bob = this.keyring.addFromUri('//Bob', { name: 'Bob' });
 
     const ChainMessageCommitter = await artifacts.readArtifact("ChainMessageCommitter");
     this.chainMessageCommitter = new ethers.Contract(addresses.ChainMessageCommitter, ChainMessageCommitter.abi, this.provider)
@@ -33,12 +34,8 @@ class SubClient extends EvmClient {
     this.lightClient = lightClient.connect(this.signer)
   }
 
-  async set_chain_committer() {
-    const call = await this.api.tx.beefyGadget.setCommitmentContract(addresses.ChainMessageCommitter)
-    const tx = await this.api.tx.sudo.sudo(call).signAndSend(this.alice)
-    console.log(`Set chain committer tx submitted with hash: ${tx}`)
-    const res = await this.api.query.beefyGadget.commitmentContract()
-    console.log(`Get chain committer: ${res}`)
+  chill() {
+    return this.api.tx.staking.chill().signAndSend(this.bob)
   }
 
   async set_chain_committer() {
@@ -77,14 +74,14 @@ class SubClient extends EvmClient {
     const hash = await this.api.rpc.chain.getFinalizedHead()
     // const hash = await this.api.rpc.beefy.getFinalizedHead()
     // const hash = '0x721cad72e9310e009bb17b48b03a1cf3667b232c7938c5decd3a382c2335f71f';
-    console.log(`Finalized head hash ${hash}`)
+    // console.log(`Finalized head hash ${hash}`)
     const block = await this.api.rpc.chain.getBlock(hash)
-    // console.log(`Finalized block #${block.block.header.number} has ${block}`)
+    console.log(`Finalized block #${block.block.header.number} has ${hash}`)
     return block
   }
 
-  async beefy_authorities() {
-    return this.api.query.beefy.authorities()
+  async beefy_authorities(hash) {
+    return this.api.query.beefy.authorities.at(hash)
   }
 
 }

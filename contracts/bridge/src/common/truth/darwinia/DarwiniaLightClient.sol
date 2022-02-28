@@ -342,12 +342,9 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         Commitment memory commitment,
         MultiProof memory validatorProof
     ) public {
-        require(commitment.validatorSetId + 1 == commitment.payload.nextValidatorSet.id, "Bridge: Invalid AuthoritySetId");
-        AuthoritySet memory set = signedCommitmentAuthoritySet(commitment.validatorSetId);
+        verifyCommitment(id, commitment, validatorProof);
 
-        verifyCommitment(id, commitment, validatorProof, set);
-
-        bool isNew = processPayload(commitment.payload, commitment.blockNumber, set);
+        bool isNew = processPayload(commitment.payload, commitment.blockNumber);
 
         /**
          * @dev We no longer need the data held in state, so delete it for a gas refund
@@ -379,9 +376,11 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     function verifyCommitment(
         uint256 id,
         Commitment memory commitment,
-        MultiProof memory validatorProof,
-        AuthoritySet memory set
+        MultiProof memory validatorProof
     ) private view {
+        require(commitment.validatorSetId + 1 == commitment.payload.nextValidatorSet.id, "Bridge: Invalid AuthoritySetId");
+        AuthoritySet memory set = signedCommitmentAuthoritySet(commitment.validatorSetId);
+
         ValidationData storage data = validationData[id];
 
         /**
@@ -605,13 +604,17 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param payload The payload variable passed in via the initial function
      * @param blockNumber The blockNumber variable passed in via the initial function
      */
-    function processPayload(Payload memory payload, uint256 blockNumber, AuthoritySet memory set) private returns (bool) {
+    function processPayload(Payload memory payload, uint256 blockNumber) private returns (bool) {
         if (blockNumber > latestBlockNumber) {
             latestMMRRoot = payload.mmr;
             latestChainMessagesRoot = payload.messageRoot;
             latestBlockNumber = blockNumber;
 
-            applyAuthoritySetChanges(set);
+            applyAuthoritySetChanges(AuthoritySet(
+                payload.nextValidatorSet.id,
+                payload.nextValidatorSet.len,
+                payload.nextValidatorSet.root
+            ));
             emit NewMMRRoot(latestMMRRoot, blockNumber);
             emit NewMessageRoot(latestChainMessagesRoot, blockNumber);
             return true;
@@ -626,7 +629,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param set The next validator set
      */
     function applyAuthoritySetChanges(AuthoritySet memory set) private {
-        if (set.id == next.id) {
+        if (set.id == next.id + 1) {
             _updateCurrentAuthoritySet(next);
             _updateNextAuthoritySet(set);
         }
