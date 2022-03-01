@@ -70,11 +70,6 @@ deploy() {
 
 	# deploy
 	ADDRESS=$(dapp create "$NAME" $ARGS -- --gas "$GAS" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
-  [[ $VERIFY_CONTRACT ]] && {
-    echo >&2 "Verifying contract at $ADDRESS"
-    sleep 5 # give etherscan some time to process the block
-    dapp verify-contract "${CONTRACT_PATH}:${NAME}" "$ADDRESS" $ARGS || true
-  }
 
 	# save the addrs to the json
 	# TODO: It'd be nice if we could evolve this into a minimal versioning system
