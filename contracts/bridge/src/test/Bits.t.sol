@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
-pragma abicoder v2;
 
 import "ds-test/test.sol";
 import "../common/utils/Bits.sol";
