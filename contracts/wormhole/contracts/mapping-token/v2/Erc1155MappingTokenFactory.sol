@@ -7,32 +7,33 @@
 pragma solidity ^0.8.10;
 
 import "../interfaces/IMessageCommitment.sol";
-import "../interfaces/IErc721MappingToken.sol";
-import "../interfaces/IErc721AttrSerializer.sol";
-import "../interfaces/IErc721Backing.sol";
-import "./Erc721MappingToken.sol";
+import "../interfaces/IErc1155MappingToken.sol";
+import "../interfaces/IErc1155AttrSerializer.sol";
+import "../interfaces/IErc1155Backing.sol";
+import "./Erc1155MappingToken.sol";
 import "./MappingTokenFactory.sol";
 
-contract Erc721MappingTokenFactory is MappingTokenFactory {
+contract Erc1155MappingTokenFactory is MappingTokenFactory {
     struct UnconfirmedInfo {
         address sender;
         address mappingToken;
         uint256[] ids;
+        uint256[] amounts;
     }
     mapping(uint256 => UnconfirmedInfo) public unlockRemoteUnconfirmed;
 
-    event IssuingERC721Created(address backingAddress, address originalToken, address mappingToken);
-    event BurnAndWaitingConfirm(uint256 messageId, address sender, address recipient, address token, uint256[] ids);
+    event IssuingERC1155Created(address backingAddress, address originalToken, address mappingToken);
+    event BurnAndWaitingConfirm(uint256 messageId, address sender, address recipient, address token, uint256[] ids, uint256[] amounts);
     event RemoteUnlockConfirmed(uint256 messageId, bool result);
 
     /**
-     * @notice create new erc721 mapping contract, this can only be called by inboundLane
+     * @notice create new erc1155 mapping contract, this can only be called by inboundLane
      * @param backingAddress the backingAddress which send this message
      * @param originalToken the original token address
      * @param attrSerializer the serializer address of the attributes
      * @param bridgedChainName bridged chain name
      */
-    function newErc721Contract(
+    function newErc1155Contract(
         address backingAddress,
         address originalToken,
         address attrSerializer,
@@ -42,7 +43,7 @@ contract Erc721MappingTokenFactory is MappingTokenFactory {
         uint32 bridgedChainPosition = IMessageCommitment(msg.sender).bridgedChainPosition();
         bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
         require(salt2MappingToken[salt] == address(0), "MappingTokenFactory:contract has been deployed");
-        bytes memory bytecode = type(Erc721MappingToken).creationCode;
+        bytes memory bytecode = type(Erc1155MappingToken).creationCode;
         bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(bridgedChainName, attrSerializer));
         mappingToken = deploy(salt, bytecodeWithInitdata);
         // save the mapping tokens in an array so it can be listed
@@ -51,7 +52,7 @@ contract Erc721MappingTokenFactory is MappingTokenFactory {
         salt2MappingToken[salt] = mappingToken;
         // map the mappingToken to origin info
         mappingToken2OriginalInfo[mappingToken] = OriginalInfo(bridgedChainPosition, backingAddress, originalToken);
-        emit IssuingERC721Created(backingAddress, originalToken, mappingToken);
+        emit IssuingERC1155Created(backingAddress, originalToken, mappingToken);
     }
 
     /**
@@ -67,17 +68,24 @@ contract Erc721MappingTokenFactory is MappingTokenFactory {
         address originalToken,
         address recipient,
         uint256[] calldata ids,
+        uint256[] calldata amounts,
         bytes[] calldata attrs
     ) public onlyInBoundLane(backingAddress) whenNotPaused {
         uint32 bridgedChainPosition = IMessageCommitment(msg.sender).bridgedChainPosition();
-        address mappingToken = getMappingToken(bridgedChainPosition, backingAddress, originalToken);
+        bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
+        address mappingToken = salt2MappingToken[salt];
         require(mappingToken != address(0), "MappingTokenFactory:mapping token has not created");
         require(ids.length > 0, "MappingTokenFactory:can not receive empty ids");
-        address serializer = IErc721MappingToken(mappingToken).attributeSerializer();
+        require(ids.length == attrs.length, "MappingTokenFactory:the length mismatch");
+        IErc1155MappingToken(mappingToken).mintBatch(recipient, ids, amounts);
+        address serializer = IErc1155MappingToken(mappingToken).attributeSerializer();
+        deserializeAttrs(serializer, ids, attrs);
+    }
+
+    function deserializeAttrs(address serializer, uint256[] memory ids, bytes[] memory attrs) internal {
         for (uint idx = 0; idx < ids.length; idx++) {
-            IErc721MappingToken(mappingToken).mint(recipient, ids[idx]);
             if (serializer != address(0)) {
-                IErc721AttrSerializer(serializer).Deserialize(ids[idx], attrs[idx]);
+                IErc1155AttrSerializer(serializer).Deserialize(ids[idx], attrs[idx]);
             }
         }
     }
@@ -93,7 +101,8 @@ contract Erc721MappingTokenFactory is MappingTokenFactory {
         uint32 bridgedLanePosition,
         address mappingToken,
         address recipient,
-        uint256[] memory ids 
+        uint256[] memory ids,
+        uint256[] memory amounts
     ) external payable whenNotPaused {
         require(ids.length > 0, "MappingTokenFactory:can not transfer empty id");
         OriginalInfo memory info = mappingToken2OriginalInfo[mappingToken];
@@ -102,25 +111,26 @@ contract Erc721MappingTokenFactory is MappingTokenFactory {
         // If remote backing chain unlock the origin token successfully, then this fund will be burned.
         // Otherwise, these tokens will be transfered back to the msg.sender.
         bytes[] memory attrs = new bytes[](ids.length);
-        address serializer = IErc721MappingToken(mappingToken).attributeSerializer();
+        address serializer = IErc1155MappingToken(mappingToken).attributeSerializer();
+        IERC1155(mappingToken).safeBatchTransferFrom(msg.sender, address(this), ids, amounts, "");
         for (uint256 idx = 0; idx < ids.length; idx++) {
-            IERC721(mappingToken).transferFrom(msg.sender, address(this), ids[idx]);
             if (serializer != address(0)) {
-                attrs[idx] = IErc721AttrSerializer(serializer).Serialize(ids[idx]);
+                attrs[idx] = IErc1155AttrSerializer(serializer).Serialize(ids[idx]);
             }
         }
 
         bytes memory unlockFromRemote = abi.encodeWithSelector(
-            IErc721Backing.unlockFromRemote.selector,
+            IErc1155Backing.unlockFromRemote.selector,
             address(this),
             info.originalToken,
             recipient,
             ids,
+            amounts,
             attrs
         );
         uint256 messageId = _sendMessage(info.bridgedChainPosition, bridgedLanePosition, info.backingAddress, unlockFromRemote);
-        unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, ids);
-        emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mappingToken, ids);
+        unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, ids, amounts);
+        emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mappingToken, ids, amounts);
     }
 
     /**
@@ -135,16 +145,32 @@ contract Erc721MappingTokenFactory is MappingTokenFactory {
         UnconfirmedInfo memory info = unlockRemoteUnconfirmed[messageId];
         require(info.ids.length > 0 && info.sender != address(0) && info.mappingToken != address(0), "MappingTokenFactory:invalid unconfirmed message");
         if (result) {
-            for (uint256 idx = 0; idx < info.ids.length; idx++) {
-                IErc721MappingToken(info.mappingToken).burn(info.ids[idx]);
-            }
+            IErc1155MappingToken(info.mappingToken).burnBatch(info.ids, info.amounts);
         } else {
-            for (uint256 idx = 0; idx < info.ids.length; idx++) {
-                IERC721(info.mappingToken).transferFrom(address(this), info.sender, info.ids[idx]);
-            }
+            IERC1155(info.mappingToken).safeBatchTransferFrom(address(this), info.sender, info.ids, info.amounts, "");
         }
         delete unlockRemoteUnconfirmed[messageId];
         emit RemoteUnlockConfirmed(messageId, result);
+    }
+
+    function onERC1155Received(
+        address operator,
+        address from,
+        uint256 id,
+        uint256 value,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return Erc1155MappingTokenFactory.onERC1155Received.selector;
+    }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] calldata ids,
+        uint256[] calldata values,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return Erc1155MappingTokenFactory.onERC1155BatchReceived.selector;
     }
 }
 
