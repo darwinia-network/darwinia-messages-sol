@@ -6,7 +6,7 @@ pragma abicoder v2;
 import "./BEEFYAuthorityRegistry.sol";
 import "../../utils/ECDSA.sol";
 import "../../utils/Bitfield.sol";
-import "../../utils/MerkleProof.sol";
+import "../../utils/BinaryMerkleProof.sol";
 import "../../utils/SparseMerkleMultiProof.sol";
 import "../../spec/BEEFYCommitmentScheme.sol";
 import "../../../interfaces/ILightClient.sol";
@@ -246,7 +246,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         MProof memory laneProof
     ) internal pure returns (bool) {
         return
-            MerkleProof.verifyMerkleLeafAtPosition(
+            BinaryMerkleProof.verifyMerkleLeafAtPosition(
                 laneProof.root,
                 laneHash,
                 lanePosition,
@@ -254,7 +254,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
                 laneProof.proof
             )
             &&
-            MerkleProof.verifyMerkleLeafAtPosition(
+            BinaryMerkleProof.verifyMerkleLeafAtPosition(
                 chainProof.root,
                 laneProof.root,
                 chainPosition,
@@ -557,7 +557,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     ) public pure returns (bool) {
         bytes32 hashedLeaf = keccak256(abi.encodePacked(addr));
         return
-            MerkleProof.verifyMerkleLeafAtPosition(
+            BinaryMerkleProof.verifyMerkleLeafAtPosition(
                 root,
                 hashedLeaf,
                 pos,
