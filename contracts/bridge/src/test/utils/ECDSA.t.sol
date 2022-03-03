@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../../../lib/ds-test/src/test.sol";
-import "../../common/utils/ECDSA.sol";
+import "../../utils/ECDSA.sol";
 
 contract ECDSATest is DSTest {
     function test_recover() public {

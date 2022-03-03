@@ -15,9 +15,9 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-import "../../interfaces/IOutboundLane.sol";
-import "../../interfaces/IOnMessageDelivered.sol";
-import "../../interfaces/IFeeMarket.sol";
+import "../interfaces/IOutboundLane.sol";
+import "../interfaces/IOnMessageDelivered.sol";
+import "../interfaces/IFeeMarket.sol";
 import "./OutboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";

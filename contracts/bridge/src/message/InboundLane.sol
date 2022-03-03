@@ -15,7 +15,7 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-import "../../interfaces/ICrossChainFilter.sol";
+import "../interfaces/ICrossChainFilter.sol";
 import "./InboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";

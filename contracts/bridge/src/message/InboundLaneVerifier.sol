@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-import "../../interfaces/ILightClient.sol";
+import "../interfaces/ILightClient.sol";
 
 contract InboundLaneVerifier {
     /**

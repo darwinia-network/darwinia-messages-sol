@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../../../lib/ds-test/src/test.sol";
-import "../../common/utils/Bitfield.sol";
+import "../../utils/Bitfield.sol";
 
 contract BitfiledTest is Bitfield, DSTest {
     function test_count_set_bits() public {

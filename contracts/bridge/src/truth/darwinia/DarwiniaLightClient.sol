@@ -9,7 +9,7 @@ import "../../utils/Bitfield.sol";
 import "../../utils/BinaryMerkleProof.sol";
 import "../../utils/SparseMerkleMultiProof.sol";
 import "../../spec/BEEFYCommitmentScheme.sol";
-import "../../../interfaces/ILightClient.sol";
+import "../../interfaces/ILightClient.sol";
 
 /**
  * @title A entry contract for the Ethereum-like light client
