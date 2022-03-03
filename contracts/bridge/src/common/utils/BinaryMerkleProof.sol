@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 /// @title A verifier for binary merkle tree.
 /// @author echo
 /// @notice Binary Merkle Tree is constructed from arbitrary-length leaves,
-///  that are initially hashed using the same keccak256 hash function as the inner nodes.
+///  that are initially hashed using the `keccak256` hash function as the inner nodes.
 ///  Inner nodes are created by concatenating child hashes and hashing again.
 /// @dev If the number of leaves is not even, last leave (hash of) is promoted to the upper layer.
 library BinaryMerkleProof {

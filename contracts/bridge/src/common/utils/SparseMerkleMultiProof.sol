@@ -2,6 +2,11 @@
 
 pragma solidity ^0.8.0;
 
+/// @title A verifier for sparse merkle tree.
+/// @author echo
+/// @notice Sparse Merkle Tree is constructed from 2^n-length leaves, where n is the tree depth
+///  equal to log2(number of leafs) and it's initially hashed using the `keccak256` hash function as the inner nodes.
+///  Inner nodes are created by concatenating child hashes and hashing again.
 library SparseMerkleMultiProof {
 
     function hash_node(bytes32 left, bytes32 right)
@@ -17,7 +22,14 @@ library SparseMerkleMultiProof {
         return hash;
     }
 
-    // Indices are required to be sorted highest to lowest.
+    /// @notice Verify that multi leafs in the Sparse Merkle Tree with generalized indices.
+    //  @dev Indices are required to be sorted highest to lowest.
+    /// @param root The root of the merkle tree
+    /// @param depth Depth of the merkle tree. Equal to log2(number of leafs)
+    /// @param indices The indices of the leafs, index starting whith 0
+    /// @param leaves The leaves which need to be proven
+    /// @param decommitments A list of decommitments required to reconstruct the merkle root
+    /// @return A boolean value representing the success or failure of the verification
     function verify(
         bytes32 root,
         uint256 depth,
