@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "../interfaces/ICrossChainFilter.sol";
-import "../interfaces/IOnMessageDelivered.sol";
-import "../interfaces/IOutboundLane.sol";
+import "../../interfaces/ICrossChainFilter.sol";
+import "../../interfaces/IOnMessageDelivered.sol";
+import "../../interfaces/IOutboundLane.sol";
 
 contract MalicousApp is ICrossChainFilter, IOnMessageDelivered {
 

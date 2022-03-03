@@ -3,8 +3,6 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-// import "hardhat/console.sol";
-
 contract MockBSCLightClient {
     struct StorageProof {
         uint256 balance;
@@ -43,7 +41,6 @@ contract MockBSCLightClient {
         // StorageProof memory storage_proof = abi.decode(proof, (StorageProof));
         address lane = lanes[chain_pos][lane_pos];
         require(lane != address(0), "missing: lane addr");
-        // console.log(lane);
         return true;
         // return verify_storage_proof(
         //     lane_hash,
@@ -62,7 +59,6 @@ contract MockBSCLightClient {
         // StorageProof memory storage_proof = abi.decode(proof, (StorageProof));
         address lane = lanes[chain_pos][lane_pos];
         require(lane != address(0), "missing: lane addr");
-        // console.log(lane);
         return true;
         // return verify_storage_proof(
         //     lane_hash,

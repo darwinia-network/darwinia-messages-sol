@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "../interfaces/ICrossChainFilter.sol";
+import "../../interfaces/ICrossChainFilter.sol";
 
 contract NormalApp is ICrossChainFilter {
 
