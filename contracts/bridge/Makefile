@@ -1,5 +1,5 @@
 .PHONY: all install update npm solc
-.PHONY: build test clean lint estimate size e2e
+.PHONY: build test clean doc lint estimate size e2e
 .PHONY: deploy deploy-mainnet deploy-rinkeby verify check-api-key
 .PHONY: local-testnet migrate-local
 # include .env file and export its env vars
@@ -26,6 +26,7 @@ build    :; dapp build
 test     :; dapp test # --ffi # enable if you need the `ffi` cheat code on HEVM
 clean    :; dapp clean
 lint     :; yarn run lint
+doc      :; yarn run docs
 estimate :; @./bin/estimate-gas.sh ${contract}
 size     :; @./bin/contract-size.sh ${contract}
 
