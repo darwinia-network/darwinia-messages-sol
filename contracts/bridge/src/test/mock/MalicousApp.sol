@@ -17,7 +17,7 @@ contract MalicousApp is ICrossChainFilter, IOnMessageDelivered {
         IOutboundLane(outlane).send_message{value: msg.value}(address(this), encoded);
     }
 
-    function on_messages_delivered(uint256, bool) override pure external {
+    function on_messages_delivered(uint256, bool) external pure override {
         loop("");
     }
 

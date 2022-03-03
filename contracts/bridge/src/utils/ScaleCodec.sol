@@ -44,6 +44,7 @@ library ScaleCodec {
             return uint256(x3);
         } else if (mode == 3) {
             // [1073741824, 4503599627370496]
+            // solhint-disable-next-line
             uint8 l = b >> 2; // remove mode bits
             require(
                 l > 32,

@@ -6,7 +6,7 @@ import "../../interfaces/ICrossChainFilter.sol";
 
 contract NormalApp is ICrossChainFilter {
 
-    fallback() external {}
+    fallback() external payable {}
 
     function crossChainFilter(uint32, uint32, address, bytes calldata) override external pure returns (bool) {
         return true;

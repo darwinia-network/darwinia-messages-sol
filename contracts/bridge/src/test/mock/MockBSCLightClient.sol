@@ -16,8 +16,8 @@ contract MockBSCLightClient {
     uint256 public immutable LANE_COMMITMENT_POSITION;
 
     // bridgedChainPosition => lanePosition => lanes
-    mapping(uint32 => mapping(uint32 => address)) lanes;
-    bytes32 stateRoot;
+    mapping(uint32 => mapping(uint32 => address)) public lanes;
+    bytes32 public stateRoot;
 
     constructor(uint32 lane_commitment_position) {
         LANE_COMMITMENT_POSITION = lane_commitment_position;

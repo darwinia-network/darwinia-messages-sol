@@ -47,7 +47,7 @@ contract BSCLightClient is SourceChain, TargetChain {
     uint256 public immutable LANE_MESSAGE_SLOT;
 
     // bridgedChainPosition => lanePosition => lanes
-    mapping(uint32 => mapping(uint32 => address)) lanes;
+    mapping(uint32 => mapping(uint32 => address)) public lanes;
 
     address public setter;
 
