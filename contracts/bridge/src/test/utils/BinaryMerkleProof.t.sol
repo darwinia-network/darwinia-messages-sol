@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import "../../lib/ds-test/src/test.sol";
-import "../common/utils/BinaryMerkleProof.sol";
+import "../../../lib/ds-test/src/test.sol";
+import "../../common/utils/BinaryMerkleProof.sol";
 
 contract BinaryMerkleProofTest is DSTest {
 

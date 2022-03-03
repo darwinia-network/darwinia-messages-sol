@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "../../lib/ds-test/src/test.sol";
-import "../common/utils/SparseMerkleMultiProof.sol";
+import "../../../lib/ds-test/src/test.sol";
+import "../../common/utils/SparseMerkleMultiProof.sol";
 
 contract SparseMerkleMultiProofTest is DSTest {
 // └─ 609cb3db293942026cbe8a4af05e7c3bf84d5d0ddd3e7992cba7679672a7320b

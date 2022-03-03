@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "../../lib/ds-test/src/test.sol";
-import "../common/utils/Bits.sol";
+import "../../../lib/ds-test/src/test.sol";
+import "../../common/utils/Bits.sol";
 
 contract BitsTest is DSTest {
     using Bits for uint;
