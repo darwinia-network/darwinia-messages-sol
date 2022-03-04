@@ -126,7 +126,7 @@ describe("Light Client Gas Usage", function () {
         value: ethers.utils.parseEther("4")
     };
     const newSigTxPromise = beefyLightClient.newSignatureCommitment(
-      beefyFixture.commitment,
+      commitmentHash,
       initialBitfield,
       allValidatorProofs[firstPosition].signature,
       firstPosition,
