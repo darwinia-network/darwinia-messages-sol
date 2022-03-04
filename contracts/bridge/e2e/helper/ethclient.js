@@ -62,7 +62,7 @@ class EthClient extends EvmClient {
     const initialBitfield = await this.lightClient.createInitialBitfield(indices, addrs.length)
 
     const newSigTx = await this.lightClient.newSignatureCommitment(
-      commitment,
+      commitmentHash,
       initialBitfield,
       sigs[0],
       first,
@@ -83,8 +83,7 @@ class EthClient extends EvmClient {
       positions: [],
       decommitments: [],
     }
-    const current = await this.lightClient.current()
-    const bitfieldInts = await this.lightClient.createRandomBitfield(lastId, current.len);
+    const bitfieldInts = await this.lightClient.createRandomBitfield(lastId);
     const bitfieldString = printBitfield(bitfieldInts);
     const ascendingBitfield = bitfieldString.split('').reverse().join('');
     for (let position = 0; position < ascendingBitfield.length; position++) {
@@ -132,7 +131,7 @@ class EthClient extends EvmClient {
       initialBitfieldPositions, 3
     )
     const newSigTx = await this.lightClient.newSignatureCommitment(
-      commitment,
+      commitmentHash,
       initialBitfield,
       allValidatorProofs[firstPosition].signature,
       firstPosition,

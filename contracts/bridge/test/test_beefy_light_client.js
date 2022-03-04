@@ -103,9 +103,6 @@ describe("Light Client Gas Usage", function () {
       0,
       totalNumberOfValidators,
       fixture.root,
-      0,
-      totalNumberOfValidators,
-      fixture.root
     );
 
     const initialBitfieldPositions = await createRandomPositions(totalNumberOfSignatures, totalNumberOfValidators)

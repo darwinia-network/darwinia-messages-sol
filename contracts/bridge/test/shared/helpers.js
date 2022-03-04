@@ -131,8 +131,7 @@ async function createSingleValidatorProof(position, beefyFixture) {
 }
 
 async function createCompleteValidatorProofs(id, beefyLightClient, allValidatorProofs, beefyFixture) {
-  const current = await beefyLightClient.current()
-  const bitfieldInts = await beefyLightClient.createRandomBitfield(id, current.len);
+  const bitfieldInts = await beefyLightClient.createRandomBitfield(id);
   const bitfieldString = printBitfield(bitfieldInts);
 
   const completeValidatorProofs = {
