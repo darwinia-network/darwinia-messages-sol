@@ -24,7 +24,6 @@ The light client is the trust layer of the bridge
   - [validate_lane_data_match_root](#validate_lane_data_match_root)
   - [validateLaneDataMatchRoot](#validatelanedatamatchroot)
   - [newSignatureCommitment](#newsignaturecommitment)
-  - [signedCommitmentAuthoritySet](#signedcommitmentauthorityset)
   - [completeSignatureCommitment](#completesignaturecommitment)
   - [cleanExpiredCommitment](#cleanexpiredcommitment)
   - [roundUpToPow2](#rounduptopow2)
@@ -67,7 +66,10 @@ Deploys the LightClientBridge contract
 ```solidity
   function constructor(
     bytes32 network,
-    address slashVault
+    address slashVault,
+    uint64 currentAuthoritySetId,
+    uint32 currentAuthoritySetLen,
+    bytes32 currentAuthoritySetRoot
   ) public
 ```
 
@@ -79,6 +81,9 @@ No modifiers
 | --- | --- | --- |
 |`network` | bytes32 | source chain network name
 |`slashVault` | address | initial SLASH_VAULT
+|`currentAuthoritySetId` | uint64 | The id of the current authority set
+|`currentAuthoritySetLen` | uint32 | The length of the current authority set
+|`currentAuthoritySetRoot` | bytes32 | The merkle tree of the current authority set
 
 ### getFinalizedChainMessagesRoot
 No description
@@ -254,7 +259,7 @@ acceptance by the light client
 #### Declaration
 ```solidity
   function newSignatureCommitment(
-    struct BEEFYCommitmentScheme.Commitment commitment,
+    bytes32 commitmentHash,
     uint256[] validatorClaimsBitfield,
     bytes validatorSignature,
     uint256 validatorPosition,
@@ -269,28 +274,13 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`commitment` | struct BEEFYCommitmentScheme.Commitment | contains the full commitment
+|`commitmentHash` | bytes32 | contains the commitmentHash signed by the current authority set
 |`validatorClaimsBitfield` | uint256[] | a bitfield containing a membership status of each
 validator who has claimed to have signed the commitmentHash
 |`validatorSignature` | bytes | the signature of one validator
 |`validatorPosition` | uint256 | the position of the validator, index starting at 0
 |`validatorAddress` | address | the public key of the validator
 |`validatorAddressMerkleProof` | bytes32[] | proof required for validation of the public key in the validator merkle tree
-
-### signedCommitmentAuthoritySet
-No description
-
-
-#### Declaration
-```solidity
-  function signedCommitmentAuthoritySet(
-  ) internal returns (struct BEEFYAuthorityRegistry.AuthoritySet set)
-```
-
-#### Modifiers:
-No modifiers
-
-
 
 ### completeSignatureCommitment
 Performs the second step in the validation logic

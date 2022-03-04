@@ -147,35 +147,3 @@ describe("bridge e2e test: beefy light client", () => {
     }
   })
 })
-
-//   A                   B          C
-// (0,1)               (0,1)      (1,2)
-// alice               alice      alice
-// bob   -> bob.chill  ~bob~
-// charlie             charlie    charlie
-// dave                dave       dave
-//
-// (B) next authority set 变更.           (a, b, c, d) -> (a, c, d)
-// (C) current authority set change 变更. (a, b, c, d) -> (a, c, d)
-// 故 (B, C) 区间也必须要relay, 问题: 这区间一定会有BEEFY Justification吗?
-//
-//  必须relay的情况如下:
-//  1. next authority set change.
-//  2. current authority set change.
-//  3. message root change.
-//
-//  current = {
-//    id: 0
-//    len: 4
-//    root: 0xa1ce8df8151796ab60157e0c6075a3a4cc170927b1b1fc0f33bde0e274e8f398
-//  }
-//  next = {
-//    id: 1
-//    len: 4
-//    root: 0xa1ce8df8151796ab60157e0c6075a3a4cc170927b1b1fc0f33bde0e274e8f398
-//  }
-//  next = {
-//    id: 1
-//    len: 3
-//    root: 0xe1bb72ea2d1d59192cf960a896eeeaed4f514ebc25ca6f43bc04c1d57338c8c9
-//  }

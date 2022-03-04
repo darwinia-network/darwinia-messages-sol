@@ -5,7 +5,6 @@
 > Stores the authority set as a Merkle root
  0  |   1   |    2   |  .. x   3 |     4
     [       )
- (current, next) = (0, 0) -> (0, 1) -> (1, 2) -> (2, 3)
 
 ## Contents
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -13,11 +12,9 @@
 
 - [Globals](#globals)
 - [Functions](#functions)
-  - [_updateCurrentAuthoritySet](#_updatecurrentauthorityset)
-  - [_updateNextAuthoritySet](#_updatenextauthorityset)
+  - [_updateAuthoritySet](#_updateauthorityset)
 - [Events](#events)
-  - [BEEFYCurrentAuthoritySetUpdated](#beefycurrentauthoritysetupdated)
-  - [BEEFYNextAuthoritySetUpdated](#beefynextauthoritysetupdated)
+  - [BEEFYAuthoritySetUpdated](#beefyauthoritysetupdated)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -27,54 +24,43 @@
 
 | Var | Type |
 | --- | --- |
-| current | struct BEEFYAuthorityRegistry.AuthoritySet |
-| next | struct BEEFYAuthorityRegistry.AuthoritySet |
+| authoritySetId | uint256 |
+| authoritySetLen | uint256 |
+| authoritySetRoot | bytes32 |
 
 
 
 ## Functions
 
-### _updateCurrentAuthoritySet
-No description
+### _updateAuthoritySet
+Updates the current authority set
+
 
 
 #### Declaration
 ```solidity
-  function _updateCurrentAuthoritySet(
+  function _updateAuthoritySet(
+    uint256 _authoritySetId,
+    uint256 _authoritySetLen,
+    bytes32 _authoritySetRoot
   ) internal
 ```
 
 #### Modifiers:
 No modifiers
 
-
-
-### _updateNextAuthoritySet
-No description
-
-
-#### Declaration
-```solidity
-  function _updateNextAuthoritySet(
-  ) internal
-```
-
-#### Modifiers:
-No modifiers
-
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_authoritySetId` | uint256 | The new authority set id
+|`_authoritySetLen` | uint256 | The new length of authority set
+|`_authoritySetRoot` | bytes32 | The new authority set root
 
 
 
 ## Events
 
-### BEEFYCurrentAuthoritySetUpdated
-No description
-
-  
-
-
-### BEEFYNextAuthoritySetUpdated
+### BEEFYAuthoritySetUpdated
 No description
 
   
