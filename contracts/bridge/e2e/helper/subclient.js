@@ -1,5 +1,4 @@
 let { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
-const addresses = require("../../bin/addr/local-dvm.json")
 const { EvmClient } = require('./evmclient')
 const { encodeNextAuthoritySet } = require('./encode')
 
@@ -13,14 +12,15 @@ class SubClient extends EvmClient {
     this.sub_provider = new WsProvider(ws_endpoint)
   }
 
-  async init(wallets, fees) {
-    await super.init(addresses, wallets, fees)
+  async init(wallets, fees, addresses) {
+    await super.init(wallets, fees, addresses)
 
     this.api = await ApiPromise.create({
       provider: this.sub_provider
     })
     this.keyring = new Keyring({ type: 'sr25519' });
     this.alice = this.keyring.addFromUri('//Alice', { name: 'Alice' });
+    this.bob = this.keyring.addFromUri('//Bob', { name: 'Bob' });
 
     const ChainMessageCommitter = await artifacts.readArtifact("ChainMessageCommitter");
     this.chainMessageCommitter = new ethers.Contract(addresses.ChainMessageCommitter, ChainMessageCommitter.abi, this.provider)
@@ -32,12 +32,14 @@ class SubClient extends EvmClient {
     const lightClient = new ethers.Contract(addresses.BSCLightClient, BSCLightClient.abi, this.provider)
 
     this.lightClient = lightClient.connect(this.signer)
+  }
 
-    await this.set_chain_committer()
+  chill() {
+    return this.api.tx.staking.chill().signAndSend(this.bob)
   }
 
   async set_chain_committer() {
-    const call = await this.api.tx.beefyGadget.setCommitmentContract(addresses.ChainMessageCommitter)
+    const call = await this.api.tx.beefyGadget.setCommitmentContract(this.chainMessageCommitter.address)
     const tx = await this.api.tx.sudo.sudo(call).signAndSend(this.alice)
     console.log(`Set chain committer tx submitted with hash: ${tx}`)
     const res = await this.api.query.beefyGadget.commitmentContract()
@@ -69,17 +71,17 @@ class SubClient extends EvmClient {
   }
 
   async beefy_block() {
-    // const hash = await this.api.rpc.chain.getFinalizedHead()
+    const hash = await this.api.rpc.chain.getFinalizedHead()
     // const hash = await this.api.rpc.beefy.getFinalizedHead()
-    const hash = '0x721cad72e9310e009bb17b48b03a1cf3667b232c7938c5decd3a382c2335f71f';
-    console.log(`Finalized head hash ${hash}`)
+    // const hash = '0x721cad72e9310e009bb17b48b03a1cf3667b232c7938c5decd3a382c2335f71f';
+    // console.log(`Finalized head hash ${hash}`)
     const block = await this.api.rpc.chain.getBlock(hash)
-    console.log(`Finalized block #${block.block.header.number} has ${block}`)
+    console.log(`Finalized block #${block.block.header.number} has ${hash}`)
     return block
   }
 
-  async beefy_authorities() {
-    return this.api.query.beefy.authorities()
+  async beefy_authorities(hash) {
+    return this.api.query.beefy.authorities.at(hash)
   }
 
 }

@@ -5,6 +5,15 @@ const registry = new TypeRegistry();
 
 registry.register(key.types)
 
-module.exports.decodeJustification = function decodeJustification(j) {
+function decodeJustification(j) {
   return createType(registry, 'VersionedCommitment', j)
+}
+
+function decodeConsensusLog(j) {
+  return createType(registry, 'ConsensusLog', j)
+}
+
+module.exports = {
+  decodeConsensusLog,
+  decodeJustification
 }

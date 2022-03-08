@@ -1,4 +1,5 @@
-const addresses = require("../../bin/addr/local-evm.json")
+const { SparseMerkleTree } = require('@darwinia/contracts-verify/src/utils/sparseMerkleTree')
+const { keccakFromHexString } = require("ethereumjs-util");
 const { EvmClient } = require('./evmclient')
 const {
   genValidatorRoot,
@@ -6,8 +7,20 @@ const {
   createSingleValidatorProof,
   createCompleteValidatorProofs,
   createRandomPositions,
-  printBitfield
+  printBitfield,
+  roundUpToPow2
 } = require("./helper")
+
+function createMerkleTree(addrs) {
+  const len = addrs.length
+  const width = roundUpToPow2(len)
+  let validatorAddresses = addrs
+  for (let i = len; i < width; i++) {
+    validatorAddresses.push("0x0000000000000000000000000000000000000000")
+  }
+  const leavesHashed = validatorAddresses.map(addr => keccakFromHexString(addr));
+  return new SparseMerkleTree(leavesHashed);
+}
 
 /**
  * The Ethereum client for Bridge interaction
@@ -18,8 +31,8 @@ class EthClient extends EvmClient {
     super(endpoint)
   }
 
-  async init(wallets, fees) {
-    await super.init(addresses, wallets, fees)
+  async init(wallets, fees, addresses) {
+    await super.init(wallets, fees, addresses)
 
     const DarwiniaLightClient = await artifacts.readArtifact("DarwiniaLightClient")
     const lightClient = new ethers.Contract(addresses.DarwiniaLightClient, DarwiniaLightClient.abi, this.provider)
@@ -33,17 +46,28 @@ class EthClient extends EvmClient {
     return block
   }
 
-  async relay_real_head(commitment, signature, address) {
+  async authority_set() {
+    return [await this.lightClient.current(), await this.lightClient.next()]
+  }
+
+  async relay_real_head(commitment, indices, sigs, raddrs, addrs) {
     const commitmentHash = await this.lightClient.hash(commitment)
-    console.log(commitmentHash)
+    console.log("commitmentHash: ", commitmentHash)
+
+    const z = indices.reduce((o, e, i) => ((o[e] = sigs[i]), o), {});
+    const first = indices[0]
+    const tree = createMerkleTree(addrs)
+    const proof = tree.proofHex([first])
+
+    const initialBitfield = await this.lightClient.createInitialBitfield(indices, addrs.length)
 
     const newSigTx = await this.lightClient.newSignatureCommitment(
       commitmentHash,
-      [1],
-      signature,
-      0,
-      address,
-      [],
+      initialBitfield,
+      sigs[0],
+      first,
+      addrs[first],
+      proof,
       {
         value: ethers.utils.parseEther("4")
       }
@@ -54,11 +78,26 @@ class EthClient extends EvmClient {
     await this.mine(20)
 
     const completeValidatorProofs = {
-      depth: 0,
-      signatures: [signature],
-      positions: [0],
+      depth: tree.height(),
+      signatures: [],
+      positions: [],
       decommitments: [],
     }
+    const bitfieldInts = await this.lightClient.createRandomBitfield(lastId);
+    const bitfieldString = printBitfield(bitfieldInts);
+    const ascendingBitfield = bitfieldString.split('').reverse().join('');
+    for (let position = 0; position < ascendingBitfield.length; position++) {
+      const bit = ascendingBitfield[position]
+      if (bit === '1') {
+        completeValidatorProofs.signatures.push(z[position])
+        completeValidatorProofs.positions.push(position)
+      }
+    }
+    completeValidatorProofs.decommitments = tree.proofHex(completeValidatorProofs.positions)
+    completeValidatorProofs.positions.reverse()
+    completeValidatorProofs.signatures.reverse()
+    console.log(completeValidatorProofs)
+
     const completeSigTx = await this.lightClient.completeSignatureCommitment(
       lastId,
       commitment,

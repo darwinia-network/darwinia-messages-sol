@@ -2,13 +2,27 @@ const EthClient = require('./ethclient').EthClient
 const SubClient = require('./subclient').SubClient
 const Bridge    = require('./bridge').Bridge
 
-// const evm_endpoint = "http://127.0.0.1:8545"
-// const dvm_endpoint = "http://127.0.0.1:9933"
-// const sub_endpoint = "ws://127.0.0.1:9944"
-const evm_endpoint = "http://192.168.2.100:8545"
-const dvm_endpoint = "http://192.168.2.100:9933"
-const sub_endpoint = "ws://192.168.2.100:9944"
+const target  = process.env.TARGET || 'local'
 
+let evm_addresses, dvm_addresses, evm_endpoint, dvm_endpoint, sub_endpoint
+if (target == 'local') {
+  evm_addresses = require("../../bin/addr/local-evm.json")
+  dvm_addresses = require("../../bin/addr/local-dvm.json")
+
+  // evm_endpoint = "http://127.0.0.1:8545"
+  // dvm_endpoint = "http://127.0.0.1:9933"
+  // sub_endpoint = "ws://127.0.0.1:9944"
+  evm_endpoint = "http://192.168.2.100:8545"
+  dvm_endpoint = "http://192.168.2.100:10033"
+  sub_endpoint = "ws://192.168.2.100:10044"
+} else if (target == 'test') {
+  evm_addresses = require("../../bin/addr/bsctest.json")
+  dvm_addresses = require("../../bin/addr/pangoro.json")
+
+  evm_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
+  dvm_endpoint = "https://pangoro-rpc.darwinia.network"
+  sub_endpoint = "wss://pangoro-rpc.darwinia.network"
+}
 
 const addr1 = "0x3DFe30fb7b46b99e234Ed0F725B5304257F78992"
 const addr2 = "0xB3c5310Dcf15A852b81d428b8B6D5Fb684300DF9"
@@ -34,8 +48,8 @@ async function bootstrap() {
   const ethClient = new EthClient(evm_endpoint)
   const subClient = new SubClient(dvm_endpoint, sub_endpoint)
   const bridge = new Bridge(ethClient, subClient)
-  await ethClient.init(wallets, fees)
-  await subClient.init(wallets, fees)
+  await ethClient.init(wallets, fees, evm_addresses)
+  await subClient.init(wallets, fees, dvm_addresses)
   return { ethClient, subClient, bridge }
 }
 
