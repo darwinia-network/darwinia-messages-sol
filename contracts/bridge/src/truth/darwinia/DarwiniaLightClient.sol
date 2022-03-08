@@ -285,7 +285,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, >= 2/3
          */
         require(
-            countSetBits(validatorClaimsBitfield) >= threshold(),
+            countSetBits(validatorClaimsBitfield) >= (authoritySetLen * 2) / 3,
             "Bridge: Bitfield not enough validators"
         );
 

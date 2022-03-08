@@ -23,7 +23,7 @@ library SparseMerkleMultiProof {
     }
 
     /// @notice Verify that multi leafs in the Sparse Merkle Tree with generalized indices.
-    //  @dev Indices are required to be sorted highest to lowest.
+    /// @dev Indices are required to be sorted highest to lowest.
     /// @param root The root of the merkle tree
     /// @param depth Depth of the merkle tree. Equal to log2(number of leafs)
     /// @param indices The indices of the leafs, index starting whith 0
