@@ -164,7 +164,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
 
     function threshold() public view returns (uint256) {
         if (authoritySetLen <= 36) {
-            return authoritySetLen - authoritySetLen / 3;
+            return authoritySetLen - (authoritySetLen - 1) / 3;
         }
         return 25;
     }
@@ -282,10 +282,10 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         bytes32[] memory validatorAddressMerkleProof
     ) public payable returns (uint256) {
         /**
-         * @dev Check that the bitfield actually contains enough claims to be succesful, ie, >= 2/3
+         * @dev Check that the bitfield actually contains enough claims to be succesful, ie, >= 2/3 + 1
          */
         require(
-            countSetBits(validatorClaimsBitfield) >= threshold(),
+            countSetBits(validatorClaimsBitfield) >= authoritySetLen - (authoritySetLen - 1) / 3,
             "Bridge: Bitfield not enough validators"
         );
 
