@@ -285,6 +285,7 @@ contract FeeMarketTest is DSTest {
         assert_market_balance(a, 2 ether);
         assert_market_balance(b, 1 ether);
         assert_market_balance(c, 1 ether);
+        assert_market_balances();
         assert_market_supply(4.1 ether);
     }
 
@@ -302,6 +303,7 @@ contract FeeMarketTest is DSTest {
         assert_market_balance(a, 1.92 ether);
         assert_market_balance(b, 1.08 ether);
         assert_market_balance(c, 1 ether);
+        assert_market_balances();
         assert_market_supply(4.1 ether);
     }
 
@@ -319,6 +321,7 @@ contract FeeMarketTest is DSTest {
         assert_market_balance(a, 1.6 ether);
         assert_market_balance(b, 1.32 ether);
         assert_market_balance(c, 1.08 ether);
+        assert_market_balances();
         assert_market_supply(4.1 ether);
     }
 
@@ -337,6 +340,7 @@ contract FeeMarketTest is DSTest {
         assert_market_balance(a, 1.4 ether);
         assert_market_balance(b, 1.6 ether);
         assert_market_balance(c, 1 ether);
+        assert_market_balances();
         assert_market_supply(4.1 ether);
     }
 
@@ -355,6 +359,7 @@ contract FeeMarketTest is DSTest {
         assert_market_balance(a, 1 ether);
         assert_market_balance(b, 2 ether);
         assert_market_balance(c, 1 ether);
+        assert_market_balances();
         assert_market_supply(4.1 ether);
     }
 
@@ -373,6 +378,64 @@ contract FeeMarketTest is DSTest {
         assert_market_balance(a, 1.352 ether);
         assert_market_balance(b, 1.088 ether);
         assert_market_balance(c, 1.66 ether);
+        assert_market_balances();
+        assert_market_supply(4.1 ether);
+    }
+
+    function test_settle_when_a_relay_and_b_confirm_late() public {
+        hevm.warp(1);
+        uint key = 1;
+        init(key);
+
+        hevm.warp(1 + RELAY_TIME + RELAY_TIME + RELAY_TIME);
+        IFeeMarket.DeliveredRelayer[] memory deliveredRelayers = newDeliveredRelayers(a, key);
+        assertTrue(market.settle(deliveredRelayers, address(b)));
+
+        assert_market_order_clean(key);
+
+        assert_vault_balance(0 ether);
+        assert_market_balance(a, 1.88 ether);
+        assert_market_balance(b, 1.22 ether);
+        assert_market_balance(c, 1 ether);
+        assert_market_balances();
+        assert_market_supply(4.1 ether);
+    }
+
+    function test_settle_when_a_relay_and_b_confirm_late_half_slash() public {
+        hevm.warp(1);
+        uint key = 1;
+        init(key);
+
+        hevm.warp(1 + RELAY_TIME + RELAY_TIME + RELAY_TIME + SLASH_TIME / 2);
+        IFeeMarket.DeliveredRelayer[] memory deliveredRelayers = newDeliveredRelayers(a, key);
+        assertTrue(market.settle(deliveredRelayers, address(b)));
+
+        assert_market_order_clean(key);
+
+        assert_vault_balance(0 ether);
+        assert_market_balance(a, 2.58 ether);
+        assert_market_balance(b, 1.02 ether);
+        assert_market_balance(c, 0.5 ether);
+        assert_market_balances();
+        assert_market_supply(4.1 ether);
+    }
+
+    function test_settle_when_a_relay_and_b_confirm_late_all_slash() public {
+        hevm.warp(1);
+        uint key = 1;
+        init(key);
+
+        hevm.warp(1 + RELAY_TIME + RELAY_TIME + RELAY_TIME + SLASH_TIME);
+        IFeeMarket.DeliveredRelayer[] memory deliveredRelayers = newDeliveredRelayers(a, key);
+        assertTrue(market.settle(deliveredRelayers, address(b)));
+
+        assert_market_order_clean(key);
+
+        assert_vault_balance(0 ether);
+        assert_market_balance(a, 3.28 ether);
+        assert_market_balance(b, 0.82 ether);
+        assert_market_balance(c, 0 ether);
+        assert_market_balances();
         assert_market_supply(4.1 ether);
     }
 
@@ -405,6 +468,14 @@ contract FeeMarketTest is DSTest {
 
     function assert_market_balance(Guy guy, uint balance) public {
         assertEq(market.balanceOf(address(guy)), balance);
+    }
+
+    function assert_market_balances() public {
+        uint ba = market.balanceOf(address(a));
+        uint bb = market.balanceOf(address(b));
+        uint bc = market.balanceOf(address(c));
+        uint bv = market.balanceOf(vault);
+        assertEq(ba + bb + bc + bv, market.totalSupply());
     }
 
     function assert_market_locked(Guy guy, uint locked) public {
