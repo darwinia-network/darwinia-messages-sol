@@ -161,7 +161,7 @@ contract FeeMarket is IFeeMarket {
         uint256[] memory array3 = new uint256[](count);
         uint index = 0;
         address cur = relayers[SENTINEL_HEAD];
-        while (cur != SENTINEL_TAIL) {
+        while (cur != SENTINEL_TAIL && index < count) {
             if (flag || balanceOf[cur] >= collateralPerorder) {
                 array1[index] = cur;
                 array2[index] = feeOf[cur];

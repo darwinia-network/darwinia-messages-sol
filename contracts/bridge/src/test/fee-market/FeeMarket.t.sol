@@ -213,9 +213,60 @@ contract FeeMarketTest is DSTest {
         assert_market_fee_of     (a, 1.2 ether);
     }
 
+    function test_market_status() public {
+        perform_enroll           (a, address(1), 1 ether, 1 ether);
+        perform_enroll           (b, address(a), 1 ether, 1 ether);
+        perform_enroll           (c, address(b), 1 ether, 1.1 ether);
+
+        address[] memory top = market.getTopRelayers();
+        assertEq(top[0], address(a));
+        assertEq(top[1], address(b));
+        assertEq(top[2], address(c));
+
+        (uint index, address[] memory relayers, uint[] memory fees, uint[] memory balances) = market.getOrderBook(3, true);
+        assertEq(index, 3);
+        assertEq(relayers[0], address(a));
+        assertEq(relayers[1], address(b));
+        assertEq(relayers[2], address(c));
+        assertEq(fees[0], 1 ether);
+        assertEq(fees[1], 1 ether);
+        assertEq(fees[2], 1.1 ether);
+        assertEq(balances[0], 1 ether);
+        assertEq(balances[1], 1 ether);
+        assertEq(balances[2], 1 ether);
+    }
+
+    function test_assign() public {
+        init();
+        uint key = 1;
+        perform_assign(key, 1.1 ether);
+        (uint index, address[] memory relayers, uint[] memory fees, uint[] memory balances) = market.getOrderBook(1, false);
+        assertEq(index, 0);
+        assertEq(relayers[0], address(0));
+        assertEq(fees[0], 0 ether);
+        assertEq(balances[0], 0 ether);
+
+        assert_market_locked(a, 1 ether);
+        assert_market_locked(b, 1 ether);
+        assert_market_locked(c, 1 ether);
+
+        Guy[] memory guys = new Guy[](3);
+        guys[0] = a;
+        guys[1] = b;
+        guys[2] = c;
+        assert_market_order(guys, key);
+    }
+
     //------------------------------------------------------------------
     // Helper functions
     //------------------------------------------------------------------
+
+    function init() public {
+        market.setOutbound(self, 1);
+        perform_enroll           (a, address(1), 1 ether, 1 ether);
+        perform_enroll           (b, address(a), 1 ether, 1 ether);
+        perform_enroll           (c, address(b), 1 ether, 1.1 ether);
+    }
 
     function assert_eth_balance(Guy guy, uint balance) public {
         assertEq(address(guy).balance, balance);
@@ -223,6 +274,24 @@ contract FeeMarketTest is DSTest {
 
     function assert_market_balance(Guy guy, uint balance) public {
         assertEq(market.balanceOf(address(guy)), balance);
+    }
+
+    function assert_market_locked(Guy guy, uint locked) public {
+        assertEq(market.lockedOf(address(guy)), locked);
+    }
+
+    function assert_market_order(Guy[] memory guys, uint key) public {
+        (uint32 assignedTime, uint32 assignedRelayersNumber, uint collateral) = market.orderOf(key);
+        assertEq(assignedTime, block.timestamp);
+        assertEq(assignedRelayersNumber, ASSIGNED_RELAYERS_NUMBER);
+        assertEq(collateral, COLLATERAL_PERORDER);
+
+        assertEq(guys.length, assignedRelayersNumber);
+        for(uint slot = 0; slot < assignedRelayersNumber; slot++) {
+            (address assignedRelayer, uint fee) = market.assignedRelayers(key, slot);
+            assertEq(assignedRelayer, address(guys[slot]));
+            assertEq(fee, market.feeOf(assignedRelayer));
+        }
     }
 
     function assert_market_supply(uint supply) public {
@@ -267,6 +336,10 @@ contract FeeMarketTest is DSTest {
 
     function perform_move_relayer(Guy guy, address old_prev, address new_prev, uint new_fee) public {
         guy.moveRelayer(old_prev, new_prev, new_fee);
+    }
+
+    function perform_assign(uint key, uint wad) public {
+        market.assign{value: wad}(key);
     }
 }
 
