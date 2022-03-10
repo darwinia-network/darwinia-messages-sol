@@ -3,7 +3,12 @@
 pragma solidity ^0.8.0;
 
 import "../../../lib/ds-test/src/test.sol";
+import "../../interfaces/IFeeMarket.sol";
 import "../../fee-market/FeeMarket.sol";
+
+interface Hevm {
+    function warp(uint) external;
+}
 
 contract FeeMarketTest is DSTest {
     uint256 constant internal COLLATERAL_PERORDER = 1 ether;
@@ -11,6 +16,7 @@ contract FeeMarketTest is DSTest {
     uint32  constant internal SLASH_TIME = 1 days;
     uint32  constant internal RELAY_TIME = 1 days;
 
+    Hevm internal hevm = Hevm(HEVM_ADDRESS);
     address public vault = address(111);
     address public self;
 
@@ -237,9 +243,8 @@ contract FeeMarketTest is DSTest {
     }
 
     function test_assign() public {
-        init();
         uint key = 1;
-        perform_assign(key, 1.1 ether);
+        init(key);
         (uint index, address[] memory relayers, uint[] memory fees, uint[] memory balances) = market.getOrderBook(1, false);
         assertEq(index, 0);
         assertEq(relayers[0], address(0));
@@ -257,19 +262,145 @@ contract FeeMarketTest is DSTest {
         assert_market_order(guys, key);
     }
 
+    function test_settle_when_a_relay_and_confirm_at_a_slot() public {
+        hevm.warp(1);
+        uint key = 1;
+        init(key);
+
+        assert_market_balance(a, 0 ether);
+        assert_market_balance(b, 0 ether);
+        assert_market_balance(c, 0 ether);
+        assert_market_locked(a, 1 ether);
+        assert_market_locked(b, 1 ether);
+        assert_market_locked(c, 1 ether);
+        assert_vault_balance(0 ether);
+        assert_market_supply(4.1 ether);
+
+        IFeeMarket.DeliveredRelayer[] memory deliveredRelayers = newDeliveredRelayers(a, key);
+        assertTrue(market.settle(deliveredRelayers, address(a)));
+
+        assert_market_order_clean(key);
+
+        assert_vault_balance(0.1 ether);
+        assert_market_balance(a, 2 ether);
+        assert_market_balance(b, 1 ether);
+        assert_market_balance(c, 1 ether);
+        assert_market_supply(4.1 ether);
+    }
+
+    function test_settle_when_a_relay_and_b_confirm_at_a_slot() public {
+        hevm.warp(1);
+        uint key = 1;
+        init(key);
+
+        IFeeMarket.DeliveredRelayer[] memory deliveredRelayers = newDeliveredRelayers(a, key);
+        assertTrue(market.settle(deliveredRelayers, address(b)));
+
+        assert_market_order_clean(key);
+
+        assert_vault_balance(0.1 ether);
+        assert_market_balance(a, 1.92 ether);
+        assert_market_balance(b, 1.08 ether);
+        assert_market_balance(c, 1 ether);
+        assert_market_supply(4.1 ether);
+    }
+
+    function test_settle_when_b_relay_and_c_confirm_at_a_slot() public {
+        hevm.warp(1);
+        uint key = 1;
+        init(key);
+
+        IFeeMarket.DeliveredRelayer[] memory deliveredRelayers = newDeliveredRelayers(b, key);
+        assertTrue(market.settle(deliveredRelayers, address(c)));
+
+        assert_market_order_clean(key);
+
+        assert_vault_balance(0.1 ether);
+        assert_market_balance(a, 1.6 ether);
+        assert_market_balance(b, 1.32 ether);
+        assert_market_balance(c, 1.08 ether);
+        assert_market_supply(4.1 ether);
+    }
+
+    function test_settle_when_a_relay_and_a_confirm_at_b_slot() public {
+        hevm.warp(1);
+        uint key = 1;
+        init(key);
+
+        hevm.warp(1 + RELAY_TIME);
+        IFeeMarket.DeliveredRelayer[] memory deliveredRelayers = newDeliveredRelayers(a, key);
+        assertTrue(market.settle(deliveredRelayers, address(a)));
+
+        assert_market_order_clean(key);
+
+        assert_vault_balance(0.1 ether);
+        assert_market_balance(a, 1.4 ether);
+        assert_market_balance(b, 1.6 ether);
+        assert_market_balance(c, 1 ether);
+        assert_market_supply(4.1 ether);
+    }
+
+    function test_settle_when_b_relay_and_b_confirm_at_b_slot() public {
+        hevm.warp(1);
+        uint key = 1;
+        init(key);
+
+        hevm.warp(1 + RELAY_TIME);
+        IFeeMarket.DeliveredRelayer[] memory deliveredRelayers = newDeliveredRelayers(b, key);
+        assertTrue(market.settle(deliveredRelayers, address(b)));
+
+        assert_market_order_clean(key);
+
+        assert_vault_balance(0.1 ether);
+        assert_market_balance(a, 1 ether);
+        assert_market_balance(b, 2 ether);
+        assert_market_balance(c, 1 ether);
+        assert_market_supply(4.1 ether);
+    }
+
+    function test_settle_when_a_relay_and_b_confirm_at_c_slot() public {
+        hevm.warp(1);
+        uint key = 1;
+        init(key);
+
+        hevm.warp(1 + RELAY_TIME + RELAY_TIME);
+        IFeeMarket.DeliveredRelayer[] memory deliveredRelayers = newDeliveredRelayers(a, key);
+        assertTrue(market.settle(deliveredRelayers, address(b)));
+
+        assert_market_order_clean(key);
+
+        assert_vault_balance(0 ether);
+        assert_market_balance(a, 1.352 ether);
+        assert_market_balance(b, 1.088 ether);
+        assert_market_balance(c, 1.66 ether);
+        assert_market_supply(4.1 ether);
+    }
+
     //------------------------------------------------------------------
     // Helper functions
     //------------------------------------------------------------------
 
-    function init() public {
+    function init(uint key) public {
         market.setOutbound(self, 1);
         perform_enroll           (a, address(1), 1 ether, 1 ether);
         perform_enroll           (b, address(a), 1 ether, 1 ether);
         perform_enroll           (c, address(b), 1 ether, 1.1 ether);
+
+        perform_assign(key, 1.1 ether);
+    }
+
+    function newDeliveredRelayers(Guy relayer, uint key) public pure returns (IFeeMarket.DeliveredRelayer[] memory) {
+        IFeeMarket.DeliveredRelayer[] memory deliveredRelayers = new IFeeMarket.DeliveredRelayer[](1);
+        deliveredRelayers[0] = IFeeMarket.DeliveredRelayer(address(relayer), key, key);
+        return deliveredRelayers;
     }
 
     function assert_eth_balance(Guy guy, uint balance) public {
         assertEq(address(guy).balance, balance);
+    }
+
+    function assert_vault_balance(uint balance) public {
+        assertEq(market.balanceOf(vault), balance);
     }
 
     function assert_market_balance(Guy guy, uint balance) public {
@@ -292,6 +423,28 @@ contract FeeMarketTest is DSTest {
             assertEq(assignedRelayer, address(guys[slot]));
             assertEq(fee, market.feeOf(assignedRelayer));
         }
+    }
+
+    function assert_market_order_clean(uint key) public {
+        Guy[] memory guys = new Guy[](3);
+        guys[0] = a;
+        guys[1] = b;
+        guys[2] = c;
+        (uint32 assignedTime, uint32 assignedRelayersNumber, uint collateral) = market.orderOf(key);
+        assertEq(assignedTime, 0);
+        assertEq(assignedRelayersNumber, 0);
+        assertEq(collateral, 0);
+
+        assertEq(guys.length, ASSIGNED_RELAYERS_NUMBER);
+        for(uint slot = 0; slot < ASSIGNED_RELAYERS_NUMBER; slot++) {
+            (address assignedRelayer, uint fee) = market.assignedRelayers(key, slot);
+            assertEq(assignedRelayer, address(0));
+            assertEq(fee, 0);
+        }
+
+        assert_market_locked(a, 0 ether);
+        assert_market_locked(b, 0 ether);
+        assert_market_locked(c, 0 ether);
     }
 
     function assert_market_supply(uint supply) public {
