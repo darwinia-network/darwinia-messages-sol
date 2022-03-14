@@ -9,6 +9,11 @@ chai.use(solidity);
 
 describe("darwinia<>bsc erc1155 mapping token tests", () => {
   before(async () => {
+      const [owner] = await ethers.getSigners();
+      await network.provider.send("hardhat_setBalance", [
+          owner.address,
+          "0x21e19e0c9bab2400000",
+      ]);
   });
 
   it("test_flow", async function () {
