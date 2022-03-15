@@ -85,7 +85,7 @@ contract Erc1155MappingTokenFactory is MappingTokenFactory {
     function deserializeAttrs(address serializer, uint256[] memory ids, bytes[] memory attrs) internal {
         for (uint idx = 0; idx < ids.length; idx++) {
             if (serializer != address(0)) {
-                IErc1155AttrSerializer(serializer).Deserialize(ids[idx], attrs[idx]);
+                IErc1155AttrSerializer(serializer).deserialize(ids[idx], attrs[idx]);
             }
         }
     }
@@ -115,7 +115,7 @@ contract Erc1155MappingTokenFactory is MappingTokenFactory {
         IERC1155(mappingToken).safeBatchTransferFrom(msg.sender, address(this), ids, amounts, "");
         for (uint256 idx = 0; idx < ids.length; idx++) {
             if (serializer != address(0)) {
-                attrs[idx] = IErc1155AttrSerializer(serializer).Serialize(ids[idx]);
+                attrs[idx] = IErc1155AttrSerializer(serializer).serialize(ids[idx]);
             }
         }
 

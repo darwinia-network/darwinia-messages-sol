@@ -92,7 +92,7 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
         for (uint idx = 0; idx < ids.length; idx++) {
             IERC721(token).transferFrom(msg.sender, address(this), ids[idx]);
             if (info.serializer != address(0)) {
-                attrs[idx] = IErc721AttrSerializer(info.serializer).Serialize(ids[idx]);
+                attrs[idx] = IErc721AttrSerializer(info.serializer).serialize(ids[idx]);
             }
         }
 
@@ -161,7 +161,7 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
         for (uint idx = 0; idx < ids.length; idx++) {
             IERC721(token).transferFrom(address(this), recipient, ids[idx]);
             if (info.serializer != address(0)) {
-                IErc721AttrSerializer(info.serializer).Deserialize(ids[idx], attrs[idx]);
+                IErc721AttrSerializer(info.serializer).deserialize(ids[idx], attrs[idx]);
             }
         }
         emit TokenUnlocked(token, recipient, ids);

@@ -94,7 +94,7 @@ contract Erc1155TokenBacking is IErc1155Backing, Backing {
         IERC1155(token).safeBatchTransferFrom(msg.sender, address(this), ids, amounts, "");
         for (uint idx = 0; idx < ids.length; idx++) {
             if (info.serializer != address(0)) {
-                attrs[idx] = IErc1155AttrSerializer(info.serializer).Serialize(ids[idx]);
+                attrs[idx] = IErc1155AttrSerializer(info.serializer).serialize(ids[idx]);
             }
         }
 
@@ -163,7 +163,7 @@ contract Erc1155TokenBacking is IErc1155Backing, Backing {
         IERC1155(token).safeBatchTransferFrom(address(this), recipient, ids, amounts, "");
         for (uint idx = 0; idx < ids.length; idx++) {
             if (info.serializer != address(0)) {
-                IErc1155AttrSerializer(info.serializer).Deserialize(ids[idx], attrs[idx]);
+                IErc1155AttrSerializer(info.serializer).deserialize(ids[idx], attrs[idx]);
             }
         }
         emit TokenUnlocked(token, recipient, ids, amounts);

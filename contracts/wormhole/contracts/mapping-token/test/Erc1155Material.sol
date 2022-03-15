@@ -39,11 +39,11 @@ contract Erc1155MaterialAttributeSerializer is IErc1155AttrSerializer {
         return "";
     }
 
-    function Serialize(uint256 id) external view returns(bytes memory) {
+    function serialize(uint256 id) external view returns(bytes memory) {
         return abi.encode(_attributes[id]);
     }
 
-    function Deserialize(uint256 id, bytes memory data) external {
+    function deserialize(uint256 id, bytes memory data) external {
         Attributes memory attr = abi.decode(data, (Attributes));
         _attributes[id] = attr;
     }

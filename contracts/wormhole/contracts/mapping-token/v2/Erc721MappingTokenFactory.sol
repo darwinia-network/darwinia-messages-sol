@@ -77,7 +77,7 @@ contract Erc721MappingTokenFactory is MappingTokenFactory {
         for (uint idx = 0; idx < ids.length; idx++) {
             IErc721MappingToken(mappingToken).mint(recipient, ids[idx]);
             if (serializer != address(0)) {
-                IErc721AttrSerializer(serializer).Deserialize(ids[idx], attrs[idx]);
+                IErc721AttrSerializer(serializer).deserialize(ids[idx], attrs[idx]);
             }
         }
     }
@@ -106,7 +106,7 @@ contract Erc721MappingTokenFactory is MappingTokenFactory {
         for (uint256 idx = 0; idx < ids.length; idx++) {
             IERC721(mappingToken).transferFrom(msg.sender, address(this), ids[idx]);
             if (serializer != address(0)) {
-                attrs[idx] = IErc721AttrSerializer(serializer).Serialize(ids[idx]);
+                attrs[idx] = IErc721AttrSerializer(serializer).serialize(ids[idx]);
             }
         }
 
