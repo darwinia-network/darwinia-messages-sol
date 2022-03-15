@@ -115,6 +115,8 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 1;
         perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
+
+        assert_empty_data(1, 1);
     }
 
     function testFail_receive_messages_delivery_proof0() public {
@@ -213,7 +215,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         }
     }
 
-    function test_test_receive_multi_messages_delivery_proof0() public {
+    function test_receive_multi_messages_delivery_proof0() public {
         address target = address(1);
         bytes memory encoded = abi.encodeWithSignature("foo()");
         perform_send_message(target, encoded);
@@ -225,9 +227,11 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 3;
         perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
+
+        assert_empty_data(3, 3);
     }
 
-    function test_test_receive_multi_messages_delivery_proof1() public {
+    function test_receive_multi_messages_delivery_proof1() public {
         address target = address(1);
         bytes memory encoded = abi.encodeWithSignature("foo()");
         perform_send_message(target, encoded);
@@ -239,15 +243,18 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 2;
         perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
+        assert_data(2, 3, 1);
 
         begin = 3;
         end = 3;
         last_confirmed_nonce = 0;
         last_delivered_nonce = 3;
         perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
+
+        assert_empty_data(3, 3);
     }
 
-    function testFail_test_receive_multi_messages_delivery_proof0() public {
+    function testFail_receive_multi_messages_delivery_proof0() public {
         address target = address(1);
         bytes memory encoded = abi.encodeWithSignature("foo()");
         perform_send_message(target, encoded);
@@ -282,6 +289,28 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         relayers[0] = UnrewardedRelayer(self, messages);
         InboundLaneData memory data = InboundLaneData(relayers, last_confirmed_nonce, last_delivered_nonce);
         outlane.receive_messages_delivery_proof(data, hex"");
+    }
+
+    function assert_data(uint64 _latest_received_nonce, uint64 _latest_generated_nonce, uint64 _message_size) public {
+        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.outboundLaneNonce();
+        assertEq(latest_received_nonce, _latest_received_nonce);
+        assertEq(latest_generated_nonce, _latest_generated_nonce);
+        assertEq(oldest_unpruned_nonce, 1);
+
+        assertEq(outlane.message_size(), _message_size);
+        OutboundLaneData memory data = outlane.data();
+        assertEq(data.latest_received_nonce, _latest_received_nonce);
+    }
+
+    function assert_empty_data(uint64 _latest_received_nonce, uint64 _latest_generated_nonce) public {
+        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.outboundLaneNonce();
+        assertEq(latest_received_nonce, _latest_received_nonce);
+        assertEq(latest_generated_nonce, _latest_generated_nonce);
+        assertEq(oldest_unpruned_nonce, 1);
+
+        assertEq(outlane.message_size(), 0);
+        OutboundLaneData memory data = outlane.data();
+        assertEq(data.latest_received_nonce, _latest_received_nonce);
     }
 
     function _tryRely(address usr) internal returns (bool ok) {
