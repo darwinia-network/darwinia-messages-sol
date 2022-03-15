@@ -81,6 +81,8 @@ describe("darwinia<>bsc erc1155 mapping token tests", () => {
       //********* configure backing **************************
       // init owner
       await backing.initialize(2, mtf.address, feeMarket.address, "Darwinia");
+      const [owner] = await ethers.getSigners();
+      await backing.grantRole(backing.OPERATOR_ROLE(), owner.address);
       // add inboundLane
       await backing.addInboundLane(mtf.address, darwiniaInboundLane.address);
       // add outboundLane
@@ -106,7 +108,7 @@ describe("darwinia<>bsc erc1155 mapping token tests", () => {
           materialAttrContractOnDarwinia.address,
           materialAttrContractOnBsc.address,
           {value: ethers.utils.parseEther("9.9999999999")}
-      )).to.be.revertedWith("Backing:not enough fee to pay");
+      )).to.be.revertedWith("HelixApp:not enough fee to pay");
       // test register successed
       await backing.registerErc1155Token(
           2,
@@ -128,7 +130,6 @@ describe("darwinia<>bsc erc1155 mapping token tests", () => {
       expect((await backing.registeredTokens(zeroAddress)).token).to.equal(zeroAddress);
       expect(await mtf.tokenLength()).to.equal(1);
 
-      const [owner] = await ethers.getSigners();
       // test lock
       await originalToken.mintBatch(owner.address, [1001, 1002, 1003], [1000, 2000, 3000]);
       await originalToken.setApprovalForAll(backing.address, true);

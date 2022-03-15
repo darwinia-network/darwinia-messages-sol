@@ -10,15 +10,12 @@ pragma solidity ^0.8.10;
 // The AttributesSerializer must implement interfaces in IErc1155AttrSerializer.
 
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC1155/IERC1155.sol";
-import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
 import "../interfaces/IErc1155AttrSerializer.sol";
 import "../interfaces/IErc1155Backing.sol";
 import "../interfaces/IErc1155MappingTokenFactory.sol";
-import "./Backing.sol";
+import "./HelixApp.sol";
 
-contract Erc1155TokenBacking is IErc1155Backing, Backing {
-    using SafeMath for uint256;
-
+contract Erc1155TokenBacking is IErc1155Backing, HelixApp {
     struct LockedInfo {
         address token;
         address sender;
@@ -58,7 +55,7 @@ contract Erc1155TokenBacking is IErc1155Backing, Backing {
         address token,
         address attributesSerializer,
         address remoteAttributesSerializer
-    ) external payable onlyOperatorOrOwner {
+    ) external payable onlyOperator {
         require(registeredTokens[token].token == address(0), "Backing:token has been registered");
         bytes memory newErc1155Contract = abi.encodeWithSelector(
             IErc1155MappingTokenFactory.newErc1155Contract.selector,
@@ -67,7 +64,7 @@ contract Erc1155TokenBacking is IErc1155Backing, Backing {
             remoteAttributesSerializer,
             thisChainName
         );
-        uint256 messageId = _sendMessage(bridgedLanePosition, remoteMappingTokenFactory, newErc1155Contract);
+        uint256 messageId = _sendMessage(bridgedLanePosition, newErc1155Contract);
         registerMessages[messageId] = TokenInfo(token, attributesSerializer);
         emit NewErc1155TokenRegistered(messageId, token);
     }
@@ -107,7 +104,7 @@ contract Erc1155TokenBacking is IErc1155Backing, Backing {
             amounts,
             attrs
         );
-        uint256 messageId = _sendMessage(bridgedLanePosition, remoteMappingTokenFactory, issueMappingToken);
+        uint256 messageId = _sendMessage(bridgedLanePosition, issueMappingToken);
         lockMessages[messageId] = LockedInfo(token, msg.sender, ids, amounts);
         emit TokenLocked(messageId, token, recipient, ids, amounts);
     }
@@ -157,7 +154,7 @@ contract Erc1155TokenBacking is IErc1155Backing, Backing {
         uint256[] calldata ids,
         uint256[] calldata amounts,
         bytes[] calldata attrs
-    ) public onlyInBoundLane(mappingTokenFactory) whenNotPaused {
+    ) public onlyRemoteHelix(mappingTokenFactory) whenNotPaused {
         TokenInfo memory info = registeredTokens[token];
         require(info.token != address(0), "the token is not registered");
         IERC1155(token).safeBatchTransferFrom(address(this), recipient, ids, amounts, "");
