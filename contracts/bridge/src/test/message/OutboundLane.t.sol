@@ -189,6 +189,84 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
     }
 
+    function test_send_multi_message() public {
+        address target = address(1);
+        bytes memory encoded = abi.encodeWithSignature("foo()");
+        perform_send_message(target, encoded);
+        perform_send_message(target, encoded);
+        perform_send_message(target, encoded);
+
+        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.outboundLaneNonce();
+        assertEq(latest_received_nonce, 0);
+        assertEq(latest_generated_nonce, 3);
+        assertEq(oldest_unpruned_nonce, 1);
+
+        assertEq(outlane.message_size(), 3);
+        OutboundLaneData memory data = outlane.data();
+        assertEq(data.latest_received_nonce, 0);
+        for(uint64 i = 0; i < 3; i++) {
+            Message memory message = data.messages[i];
+            assertEq(message.encoded_key, outlane.encodeMessageKey(i + 1));
+            assertEq(message.data.sourceAccount, address(app));
+            assertEq(message.data.targetContract, target);
+            assertEq(message.data.encodedHash, keccak256(encoded));
+        }
+    }
+
+    function test_test_receive_multi_messages_delivery_proof0() public {
+        address target = address(1);
+        bytes memory encoded = abi.encodeWithSignature("foo()");
+        perform_send_message(target, encoded);
+        perform_send_message(target, encoded);
+        perform_send_message(target, encoded);
+
+        uint64 begin = 1;
+        uint64 end = 3;
+        uint64 last_confirmed_nonce = 0;
+        uint64 last_delivered_nonce = 3;
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
+    }
+
+    function test_test_receive_multi_messages_delivery_proof1() public {
+        address target = address(1);
+        bytes memory encoded = abi.encodeWithSignature("foo()");
+        perform_send_message(target, encoded);
+        perform_send_message(target, encoded);
+        perform_send_message(target, encoded);
+
+        uint64 begin = 1;
+        uint64 end = 2;
+        uint64 last_confirmed_nonce = 0;
+        uint64 last_delivered_nonce = 2;
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
+
+        begin = 3;
+        end = 3;
+        last_confirmed_nonce = 0;
+        last_delivered_nonce = 3;
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
+    }
+
+    function testFail_test_receive_multi_messages_delivery_proof0() public {
+        address target = address(1);
+        bytes memory encoded = abi.encodeWithSignature("foo()");
+        perform_send_message(target, encoded);
+        perform_send_message(target, encoded);
+        perform_send_message(target, encoded);
+
+        uint64 begin = 1;
+        uint64 end = 3;
+        uint64 last_confirmed_nonce = 0;
+        uint64 last_delivered_nonce = 3;
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
+
+        begin = 3;
+        end = 3;
+        last_confirmed_nonce = 0;
+        last_delivered_nonce = 3;
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
+    }
+
     //------------------------------------------------------------------
     // Helper functions
     //------------------------------------------------------------------

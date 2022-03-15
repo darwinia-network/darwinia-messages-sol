@@ -25,10 +25,10 @@ import "../spec/TargetChain.sol";
 // Everything about outgoing messages sending.
 contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, SourceChain {
     event MessageAccepted(uint64 indexed nonce, bytes encoded);
-    event MessagesDelivered(uint64 begin, uint64 end, uint256 results);
+    event MessagesDelivered(uint64 indexed begin, uint64 indexed end, uint256 results);
     event MessagePruned(uint64 indexed oldest_unpruned_nonce);
     event MessageFeeIncreased(uint64 indexed nonce, uint256 fee);
-    event CallbackMessageDelivered(uint64 nonce, bool result);
+    event CallbackMessageDelivered(uint64 indexed nonce, bool result);
     event Rely(address indexed usr);
     event Deny(address indexed usr);
 
