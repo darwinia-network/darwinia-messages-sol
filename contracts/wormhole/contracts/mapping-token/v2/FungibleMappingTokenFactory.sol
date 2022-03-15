@@ -6,16 +6,17 @@
 pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "../interfaces/IMessageCommitment.sol";
 import "../../utils/DailyLimit.sol";
 import "../interfaces/IBacking.sol";
 import "../interfaces/IERC20.sol";
 import "../interfaces/IGuard.sol";
 import "../interfaces/IInboundLane.sol";
 import "../interfaces/IMappingTokenFactory.sol";
+import "../interfaces/IMessageCommitment.sol";
+import "./HelixApp.sol";
 import "./MappingTokenFactory.sol";
 
-contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, MappingTokenFactory {
+contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFactory, MappingTokenFactory {
     address public constant BLACK_HOLE_ADDRESS = 0x000000000000000000000000000000000000dEaD;
     struct UnconfirmedInfo {
         address sender;
@@ -31,23 +32,23 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
     mapping(uint32 => address) public tokenType2Logic;
 
     event NewLogicSetted(uint32 tokenType, address addr);
-    event IssuingERC20Created(address backingAddress, address originalToken, address mappingToken);
+    event IssuingERC20Created(address originalToken, address mappingToken);
     event BurnAndWaitingConfirm(uint256 messageId, address sender, address recipient, address token, uint256 amount);
     event RemoteUnlockConfirmed(uint256 messageId, bool result);
 
     receive() external payable {
     }
 
-    function updateGuard(address newGuard) external onlyOwner {
+    function updateGuard(address newGuard) external onlyAdmin {
         guard = newGuard;
     }
 
-    function changeDailyLimit(address mappingToken, uint amount) public onlyOwner  {
+    function changeDailyLimit(address mappingToken, uint amount) public onlyAdmin  {
         _changeDailyLimit(mappingToken, amount);
     }
 
 
-    function setTokenContractLogic(uint32 tokenType, address logic) external onlyOwner {
+    function setTokenContractLogic(uint32 tokenType, address logic) external onlyAdmin {
         tokenType2Logic[tokenType] = logic;
         emit NewLogicSetted(tokenType, logic);
     }
@@ -69,11 +70,10 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
         string memory name,
         string memory symbol,
         uint8 decimals
-    ) public onlyInBoundLane(backingAddress) whenNotPaused returns (address mappingToken) {
+    ) public onlyRemoteHelix(backingAddress) whenNotPaused returns (address mappingToken) {
         require(tokenType == 0 || tokenType == 1, "MappingTokenFactory:token type cannot mapping to erc20 token");
         // (bridgeChainId, backingAddress, originalToken) pack a unique new contract salt
-        uint32 bridgedChainPosition = IMessageCommitment(msg.sender).bridgedChainPosition();
-        bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
+        bytes32 salt = keccak256(abi.encodePacked(remoteChainPosition, backingAddress, originalToken));
         require(salt2MappingToken[salt] == address(0), "MappingTokenFactory:contract has been deployed");
         mappingToken = deployErc20Contract(salt, tokenType);
         IMappingToken(mappingToken).initialize(
@@ -86,8 +86,8 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
         // map the originToken to mappingInfo
         salt2MappingToken[salt] = mappingToken;
         // map the mappingToken to origin info
-        mappingToken2OriginalInfo[mappingToken] = OriginalInfo(bridgedChainPosition, backingAddress, originalToken);
-        emit IssuingERC20Created(backingAddress, originalToken, mappingToken);
+        mappingToken2OriginalToken[mappingToken] = originalToken;
+        emit IssuingERC20Created(originalToken, mappingToken);
     }
 
     function deployErc20Contract(
@@ -96,7 +96,7 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
     ) internal returns(address) {
         bytes memory bytecode = type(TransparentUpgradeableProxy).creationCode;
         bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(tokenType2Logic[tokenType], address(BLACK_HOLE_ADDRESS), ""));
-        return deploy(salt, bytecodeWithInitdata);
+        return _deploy(salt, bytecodeWithInitdata);
     }
 
     /**
@@ -111,9 +111,8 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
         address originalToken,
         address recipient,
         uint256 amount
-    ) public onlyInBoundLane(backingAddress) whenNotPaused {
-        uint32 bridgedChainPosition = IMessageCommitment(msg.sender).bridgedChainPosition();
-        address mappingToken = getMappingToken(bridgedChainPosition, backingAddress, originalToken);
+    ) public onlyRemoteHelix(backingAddress) whenNotPaused {
+        address mappingToken = getMappingToken(remoteChainPosition, backingAddress, originalToken);
         require(mappingToken != address(0), "MappingTokenFactory:mapping token has not created");
         require(amount > 0, "MappingTokenFactory:can not receive amount zero");
         expendDailyLimit(mappingToken, amount);
@@ -143,8 +142,8 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
         uint256 amount
     ) external payable whenNotPaused {
         require(amount > 0, "MappingTokenFactory:can not transfer amount zero");
-        OriginalInfo memory info = mappingToken2OriginalInfo[mappingToken];
-        require(info.originalToken != address(0), "MappingTokenFactory:token is not created by factory");
+        address originalToken = mappingToken2OriginalToken[mappingToken];
+        require(originalToken != address(0), "MappingTokenFactory:token is not created by factory");
         // Lock the fund in this before message on remote backing chain get dispatched successfully and burn finally
         // If remote backing chain unlock the origin token successfully, then this fund will be burned.
         // Otherwise, this fund will be transfered back to the msg.sender.
@@ -153,12 +152,12 @@ contract FungibleMappingTokenFactory is DailyLimit, IMappingTokenFactory, Mappin
         bytes memory unlockFromRemote = abi.encodeWithSelector(
             IBacking.unlockFromRemote.selector,
             address(this),
-            info.originalToken,
+            originalToken,
             recipient,
             amount
         );
 
-        uint256 messageId = _sendMessage(info.bridgedChainPosition, bridgedLanePosition, info.backingAddress, unlockFromRemote);
+        uint256 messageId = _sendMessage(bridgedLanePosition, unlockFromRemote);
         unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, amount);
         emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mappingToken, amount);
     }

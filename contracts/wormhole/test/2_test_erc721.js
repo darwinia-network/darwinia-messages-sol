@@ -66,10 +66,10 @@ describe("darwinia<>bsc erc721 mapping token tests", () => {
 
       //********** configure mapping-token-factory ***********
       // init owner
-      await mtf.initialize(feeMarket.address);
+      await mtf.initialize(1, backing.address, feeMarket.address, "BSC");
       // add inboundLane
       await mtf.addInboundLane(backing.address, bscInboundLane.address);
-      await mtf.addOutBoundLane(bscOutboundLane.address);
+      await mtf.addOutboundLane(bscOutboundLane.address);
       //************ configure mapping-token end *************
 
       //********* configure backing **************************

@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.0;
 
+import "@zeppelin-solidity-4.4.0/contracts/access/Ownable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC1155/IERC1155.sol";
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC1155/IERC1155Receiver.sol";
-import "@zeppelin-solidity-4.4.0/contracts/utils/introspection/ERC165.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/Address.sol";
-import "../../utils/Ownable.sol";
+import "@zeppelin-solidity-4.4.0/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @dev Implementation of the basic standard multi-token.
@@ -29,7 +29,7 @@ contract Erc1155MappingToken is ERC165, IERC1155, IERC1155MetadataURI, Ownable {
     mapping(address => mapping(address => bool)) private _operatorApprovals;
 
     constructor(string memory _bridgedChainName, address _attributeSerializer) {
-        ownableConstructor();
+        _transferOwnership(_msgSender());
         bridgedChainName = _bridgedChainName;
         attributeSerializer = _attributeSerializer;
     }

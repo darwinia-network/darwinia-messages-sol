@@ -5,7 +5,6 @@ pragma solidity >=0.8.10;
 import "../interfaces/IErc1155AttrSerializer.sol";
 import "../../utils/Ownable.sol";
 import "../interfaces/IErc1155MappingToken.sol";
-import "../v2/Erc721MappingToken.sol";
 
 contract Erc1155MaterialAttributeSerializer is IErc1155AttrSerializer {
     // some changable attributes

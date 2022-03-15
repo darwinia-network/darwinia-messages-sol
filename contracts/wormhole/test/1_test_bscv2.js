@@ -64,18 +64,20 @@ describe("darwinia<>bsc mapping token tests", () => {
 
       //********** configure mapping-token-factory ***********
       // init owner
-      await mtf.initialize(feeMarket.address);
+      await mtf.initialize(1, backing.address, feeMarket.address, "BSC");
       // set logic mapping token
       await mtf.setTokenContractLogic(0, mappingToken.address);
       await mtf.setTokenContractLogic(1, mappingToken.address);
       // add inboundLane
       await mtf.addInboundLane(backing.address, bscInboundLane.address);
-      await mtf.addOutBoundLane(bscOutboundLane.address);
+      await mtf.addOutboundLane(bscOutboundLane.address);
       //************ configure mapping-token end *************
 
       //********* configure backing **************************
       // init owner
       await backing.initialize(2, mtf.address, feeMarket.address, "Darwinia");
+      const [owner] = await ethers.getSigners();
+      await backing.grantRole(backing.OPERATOR_ROLE(), owner.address);
       // add inboundLane
       await backing.addInboundLane(mtf.address, darwiniaInboundLane.address);
       // add outboundLane
@@ -100,7 +102,7 @@ describe("darwinia<>bsc mapping token tests", () => {
           tokenSymbol,
           9,
           {value: ethers.utils.parseEther("9.9999999999")}
-      )).to.be.revertedWith("Backing:not enough fee to pay");
+      )).to.be.revertedWith("HelixApp:not enough fee to pay");
       // test register successed
       await backing.registerErc20Token(2, originalToken.address, tokenName, tokenSymbol, 9, {value: ethers.utils.parseEther("10.0")});
       // check not exist
@@ -116,7 +118,6 @@ describe("darwinia<>bsc mapping token tests", () => {
       expect(await backing.registeredTokens(zeroAddress)).to.equal(false);
       expect(await mtf.tokenLength()).to.equal(1);
 
-      const [owner] = await ethers.getSigners();
       // test lock
       await originalToken.mint(owner.address, 1000);
       await originalToken.approve(backing.address, 1000);

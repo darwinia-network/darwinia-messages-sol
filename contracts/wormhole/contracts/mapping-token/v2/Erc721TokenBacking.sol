@@ -55,7 +55,7 @@ contract Erc721TokenBacking is IErc721Backing, HelixApp {
         address attributesSerializer,
         address remoteAttributesSerializer
     ) external payable onlyOperator {
-        require(registeredTokens[token].token == address(0), "Backing:token has been registered");
+        require(registeredTokens[token].token == address(0), "Erc721Backing:token has been registered");
         bytes memory newErc721Contract = abi.encodeWithSelector(
             IErc721MappingTokenFactory.newErc721Contract.selector,
             address(this),
@@ -83,7 +83,7 @@ contract Erc721TokenBacking is IErc721Backing, HelixApp {
         uint256[] calldata ids
     ) external payable whenNotPaused {
         TokenInfo memory info = registeredTokens[token];
-        require(info.token != address(0), "Backing:the token is not registed");
+        require(info.token != address(0), "Erc721Backing:the token is not registed");
 
         bytes[] memory attrs = new bytes[](ids.length);
         for (uint idx = 0; idx < ids.length; idx++) {
@@ -154,7 +154,7 @@ contract Erc721TokenBacking is IErc721Backing, HelixApp {
         bytes[] calldata attrs
     ) public onlyRemoteHelix(mappingTokenFactory) whenNotPaused {
         TokenInfo memory info = registeredTokens[token];
-        require(info.token != address(0), "the token is not registered");
+        require(info.token != address(0), "Erc721Backing:the token is not registered");
         for (uint idx = 0; idx < ids.length; idx++) {
             IERC721(token).transferFrom(address(this), recipient, ids[idx]);
             if (info.serializer != address(0)) {

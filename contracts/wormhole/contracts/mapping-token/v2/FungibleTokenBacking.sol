@@ -8,9 +8,9 @@ import "../interfaces/IERC20.sol";
 import "../interfaces/IGuard.sol";
 import "../interfaces/IInboundLane.sol";
 import "../interfaces/IMappingTokenFactory.sol";
-import "./Backing.sol";
+import "./HelixApp.sol";
 
-contract FungibleTokenBacking is DailyLimit, IBacking, Backing {
+contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
     using SafeMath for uint256;
     struct LockedInfo {
         address token;
@@ -36,11 +36,11 @@ contract FungibleTokenBacking is DailyLimit, IBacking, Backing {
     event TokenRegisterFinished(uint256 messageId, bool result);
     event TokenUnlocked(address token, address recipient, uint256 amount);
 
-    function changeDailyLimit(address mappingToken, uint amount) public onlyOwner  {
+    function changeDailyLimit(address mappingToken, uint amount) public onlyAdmin  {
         _changeDailyLimit(mappingToken, amount);
     }
 
-    function updateGuard(address newGuard) external onlyOwner {
+    function updateGuard(address newGuard) external onlyAdmin {
         guard = newGuard;
     }
 
@@ -58,7 +58,7 @@ contract FungibleTokenBacking is DailyLimit, IBacking, Backing {
         string memory name,
         string memory symbol,
         uint8 decimals
-    ) external payable onlyOperatorOrOwner {
+    ) external payable onlyOperator {
         require(registeredTokens[token] == false, "Backing:token has been registered");
 
         bytes memory newErc20Contract = abi.encodeWithSelector(
@@ -71,7 +71,7 @@ contract FungibleTokenBacking is DailyLimit, IBacking, Backing {
             symbol,
             decimals
         );
-        uint256 messageId = _sendMessage(bridgedLanePosition, remoteMappingTokenFactory, newErc20Contract);
+        uint256 messageId = _sendMessage(bridgedLanePosition, newErc20Contract);
         registerMessages[messageId] = token;
         emit NewErc20TokenRegistered(messageId, token);
     }
@@ -103,7 +103,7 @@ contract FungibleTokenBacking is DailyLimit, IBacking, Backing {
             recipient,
             amount
         );
-        uint256 messageId = _sendMessage(bridgedLanePosition, remoteMappingTokenFactory, issueMappingToken);
+        uint256 messageId = _sendMessage(bridgedLanePosition, issueMappingToken);
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
         emit TokenLocked(messageId, token, recipient, amount);
     }
@@ -150,7 +150,7 @@ contract FungibleTokenBacking is DailyLimit, IBacking, Backing {
         address token,
         address recipient,
         uint256 amount
-    ) public onlyInBoundLane(mappingTokenFactory) whenNotPaused {
+    ) public onlyRemoteHelix(mappingTokenFactory) whenNotPaused {
         expendDailyLimit(token, amount);
         if (guard != address(0)) {
             require(IERC20(token).approve(guard, amount), "Backing:approve token transfer to guard failed");

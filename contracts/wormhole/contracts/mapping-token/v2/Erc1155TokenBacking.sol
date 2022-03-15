@@ -56,7 +56,7 @@ contract Erc1155TokenBacking is IErc1155Backing, HelixApp {
         address attributesSerializer,
         address remoteAttributesSerializer
     ) external payable onlyOperator {
-        require(registeredTokens[token].token == address(0), "Backing:token has been registered");
+        require(registeredTokens[token].token == address(0), "Erc1155Backing:token has been registered");
         bytes memory newErc1155Contract = abi.encodeWithSelector(
             IErc1155MappingTokenFactory.newErc1155Contract.selector,
             address(this),
@@ -85,7 +85,7 @@ contract Erc1155TokenBacking is IErc1155Backing, HelixApp {
         uint256[] calldata amounts
     ) external payable whenNotPaused {
         TokenInfo memory info = registeredTokens[token];
-        require(info.token != address(0), "Backing:the token is not registed");
+        require(info.token != address(0), "Erc1155Backing:the token is not registed");
 
         bytes[] memory attrs = new bytes[](ids.length);
         IERC1155(token).safeBatchTransferFrom(msg.sender, address(this), ids, amounts, "");
@@ -156,7 +156,7 @@ contract Erc1155TokenBacking is IErc1155Backing, HelixApp {
         bytes[] calldata attrs
     ) public onlyRemoteHelix(mappingTokenFactory) whenNotPaused {
         TokenInfo memory info = registeredTokens[token];
-        require(info.token != address(0), "the token is not registered");
+        require(info.token != address(0), "Erc1155Backing:the token is not registered");
         IERC1155(token).safeBatchTransferFrom(address(this), recipient, ids, amounts, "");
         for (uint idx = 0; idx < ids.length; idx++) {
             if (info.serializer != address(0)) {

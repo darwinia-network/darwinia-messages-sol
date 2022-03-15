@@ -42,7 +42,6 @@ contract HelixApp is AccessControlEnumerable, Initializable, ICrossChainFilter, 
         _;
     }
 
-    //modifier onlyInBoundLane(address mappingTokenFactoryAddress) {
     modifier onlyRemoteHelix(address _remoteHelix) {
         (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(msg.sender).getLaneInfo();
         require(remoteChainPosition == bridgedChainPosition, "HelixApp:Invalid bridged chain position");
