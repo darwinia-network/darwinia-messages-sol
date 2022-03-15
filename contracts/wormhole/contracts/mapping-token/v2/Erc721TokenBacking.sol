@@ -10,15 +10,12 @@ pragma solidity ^0.8.10;
 // The AttributesSerializer must implement interfaces in IErc721AttrSerializer.
 
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC721/IERC721.sol";
-import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
 import "../interfaces/IErc721AttrSerializer.sol";
 import "../interfaces/IErc721Backing.sol";
 import "../interfaces/IErc721MappingTokenFactory.sol";
-import "./Backing.sol";
+import "./HelixApp.sol";
 
-contract Erc721TokenBacking is IErc721Backing, Backing {
-    using SafeMath for uint256;
-
+contract Erc721TokenBacking is IErc721Backing, HelixApp {
     struct LockedInfo {
         address token;
         address sender;
@@ -57,7 +54,7 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
         address token,
         address attributesSerializer,
         address remoteAttributesSerializer
-    ) external payable onlyOperatorOrOwner {
+    ) external payable onlyOperator {
         require(registeredTokens[token].token == address(0), "Backing:token has been registered");
         bytes memory newErc721Contract = abi.encodeWithSelector(
             IErc721MappingTokenFactory.newErc721Contract.selector,
@@ -66,7 +63,7 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
             remoteAttributesSerializer,
             thisChainName
         );
-        uint256 messageId = _sendMessage(bridgedLanePosition, remoteMappingTokenFactory, newErc721Contract);
+        uint256 messageId = _sendMessage(bridgedLanePosition, newErc721Contract);
         registerMessages[messageId] = TokenInfo(token, attributesSerializer);
         emit NewErc721TokenRegistered(messageId, token);
     }
@@ -104,7 +101,7 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
             ids,
             attrs
         );
-        uint256 messageId = _sendMessage(bridgedLanePosition, remoteMappingTokenFactory, issueMappingToken);
+        uint256 messageId = _sendMessage(bridgedLanePosition, issueMappingToken);
         lockMessages[messageId] = LockedInfo(token, msg.sender, ids);
         emit TokenLocked(messageId, token, recipient, ids);
     }
@@ -155,7 +152,7 @@ contract Erc721TokenBacking is IErc721Backing, Backing {
         address recipient,
         uint256[] calldata ids,
         bytes[] calldata attrs
-    ) public onlyInBoundLane(mappingTokenFactory) whenNotPaused {
+    ) public onlyRemoteHelix(mappingTokenFactory) whenNotPaused {
         TokenInfo memory info = registeredTokens[token];
         require(info.token != address(0), "the token is not registered");
         for (uint idx = 0; idx < ids.length; idx++) {
