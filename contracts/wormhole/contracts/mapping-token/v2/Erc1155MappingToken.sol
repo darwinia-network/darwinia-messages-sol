@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
+// This is the standard Erc1155 Mapping Token implementation.
+// In addition to implementing the standard Erc1155, we also added the IERC1155MetadataURI to the mapping token standard.
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/access/Ownable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
@@ -19,7 +21,7 @@ import "@zeppelin-solidity-4.4.0/contracts/utils/introspection/ERC165.sol";
 contract Erc1155MappingToken is ERC165, IERC1155, IERC1155MetadataURI, Ownable {
     using Address for address;
 
-    string public bridgedChainName;
+    string  public bridgedChainName;
     address public attributeSerializer;
 
     // Mapping from token ID to account balances

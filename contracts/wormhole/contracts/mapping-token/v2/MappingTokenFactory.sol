@@ -16,36 +16,27 @@ contract MappingTokenFactory {
     // so this is a mapping from mappingToken to original token
     mapping(address => address) public mappingToken2OriginalToken;
 
-    event MappingTokenUpdated(bytes32 salt, address oldAddress, address newAddress);
-
     function _transferMappingTokenOwnership(address mappingToken, address new_owner) internal {
         Ownable(mappingToken).transferOwnership(new_owner);
     }
 
     /**
      * @notice add mapping-token address by owner
-     * @param bridgedChainPosition the bridged chain position
-     * @param backingAddress the remote backingAddress
+     * @param salt the salt of the mapping token deployed
      * @param originalToken the original token address
      * @param mappingToken the mapping token address
      */
     function _addMappingToken(
-        uint32 bridgedChainPosition,
-        address backingAddress,
+        bytes32 salt,
         address originalToken,
         address mappingToken
     ) internal {
-        bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
-        address existed = salt2MappingToken[salt];
-        require(existed == address(0), "the mapping token exist");
-
         // save the mapping tokens in an array so it can be listed
         allMappingTokens.push(mappingToken);
         // map the originToken to mappingInfo
         salt2MappingToken[salt] = mappingToken;
         // map the mappingToken to origin info
         mappingToken2OriginalToken[mappingToken] = originalToken;
-        emit MappingTokenUpdated(salt, existed, mappingToken);
     }
 
     // internal

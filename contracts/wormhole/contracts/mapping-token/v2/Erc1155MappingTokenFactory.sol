@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
-// This is the Issuing Module(Mapping-token-factory) of the ethereum like bridge.
+// This is the Erc1155 Token Issuing Module(Mapping-token-factory) of the ethereum like bridge.
 // We trust the inboundLane/outboundLane when we add them to the module.
 // It means that each message from the inboundLane is verified correct and truthly from the sourceAccount.
-// Only we need is to verify the sourceAccount is expected. And we add it to the Filter.
+// Only we need is to verify that the sourceAccount is expected. And we add it to the Filter.
+// All of the above are implemented in `HelixApp`.
 
 pragma solidity ^0.8.10;
 
@@ -27,6 +28,16 @@ contract Erc1155MappingTokenFactory is HelixApp, MappingTokenFactory {
     event RemoteUnlockConfirmed(uint256 messageId, bool result);
 
     /**
+     * @notice only admin can transfer the ownership of the mapping token from factory to other account
+     * generally we should not do this. When we encounter a non-recoverable error, we temporarily transfer the privileges to a maintenance account.
+     * @param mappingToken the address the mapping token
+     * @param new_owner the new owner of the mapping token
+     */
+    function transferMappingTokenOwnership(address mappingToken, address new_owner) external onlyAdmin {
+        _transferMappingTokenOwnership(mappingToken, new_owner);
+    }
+
+    /**
      * @notice create new erc1155 mapping contract, this can only be called by inboundLane
      * @param backingAddress the backingAddress which send this message
      * @param originalToken the original token address
@@ -45,12 +56,7 @@ contract Erc1155MappingTokenFactory is HelixApp, MappingTokenFactory {
         bytes memory bytecode = type(Erc1155MappingToken).creationCode;
         bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(bridgedChainName, attrSerializer));
         mappingToken = _deploy(salt, bytecodeWithInitdata);
-        // save the mapping tokens in an array so it can be listed
-        allMappingTokens.push(mappingToken);
-        // map the originToken to mappingInfo
-        salt2MappingToken[salt] = mappingToken;
-        // map the mappingToken to origin info
-        mappingToken2OriginalToken[mappingToken] = originalToken;
+        _addMappingToken(salt, originalToken, mappingToken);
         emit IssuingERC1155Created(originalToken, mappingToken);
     }
 

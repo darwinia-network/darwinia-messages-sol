@@ -1,4 +1,9 @@
 // SPDX-License-Identifier: MIT
+// This is the standard Erc721 Mapping Token implementation.
+// In addition to implementing the standard Erc721, we also added the
+// IERC721Enumerable, IErc721MappingToken, IERC721Metadata to the mapping token standard.
+// The mapping token contract will ask attributeSerializer for the metadata, such as the name,
+// the symbol and the uri.
 
 pragma solidity >=0.8.10;
 

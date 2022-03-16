@@ -39,6 +39,16 @@ contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFacto
     receive() external payable {
     }
 
+    /**
+     * @notice only admin can transfer the ownership of the mapping token from factory to other account
+     * generally we should not do this. When we encounter a non-recoverable error, we temporarily transfer the privileges to a maintenance account.
+     * @param mappingToken the address the mapping token
+     * @param new_owner the new owner of the mapping token
+     */
+    function transferMappingTokenOwnership(address mappingToken, address new_owner) external onlyAdmin {
+        _transferMappingTokenOwnership(mappingToken, new_owner);
+    }
+
     function updateGuard(address newGuard) external onlyAdmin {
         guard = newGuard;
     }
@@ -81,12 +91,7 @@ contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFacto
             string(abi.encodePacked("x", symbol)),
             decimals);
 
-        // save the mapping tokens in an array so it can be listed
-        allMappingTokens.push(mappingToken);
-        // map the originToken to mappingInfo
-        salt2MappingToken[salt] = mappingToken;
-        // map the mappingToken to origin info
-        mappingToken2OriginalToken[mappingToken] = originalToken;
+        _addMappingToken(salt, originalToken, mappingToken);
         emit IssuingERC20Created(originalToken, mappingToken);
     }
 

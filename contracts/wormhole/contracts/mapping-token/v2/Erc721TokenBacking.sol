@@ -163,5 +163,17 @@ contract Erc721TokenBacking is IErc721Backing, HelixApp {
         }
         emit TokenUnlocked(token, recipient, ids);
     }
+
+    /**
+     * @notice this should not be used unless there is a non-recoverable error in the bridge or the target chain
+     * we use this to protect user's asset from being locked up
+     */
+    function rescueFunds(
+        address token,
+        uint256 id,
+        address recipient
+    ) external onlyAdmin {
+        IERC721(token).transferFrom(address(this), recipient, id);
+    }
 }
  

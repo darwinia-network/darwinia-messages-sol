@@ -163,5 +163,17 @@ contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
         }
         emit TokenUnlocked(token, recipient, amount);
     }
+
+    /**
+     * @notice this should not be used unless there is a non-recoverable error in the bridge or the target chain
+     * we use this to protect user's asset from being locked up
+     */
+    function rescueFunds(
+        address token,
+        address recipient,
+        uint256 amount
+    ) external onlyAdmin {
+        IERC20(token).transfer(recipient, amount);
+    }
 }
  

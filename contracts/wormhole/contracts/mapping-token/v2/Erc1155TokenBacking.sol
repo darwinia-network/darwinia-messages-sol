@@ -185,5 +185,18 @@ contract Erc1155TokenBacking is IErc1155Backing, HelixApp {
     ) external returns (bytes4) {
         return Erc1155TokenBacking.onERC1155BatchReceived.selector;
     }
+
+    /**
+     * @notice this should not be used unless there is a non-recoverable error in the bridge or the target chain
+     * we use this to protect user's asset from being locked up
+     */
+    function rescueFunds(
+        address token,
+        uint256 id,
+        address recipient,
+        uint256 amount
+    ) external onlyAdmin {
+        IERC1155(token).safeTransferFrom(address(this), recipient, id, amount, "");
+    }
 }
  
