@@ -15,7 +15,6 @@ interface Hevm {
 }
 
 contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
-
     uint32 constant internal THIS_CHAIN_POS = 0;
     uint32 constant internal THIS_OUT_LANE_POS = 0;
     uint32 constant internal BRIDGED_CHAIN_POS = 1;
@@ -61,6 +60,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         assertEq(outlane.message_size(), 0);
         OutboundLaneData memory data = outlane.data();
         assertEq(data.latest_received_nonce, 0);
+        assertEq(data.messages.length, 0);
     }
 
     function test_set_fee_market() public {
