@@ -89,10 +89,8 @@ contract Erc1155TokenBacking is IErc1155Backing, HelixApp {
 
         bytes[] memory attrs = new bytes[](ids.length);
         IERC1155(token).safeBatchTransferFrom(msg.sender, address(this), ids, amounts, "");
-        for (uint idx = 0; idx < ids.length; idx++) {
-            if (info.serializer != address(0)) {
-                attrs[idx] = IErc1155AttrSerializer(info.serializer).serialize(ids[idx]);
-            }
+        if (info.serializer != address(0)) {
+            attrs = IErc1155AttrSerializer(info.serializer).serialize(ids);
         }
 
         bytes memory issueMappingToken = abi.encodeWithSelector(
@@ -158,10 +156,8 @@ contract Erc1155TokenBacking is IErc1155Backing, HelixApp {
         TokenInfo memory info = registeredTokens[token];
         require(info.token != address(0), "Erc1155Backing:the token is not registered");
         IERC1155(token).safeBatchTransferFrom(address(this), recipient, ids, amounts, "");
-        for (uint idx = 0; idx < ids.length; idx++) {
-            if (info.serializer != address(0)) {
-                IErc1155AttrSerializer(info.serializer).deserialize(ids[idx], attrs[idx]);
-            }
+        if (info.serializer != address(0)) {
+            IErc1155AttrSerializer(info.serializer).deserialize(ids, attrs);
         }
         emit TokenUnlocked(token, recipient, ids, amounts);
     }

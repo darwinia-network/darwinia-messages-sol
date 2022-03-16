@@ -83,14 +83,8 @@ contract Erc1155MappingTokenFactory is HelixApp, MappingTokenFactory {
         require(ids.length == attrs.length, "Erc1155MappingTokenFactory:the length mismatch");
         IErc1155MappingToken(mappingToken).mintBatch(recipient, ids, amounts);
         address serializer = IErc1155MappingToken(mappingToken).attributeSerializer();
-        deserializeAttrs(serializer, ids, attrs);
-    }
-
-    function deserializeAttrs(address serializer, uint256[] memory ids, bytes[] memory attrs) internal {
-        for (uint idx = 0; idx < ids.length; idx++) {
-            if (serializer != address(0)) {
-                IErc1155AttrSerializer(serializer).deserialize(ids[idx], attrs[idx]);
-            }
+        if (serializer != address(0)) {
+            IErc1155AttrSerializer(serializer).deserialize(ids, attrs);
         }
     }
 
@@ -117,10 +111,8 @@ contract Erc1155MappingTokenFactory is HelixApp, MappingTokenFactory {
         bytes[] memory attrs = new bytes[](ids.length);
         address serializer = IErc1155MappingToken(mappingToken).attributeSerializer();
         IERC1155(mappingToken).safeBatchTransferFrom(msg.sender, address(this), ids, amounts, "");
-        for (uint256 idx = 0; idx < ids.length; idx++) {
-            if (serializer != address(0)) {
-                attrs[idx] = IErc1155AttrSerializer(serializer).serialize(ids[idx]);
-            }
+        if (serializer != address(0)) {
+            attrs = IErc1155AttrSerializer(serializer).serialize(ids);
         }
 
         bytes memory unlockFromRemote = abi.encodeWithSelector(
