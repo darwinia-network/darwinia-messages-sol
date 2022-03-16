@@ -7,7 +7,6 @@
 
 pragma solidity ^0.8.10;
 
-import "../interfaces/IErc1155AttrSerializer.sol";
 import "../interfaces/IErc1155Backing.sol";
 import "../interfaces/IErc1155MappingToken.sol";
 import "./Erc1155MappingToken.sol";
@@ -41,20 +40,20 @@ contract Erc1155MappingTokenFactory is HelixApp, MappingTokenFactory {
      * @notice create new erc1155 mapping contract, this can only be called by inboundLane
      * @param backingAddress the backingAddress which send this message
      * @param originalToken the original token address
-     * @param attrSerializer the serializer address of the attributes
+     * @param metadataAddress the contract address of the metadata
      * @param bridgedChainName bridged chain name
      */
     function newErc1155Contract(
         address backingAddress,
         address originalToken,
-        address attrSerializer,
+        address metadataAddress,
         string memory bridgedChainName
     ) public onlyRemoteHelix(backingAddress) whenNotPaused returns (address mappingToken) {
         // (bridgeChainId, backingAddress, originalToken) pack a unique new contract salt
         bytes32 salt = keccak256(abi.encodePacked(remoteChainPosition, backingAddress, originalToken));
         require(salt2MappingToken[salt] == address(0), "Erc1155MappingTokenFactory:contract has been deployed");
         bytes memory bytecode = type(Erc1155MappingToken).creationCode;
-        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(bridgedChainName, attrSerializer));
+        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(bridgedChainName, metadataAddress));
         mappingToken = _deploy(salt, bytecodeWithInitdata);
         _addMappingToken(salt, originalToken, mappingToken);
         emit IssuingERC1155Created(originalToken, mappingToken);
@@ -66,26 +65,19 @@ contract Erc1155MappingTokenFactory is HelixApp, MappingTokenFactory {
      * @param originalToken the original token address
      * @param recipient the recipient of the issued mapping token
      * @param ids the ids of the issued mapping tokens
-     * @param attrs the serialized data of the original token's attributes
      */
     function issueMappingToken(
         address backingAddress,
         address originalToken,
         address recipient,
         uint256[] calldata ids,
-        uint256[] calldata amounts,
-        bytes[] calldata attrs
+        uint256[] calldata amounts
     ) public onlyRemoteHelix(backingAddress) whenNotPaused {
         bytes32 salt = keccak256(abi.encodePacked(remoteChainPosition, backingAddress, originalToken));
         address mappingToken = salt2MappingToken[salt];
         require(mappingToken != address(0), "Erc1155MappingTokenFactory:mapping token has not created");
         require(ids.length > 0, "Erc1155MappingTokenFactory:can not receive empty ids");
-        require(ids.length == attrs.length, "Erc1155MappingTokenFactory:the length mismatch");
         IErc1155MappingToken(mappingToken).mintBatch(recipient, ids, amounts);
-        address serializer = IErc1155MappingToken(mappingToken).attributeSerializer();
-        if (serializer != address(0)) {
-            IErc1155AttrSerializer(serializer).deserialize(ids, attrs);
-        }
     }
 
     /**
@@ -108,12 +100,7 @@ contract Erc1155MappingTokenFactory is HelixApp, MappingTokenFactory {
         // Lock the fund in this before message on remote backing chain get dispatched successfully and burn finally
         // If remote backing chain unlock the origin token successfully, then this fund will be burned.
         // Otherwise, these tokens will be transfered back to the msg.sender.
-        bytes[] memory attrs = new bytes[](ids.length);
-        address serializer = IErc1155MappingToken(mappingToken).attributeSerializer();
         IERC1155(mappingToken).safeBatchTransferFrom(msg.sender, address(this), ids, amounts, "");
-        if (serializer != address(0)) {
-            attrs = IErc1155AttrSerializer(serializer).serialize(ids);
-        }
 
         bytes memory unlockFromRemote = abi.encodeWithSelector(
             IErc1155Backing.unlockFromRemote.selector,
@@ -121,8 +108,7 @@ contract Erc1155MappingTokenFactory is HelixApp, MappingTokenFactory {
             originalToken,
             recipient,
             ids,
-            amounts,
-            attrs
+            amounts
         );
         uint256 messageId = _sendMessage(bridgedLanePosition, unlockFromRemote);
         unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, ids, amounts);

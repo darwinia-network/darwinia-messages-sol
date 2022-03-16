@@ -22,7 +22,7 @@ contract Erc1155MappingToken is ERC165, IERC1155, IERC1155MetadataURI, Ownable {
     using Address for address;
 
     string  public bridgedChainName;
-    address public attributeSerializer;
+    address public metaDataAddress;
 
     // Mapping from token ID to account balances
     mapping(uint256 => mapping(address => uint256)) private _balances;
@@ -30,10 +30,10 @@ contract Erc1155MappingToken is ERC165, IERC1155, IERC1155MetadataURI, Ownable {
     // Mapping from account to operator approvals
     mapping(address => mapping(address => bool)) private _operatorApprovals;
 
-    constructor(string memory _bridgedChainName, address _attributeSerializer) {
+    constructor(string memory _bridgedChainName, address _metaDataAddress) {
         _transferOwnership(_msgSender());
         bridgedChainName = _bridgedChainName;
-        attributeSerializer = _attributeSerializer;
+        metaDataAddress = _metaDataAddress;
     }
 
     /**
@@ -57,7 +57,7 @@ contract Erc1155MappingToken is ERC165, IERC1155, IERC1155MetadataURI, Ownable {
      * actual token type ID.
      */
     function uri(uint256 id) public view virtual override returns (string memory) {
-        return IERC1155MetadataURI(attributeSerializer).uri(id);
+        return IERC1155MetadataURI(metaDataAddress).uri(id);
     }
 
    /**

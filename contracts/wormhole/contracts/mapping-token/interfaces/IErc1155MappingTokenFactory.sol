@@ -6,7 +6,7 @@ interface IErc1155MappingTokenFactory {
     function newErc1155Contract(
         address backingAddress,
         address originalToken,
-        address attrSerializer,
+        address metadataAddress,
         string memory bridgedChainName
     ) external returns (address mappingToken);
 
@@ -15,8 +15,7 @@ interface IErc1155MappingTokenFactory {
         address originalToken,
         address recipient,
         uint256[] calldata ids,
-        uint256[] calldata amounts,
-        bytes[] calldata attrs
+        uint256[] calldata amounts
     ) external;
 }
      

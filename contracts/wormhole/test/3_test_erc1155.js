@@ -47,8 +47,8 @@ describe("darwinia<>bsc erc1155 mapping token tests", () => {
       await feeMarket.deployed();
       /****** deploy fee market *****/
 
-      // deploy erc1155 serializer, local and remote
-      const materialAttrContract = await ethers.getContractFactory("Erc1155MaterialAttributeSerializer");
+      // deploy erc1155 metadata
+      const materialAttrContract = await ethers.getContractFactory("Erc1155MaterialMetadata");
       const materialAttrContractOnBsc = await materialAttrContract.deploy();
       await materialAttrContractOnBsc.deployed();
       const materialAttrContractOnDarwinia = await materialAttrContract.deploy();
@@ -94,9 +94,6 @@ describe("darwinia<>bsc erc1155 mapping token tests", () => {
       const originalContract = await ethers.getContractFactory("Erc1155MappingToken");
       const originalToken = await originalContract.deploy("Original", materialAttrContractOnBsc.address);
       await originalToken.deployed();
-      await materialAttrContractOnDarwinia.setAttr(1001, "sioo", "brick", 1);
-      await materialAttrContractOnDarwinia.setAttr(1002, "gold", "rebar", 2);
-      await materialAttrContractOnDarwinia.setAttr(1003, "sioo", "brick", 2);
       console.log("generate original token contract finished");
 
       const zeroAddress = "0x0000000000000000000000000000000000000000";
@@ -106,7 +103,6 @@ describe("darwinia<>bsc erc1155 mapping token tests", () => {
           2,
           originalToken.address,
           materialAttrContractOnDarwinia.address,
-          materialAttrContractOnBsc.address,
           {value: ethers.utils.parseEther("9.9999999999")}
       )).to.be.revertedWith("HelixApp:not enough fee to pay");
       // test register successed
@@ -114,20 +110,19 @@ describe("darwinia<>bsc erc1155 mapping token tests", () => {
           2,
           originalToken.address,
           materialAttrContractOnDarwinia.address,
-          materialAttrContractOnBsc.address,
           {value: ethers.utils.parseEther("10.0")});
       // check not exist
-      expect((await backing.registeredTokens(originalToken.address)).token).to.equal(zeroAddress);
+      expect((await backing.registeredTokens(originalToken.address))).to.equal(false);
       // confirmed
       await darwiniaOutboundLane.mock_confirm(1);
       // check register successed
-      expect((await backing.registeredTokens(originalToken.address)).token).to.equal(originalToken.address);
+      expect((await backing.registeredTokens(originalToken.address))).to.equal(true);
       expect(await mtf.tokenLength()).to.equal(1);
       const mappingTokenAddress = await mtf.allMappingTokens(0);
       console.log("test register erc1155 finished");
       
       // check unregistered
-      expect((await backing.registeredTokens(zeroAddress)).token).to.equal(zeroAddress);
+      expect((await backing.registeredTokens(zeroAddress))).to.equal(false);
       expect(await mtf.tokenLength()).to.equal(1);
 
       // test lock
@@ -162,22 +157,7 @@ describe("darwinia<>bsc erc1155 mapping token tests", () => {
       expect(await mappedToken.balanceOf(owner.address, 1001)).to.equal(10);
       expect(await mappedToken.balanceOf(owner.address, 1002)).to.equal(20);
       expect(await mappedToken.balanceOf(owner.address, 1003)).to.equal(30);
-
-      expect(await materialAttrContractOnBsc.getSource(1001)).to.equal("sioo");
-      expect(await materialAttrContractOnBsc.getName(1001)).to.equal("brick");
-      expect(await materialAttrContractOnBsc.getLevel(1001)).to.equal(1);
-      
-      expect(await materialAttrContractOnBsc.getSource(1002)).to.equal("gold");
-      expect(await materialAttrContractOnBsc.getName(1002)).to.equal("rebar");
-      expect(await materialAttrContractOnBsc.getLevel(1002)).to.equal(2);
-
-      expect(await materialAttrContractOnBsc.getSource(1003)).to.equal("sioo");
-      expect(await materialAttrContractOnBsc.getName(1003)).to.equal("brick");
-      expect(await materialAttrContractOnBsc.getLevel(1003)).to.equal(2);
       console.log("test issuing erc1155 finished");
-
-      // update attr
-      await materialAttrContractOnBsc.setAttr(1001, "sioo&water", "brick", 10);
 
       // test burn and unlock
       await originalToken.transferOwnership(backing.address);
@@ -190,9 +170,6 @@ describe("darwinia<>bsc erc1155 mapping token tests", () => {
       // after confirmed
       await bscOutboundLane.mock_confirm(1);
       expect(await originalToken.balanceOf(owner.address, 1001)).to.equal(1000-10+3);
-      expect(await materialAttrContractOnDarwinia.getSource(1001)).to.equal("sioo&water");
-      expect(await materialAttrContractOnDarwinia.getName(1001)).to.equal("brick");
-      expect(await materialAttrContractOnDarwinia.getLevel(1001)).to.equal(10);
       console.log("test burning erc1155 finished");
   });
 });

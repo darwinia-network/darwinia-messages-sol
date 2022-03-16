@@ -8,7 +8,6 @@ interface IErc1155Backing {
         address originalToken,
         address recipient,
         uint256[] calldata ids,
-        uint256[] calldata amounts,
-        bytes[] calldata attrs
+        uint256[] calldata amounts
     ) external;
 }
