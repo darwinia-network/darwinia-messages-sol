@@ -73,7 +73,7 @@ describe("multi message relay tests", () => {
     [owner, addr1, addr2] = await ethers.getSigners();
 
     const NormalApp = await ethers.getContractFactory("NormalApp")
-    normalApp = await NormalApp.deploy()
+    normalApp = await NormalApp.deploy("0x0000000000000000000000000000000000000000")
     outbound.rely(normalApp.address)
 
     log(" out bound lane                                   ->      in bound lane")
