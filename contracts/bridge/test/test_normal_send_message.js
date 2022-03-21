@@ -104,15 +104,15 @@ describe("send message tests", () => {
     await receive_messages_delivery_proof(1, batch)
   })
 
-  it("3", async function () {
-    await receive_messages_proof(batch)
-  })
+  // it("3", async function () {
+  //   await receive_messages_proof(batch)
+  // })
 
-  it("4", async function () {
-    for(let i=batch+1; i <=2*batch; i++) {
-      await send_message(i)
-      await receive_messages_proof(i)
-    }
-    await receive_messages_delivery_proof(batch+1, 2*batch)
-  })
+  // it("4", async function () {
+  //   for(let i=batch+1; i <=2*batch; i++) {
+  //     await send_message(i)
+  //     await receive_messages_proof(i)
+  //   }
+  //   await receive_messages_delivery_proof(batch+1, 2*batch)
+  // })
 })
