@@ -14,7 +14,7 @@ let feeMarket, outbound, inbound, normalApp
 let outboundData, inboundData
 let overrides = { value: ethers.utils.parseEther("30") }
 
-const batch = 30
+const batch = 1
 const encoded = "0x"
 const send_message = async (nonce) => {
     let to = normalApp.address
@@ -62,17 +62,16 @@ const receive_messages_delivery_proof = async (begin, end) => {
     const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
-      .withArgs(begin, end, 1073741823)
+      .withArgs(begin, end, 1)
     await logNonce()
 }
 
 //   out bound lane                                    ->           in bound lane
 //   (latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]
-//0  (0,  30]   #send_message                            ->     (0, 0]
-//1  (0,  30]                                            ->     (0, 30]  #receive_messages_proof
-//2  (30, 30]   #receive_messages_delivery_proof         ->     (0, 30]
-//3  (30, 30]                                            ->     (30, 30]  #receive_messages_proof
-describe("send message tests", () => {
+//0  (0,  1]   #send_message                            ->     (0, 0]
+//1  (0,  1]                                            ->     (0, 1]  #receive_messages_proof
+//2  (1 , 1]   #receive_messages_delivery_proof         ->     (0, 1]
+describe("normal app send single message tests", () => {
 
   before(async () => {
     ({ feeMarket, outbound, inbound } = await waffle.loadFixture(Fixure));
@@ -102,17 +101,5 @@ describe("send message tests", () => {
 
   it("2", async function () {
     await receive_messages_delivery_proof(1, batch)
-  })
-
-  it("3", async function () {
-    await receive_messages_proof(batch)
-  })
-
-  it("4", async function () {
-    for(let i=batch+1; i <=2*batch; i++) {
-      await send_message(i)
-      await receive_messages_proof(i)
-    }
-    await receive_messages_delivery_proof(batch+1, 2*batch)
   })
 })
