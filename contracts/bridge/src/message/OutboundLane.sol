@@ -33,7 +33,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     event Deny(address indexed usr);
 
     uint256 internal constant MAX_GAS_PER_MESSAGE = 100000;
-    uint256 internal constant MAX_CALLDATA_LENGTH = 4096;
+    uint256 internal constant MAX_CALLDATA_LENGTH = 2048;
     uint64 internal constant MAX_PENDING_MESSAGES = 30;
     uint64 internal constant MAX_PRUNE_MESSAGES_ATONCE = 5;
 
