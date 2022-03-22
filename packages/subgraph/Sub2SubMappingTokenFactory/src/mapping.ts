@@ -12,6 +12,7 @@ import {
 } from "../generated/Sub2SubMappingTokenFactory/Sub2SubMappingTokenFactory"
 import { BurnRecordEntity } from "../generated/schema"
 import { LockRecordEntity } from "../generated/schema"
+import { BurnDailyStatistic } from "../generated/schema"
 
 export function handleBurnAndWaitingConfirm(
   event: BurnAndWaitingConfirm
@@ -107,7 +108,7 @@ export function handleRemoteUnlockConfirmed(
   event: RemoteUnlockConfirmed
 ): void {
     let message_id = event.params.laneid.toHexString() + event.params.nonce.toHexString()
-    let entity = new BurnRecordEntity(message_id)
+    let entity = BurnRecordEntity.load(message_id)
     if (entity == null) {
         return
     }
@@ -115,4 +116,18 @@ export function handleRemoteUnlockConfirmed(
     entity.response_transaction = event.transaction.hash
     entity.end_timestamp = event.block.timestamp
     entity.save()
+
+    if (event.params.result) {
+        let dailyTime = (entity.start_timestamp/BigInt.fromI32(86400)) * BigInt.fromI32(86400);
+        let daily = BurnDailyStatistic.load(dailyTime.toString())
+        if (daily == null) {
+            daily = new BurnDailyStatistic(dailyTime.toString())
+            daily.dailyVolume = BigInt.fromI32(0)
+            daily.dailyCount = 0
+        }
+        daily.dailyVolume = entity.amount + daily.dailyVolume
+        daily.dailyCount += 1
+        daily.save()
+    }
 }
+
