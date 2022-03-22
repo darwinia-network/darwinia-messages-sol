@@ -1,132 +1,47 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
-import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
-import "../interfaces/ICrossChainFilter.sol";
-import "../interfaces/IFeeMarket.sol";
-import "../interfaces/IMessageCommitment.sol";
-import "../interfaces/IOutboundLane.sol";
 import "../../utils/DailyLimit.sol";
-import "../../utils/Ownable.sol";
-import "../../utils/Pausable.sol";
 import "../interfaces/IBacking.sol";
 import "../interfaces/IERC20.sol";
 import "../interfaces/IGuard.sol";
 import "../interfaces/IInboundLane.sol";
 import "../interfaces/IMappingTokenFactory.sol";
+import "./HelixApp.sol";
 
-contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBacking, Pausable {
+contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
     using SafeMath for uint256;
-
     struct LockedInfo {
         address token;
         address sender;
         uint256 amount;
     }
-    struct InBoundLaneInfo {
-        address remoteSender;
-        address inBoundLaneAddress;
-    }
     uint32 public constant NATIVE_TOKEN_TYPE = 0;
     uint32 public constant ERC20_TOKEN_TYPE = 1;
-    address public feeMarket;
-    string public thisChainName;
-    uint32 public remoteChainPosition;
-    address public remoteMappingTokenFactory;
-    address public operator;
     address public guard;
 
-    // bridge channel
-    // bridgedLanePosition => inBoundLaneAddress
-    mapping(uint32 => address) public inboundLanes;
-    // bridgedLanePosition => outBoundLaneAddress
-    mapping(uint32 => address) public outboundLanes;
+    // (messageId => tokenAddress)
+    mapping(uint256 => address) public registerMessages;
 
     // tokenAddress => reistered
     mapping(address => bool) public registeredTokens;
 
-    // (messageId => tokenAddress)
-    mapping(uint256 => address) public registerMessages;
     // (messageId => lockedInfo)
     mapping(uint256 => LockedInfo) public lockMessages;
 
-    event NewInBoundLaneAdded(address backingAddress, address inboundLane);
-    event NewOutBoundLaneAdded(uint32 bridgedLanePosition, address outboundLane);
     event NewErc20TokenRegistered(uint256 messageId, address token);
     event TokenLocked(uint256 messageId, address token, address recipient, uint256 amount);
     event TokenLockFinished(uint256 messageId, bool result);
     event TokenRegisterFinished(uint256 messageId, bool result);
     event TokenUnlocked(address token, address recipient, uint256 amount);
 
-    modifier onlyInBoundLane(address mappingTokenFactoryAddress) {
-        (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(msg.sender).getLaneInfo();
-        require(remoteChainPosition == bridgedChainPosition, "Backing:Invalid bridged chain position");
-        require(remoteMappingTokenFactory == mappingTokenFactoryAddress, "Backing:remote caller is not issuing account");
-        require(inboundLanes[bridgedLanePosition] == msg.sender, "Backing:caller is not the inboundLane account");
-        _;
-    }
-
-    modifier onlyOutBoundLane() {
-        (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(msg.sender).getLaneInfo();
-        require(remoteChainPosition == bridgedChainPosition, "Backing:Invalid bridged chain position");
-        require(outboundLanes[bridgedLanePosition] == msg.sender, "Backing:caller is not the outboundLane account");
-        _;
-    }
-
-    modifier onlyOperatorOrOwner() {
-        require(operator == msg.sender || owner() == msg.sender, "Backing:caller is not the owner or operator");
-        _;
-    }
-
-    function updateOperator(address _operator) external onlyOperatorOrOwner {
-        operator = _operator;
-    }
-
-    function initialize(uint32 _bridgedChainPosition, address _remoteMappingTokenFactory, address _feeMarket, string memory _chainName) public initializer {
-        feeMarket = _feeMarket;
-        remoteChainPosition = _bridgedChainPosition;
-        remoteMappingTokenFactory = _remoteMappingTokenFactory;
-        thisChainName = _chainName;
-        operator = msg.sender;
-        ownableConstructor();
-    }
-
-    function unpause() external onlyOperatorOrOwner {
-        _unpause();
-    }
-
-    function pause() external onlyOperatorOrOwner {
-        _pause();
-    }
-
-    function changeDailyLimit(address mappingToken, uint amount) public onlyOwner  {
+    function changeDailyLimit(address mappingToken, uint amount) public onlyAdmin  {
         _changeDailyLimit(mappingToken, amount);
     }
 
-    function updateFeeMarket(address newFeeMarket) external onlyOwner {
-        feeMarket = newFeeMarket;
-    }
-
-    function updateGuard(address newGuard) external onlyOwner {
+    function updateGuard(address newGuard) external onlyAdmin {
         guard = newGuard;
-    }
-
-    // here add InBoundLane, and remote issuing module must add the corresponding OutBoundLane
-    function addInboundLane(address mappingTokenFactory, address inboundLane) external onlyOwner {
-        (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(inboundLane).getLaneInfo();
-        require(remoteChainPosition == bridgedChainPosition, "Backing:Invalid bridged chain position");
-        inboundLanes[bridgedLanePosition] = inboundLane;
-        emit NewInBoundLaneAdded(mappingTokenFactory, inboundLane);
-    }
-
-    // here add OutBoundLane, and remote issuing module must add the corresponding InBoundLane
-    function addOutboundLane(address outboundLane) external onlyOwner {
-        (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(outboundLane).getLaneInfo();
-        require(remoteChainPosition == bridgedChainPosition, "Backing:Invalid bridged chain position");
-        outboundLanes[bridgedLanePosition] = outboundLane;
-        emit NewOutBoundLaneAdded(bridgedLanePosition, outboundLane);
     }
 
     /**
@@ -143,11 +58,9 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         string memory name,
         string memory symbol,
         uint8 decimals
-    ) external payable onlyOperatorOrOwner {
+    ) external payable onlyOperator {
         require(registeredTokens[token] == false, "Backing:token has been registered");
 
-        address outboundLane = outboundLanes[bridgedLanePosition];
-        require(outboundLane != address(0), "Backing:cannot find outboundLane to send message");
         bytes memory newErc20Contract = abi.encodeWithSelector(
             IMappingTokenFactory.newErc20Contract.selector,
             address(this),
@@ -158,13 +71,8 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
             symbol,
             decimals
         );
-        uint256 fee = IFeeMarket(feeMarket).market_fee();
-        require(msg.value >= fee, "Backing:not enough fee to pay");
-        uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, newErc20Contract);
+        uint256 messageId = _sendMessage(bridgedLanePosition, newErc20Contract);
         registerMessages[messageId] = token;
-        if (msg.value > fee) {
-            payable(msg.sender).transfer(msg.value.sub(fee));
-        }
         emit NewErc20TokenRegistered(messageId, token);
     }
 
@@ -188,8 +96,6 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         require(IERC20(token).transferFrom(msg.sender, address(this), amount), "Backing:transfer tokens failed");
         uint256 balanceAfter = IERC20(token).balanceOf(address(this));
         require(balanceBefore.add(amount) == balanceAfter, "Backing:Transfer amount is invalid");
-        address outboundLane = outboundLanes[bridgedLanePosition];
-        require(outboundLane != address(0), "Backing:outboundLane not exist");
         bytes memory issueMappingToken = abi.encodeWithSelector(
             IMappingTokenFactory.issueMappingToken.selector,
             address(this),
@@ -197,13 +103,8 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
             recipient,
             amount
         );
-        uint256 fee = IFeeMarket(feeMarket).market_fee();
-        require(msg.value >= fee, "Backing:not enough fee to pay");
-        uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(remoteMappingTokenFactory, issueMappingToken);
+        uint256 messageId = _sendMessage(bridgedLanePosition, issueMappingToken);
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
-        if (msg.value > fee) {
-            payable(msg.sender).transfer(msg.value.sub(fee));
-        }
         emit TokenLocked(messageId, token, recipient, amount);
     }
 
@@ -237,17 +138,9 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         }
     }
 
-    function crossChainFilter(
-        uint32 bridgedChainPosition,
-        uint32 bridgedLanePosition,
-        address sourceAccount,
-        bytes calldata
-    ) external view returns (bool) {
-        return remoteChainPosition == bridgedChainPosition && inboundLanes[bridgedLanePosition] == msg.sender && remoteMappingTokenFactory == sourceAccount;
-    }
-
     /**
      * @notice this will be called by inboundLane when the remote mapping token burned and want to unlock the original token
+     * @param mappingTokenFactory the remote mapping token factory address
      * @param token the original token address
      * @param recipient the recipient who will receive the unlocked token
      * @param amount amount of the unlocked token
@@ -257,7 +150,7 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
         address token,
         address recipient,
         uint256 amount
-    ) public onlyInBoundLane(mappingTokenFactory) whenNotPaused {
+    ) public onlyRemoteHelix(mappingTokenFactory) whenNotPaused {
         expendDailyLimit(token, amount);
         if (guard != address(0)) {
             require(IERC20(token).approve(guard, amount), "Backing:approve token transfer to guard failed");
@@ -269,6 +162,18 @@ contract Backing is Initializable, Ownable, DailyLimit, ICrossChainFilter, IBack
             require(IERC20(token).transfer(recipient, amount), "Backing:unlock transfer failed");
         }
         emit TokenUnlocked(token, recipient, amount);
+    }
+
+    /**
+     * @notice this should not be used unless there is a non-recoverable error in the bridge or the target chain
+     * we use this to protect user's asset from being locked up
+     */
+    function rescueFunds(
+        address token,
+        address recipient,
+        uint256 amount
+    ) external onlyAdmin {
+        IERC20(token).transfer(recipient, amount);
     }
 }
  
