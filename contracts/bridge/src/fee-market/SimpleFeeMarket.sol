@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 import "../interfaces/IFeeMarket.sol";
 
-contract FeeMarket is IFeeMarket {
+contract SimpleFeeMarket is IFeeMarket {
     event SetOwner(address indexed o, address indexed n);
     event SetOutbound(address indexed out, uint256 flag);
     event SetParameters(uint32 slash_time, uint32 relay_time, uint256 collateral);

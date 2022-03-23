@@ -18,14 +18,14 @@ contract SimpleFeeMarketTest is DSTest {
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     address public self;
 
-    FeeMarket public market;
+    SimpleFeeMarket public market;
     Guy       public a;
     Guy       public b;
     Guy       public c;
 
 
     function setUp() public {
-        market = new FeeMarket(
+        market = new SimpleFeeMarket(
             COLLATERAL_PERORDER,
             SLASH_TIME,
             RELAY_TIME
@@ -502,9 +502,9 @@ contract SimpleFeeMarketTest is DSTest {
 }
 
 contract Guy {
-    FeeMarket market;
+    SimpleFeeMarket market;
 
-    constructor(FeeMarket _market) {
+    constructor(SimpleFeeMarket _market) {
         market = _market;
     }
 
