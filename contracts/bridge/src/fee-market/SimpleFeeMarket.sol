@@ -8,8 +8,7 @@ import "../interfaces/IFeeMarket.sol";
 contract FeeMarket is IFeeMarket {
     event SetOwner(address indexed o, address indexed n);
     event SetOutbound(address indexed out, uint256 flag);
-    event SetParaTime(uint32 slash_time, uint32 relay_time);
-    event SetParaRelay(uint256 collateral);
+    event SetParameters(uint32 slash_time, uint32 relay_time, uint256 collateral);
     event Slash(address indexed src, uint wad);
     event Reward(address indexed dst, uint wad);
     event Deposit(address indexed dst, uint wad);
@@ -18,7 +17,7 @@ contract FeeMarket is IFeeMarket {
     event UnLocked(address indexed src, uint wad);
     event AddRelayer(address indexed prev, address indexed cur, uint fee);
     event RemoveRelayer(address indexed prev, address indexed cur);
-    event OrderAssgigned(uint256 indexed key, uint256 timestamp, uint256 collateral, uint256 fee);
+    event OrderAssgigned(uint256 indexed key, uint256 timestamp, address relayer, uint256 collateral, uint256 fee);
     event OrderSettled(uint256 indexed key, uint timestamp);
 
     address private constant SENTINEL_HEAD = address(0x1);
@@ -102,16 +101,12 @@ contract FeeMarket is IFeeMarket {
         emit SetOutbound(out, flag);
     }
 
-    function setParaTime(uint32 slash_time, uint32 relay_time) external onlyOwner {
+    function setParameters(uint32 slash_time, uint32 relay_time, uint256 collateral_perorder) external onlyOwner {
         require(slash_time > 0 && relay_time > 0, "!0");
         slashTime = slash_time;
         relayTime = relay_time;
-        emit SetParaTime(slash_time, relay_time);
-    }
-
-    function setParaRelay(uint256 collateral_perorder) external onlyOwner {
         collateralPerorder = collateral_perorder;
-        emit SetParaRelay(collateral_perorder);
+        emit SetParameters(slash_time, relay_time, collateral_perorder);
     }
 
     // deposit native token for collateral to relay message
@@ -160,18 +155,13 @@ contract FeeMarket is IFeeMarket {
     function getTopRelayer() public view returns (address top) {
         require(1 <= relayerCount, "!count");
         address cur = relayers[SENTINEL_HEAD];
-        while (cur != SENTINEL_TAIL && top != address(0)) {
+        while (cur != SENTINEL_TAIL && top == address(0)) {
             if (balanceOf[cur] >= collateralPerorder) {
                 top = cur;
             }
             cur = relayers[cur];
         }
         require(top != address(0), "!assigned");
-    }
-
-    // fetch the order fee by the encoded message key
-    function getOrderFee(uint256 key) public view returns (uint256 fee) {
-        fee = orderOf[key].makerFee;
     }
 
     function isRelayer(address addr) public view returns (bool) {
@@ -241,10 +231,11 @@ contract FeeMarket is IFeeMarket {
         require(isRelayer(top_relayer), "!relayer");
         uint fee = feeOf[top_relayer];
         require(msg.value == fee, "!fee");
-        _lock(top_relayer, collateralPerorder);
+        uint256 _collateral = collateralPerorder;
+        _lock(top_relayer, _collateral);
         // record the assigned time
-        orderOf[key] = Order(uint32(block.timestamp), top_relayer, collateralPerorder, fee);
-        emit OrderAssgigned(key, block.timestamp, collateralPerorder, fee);
+        orderOf[key] = Order(uint32(block.timestamp), top_relayer, _collateral, fee);
+        emit OrderAssgigned(key, block.timestamp, top_relayer, _collateral, fee);
         return true;
     }
 
@@ -258,7 +249,7 @@ contract FeeMarket is IFeeMarket {
         require(1 <= relayerCount, "!count");
         address prev = SENTINEL_HEAD;
         address cur = relayers[SENTINEL_HEAD];
-        while (cur != SENTINEL_TAIL && top != address(0)) {
+        while (cur != SENTINEL_TAIL && top == address(0)) {
             if (balanceOf[cur] >= collateralPerorder) {
                 top = cur;
             } else {
@@ -267,7 +258,7 @@ contract FeeMarket is IFeeMarket {
             prev = cur;
             cur = relayers[cur];
         }
-        require(top != top, "!assigned");
+        require(top != address(0), "!assigned");
     }
 
     function _remove_relayer(address prev, address cur) private {
@@ -314,7 +305,9 @@ contract FeeMarket is IFeeMarket {
             DeliveredRelayer memory entry = delivery_relayers[i];
             uint256 every_delivery_reward = 0;
             for (uint256 key = entry.begin; key <= entry.end; key++) {
-                require(orderOf[key].assignedTime > 0, "!exist");
+                uint256 assigned_time = orderOf[key].assignedTime;
+                require(assigned_time > 0, "!exist");
+                require(block.timestamp >= assigned_time, "!time");
                 // diff_time = settle_time - assign_time
                 uint256 diff_time = block.timestamp - orderOf[key].assignedTime;
                 // on time
