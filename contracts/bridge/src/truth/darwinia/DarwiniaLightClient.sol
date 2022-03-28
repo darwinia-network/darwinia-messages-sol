@@ -100,7 +100,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     /* State */
 
     uint256 public currentId;
-    bytes32 public latestMMRRoot;
     bytes32 public latestChainMessagesRoot;
     uint256 public latestBlockNumber;
     mapping(uint256 => ValidationData) public validationData;
@@ -586,7 +585,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      */
     function processPayload(Payload memory payload, uint256 blockNumber) private returns (bool) {
         if (blockNumber > latestBlockNumber) {
-            latestMMRRoot = payload.mmr;
             latestChainMessagesRoot = payload.messageRoot;
             latestBlockNumber = blockNumber;
 
@@ -595,7 +593,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
                 payload.nextValidatorSet.len,
                 payload.nextValidatorSet.root
             );
-            emit NewMMRRoot(latestMMRRoot, blockNumber);
             emit NewMessageRoot(latestChainMessagesRoot, blockNumber);
             return true;
         } else {
