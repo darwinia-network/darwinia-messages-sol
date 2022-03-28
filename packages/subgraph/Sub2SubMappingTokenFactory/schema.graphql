@@ -10,6 +10,7 @@ type BurnRecordEntity @entity {
   amount: BigInt
   start_timestamp: BigInt
   end_timestamp: BigInt
+  fee: BigInt
   result: Int
 }
 

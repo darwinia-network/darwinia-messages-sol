@@ -37,6 +37,7 @@ export function handleBurnAndWaitingConfirm(
   entity.amount = event.params.amount
   entity.request_transaction = event.transaction.hash
   entity.start_timestamp = event.block.timestamp
+  entity.fee = event.transaction.value
   // 0 --- unconfirmed
   // 1 --- confirmed return true
   // 2 --- confirmed return false
