@@ -20,11 +20,11 @@ contract BEEFYAuthorityRegistry {
      * @notice Authority set supposed to sign the BEEFY commitment.
      * @dev The current authority set id
      */
-    uint256 public authoritySetId;
+    uint64 public authoritySetId;
     /**
      * @dev The current length of authority set
      */
-    uint256 public authoritySetLen;
+    uint32 public authoritySetLen;
     /**
      * @dev The current merkle root of authority set
      */
@@ -36,7 +36,7 @@ contract BEEFYAuthorityRegistry {
      * @param _authoritySetLen The new length of authority set
      * @param _authoritySetRoot The new authority set root
      */
-    function _updateAuthoritySet(uint256 _authoritySetId, uint256 _authoritySetLen, bytes32 _authoritySetRoot) internal {
+    function _updateAuthoritySet(uint64 _authoritySetId, uint32 _authoritySetLen, bytes32 _authoritySetRoot) internal {
         authoritySetId = _authoritySetId;
         authoritySetLen = _authoritySetLen;
         authoritySetRoot = _authoritySetRoot;
