@@ -51,8 +51,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
 
     event CleanExpiredCommitment(uint256 id);
 
-    event NewMMRRoot(bytes32 mmrRoot, uint256 blockNumber);
-
     event NewMessageRoot(bytes32 messageRoot, uint256 blockNumber);
 
     /* Types */
