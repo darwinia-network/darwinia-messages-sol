@@ -10,31 +10,31 @@ async function mine(n) {
 }
 
 async function printTxPromiseGas(func, tx) {
-    try {
-      let r = await tx.wait()
-      // console.log(r)
-      console.log(`Tx successful - ${func} gas used: ${r.gasUsed}`)
-    } catch (e) {
-      console.log(`Tx failed - ${func} gas used: ${r.gasUsed}`)
-    }
+  try {
+    let r = await tx.wait()
+    // console.log(r)
+    console.log(`Tx successful - ${func} gas used: ${r.gasUsed}`)
+  } catch (e) {
+    console.log(`Tx failed - ${func} gas used: ${r.gasUsed}`)
+  }
 }
 
 function printBitfield(bitfield) {
-  return bitfield.map(i => {
-    const bf = BigInt(i.toString(), 10).toString(2).split('')
-    while (bf.length < 256) {
-      bf.unshift('0')
-    }
-    return bf.join('')
-  }).reverse().join('').replace(/^0*/g, '')
+  const i = bitfield
+  const bf = BigInt(i.toString(), 10).toString(2).split('')
+  while (bf.length < 256) {
+    bf.unshift('0')
+  }
+  const b = bf.join('')
+  return b.replace(/^0*/g, '')
 }
 
 function roundUpToPow2(len) {
-    if (len <= 1) {
-      return 1
-    } else {
-      return 2 * roundUpToPow2(parseInt((len + 1) / 2));
-    }
+  if (len <= 1) {
+    return 1
+  } else {
+    return 2 * roundUpToPow2(parseInt((len + 1) / 2));
+  }
 }
 
 async function createBeefyValidatorFixture(numberOfValidators) {

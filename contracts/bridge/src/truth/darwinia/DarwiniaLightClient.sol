@@ -81,7 +81,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         address senderAddress;
         bytes32 commitmentHash;
         uint256 blockNumber;
-        uint256[] validatorClaimsBitfield;
+        uint256 validatorClaimsBitfield;
     }
 
     struct MessagesProof {
@@ -155,7 +155,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         return latestBlockNumber;
     }
 
-    function validatorBitfield(uint256 id) external view returns (uint256[] memory) {
+    function validatorBitfield(uint256 id) external view returns (uint256) {
         return validationData[id].validatorClaimsBitfield;
     }
 
@@ -169,7 +169,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     function createRandomBitfield(uint256 id)
         public
         view
-        returns (uint256[] memory)
+        returns (uint256)
     {
         ValidationData storage data = validationData[id];
         return _createRandomBitfield(data);
@@ -178,7 +178,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     function _createRandomBitfield(ValidationData storage data)
         internal
         view
-        returns (uint256[] memory)
+        returns (uint256)
     {
         require(data.blockNumber > 0, "Bridge: invalid id");
         return
@@ -190,12 +190,12 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
             );
     }
 
-    function createInitialBitfield(uint256[] calldata bitsToSet, uint256 length)
+    function createInitialBitfield(uint256[] calldata bitsToSet)
         external
         pure
-        returns (uint256[] memory)
+        returns (uint256)
     {
-        return createBitfield(bitsToSet, length);
+        return createBitfield(bitsToSet);
     }
 
     function verify_messages_proof(
@@ -272,7 +272,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      */
     function newSignatureCommitment(
         bytes32 commitmentHash,
-        uint256[] memory validatorClaimsBitfield,
+        uint256 validatorClaimsBitfield,
         bytes memory validatorSignature,
         uint256 validatorPosition,
         address validatorAddress,
@@ -380,7 +380,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
             "Bridge: Sender address does not match original validation data"
         );
 
-        uint256[] memory randomBitfield = _createRandomBitfield(data);
+        uint256 randomBitfield = _createRandomBitfield(data);
 
         // Encode and hash the commitment
         bytes32 commitmentHash = hash(commitment);
@@ -403,7 +403,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     }
 
     function verifyValidatorProofSignatures(
-        uint256[] memory randomBitfield,
+        uint256 randomBitfield,
         MultiProof memory proof,
         bytes32 commitmentHash
     ) private view {
@@ -420,7 +420,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     function verifyProofSignatures(
         bytes32 root,
         uint256 len,
-        uint256[] memory bitfield,
+        uint256 bitfield,
         MultiProof memory proof,
         uint256 requiredNumOfSignatures,
         bytes32 commitmentHash
@@ -448,7 +448,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
             /**
              * @dev Remove validator from bitfield such that no validator can appear twice in signatures
              */
-            clear(bitfield, pos);
+            bitfield = clear(bitfield, pos);
 
             address signer = ECDSA.recover(commitmentHash, proof.signatures[i]);
             leaves[i] = keccak256(abi.encodePacked(signer));

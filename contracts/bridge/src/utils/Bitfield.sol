@@ -41,20 +41,19 @@ contract Bitfield {
      */
     function randomNBitsWithPriorCheck(
         uint256 seed,
-        uint256[] memory prior,
+        uint256 prior,
         uint256 n,
         uint256 length
-    ) internal view returns (uint256[] memory bitfield) {
+    ) internal view returns (uint256 bitfield) {
         require(
             n <= countSetBits(prior),
             "`n` must be <= number of set bits in `prior`"
         );
         require(
-            length < 1000000,
+            length < 256,
             "length too large"
         );
 
-        bitfield = new uint256[](prior.length);
         uint256 prime = BIG_PRIME[seed%20];
         uint256 begin = uint256(keccak256(abi.encode(seed))) % 1000000 + 1;
         uint256 found = 0;
@@ -72,7 +71,7 @@ contract Bitfield {
                 continue;
             }
 
-            set(bitfield, index);
+            bitfield = set(bitfield, index);
 
             found++;
         }
@@ -80,18 +79,13 @@ contract Bitfield {
         return bitfield;
     }
 
-    function createBitfield(uint256[] memory bitsToSet, uint256 length)
+    function createBitfield(uint256[] memory bitsToSet)
         internal
         pure
-        returns (uint256[] memory bitfield)
+        returns (uint256 bitfield)
     {
-        // Calculate length of uint256 array based on rounding up to number of uint256 needed
-        uint256 arrayLength = (length + 255) / 256;
-
-        bitfield = new uint256[](arrayLength);
-
         for (uint256 i = 0; i < bitsToSet.length; i++) {
-            set(bitfield, bitsToSet[i]);
+            bitfield = set(bitfield, bitsToSet[i]);
         }
 
         return bitfield;
@@ -102,43 +96,34 @@ contract Bitfield {
      * The alogrithm below is implemented after https://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation.
      * Further improvements are possible, see the article above.
      */
-    function countSetBits(uint256[] memory self) internal pure returns (uint256) {
-        uint256 count = 0;
-        for (uint256 i = 0; i < self.length; i++) {
-            uint256 x = self[i];
-
-            x = (x & M1) + ((x >> 1) & M1); //put count of each  2 bits into those  2 bits
-            x = (x & M2) + ((x >> 2) & M2); //put count of each  4 bits into those  4 bits
-            x = (x & M4) + ((x >> 4) & M4); //put count of each  8 bits into those  8 bits
-            x = (x & M8) + ((x >> 8) & M8); //put count of each 16 bits into those 16 bits
-            x = (x & M16) + ((x >> 16) & M16); //put count of each 32 bits into those 32 bits
-            x = (x & M32) + ((x >> 32) & M32); //put count of each 64 bits into those 64 bits
-            x = (x & M64) + ((x >> 64) & M64); //put count of each 128 bits into those 128 bits
-            x = (x & M128) + ((x >> 128) & M128); //put count of each 256 bits into those 256 bits
-            count += x;
-        }
-        return count;
+    function countSetBits(uint256 x) internal pure returns (uint256) {
+        x = (x & M1) + ((x >> 1) & M1); //put count of each  2 bits into those  2 bits
+        x = (x & M2) + ((x >> 2) & M2); //put count of each  4 bits into those  4 bits
+        x = (x & M4) + ((x >> 4) & M4); //put count of each  8 bits into those  8 bits
+        x = (x & M8) + ((x >> 8) & M8); //put count of each 16 bits into those 16 bits
+        x = (x & M16) + ((x >> 16) & M16); //put count of each 32 bits into those 32 bits
+        x = (x & M32) + ((x >> 32) & M32); //put count of each 64 bits into those 64 bits
+        x = (x & M64) + ((x >> 64) & M64); //put count of each 128 bits into those 128 bits
+        x = (x & M128) + ((x >> 128) & M128); //put count of each 256 bits into those 256 bits
+        return x;
     }
 
-    function isSet(uint256[] memory self, uint256 index)
+    function isSet(uint256 self, uint256 index)
         internal
         pure
         returns (bool)
     {
-        uint256 element = index >> 8;
         uint8 within = uint8(index & 255);
-        return self[element].bit(within) == 1;
+        return self.bit(within) == 1;
     }
 
-    function set(uint256[] memory self, uint256 index) internal pure {
-        uint256 element = index >> 8;
+    function set(uint256 self, uint256 index) internal pure returns (uint256) {
         uint8 within = uint8(index & 255);
-        self[element] = self[element].setBit(within);
+        return self.setBit(within);
     }
 
-    function clear(uint256[] memory self, uint256 index) internal pure {
-        uint256 element = index >> 8;
+    function clear(uint256 self, uint256 index) internal pure returns (uint256) {
         uint8 within = uint8(index & 255);
-        self[element] = self[element].clearBit(within);
+        return self.clearBit(within);
     }
 }

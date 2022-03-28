@@ -100,7 +100,7 @@ describe("Light Client Gas Usage", function () {
     const firstPosition = initialBitfieldPositions[0]
 
     const initialBitfield = await beefyLightClient.createInitialBitfield(
-      initialBitfieldPositions, totalNumberOfValidators
+      initialBitfieldPositions
     );
 
     const commitmentHash = await beefyLightClient.hash(beefyFixture.commitment);
