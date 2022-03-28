@@ -1,7 +1,6 @@
 {
   "commitment": {
     "payload": {
-      "network": "0x4372616200000000000000000000000000000000000000000000000000000000",
       "messageRoot": "0xaeaa48e8dbb7563f0a7037a924a3361de9c70b4871153f33b22dc641dcc66cff",
       "nextValidatorSet": {
         "id": 1,
