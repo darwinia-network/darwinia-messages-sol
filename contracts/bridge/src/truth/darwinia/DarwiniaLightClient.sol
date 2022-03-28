@@ -93,8 +93,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      */
     struct ValidationData {
         address senderAddress;
+        uint32 blockNumber;
         bytes32 commitmentHash;
-        uint256 blockNumber;
         uint256 validatorClaimsBitfield;
     }
 
@@ -303,8 +303,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         // Accept and save the commitment
         validationData[currentId] = ValidationData(
             msg.sender,
+            uint32(block.number),
             commitmentHash,
-            block.number,
             validatorClaimsBitfield
         );
 
