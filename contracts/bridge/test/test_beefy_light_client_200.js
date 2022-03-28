@@ -110,13 +110,17 @@ describe("Light Client Gas Usage", function () {
     let overrides = {
         value: ethers.utils.parseEther("4")
     };
+
+    const singleProof = {
+        signature: allValidatorProofs[firstPosition].signature,
+        position: firstPosition,
+        signer: allValidatorProofs[firstPosition].address,
+        proof: firstProof,
+    }
     const newSigTxPromise = beefyLightClient.newSignatureCommitment(
       commitmentHash,
       initialBitfield,
-      allValidatorProofs[firstPosition].signature,
-      firstPosition,
-      allValidatorProofs[firstPosition].address,
-      firstProof,
+      singleProof,
       overrides
     )
     printTxPromiseGas("1-step", await newSigTxPromise)

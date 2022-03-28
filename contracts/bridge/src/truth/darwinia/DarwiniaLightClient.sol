@@ -70,6 +70,20 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         bytes32[] decommitments;
     }
 
+
+    /*
+     * @param signature the signature of one validator
+     * @param position the position of the validator, index starting at 0
+     * @param signer the public key of the validator
+     * @param proof proof required for validation of the public key in the validator merkle tree
+     */
+    struct SingleProof {
+        bytes signature;
+        uint256 position;
+        address signer;
+        bytes32[] proof;
+    }
+
     /**
      * The ValidationData is the set of data used to link each pair of initial and complete verification transactions.
      * @param senderAddress the sender of the initial transaction
@@ -212,7 +226,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         bytes32 lane_hash,
         uint32 chain_pos,
         uint32 lane_pos,
-        bytes memory proof
+        bytes calldata proof
     ) internal view returns (bool) {
         MessagesProof memory messages_proof = abi.decode(proof, (MessagesProof));
         // Validate that the commitment matches the commitment contents
@@ -257,18 +271,11 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param commitmentHash contains the commitmentHash signed by the current authority set
      * @param validatorClaimsBitfield a bitfield containing a membership status of each
      * validator who has claimed to have signed the commitmentHash
-     * @param validatorSignature the signature of one validator
-     * @param validatorPosition the position of the validator, index starting at 0
-     * @param validatorAddress the public key of the validator
-     * @param validatorAddressMerkleProof proof required for validation of the public key in the validator merkle tree
      */
     function newSignatureCommitment(
         bytes32 commitmentHash,
         uint256 validatorClaimsBitfield,
-        bytes memory validatorSignature,
-        uint256 validatorPosition,
-        address validatorAddress,
-        bytes32[] memory validatorAddressMerkleProof
+        SingleProof calldata singleProof
     ) public payable returns (uint256) {
         /**
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, >= 2/3 + 1
@@ -279,12 +286,12 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         );
 
         verifySignature(
-            validatorSignature,
+            singleProof.signature,
             authoritySetRoot,
-            validatorAddress,
+            singleProof.signer,
             authoritySetLen,
-            validatorPosition,
-            validatorAddressMerkleProof,
+            singleProof.position,
+            singleProof.proof,
             commitmentHash
         );
 
@@ -315,8 +322,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      */
     function completeSignatureCommitment(
         uint256 id,
-        Commitment memory commitment,
-        MultiProof memory validatorProof
+        Commitment calldata commitment,
+        MultiProof calldata validatorProof
     ) public {
         verifyCommitment(id, commitment, validatorProof);
 
@@ -351,8 +358,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
 
     function verifyCommitment(
         uint256 id,
-        Commitment memory commitment,
-        MultiProof memory validatorProof
+        Commitment calldata commitment,
+        MultiProof calldata validatorProof
     ) private view {
         ValidationData storage data = validationData[id];
 
@@ -388,7 +395,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
 
     function verifyValidatorProofSignatures(
         uint256 randomBitfield,
-        MultiProof memory proof,
+        MultiProof calldata proof,
         bytes32 commitmentHash
     ) private view {
         verifyProofSignatures(
@@ -405,7 +412,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         bytes32 root,
         uint256 len,
         uint256 bitfield,
-        MultiProof memory proof,
+        MultiProof calldata proof,
         uint256 requiredNumOfSignatures,
         bytes32 commitmentHash
     ) private pure {
@@ -453,7 +460,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
 
     function verifyMultiProofLengths(
         uint256 requiredNumOfSignatures,
-        MultiProof memory proof
+        MultiProof calldata proof
     ) private pure {
         require(
             proof.signatures.length == requiredNumOfSignatures,
@@ -466,12 +473,12 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     }
 
     function verifySignature(
-        bytes memory signature,
+        bytes calldata signature,
         bytes32 root,
         address signer,
         uint256 len,
         uint256 position,
-        bytes32[] memory addrMerkleProof,
+        bytes32[] calldata addrMerkleProof,
         bytes32 commitmentHash
     ) private pure {
         require(position < len, "Bridge: invalid signer position");
@@ -514,7 +521,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         address addr,
         uint256 width,
         uint256 pos,
-        bytes32[] memory proof
+        bytes32[] calldata proof
     ) public pure returns (bool) {
         bytes32 hashedLeaf = keccak256(abi.encodePacked(addr));
         return
@@ -565,7 +572,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param payload The payload variable passed in via the initial function
      * @param blockNumber The blockNumber variable passed in via the initial function
      */
-    function processPayload(Payload memory payload, uint256 blockNumber) private returns (bool) {
+    function processPayload(Payload calldata payload, uint256 blockNumber) private returns (bool) {
         if (blockNumber > latestBlockNumber) {
             latestChainMessagesRoot = payload.messageRoot;
             latestBlockNumber = blockNumber;

@@ -33,9 +33,9 @@ library SparseMerkleMultiProof {
     function verify(
         bytes32 root,
         uint256 depth,
-        uint256[] memory indices,
+        uint256[] calldata indices,
         bytes32[] memory leaves,
-        bytes32[] memory decommitments
+        bytes32[] calldata decommitments
     )
         internal
         pure
