@@ -3,7 +3,11 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
+import "../utils/ScaleCodec.sol";
+
 contract BEEFYCommitmentScheme {
+    using ScaleCodec for uint32;
+    using ScaleCodec for uint64;
     /**
      * Next BEEFY authority set
      * @param id ID of the next set
@@ -18,10 +22,12 @@ contract BEEFYCommitmentScheme {
 
     /**
      * The payload being signed
+     * @param network Source chain network identifier
      * @param messageRoot Darwnia message root commitment hash
      * @param nextValidatorSet Next BEEFY authority set
     */
     struct Payload {
+        bytes32 network;
         bytes32 messageRoot;
         NextValidatorSet nextValidatorSet;
     }
@@ -55,8 +61,8 @@ contract BEEFYCommitmentScheme {
             abi.encodePacked(
                 PAYLOAD_SCALE_ENCOD_PREFIX,
                 hash(commitment.payload),
-                commitment.blockNumber,
-                commitment.validatorSetId
+                commitment.blockNumber.encode32(),
+                commitment.validatorSetId.encode64()
             )
         );
     }
@@ -71,6 +77,7 @@ contract BEEFYCommitmentScheme {
          */
         return keccak256(
             abi.encodePacked(
+                payload.network,
                 payload.messageRoot,
                 encode(payload.nextValidatorSet)
             )
@@ -86,8 +93,8 @@ contract BEEFYCommitmentScheme {
          * Encode the NextValidatorSet
          */
         return abi.encodePacked(
-                nextValidatorSet.id,
-                nextValidatorSet.len,
+                nextValidatorSet.id.encode64(),
+                nextValidatorSet.len.encode32(),
                 nextValidatorSet.root
             );
     }

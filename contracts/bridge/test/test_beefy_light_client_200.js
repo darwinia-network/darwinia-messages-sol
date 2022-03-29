@@ -85,8 +85,10 @@ describe("Light Client Gas Usage", function () {
       totalNumberOfValidators
     )
     const LightClientBridge = await ethers.getContractFactory("DarwiniaLightClient");
+    const crab = beefyFixture.commitment.payload.network
     const vault = "0x0000000000000000000000000000000000000000"
     beefyLightClient = await LightClientBridge.deploy(
+      crab,
       vault,
       0,
       totalNumberOfValidators,

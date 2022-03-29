@@ -135,18 +135,26 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     address public immutable SLASH_VAULT;
 
     /**
+      * @dev NETWORK Source chain network identify ('Crab', 'Darwinia', 'Pangolin')
+      */
+     bytes32 public immutable NETWORK;
+
+    /**
      * @notice Deploys the LightClientBridge contract
+     * @param network source chain network name
      * @param slashVault initial SLASH_VAULT
      * @param currentAuthoritySetId The id of the current authority set
      * @param currentAuthoritySetLen The length of the current authority set
      * @param currentAuthoritySetRoot The merkle tree of the current authority set
     */
     constructor(
+        bytes32 network,
         address slashVault,
         uint64 currentAuthoritySetId,
         uint32 currentAuthoritySetLen,
         bytes32 currentAuthoritySetRoot
     ) {
+        NETWORK = network;
         SLASH_VAULT = slashVault;
         _updateAuthoritySet(currentAuthoritySetId, currentAuthoritySetLen, currentAuthoritySetRoot);
     }
@@ -362,6 +370,14 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         MultiProof calldata validatorProof
     ) private view {
         ValidationData storage data = validationData[id];
+
+        /**
+          * @dev verify that network is the same as `network`
+          */
+         require(
+             commitment.payload.network == NETWORK,
+             "Bridge: Commitment is not part of this network"
+         );
 
         /**
          * @dev verify that sender is the same as in `newSignatureCommitment`
