@@ -17,7 +17,6 @@ contract BinaryMerkleProofTest is DSTest {
         bytes32 root = hex"ad4e8946ee8f8a4b98c6ece5d271d842abc752aa6b3a133efb44e2c13dd5a635";
         bytes32 leaf = hex"950a019d53380dd2d4e240aaace158b09aac75689325fbdb4994748a9ce04c89";
         uint pos = 0;
-        uint width = 3;
         bytes32[] memory proof = new bytes32[](2);
         proof[0] = hex"3ad9e2f40f14c1834af2848ff5d8b568ffb5aec4ea137dbcd69411d5a5b3082c";
         proof[1] = hex"0fdef50f4e46e1db97d092c03e160fd45d6fd9bde3424790c1c5fe140bb93850";
@@ -25,7 +24,6 @@ contract BinaryMerkleProofTest is DSTest {
             root,
             leaf,
             pos,
-            width,
             proof
         ));
     }
@@ -34,7 +32,6 @@ contract BinaryMerkleProofTest is DSTest {
         bytes32 root = hex"ad4e8946ee8f8a4b98c6ece5d271d842abc752aa6b3a133efb44e2c13dd5a635";
         bytes32 leaf = hex"950a019d53380dd2d4e240aaace158b09aac75689325fbdb4994748a9ce04c89";
         uint pos = 1;
-        uint width = 3;
         bytes32[] memory proof = new bytes32[](2);
         proof[0] = hex"3ad9e2f40f14c1834af2848ff5d8b568ffb5aec4ea137dbcd69411d5a5b3082c";
         proof[1] = hex"0fdef50f4e46e1db97d092c03e160fd45d6fd9bde3424790c1c5fe140bb93850";
@@ -42,7 +39,6 @@ contract BinaryMerkleProofTest is DSTest {
             root,
             leaf,
             pos,
-            width,
             proof
         ));
     }

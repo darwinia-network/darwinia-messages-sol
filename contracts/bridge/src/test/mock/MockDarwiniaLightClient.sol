@@ -12,7 +12,6 @@ contract MockDarwiniaLightClient {
     }
     struct MProof {
         bytes32 root;
-        uint256 count;
         bytes32[] proof;
     }
 
@@ -70,7 +69,6 @@ contract MockDarwiniaLightClient {
                 laneProof.root,
                 laneHash,
                 lanePosition,
-                laneProof.count,
                 laneProof.proof
             )
             &&
@@ -78,7 +76,6 @@ contract MockDarwiniaLightClient {
                 chainProof.root,
                 laneProof.root,
                 chainPosition,
-                chainProof.count,
                 chainProof.proof
             );
     }

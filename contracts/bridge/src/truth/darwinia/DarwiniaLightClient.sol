@@ -105,7 +105,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
 
     struct MProof {
         bytes32 root;
-        uint256 count;
         bytes32[] proof;
     }
 
@@ -260,7 +259,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
                 laneProof.root,
                 laneHash,
                 lanePosition,
-                laneProof.count,
                 laneProof.proof
             )
             &&
@@ -268,7 +266,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
                 chainProof.root,
                 laneProof.root,
                 chainPosition,
-                chainProof.count,
                 chainProof.proof
             );
     }
@@ -404,9 +401,9 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         );
     }
 
-    function roundUpToPow2(uint256 len) internal pure returns (uint256) {
-        if (len <= 1) return 1;
-        else return 2 * roundUpToPow2((len + 1) / 2);
+    function roundUpToPow2(uint256 x) internal pure returns (uint256) {
+        if (x <= 1) return 1;
+        else return 2 * roundUpToPow2((x + 1) / 2);
     }
 
     function verifyValidatorProofSignatures(
@@ -498,7 +495,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         bytes32 commitmentHash
     ) private pure {
         require(position < len, "Bridge: invalid signer position");
-        uint256 width = roundUpToPow2(len);
 
         /**
          * @dev Check if merkle proof is valid
@@ -507,7 +503,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
             checkAddrInSet(
                 root,
                 signer,
-                width,
                 position,
                 addrMerkleProof
             ),
@@ -528,14 +523,12 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param root the root of the merkle tree
      * @param addr The address to check
      * @param pos The position to check, index starting at 0
-     * @param width the width or number of leaves in the tree
      * @param proof Merkle proof required for validation of the address
      * @return Returns true if the address is in the set
      */
     function checkAddrInSet(
         bytes32 root,
         address addr,
-        uint256 width,
         uint256 pos,
         bytes32[] calldata proof
     ) public pure returns (bool) {
@@ -545,7 +538,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
                 root,
                 hashedLeaf,
                 pos,
-                width,
                 proof
             );
     }

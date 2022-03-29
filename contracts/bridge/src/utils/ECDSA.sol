@@ -25,6 +25,7 @@ library ECDSA {
      */
     function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
         // Check the signature length
+        // (cf https://eips.ethereum.org/EIPS/eip-2098)
         if (signature.length != 64) {
             revert("ECDSA: invalid signature length");
         }
