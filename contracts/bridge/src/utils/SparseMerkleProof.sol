@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
 /// @notice Sparse Merkle Tree is constructed from 2^n-length leaves, where n is the tree depth
 ///  equal to log2(number of leafs) and it's initially hashed using the `keccak256` hash function as the inner nodes.
 ///  Inner nodes are created by concatenating child hashes and hashing again.
-library SparseMerkleMultiProof {
+library SparseMerkleProof {
 
     function hash_node(bytes32 left, bytes32 right)
         internal
@@ -22,6 +22,33 @@ library SparseMerkleMultiProof {
         return hash;
     }
 
+    /// @notice Verify that a specific leaf element is part of the Sparse Merkle Tree at a specific position in the tree.
+    //
+    /// @param root The root of the merkle tree
+    /// @param leaf The leaf which needs to be proven
+    /// @param pos The position of the leaf, index starting with 0
+    /// @param proof The array of proofs to help verify the leaf's membership, ordered from leaf to root
+    /// @return A boolean value representing the success or failure of the verification
+    function singleVerify(
+        bytes32 root,
+        bytes32 leaf,
+        uint256 pos,
+        bytes32[] memory proof
+    ) internal pure returns (bool) {
+        uint256 depth = proof.length;
+        uint256 index = 2**depth + pos;
+        bytes32 value = leaf;
+        for (uint256 i = 0; i < depth; i++) {
+            if (index & 1 == 0) {
+                value = hash_node(value, proof[i]);
+            } else {
+                value = hash_node(proof[i], value);
+            }
+            index /= 2;
+        }
+        return value == root;
+    }
+
     /// @notice Verify that multi leafs in the Sparse Merkle Tree with generalized indices.
     /// @dev Indices are required to be sorted highest to lowest.
     /// @param root The root of the merkle tree
@@ -30,7 +57,7 @@ library SparseMerkleMultiProof {
     /// @param leaves The leaves which need to be proven
     /// @param decommitments A list of decommitments required to reconstruct the merkle root
     /// @return A boolean value representing the success or failure of the verification
-    function verify(
+    function multiVerify(
         bytes32 root,
         uint256 depth,
         uint256[] calldata indices,

@@ -6,8 +6,7 @@ pragma abicoder v2;
 import "./BEEFYAuthorityRegistry.sol";
 import "../../utils/ECDSA.sol";
 import "../../utils/Bitfield.sol";
-import "../../utils/BinaryMerkleProof.sol";
-import "../../utils/SparseMerkleMultiProof.sol";
+import "../../utils/SparseMerkleProof.sol";
 import "../../spec/BEEFYCommitmentScheme.sol";
 import "../../interfaces/ILightClient.sol";
 
@@ -255,14 +254,14 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         MProof memory laneProof
     ) internal pure returns (bool) {
         return
-            BinaryMerkleProof.verifyMerkleLeafAtPosition(
+            SparseMerkleProof.singleVerify(
                 laneProof.root,
                 laneHash,
                 lanePosition,
                 laneProof.proof
             )
             &&
-            BinaryMerkleProof.verifyMerkleLeafAtPosition(
+            SparseMerkleProof.singleVerify(
                 chainProof.root,
                 laneProof.root,
                 chainPosition,
@@ -460,7 +459,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
 
         require(1 << proof.depth == width, "Bridge: invalid depth");
         require(
-            SparseMerkleMultiProof.verify(
+            SparseMerkleProof.multiVerify(
                 root,
                 proof.depth,
                 proof.positions,
@@ -534,7 +533,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     ) public pure returns (bool) {
         bytes32 hashedLeaf = keccak256(abi.encodePacked(addr));
         return
-            BinaryMerkleProof.verifyMerkleLeafAtPosition(
+            SparseMerkleProof.singleVerify(
                 root,
                 hashedLeaf,
                 pos,

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-import "../../utils/BinaryMerkleProof.sol";
+import "../../utils/SparseMerkleProof.sol";
 
 contract MockDarwiniaLightClient {
     struct MessagesProof {
@@ -65,14 +65,14 @@ contract MockDarwiniaLightClient {
         MProof memory laneProof
     ) internal pure returns (bool) {
         return
-            BinaryMerkleProof.verifyMerkleLeafAtPosition(
+            SparseMerkleProof.singleVerify(
                 laneProof.root,
                 laneHash,
                 lanePosition,
                 laneProof.proof
             )
             &&
-            BinaryMerkleProof.verifyMerkleLeafAtPosition(
+            SparseMerkleProof.singleVerify(
                 chainProof.root,
                 laneProof.root,
                 chainPosition,
