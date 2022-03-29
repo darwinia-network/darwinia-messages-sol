@@ -610,6 +610,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     ) private {
         require(newAuthoritySetId == authoritySetId || newAuthoritySetId == authoritySetId + 1, "Bridge: Invalid new validator set id");
         if (newAuthoritySetId == authoritySetId + 1) {
+            require(newAuthoritySetLen <= 256, "Bridge: Authority set too large");
             _updateAuthoritySet(
                 newAuthoritySetId,
                 newAuthoritySetLen,
