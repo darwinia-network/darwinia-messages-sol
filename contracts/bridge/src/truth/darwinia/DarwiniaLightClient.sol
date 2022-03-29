@@ -62,7 +62,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param decommitments multi merkle proof from the chosen validators proving that their addresses
      * are in the validator set
      */
-    struct MultiProof {
+    struct CommitmentMultiProof {
         uint256 depth;
         bytes[] signatures;
         uint256[] positions;
@@ -76,7 +76,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param signer the public key of the validator
      * @param proof proof required for validation of the public key in the validator merkle tree
      */
-    struct SingleProof {
+    struct CommitmentSingleProof {
         bytes signature;
         uint256 position;
         address signer;
@@ -98,11 +98,11 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     }
 
     struct MessagesProof {
-        MProof chainProof;
-        MProof laneProof;
+        MessageSingleProof chainProof;
+        MessageSingleProof laneProof;
     }
 
-    struct MProof {
+    struct MessageSingleProof {
         bytes32 root;
         bytes32[] proof;
     }
@@ -250,8 +250,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         bytes32 laneHash,
         uint256 chainPosition,
         uint256 lanePosition,
-        MProof memory chainProof,
-        MProof memory laneProof
+        MessageSingleProof memory chainProof,
+        MessageSingleProof memory laneProof
     ) internal pure returns (bool) {
         return
             SparseMerkleProof.singleVerify(
@@ -279,7 +279,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     function newSignatureCommitment(
         bytes32 commitmentHash,
         uint256 validatorClaimsBitfield,
-        SingleProof calldata singleProof
+        CommitmentSingleProof calldata commitmentSingleProof
     ) public payable returns (uint256) {
         /**
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, >= 2/3 + 1
@@ -290,12 +290,12 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         );
 
         verifySignature(
-            singleProof.signature,
+            commitmentSingleProof.signature,
             authoritySetRoot,
-            singleProof.signer,
+            commitmentSingleProof.signer,
             authoritySetLen,
-            singleProof.position,
-            singleProof.proof,
+            commitmentSingleProof.position,
+            commitmentSingleProof.proof,
             commitmentHash
         );
 
@@ -327,7 +327,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     function completeSignatureCommitment(
         uint256 id,
         Commitment calldata commitment,
-        MultiProof calldata validatorProof
+        CommitmentMultiProof calldata validatorProof
     ) public {
         verifyCommitment(id, commitment, validatorProof);
 
@@ -363,7 +363,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     function verifyCommitment(
         uint256 id,
         Commitment calldata commitment,
-        MultiProof calldata validatorProof
+        CommitmentMultiProof calldata validatorProof
     ) private view {
         ValidationData storage data = validationData[id];
 
@@ -407,7 +407,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
 
     function verifyValidatorProofSignatures(
         uint256 randomBitfield,
-        MultiProof calldata proof,
+        CommitmentMultiProof calldata proof,
         bytes32 commitmentHash
     ) private view {
         verifyProofSignatures(
@@ -424,7 +424,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         bytes32 root,
         uint256 len,
         uint256 bitfield,
-        MultiProof calldata proof,
+        CommitmentMultiProof calldata proof,
         uint256 requiredNumOfSignatures,
         bytes32 commitmentHash
     ) private pure {
@@ -472,7 +472,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
 
     function verifyMultiProofLengths(
         uint256 requiredNumOfSignatures,
-        MultiProof calldata proof
+        CommitmentMultiProof calldata proof
     ) private pure {
         require(
             proof.signatures.length == requiredNumOfSignatures,
@@ -490,7 +490,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         address signer,
         uint256 len,
         uint256 position,
-        bytes32[] calldata addrMerkleProof,
+        bytes32[] calldata proof,
         bytes32 commitmentHash
     ) private pure {
         require(position < len, "Bridge: invalid signer position");
@@ -503,7 +503,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
                 root,
                 signer,
                 position,
-                addrMerkleProof
+                proof
             ),
             "Bridge: signer must be in signer set at correct position"
         );

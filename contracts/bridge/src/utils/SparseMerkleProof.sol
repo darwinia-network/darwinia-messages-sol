@@ -46,7 +46,7 @@ library SparseMerkleProof {
             }
             index /= 2;
         }
-        return value == root;
+        return value == root && index == 1;
     }
 
     /// @notice Verify that multi leafs in the Sparse Merkle Tree with generalized indices.
