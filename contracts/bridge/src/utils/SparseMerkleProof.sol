@@ -36,7 +36,7 @@ library SparseMerkleProof {
         bytes32[] memory proof
     ) internal pure returns (bool) {
         uint256 depth = proof.length;
-        uint256 index = 2**depth + pos;
+        uint256 index = (1 << depth) + pos;
         bytes32 value = leaf;
         for (uint256 i = 0; i < depth; i++) {
             if (index & 1 == 0) {
@@ -80,7 +80,7 @@ library SparseMerkleProof {
 
         // Queue the leafs
         for(; tail < n; ++tail) {
-            tree_indices[tail] = 2**depth + indices[tail];
+            tree_indices[tail] = (1 << depth) + indices[tail];
             hashes[tail] = leaves[tail];
         }
 
