@@ -368,12 +368,12 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         ValidationData storage data = validationData[id];
 
         /**
-          * @dev verify that network is the same as `network`
-          */
-         require(
-             commitment.payload.network == NETWORK,
-             "Bridge: Commitment is not part of this network"
-         );
+         * @dev verify that network is the same as `network`
+         */
+        require(
+            commitment.payload.network == NETWORK,
+            "Bridge: Commitment is not part of this network"
+        );
 
         /**
          * @dev verify that sender is the same as in `newSignatureCommitment`
