@@ -9,6 +9,7 @@ const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL || process.env.ALCHEMY_MAINN
 const RINKEBY_RPC_URL = process.env.RINKEBY_RPC_URL
 const ROPSTEN_RPC_URL = process.env.ROPSTEN_RPC_URL
 const KOVAN_RPC_URL = process.env.KOVAN_RPC_URL
+const BSCTEST_RPC_URL = process.env.BSCTEST_RPC_URL
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
 const REPORT_GAS = process.env.REPORT_GAS ? true : false
@@ -96,6 +97,12 @@ module.exports = {
     },
     kovan: {
       url: KOVAN_RPC_URL,
+      network_id: "*",
+      accounts: [PRIVATE_KEY],
+      timeout: 200000
+    },
+    bsctest: {
+      url: BSCTEST_RPC_URL,
       network_id: "*",
       accounts: [PRIVATE_KEY],
       timeout: 200000

@@ -19,64 +19,48 @@ describe("Light Client Gas Usage", function () {
 
   const testCases = [
     {
-      totalNumberOfValidators: 10,
-      totalNumberOfSignatures: 7,
-    },
-    {
-      totalNumberOfValidators: 15,
-      totalNumberOfSignatures: 15,
-    },
-    {
-      totalNumberOfValidators: 25,
-      totalNumberOfSignatures: 25,
-    },
-    {
-      totalNumberOfValidators: 30,
-      totalNumberOfSignatures: 30,
-    },
-    {
-      totalNumberOfValidators: 35,
-      totalNumberOfSignatures: 35,
-    },
-    {
-      totalNumberOfValidators: 36,
-      totalNumberOfSignatures: 36,
-    },
-    {
-      totalNumberOfValidators: 40,
-      totalNumberOfSignatures: 40,
-    },
-    {
-      totalNumberOfValidators: 50,
-      totalNumberOfSignatures: 50,
-    },
-    {
       totalNumberOfValidators: 100,
-      totalNumberOfSignatures: 100,
+      totalNumberOfSignatures: 67,
     },
     {
-      totalNumberOfValidators: 128,
-      totalNumberOfSignatures: 128,
+      totalNumberOfValidators: 110,
+      totalNumberOfSignatures: 74,
     },
     {
-      totalNumberOfValidators: 257,
-      totalNumberOfSignatures: 257,
+      totalNumberOfValidators: 120,
+      totalNumberOfSignatures: 81,
     },
     {
-      totalNumberOfValidators: 1000,
-      totalNumberOfSignatures: 1000,
+      totalNumberOfValidators: 130,
+      totalNumberOfSignatures: 87,
     },
     {
-      totalNumberOfValidators: 1000,
-      totalNumberOfSignatures: 667,
+      totalNumberOfValidators: 140,
+      totalNumberOfSignatures: 94,
     },
     {
-      totalNumberOfValidators: 1025,
-      totalNumberOfSignatures: 684,
+      totalNumberOfValidators: 150,
+      totalNumberOfSignatures: 101,
     },
     {
-      totalNumberOfValidators: 2048,
-      totalNumberOfSignatures: 1366,
+      totalNumberOfValidators: 160,
+      totalNumberOfSignatures: 107,
+    },
+    {
+      totalNumberOfValidators: 170,
+      totalNumberOfSignatures: 114,
+    },
+    {
+      totalNumberOfValidators: 180,
+      totalNumberOfSignatures: 121,
+    },
+    {
+      totalNumberOfValidators: 190,
+      totalNumberOfSignatures: 127,
+    },
+    {
+      totalNumberOfValidators: 200,
+      totalNumberOfSignatures: 134,
     },
   ]
 
