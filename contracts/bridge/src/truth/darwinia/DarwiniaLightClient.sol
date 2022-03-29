@@ -133,9 +133,9 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     address public immutable SLASH_VAULT;
 
     /**
-      * @dev NETWORK Source chain network identify ('Crab', 'Darwinia', 'Pangolin')
-      */
-     bytes32 public immutable NETWORK;
+     * @dev NETWORK Source chain network identify ('Crab', 'Darwinia', 'Pangolin')
+     */
+    bytes32 public immutable NETWORK;
 
     /**
      * @notice Deploys the LightClientBridge contract
