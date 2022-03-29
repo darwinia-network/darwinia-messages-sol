@@ -12,7 +12,7 @@ pragma abicoder v2;
 contract BEEFYAuthorityRegistry {
     /* Events */
 
-    event BEEFYAuthoritySetUpdated(uint256 id, uint256 len, bytes32 root);
+    event BEEFYAuthoritySetUpdated(uint64 id, uint32 len, bytes32 root);
 
     /* State */
 
