@@ -101,15 +101,7 @@ async function createAllValidatorProofs(commitmentHash, beefyFixture) {
     const signature = Uint8Array.from(
       signatureECDSA.signature.join().split(',').concat(ethRecID)
     )
-    const sig = ethers.utils.hexlify(signature)
-    const sign = ethers.utils.splitSignature(sig)
-    const signa = ethers.utils.hexlify(
-      ethers.utils.concat([
-        sign.r,
-        sign._vs
-      ])
-    )
-    return { signature: signa , position, address };
+    return { signature: ethers.utils.hexlify(signature), position, address };
   });
 }
 

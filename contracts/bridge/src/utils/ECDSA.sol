@@ -25,25 +25,23 @@ library ECDSA {
      */
     function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
         // Check the signature length
-        // (cf https://eips.ethereum.org/EIPS/eip-2098)
-        if (signature.length != 64) {
+        if (signature.length != 65) {
             revert("ECDSA: invalid signature length");
         }
 
         // Divide the signature in r, s and v variables
         bytes32 r;
-        bytes32 vs;
+        bytes32 s;
+        uint8 v;
 
         // ecrecover takes the signature parameters, and the only way to get them
         // currently is to use assembly.
         // solhint-disable-next-line no-inline-assembly
         assembly {
             r := mload(add(signature, 0x20))
-            vs := mload(add(signature, 0x40))
+            s := mload(add(signature, 0x40))
+            v := byte(0, mload(add(signature, 0x60)))
         }
-
-        bytes32 s = vs & bytes32(0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
-        uint8 v = uint8((uint256(vs) >> 255) + 27);
 
         // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
         // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
