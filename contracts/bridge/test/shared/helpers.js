@@ -138,14 +138,24 @@ async function createSingleValidatorProof(position, beefyFixture) {
   return beefyFixture.validatorsMerkleTree.proofHex(indices)
 }
 
+const toHexString = bytes =>
+  bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '0x');
+
+const hexZeroPad = (value, length) => {
+    while (value.length < 2 * length + 2) {
+        value =  "0x" + value.substring(2) + "0"
+    }
+    return value;
+}
+
 async function createCompleteValidatorProofs(id, beefyLightClient, allValidatorProofs, beefyFixture) {
   const bitfieldInts = await beefyLightClient.createRandomBitfield(id);
   const bitfieldString = printBitfield(bitfieldInts);
 
   const completeValidatorProofs = {
     depth: beefyFixture.validatorsMerkleTree.height(),
-    signatures: [],
     positions: [],
+    signatures: [],
     decommitments: [],
   }
 
@@ -161,6 +171,8 @@ async function createCompleteValidatorProofs(id, beefyLightClient, allValidatorP
   completeValidatorProofs.decommitments = beefyFixture.validatorsMerkleTree.proofHex(completeValidatorProofs.positions)
   completeValidatorProofs.positions.reverse()
   completeValidatorProofs.signatures.reverse()
+  const a = toHexString(completeValidatorProofs.positions)
+  completeValidatorProofs.positions = hexZeroPad(a, 32)
 
   return completeValidatorProofs
 }

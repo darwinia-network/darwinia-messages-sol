@@ -59,7 +59,7 @@ contract Bitfield {
         uint256 found = 0;
 
         for (uint256 i = 0; found < n; i++) {
-            uint256 index = (prime * (begin + i)) % length;
+            uint8 index = uint8((prime * (begin + i)) % length);
 
            // require randomly seclected bit to be set in prior
             if (!isSet(prior, index)) {
@@ -79,7 +79,7 @@ contract Bitfield {
         return bitfield;
     }
 
-    function createBitfield(uint256[] memory bitsToSet)
+    function createBitfield(uint8[] memory bitsToSet)
         internal
         pure
         returns (uint256 bitfield)
@@ -108,22 +108,19 @@ contract Bitfield {
         return x;
     }
 
-    function isSet(uint256 self, uint256 index)
+    function isSet(uint256 self, uint8 index)
         internal
         pure
         returns (bool)
     {
-        uint8 within = uint8(index & 255);
-        return self.bit(within) == 1;
+        return self.bit(index) == 1;
     }
 
-    function set(uint256 self, uint256 index) internal pure returns (uint256) {
-        uint8 within = uint8(index & 255);
-        return self.setBit(within);
+    function set(uint256 self, uint8 index) internal pure returns (uint256) {
+        return self.setBit(index);
     }
 
-    function clear(uint256 self, uint256 index) internal pure returns (uint256) {
-        uint8 within = uint8(index & 255);
-        return self.clearBit(within);
+    function clear(uint256 self, uint8 index) internal pure returns (uint256) {
+        return self.clearBit(index);
     }
 }

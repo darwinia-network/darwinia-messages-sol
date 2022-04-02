@@ -60,7 +60,7 @@ library SparseMerkleProof {
     function multiVerify(
         bytes32 root,
         uint256 depth,
-        uint256[] calldata indices,
+        bytes32 indices,
         bytes32[] memory leaves,
         bytes32[] calldata decommitments
     )
@@ -68,8 +68,8 @@ library SparseMerkleProof {
         pure
         returns (bool)
     {
-        require(indices.length == leaves.length, "LENGTH_MISMATCH");
-        uint256 n = indices.length;
+        require(leaves.length <= 32, "LENGTH_TOO_LARGE");
+        uint256 n = leaves.length;
 
         // Dynamically allocate index and hash queue
         uint256[] memory tree_indices = new uint256[](n + 1);
@@ -80,7 +80,7 @@ library SparseMerkleProof {
 
         // Queue the leafs
         for(; tail < n; ++tail) {
-            tree_indices[tail] = (1 << depth) + indices[tail];
+            tree_indices[tail] = (1 << depth) + uint8(indices[tail]);
             hashes[tail] = leaves[tail];
         }
 

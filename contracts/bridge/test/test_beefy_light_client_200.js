@@ -110,7 +110,8 @@ describe("Light Client Gas Usage", function () {
     const firstProof = await createSingleValidatorProof(firstPosition, fixture)
 
     let overrides = {
-        value: ethers.utils.parseEther("4")
+        // value: ethers.utils.parseEther("4")
+        value: 4
     };
 
     const singleProof = {

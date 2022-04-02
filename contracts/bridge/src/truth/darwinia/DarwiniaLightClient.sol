@@ -64,8 +64,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      */
     struct CommitmentMultiProof {
         uint256 depth;
+        bytes32 positions;
         bytes[] signatures;
-        uint256[] positions;
         bytes32[] decommitments;
     }
 
@@ -125,7 +125,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @dev Block wait period after `newSignatureCommitment` to pick the random block hash
      *  120000000/2^25 = 3.57 ether is recommended for Ethereum
     */
-    uint256 public constant MIN_SUPPORT = 4 ether;
+    uint256 public constant MIN_SUPPORT = 4 wei;
 
     /**
      * @dev A vault to store expired commitment or malicious commitment slashed asset
@@ -202,7 +202,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
             );
     }
 
-    function createInitialBitfield(uint256[] calldata bitsToSet)
+    function createInitialBitfield(uint8[] calldata bitsToSet)
         external
         pure
         returns (uint256)
@@ -429,7 +429,10 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         bytes32 commitmentHash
     ) private pure {
 
-        verifyMultiProofLengths(requiredNumOfSignatures, proof);
+        require(
+            proof.signatures.length == requiredNumOfSignatures,
+            "Bridge: Number of signatures does not match required"
+        );
 
         uint256 width = roundUpToPow2(len);
         /**
@@ -437,7 +440,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
          */
         bytes32[] memory leaves = new bytes32[](requiredNumOfSignatures);
         for (uint256 i = 0; i < requiredNumOfSignatures; i++) {
-            uint256 pos = proof.positions[i];
+            uint8 pos = uint8(proof.positions[i]);
 
             require(pos < len, "Bridge: invalid signer position");
             /**
@@ -467,20 +470,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
                 proof.decommitments
             ),
             "Bridge: invalid multi proof"
-        );
-    }
-
-    function verifyMultiProofLengths(
-        uint256 requiredNumOfSignatures,
-        CommitmentMultiProof calldata proof
-    ) private pure {
-        require(
-            proof.signatures.length == requiredNumOfSignatures,
-            "Bridge: Number of signatures does not match required"
-        );
-        require(
-            proof.positions.length == requiredNumOfSignatures,
-            "Bridge: Number of validator positions does not match required"
         );
     }
 
