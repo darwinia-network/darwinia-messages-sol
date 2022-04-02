@@ -50,7 +50,7 @@ contract Bitfield {
             "`n` must be <= number of set bits in `prior`"
         );
         require(
-            length < 256,
+            length <= 256,
             "length too large"
         );
 

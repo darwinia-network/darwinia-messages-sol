@@ -188,11 +188,11 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         view
         returns (uint256)
     {
-        ValidationData storage data = validationData[id];
+        ValidationData memory data = validationData[id];
         return _createRandomBitfield(data);
     }
 
-    function _createRandomBitfield(ValidationData storage data)
+    function _createRandomBitfield(ValidationData memory data)
         internal
         view
         returns (uint256)
@@ -370,7 +370,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         Commitment calldata commitment,
         CommitmentMultiProof calldata validatorProof
     ) private view {
-        ValidationData storage data = validationData[id];
+        ValidationData memory data = validationData[id];
 
         /**
          * @dev verify that network is the same as `network`

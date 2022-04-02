@@ -68,9 +68,9 @@ library SparseMerkleProof {
         pure
         returns (bool)
     {
-        require(leaves.length <= 32, "LENGTH_TOO_LARGE");
-        require(depth <= 8, "DEPTH_TOO_LARGE");
         uint256 n = leaves.length;
+        require(n <= 32, "LENGTH_TOO_LARGE");
+        require(depth <= 8, "DEPTH_TOO_LARGE");
 
         // Dynamically allocate index and hash queue
         uint256[] memory tree_indices = new uint256[](n + 1);
