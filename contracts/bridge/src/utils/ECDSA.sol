@@ -23,25 +23,9 @@ library ECDSA {
      * this is by receiving a hash of the original message (which may otherwise
      * be too long), and then calling {toEthSignedMessageHash} on it.
      */
-    function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
+    function recover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address) {
         // Check the signature length
         // - case 64: r,vs signature (cf https://eips.ethereum.org/EIPS/eip-2098)
-        if (signature.length != 64) {
-            revert("ECDSA: invalid signature length");
-        }
-
-        // Divide the signature in r, s and v variables
-        bytes32 r;
-        bytes32 vs;
-
-        // ecrecover takes the signature parameters, and the only way to get them
-        // currently is to use assembly.
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            r := mload(add(signature, 0x20))
-            vs := mload(add(signature, 0x40))
-        }
-
         bytes32 s = vs & bytes32(0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
         uint8 v = uint8((uint256(vs) >> 255) + 27);
 

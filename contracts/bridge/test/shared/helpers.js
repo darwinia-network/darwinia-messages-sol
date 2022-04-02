@@ -103,13 +103,13 @@ async function createAllValidatorProofs(commitmentHash, beefyFixture) {
     )
     const sig = ethers.utils.hexlify(signature)
      const sign = ethers.utils.splitSignature(sig)
-     const signa = ethers.utils.hexlify(
-       ethers.utils.concat([
-         sign.r,
-         sign._vs
-       ])
-     )
-     return { signature: signa , position, address };
+     // const signa = ethers.utils.hexlify(
+     //   ethers.utils.concat([
+     //     sign.r,
+     //     sign._vs
+     //   ])
+     // )
+     return { signature: {r: sign.r, vs: sign._vs} , position, address };
   });
 }
 

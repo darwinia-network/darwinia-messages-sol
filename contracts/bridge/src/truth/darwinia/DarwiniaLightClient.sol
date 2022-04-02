@@ -54,6 +54,11 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
 
     /* Types */
 
+    struct Signature {
+        bytes32 r;
+        bytes32 vs;
+    }
+
     /**
      * The Proof is a collection of proofs used to verify the signatures from the signers signing
      * each new justification.
@@ -65,8 +70,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     struct CommitmentMultiProof {
         uint256 depth;
         bytes32 positions;
-        bytes[] signatures;
         bytes32[] decommitments;
+        Signature[] signatures;
     }
 
 
@@ -77,10 +82,10 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param proof proof required for validation of the public key in the validator merkle tree
      */
     struct CommitmentSingleProof {
-        bytes signature;
         uint256 position;
         address signer;
         bytes32[] proof;
+        Signature signature;
     }
 
     /**
@@ -456,7 +461,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
              */
             bitfield = clear(bitfield, pos);
 
-            address signer = ECDSA.recover(commitmentHash, proof.signatures[i]);
+            address signer = ECDSA.recover(commitmentHash, proof.signatures[i].r, proof.signatures[i].vs);
             leaves[i] = keccak256(abi.encodePacked(signer));
         }
 
@@ -474,7 +479,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     }
 
     function verifySignature(
-        bytes calldata signature,
+        Signature calldata signature,
         bytes32 root,
         address signer,
         uint256 len,
@@ -501,7 +506,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
          * @dev Check if signature is correct
          */
         require(
-            ECDSA.recover(commitmentHash, signature) == signer,
+            ECDSA.recover(commitmentHash, signature.r, signature.vs) == signer,
             "Bridge: Invalid Signature"
         );
     }
