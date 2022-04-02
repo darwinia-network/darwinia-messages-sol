@@ -62,13 +62,14 @@ library SparseMerkleProof {
         uint256 depth,
         bytes32 indices,
         bytes32[] memory leaves,
-        bytes32[] calldata decommitments
+        bytes32[] memory decommitments
     )
         internal
         pure
         returns (bool)
     {
         require(leaves.length <= 32, "LENGTH_TOO_LARGE");
+        require(depth <= 8, "DEPTH_TOO_LARGE");
         uint256 n = leaves.length;
 
         // Dynamically allocate index and hash queue
