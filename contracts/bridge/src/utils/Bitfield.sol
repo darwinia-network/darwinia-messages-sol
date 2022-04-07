@@ -47,27 +47,22 @@ contract Bitfield {
     ) internal view returns (uint256 bitfield) {
         require(
             n <= countSetBits(prior),
-            "`n` must be <= number of set bits in `prior`"
+            "invalid n"
         );
         require(
-            length <= 256,
-            "length too large"
+            length <= 256 && n <= length,
+            "invalid length"
         );
 
         uint256 prime = BIG_PRIME[seed%20];
-        uint256 begin = uint256(keccak256(abi.encode(seed))) % 1000000 + 1;
+        uint256 begin = seed % 256 + 1;
         uint256 found = 0;
 
         for (uint256 i = 0; found < n; i++) {
             uint8 index = uint8((prime * (begin + i)) % length);
 
-           // require randomly seclected bit to be set in prior
+            // require randomly seclected bit to be set in prior
             if (!isSet(prior, index)) {
-                continue;
-            }
-
-            // require a not yet set (new) bit to be set
-            if (isSet(bitfield, index)) {
                 continue;
             }
 

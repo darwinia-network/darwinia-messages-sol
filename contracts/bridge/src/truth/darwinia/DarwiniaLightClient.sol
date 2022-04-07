@@ -189,19 +189,19 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         returns (uint256)
     {
         ValidationData memory data = validationData[id];
-        return _createRandomBitfield(data);
+        return _createRandomBitfield(data.blockNumber, data.validatorClaimsBitfield);
     }
 
-    function _createRandomBitfield(ValidationData memory data)
+    function _createRandomBitfield(uint32 blockNumber, uint256 validatorClaimsBitfield)
         internal
         view
         returns (uint256)
     {
-        require(data.blockNumber > 0, "Bridge: invalid id");
+        require(blockNumber > 0, "Bridge: invalid id");
         return
             randomNBitsWithPriorCheck(
-                getSeed(data.blockNumber),
-                data.validatorClaimsBitfield,
+                getSeed(blockNumber),
+                validatorClaimsBitfield,
                 threshold(),
                 authoritySetLen
             );
@@ -388,7 +388,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
             "Bridge: Sender address does not match original validation data"
         );
 
-        uint256 randomBitfield = _createRandomBitfield(data);
+        uint256 randomBitfield = _createRandomBitfield(data.blockNumber, data.validatorClaimsBitfield);
 
         // Encode and hash the commitment
         bytes32 commitmentHash = hash(commitment);
@@ -405,10 +405,11 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         );
     }
 
-    function roundUpToPow2(uint256 x) internal pure returns (uint256) {
-        if (x <= 1) return 1;
-        else return 2 * roundUpToPow2((x + 1) / 2);
-    }
+     function get_power_of_two_ceil(uint256 x) internal pure returns (uint256) {
+         if (x <= 1) return 1;
+         else if (x == 2) return 2;
+         else return 2 * get_power_of_two_ceil((x + 1) / 2);
+     }
 
     function verifyValidatorProofSignatures(
         uint256 randomBitfield,
@@ -439,7 +440,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
             "Bridge: Number of signatures does not match required"
         );
 
-        uint256 width = roundUpToPow2(len);
+        uint256 width = get_power_of_two_ceil(len);
         /**
          *  @dev For each randomSignature, do:
          */

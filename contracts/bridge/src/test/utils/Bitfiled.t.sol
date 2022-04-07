@@ -5,15 +5,14 @@ import "../../../lib/ds-test/src/test.sol";
 import "../../utils/Bitfield.sol";
 
 contract BitfiledTest is Bitfield, DSTest {
-    // function test_count_set_bits() public {
-    //     uint[] memory bitVector = new uint[](3);
-    //     bitVector[0] = 1;
-    //     assertEq(countSetBits(bitVector), 1);
-    //     bitVector[1] = 2;
-    //     assertEq(countSetBits(bitVector), 2);
-    //     bitVector[2] = 3;
-    //     assertEq(countSetBits(bitVector), 4);
-    // }
+    function test_count_set_bits() public {
+        uint bitVector = 1;
+        assertEq(countSetBits(bitVector), 1);
+        bitVector = 2;
+        assertEq(countSetBits(bitVector), 1);
+        bitVector = 3;
+        assertEq(countSetBits(bitVector), 2);
+    }
 
     // function test_is_set() public {
     //     uint[] memory bitVector = new uint[](3);
@@ -67,12 +66,13 @@ contract BitfiledTest is Bitfield, DSTest {
     //     assertEq(bitfield[0], 289);
     // }
 
-    // function test_random_n_bits_with_prior_check() public {
-    //     uint seed = 0;
-    //     uint[] memory prior = new uint[](1);
-    //     prior[0] = 289;
-    //     uint[] memory bitfield = randomNBitsWithPriorCheck(seed, prior, 2, 9);
-    //     assertEq(bitfield.length, 1);
-    //     assertEq(bitfield[0], 33);
-    // }
+
+    // 0b11110110100101000101100110101011000100000111011100000011010001000100101011111011011101001
+    // 0b01010010100101000000100100001010000100000010001100000010000001000000101001011010001101000
+    function test_random_n_bits_with_prior_check() public {
+        uint seed = 0;
+        uint prior = 596192631902738161293719273;
+        uint bitfield = randomNBitsWithPriorCheck(seed, prior, 25, 128);
+        assertEq(bitfield, 53346269764345968789395048);
+    }
 }
