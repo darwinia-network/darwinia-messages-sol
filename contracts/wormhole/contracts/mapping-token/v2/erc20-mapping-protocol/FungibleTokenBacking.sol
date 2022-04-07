@@ -2,13 +2,13 @@
 pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
-import "../../utils/DailyLimit.sol";
-import "../interfaces/IBacking.sol";
-import "../interfaces/IERC20.sol";
-import "../interfaces/IGuard.sol";
-import "../interfaces/IInboundLane.sol";
-import "../interfaces/IMappingTokenFactory.sol";
-import "./HelixApp.sol";
+import "../HelixApp.sol";
+import "../../interfaces/IBacking.sol";
+import "../../interfaces/IERC20.sol";
+import "../../interfaces/IGuard.sol";
+import "../../interfaces/IInboundLane.sol";
+import "../../interfaces/IMappingTokenFactory.sol";
+import "../../../utils/DailyLimit.sol";
 
 contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
     using SafeMath for uint256;

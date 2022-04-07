@@ -5,7 +5,7 @@ pragma solidity >=0.8.10;
 import "../interfaces/IErc721AttrSerializer.sol";
 import "@zeppelin-solidity-4.4.0/contracts/access/Ownable.sol";
 import "../interfaces/IErc721MappingToken.sol";
-import "../v2/Erc721MappingToken.sol";
+import "../v2/erc721-mapping-protocol/Erc721MappingToken.sol";
 
 contract Erc721MonkeyAttributeSerializer is IErc721AttrSerializer {
     // some changable attributes

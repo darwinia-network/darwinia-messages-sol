@@ -51,8 +51,8 @@ contract MappingTokenFactory {
         return allMappingTokens.length;
     }
 
-    function getMappingToken(uint32 bridgedChainPosition, address backingAddress, address originalToken) public view returns (address) {
-        bytes32 salt = keccak256(abi.encodePacked(bridgedChainPosition, backingAddress, originalToken));
+    function getMappingToken(address backingAddress, address originalToken) public view returns (address) {
+        bytes32 salt = keccak256(abi.encodePacked(backingAddress, originalToken));
         return salt2MappingToken[salt];
     }
 }

@@ -6,15 +6,15 @@
 pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "../../utils/DailyLimit.sol";
-import "../interfaces/IBacking.sol";
-import "../interfaces/IERC20.sol";
-import "../interfaces/IGuard.sol";
-import "../interfaces/IInboundLane.sol";
-import "../interfaces/IMappingTokenFactory.sol";
-import "../interfaces/IMessageCommitment.sol";
-import "./HelixApp.sol";
-import "./MappingTokenFactory.sol";
+import "../HelixApp.sol";
+import "../MappingTokenFactory.sol";
+import "../../interfaces/IBacking.sol";
+import "../../interfaces/IERC20.sol";
+import "../../interfaces/IGuard.sol";
+import "../../interfaces/IInboundLane.sol";
+import "../../interfaces/IMappingTokenFactory.sol";
+import "../../interfaces/IMessageCommitment.sol";
+import "../../../utils/DailyLimit.sol";
 
 contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFactory, MappingTokenFactory {
     address public constant BLACK_HOLE_ADDRESS = 0x000000000000000000000000000000000000dEaD;
@@ -83,7 +83,7 @@ contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFacto
     ) public onlyRemoteHelix(backingAddress) whenNotPaused returns (address mappingToken) {
         require(tokenType == 0 || tokenType == 1, "MappingTokenFactory:token type cannot mapping to erc20 token");
         // (bridgeChainId, backingAddress, originalToken) pack a unique new contract salt
-        bytes32 salt = keccak256(abi.encodePacked(remoteChainPosition, backingAddress, originalToken));
+        bytes32 salt = keccak256(abi.encodePacked(backingAddress, originalToken));
         require(salt2MappingToken[salt] == address(0), "MappingTokenFactory:contract has been deployed");
         mappingToken = deployErc20Contract(salt, tokenType);
         IMappingToken(mappingToken).initialize(
@@ -117,7 +117,7 @@ contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFacto
         address recipient,
         uint256 amount
     ) public onlyRemoteHelix(backingAddress) whenNotPaused {
-        address mappingToken = getMappingToken(remoteChainPosition, backingAddress, originalToken);
+        address mappingToken = getMappingToken(backingAddress, originalToken);
         require(mappingToken != address(0), "MappingTokenFactory:mapping token has not created");
         require(amount > 0, "MappingTokenFactory:can not receive amount zero");
         expendDailyLimit(mappingToken, amount);

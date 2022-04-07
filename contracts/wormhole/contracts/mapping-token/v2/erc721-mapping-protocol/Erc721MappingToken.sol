@@ -16,7 +16,7 @@ import "@zeppelin-solidity-4.4.0/contracts/token/ERC721/IERC721Receiver.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/Address.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/introspection/ERC165.sol";
 import "@zeppelin-solidity-4.4.0/contracts/utils/Strings.sol";
-import "../interfaces/IErc721MappingToken.sol";
+import "../../interfaces/IErc721MappingToken.sol";
 
 contract Erc721MappingToken is ERC165, IERC721Enumerable, IErc721MappingToken, IERC721Metadata, Ownable {
     using Address for address;

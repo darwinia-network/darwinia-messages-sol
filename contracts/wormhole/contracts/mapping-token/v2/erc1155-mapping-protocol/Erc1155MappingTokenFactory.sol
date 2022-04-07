@@ -1,28 +1,29 @@
 // SPDX-License-Identifier: MIT
-// This is the Issuing Module(Mapping-token-factory) of the ethereum like bridge.
+// This is the Erc1155 Token Issuing Module(Mapping-token-factory) of the ethereum like bridge.
 // We trust the inboundLane/outboundLane when we add them to the module.
 // It means that each message from the inboundLane is verified correct and truthly from the sourceAccount.
-// Only we need is to verify the sourceAccount is expected. And we add it to the Filter.
+// Only we need is to verify that the sourceAccount is expected. And we add it to the Filter.
+// All of the above are implemented in `HelixApp`.
 
 pragma solidity ^0.8.10;
 
-import "../interfaces/IErc721AttrSerializer.sol";
-import "../interfaces/IErc721Backing.sol";
-import "../interfaces/IErc721MappingToken.sol";
-import "./Erc721MappingToken.sol";
-import "./HelixApp.sol";
-import "./MappingTokenFactory.sol";
+import "./Erc1155MappingToken.sol";
+import "../HelixApp.sol";
+import "../MappingTokenFactory.sol";
+import "../../interfaces/IErc1155Backing.sol";
+import "../../interfaces/IErc1155MappingToken.sol";
 
-contract Erc721MappingTokenFactory is HelixApp, MappingTokenFactory {
+contract Erc1155MappingTokenFactory is HelixApp, MappingTokenFactory {
     struct UnconfirmedInfo {
         address sender;
         address mappingToken;
         uint256[] ids;
+        uint256[] amounts;
     }
     mapping(uint256 => UnconfirmedInfo) public unlockRemoteUnconfirmed;
 
-    event IssuingERC721Created(address originalToken, address mappingToken);
-    event BurnAndWaitingConfirm(uint256 messageId, address sender, address recipient, address token, uint256[] ids);
+    event IssuingERC1155Created(address originalToken, address mappingToken);
+    event BurnAndWaitingConfirm(uint256 messageId, address sender, address recipient, address token, uint256[] ids, uint256[] amounts);
     event RemoteUnlockConfirmed(uint256 messageId, bool result);
 
     /**
@@ -36,26 +37,26 @@ contract Erc721MappingTokenFactory is HelixApp, MappingTokenFactory {
     }
 
     /**
-     * @notice create new erc721 mapping contract, this can only be called by inboundLane
+     * @notice create new erc1155 mapping contract, this can only be called by inboundLane
      * @param backingAddress the backingAddress which send this message
      * @param originalToken the original token address
-     * @param attrSerializer the serializer address of the attributes
+     * @param metadataAddress the contract address of the metadata
      * @param bridgedChainName bridged chain name
      */
-    function newErc721Contract(
+    function newErc1155Contract(
         address backingAddress,
         address originalToken,
-        address attrSerializer,
+        address metadataAddress,
         string memory bridgedChainName
     ) public onlyRemoteHelix(backingAddress) whenNotPaused returns (address mappingToken) {
         // (bridgeChainId, backingAddress, originalToken) pack a unique new contract salt
         bytes32 salt = keccak256(abi.encodePacked(remoteChainPosition, backingAddress, originalToken));
-        require(salt2MappingToken[salt] == address(0), "Erc721MappingTokenFactory:contract has been deployed");
-        bytes memory bytecode = type(Erc721MappingToken).creationCode;
-        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(bridgedChainName, attrSerializer));
+        require(salt2MappingToken[salt] == address(0), "Erc1155MappingTokenFactory:contract has been deployed");
+        bytes memory bytecode = type(Erc1155MappingToken).creationCode;
+        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(bridgedChainName, metadataAddress));
         mappingToken = _deploy(salt, bytecodeWithInitdata);
         _addMappingToken(salt, originalToken, mappingToken);
-        emit IssuingERC721Created(originalToken, mappingToken);
+        emit IssuingERC1155Created(originalToken, mappingToken);
     }
 
     /**
@@ -64,25 +65,19 @@ contract Erc721MappingTokenFactory is HelixApp, MappingTokenFactory {
      * @param originalToken the original token address
      * @param recipient the recipient of the issued mapping token
      * @param ids the ids of the issued mapping tokens
-     * @param attrs the serialized data of the original token's attributes
      */
     function issueMappingToken(
         address backingAddress,
         address originalToken,
         address recipient,
         uint256[] calldata ids,
-        bytes[] calldata attrs
+        uint256[] calldata amounts
     ) public onlyRemoteHelix(backingAddress) whenNotPaused {
-        address mappingToken = getMappingToken(remoteChainPosition, backingAddress, originalToken);
-        require(mappingToken != address(0), "Erc721MappingTokenFactory:mapping token has not created");
-        require(ids.length > 0, "Erc721MappingTokenFactory:can not receive empty ids");
-        address serializer = IErc721MappingToken(mappingToken).attributeSerializer();
-        for (uint idx = 0; idx < ids.length; idx++) {
-            IErc721MappingToken(mappingToken).mint(recipient, ids[idx]);
-            if (serializer != address(0)) {
-                IErc721AttrSerializer(serializer).deserialize(ids[idx], attrs[idx]);
-            }
-        }
+        bytes32 salt = keccak256(abi.encodePacked(remoteChainPosition, backingAddress, originalToken));
+        address mappingToken = salt2MappingToken[salt];
+        require(mappingToken != address(0), "Erc1155MappingTokenFactory:mapping token has not created");
+        require(ids.length > 0, "Erc1155MappingTokenFactory:can not receive empty ids");
+        IErc1155MappingToken(mappingToken).mintBatch(recipient, ids, amounts);
     }
 
     /**
@@ -96,34 +91,28 @@ contract Erc721MappingTokenFactory is HelixApp, MappingTokenFactory {
         uint32 bridgedLanePosition,
         address mappingToken,
         address recipient,
-        uint256[] memory ids 
+        uint256[] memory ids,
+        uint256[] memory amounts
     ) external payable whenNotPaused {
-        require(ids.length > 0, "Erc721MappingTokenFactory:can not transfer empty id");
+        require(ids.length > 0, "Erc1155MappingTokenFactory:can not transfer empty id");
         address originalToken = mappingToken2OriginalToken[mappingToken];
-        require(originalToken != address(0), "Erc721MappingTokenFactory:token is not created by factory");
+        require(originalToken != address(0), "Erc1155MappingTokenFactory:token is not created by factory");
         // Lock the fund in this before message on remote backing chain get dispatched successfully and burn finally
         // If remote backing chain unlock the origin token successfully, then this fund will be burned.
         // Otherwise, these tokens will be transfered back to the msg.sender.
-        bytes[] memory attrs = new bytes[](ids.length);
-        address serializer = IErc721MappingToken(mappingToken).attributeSerializer();
-        for (uint256 idx = 0; idx < ids.length; idx++) {
-            IERC721(mappingToken).transferFrom(msg.sender, address(this), ids[idx]);
-            if (serializer != address(0)) {
-                attrs[idx] = IErc721AttrSerializer(serializer).serialize(ids[idx]);
-            }
-        }
+        IERC1155(mappingToken).safeBatchTransferFrom(msg.sender, address(this), ids, amounts, "");
 
         bytes memory unlockFromRemote = abi.encodeWithSelector(
-            IErc721Backing.unlockFromRemote.selector,
+            IErc1155Backing.unlockFromRemote.selector,
             address(this),
             originalToken,
             recipient,
             ids,
-            attrs
+            amounts
         );
         uint256 messageId = _sendMessage(bridgedLanePosition, unlockFromRemote);
-        unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, ids);
-        emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mappingToken, ids);
+        unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, ids, amounts);
+        emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mappingToken, ids, amounts);
     }
 
     /**
@@ -136,18 +125,34 @@ contract Erc721MappingTokenFactory is HelixApp, MappingTokenFactory {
         bool result
     ) external onlyOutBoundLane {
         UnconfirmedInfo memory info = unlockRemoteUnconfirmed[messageId];
-        require(info.ids.length > 0 && info.sender != address(0) && info.mappingToken != address(0), "Erc721MappingTokenFactory:invalid unconfirmed message");
+        require(info.ids.length > 0 && info.sender != address(0) && info.mappingToken != address(0), "Erc1155MappingTokenFactory:invalid unconfirmed message");
         if (result) {
-            for (uint256 idx = 0; idx < info.ids.length; idx++) {
-                IErc721MappingToken(info.mappingToken).burn(info.ids[idx]);
-            }
+            IErc1155MappingToken(info.mappingToken).burnBatch(info.ids, info.amounts);
         } else {
-            for (uint256 idx = 0; idx < info.ids.length; idx++) {
-                IERC721(info.mappingToken).transferFrom(address(this), info.sender, info.ids[idx]);
-            }
+            IERC1155(info.mappingToken).safeBatchTransferFrom(address(this), info.sender, info.ids, info.amounts, "");
         }
         delete unlockRemoteUnconfirmed[messageId];
         emit RemoteUnlockConfirmed(messageId, result);
+    }
+
+    function onERC1155Received(
+        address operator,
+        address from,
+        uint256 id,
+        uint256 value,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return Erc1155MappingTokenFactory.onERC1155Received.selector;
+    }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] calldata ids,
+        uint256[] calldata values,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return Erc1155MappingTokenFactory.onERC1155BatchReceived.selector;
     }
 }
 

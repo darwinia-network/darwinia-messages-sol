@@ -6,9 +6,9 @@ pragma solidity ^0.8.10;
 // the medata contract need support uri interface defined in IErc1155Metadata
 
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC1155/IERC1155.sol";
-import "../interfaces/IErc1155Backing.sol";
-import "../interfaces/IErc1155MappingTokenFactory.sol";
-import "./HelixApp.sol";
+import "../HelixApp.sol";
+import "../../interfaces/IErc1155Backing.sol";
+import "../../interfaces/IErc1155MappingTokenFactory.sol";
 
 contract Erc1155TokenBacking is IErc1155Backing, HelixApp {
     struct LockedInfo {
