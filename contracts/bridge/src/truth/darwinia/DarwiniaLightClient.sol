@@ -453,7 +453,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
              * @dev Check if validator in bitfield
              */
             require(
-                isSet(bitfield, pos),
+                (bitfield >> pos) & 1 == 1,
                 "Bridge: signer must be once in bitfield"
             );
 
