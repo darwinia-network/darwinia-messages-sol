@@ -11,7 +11,7 @@ describe("darwinia<>bsc erc721 mapping token tests", () => {
   before(async () => {
   });
 
-  it("test_flow", async function () {
+  it("test_supporting_confirm_flow", async function () {
       // lane
       // darwinia chain position 1
       // bsc chain position      2
@@ -42,6 +42,24 @@ describe("darwinia<>bsc erc721 mapping token tests", () => {
       await feeMarket.deployed();
       /****** deploy fee market *****/
 
+      // deploy darwiniaMessageHandle
+      const messageHandleContract = await ethers.getContractFactory("DarwiniaMessageHandle");
+      const darwiniaMessageHandle = await messageHandleContract.deploy();
+      await darwiniaMessageHandle.deployed();
+      const bscMessageHandle = await messageHandleContract.deploy();
+      await bscMessageHandle.deployed();
+      /******* deploy darwiniaMessageHandle ******/
+      // configure darwiniaMessageHandle
+      await darwiniaMessageHandle.setBridgeInfo(2, bscMessageHandle.address);
+      await darwiniaMessageHandle.setFeeMarket(feeMarket.address);
+      await darwiniaMessageHandle.setInboundLane(darwiniaInboundLane.address);
+      await darwiniaMessageHandle.setOutboundLane(darwiniaOutboundLane.address);
+      await bscMessageHandle.setBridgeInfo(1, darwiniaMessageHandle.address);
+      await bscMessageHandle.setFeeMarket(feeMarket.address);
+      await bscMessageHandle.setInboundLane(bscInboundLane.address);
+      await bscMessageHandle.setOutboundLane(bscOutboundLane.address);
+      // end configure
+
       // deploy erc721 serializer, local and remote
       const monkeyAttrContract = await ethers.getContractFactory("Erc721MonkeyAttributeSerializer");
       const monkeyAttrContractOnBsc = await monkeyAttrContract.deploy();
@@ -51,14 +69,14 @@ describe("darwinia<>bsc erc721 mapping token tests", () => {
       console.log("deploy erc721 attribute serializer success");
       /******* deploy mapping token factory at bsc *******/
       // deploy mapping token factory
-      const mapping_token_factory = await ethers.getContractFactory("Erc721MappingTokenFactory");
+      const mapping_token_factory = await ethers.getContractFactory("Erc721MappingTokenFactorySupportingConfirm");
       const mtf = await mapping_token_factory.deploy();
       await mtf.deployed();
       console.log("mapping-token-factory address", mtf.address);
       /******* deploy mapping token factory  end *******/
 
       /******* deploy backing at darwinia ********/
-      backingContract = await ethers.getContractFactory("Erc721TokenBacking");
+      backingContract = await ethers.getContractFactory("Erc721BackingSupportingConfirm");
       const backing = await backingContract.deploy();
       await backing.deployed();
       console.log("backing address", backing.address);
@@ -66,26 +84,21 @@ describe("darwinia<>bsc erc721 mapping token tests", () => {
 
       //********** configure mapping-token-factory ***********
       // init owner
-      await mtf.initialize(1, backing.address, feeMarket.address, "BSC");
-      // add inboundLane
-      await mtf.addInboundLane(backing.address, bscInboundLane.address);
-      await mtf.addOutboundLane(bscOutboundLane.address);
+      await mtf.initialize(bscMessageHandle.address, backing.address);
+      await bscMessageHandle.grantRole(bscMessageHandle.CALLER_ROLE(), mtf.address);
       //************ configure mapping-token end *************
 
       //********* configure backing **************************
       // init owner
-      await backing.initialize(2, mtf.address, feeMarket.address, "Darwinia");
+      await backing.initialize(darwiniaMessageHandle.address, mtf.address);
       const [owner] = await ethers.getSigners();
       await backing.grantRole(backing.OPERATOR_ROLE(), owner.address);
-      // add inboundLane
-      await backing.addInboundLane(mtf.address, darwiniaInboundLane.address);
-      // add outboundLane
-      await backing.addOutboundLane(darwiniaOutboundLane.address);
+      await darwiniaMessageHandle.grantRole(darwiniaMessageHandle.CALLER_ROLE(), backing.address);
       //********* configure backing end   ********************
 
       // this contract can be any erc721 contract. We use MappingToken as an example
       const originalContract = await ethers.getContractFactory("Erc721MappingToken");
-      const originalToken = await originalContract.deploy("Original", monkeyAttrContractOnBsc.address);
+      const originalToken = await originalContract.deploy(monkeyAttrContractOnBsc.address);
       await originalToken.deployed();
       await monkeyAttrContractOnDarwinia.setAttr(1001, 18, 60);
 
@@ -93,15 +106,13 @@ describe("darwinia<>bsc erc721 mapping token tests", () => {
 
       // test register not enough fee
       await expect(backing.registerErc721Token(
-          2,
           originalToken.address,
           monkeyAttrContractOnDarwinia.address,
           monkeyAttrContractOnBsc.address,
           {value: ethers.utils.parseEther("9.9999999999")}
-      )).to.be.revertedWith("HelixApp:not enough fee to pay");
+      )).to.be.revertedWith("DarwiniaMessageHandle:not enough fee to pay");
       // test register successed
       await backing.registerErc721Token(
-          2,
           originalToken.address,
           monkeyAttrContractOnDarwinia.address,
           monkeyAttrContractOnBsc.address,
@@ -126,7 +137,6 @@ describe("darwinia<>bsc erc721 mapping token tests", () => {
       var mappedToken = await ethers.getContractAt("Erc721MappingToken", mappingTokenAddress);
       // test lock successful
       await expect(backing.lockAndRemoteIssuing(
-          2,
           originalToken.address,
           owner.address,
           [1001],
@@ -135,7 +145,7 @@ describe("darwinia<>bsc erc721 mapping token tests", () => {
       // balance before
       expect(await originalToken.ownerOf(1001)).to.equal(owner.address);
       expect(await mappedToken.totalSupply()).to.equal(0);
-      await backing.lockAndRemoteIssuing(2, originalToken.address, owner.address, [1001], {value: ethers.utils.parseEther("10.0")});
+      await backing.lockAndRemoteIssuing(originalToken.address, owner.address, [1001], {value: ethers.utils.parseEther("10.0")});
       await darwiniaOutboundLane.mock_confirm(2);
       // check lock and remote successed
       expect(await originalToken.ownerOf(1001)).to.equal(backing.address);
@@ -155,7 +165,7 @@ describe("darwinia<>bsc erc721 mapping token tests", () => {
       //approve to mapping-token-factory
       await mappedToken.approve(mtf.address, 1001);
       expect(await mappedToken.ownerOf(1001)).to.equal(owner.address);
-      await mtf.burnAndRemoteUnlockWaitingConfirm(1, mappingTokenAddress, owner.address, [1001], {value: ethers.utils.parseEther("10.0")});
+      await mtf.burnAndRemoteUnlockWaitingConfirm(mappingTokenAddress, owner.address, [1001], {value: ethers.utils.parseEther("10.0")});
       // before confirmed
       expect(await mappedToken.ownerOf(1001)).to.equal(mtf.address);
       // after confirmed

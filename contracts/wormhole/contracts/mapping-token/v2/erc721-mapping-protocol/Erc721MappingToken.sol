@@ -8,7 +8,6 @@
 pragma solidity >=0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/access/Ownable.sol";
-import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC721/IERC721.sol";
@@ -22,7 +21,6 @@ contract Erc721MappingToken is ERC165, IERC721Enumerable, IErc721MappingToken, I
     using Address for address;
     using Strings for uint256;
 
-    string public bridgedChainName;
     address public attributeSerializer;
 
     // for erc721 standard
@@ -51,9 +49,8 @@ contract Erc721MappingToken is ERC165, IERC721Enumerable, IErc721MappingToken, I
     // Mapping from token id to position in the allTokens array
     mapping(uint256 => uint256) private _allTokensIndex;
 
-    constructor(string memory _bridgedChainName, address _attributeSerializer) {
+    constructor(address _attributeSerializer) {
         _transferOwnership(_msgSender());
-        bridgedChainName = _bridgedChainName;
         attributeSerializer = _attributeSerializer;
     }
 

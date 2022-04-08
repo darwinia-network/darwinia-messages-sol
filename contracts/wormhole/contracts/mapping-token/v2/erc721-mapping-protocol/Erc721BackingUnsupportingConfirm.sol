@@ -11,13 +11,13 @@ pragma solidity ^0.8.10;
 // It only receive message from messageHandle, and send message by messageHandle
 
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC721/IERC721.sol";
+import "../Backing.sol";
 import "../../interfaces/IErc721AttrSerializer.sol";
 import "../../interfaces/IErc721Backing.sol";
 import "../../interfaces/IErc721MappingTokenFactory.sol";
 import "../../interfaces/IHelixMessageHandle.sol";
-import "../AccessController.sol";
 
-contract Erc721BackingUnsupportingConfirm is IErc721Backing, AccessController {
+contract Erc721BackingUnsupportingConfirm is Backing, IErc721Backing {
     struct TokenInfo {
         address token;
         address serializer;
@@ -25,24 +25,12 @@ contract Erc721BackingUnsupportingConfirm is IErc721Backing, AccessController {
     // tokenAddress => reistered
     mapping(address => TokenInfo) public registeredTokens;
 
-    address messageHandle;
-    address remoteMappingTokenFactory;
-
     event NewErc721TokenRegistered(address token);
     event TokenLocked(address token, address recipient, uint256[] ids);
     event TokenUnlocked(address token, address recipient, uint256[] ids);
 
-    modifier onlyMessageHandle() {
-        require(messageHandle == msg.sender, "Erc721BackingUnsupportingConfirm:Bad message handle");
-        _;
-    }
-
     function setMessageHandle(address _messageHandle) external onlyAdmin {
-        messageHandle = _messageHandle;
-    }
-
-    function setRemoteMappingTokenFactory(address _remoteMappingTokenFactory) external onlyAdmin {
-        remoteMappingTokenFactory = _remoteMappingTokenFactory;
+        _setMessageHandle(_messageHandle);
     }
 
     /**
@@ -59,7 +47,6 @@ contract Erc721BackingUnsupportingConfirm is IErc721Backing, AccessController {
         require(registeredTokens[token].token == address(0), "Erc721BackingUnsupportingConfirm:token has been registered");
         bytes memory newErc721Contract = abi.encodeWithSelector(
             IErc721MappingTokenFactory.newErc721Contract.selector,
-            address(this),
             token,
             remoteAttributesSerializer
         );
@@ -92,7 +79,6 @@ contract Erc721BackingUnsupportingConfirm is IErc721Backing, AccessController {
 
         bytes memory issueMappingToken = abi.encodeWithSelector(
             IErc721MappingTokenFactory.issueMappingToken.selector,
-            address(this),
             token,
             recipient,
             ids,
@@ -104,14 +90,12 @@ contract Erc721BackingUnsupportingConfirm is IErc721Backing, AccessController {
 
     /**
      * @notice this will be called by inboundLane when the remote mapping token burned and want to unlock the original token
-     * @param mappingTokenFactory the remote mapping token factory address
      * @param token the original token address
      * @param recipient the recipient who will receive the unlocked token
      * @param ids ids of the unlocked token
      * @param attrs the serialized data of the token's attributes may be updated from mapping token
      */
     function unlockFromRemote(
-        address mappingTokenFactory,
         address token,
         address recipient,
         uint256[] calldata ids,

@@ -5,11 +5,12 @@ import "../AccessController.sol";
 import "../../interfaces/ICrossChainFilter.sol";
 import "../../interfaces/IFeeMarket.sol";
 import "../../interfaces/IHelixApp.sol";
-import "../../interfaces/IHelixMessageHandle.sol";
+import "../../interfaces/IHelixMessageHandleSupportingConfirm.sol";
+import "../../interfaces/IInboundLane.sol";
 import "../../interfaces/IMessageCommitment.sol";
 import "../../interfaces/IOutboundLane.sol";
 
-contract DarwiniaMessageHandle is IHelixMessageHandle, ICrossChainFilter, AccessController {
+contract DarwiniaMessageHandle is IHelixMessageHandleSupportingConfirm, ICrossChainFilter, AccessController {
     address public feeMarket;
     uint32  public remoteChainPosition;
     address public remoteHelix;
@@ -21,6 +22,10 @@ contract DarwiniaMessageHandle is IHelixMessageHandle, ICrossChainFilter, Access
 
     event NewInBoundLaneAdded(uint32 bridgedLanePosition, address inboundLane);
     event NewOutBoundLaneAdded(uint32 bridgedLanePosition, address outboundLane);
+
+    constructor() {
+        _initialize(msg.sender);
+    }
 
     modifier onlyRemoteHelix(address _remoteHelix) {
         (,,uint32 bridgedChainPosition, uint32 bridgedLanePosition) = IMessageCommitment(msg.sender).getLaneInfo();
@@ -71,11 +76,16 @@ contract DarwiniaMessageHandle is IHelixMessageHandle, ICrossChainFilter, Access
         return remoteChainPosition == bridgedChainPosition && inboundLane == msg.sender && remoteHelix == sourceAccount;
     }
 
-    function sendMessage(address receiver, bytes calldata message) external onlyApp payable returns (uint256) {
-        bytes memory messageWithCaller = abi.encode(address(this), receiver, message);
+    function sendMessage(address receiver, bytes calldata message) external onlyCaller payable returns (uint256) {
+        bytes memory messageWithCaller = abi.encodeWithSelector(
+            DarwiniaMessageHandle.recvMessage.selector,
+            address(this),
+            receiver,
+            message
+        );
         uint256 fee = IFeeMarket(feeMarket).market_fee();
         require(msg.value >= fee, "DarwiniaMessageHandle:not enough fee to pay");
-        uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(remoteHelix, message);
+        uint256 messageId = IOutboundLane(outboundLane).send_message{value: fee}(remoteHelix, messageWithCaller);
         if (msg.value > fee) {
             payable(msg.sender).transfer(msg.value - fee);
         }
@@ -88,10 +98,16 @@ contract DarwiniaMessageHandle is IHelixMessageHandle, ICrossChainFilter, Access
         address receiver,
         bytes calldata message
     ) external onlyRemoteHelix(sender) whenNotPaused {
-        (address receiver, bytes memory payload) = abi.decode(message, (address, bytes)); 
-        require(hasRole(APP_ROLE, receiver), "DarwiniaMessageHandle:receiver is not app");
-        (bool result,) = receiver.call{value: 0}(payload);
+        require(hasRole(CALLER_ROLE, receiver), "DarwiniaMessageHandle:receiver is not caller");
+        (bool result,) = receiver.call{value: 0}(message);
         require(result, "DarwiniaMessageHandle:call app failed");
+    }
+
+    function latestRecvMessageId() external view returns(uint256) {
+        IInboundLane.InboundLaneNonce memory inboundLaneNonce = IInboundLane(inboundLane).inboundLaneNonce();
+        // todo we should transform this messageId to bridged outboundLane messageId
+        uint256 messageId = IInboundLane(inboundLane).encodeMessageKey(inboundLaneNonce.last_delivered_nonce);
+        return messageId;
     }
 
     function on_messages_delivered(

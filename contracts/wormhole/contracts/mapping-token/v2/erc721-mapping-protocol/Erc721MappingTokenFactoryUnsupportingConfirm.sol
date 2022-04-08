@@ -7,23 +7,18 @@
 pragma solidity ^0.8.10;
 
 import "./Erc721MappingToken.sol";
-import "../AccessController.sol";
 import "../MappingTokenFactory.sol";
 import "../../interfaces/IErc721AttrSerializer.sol";
 import "../../interfaces/IErc721Backing.sol";
 import "../../interfaces/IErc721MappingToken.sol";
 import "../../interfaces/IHelixMessageHandle.sol";
 
-contract Erc721MappingTokenFactoryUnsupportingConfirm is AccessController, MappingTokenFactory {
-    address messageHandle;
-    address remoteBacking;
-
+contract Erc721MappingTokenFactoryUnsupportingConfirm is MappingTokenFactory {
     event IssuingERC721Created(address originalToken, address mappingToken);
     event BurnAndRemoteUnlock(address sender, address recipient, address token, uint256[] ids);
 
-    modifier onlyMessageHandle() {
-        require(messageHandle == msg.sender, "Erc721MTFUnsupportingConfirm:Bad message handle");
-        _;
+    function setMessageHandle(address _messageHandle) external onlyAdmin {
+        _setMessageHandle(_messageHandle);
     }
 
     /**
@@ -40,17 +35,15 @@ contract Erc721MappingTokenFactoryUnsupportingConfirm is AccessController, Mappi
      * @notice create new erc721 mapping contract, this can only be called by inboundLane
      * @param originalToken the original token address
      * @param attrSerializer the serializer address of the attributes
-     * @param bridgedChainName bridged chain name
      */
     function newErc721Contract(
         address originalToken,
-        address attrSerializer,
-        string memory bridgedChainName
+        address attrSerializer
     ) public onlyMessageHandle whenNotPaused returns (address mappingToken) {
         bytes32 salt = keccak256(abi.encodePacked(remoteBacking, originalToken));
-        require(salt2MappingToken[salt] == address(0), "Erc721MappingTokenFactory:contract has been deployed");
+        require(salt2MappingToken[salt] == address(0), "Erc721MTFUnsupportingConfirm:contract has been deployed");
         bytes memory bytecode = type(Erc721MappingToken).creationCode;
-        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(bridgedChainName, attrSerializer));
+        bytes memory bytecodeWithInitdata = abi.encodePacked(bytecode, abi.encode(attrSerializer));
         mappingToken = _deploy(salt, bytecodeWithInitdata);
         _addMappingToken(salt, originalToken, mappingToken);
         emit IssuingERC721Created(originalToken, mappingToken);
@@ -70,8 +63,8 @@ contract Erc721MappingTokenFactoryUnsupportingConfirm is AccessController, Mappi
         bytes[] calldata attrs
     ) public onlyMessageHandle whenNotPaused {
         address mappingToken = getMappingToken(remoteBacking, originalToken);
-        require(mappingToken != address(0), "Erc721MappingTokenFactory:mapping token has not created");
-        require(ids.length > 0, "Erc721MappingTokenFactory:can not receive empty ids");
+        require(mappingToken != address(0), "Erc721MTFUnsupportingConfirm:mapping token has not created");
+        require(ids.length > 0, "Erc721MTFUnsupportingConfirm:can not receive empty ids");
         address serializer = IErc721MappingToken(mappingToken).attributeSerializer();
         for (uint idx = 0; idx < ids.length; idx++) {
             IErc721MappingToken(mappingToken).mint(recipient, ids[idx]);
@@ -92,9 +85,9 @@ contract Erc721MappingTokenFactoryUnsupportingConfirm is AccessController, Mappi
         address recipient,
         uint256[] memory ids 
     ) external payable whenNotPaused {
-        require(ids.length > 0, "Erc721MappingTokenFactory:can not transfer empty id");
+        require(ids.length > 0, "Erc721MTFUnsupportingConfirm:can not transfer empty id");
         address originalToken = mappingToken2OriginalToken[mappingToken];
-        require(originalToken != address(0), "Erc721MappingTokenFactory:token is not created by factory");
+        require(originalToken != address(0), "Erc721MTFUnsupportingConfirm:token is not created by factory");
         // Lock the fund in this before message on remote backing chain get dispatched successfully and burn finally
         // If remote backing chain unlock the origin token successfully, then this fund will be burned.
         // Otherwise, these tokens will be transfered back to the msg.sender.

@@ -6,17 +6,17 @@
 pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "../HelixApp.sol";
 import "../MappingTokenFactory.sol";
 import "../../interfaces/IBacking.sol";
 import "../../interfaces/IERC20.sol";
 import "../../interfaces/IGuard.sol";
-import "../../interfaces/IInboundLane.sol";
-import "../../interfaces/IMappingTokenFactory.sol";
+import "../../interfaces/IHelixMessageHandle.sol";
+import "../../interfaces/IHelixMessageHandleSupportingConfirm.sol";
+import "../../interfaces/IErc20MappingTokenFactory.sol";
 import "../../interfaces/IMessageCommitment.sol";
 import "../../../utils/DailyLimit.sol";
 
-contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFactory, MappingTokenFactory {
+contract Erc20MappingTokenFactorySupportingConfirm is DailyLimit, IErc20MappingTokenFactory, MappingTokenFactory {
     address public constant BLACK_HOLE_ADDRESS = 0x000000000000000000000000000000000000dEaD;
     struct UnconfirmedInfo {
         address sender;
@@ -35,6 +35,10 @@ contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFacto
     event IssuingERC20Created(address originalToken, address mappingToken);
     event BurnAndWaitingConfirm(uint256 messageId, address sender, address recipient, address token, uint256 amount);
     event RemoteUnlockConfirmed(uint256 messageId, bool result);
+
+    function setMessageHandle(address _messageHandle) external onlyAdmin {
+        _setMessageHandle(_messageHandle);
+    }
 
     receive() external payable {
     }
@@ -65,7 +69,6 @@ contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFacto
 
     /**
      * @notice create new erc20 mapping contract, this can only be called by inboundLane
-     * @param backingAddress the backingAddress which send this message
      * @param tokenType the original token type
      * @param originalToken the original token address
      * @param name the name of the original erc20 token
@@ -73,17 +76,15 @@ contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFacto
      * @param decimals the decimals of the original erc20 token
      */
     function newErc20Contract(
-        address backingAddress,
         uint32 tokenType,
         address originalToken,
         string memory bridgedChainName,
         string memory name,
         string memory symbol,
         uint8 decimals
-    ) public onlyRemoteHelix(backingAddress) whenNotPaused returns (address mappingToken) {
+    ) public onlyMessageHandle whenNotPaused returns (address mappingToken) {
         require(tokenType == 0 || tokenType == 1, "MappingTokenFactory:token type cannot mapping to erc20 token");
-        // (bridgeChainId, backingAddress, originalToken) pack a unique new contract salt
-        bytes32 salt = keccak256(abi.encodePacked(backingAddress, originalToken));
+        bytes32 salt = keccak256(abi.encodePacked(remoteBacking, originalToken));
         require(salt2MappingToken[salt] == address(0), "MappingTokenFactory:contract has been deployed");
         mappingToken = deployErc20Contract(salt, tokenType);
         IMappingToken(mappingToken).initialize(
@@ -106,27 +107,23 @@ contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFacto
 
     /**
      * @notice issue mapping token, only can be called by inboundLane
-     * @param backingAddress the backingAddress which send this message
      * @param originalToken the original token address
      * @param recipient the recipient of the issued mapping token
      * @param amount the amount of the issued mapping token
      */
     function issueMappingToken(
-        address backingAddress,
         address originalToken,
         address recipient,
         uint256 amount
-    ) public onlyRemoteHelix(backingAddress) whenNotPaused {
-        address mappingToken = getMappingToken(backingAddress, originalToken);
+    ) public onlyMessageHandle whenNotPaused {
+        address mappingToken = getMappingToken(remoteBacking, originalToken);
         require(mappingToken != address(0), "MappingTokenFactory:mapping token has not created");
         require(amount > 0, "MappingTokenFactory:can not receive amount zero");
         expendDailyLimit(mappingToken, amount);
         if (guard != address(0)) {
             IERC20(mappingToken).mint(address(this), amount);
             require(IERC20(mappingToken).approve(guard, amount), "MappingTokenFactory:approve token transfer to guard failed");
-            IInboundLane.InboundLaneNonce memory inboundLaneNonce = IInboundLane(msg.sender).inboundLaneNonce();
-            // todo we should transform this messageId to bridged outboundLane messageId
-            uint256 messageId = IInboundLane(msg.sender).encodeMessageKey(inboundLaneNonce.last_delivered_nonce);
+            uint256 messageId = IHelixMessageHandleSupportingConfirm(messageHandle).latestRecvMessageId();
             IGuard(guard).deposit(messageId, mappingToken, recipient, amount);
         } else {
             IERC20(mappingToken).mint(recipient, amount);
@@ -135,13 +132,11 @@ contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFacto
 
     /**
      * @notice burn mapping token and unlock remote original token, waiting for the confirm
-     * @param bridgedLanePosition the bridged lane position to send the unlock message
      * @param mappingToken the burt mapping token address
      * @param recipient the recipient of the remote unlocked token
      * @param amount the amount of the burn and unlock
      */
     function burnAndRemoteUnlockWaitingConfirm(
-        uint32 bridgedLanePosition,
         address mappingToken,
         address recipient,
         uint256 amount
@@ -162,7 +157,7 @@ contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFacto
             amount
         );
 
-        uint256 messageId = _sendMessage(bridgedLanePosition, unlockFromRemote);
+        uint256 messageId = IHelixMessageHandle(messageHandle).sendMessage{value: msg.value}(remoteBacking, unlockFromRemote);
         unlockRemoteUnconfirmed[messageId] = UnconfirmedInfo(msg.sender, mappingToken, amount);
         emit BurnAndWaitingConfirm(messageId, msg.sender, recipient, mappingToken, amount);
     }
@@ -172,10 +167,10 @@ contract FungibleMappingTokenFactory is HelixApp, DailyLimit, IMappingTokenFacto
      * @param messageId the message id, is used to identify the unlocked message
      * @param result the result of the remote backing's unlock, if false, the mapping token need to transfer back to the user, otherwise burt
      */
-    function on_messages_delivered(
+    function onMessageDelivered(
         uint256 messageId,
         bool result
-    ) external onlyOutBoundLane {
+    ) external onlyMessageHandle {
         UnconfirmedInfo memory info = unlockRemoteUnconfirmed[messageId];
         require(info.amount > 0 && info.sender != address(0) && info.mappingToken != address(0), "MappingTokenFactory:invalid unconfirmed message");
         if (result) {

@@ -6,8 +6,10 @@
 pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/access/Ownable.sol";
+import "@zeppelin-solidity-4.4.0/contracts/proxy/utils/Initializable.sol";
+import "./AccessController.sol";
 
-contract MappingTokenFactory {
+contract MappingTokenFactory is AccessController, Initializable {
     address[] public allMappingTokens;
     // salt=>mappingToken, the salt is derived from origin token on backing chain
     // so this is a mapping from origin to mapping token
@@ -15,6 +17,29 @@ contract MappingTokenFactory {
     // mappingToken=>info the info is the original token info
     // so this is a mapping from mappingToken to original token
     mapping(address => address) public mappingToken2OriginalToken;
+
+
+    address public messageHandle;
+    address public remoteBacking;
+
+    modifier onlyMessageHandle() {
+        require(messageHandle == msg.sender, "MappingTokenFactory:Bad message handle");
+        _;
+    }
+
+    function initialize(address _messageHandle, address _remoteBacking) public initializer {
+        _setMessageHandle(_messageHandle);
+        _setRemoteBacking(_remoteBacking);
+        _initialize(msg.sender);
+    }
+
+    function _setMessageHandle(address _messageHandle) internal {
+        messageHandle = _messageHandle;
+    }
+
+    function _setRemoteBacking(address _remoteBacking) internal {
+        remoteBacking = _remoteBacking;
+    }
 
     function _transferMappingTokenOwnership(address mappingToken, address new_owner) internal {
         Ownable(mappingToken).transferOwnership(new_owner);

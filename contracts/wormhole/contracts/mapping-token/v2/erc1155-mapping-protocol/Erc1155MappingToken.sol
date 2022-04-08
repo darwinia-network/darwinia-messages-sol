@@ -21,7 +21,6 @@ import "@zeppelin-solidity-4.4.0/contracts/utils/introspection/ERC165.sol";
 contract Erc1155MappingToken is ERC165, IERC1155, IERC1155MetadataURI, Ownable {
     using Address for address;
 
-    string  public bridgedChainName;
     address public metaDataAddress;
 
     // Mapping from token ID to account balances
@@ -30,9 +29,8 @@ contract Erc1155MappingToken is ERC165, IERC1155, IERC1155MetadataURI, Ownable {
     // Mapping from account to operator approvals
     mapping(address => mapping(address => bool)) private _operatorApprovals;
 
-    constructor(string memory _bridgedChainName, address _metaDataAddress) {
+    constructor(address _metaDataAddress) {
         _transferOwnership(_msgSender());
-        bridgedChainName = _bridgedChainName;
         metaDataAddress = _metaDataAddress;
     }
 

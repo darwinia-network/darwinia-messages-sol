@@ -10,12 +10,13 @@ pragma solidity ^0.8.10;
 // The AttributesSerializer must implement interfaces in IErc721AttrSerializer.
 
 import "@zeppelin-solidity-4.4.0/contracts/token/ERC721/IERC721.sol";
-import "../HelixApp.sol";
+import "../Backing.sol";
 import "../../interfaces/IErc721AttrSerializer.sol";
 import "../../interfaces/IErc721Backing.sol";
 import "../../interfaces/IErc721MappingTokenFactory.sol";
+import "../../interfaces/IHelixMessageHandle.sol";
 
-contract Erc721TokenBacking is IErc721Backing, HelixApp {
+contract Erc721BackingSupportingConfirm is Backing, IErc721Backing {
     struct LockedInfo {
         address token;
         address sender;
@@ -42,15 +43,17 @@ contract Erc721TokenBacking is IErc721Backing, HelixApp {
     event TokenRegisterFinished(uint256 messageId, bool result);
     event TokenUnlocked(address token, address recipient, uint256[] ids);
 
+    function setMessageHandle(address _messageHandle) external onlyAdmin {
+        _setMessageHandle(_messageHandle);
+    }
+
     /**
      * @notice reigister new erc721 token to the bridge. Only owner can do this.
-     * @param bridgedLanePosition the bridged lane positon, this register message will be delived to this lane position
      * @param token the original token address
      * @param attributesSerializer local serializer address of the token's attributes
      * @param remoteAttributesSerializer remote serializer address of the mapping token's attributes
      */
     function registerErc721Token(
-        uint32 bridgedLanePosition,
         address token,
         address attributesSerializer,
         address remoteAttributesSerializer
@@ -58,12 +61,11 @@ contract Erc721TokenBacking is IErc721Backing, HelixApp {
         require(registeredTokens[token].token == address(0), "Erc721Backing:token has been registered");
         bytes memory newErc721Contract = abi.encodeWithSelector(
             IErc721MappingTokenFactory.newErc721Contract.selector,
-            address(this),
             token,
-            remoteAttributesSerializer,
-            thisChainName
+            remoteAttributesSerializer
         );
-        uint256 messageId = _sendMessage(bridgedLanePosition, newErc721Contract);
+        uint256 messageId = IHelixMessageHandle(messageHandle).sendMessage{value: msg.value}(remoteMappingTokenFactory, newErc721Contract);
+        // save register info waiting for confirm
         registerMessages[messageId] = TokenInfo(token, attributesSerializer);
         emit NewErc721TokenRegistered(messageId, token);
     }
@@ -71,13 +73,11 @@ contract Erc721TokenBacking is IErc721Backing, HelixApp {
     /**
      * @notice lock original token and issuing mapping token from bridged chain
      * @dev maybe some tokens will take some fee when transfer
-     * @param bridgedLanePosition the bridged lane positon, this issuing message will be delived to this lane position
      * @param token the original token address
      * @param recipient the recipient who will receive the issued mapping token
      * @param ids ids of the locked token
      */
     function lockAndRemoteIssuing(
-        uint32 bridgedLanePosition,
         address token,
         address recipient,
         uint256[] calldata ids
@@ -95,13 +95,12 @@ contract Erc721TokenBacking is IErc721Backing, HelixApp {
 
         bytes memory issueMappingToken = abi.encodeWithSelector(
             IErc721MappingTokenFactory.issueMappingToken.selector,
-            address(this),
             token,
             recipient,
             ids,
             attrs
         );
-        uint256 messageId = _sendMessage(bridgedLanePosition, issueMappingToken);
+        uint256 messageId = IHelixMessageHandle(messageHandle).sendMessage{value: msg.value}(remoteMappingTokenFactory, issueMappingToken);
         lockMessages[messageId] = LockedInfo(token, msg.sender, ids);
         emit TokenLocked(messageId, token, recipient, ids);
     }
@@ -111,10 +110,10 @@ contract Erc721TokenBacking is IErc721Backing, HelixApp {
      * @param messageId message id to identify the register/lock message
      * @param result the result of the remote call
      */
-    function on_messages_delivered(
+    function onMessageDelivered(
         uint256 messageId,
         bool result
-    ) external onlyOutBoundLane {
+    ) external onlyMessageHandle {
         LockedInfo memory lockedInfo = lockMessages[messageId];
         // it is lock message, if result is false, need to transfer back to the user, otherwise will be locked here
         if (lockedInfo.token != address(0)) {
@@ -140,19 +139,17 @@ contract Erc721TokenBacking is IErc721Backing, HelixApp {
 
     /**
      * @notice this will be called by inboundLane when the remote mapping token burned and want to unlock the original token
-     * @param mappingTokenFactory the remote mapping token factory address
      * @param token the original token address
      * @param recipient the recipient who will receive the unlocked token
      * @param ids ids of the unlocked token
      * @param attrs the serialized data of the token's attributes may be updated from mapping token
      */
     function unlockFromRemote(
-        address mappingTokenFactory,
         address token,
         address recipient,
         uint256[] calldata ids,
         bytes[] calldata attrs
-    ) public onlyRemoteHelix(mappingTokenFactory) whenNotPaused {
+    ) public onlyMessageHandle whenNotPaused {
         TokenInfo memory info = registeredTokens[token];
         require(info.token != address(0), "Erc721Backing:the token is not registered");
         for (uint idx = 0; idx < ids.length; idx++) {

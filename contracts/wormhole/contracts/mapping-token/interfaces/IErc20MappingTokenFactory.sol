@@ -2,9 +2,8 @@
 
 pragma solidity >=0.8.10;
 
-interface IMappingTokenFactory {
+interface IErc20MappingTokenFactory {
     function newErc20Contract(
-        address backingAddress,
         uint32 tokenType,
         address originalToken,
         string memory bridgedChainName,
@@ -13,7 +12,6 @@ interface IMappingTokenFactory {
         uint8 decimals
     ) external returns (address mappingToken);
     function issueMappingToken(
-        address backingAddress,
         address originalToken,
         address recipient,
         uint256 amount

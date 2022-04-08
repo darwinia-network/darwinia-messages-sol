@@ -7,7 +7,7 @@ import "@zeppelin-solidity-4.4.0/contracts/security/Pausable.sol";
 contract AccessController is AccessControlEnumerable, Pausable {
     bytes32 public constant DAO_ADMIN_ROLE = keccak256("DAO_ADMIN_ROLE");
     bytes32 public constant OPERATOR_ROLE  = keccak256("OPERATOR_ROLE");
-    bytes32 public constant APP_ROLE       = keccak256("APP_ROLE");
+    bytes32 public constant CALLER_ROLE    = keccak256("CALLER_ROLE");
 
     // access controller
     // admin is helix Dao
@@ -22,12 +22,13 @@ contract AccessController is AccessControlEnumerable, Pausable {
         _;
     }
 
-    modifier onlyApp() {
-        require(hasRole(APP_ROLE, msg.sender), "cBridgeMessageHandle:Bad app role");
+    modifier onlyCaller() {
+        require(hasRole(CALLER_ROLE, msg.sender), "AccessController:Bad call role");
         _;
     }
 
     function _initialize(address admin) internal {
+        _setRoleAdmin(CALLER_ROLE, DAO_ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, DAO_ADMIN_ROLE);
         _setRoleAdmin(DAO_ADMIN_ROLE, DAO_ADMIN_ROLE);
         _setupRole(DAO_ADMIN_ROLE, admin);

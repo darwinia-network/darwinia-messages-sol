@@ -2,15 +2,16 @@
 pragma solidity ^0.8.10;
 
 import "@zeppelin-solidity-4.4.0/contracts/utils/math/SafeMath.sol";
-import "../HelixApp.sol";
+import "../Backing.sol";
 import "../../interfaces/IBacking.sol";
 import "../../interfaces/IERC20.sol";
 import "../../interfaces/IGuard.sol";
-import "../../interfaces/IInboundLane.sol";
-import "../../interfaces/IMappingTokenFactory.sol";
+import "../../interfaces/IHelixMessageHandle.sol";
+import "../../interfaces/IHelixMessageHandleSupportingConfirm.sol";
+import "../../interfaces/IErc20MappingTokenFactory.sol";
 import "../../../utils/DailyLimit.sol";
 
-contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
+contract Erc20BackingSupportingConfirm is Backing, DailyLimit, IBacking {
     using SafeMath for uint256;
     struct LockedInfo {
         address token;
@@ -20,6 +21,7 @@ contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
     uint32 public constant NATIVE_TOKEN_TYPE = 0;
     uint32 public constant ERC20_TOKEN_TYPE = 1;
     address public guard;
+    string public chainName;
 
     // (messageId => tokenAddress)
     mapping(uint256 => address) public registerMessages;
@@ -36,6 +38,17 @@ contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
     event TokenRegisterFinished(uint256 messageId, bool result);
     event TokenUnlocked(address token, address recipient, uint256 amount);
 
+    receive() external payable {
+    }
+
+    function setMessageHandle(address _messageHandle) external onlyAdmin {
+        _setMessageHandle(_messageHandle);
+    }
+
+    function setChainName(string memory _chainName) external onlyAdmin {
+        chainName = _chainName;
+    }
+
     function changeDailyLimit(address mappingToken, uint amount) public onlyAdmin  {
         _changeDailyLimit(mappingToken, amount);
     }
@@ -46,14 +59,12 @@ contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
 
     /**
      * @notice reigister new erc20 token to the bridge. Only owner can do this.
-     * @param bridgedLanePosition the bridged lane positon, this register message will be delived to this lane position
      * @param token the original token address
      * @param name the name of the original token
      * @param symbol the symbol of the original token
      * @param decimals the decimals of the original token
      */
     function registerErc20Token(
-        uint32 bridgedLanePosition,
         address token,
         string memory name,
         string memory symbol,
@@ -62,16 +73,15 @@ contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
         require(registeredTokens[token] == false, "Backing:token has been registered");
 
         bytes memory newErc20Contract = abi.encodeWithSelector(
-            IMappingTokenFactory.newErc20Contract.selector,
-            address(this),
+            IErc20MappingTokenFactory.newErc20Contract.selector,
             ERC20_TOKEN_TYPE,
             token,
-            thisChainName,
+            chainName,
             name,
             symbol,
             decimals
         );
-        uint256 messageId = _sendMessage(bridgedLanePosition, newErc20Contract);
+        uint256 messageId = IHelixMessageHandle(messageHandle).sendMessage{value: msg.value}(remoteMappingTokenFactory, newErc20Contract);
         registerMessages[messageId] = token;
         emit NewErc20TokenRegistered(messageId, token);
     }
@@ -79,13 +89,11 @@ contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
     /**
      * @notice lock original token and issuing mapping token from bridged chain
      * @dev maybe some tokens will take some fee when transfer
-     * @param bridgedLanePosition the bridged lane positon, this issuing message will be delived to this lane position
      * @param token the original token address
      * @param recipient the recipient who will receive the issued mapping token
      * @param amount amount of the locked token
      */
     function lockAndRemoteIssuing(
-        uint32 bridgedLanePosition,
         address token,
         address recipient,
         uint256 amount
@@ -97,13 +105,12 @@ contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
         uint256 balanceAfter = IERC20(token).balanceOf(address(this));
         require(balanceBefore.add(amount) == balanceAfter, "Backing:Transfer amount is invalid");
         bytes memory issueMappingToken = abi.encodeWithSelector(
-            IMappingTokenFactory.issueMappingToken.selector,
-            address(this),
+            IErc20MappingTokenFactory.issueMappingToken.selector,
             token,
             recipient,
             amount
         );
-        uint256 messageId = _sendMessage(bridgedLanePosition, issueMappingToken);
+        uint256 messageId = IHelixMessageHandle(messageHandle).sendMessage{value: msg.value}(remoteMappingTokenFactory, issueMappingToken);
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
         emit TokenLocked(messageId, token, recipient, amount);
     }
@@ -113,10 +120,10 @@ contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
      * @param messageId message id to identify the register/lock message
      * @param result the result of the remote call
      */
-    function on_messages_delivered(
+    function onMessageDelivered(
         uint256 messageId,
         bool result
-    ) external onlyOutBoundLane {
+    ) external onlyMessageHandle {
         LockedInfo memory lockedInfo = lockMessages[messageId];
         // it is lock message, if result is false, need to transfer back to the user, otherwise will be locked here
         if (lockedInfo.token != address(0)) {
@@ -150,13 +157,11 @@ contract FungibleTokenBacking is DailyLimit, IBacking, HelixApp {
         address token,
         address recipient,
         uint256 amount
-    ) public onlyRemoteHelix(mappingTokenFactory) whenNotPaused {
+    ) public onlyMessageHandle whenNotPaused {
         expendDailyLimit(token, amount);
         if (guard != address(0)) {
             require(IERC20(token).approve(guard, amount), "Backing:approve token transfer to guard failed");
-            IInboundLane.InboundLaneNonce memory inboundLaneNonce = IInboundLane(msg.sender).inboundLaneNonce();
-            // todo we should transform this messageId to bridged outboundLane messageId
-            uint256 messageId = IInboundLane(msg.sender).encodeMessageKey(inboundLaneNonce.last_delivered_nonce);
+            uint256 messageId = IHelixMessageHandleSupportingConfirm(messageHandle).latestRecvMessageId();
             IGuard(guard).deposit(messageId, token, recipient, amount);
         } else {
             require(IERC20(token).transfer(recipient, amount), "Backing:unlock transfer failed");
