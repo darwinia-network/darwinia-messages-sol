@@ -408,7 +408,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      function get_power_of_two_ceil(uint256 x) internal pure returns (uint256) {
          if (x <= 1) return 1;
          else if (x == 2) return 2;
-         else return 2 * get_power_of_two_ceil((x + 1) / 2);
+         else return 2 * get_power_of_two_ceil((x + 1) >> 1);
      }
 
     function verifyValidatorProofSignatures(
@@ -445,7 +445,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
          *  @dev For each randomSignature, do:
          */
         bytes32[] memory leaves = new bytes32[](requiredNumOfSignatures);
-        for (uint256 i = 0; i < requiredNumOfSignatures; i++) {
+        for (uint256 i = 0; i < requiredNumOfSignatures; ++i) {
             uint8 pos = uint8(proof.positions[i]);
 
             require(pos < len, "Bridge: invalid signer position");

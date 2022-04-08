@@ -38,7 +38,7 @@ library SparseMerkleProof {
         uint256 depth = proof.length;
         uint256 index = (1 << depth) + pos;
         bytes32 value = leaf;
-        for (uint256 i = 0; i < depth; i++) {
+        for (uint256 i = 0; i < depth; ++i) {
             if (index & 1 == 0) {
                 value = hash_node(value, proof[i]);
             } else {

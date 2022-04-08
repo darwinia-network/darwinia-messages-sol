@@ -28,8 +28,6 @@ contract Bitfield {
     uint256 internal constant M128 =
         0x00000000000000000000000000000000ffffffffffffffffffffffffffffffff;
 
-    uint256 internal constant ONE = uint256(1);
-
     uint256[20] internal BIG_PRIME = [
         1000003,1000033,1000037,1000039,1000081,1000099,1000117,1000121,1000133,1000151,
         1000159,1000171,1000183,1000187,1000193,1000199,1000211,1000213,1000231,1000249
@@ -55,20 +53,17 @@ contract Bitfield {
         );
 
         uint256 prime = BIG_PRIME[seed%20];
-        uint256 begin = seed % 256 + 1;
+        uint256 begin = seed % 256;
         uint256 found = 0;
 
-        for (uint256 i = 0; found < n; i++) {
+        for (uint256 i = 0; found < n; ++i) {
             uint8 index = uint8((prime * (begin + i)) % length);
 
             // require randomly seclected bit to be set in prior
-            if (!isSet(prior, index)) {
-                continue;
+            if ((prior >> index) & 1 == 1) {
+                bitfield = set(bitfield, index);
+                found++;
             }
-
-            bitfield = set(bitfield, index);
-
-            found++;
         }
 
         return bitfield;
@@ -79,7 +74,8 @@ contract Bitfield {
         pure
         returns (uint256 bitfield)
     {
-        for (uint256 i = 0; i < bitsToSet.length; i++) {
+        uint256 length = bitsToSet.length;
+        for (uint256 i = 0; i < length; ++i) {
             bitfield = set(bitfield, bitsToSet[i]);
         }
 
