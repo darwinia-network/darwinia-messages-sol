@@ -4,10 +4,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Sub2SubMappingTokenFactory
-    network: pangolin
+    network: crab
     source:
-      address: "0x92496871560a01551E1B4fD04540D7A519D5C19e"
+      address: "0x3CC8913088F79831c8335f0307f4FC92d79C1ac7"
       abi: Sub2SubMappingTokenFactory
+      startBlock: 8304800
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
