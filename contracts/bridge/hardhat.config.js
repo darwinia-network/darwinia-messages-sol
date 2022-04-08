@@ -38,31 +38,20 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.8.11",
+        version: "0.7.6",
         settings: {
-          evmVersion: "istanbul",
           optimizer: {
             enabled: true,
-            runs: 999999
+            runs: 999999,
           },
-          outputSelection: {
-            "*": {
-              "*": [
-                "abi",
-                "storageLayout",
-                "devdoc",
-                "metadata",
-                "evm.bytecode.object",
-                "evm.bytecode.sourceMap",
-                "evm.deployedBytecode.object",
-                "evm.deployedBytecode.sourceMap",
-                "evm.methodIdentifiers"
-              ],
-              "": ["ast"]
-            }
-          }
-        }
-      }
+          metadata: {
+            // do not include the metadata hash, since this is machine dependent
+            // and we want all generated code to be deterministic
+            // https://docs.soliditylang.org/en/v0.7.6/metadata.html
+            bytecodeHash: 'none',
+          },
+        },
+      },
     ]
   },
   paths: {
