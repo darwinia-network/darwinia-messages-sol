@@ -44,7 +44,7 @@ library SparseMerkleProof {
             } else {
                 value = hash_node(proof[i], value);
             }
-            index /= 2;
+            index = index >> 1;
         }
         return value == root && index == 1;
     }
@@ -80,8 +80,9 @@ library SparseMerkleProof {
         uint256 di = 0;
 
         // Queue the leafs
+        uint256 offset = 1 << depth;
         for(; tail < n; ++tail) {
-            tree_indices[tail] = (1 << depth) + uint8(indices[tail]);
+            tree_indices[tail] = offset + uint8(indices[tail]);
             hashes[tail] = leaves[tail];
         }
 
@@ -105,7 +106,7 @@ library SparseMerkleProof {
             } else {
                 hash = hash_node(decommitments[di++], hash);
             }
-            tree_indices[tail] = index / 2;
+            tree_indices[tail] = index >> 1;
             hashes[tail] = hash;
             tail = (tail + 1) % (n + 1);
         }
