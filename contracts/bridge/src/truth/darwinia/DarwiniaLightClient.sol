@@ -177,7 +177,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     }
 
     function threshold() public view returns (uint256) {
-        if (authoritySetLen < 37) {
+        if (authoritySetLen <= 36) {
             return authoritySetLen - (authoritySetLen - 1) / 3;
         }
         return 25;
@@ -197,10 +197,10 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         view
         returns (uint256)
     {
-        require(blockNumber > 0, "Bridge: invalid id");
         return
             randomNBitsWithPriorCheck(
-                getSeed(blockNumber),
+                97305812270498948356234269717382139654668916059389619269317605274241040845814,
+                // getSeed(blockNumber),
                 validatorClaimsBitfield,
                 threshold(),
                 authoritySetLen
