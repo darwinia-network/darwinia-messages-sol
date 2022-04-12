@@ -71,12 +71,12 @@ contract DarwiniaLightClientTest is DSTest {
             p,
             signature
         );
-        assertEq(lightclient.newSignatureCommitment{value: 4 wei}(
+        uint32 id = lightclient.newSignatureCommitment{value: 4 wei}(
             commitmentHash,
             validatorClaimsBitfield,
             proof
-            ),
-        1);
+            );
+        assertEq(uint256(id), 1);
     }
 
     function perform_phase_2() internal {

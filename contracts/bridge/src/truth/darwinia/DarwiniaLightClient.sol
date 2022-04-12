@@ -3,7 +3,6 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "./BEEFYAuthorityRegistry.sol";
 import "../../utils/ECDSA.sol";
 import "../../utils/Bitfield.sol";
 import "../../utils/SparseMerkleProof.sol";
@@ -16,9 +15,11 @@ import "../../interfaces/ILightClient.sol";
  * @notice The light client is the trust layer of the bridge
  * @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
  */
-contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, BEEFYAuthorityRegistry {
+contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme {
 
     /* Events */
+
+    event BEEFYAuthoritySetUpdated(uint64 id, uint32 len, bytes32 root);
 
     /**
      * @notice Notifies an observer that the prover's attempt at initital
@@ -50,7 +51,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
 
     event CleanExpiredCommitment(uint256 id);
 
-    event NewMessageRoot(bytes32 messageRoot, uint256 blockNumber);
+    event NewMessageRoot(bytes32 messageRoot, uint32 blockNumber);
 
     /* Types */
 
@@ -114,10 +115,18 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
 
     /* State */
 
-    uint256 public currentId;
+    struct Slot0 {
+        uint64 authoritySetId;
+        uint32 authoritySetLen;
+
+        uint32 currentId;
+        uint32 latestBlockNumber;
+    }
+
+    Slot0 public slot0;
+    bytes32 public authoritySetRoot;
     bytes32 public latestChainMessagesRoot;
-    uint256 public latestBlockNumber;
-    mapping(uint256 => ValidationData) public validationData;
+    mapping(uint32 => ValidationData) public validationData;
 
     /* Constants */
 
@@ -169,21 +178,22 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     }
 
     function getFinalizedBlockNumber() external view returns (uint256) {
-        return latestBlockNumber;
+        return slot0.latestBlockNumber;
     }
 
-    function validatorBitfield(uint256 id) external view returns (uint256) {
+    function validatorBitfield(uint32 id) external view returns (uint256) {
         return validationData[id].validatorClaimsBitfield;
     }
 
     function threshold() public view returns (uint256) {
-        if (authoritySetLen <= 36) {
-            return authoritySetLen - (authoritySetLen - 1) / 3;
+        uint32 _authoritySetLen = slot0.authoritySetLen;
+        if (_authoritySetLen <= 36) {
+            return _authoritySetLen - (_authoritySetLen - 1) / 3;
         }
         return 25;
     }
 
-    function createRandomBitfield(uint256 id)
+    function createRandomBitfield(uint32 id)
         public
         view
         returns (uint256)
@@ -203,7 +213,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
                 // getSeed(blockNumber),
                 validatorClaimsBitfield,
                 threshold(),
-                authoritySetLen
+                slot0.authoritySetLen
             );
     }
 
@@ -285,12 +295,13 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         bytes32 commitmentHash,
         uint256 validatorClaimsBitfield,
         CommitmentSingleProof calldata commitmentSingleProof
-    ) external payable returns (uint256) {
+    ) external payable returns (uint32) {
+        uint32 _authoritySetLen = slot0.authoritySetLen;
         /**
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, >= 2/3 + 1
          */
         require(
-            countSetBits(validatorClaimsBitfield) >= authoritySetLen - (authoritySetLen - 1) / 3,
+            countSetBits(validatorClaimsBitfield) >= _authoritySetLen - (_authoritySetLen - 1) / 3,
             "Bridge: Bitfield not enough validators"
         );
 
@@ -298,7 +309,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
             commitmentSingleProof.signature,
             authoritySetRoot,
             commitmentSingleProof.signer,
-            authoritySetLen,
+            _authoritySetLen,
             commitmentSingleProof.position,
             commitmentSingleProof.proof,
             commitmentHash
@@ -310,17 +321,19 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         require(msg.value == MIN_SUPPORT, "Bridge: Collateral mismatch");
 
         // Accept and save the commitment
-        validationData[currentId] = ValidationData(
+        uint32 _currentId = slot0.currentId;
+        validationData[_currentId] = ValidationData(
             msg.sender,
             uint32(block.number),
             commitmentHash,
             validatorClaimsBitfield
         );
 
-        emit InitialVerificationSuccessful(msg.sender, block.number, currentId);
+        emit InitialVerificationSuccessful(msg.sender, block.number, _currentId);
 
-        currentId = currentId + 1;
-        return currentId;
+        _currentId = _currentId + 1;
+        slot0.currentId = _currentId;
+        return _currentId;
     }
 
     /**
@@ -330,7 +343,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param validatorProof a struct containing the data needed to verify all validator signatures
      */
     function completeSignatureCommitment(
-        uint256 id,
+        uint32 id,
         Commitment calldata commitment,
         CommitmentMultiProof calldata validatorProof
     ) external payable {
@@ -355,7 +368,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @notice Clean up the expired commitment and slash
      * @param id the identifier generated by submit commitment
      */
-    function cleanExpiredCommitment(uint256 id) external {
+    function cleanExpiredCommitment(uint32 id) external {
         ValidationData storage data = validationData[id];
         require(block.number > data.blockNumber + BLOCK_WAIT_PERIOD + 256, "Bridge: Only expired");
         payable(SLASH_VAULT).transfer(MIN_SUPPORT);
@@ -366,7 +379,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     /* Private Functions */
 
     function verifyCommitment(
-        uint256 id,
+        uint32 id,
         Commitment calldata commitment,
         CommitmentMultiProof calldata validatorProof
     ) private view {
@@ -418,7 +431,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
     ) private view {
         verifyProofSignatures(
             authoritySetRoot,
-            authoritySetLen,
+            slot0.authoritySetLen,
             randomBitfield,
             proof,
             threshold(),
@@ -574,10 +587,10 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
      * @param payload The payload variable passed in via the initial function
      * @param blockNumber The blockNumber variable passed in via the initial function
      */
-    function processPayload(Payload calldata payload, uint256 blockNumber) private returns (bool) {
-        if (blockNumber > latestBlockNumber) {
+    function processPayload(Payload calldata payload, uint32 blockNumber) private returns (bool) {
+        if (blockNumber > slot0.latestBlockNumber) {
             latestChainMessagesRoot = payload.messageRoot;
-            latestBlockNumber = blockNumber;
+            slot0.latestBlockNumber = blockNumber;
 
             applyAuthoritySetChanges(
                 payload.nextValidatorSet.id,
@@ -603,8 +616,9 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         uint32 newAuthoritySetLen,
         bytes32 newAuthoritySetRoot
     ) private {
-        require(newAuthoritySetId == authoritySetId || newAuthoritySetId == authoritySetId + 1, "Bridge: Invalid new validator set id");
-        if (newAuthoritySetId == authoritySetId + 1) {
+        uint64 _authoritySetId = slot0.authoritySetId;
+        require(newAuthoritySetId == _authoritySetId || newAuthoritySetId == _authoritySetId + 1, "Bridge: Invalid new validator set id");
+        if (newAuthoritySetId == _authoritySetId + 1) {
             require(newAuthoritySetLen < 257, "Bridge: Authority set too large");
             _updateAuthoritySet(
                 newAuthoritySetId,
@@ -614,4 +628,16 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, B
         }
     }
 
+    /**
+     * @notice Updates the current authority set
+     * @param _authoritySetId The new authority set id
+     * @param _authoritySetLen The new length of authority set
+     * @param _authoritySetRoot The new authority set root
+     */
+    function _updateAuthoritySet(uint64 _authoritySetId, uint32 _authoritySetLen, bytes32 _authoritySetRoot) internal {
+        slot0.authoritySetId = _authoritySetId;
+        slot0.authoritySetLen = _authoritySetLen;
+        authoritySetRoot = _authoritySetRoot;
+        emit BEEFYAuthoritySetUpdated(_authoritySetId, _authoritySetLen, _authoritySetRoot);
+    }
 }
