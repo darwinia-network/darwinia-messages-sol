@@ -132,7 +132,7 @@ describe("Light Client Gas Usage", function () {
     await mine(20);
     // await sleep(1000 * 100)
 
-    const lastId = (await beefyLightClient.currentId()).sub(BigNumber.from(1));
+    const lastId = await beefyLightClient.getCurrentId() - 1;
 
     const completeValidatorProofs = await createCompleteValidatorProofs(lastId, beefyLightClient, allValidatorProofs, fixture);
 

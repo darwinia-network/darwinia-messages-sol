@@ -181,6 +181,10 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme {
         return slot0.latestBlockNumber;
     }
 
+    function getCurrentId() external view returns (uint32) {
+        return slot0.currentId;
+    }
+
     function validatorBitfield(uint32 id) external view returns (uint256) {
         return validationData[id].validatorClaimsBitfield;
     }
