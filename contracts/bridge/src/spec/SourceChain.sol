@@ -103,8 +103,9 @@ contract SourceChain {
         pure
         returns (bytes32)
     {
-        bytes memory encoded = abi.encode(msgs.length);
-        for (uint256 i = 0; i < msgs.length; i ++) {
+        uint msgsLength = msgs.length;
+        bytes memory encoded = abi.encode(msgsLength);
+        for (uint256 i = 0; i < msgsLength; i ++) {
             Message memory message = msgs[i];
             encoded = abi.encodePacked(
                 encoded,

@@ -76,7 +76,7 @@ contract DarwiniaLightClientTest is DSTest {
             validatorClaimsBitfield,
             proof
             );
-        assertEq(uint256(id), 1);
+        assertEq(uint256(id), 0);
     }
 
     function perform_phase_2() internal {

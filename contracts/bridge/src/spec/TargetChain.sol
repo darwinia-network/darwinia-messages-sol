@@ -103,8 +103,9 @@ contract TargetChain {
         pure
         returns (bytes32)
     {
-        bytes memory encoded = abi.encode(relayers.length);
-        for (uint256 i = 0; i < relayers.length; i ++) {
+        uint relayersLength = relayers.length;
+        bytes memory encoded = abi.encode(relayersLength);
+        for (uint256 i = 0; i < relayersLength; i ++) {
             UnrewardedRelayer memory r = relayers[i];
             encoded = abi.encodePacked(
                 encoded,
