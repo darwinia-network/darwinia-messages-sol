@@ -189,7 +189,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme {
         return validationData[id].validatorClaimsBitfield;
     }
 
-    function threshold(uint32 len) public view returns (uint256) {
+    function threshold(uint32 len) public pure returns (uint256) {
         if (len <= 36) {
             return len - (len - 1) / 3;
         }
@@ -300,12 +300,12 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme {
         uint256 validatorClaimsBitfield,
         CommitmentSingleProof calldata commitmentSingleProof
     ) external payable returns (uint32) {
-        uint32 _authoritySetLen = slot0.authoritySetLen;
+        uint32 len = slot0.authoritySetLen;
         /**
          * @dev Check that the bitfield actually contains enough claims to be succesful, ie, >= 2/3 + 1
          */
         require(
-            countSetBits(validatorClaimsBitfield) >= _authoritySetLen - (_authoritySetLen - 1) / 3,
+            countSetBits(validatorClaimsBitfield) >= len - (len - 1) / 3,
             "Bridge: Bitfield not enough validators"
         );
 
@@ -313,7 +313,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme {
             commitmentSingleProof.signature,
             authoritySetRoot,
             commitmentSingleProof.signer,
-            _authoritySetLen,
+            len,
             commitmentSingleProof.position,
             commitmentSingleProof.proof,
             commitmentHash

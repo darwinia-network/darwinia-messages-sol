@@ -68,13 +68,13 @@ library SparseMerkleProof {
         pure
         returns (bool)
     {
-        uint256 n = leaves.length;
-        require(n <= 32, "LENGTH_TOO_LARGE");
         require(depth <= 8, "DEPTH_TOO_LARGE");
+        uint256 n = leaves.length;
+        uint256 n1 = n + 1;
 
         // Dynamically allocate index and hash queue
-        uint256[] memory tree_indices = new uint256[](n + 1);
-        bytes32[] memory hashes = new bytes32[](n + 1);
+        uint256[] memory tree_indices = new uint256[](n1);
+        bytes32[] memory hashes = new bytes32[](n1);
         uint256 head = 0;
         uint256 tail = 0;
         uint256 di = 0;
@@ -90,7 +90,7 @@ library SparseMerkleProof {
         while (true) {
             uint256 index = tree_indices[head];
             bytes32 hash = hashes[head];
-            head = (head + 1) % (n + 1);
+            head = (head + 1) % n1;
 
             // Merkle root
             if (index == 1) {
@@ -101,14 +101,14 @@ library SparseMerkleProof {
             // Odd node with sibbling in the queue
             } else if (head != tail && tree_indices[head] == index - 1) {
                 hash = hash_node(hashes[head], hash);
-                head = (head + 1) % (n + 1);
+                head = (head + 1) % n1;
             // Odd node with sibbling from decommitments
             } else {
                 hash = hash_node(decommitments[di++], hash);
             }
             tree_indices[tail] = index >> 1;
             hashes[tail] = hash;
-            tail = (tail + 1) % (n + 1);
+            tail = (tail + 1) % n1;
         }
 
         // resolve warning
