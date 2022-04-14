@@ -97,7 +97,7 @@ describe("async message relay tests", () => {
   before(async () => {
     ({ feeMarket, outbound, inbound } = await waffle.loadFixture(Fixure))
     const NormalApp = await ethers.getContractFactory("NormalApp")
-    normalApp = await NormalApp.deploy()
+    normalApp = await NormalApp.deploy("0x0000000000000000000000000000000000000000")
     outbound.rely(normalApp.address)
     log(" out bound lane                                   ->      in bound lane")
     log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")

@@ -119,23 +119,6 @@ contract SourceChain {
         return keccak256(encoded);
     }
 
-    function hash(MessageKey memory key)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(
-            abi.encode(
-                MESSAGEKEY_TYPEHASH,
-                key.this_chain_id,
-                key.this_lane_id,
-                key.bridged_chain_id,
-                key.bridged_lane_id,
-                key.nonce
-            )
-        );
-    }
-
     function hash(MessagePayload memory payload)
         internal
         pure

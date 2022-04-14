@@ -11,6 +11,7 @@ contract MockFeeMarket is IFeeMarket {
     }
 
     function assign(uint256) external payable override returns(bool) {
+        require(msg.value == 1 ether, "!fee");
         return true;
     }
     function settle(DeliveredRelayer[] calldata, address) external pure override returns(bool) {

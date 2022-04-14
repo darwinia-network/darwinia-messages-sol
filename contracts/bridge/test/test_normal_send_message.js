@@ -84,7 +84,7 @@ describe("send message tests", () => {
     await feeMarket.connect(addr2).deposit(overrides)
 
     const NormalApp = await ethers.getContractFactory("NormalApp")
-    normalApp = await NormalApp.deploy()
+    normalApp = await NormalApp.deploy("0x0000000000000000000000000000000000000000")
     outbound.rely(normalApp.address)
     log(" out bound lane                                   ->      in bound lane")
     log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")

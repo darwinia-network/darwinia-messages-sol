@@ -93,7 +93,8 @@ contract TargetChain {
             abi.encode(
                 INBOUNDLANEDATA_TYPEHASH,
                 hash(inboundLaneData.relayers),
-                inboundLaneData.last_confirmed_nonce
+                inboundLaneData.last_confirmed_nonce,
+                inboundLaneData.last_delivered_nonce
             )
         );
     }

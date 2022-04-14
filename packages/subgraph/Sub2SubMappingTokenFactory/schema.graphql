@@ -7,9 +7,10 @@ type BurnRecordEntity @entity {
   sender: Bytes! # address
   recipient: Bytes! # address
   token: Bytes! # address
-  amount: BigInt!
-  start_timestamp: BigInt!
+  amount: BigInt
+  start_timestamp: BigInt
   end_timestamp: BigInt
+  fee: BigInt
   result: Int
 }
 
@@ -21,4 +22,10 @@ type LockRecordEntity @entity {
   recipient: Bytes!
   amount: BigInt!
   transaction: Bytes!
+}
+
+type BurnDailyStatistic @entity {
+  id: ID!
+  dailyVolume: BigInt!
+  dailyCount: Int
 }
