@@ -2,6 +2,7 @@
   "commitment": {
     "payload": {
       "network": "0x4372616200000000000000000000000000000000000000000000000000000000",
+      "mmr": "0x2c0a2fc1108ee004f48eec805ed60e9d7c364106389f67bf7667a36769a42eb6",
       "messageRoot": "0xaeaa48e8dbb7563f0a7037a924a3361de9c70b4871153f33b22dc641dcc66cff",
       "nextValidatorSet": {
         "id": 1,

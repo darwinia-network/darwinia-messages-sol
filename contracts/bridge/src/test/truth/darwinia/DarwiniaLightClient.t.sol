@@ -83,6 +83,7 @@ contract DarwiniaLightClientTest is DSTest {
         BEEFYCommitmentScheme.NextValidatorSet memory set = BEEFYCommitmentScheme.NextValidatorSet(1, 3, 0x92622f8520ac4c57e72783387099b2bc696523782c5e5fae137faff102268e07);
         BEEFYCommitmentScheme.Payload memory payload = BEEFYCommitmentScheme.Payload(
             0x4372616200000000000000000000000000000000000000000000000000000000,
+            0x2c0a2fc1108ee004f48eec805ed60e9d7c364106389f67bf7667a36769a42eb6,
             0xaeaa48e8dbb7563f0a7037a924a3361de9c70b4871153f33b22dc641dcc66cff,
             set
         );

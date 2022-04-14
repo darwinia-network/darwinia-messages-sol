@@ -139,7 +139,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme {
      * @dev Block wait period after `newSignatureCommitment` to pick the random block hash
      *  120000000/2^25 = 3.57 ether is recommended for Ethereum
     */
-    uint256 public constant MIN_SUPPORT = 4 wei;
+    uint256 public constant MIN_SUPPORT = 4 ether;
 
     /**
      * @dev A vault to store expired commitment or malicious commitment slashed asset
@@ -213,8 +213,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme {
     {
         return
             randomNBitsWithPriorCheck(
-                97305812270498948356234269717382139654668916059389619269317605274241040845814,
-                // getSeed(blockNumber),
+                // 97305812270498948356234269717382139654668916059389619269317605274241040845814,
+                getSeed(blockNumber),
                 validatorClaimsBitfield,
                 threshold(len),
                 len

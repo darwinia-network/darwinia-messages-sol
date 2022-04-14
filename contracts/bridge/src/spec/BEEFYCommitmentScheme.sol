@@ -23,11 +23,13 @@ contract BEEFYCommitmentScheme {
     /**
      * The payload being signed
      * @param network Source chain network identifier
+     * @param mmr MMR root hash
      * @param messageRoot Darwnia message root commitment hash
      * @param nextValidatorSet Next BEEFY authority set
     */
     struct Payload {
         bytes32 network;
+        bytes32 mmr;
         bytes32 messageRoot;
         NextValidatorSet nextValidatorSet;
     }
@@ -78,6 +80,7 @@ contract BEEFYCommitmentScheme {
         return keccak256(
             abi.encodePacked(
                 payload.network,
+                payload.mmr,
                 payload.messageRoot,
                 encode(payload.nextValidatorSet)
             )

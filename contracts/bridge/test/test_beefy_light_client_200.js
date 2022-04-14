@@ -28,46 +28,46 @@ describe("Light Client Gas Usage", function () {
       totalNumberOfValidators: 100,
       totalNumberOfSignatures: 67,
     },
-    // {
-    //   totalNumberOfValidators: 110,
-    //   totalNumberOfSignatures: 74,
-    // },
-    // {
-    //   totalNumberOfValidators: 120,
-    //   totalNumberOfSignatures: 81,
-    // },
-    // {
-    //   totalNumberOfValidators: 130,
-    //   totalNumberOfSignatures: 87,
-    // },
-    // {
-    //   totalNumberOfValidators: 140,
-    //   totalNumberOfSignatures: 94,
-    // },
-    // {
-    //   totalNumberOfValidators: 150,
-    //   totalNumberOfSignatures: 101,
-    // },
-    // {
-    //   totalNumberOfValidators: 160,
-    //   totalNumberOfSignatures: 107,
-    // },
-    // {
-    //   totalNumberOfValidators: 170,
-    //   totalNumberOfSignatures: 114,
-    // },
-    // {
-    //   totalNumberOfValidators: 180,
-    //   totalNumberOfSignatures: 121,
-    // },
-    // {
-    //   totalNumberOfValidators: 190,
-    //   totalNumberOfSignatures: 127,
-    // },
-    // {
-    //   totalNumberOfValidators: 200,
-    //   totalNumberOfSignatures: 134,
-    // },
+    {
+      totalNumberOfValidators: 110,
+      totalNumberOfSignatures: 74,
+    },
+    {
+      totalNumberOfValidators: 120,
+      totalNumberOfSignatures: 81,
+    },
+    {
+      totalNumberOfValidators: 130,
+      totalNumberOfSignatures: 87,
+    },
+    {
+      totalNumberOfValidators: 140,
+      totalNumberOfSignatures: 94,
+    },
+    {
+      totalNumberOfValidators: 150,
+      totalNumberOfSignatures: 101,
+    },
+    {
+      totalNumberOfValidators: 160,
+      totalNumberOfSignatures: 107,
+    },
+    {
+      totalNumberOfValidators: 170,
+      totalNumberOfSignatures: 114,
+    },
+    {
+      totalNumberOfValidators: 180,
+      totalNumberOfSignatures: 121,
+    },
+    {
+      totalNumberOfValidators: 190,
+      totalNumberOfSignatures: 127,
+    },
+    {
+      totalNumberOfValidators: 200,
+      totalNumberOfSignatures: 134,
+    },
   ]
 
   for (const testCase of testCases) {
@@ -110,8 +110,8 @@ describe("Light Client Gas Usage", function () {
     const firstProof = await createSingleValidatorProof(firstPosition, fixture)
 
     let overrides = {
-        // value: ethers.utils.parseEther("4")
-        value: 4
+        value: ethers.utils.parseEther("4")
+        // value: 4
     };
 
     const singleProof = {
