@@ -75,7 +75,7 @@ const receive_messages_delivery_proof = async (begin, end) => {
 describe("normal app send single message tests", () => {
 
   before(async () => {
-    ({ feeMarket, outbound, inbound } = await waffle.loadFixture(Fixure));
+    ({ outbound, inbound } = await waffle.loadFixture(Fixure));
     [owner, addr1, addr2] = await ethers.getSigners();
 
     const SimpleFeeMarket = await ethers.getContractFactory("SimpleFeeMarket")
@@ -87,7 +87,7 @@ describe("normal app send single message tests", () => {
     await feeMarket.setOutbound(outbound.address, 1)
 
     const NormalApp = await ethers.getContractFactory("NormalApp")
-    normalApp = await NormalApp.deploy()
+    normalApp = await NormalApp.deploy("0x0000000000000000000000000000000000000000")
     outbound.rely(normalApp.address)
     log(" out bound lane                                   ->      in bound lane")
     log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")

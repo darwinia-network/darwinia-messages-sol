@@ -27,12 +27,10 @@ const build_proof = async () => {
     const inb = await darwiniaLaneCommitter0['commitment(uint256)'](sourceInLanePos)
     const chainProof = {
       root: c,
-      count: 2,
       proof: [c0]
     }
     const laneProof = {
       root: c1,
-      count: 2,
       proof: [inb]
     }
     return { chainProof, laneProof }
@@ -41,11 +39,11 @@ const build_proof = async () => {
 const generate_darwinia_proof = async () => {
   const proof = await build_proof()
   return ethers.utils.defaultAbiCoder.encode([
-    "tuple(tuple(bytes32,uint256,bytes32[]),tuple(bytes32,uint256,bytes32[]))"
+    "tuple(tuple(bytes32,bytes32[]),tuple(bytes32,bytes32[]))"
     ], [
       [
-        [proof.chainProof.root, proof.chainProof.count, proof.chainProof.proof],
-        [proof.laneProof.root, proof.laneProof.count, proof.laneProof.proof]
+        [proof.chainProof.root, proof.chainProof.proof],
+        [proof.laneProof.root, proof.laneProof.proof]
       ]
     ])
 }
