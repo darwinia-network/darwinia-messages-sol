@@ -14,57 +14,42 @@ contract BitfiledTest is Bitfield, DSTest {
         assertEq(countSetBits(bitVector), 2);
     }
 
-    // function test_is_set() public {
-    //     uint[] memory bitVector = new uint[](3);
-    //     bitVector[0] = 1;
-    //     bitVector[1] = 2;
-    //     bitVector[2] = 3;
-    //     assertTrue(isSet(bitVector, 0));
-    //     assertTrue(!isSet(bitVector, 1));
-    //     assertTrue(!isSet(bitVector, 256));
-    //     assertTrue(isSet(bitVector, 257));
-    //     assertTrue(isSet(bitVector, 512));
-    //     assertTrue(isSet(bitVector, 513));
-    //     assertTrue(!isSet(bitVector, 514));
-    // }
+    function test_is_set() public {
+        uint bitVector = 3;
+        assertTrue(isSet(bitVector, 0));
+        assertTrue(isSet(bitVector, 1));
+        assertTrue(!isSet(bitVector, 2));
+        assertTrue(!isSet(bitVector, 255));
+    }
 
-    // function test_set() public {
-    //     uint[] memory bitVector = new uint[](3);
-    //     bitVector[0] = 1;
-    //     bitVector[1] = 2;
-    //     bitVector[2] = 3;
-    //     set(bitVector, 1);
-    //     assertTrue(isSet(bitVector, 1));
-    //     set(bitVector, 256);
-    //     assertTrue(isSet(bitVector, 256));
-    //     set(bitVector, 514);
-    //     assertTrue(isSet(bitVector, 514));
-    // }
+    function test_set() public {
+        uint bitVector = 0;
+        bitVector = set(bitVector, 0);
+        assertTrue(isSet(bitVector, 0));
+        assertTrue(!isSet(bitVector, 255));
+        bitVector = set(bitVector, 255);
+        assertTrue(isSet(bitVector, 255));
+    }
 
-    // function test_clean() public {
-    //     uint[] memory bitVector = new uint[](3);
-    //     bitVector[0] = 1;
-    //     bitVector[1] = 2;
-    //     bitVector[2] = 3;
-    //     clear(bitVector, 0);
-    //     assertTrue(!isSet(bitVector, 0));
-    //     clear(bitVector, 257);
-    //     assertTrue(!isSet(bitVector, 257));
-    //     clear(bitVector, 512);
-    //     assertTrue(!isSet(bitVector, 512));
-    //     clear(bitVector, 513);
-    //     assertTrue(!isSet(bitVector, 513));
-    // }
+    function test_clean() public {
+        uint bitVector = 3;
+        bitVector = clear(bitVector, 0);
+        assertTrue(!isSet(bitVector, 0));
+        bitVector = clear(bitVector, 1);
+        assertTrue(!isSet(bitVector, 1));
+        bitVector = clear(bitVector, 2);
+        assertTrue(!isSet(bitVector, 2));
+        assertTrue(!isSet(bitVector, 255));
+    }
 
-    // function test_create_bitfield() public {
-    //     uint[] memory bitsToSet = new uint[](3);
-    //     bitsToSet[0] = 0;
-    //     bitsToSet[1] = 5;
-    //     bitsToSet[2] = 8;
-    //     uint[] memory bitfield = createBitfield(bitsToSet, 9);
-    //     assertEq(bitfield.length, 1);
-    //     assertEq(bitfield[0], 289);
-    // }
+    function test_create_bitfield() public {
+        uint8[] memory bitsToSet = new uint8[](3);
+        bitsToSet[0] = 0;
+        bitsToSet[1] = 5;
+        bitsToSet[2] = 8;
+        uint bitfield = createBitfield(bitsToSet);
+        assertEq(bitfield, 289);
+    }
 
 
     // 0b11110110100101000101100110101011000100000111011100000011010001000100101011111011011101001

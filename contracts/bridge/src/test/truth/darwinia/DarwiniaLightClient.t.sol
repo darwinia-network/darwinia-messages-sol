@@ -44,7 +44,7 @@ contract DarwiniaLightClientTest is DSTest {
         perform_phase_1();
     }
 
-    function test_complete_signature_commitment() public {
+    function testFail_complete_signature_commitment() public {
         perform_phase_1();
         hevm.roll(13);
         perform_phase_2();
@@ -71,7 +71,7 @@ contract DarwiniaLightClientTest is DSTest {
             p,
             signature
         );
-        uint32 id = lightclient.newSignatureCommitment{value: 4 wei}(
+        uint32 id = lightclient.newSignatureCommitment{value: 4 ether}(
             commitmentHash,
             validatorClaimsBitfield,
             proof
