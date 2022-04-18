@@ -129,6 +129,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme {
     mapping(uint32 => ValidationData) public validationData;
 
     /* Constants */
+    uint256 public constant MAX_COUNT = 2**32 - 1;
 
     /**
      * @dev Block wait period after `newSignatureCommitment` to pick the random block hash
@@ -326,6 +327,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme {
 
         // Accept and save the commitment
         uint32 _currentId = slot0.currentId;
+        require(_currentId < MAX_COUNT, "Bridge: Full");
         validationData[_currentId] = ValidationData(
             msg.sender,
             uint32(block.number),
