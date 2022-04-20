@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.7.6;
 
-import "../../../lib/ds-test/src/test.sol";
+import "../test.sol";
 import "../../utils/Bitfield.sol";
 
 contract BitfiledTest is Bitfield, DSTest {

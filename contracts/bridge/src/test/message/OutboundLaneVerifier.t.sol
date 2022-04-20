@@ -2,7 +2,7 @@
 
 pragma solidity 0.7.6;
 
-import "../../../lib/ds-test/src/test.sol";
+import "../test.sol";
 import "../../message/OutboundLaneVerifier.sol";
 import "../mock/MockLightClient.sol";
 

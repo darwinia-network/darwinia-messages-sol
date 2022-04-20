@@ -3,7 +3,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../../../lib/ds-test/src/test.sol";
+import "../test.sol";
 import "../../interfaces/IFeeMarket.sol";
 import "../../fee-market/FeeMarket.sol";
 
