@@ -18,7 +18,7 @@ contract NormalApp is ICrossChainFilter, IOnMessageDelivered {
 
     fallback() external payable {}
 
-    function crossChainFilter(uint32, uint32, address, bytes calldata) external pure override returns (bool) {
+    function cross_chain_filter(uint32, uint32, address, bytes calldata) external pure override returns (bool) {
         return true;
     }
 

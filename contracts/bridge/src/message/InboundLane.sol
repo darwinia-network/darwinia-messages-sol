@@ -283,7 +283,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
 
     function dispatch(MessagePayload memory payload, bytes memory encoded) internal returns (bool dispatch_result, bytes memory returndata) {
         bytes memory filterCallData = abi.encodeWithSelector(
-            ICrossChainFilter.crossChainFilter.selector,
+            ICrossChainFilter.cross_chain_filter.selector,
             bridgedChainPosition,
             bridgedLanePosition,
             payload.sourceAccount,

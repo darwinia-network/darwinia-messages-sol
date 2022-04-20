@@ -17,5 +17,5 @@ interface ICrossChainFilter {
      * @param payload The calldata which encoded by ABI Encoding
      * @return Can call target contract if returns true
      */
-    function crossChainFilter(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address sourceAccount, bytes calldata payload) external view returns (bool);
+    function cross_chain_filter(uint32 bridgedChainPosition, uint32 bridgedLanePosition, address sourceAccount, bytes calldata payload) external view returns (bool);
 }

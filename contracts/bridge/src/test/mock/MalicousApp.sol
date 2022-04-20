@@ -8,7 +8,7 @@ import "../../interfaces/IOutboundLane.sol";
 
 contract MalicousApp is ICrossChainFilter, IOnMessageDelivered {
 
-    function crossChainFilter(uint32, uint32, address, bytes calldata) external override pure returns (bool) {
+    function cross_chain_filter(uint32, uint32, address, bytes calldata) external override pure returns (bool) {
         return true;
     }
 
