@@ -5,8 +5,7 @@
 .
 ├── contracts
 │   ├── bridge
-│   ├── issuing-burn
-│   ├── mapping-token
+│   ├── deprecated
 │   ├── tokens
 │   ├── utils
 │   └── verify
