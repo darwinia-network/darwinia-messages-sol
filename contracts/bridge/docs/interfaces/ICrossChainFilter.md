@@ -9,7 +9,7 @@ The app layer must implement the interface `ICrossChainFilter`
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [Functions](#functions)
-  - [crossChainFilter](#crosschainfilter)
+  - [cross_chain_filter](#cross_chain_filter)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -18,7 +18,7 @@ The app layer must implement the interface `ICrossChainFilter`
 
 ## Functions
 
-### crossChainFilter
+### cross_chain_filter
 Verify the source sender and payload of source chain messages,
 Generally, app layer cross-chain messages require validation of sourceAccount
 
@@ -26,7 +26,7 @@ Generally, app layer cross-chain messages require validation of sourceAccount
 
 #### Declaration
 ```solidity
-  function crossChainFilter(
+  function cross_chain_filter(
     uint32 bridgedChainPosition,
     uint32 bridgedLanePosition,
     address sourceAccount,

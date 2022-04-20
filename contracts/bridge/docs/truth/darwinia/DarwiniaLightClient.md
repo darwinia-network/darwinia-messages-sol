@@ -14,6 +14,7 @@ The light client is the trust layer of the bridge
   - [constructor](#constructor)
   - [getFinalizedChainMessagesRoot](#getfinalizedchainmessagesroot)
   - [getFinalizedBlockNumber](#getfinalizedblocknumber)
+  - [getCurrentId](#getcurrentid)
   - [validatorBitfield](#validatorbitfield)
   - [threshold](#threshold)
   - [createRandomBitfield](#createrandombitfield)
@@ -26,13 +27,14 @@ The light client is the trust layer of the bridge
   - [newSignatureCommitment](#newsignaturecommitment)
   - [completeSignatureCommitment](#completesignaturecommitment)
   - [cleanExpiredCommitment](#cleanexpiredcommitment)
-  - [roundUpToPow2](#rounduptopow2)
+  - [get_power_of_two_ceil](#get_power_of_two_ceil)
   - [checkAddrInSet](#checkaddrinset)
+  - [_updateAuthoritySet](#_updateauthorityset)
 - [Events](#events)
+  - [BEEFYAuthoritySetUpdated](#beefyauthoritysetupdated)
   - [InitialVerificationSuccessful](#initialverificationsuccessful)
   - [FinalVerificationSuccessful](#finalverificationsuccessful)
   - [CleanExpiredCommitment](#cleanexpiredcommitment)
-  - [NewMMRRoot](#newmmrroot)
   - [NewMessageRoot](#newmessageroot)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -43,11 +45,11 @@ The light client is the trust layer of the bridge
 
 | Var | Type |
 | --- | --- |
-| currentId | uint256 |
-| latestMMRRoot | bytes32 |
+| slot0 | struct DarwiniaLightClient.Slot0 |
+| authoritySetRoot | bytes32 |
 | latestChainMessagesRoot | bytes32 |
-| latestBlockNumber | uint256 |
-| validationData | mapping(uint256 => struct DarwiniaLightClient.ValidationData) |
+| validationData | mapping(uint32 => struct DarwiniaLightClient.ValidationData) |
+| MAX_COUNT | uint256 |
 | BLOCK_WAIT_PERIOD | uint256 |
 | MIN_SUPPORT | uint256 |
 | SLASH_VAULT | address |
@@ -115,6 +117,21 @@ No modifiers
 
 
 
+### getCurrentId
+No description
+
+
+#### Declaration
+```solidity
+  function getCurrentId(
+  ) external returns (uint32)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
 ### validatorBitfield
 No description
 
@@ -122,7 +139,7 @@ No description
 #### Declaration
 ```solidity
   function validatorBitfield(
-  ) external returns (uint256[])
+  ) external returns (uint256)
 ```
 
 #### Modifiers:
@@ -152,7 +169,7 @@ No description
 #### Declaration
 ```solidity
   function createRandomBitfield(
-  ) public returns (uint256[])
+  ) public returns (uint256)
 ```
 
 #### Modifiers:
@@ -167,7 +184,7 @@ No description
 #### Declaration
 ```solidity
   function _createRandomBitfield(
-  ) internal returns (uint256[])
+  ) internal returns (uint256)
 ```
 
 #### Modifiers:
@@ -182,7 +199,7 @@ No description
 #### Declaration
 ```solidity
   function createInitialBitfield(
-  ) external returns (uint256[])
+  ) external returns (uint256)
 ```
 
 #### Modifiers:
@@ -260,12 +277,8 @@ acceptance by the light client
 ```solidity
   function newSignatureCommitment(
     bytes32 commitmentHash,
-    uint256[] validatorClaimsBitfield,
-    bytes validatorSignature,
-    uint256 validatorPosition,
-    address validatorAddress,
-    bytes32[] validatorAddressMerkleProof
-  ) public returns (uint256)
+    uint256 validatorClaimsBitfield
+  ) external returns (uint32)
 ```
 
 #### Modifiers:
@@ -275,12 +288,8 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`commitmentHash` | bytes32 | contains the commitmentHash signed by the current authority set
-|`validatorClaimsBitfield` | uint256[] | a bitfield containing a membership status of each
+|`validatorClaimsBitfield` | uint256 | a bitfield containing a membership status of each
 validator who has claimed to have signed the commitmentHash
-|`validatorSignature` | bytes | the signature of one validator
-|`validatorPosition` | uint256 | the position of the validator, index starting at 0
-|`validatorAddress` | address | the public key of the validator
-|`validatorAddressMerkleProof` | bytes32[] | proof required for validation of the public key in the validator merkle tree
 
 ### completeSignatureCommitment
 Performs the second step in the validation logic
@@ -290,10 +299,10 @@ Performs the second step in the validation logic
 #### Declaration
 ```solidity
   function completeSignatureCommitment(
-    uint256 id,
+    uint32 id,
     struct BEEFYCommitmentScheme.Commitment commitment,
-    struct DarwiniaLightClient.MultiProof validatorProof
-  ) public
+    struct DarwiniaLightClient.CommitmentMultiProof validatorProof
+  ) external
 ```
 
 #### Modifiers:
@@ -302,9 +311,9 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`id` | uint256 | an identifying value generated in the previous transaction
+|`id` | uint32 | an identifying value generated in the previous transaction
 |`commitment` | struct BEEFYCommitmentScheme.Commitment | contains the full commitment that was used for the commitmentHash
-|`validatorProof` | struct DarwiniaLightClient.MultiProof | a struct containing the data needed to verify all validator signatures
+|`validatorProof` | struct DarwiniaLightClient.CommitmentMultiProof | a struct containing the data needed to verify all validator signatures
 
 ### cleanExpiredCommitment
 Clean up the expired commitment and slash
@@ -314,8 +323,8 @@ Clean up the expired commitment and slash
 #### Declaration
 ```solidity
   function cleanExpiredCommitment(
-    uint256 id
-  ) public
+    uint32 id
+  ) external
 ```
 
 #### Modifiers:
@@ -324,15 +333,15 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`id` | uint256 | the identifier generated by submit commitment
+|`id` | uint32 | the identifier generated by submit commitment
 
-### roundUpToPow2
+### get_power_of_two_ceil
 No description
 
 
 #### Declaration
 ```solidity
-  function roundUpToPow2(
+  function get_power_of_two_ceil(
   ) internal returns (uint256)
 ```
 
@@ -352,7 +361,6 @@ Checks if an address is a member of the merkle tree
     bytes32 root,
     address addr,
     uint256 pos,
-    uint256 width,
     bytes32[] proof
   ) public returns (bool)
 ```
@@ -366,16 +374,45 @@ No modifiers
 |`root` | bytes32 | the root of the merkle tree
 |`addr` | address | The address to check
 |`pos` | uint256 | The position to check, index starting at 0
-|`width` | uint256 | the width or number of leaves in the tree
 |`proof` | bytes32[] | Merkle proof required for validation of the address
 
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`Returns` | true if the address is in the set
+### _updateAuthoritySet
+Updates the current authority set
+
+
+
+#### Declaration
+```solidity
+  function _updateAuthoritySet(
+    uint64 _authoritySetId,
+    uint32 _authoritySetLen,
+    bytes32 _authoritySetRoot
+  ) internal
+```
+
+#### Modifiers:
+No modifiers
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_authoritySetId` | uint64 | The new authority set id
+|`_authoritySetLen` | uint32 | The new length of authority set
+|`_authoritySetRoot` | bytes32 | The new authority set root
+
 
 
 ## Events
+
+### BEEFYAuthoritySetUpdated
+No description
+
+  
+
 
 ### InitialVerificationSuccessful
 Notifies an observer that the prover's attempt at initital
@@ -406,12 +443,6 @@ Notifies an observer that the complete verification process has
 |`prover` | address |  | The address of the successful prover
 |`id` | uint256 |  | the identifier used
 ### CleanExpiredCommitment
-No description
-
-  
-
-
-### NewMMRRoot
 No description
 
   

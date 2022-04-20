@@ -13,7 +13,6 @@
   - [hash](#hash)
   - [hash](#hash-1)
   - [hash](#hash-2)
-  - [hash](#hash-3)
   - [decodeMessageKey](#decodemessagekey)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -32,21 +31,6 @@
 
 
 ## Functions
-
-### hash
-No description
-
-
-#### Declaration
-```solidity
-  function hash(
-  ) internal returns (bytes32)
-```
-
-#### Modifiers:
-No modifiers
-
-
 
 ### hash
 No description
