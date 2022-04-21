@@ -50,7 +50,7 @@ const receive_messages_proof = async (laneData, nonce) => {
       }
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, n, result, returndata)
+        .withArgs(n, result)
     }
     await logNonce()
 }

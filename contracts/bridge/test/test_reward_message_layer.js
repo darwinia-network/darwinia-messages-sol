@@ -41,7 +41,7 @@ const receive_messages_proof = async (nonce) => {
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, from+i+1, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
+        .withArgs(from+i+1, false)
     }
     await logNonce()
 }

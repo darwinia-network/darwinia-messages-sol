@@ -53,7 +53,7 @@ const receive_messages_proof = async (nonce) => {
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, from+i+1, true, "0x")
+        .withArgs(from+i+1, true)
     }
     await logNonce()
 }
