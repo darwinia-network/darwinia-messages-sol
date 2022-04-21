@@ -26,7 +26,7 @@ const send_message = async (nonce) => {
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(nonce, encoded)
+      .withArgs(nonce, owner.address, to, encoded)
     await logNonce()
 }
 
@@ -37,17 +37,32 @@ const logNonce = async () => {
 }
 
 const receive_messages_proof = async (nonce) => {
-    laneData = await outbound.data()
+    const payload = {
+      source: owner.address,
+      target: normalApp.address,
+      encoded: encoded
+    }
+    let laneData = await outbound.data()
+    let data = {
+      latest_received_nonce: laneData.latest_received_nonce,
+      messages: []
+    }
+    for (let i = 0; i< laneData.messages.length; i++) {
+      let message = {
+        encoded_key: laneData.messages[i].encoded_key,
+        payload: payload
+      }
+      data.messages.push(message)
+    }
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
-    const calldata = Array(laneData.messages.length).fill(encoded)
     let relayer = ethers.Wallet.createRandom();
     await owner.sendTransaction({
         to: relayer.address,
         value: ethers.utils.parseEther("1.0")
     })
     relayer = relayer.connect(ethers.provider)
-    const tx = await inbound.connect(relayer).receive_messages_proof(laneData, calldata, "0x", {
+    const tx = await inbound.connect(relayer).receive_messages_proof(data, "0x", {
       gasLimit: 10000000
     })
     for (let i = 0; i<size; i++) {
@@ -59,8 +74,13 @@ const receive_messages_proof = async (nonce) => {
 }
 
 const receive_messages_delivery_proof = async (begin, end) => {
-    laneData = await inbound.data()
-    const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, "0x")
+    let laneData = await inbound.data()
+    const payload = {
+      source: owner.address,
+      target: normalApp.address,
+      encoded_hash: "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+    }
+    const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, [payload], "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 1)

@@ -24,7 +24,7 @@ import "../spec/TargetChain.sol";
 
 // Everything about outgoing messages sending.
 contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, SourceChain {
-    event MessageAccepted(uint64 indexed nonce, bytes encoded);
+    event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
     event MessagesDelivered(uint64 indexed begin, uint64 indexed end, uint256 results);
     event MessagePruned(uint64 indexed oldest_unpruned_nonce);
     event MessageFeeIncreased(uint64 indexed nonce, uint256 fee);
@@ -54,8 +54,8 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     OutboundLaneNonce public outboundLaneNonce;
 
     // slot 2
-    // nonce => MessagePayload
-    mapping(uint64 => MessagePayload) public messages;
+    // nonce => hash(MessagePayload)
+    mapping(uint64 => bytes32) public messages;
 
     // white list who can send meesage over lane, will remove in the future
     mapping (address => uint256) public wards;
@@ -129,26 +129,31 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         require(IFeeMarket(fee_market).assign{value: fee}(encodeMessageKey(nonce)), "Lane: AssignRelayersFailed");
         require(encoded.length <= MAX_CALLDATA_LENGTH, "Lane: Calldata is too large");
         outboundLaneNonce.latest_generated_nonce = nonce;
-        messages[nonce] = MessagePayload({
-            sourceAccount: msg.sender,
-            targetContract: targetContract,
-            encodedHash: keccak256(encoded)
+        MessagePayload memory payload = MessagePayload({
+            source: msg.sender,
+            target: targetContract,
+            encoded: encoded
         });
-
+        messages[nonce] = hash(payload);
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
         prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
-        emit MessageAccepted(nonce, encoded);
+        emit MessageAccepted(
+            nonce,
+            msg.sender,
+            targetContract,
+            encoded);
         return encodeMessageKey(nonce);
     }
 
     // Receive messages delivery proof from bridged chain.
     function receive_messages_delivery_proof(
-        InboundLaneData memory inboundLaneData,
+        InboundLaneData calldata inboundLaneData,
+        MessagePayloadCompact[] calldata payloads,
         bytes memory messagesProof
-    ) public nonReentrant {
+    ) external nonReentrant {
         verify_messages_delivery_proof(hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
-        on_messages_delivered(confirmed_messages);
+        on_messages_delivered(confirmed_messages, payloads);
         // settle the confirmed_messages at fee market
         settle_messages(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
     }
@@ -158,14 +163,14 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     }
 
 	// Get lane data from the storage.
-    function data() public view returns (OutboundLaneData memory lane_data) {
+    function data() public view returns (OutboundLaneDataStorage memory lane_data) {
         uint64 size = message_size();
         if (size > 0) {
-            lane_data.messages = new Message[](size);
+            lane_data.messages = new MessageStorage[](size);
             uint64 begin = outboundLaneNonce.latest_received_nonce + 1;
             for (uint64 index = 0; index < size; index++) {
                 uint64 nonce = index + begin;
-                lane_data.messages[index] = Message(encodeMessageKey(nonce), messages[nonce]);
+                lane_data.messages[index] = MessageStorage(encodeMessageKey(nonce), messages[nonce]);
             }
         }
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
@@ -257,12 +262,15 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         }
     }
 
-    function on_messages_delivered(DeliveredMessages memory confirmed_messages) internal {
-        for (uint64 nonce = confirmed_messages.begin; nonce <= confirmed_messages.end; nonce ++) {
+    function on_messages_delivered(DeliveredMessages memory confirmed_messages, MessagePayloadCompact[] calldata payloads) internal {
+        uint i = 0;
+        for (uint64 nonce = confirmed_messages.begin; nonce <= confirmed_messages.end; nonce++) {
+            MessagePayloadCompact memory payload = payloads[i];
+            require(hash(payload) == messages[nonce], "Lane: Invalid Payload");
             uint256 offset = nonce - confirmed_messages.begin;
             bool dispatch_result = ((confirmed_messages.dispatch_results >> offset) & 1) > 0;
             // Submitter could be a contract or just an EOA address.
-            address submitter = messages[nonce].sourceAccount;
+            address submitter = payload.source;
             bytes memory deliveredCallbackData = abi.encodeWithSelector(
                 IOnMessageDelivered.on_messages_delivered.selector,
                 encodeMessageKey(nonce),
