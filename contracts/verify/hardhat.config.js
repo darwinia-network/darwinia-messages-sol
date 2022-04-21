@@ -90,7 +90,7 @@ module.exports = {
     }
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_KEY
+    apiKey: process.env.ETHERSCAN_API_KEY
   },
   abiExporter: {
     path: './abi/',
