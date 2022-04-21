@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.7.0;
 
+import { Bytes } from "./Bytes.sol";
+
 library ScaleCodec {
     // Decodes a SCALE encoded uint256 by converting bytes (bid endian) to little endian format
     function decodeUint256(bytes memory data) internal pure returns (uint256) {
@@ -49,6 +51,27 @@ library ScaleCodec {
                 l > 32,
                 "Not supported: number cannot be greater than 32 bytes"
             );
+        } else {
+            revert("Code should be unreachable");
+        }
+    }
+
+
+    function encodeUintCompact(uint256 v) internal pure returns (bytes memory) {
+        if ( v >= 0 && v <= 63 ) {
+            return abi.encodePacked(uint8(v << 2));
+        } else if ( v > 63 && v <= (2 ** 14) - 1 ) {
+            return Bytes.reverse(abi.encodePacked(uint16(((v << 2) + 1))));
+        } else if ( v > (2 ** 14) - 1 && v <= (2 ** 30) - 1 ) {
+            return Bytes.reverse(abi.encodePacked(uint32(((v << 2) + 2))));
+        } else if ( v > 2 ** 30 - 1 ) {
+            bytes memory valueBytes = Bytes.removeLeadingZero(abi.encodePacked(v));
+            bytes memory body = Bytes.reverse(valueBytes);
+
+            uint length = valueBytes.length;
+            bytes memory prefix = Bytes.removeLeadingZero(abi.encodePacked( ((length - 4) << 2) + 3 ));
+
+            return abi.encodePacked(prefix, body);
         } else {
             revert("Code should be unreachable");
         }

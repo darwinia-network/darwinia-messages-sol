@@ -21,4 +21,20 @@ library ScaleStruct {
         address target;
         uint256 value;
     }
+
+    // struct Arg {
+    //     uint16 type;
+    //     bytes value;
+    // }
+
+    // struct SystemRemarkCall {
+    //     bytes2 callIndex;
+    //     bytes remark;
+    // }
 }
+
+// function encodeSystemRemarkCall(SystemRemarkCall call) {
+//   call.callIndex + 
+//   call.remark.length
+  
+// }
