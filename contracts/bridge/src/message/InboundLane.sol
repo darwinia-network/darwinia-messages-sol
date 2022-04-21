@@ -276,6 +276,17 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         }
     }
 
+    /// @notice dispatch the cross chain message
+    /// @param payload payload of the dispatch message
+    /// @param encoded encoded calldata to dispatch
+    /// @return dispatch_result the dispatch call result
+    /// - Return True:
+    ///   1. filter return True and dispatch call successfully with no 32-length return data
+    ///   2. filter return True and dispatch call successfully with 32-length return data is True
+    /// - Return False:
+    ///   1. filter return False
+    ///   2. filter return True and dispatch call failed
+    ///   3. filter return True and dispatch call successfully with 32-length return data is False
     function dispatch(MessagePayload memory payload, bytes memory encoded) internal returns (bool dispatch_result) {
         bytes memory filterCallData = abi.encodeWithSelector(
             ICrossChainFilter.cross_chain_filter.selector,
@@ -287,7 +298,10 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         bool canCall = filter(payload.targetContract, filterCallData);
         if (canCall) {
             // Deliver the message to the target
-            (dispatch_result,) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(encoded);
+            (dispatch_result, bytes memory result_data) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(encoded);
+            if (dispatch_result && result_data.length == 32) {
+                dispatch_result = abi.decode(result_data, (bool));
+            }
         } else {
             dispatch_result = false;
         }
