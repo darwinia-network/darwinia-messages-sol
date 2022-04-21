@@ -29,15 +29,10 @@ import "../spec/TargetChain.sol";
 contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /**
      * @notice Notifies an observer that the message has dispatched
-     * @param thisChainPosition The thisChainPosition of the message
-     * @param thisLanePosition The thisLanePosition of the message
-     * @param bridgedChainPosition The bridgedChainPosition of the message
-     * @param bridgedLanePosition The bridgedLanePosition of the message
      * @param nonce The message nonce
      * @param result The message result
-     * @param returndata The return data of message call, when return false, it's the reason of the error
      */
-    event MessageDispatched(uint32 thisChainPosition, uint32 thisLanePosition, uint32 bridgedChainPosition, uint32 bridgedLanePosition, uint64 nonce, bool result, bytes returndata);
+    event MessageDispatched(uint64 nonce, bool result);
 
     /* Constants */
 
@@ -259,9 +254,9 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             inboundLaneNonce.last_delivered_nonce = next;
 
             // then, dispatch message
-            (bool dispatch_result, bytes memory returndata) = dispatch(message_payload, messagesCallData[i]);
+            bool dispatch_result = dispatch(message_payload, messagesCallData[i]);
 
-            emit MessageDispatched(key.this_chain_id, key.this_lane_id, key.bridged_chain_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
+            emit MessageDispatched(key.nonce, dispatch_result);
             dispatch_results |= (dispatch_result ? uint256(1) << (next - begin) : uint256(0));
 
             next += 1;
@@ -281,7 +276,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         }
     }
 
-    function dispatch(MessagePayload memory payload, bytes memory encoded) internal returns (bool dispatch_result, bytes memory returndata) {
+    function dispatch(MessagePayload memory payload, bytes memory encoded) internal returns (bool dispatch_result) {
         bytes memory filterCallData = abi.encodeWithSelector(
             ICrossChainFilter.cross_chain_filter.selector,
             bridgedChainPosition,
@@ -292,10 +287,9 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         bool canCall = filter(payload.targetContract, filterCallData);
         if (canCall) {
             // Deliver the message to the target
-            (dispatch_result, returndata) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(encoded);
+            (dispatch_result,) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(encoded);
         } else {
             dispatch_result = false;
-            returndata = "Lane: MessageCallRejected";
         }
     }
 
