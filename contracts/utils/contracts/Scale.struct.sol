@@ -24,18 +24,6 @@ library ScaleStruct {
         uint256 value;
     }
 
-    // struct Arg {
-    //     uint16 type;
-    //     bytes value;
-    // }
-
-    // struct SystemRemarkCall {
-    //     bytes2 callIndex;
-    //     bytes remark;
-    // }
-
-    
-
 }
 
 library S2SBacking {
@@ -52,6 +40,14 @@ library S2SBacking {
         return abi.encodePacked(call.callIndex, call.tokenAddress, amountEncoded, recipientLengthEncoded, call.recipient);
     }
 
-    
+    struct SystemRemarkCall {
+        bytes2 callIndex;
+        bytes remark;
+    }
+
+    function encodeSystemRemarkCall(SystemRemarkCall memory call) internal pure returns (bytes memory) {
+        bytes memory remarkLengthEncoded = ScaleCodec.encodeUintCompact(call.remark.length);
+        return abi.encodePacked(call.callIndex, remarkLengthEncoded, call.remark);
+    }
 }
 

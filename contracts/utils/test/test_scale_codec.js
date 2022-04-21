@@ -46,6 +46,10 @@ describe('ScaleCodecTest', function (accounts) {
         await scaleCodecTest.testEncodeUnlockFromRemoteCall();
     })
 
+    it('encodeSystemRemarkCall', async() => {
+        await scaleCodecTest.testEncodeSystemRemarkCall();
+    })
+
     // it('ScaleTest', async() => {
     //     await scaleTest.testDecodeReceiptProof()
     // })

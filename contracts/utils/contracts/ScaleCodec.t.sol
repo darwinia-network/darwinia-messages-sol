@@ -50,6 +50,20 @@ contract ScaleCodecTest is DSTest {
 
         bytes memory e = hex"14021200000000000000000000000000000000000012d31b000000000000000000000000000000000000000000000000000000000000081234";
         bytes memory r = S2SBacking.encodeUnlockFromRemoteCall(call);
-        assertEq0(r, e);    
+        assertEq0(r, e);
     }
+
+    function testEncodeSystemRemarkCall() public {
+        // pangoro call
+        S2SBacking.SystemRemarkCall memory call = S2SBacking.SystemRemarkCall(
+            hex"0001",
+            hex"12345678"
+        );
+
+        bytes memory e = hex"00011012345678";
+        bytes memory r = S2SBacking.encodeSystemRemarkCall(call);
+        assertEq0(r, e);
+    }
+
+
 }
