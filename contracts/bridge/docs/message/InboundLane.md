@@ -1,9 +1,11 @@
 # InboundLane
 
 
+
 The inbound lane is the message layer of the bridge
 
 > See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
+
 
 ## Contents
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -199,20 +201,38 @@ No modifiers
 
 
 ### dispatch
-No description
+dispatch the cross chain message
+
 
 
 #### Declaration
 ```solidity
   function dispatch(
-  ) internal returns (bool dispatch_result, bytes returndata)
+    struct SourceChain.MessagePayload payload,
+    bytes encoded
+  ) internal returns (bool dispatch_result)
 ```
 
 #### Modifiers:
 No modifiers
 
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`payload` | struct SourceChain.MessagePayload | payload of the dispatch message
+|`encoded` | bytes | encoded calldata to dispatch
 
-
+#### Returns:
+| Type | Description |
+| --- | --- |
+|`dispatch_result` | the dispatch call result
+- Return True:
+  1. filter return True and dispatch call successfully with no 32-length return data
+  2. filter return True and dispatch call successfully with 32-length return data is True
+- Return False:
+  1. filter return False
+  2. filter return True and dispatch call failed
+  3. filter return True and dispatch call successfully with 32-length return data is False
 ### filter
 No description
 
@@ -241,10 +261,5 @@ Notifies an observer that the message has dispatched
 #### Params:
 | Param | Type | Indexed | Description |
 | --- | --- | :---: | --- |
-|`thisChainPosition` | uint32 |  | The thisChainPosition of the message
-|`thisLanePosition` | uint32 |  | The thisLanePosition of the message
-|`bridgedChainPosition` | uint32 |  | The bridgedChainPosition of the message
-|`bridgedLanePosition` | uint32 |  | The bridgedLanePosition of the message
 |`nonce` | uint64 |  | The message nonce
 |`result` | bool |  | The message result
-|`returndata` | bytes |  | The return data of message call, when return false, it's the reason of the error
