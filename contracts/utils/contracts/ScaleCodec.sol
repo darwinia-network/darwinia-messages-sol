@@ -184,4 +184,10 @@ library ScaleCodec {
     function encode16(uint16 input) internal pure returns (bytes2) {
         return bytes2(reverse16(input));
     }
+
+    function encodeBytes(bytes memory input) internal pure returns (bytes memory) {
+        return encodeUintCompact(input.length);
+    }
+
+    
 }

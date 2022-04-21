@@ -42,6 +42,10 @@ describe('ScaleCodecTest', function (accounts) {
         await scaleCodecTest.testEncodeUintCompact_Big();
     })
 
+    it('encodeUnlockFromRemoteCall', async() => {
+        await scaleCodecTest.testEncodeUnlockFromRemoteCall();
+    })
+
     // it('ScaleTest', async() => {
     //     await scaleTest.testDecodeReceiptProof()
     // })
