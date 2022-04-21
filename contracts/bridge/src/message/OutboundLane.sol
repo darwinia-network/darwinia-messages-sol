@@ -81,17 +81,15 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         _;
     }
 
-    /**
-     * @notice Deploys the OutboundLane contract
-     * @param _lightClientBridge The contract address of on-chain light client
-     * @param _thisChainPosition The thisChainPosition of outbound lane
-     * @param _thisLanePosition The lanePosition of this outbound lane
-     * @param _bridgedChainPosition The bridgedChainPosition of outbound lane
-     * @param _bridgedLanePosition The lanePosition of target inbound lane
-     * @param _oldest_unpruned_nonce The oldest_unpruned_nonce of outbound lane
-     * @param _latest_received_nonce The latest_received_nonce of outbound lane
-     * @param _latest_generated_nonce The latest_generated_nonce of outbound lane
-     */
+    /// @notice Deploys the OutboundLane contract
+    /// @param _lightClientBridge The contract address of on-chain light client
+    /// @param _thisChainPosition The thisChainPosition of outbound lane
+    /// @param _thisLanePosition The lanePosition of this outbound lane
+    /// @param _bridgedChainPosition The bridgedChainPosition of outbound lane
+    /// @param _bridgedLanePosition The lanePosition of target inbound lane
+    /// @param _oldest_unpruned_nonce The oldest_unpruned_nonce of outbound lane
+    /// @param _latest_received_nonce The latest_received_nonce of outbound lane
+    /// @param _latest_generated_nonce The latest_generated_nonce of outbound lane
     constructor(
         address _lightClientBridge,
         uint32 _thisChainPosition,
@@ -117,13 +115,11 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         setter = _setter;
     }
 
-    /**
-     * @notice Send message over lane.
-     * Submitter could be a contract or just an EOA address.
-     * At the beginning of the launch, submmiter is permission, after the system is stable it will be permissionless.
-     * @param targetContract The target contract address which you would send cross chain message to
-     * @param encoded The calldata which encoded by ABI Encoding
-     */
+    /// @notice Send message over lane.
+    /// Submitter could be a contract or just an EOA address.
+    /// At the beginning of the launch, submmiter is permission, after the system is stable it will be permissionless.
+    /// @param targetContract The target contract address which you would send cross chain message to
+    /// @param encoded The calldata which encoded by ABI Encoding
     function send_message(address targetContract, bytes calldata encoded) external payable override auth nonReentrant returns (uint256) {
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
         require(outboundLaneNonce.latest_generated_nonce < type(uint64).max, "Lane: Overflow");

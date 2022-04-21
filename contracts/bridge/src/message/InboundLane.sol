@@ -20,51 +20,41 @@ import "./InboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 
-/**
- * @title Everything about incoming messages receival
- * @author echo
- * @notice The inbound lane is the message layer of the bridge
- * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
- */
+///
+/// @title Everything about incoming messages receival
+/// @author echo
+/// @notice The inbound lane is the message layer of the bridge
+/// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
+///
 contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
-    /**
-     * @notice Notifies an observer that the message has dispatched
-     * @param nonce The message nonce
-     * @param result The message result
-     */
+    /// @notice Notifies an observer that the message has dispatched
+    /// @param nonce The message nonce
+    /// @param result The message result
     event MessageDispatched(uint64 nonce, bool result);
 
     /* Constants */
 
-    /**
-     * @dev Gas used per message needs to be less than 100000 wei
-     */
+    /// @dev Gas used per message needs to be less than 100000 wei
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
-    /**
-     * @dev Gas buffer for executing `send_message` tx
-     */
+    /// @dev Gas buffer for executing `send_message` tx
     uint256 public constant GAS_BUFFER = 3000;
-    /**
-     * @notice This parameter must lesser than 256
-     * Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
-     * message has been delivered, but either confirmations haven't been delivered back to the
-     * source chain, or we haven't received reward confirmations for these messages yet.
-     *
-     * This constant limits difference between last message from last entry of the
-     * `InboundLaneData::relayers` and first message at the first entry.
-     *
-     * This value also represents maximal number of messages in single delivery transaction.
-     * Transaction that is declaring more messages than this value, will be rejected. Even if
-     * these messages are from different lanes.
-     */
+    /// @notice This parameter must lesser than 256
+    /// Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
+    /// message has been delivered, but either confirmations haven't been delivered back to the
+    /// source chain, or we haven't received reward confirmations for these messages yet.
+    //
+    /// This constant limits difference between last message from last entry of the
+    /// `InboundLaneData::relayers` and first message at the first entry.
+    //
+    /// This value also represents maximal number of messages in single delivery transaction.
+    /// Transaction that is declaring more messages than this value, will be rejected. Even if
+    /// these messages are from different lanes.
     uint256 public constant MAX_UNCONFIRMED_MESSAGES = 30;
 
     /* State */
 
-    /**
-     * @dev ID of the next message, which is incremented in strict order
-     * @notice When upgrading the lane, this value must be synchronized
-     */
+    /// @dev ID of the next message, which is incremented in strict order
+    /// @notice When upgrading the lane, this value must be synchronized
     struct InboundLaneNonce {
         // Nonce of the last message that
         // a) has been delivered to the target (this) chain and
@@ -298,7 +288,8 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         bool canCall = filter(payload.targetContract, filterCallData);
         if (canCall) {
             // Deliver the message to the target
-            (dispatch_result, bytes memory result_data) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(encoded);
+            bytes memory result_data;
+            (dispatch_result, result_data) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(encoded);
             if (dispatch_result && result_data.length == 32) {
                 dispatch_result = abi.decode(result_data, (bool));
             }
@@ -308,9 +299,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     }
 
     function filter(address target, bytes memory encoded) internal view returns (bool canCall) {
-        /**
-         * @notice The app layer must implement the interface `ICrossChainFilter`
-         */
+        /// @dev The app layer must implement the interface `ICrossChainFilter`
         (bool ok, bytes memory result) = target.staticcall{gas: GAS_BUFFER}(encoded);
         if (ok) {
             if (result.length == 32) {

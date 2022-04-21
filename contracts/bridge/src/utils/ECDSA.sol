@@ -2,27 +2,23 @@
 
 pragma solidity 0.7.6;
 
-/**
- * @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
- *
- * These functions can be used to verify that a message was signed by the holder
- * of the private keys of a given address.
- */
+/// @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
+//
+/// These functions can be used to verify that a message was signed by the holder
+/// of the private keys of a given address.
 library ECDSA {
-    /**
-     * @dev Returns the address that signed a hashed message (`hash`) with
-     * `signature`. This address can then be used for verification purposes.
-     *
-     * The `ecrecover` EVM opcode allows for malleable (non-unique) signatures:
-     * this function rejects them by requiring the `s` value to be in the lower
-     * half order, and the `v` value to be either 27 or 28.
-     *
-     * IMPORTANT: `hash` _must_ be the result of a hash operation for the
-     * verification to be secure: it is possible to craft signatures that
-     * recover to arbitrary addresses for non-hashed data. A safe way to ensure
-     * this is by receiving a hash of the original message (which may otherwise
-     * be too long), and then calling {toEthSignedMessageHash} on it.
-     */
+    /// @dev Returns the address that signed a hashed message (`hash`) with
+    /// `signature`. This address can then be used for verification purposes.
+    //
+    /// The `ecrecover` EVM opcode allows for malleable (non-unique) signatures:
+    /// this function rejects them by requiring the `s` value to be in the lower
+    /// half order, and the `v` value to be either 27 or 28.
+    //
+    /// IMPORTANT: `hash` _must_ be the result of a hash operation for the
+    /// verification to be secure: it is possible to craft signatures that
+    /// recover to arbitrary addresses for non-hashed data. A safe way to ensure
+    /// this is by receiving a hash of the original message (which may otherwise
+    /// be too long), and then calling {toEthSignedMessageHash} on it.
     function recover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address) {
         // Check the signature length
         // - case 64: r,vs signature (cf https://eips.ethereum.org/EIPS/eip-2098)
@@ -48,14 +44,12 @@ library ECDSA {
         return signer;
     }
 
-    /**
-     * @dev Returns an Ethereum Signed Message, created from a `hash`. This
-     * replicates the behavior of the
-     * https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign[`eth_sign`]
-     * JSON-RPC method.
-     *
-     * See {recover}.
-     */
+    /// @dev Returns an Ethereum Signed Message, created from a `hash`. This
+    /// replicates the behavior of the
+    /// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign[`eth_sign`]
+    /// JSON-RPC method.
+    //
+    /// See {recover}.
     function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32) {
         // 32 is the length in bytes of hash,
         // enforced by the type signature above

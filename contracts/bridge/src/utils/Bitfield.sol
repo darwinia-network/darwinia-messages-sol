@@ -7,10 +7,8 @@ import "./Bits.sol";
 contract Bitfield {
     using Bits for uint256;
 
-    /**
-     * @dev Constants used to efficiently calculate the hamming weight of a bitfield. See
-     * https://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation for an explanation of those constants.
-     */
+    /// @dev Constants used to efficiently calculate the hamming weight of a bitfield. See
+    /// https://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation for an explanation of those constants.
     uint256 internal constant M1 =
         0x5555555555555555555555555555555555555555555555555555555555555555;
     uint256 internal constant M2 =
@@ -33,10 +31,8 @@ contract Bitfield {
         1000159,1000171,1000183,1000187,1000193,1000199,1000211,1000213,1000231,1000249
     ];
 
-    /**
-     * @notice Draws a random number, derives an index in the bitfield, and sets the bit if it is in the `prior` and not
-     * yet set. Repeats that `n` times.
-     */
+    /// @notice Draws a random number, derives an index in the bitfield, and sets the bit if it is in the `prior` and not
+    /// yet set. Repeats that `n` times.
     function randomNBitsWithPriorCheck(
         uint256 seed,
         uint256 prior,
@@ -82,11 +78,9 @@ contract Bitfield {
         return bitfield;
     }
 
-    /**
-     * @notice Calculates the number of set bits by using the hamming weight of the bitfield.
-     * The alogrithm below is implemented after https://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation.
-     * Further improvements are possible, see the article above.
-     */
+    /// @notice Calculates the number of set bits by using the hamming weight of the bitfield.
+    /// The alogrithm below is implemented after https://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation.
+    /// Further improvements are possible, see the article above.
     function countSetBits(uint256 x) internal pure returns (uint256) {
         x = (x & M1) + ((x >> 1) & M1); //put count of each  2 bits into those  2 bits
         x = (x & M2) + ((x >> 2) & M2); //put count of each  4 bits into those  4 bits

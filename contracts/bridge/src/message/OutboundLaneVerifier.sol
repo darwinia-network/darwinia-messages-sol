@@ -6,21 +6,21 @@ pragma abicoder v2;
 import "../interfaces/ILightClient.sol";
 
 contract OutboundLaneVerifier {
-    /**
-     * @dev The contract address of on-chain light client
-     */
+    /// @dev The contract address of on-chain light client
     ILightClient public immutable lightClient;
 
     /* State */
+
     // indentify slot
     // slot 0 ------------------------------------------------------------
-    // @dev bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
+
+    /// @dev bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
     uint32 public bridgedLanePosition;
-    // @dev Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
+    /// @dev Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
     uint32 public bridgedChainPosition;
-    // @dev This lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
+    /// @dev This lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
     uint32 public thisLanePosition;
-    // @dev This chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
+    /// @dev This chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
     uint32 public thisChainPosition;
 
     // ------------------------------------------------------------------
