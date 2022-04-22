@@ -5,14 +5,59 @@ pragma solidity >=0.6.0 <0.7.0;
 import "./ScaleCodec.sol";
 
 library Types {
-    struct EnumItemAccountId32 {
+    struct EnumItemAccountId {
         uint8 index;
         bytes32 accountId;
     }
 
-    function encodeEnumItemAccountId32(EnumItemAccountId32 memory item) internal pure returns (bytes memory) {
+    function encodeEnumItemAccountId(EnumItemAccountId memory item) internal pure returns (bytes memory) {
         bytes memory prefix = abi.encodePacked(uint8(item.index));
         return abi.encodePacked(prefix, item.accountId);
+    }
+
+    struct EnumItemCallOriginSourceAccount {
+        uint8 index;
+        bytes32 accountId;
+    }
+
+    function encodeEnumItemCallOriginSourceAccount(EnumItemCallOriginSourceAccount memory item) internal pure returns (bytes memory) {
+        bytes memory prefix = abi.encodePacked(uint8(item.index));
+        return abi.encodePacked(prefix, item.accountId);
+    }
+
+    struct EnumItemDispatchFeePaymentAtSourceChain {
+        uint8 index;
+    }
+
+    function encodeEnumItemDispatchFeePaymentAtSourceChain(EnumItemDispatchFeePaymentAtSourceChain memory item) internal pure returns (bytes memory) {
+        return abi.encodePacked(uint8(item.index));
+    }
+
+    struct Message {
+        uint32 specVersion;
+        uint64 weight;
+        bytes call;
+        bytes32 callerAccountId;
+    }
+
+    function encodeMessage(Message memory msg1) internal pure returns (bytes memory) {
+        EnumItemCallOriginSourceAccount memory origin = EnumItemCallOriginSourceAccount(
+            2,
+            msg1.callerAccountId
+        );
+
+
+        EnumItemDispatchFeePaymentAtSourceChain memory dispatchFeePayment = EnumItemDispatchFeePaymentAtSourceChain(
+            0
+        );
+
+        return abi.encodePacked(
+            ScaleCodec.encode32(msg1.specVersion), 
+            ScaleCodec.encode64(msg1.weight),
+            encodeEnumItemCallOriginSourceAccount(origin),
+            msg1.call,
+            encodeEnumItemDispatchFeePaymentAtSourceChain(dispatchFeePayment)
+        );
     }
 }
 
@@ -52,12 +97,12 @@ library System {
 library Balances {
     struct TransferCall {
         bytes2 callIndex;
-        Types.EnumItemAccountId32 dest;
+        Types.EnumItemAccountId dest;
         uint128 value;
     }
 
     function encodeTransferCall(TransferCall memory call) internal pure returns (bytes memory) {
-        bytes memory destEncoded = Types.encodeEnumItemAccountId32(call.dest);
+        bytes memory destEncoded = Types.encodeEnumItemAccountId(call.dest);
         bytes memory valueEncoded = ScaleCodec.encodeUintCompact(call.value);
         return abi.encodePacked(
             call.callIndex, 

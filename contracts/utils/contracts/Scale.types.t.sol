@@ -46,7 +46,7 @@ contract ScaleTypesTest is DSTest {
         // pangoro call
         Balances.TransferCall memory call = Balances.TransferCall(
             hex"0400",
-            Types.EnumItemAccountId32(
+            Types.EnumItemAccountId(
                 0,
                 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
             ),
