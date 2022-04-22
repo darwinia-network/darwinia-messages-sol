@@ -5,7 +5,7 @@ import "./ds-test/test.sol";
 
 import "./Input.sol";
 import "./Scale.sol";
-import { ScaleStruct, S2SBacking } from "./Scale.struct.sol";
+import { ScaleStruct, S2SBacking, System } from "./Scale.struct.sol";
 import "./ScaleCodec.sol";
 import "hardhat/console.sol";
 
@@ -39,7 +39,7 @@ contract ScaleCodecTest is DSTest {
         assertCompactEq(1073741824, hex"0300000040");
     }
 
-    function testEncodeUnlockFromRemoteCall() public {
+    function testEncodeS2SBackingUnlockFromRemoteCall() public {
         // pangoro call
         S2SBacking.UnlockFromRemoteCall memory call = S2SBacking.UnlockFromRemoteCall(
             hex"1402",
@@ -55,13 +55,13 @@ contract ScaleCodecTest is DSTest {
 
     function testEncodeSystemRemarkCall() public {
         // pangoro call
-        S2SBacking.SystemRemarkCall memory call = S2SBacking.SystemRemarkCall(
+        System.RemarkCall memory call = System.RemarkCall(
             hex"0001",
             hex"12345678"
         );
 
         bytes memory e = hex"00011012345678";
-        bytes memory r = S2SBacking.encodeSystemRemarkCall(call);
+        bytes memory r = System.encodeRemarkCall(call);
         assertEq0(r, e);
     }
 

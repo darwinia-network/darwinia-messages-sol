@@ -37,17 +37,29 @@ library S2SBacking {
     function encodeUnlockFromRemoteCall(UnlockFromRemoteCall memory call) internal pure returns (bytes memory) {
         bytes32 amountEncoded = ScaleCodec.encode256(call.amount);
         bytes memory recipientLengthEncoded = ScaleCodec.encodeUintCompact(call.recipient.length);
-        return abi.encodePacked(call.callIndex, call.tokenAddress, amountEncoded, recipientLengthEncoded, call.recipient);
+        return abi.encodePacked(
+            call.callIndex, 
+            call.tokenAddress, 
+            amountEncoded,
+            recipientLengthEncoded, 
+            call.recipient
+        );
     }
+}
 
-    struct SystemRemarkCall {
+library System {
+    struct RemarkCall {
         bytes2 callIndex;
         bytes remark;
     }
 
-    function encodeSystemRemarkCall(SystemRemarkCall memory call) internal pure returns (bytes memory) {
+    function encodeRemarkCall(RemarkCall memory call) internal pure returns (bytes memory) {
         bytes memory remarkLengthEncoded = ScaleCodec.encodeUintCompact(call.remark.length);
-        return abi.encodePacked(call.callIndex, remarkLengthEncoded, call.remark);
+        return abi.encodePacked(
+            call.callIndex, 
+            remarkLengthEncoded, 
+            call.remark
+        );
     }
 }
 

@@ -43,7 +43,7 @@ describe('ScaleCodecTest', function (accounts) {
     })
 
     it('encodeUnlockFromRemoteCall', async() => {
-        await scaleCodecTest.testEncodeUnlockFromRemoteCall();
+        await scaleCodecTest.testEncodeS2SBackingUnlockFromRemoteCall();
     })
 
     it('encodeSystemRemarkCall', async() => {
