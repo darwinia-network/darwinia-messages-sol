@@ -186,7 +186,10 @@ library ScaleCodec {
     }
 
     function encodeBytes(bytes memory input) internal pure returns (bytes memory) {
-        return encodeUintCompact(input.length);
+        return abi.encodePacked(
+            encodeUintCompact(input.length),
+            input
+        );
     }
 
     
