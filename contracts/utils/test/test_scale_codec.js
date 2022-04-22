@@ -7,7 +7,6 @@ describe('ScaleCodecTest', function (accounts) {
 
     before(async () => {
         Scale = await ethers.getContractFactory("Scale");
-
         scale = await Scale.deploy();
         await scale.deployed();
 
@@ -17,10 +16,6 @@ describe('ScaleCodecTest', function (accounts) {
             // Scale: scale.address
           }
         });
-
-        // compactMerkleProofTest = await CompactMerkleProofTest.deploy();
-        // await compactMerkleProofTest.deployed();
-
         scaleTest = await ScaleTest.deploy();
         await scaleTest.deployed();
         
@@ -33,6 +28,15 @@ describe('ScaleCodecTest', function (accounts) {
         });
         scaleCodecTest = await ScaleCodecTest.deploy();
         await scaleCodecTest.deployed();
+
+        ScaleTypesTest = await ethers.getContractFactory("ScaleTypesTest",
+        {
+          libraries: {
+            
+          }
+        });
+        scaleTypesTest = await ScaleTypesTest.deploy();
+        await scaleTypesTest.deployed();
     });
 
     it('encodeUintCompact', async() => {
@@ -43,11 +47,15 @@ describe('ScaleCodecTest', function (accounts) {
     })
 
     it('encodeUnlockFromRemoteCall', async() => {
-        await scaleCodecTest.testEncodeS2SBackingUnlockFromRemoteCall();
+        await scaleTypesTest.testEncodeS2SBackingUnlockFromRemoteCall();
     })
 
     it('encodeSystemRemarkCall', async() => {
-        await scaleCodecTest.testEncodeSystemRemarkCall();
+        await scaleTypesTest.testEncodeSystemRemarkCall();
+    })
+
+    it('encodeBalancesTransferCall', async() => {
+        await scaleTypesTest.testEncodeBalancesTransferCall();
     })
 
     // it('ScaleTest', async() => {
