@@ -21,7 +21,8 @@ contract TargetChainTest is DSTest, TargetChain {
 
         assertEq(
             keccak256(abi.encodePacked(
-                "UnrewardedRelayer(address relayer,DeliveredMessages messages)"
+                "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
+                "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
                 )
             ),
             UNREWARDEDRELAYER_TYPETASH
@@ -51,9 +52,9 @@ contract TargetChainTest is DSTest, TargetChain {
         assertEq(hash(messages), hex"8c4376658fb7931861c44cd7fd187ebfe2ac3c956963cedf369ef4de343799dc");
         UnrewardedRelayer[] memory relayers = new UnrewardedRelayer[](1);
         relayers[0] = UnrewardedRelayer(address(1), messages);
-        assertEq(hash(relayers), hex"605bf17a2b6c7a6caa432b4cc39ad3b2400f479f9cde70ff1efbfb1c46dc46cb");
+        assertEq(hash(relayers), hex"2e004505eaef4472a04cc84b407767b2e1a8bb43e7ea67299eca2f16c7e513cd");
         InboundLaneData memory data = InboundLaneData(relayers, 0, 1);
-        assertEq(hash(data), hex"8f802bcb220cf6dce5c09e9cf80f9e75c276bd7dd5b03c3e354ef76ad3f09845");
+        assertEq(hash(data), hex"d0ef2e272b80d26edcfc1d6b3603ca1778bf9015f17c5214a3554f5394ac9124");
     }
 
 }

@@ -65,7 +65,7 @@ contract SourceChain {
     //     "OutboundLaneData(uint256 latest_received_nonce,Message[] messages)",
     //     "Message(uint256 encoded_key,MessagePayload payload)",
     //     "MessagePayload(address source,address target,bytes32 encoded_hash)"
-    //     ")"
+    //     )
     // )
     bytes32 internal constant OUTBOUNDLANEDATA_TYPEHASH = 0x823237038687bee0f021baf36aa1a00c49bd4d430512b28fed96643d7f4404c6;
 
@@ -74,14 +74,14 @@ contract SourceChain {
     // keccak256(abi.encodePacked(
     //     "Message(uint256 encoded_key,MessagePayload payload)",
     //     "MessagePayload(address source,address target,bytes32 encoded_hash)"
-    //     ")"
+    //     )
     // )
     bytes32 internal constant MESSAGE_TYPEHASH = 0xfc686c8227203ee2031e2c031380f840b8cea19f967c05fc398fdeb004e7bf8b;
 
     // Hash of the MessagePayload Schema
     // keccak256(abi.encodePacked(
     //     "MessagePayload(address source,address target,bytes32 encoded_hash)"
-    //     ")"
+    //     )
     // )
     bytes32 internal constant MESSAGEPAYLOAD_TYPEHASH = 0x582ffe1da2ae6da425fa2c8a2c423012be36b65787f7994d78362f66e4f84101;
 
