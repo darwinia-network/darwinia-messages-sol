@@ -66,12 +66,12 @@ library ScaleCodec {
             return Bytes.reverse(abi.encodePacked(uint32(((v << 2) + 2))));
         } else if ( v > 2 ** 30 - 1 ) {
             bytes memory valueBytes = Bytes.removeLeadingZero(abi.encodePacked(v));
-            bytes memory body = Bytes.reverse(valueBytes);
+            bytes memory value = Bytes.reverse(valueBytes);
 
             uint length = valueBytes.length;
             bytes memory prefix = Bytes.removeLeadingZero(abi.encodePacked( ((length - 4) << 2) + 3 ));
 
-            return abi.encodePacked(prefix, body);
+            return abi.encodePacked(prefix, value);
         } else {
             revert("Code should be unreachable");
         }
