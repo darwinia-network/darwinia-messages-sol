@@ -58,6 +58,10 @@ describe('ScaleCodecTest', function (accounts) {
         await scaleTypesTest.testEncodeBalancesTransferCall();
     })
 
+    it('encodeMessage', async() => {
+        await scaleTypesTest.testEncodeMessage();
+    })
+
     // it('ScaleTest', async() => {
     //     await scaleTest.testDecodeReceiptProof()
     // })

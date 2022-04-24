@@ -20,12 +20,12 @@ contract ScaleTypesTest is DSTest {
         // pangoro call
         S2SBacking.UnlockFromRemoteCall memory call = S2SBacking.UnlockFromRemoteCall(
             hex"1402",
-            0x1200000000000000000000000000000000000012,
-            7123,
-            hex"1234"
+            0x6D6F646C64612f6272696e670000000000000000,
+            100000,
+            hex"d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"
         );
 
-        bytes memory e = hex"14021200000000000000000000000000000000000012d31b000000000000000000000000000000000000000000000000000000000000081234";
+        bytes memory e = hex"14026d6f646c64612f6272696e670000000000000000a08601000000000000000000000000000000000000000000000000000000000080d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
         bytes memory r = S2SBacking.encodeUnlockFromRemoteCall(call);
         assertEq0(r, e);
     }
@@ -46,7 +46,7 @@ contract ScaleTypesTest is DSTest {
         // pangoro call
         Balances.TransferCall memory call = Balances.TransferCall(
             hex"0400",
-            Types.EnumItemAccountId(
+            Types.EnumItemWithAccountId(
                 0,
                 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
             ),
@@ -55,6 +55,39 @@ contract ScaleTypesTest is DSTest {
 
         bytes memory e = hex"040000d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d690a";
         bytes memory r = Balances.encodeTransferCall(call);
+        assertEq0(r, e);
+    }
+
+    function testEncodeMessage() public {
+        // the remote call of pangoro
+        S2SBacking.UnlockFromRemoteCall memory call = S2SBacking.UnlockFromRemoteCall(
+            hex"1402",
+            0x6D6F646C64612f6272696e670000000000000000,
+            100000,
+            hex"d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"
+        );
+        bytes memory callEncoded = S2SBacking.encodeUnlockFromRemoteCall(call);
+
+        // the origin for the remote call        
+        Types.EnumItemWithAccountId memory origin = Types.EnumItemWithAccountId(
+            2,
+            0x64766d3a00000000000000d2c7008400f54aa70af01cf8c747a4473246593ea2
+        );
+
+
+        // the message encoding
+        Types.EnumItemWithNull memory dispatchFeePayment = Types.EnumItemWithNull(0);
+        Types.Message memory msg1 = Types.Message(
+            28080,
+            2654000000,
+            origin,
+            dispatchFeePayment,
+            callEncoded
+        );
+        bytes memory r = Types.encodeMessage(msg1);
+
+
+        bytes memory e = hex"b06d000080d3309e000000000264766d3a00000000000000d2c7008400f54aa70af01cf8c747a4473246593ea2005d0114026d6f646c64612f6272696e670000000000000000a08601000000000000000000000000000000000000000000000000000000000080d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
         assertEq0(r, e);
     }
 
