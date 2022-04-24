@@ -1,0 +1,15 @@
+{
+  "name": "@darwinia/contracts-periphery",
+  "version": "1.0.0",
+  "description": "Peripheral smart contracts for interacting with message protocal.",
+  "main": "index.js",
+  "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Darwinia dev",
+  "license": "MIT",
+  "dependencies": {
+    "hardhat": "^2.9.3"
+  }
+}
