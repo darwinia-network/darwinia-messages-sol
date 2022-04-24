@@ -20,7 +20,6 @@ import "./InboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 
-///
 /// @title Everything about incoming messages receival
 /// @author echo
 /// @notice The inbound lane is the message layer of the bridge
@@ -37,7 +36,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// @dev Gas used per message needs to be less than 100000 wei
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
     /// @dev Gas buffer for executing `send_message` tx
-    uint256 public constant GAS_BUFFER = 3000;
+    uint256 public constant GAS_BUFFER = 6000;
     /// @notice This parameter must lesser than 256
     /// Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
     /// message has been delivered, but either confirmations haven't been delivered back to the
@@ -266,7 +265,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// @param payload payload of the dispatch message
     /// @return dispatch_result the dispatch call result
     /// - Return True:
-    ///   1. filter return True and dispatch call successfully with no 32-length return data
+    ///   1. filter return True and dispatch call successfully with none 32-length return data
     ///   2. filter return True and dispatch call successfully with 32-length return data is True
     /// - Return False:
     ///   1. filter return False
@@ -288,13 +287,17 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             if (dispatch_result && result_data.length == 32) {
                 dispatch_result = abi.decode(result_data, (bool));
             }
-        } else {
-            dispatch_result = false;
         }
     }
 
+    /// @notice filter the cross chain message
+    /// @dev The app layer must implement the interface `ICrossChainFilter`
+    /// to verify the source sender and payload of source chain messages.
+    /// @param target target of the dispatch message
+    /// @param encoded encoded calldata of the dispatch message
+    /// @return canCall the filter static call result, Return True only when target contract
+    /// implement the `ICrossChainFilter` interface with return data is True.
     function filter(address target, bytes memory encoded) internal view returns (bool canCall) {
-        /// @dev The app layer must implement the interface `ICrossChainFilter`
         (bool ok, bytes memory result) = target.staticcall{gas: GAS_BUFFER}(encoded);
         if (ok) {
             if (result.length == 32) {

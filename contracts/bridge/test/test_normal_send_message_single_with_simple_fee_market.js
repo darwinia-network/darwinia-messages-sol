@@ -14,9 +14,11 @@ let feeMarket, outbound, inbound, normalApp
 let outboundData, inboundData
 let fee = ethers.utils.parseEther("30")
 let overrides = { value: fee }
-
+let source, target
 const batch = 1
 const encoded = "0x"
+const encoded_hash = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+
 const send_message = async (nonce) => {
     let to = normalApp.address
     const tx = await outbound.send_message(
@@ -26,7 +28,7 @@ const send_message = async (nonce) => {
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(nonce, owner.address, to, encoded)
+      .withArgs(nonce, source, target, encoded)
     await logNonce()
 }
 
@@ -36,13 +38,7 @@ const logNonce = async () => {
   log(`(${out.latest_received_nonce}, ${out.latest_generated_nonce}]                                            ->     (${iin.last_confirmed_nonce}, ${iin.last_delivered_nonce}]`)
 }
 
-const receive_messages_proof = async (nonce) => {
-    const payload = {
-      source: owner.address,
-      target: normalApp.address,
-      encoded: encoded
-    }
-    let laneData = await outbound.data()
+const build_land_data = (laneData) => {
     let data = {
       latest_received_nonce: laneData.latest_received_nonce,
       messages: []
@@ -50,10 +46,25 @@ const receive_messages_proof = async (nonce) => {
     for (let i = 0; i< laneData.messages.length; i++) {
       let message = {
         encoded_key: laneData.messages[i].encoded_key,
-        payload: payload
+        payload: {
+          source,
+          target,
+          encoded,
+        }
       }
       data.messages.push(message)
     }
+    return data
+}
+
+const receive_messages_proof = async (nonce) => {
+    const payload = {
+      source: owner.address,
+      target: normalApp.address,
+      encoded: encoded
+    }
+    let laneData = await outbound.data()
+    let data = build_land_data(laneData)
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
     let relayer = ethers.Wallet.createRandom();
@@ -74,13 +85,17 @@ const receive_messages_proof = async (nonce) => {
 }
 
 const receive_messages_delivery_proof = async (begin, end) => {
-    let laneData = await inbound.data()
-    const payload = {
-      source: owner.address,
-      target: normalApp.address,
-      encoded_hash: "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+    let payloads = []
+    for(let i=begin; i<=end; i++){
+      let payload = {
+        source,
+        target,
+        encoded_hash
+      }
+      payloads.push(payload)
     }
-    const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, [payload], "0x")
+    let laneData = await inbound.data()
+    const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, payloads, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 1)
@@ -97,6 +112,7 @@ describe("normal app send single message tests", () => {
   before(async () => {
     ({ outbound, inbound } = await waffle.loadFixture(Fixure));
     [owner, addr1, addr2] = await ethers.getSigners();
+    source = owner.address
 
     const SimpleFeeMarket = await ethers.getContractFactory("SimpleFeeMarket")
     feeMarket = await SimpleFeeMarket.deploy(ethers.utils.parseEther("10"), 100, 100)
@@ -109,6 +125,8 @@ describe("normal app send single message tests", () => {
     const NormalApp = await ethers.getContractFactory("NormalApp")
     normalApp = await NormalApp.deploy("0x0000000000000000000000000000000000000000")
     outbound.rely(normalApp.address)
+    target = normalApp.address
+
     log(" out bound lane                                   ->      in bound lane")
     log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")
   })

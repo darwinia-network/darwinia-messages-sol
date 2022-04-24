@@ -73,6 +73,15 @@ contract SourceChainTest is DSTest, SourceChain {
         assertEq(hash(data_storage), hash(data));
     }
 
+    function test_hash_message() public {
+         MessagePayloadCompact memory payload_compact = MessagePayloadCompact(
+             0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266,
+             0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6,
+             keccak256("")
+         );
+        assertEq(hash(payload_compact), 0x4b7e76927f12905f720b644a483f3db0d1717b0cf58c1ce223b540707652fdbd);
+    }
+
     function test_decode_message_key() public {
         uint256 encoded_key = uint256(0x0000000000000000000000000000000000000001000000010000000000000001);
         MessageKey memory key = decodeMessageKey(encoded_key);

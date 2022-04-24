@@ -18,6 +18,11 @@ let darwiniaLaneCommitter0, darwiniaChainCommitter
 let sourceLightClient, targetLightClient
 let overrides = { value: ethers.utils.parseEther("30") }
 
+let owner, source
+const target = "0x0000000000000000000000000000000000000000"
+const encoded = "0x"
+const encoded_hash = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+
 // let getAndVerify = new GetAndVerify("http://127.0.0.1:8545 ")
 
 const build_proof = async () => {
@@ -50,22 +55,41 @@ const generate_darwinia_proof = async () => {
 
 const send_message = async (outbound, nonce) => {
     const tx = await outbound.send_message(
-      "0x0000000000000000000000000000000000000000",
-      "0x",
+      target,
+      encoded,
       overrides
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(nonce, "0x")
+      .withArgs(nonce, source, target, encoded)
+}
+
+const build_land_data = (laneData) => {
+    let data = {
+      latest_received_nonce: laneData.latest_received_nonce,
+      messages: []
+    }
+    for (let i = 0; i< laneData.messages.length; i++) {
+      let message = {
+        encoded_key: laneData.messages[i].encoded_key,
+        payload: {
+          source,
+          target,
+          encoded,
+        }
+      }
+      data.messages.push(message)
+    }
+    return data
 }
 
 const receive_messages_proof = async (inbound, srcoutbound, srcinbound, nonce) => {
     const o = await srcoutbound.data()
+    const data = build_land_data(o)
     const proof = await generate_darwinia_proof()
-    const calldata = Array(o.messages.length).fill("0x")
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
-    const tx = await inbound.receive_messages_proof(o, calldata, proof)
+    const tx = await inbound.receive_messages_proof(data, proof)
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
@@ -74,9 +98,15 @@ const receive_messages_proof = async (inbound, srcoutbound, srcinbound, nonce) =
 }
 
 const receive_messages_delivery_proof = async (outbound, tgtoutbound, tgtinbound, begin, end) => {
+    const payload = {
+      source,
+      target,
+      encoded_hash: "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+    }
+    const payloads = Array(end - begin + 1).fill(payload)
     const i = await tgtinbound.data()
     // const proof = await generate_bsc_proof()
-    const tx = await outbound.receive_messages_delivery_proof(i, "0x")
+    const tx = await outbound.receive_messages_delivery_proof(i, payloads, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 0)
@@ -86,6 +116,7 @@ describe("verify message relay tests", () => {
 
   before(async () => {
     const [owner] = await ethers.getSigners();
+    source = owner.address
     const MockBSCLightClient = await ethers.getContractFactory("MockBSCLightClient")
     const MockDarwiniaLightClient = await ethers.getContractFactory("MockDarwiniaLightClient")
     const OutboundLane = await ethers.getContractFactory("OutboundLane")

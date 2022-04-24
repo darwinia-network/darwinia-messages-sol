@@ -265,7 +265,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     function on_messages_delivered(DeliveredMessages memory confirmed_messages, MessagePayloadCompact[] calldata payloads) internal {
         uint i = 0;
         for (uint64 nonce = confirmed_messages.begin; nonce <= confirmed_messages.end; nonce++) {
-            MessagePayloadCompact memory payload = payloads[i];
+            MessagePayloadCompact memory payload = payloads[i++];
             require(hash(payload) == messages[nonce], "Lane: Invalid Payload");
             uint256 offset = nonce - confirmed_messages.begin;
             bool dispatch_result = ((confirmed_messages.dispatch_results >> offset) & 1) > 0;
