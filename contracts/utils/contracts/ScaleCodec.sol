@@ -61,17 +61,18 @@ library ScaleCodec {
         if ( v >= 0 && v <= 63 ) {
             return abi.encodePacked(uint8(v << 2));
         } else if ( v > 63 && v <= (2 ** 14) - 1 ) {
-            return Bytes.reverse(abi.encodePacked(uint16(((v << 2) + 1))));
+            return abi.encodePacked(reverse16(uint16(((v << 2) + 1))));
         } else if ( v > (2 ** 14) - 1 && v <= (2 ** 30) - 1 ) {
-            return Bytes.reverse(abi.encodePacked(uint32(((v << 2) + 2))));
+            return abi.encodePacked(reverse32(uint32(((v << 2) + 2))));
         } else if ( v > 2 ** 30 - 1 ) {
-            bytes memory valueBytes = Bytes.removeLeadingZero(abi.encodePacked(v));
-            bytes memory value = Bytes.reverse(valueBytes);
+            bytes memory valueBytes = 
+                Bytes.removeEndingZero(abi.encodePacked(reverse256(v)));
 
             uint length = valueBytes.length;
-            bytes memory prefix = Bytes.removeLeadingZero(abi.encodePacked( ((length - 4) << 2) + 3 ));
+            bytes memory prefix = 
+                Bytes.removeLeadingZero(abi.encodePacked(((length - 4) << 2) + 3));
 
-            return abi.encodePacked(prefix, value);
+            return abi.encodePacked(prefix, valueBytes);
         } else {
             revert("Code should be unreachable");
         }

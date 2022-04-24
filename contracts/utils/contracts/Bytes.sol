@@ -129,18 +129,6 @@ library Bytes {
         return out;
     }
 
-    // TODO: use more effective way
-    function reverse(bytes memory inbytes) internal pure returns (bytes memory) {
-        uint inlength = inbytes.length;
-        bytes memory outbytes = new bytes(inlength);
-
-        for (uint i = 0; i <= inlength - 1; i++) {
-            outbytes[i] = inbytes[inlength - i - 1];
-        }
-
-        return outbytes;
-    }
-
     function removeLeadingZero(bytes memory data) internal pure returns (bytes memory) {
         uint length = data.length;
 
@@ -152,6 +140,20 @@ library Bytes {
             }
         }
 
-        return Bytes.substr(data, startIndex);
+        return substr(data, startIndex);
+    }
+
+    function removeEndingZero(bytes memory data) internal pure returns (bytes memory) {
+        uint length = data.length;
+
+        uint endIndex = 0;
+        for (uint i = length - 1; i >= 0; i--) {
+            if (data[i] != 0) {
+                endIndex = i;
+                break;
+            }
+        }
+
+        return substr(data, 0, endIndex + 1);
     }
 }
