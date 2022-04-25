@@ -2,12 +2,11 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "../bridge/src/interfaces/ICrossChainFilter.sol";
-import "../bridge/src/interfaces/IOnMessageDelivered.sol";
-
+import "./interfaces/ISubToSubBridge.sol";
 import "../utils/contracts/Scale.types.sol";
+import "../utils/contracts/AccountId.sol";
 
-abstract contract SmartChainApp is ICrossChainFilter, IOnMessageDelivered {
+abstract contract SmartChainApp {
 	address public constant DISPATCH_ENCODER = 0x0000000000000000000000000000000000000018;
     address public constant DISPATCH = 0x0000000000000000000000000000000000000019;
 
@@ -15,19 +14,13 @@ abstract contract SmartChainApp is ICrossChainFilter, IOnMessageDelivered {
 
     fallback() external {}
 
-    function crossChainFilter(uint32, uint32, address, bytes calldata) external pure virtual override returns (bool) {
-        return true;
-    }
-
-    function on_messages_delivered(uint256, bool) external pure virtual override {
-        return;
-    }
-
     // move to solidity encode?
+    // TODO: 
+    //   define channel constant from palletIndex and laneId
     function sendMessage(uint32 palletIndex, bytes4 laneId, bytes calldata message) public payable returns (bool) {
     	// the pricision in contract is 18, and in pallet is 9, transform the fee value
         uint256 fee = msg.value/(10**9); 
-        bytes memory sendMessageCall = SubToSubBridge(DISPATCH_ENCODER).encode_send_message_dispatch_call(
+        bytes memory sendMessageCall = ISubToSubBridge(DISPATCH_ENCODER).encode_send_message_dispatch_call(
             palletIndex,
             laneId,
             message,
