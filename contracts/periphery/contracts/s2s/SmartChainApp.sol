@@ -52,6 +52,6 @@ abstract contract SmartChainApp is ICrossChainFilter, IOnMessageDelivered {
             dispatchFeePayment,
             callEncoded
         );
-        return Types.encodeMessage(message);
+        return abi.encode(Types.encodeMessage(message));
     }
 }
