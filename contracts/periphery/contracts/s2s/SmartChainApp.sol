@@ -42,7 +42,7 @@ abstract contract SmartChainApp is ICrossChainFilter, IOnMessageDelivered {
     function buildMessage(uint32 specVersion, uint64 weight, bytes calldata callEncoded) public pure returns (bytes memory) {
         Types.EnumItemWithAccountId memory origin = Types.EnumItemWithAccountId(
             2, // index in enum
-            origin
+            AccountId.fromAddress(this) // 'this' is the UserApp contract address
         );
         Types.EnumItemWithNull memory dispatchFeePayment = Types.EnumItemWithNull(0);
         Types.Message memory message = Types.Message(
