@@ -92,3 +92,21 @@ library Balances {
         );
     }
 }
+
+library BridgeMessages {
+    struct SendMessageCall {
+        bytes2 callIndex;
+        bytes4 lineId;
+        Types.Message payload;
+        uint128 deliveryAndDispatchFee;
+    }
+
+    function encodeSendMessageCall(SendMessageCall memory call) internal pure returns (bytes memory) {
+        return abi.encodePacked(
+            call.callIndex, 
+            call.lineId, 
+            Types.encodeMessage(call.payload),
+            ScaleCodec.encode128(call.deliveryAndDispatchFee)
+        );
+    }
+}
