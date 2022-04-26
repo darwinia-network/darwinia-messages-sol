@@ -31,20 +31,21 @@ abstract contract SmartChainApp {
         return success;
     }
     
-    // origin?
-    function buildMessage(uint32 specVersion, uint64 weight, bytes calldata callEncoded) public pure returns (bytes memory) {
+    function buildMessage(uint32 specVersion, uint64 weight, bytes memory callEncoded) internal returns (Types.Message memory) {
         Types.EnumItemWithAccountId memory origin = Types.EnumItemWithAccountId(
             2, // index in enum
             AccountId.fromAddress(address(this)) // UserApp contract address
         );
-        Types.EnumItemWithNull memory dispatchFeePayment = Types.EnumItemWithNull(0);
-        Types.Message memory message = Types.Message(
+
+        Types.EnumItemWithNull memory dispatchFeePayment = 
+            Types.EnumItemWithNull(0);
+
+        return Types.Message(
             specVersion,
             weight,
             origin,
             dispatchFeePayment,
             callEncoded
         );
-        return abi.encode(Types.encodeMessage(message));
     }
 }
