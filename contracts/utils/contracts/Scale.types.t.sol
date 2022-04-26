@@ -138,4 +138,44 @@ contract ScaleTypesTest is DSTest {
         assertEq0(r, e);
     }
 
+    function testEncodeSendMessageCall2() public {
+        // the remote call of pangoro
+        S2SBacking.UnlockFromRemoteCall memory unlockFromRemotecall = S2SBacking.UnlockFromRemoteCall(
+            hex"1402",
+            0x6D6F646C64612f6272696e670000000000000000,
+            100000,
+            hex"d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"
+        );
+        bytes memory callEncoded = S2SBacking.encodeUnlockFromRemoteCall(unlockFromRemotecall);
+
+        // the origin for the remote call        
+        Types.EnumItemWithAccountId memory origin = Types.EnumItemWithAccountId(
+            2,
+            0x64766d3a00000000000000d2c7008400f54aa70af01cf8c747a4473246593ea2
+        );
+
+
+        // the message
+        Types.EnumItemWithNull memory dispatchFeePayment = Types.EnumItemWithNull(0);
+        Types.Message memory message = Types.Message(
+            28080,
+            2654000000,
+            origin,
+            dispatchFeePayment,
+            callEncoded
+        );
+
+        // pangolin call
+        BridgeMessages.SendMessageCall memory call = BridgeMessages.SendMessageCall(
+            hex"2b03",
+            bytes4(0x00000000),
+            message,
+            200000000000000000000
+        );
+
+        bytes memory e = hex"2b0300000000b06d000080d3309e000000000264766d3a00000000000000d2c7008400f54aa70af01cf8c747a4473246593ea2005d0114026d6f646c64612f6272696e670000000000000000a08601000000000000000000000000000000000000000000000000000000000080d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d000020c65abc8ed70a00000000000000";
+        bytes memory r = BridgeMessages.encodeSendMessageCall(call);
+        assertEq0(r, e);
+    }
+
 }

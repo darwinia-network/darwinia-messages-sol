@@ -67,7 +67,7 @@ describe('ScaleCodecTest', function (accounts) {
     })
 
     it('encodeSendMessageCall', async() => {
-        await scaleTypesTest.testEncodeSendMessageCall();
+        await scaleTypesTest.testEncodeSendMessageCall2();
     })
 
     // it('ScaleTest', async() => {
