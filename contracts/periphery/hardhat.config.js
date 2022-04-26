@@ -57,7 +57,7 @@ module.exports = {
     cache: "./cache",
     artifacts: "./artifacts"
   },
-  defaultNetwork: 'hardhat',
+  defaultNetwork: 'pangolin',
   networks: {
     hardhat: {
     },
@@ -65,6 +65,13 @@ module.exports = {
       url: 'http://localhost:8545/',
       network_id: "*",
       accounts: [PRIVATE_KEY]
+    },
+    pangolin: {
+      url: 'https://pangolin-rpc.darwinia.network',
+      network_id: "*",
+      accounts: [PRIVATE_KEY],
+      gas: 30_000_000,
+      gasPrice: 53100000000
     },
     ropsten: {
       url: ROPSTEN_RPC_URL,
