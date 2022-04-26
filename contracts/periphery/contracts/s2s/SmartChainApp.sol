@@ -10,6 +10,8 @@ abstract contract SmartChainApp {
     address public constant DISPATCH_ENCODER = 0x0000000000000000000000000000000000000018;
     address public constant DISPATCH = 0x0000000000000000000000000000000000000019;
 
+    event DispatchResult(bool success, bytes result);
+
     receive() external payable {}
 
     fallback() external {}
@@ -32,7 +34,9 @@ abstract contract SmartChainApp {
         );
         
         (bool success, bytes memory result) = DISPATCH.call(sendMessageCallEncoded);
+        emit DispatchResult(success2, result2);
     }
+
     function sendMessageOld(uint32 palletIndex, bytes4 laneId, uint256 fee, bytes memory message) internal { 
         // the pricision in contract is 18, and in pallet is 9, transform the fee value
         uint256 feeInPallet = fee/(10**9); 
@@ -46,6 +50,9 @@ abstract contract SmartChainApp {
         (bool success, bytes memory result) = DISPATCH_ENCODER.staticcall(data);
         if (success) {
             (bool success2, bytes memory result2) = DISPATCH.call(result);
+            emit DispatchResult(success2, result2);
+        } else {
+            emit DispatchResult(success, result);
         }
     }
 
