@@ -34,7 +34,7 @@ abstract contract SmartChainApp {
         );
         
         (bool success, bytes memory result) = DISPATCH.call(sendMessageCallEncoded);
-        emit DispatchResult(success2, result2);
+        emit DispatchResult(success, result);
     }
 
     function sendMessageOld(uint32 palletIndex, bytes4 laneId, uint256 fee, bytes memory message) internal { 
