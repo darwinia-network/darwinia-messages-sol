@@ -3,8 +3,8 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 import "./interfaces/ISubToSubBridge.sol";
-import "../utils/contracts/Scale.types.sol";
-import "../utils/contracts/AccountId.sol";
+import "@darwinia/contracts-utils/contracts/Scale.types.sol";
+import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
 abstract contract SmartChainApp {
 	address public constant DISPATCH_ENCODER = 0x0000000000000000000000000000000000000018;
