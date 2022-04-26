@@ -209,7 +209,7 @@ contract FeeMarket is IFeeMarket {
         return addr != SENTINEL_HEAD && addr != SENTINEL_TAIL && relayers[addr] != address(0);
     }
 
-    // fetch the real time maket fee
+    // fetch the real time market fee
     function market_fee() external view override returns (uint fee) {
         address[] memory top_relayers = getTopRelayers();
         address last = top_relayers[top_relayers.length - 1];
