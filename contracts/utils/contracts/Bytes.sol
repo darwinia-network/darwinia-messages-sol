@@ -133,7 +133,7 @@ library Bytes {
         uint length = data.length;
 
         uint startIndex = 0;
-        for (uint i = 0; i <= length - 1; i++) {
+        for (uint i = 0; i < length; i++) {
             if (data[i] != 0) {
                 startIndex = i;
                 break;
