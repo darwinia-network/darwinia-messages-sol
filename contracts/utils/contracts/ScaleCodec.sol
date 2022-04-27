@@ -58,7 +58,7 @@ library ScaleCodec {
 
 
     function encodeUintCompact(uint256 v) internal pure returns (bytes memory) {
-        if ( v >= 0 && v <= 63 ) {
+        if ( v < 64 ) {
             return abi.encodePacked(uint8(v << 2));
         } else if ( v > 63 && v <= (2 ** 14) - 1 ) {
             return abi.encodePacked(reverse16(uint16(((v << 2) + 1))));
