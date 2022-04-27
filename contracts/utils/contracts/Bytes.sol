@@ -156,4 +156,15 @@ library Bytes {
 
         return substr(data, 0, endIndex + 1);
     }
+
+    function reverse(bytes memory inbytes) internal pure returns (bytes memory) {
+        uint inlength = inbytes.length;
+        bytes memory outbytes = new bytes(inlength);
+
+        for (uint i = 0; i <= inlength - 1; i++) {
+            outbytes[i] = inbytes[inlength - i - 1];
+        }
+
+        return outbytes;
+    }
 }

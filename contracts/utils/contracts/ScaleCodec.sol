@@ -56,15 +56,16 @@ library ScaleCodec {
         }
     }
 
-
+    // The biggest compact supported uint is 2 ** 536 - 1. 
+    // But the biggest value supported by this method is 2 ** 256 - 1(max of uint256)
     function encodeUintCompact(uint256 v) internal pure returns (bytes memory) {
         if ( v < 64 ) {
             return abi.encodePacked(uint8(v << 2));
-        } else if ( v > 63 && v <= (2 ** 14) - 1 ) {
+        } else if ( v < 2 ** 14 ) {
             return abi.encodePacked(reverse16(uint16(((v << 2) + 1))));
-        } else if ( v > (2 ** 14) - 1 && v <= (2 ** 30) - 1 ) {
+        } else if ( v < 2 ** 30 ) {
             return abi.encodePacked(reverse32(uint32(((v << 2) + 2))));
-        } else if ( v > 2 ** 30 - 1 ) {
+        } else {
             bytes memory valueBytes = 
                 Bytes.removeEndingZero(abi.encodePacked(reverse256(v)));
 
@@ -73,8 +74,6 @@ library ScaleCodec {
                 Bytes.removeLeadingZero(abi.encodePacked(((length - 4) << 2) + 3));
 
             return abi.encodePacked(prefix, valueBytes);
-        } else {
-            revert("Code should be unreachable");
         }
     }
 
