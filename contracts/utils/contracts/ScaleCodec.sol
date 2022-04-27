@@ -72,9 +72,6 @@ library ScaleCodec {
             uint length = valueBytes.length;
             bytes memory prefix = 
                 Bytes.removeLeadingZero(abi.encodePacked(((length - 4) << 2) + 3));
-                
-            uint8 length = uint8(valueBytes.length);
-            uint8 prefix = (length - 4) << 2 + 3;
 
             return abi.encodePacked(prefix, valueBytes);
         }
