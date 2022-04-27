@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.7.0;
 
+import { Bytes } from "./Bytes.sol";
+
 library ScaleCodec {
     // Decodes a SCALE encoded uint256 by converting bytes (bid endian) to little endian format
     function decodeUint256(bytes memory data) internal pure returns (uint256) {
@@ -51,6 +53,27 @@ library ScaleCodec {
             );
         } else {
             revert("Code should be unreachable");
+        }
+    }
+
+    // The biggest compact supported uint is 2 ** 536 - 1. 
+    // But the biggest value supported by this method is 2 ** 256 - 1(max of uint256)
+    function encodeUintCompact(uint256 v) internal pure returns (bytes memory) {
+        if ( v < 64 ) {
+            return abi.encodePacked(uint8(v << 2));
+        } else if ( v < 2 ** 14 ) {
+            return abi.encodePacked(reverse16(uint16(((v << 2) + 1))));
+        } else if ( v < 2 ** 30 ) {
+            return abi.encodePacked(reverse32(uint32(((v << 2) + 2))));
+        } else {
+            bytes memory valueBytes = 
+                Bytes.removeEndingZero(abi.encodePacked(reverse256(v)));
+
+            uint length = valueBytes.length;
+            bytes memory prefix = 
+                Bytes.removeLeadingZero(abi.encodePacked(((length - 4) << 2) + 3));
+
+            return abi.encodePacked(prefix, valueBytes);
         }
     }
 
@@ -161,4 +184,13 @@ library ScaleCodec {
     function encode16(uint16 input) internal pure returns (bytes2) {
         return bytes2(reverse16(input));
     }
+
+    function encodeBytes(bytes memory input) internal pure returns (bytes memory) {
+        return abi.encodePacked(
+            encodeUintCompact(input.length),
+            input
+        );
+    }
+
+    
 }

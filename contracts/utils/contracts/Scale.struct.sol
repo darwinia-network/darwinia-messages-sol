@@ -21,4 +21,5 @@ library ScaleStruct {
         address target;
         uint256 value;
     }
+
 }
