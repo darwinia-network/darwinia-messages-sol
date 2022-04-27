@@ -19,7 +19,7 @@ library Types {
     }
 
     function encodeEnumItemWithNull(EnumItemWithNull memory item) internal pure returns (bytes memory) {
-        return abi.encodePacked(uint8(item.index));
+        return abi.encodePacked(item.index);
     }
 
     struct Message {
