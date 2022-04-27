@@ -11,8 +11,7 @@ library Types {
     }
 
     function encodeEnumItemWithAccountId(EnumItemWithAccountId memory item) internal pure returns (bytes memory) {
-        bytes memory prefix = abi.encodePacked(uint8(item.index));
-        return abi.encodePacked(prefix, item.accountId);
+        return abi.encodePacked(item.index, item.accountId);
     }
 
     struct EnumItemWithNull {
