@@ -28,13 +28,13 @@ const send_message = async (nonce) => {
       .withArgs(nonce, source, target, encoded)
     let block = await ethers.provider.getBlock(tx.blockNumber)
     await expect(tx)
-      .to.emit(feeMarket, "OrderAssgigned")
-      .withArgs(await outbound.encodeMessageKey(nonce), block.timestamp, await feeMarket.assignedRelayersNumber(), await feeMarket.collateralPerorder())
+      .to.emit(feeMarket, "Assgigned")
+      .withArgs(await outbound.encodeMessageKey(nonce), block.timestamp, await feeMarket.assignedRelayersNumber(), await feeMarket.collateralPerOrder())
 
     const [one, two, three] = await ethers.getSigners();
     await expect(tx)
       .to.emit(feeMarket, "Locked")
-      .withArgs(three.address, await feeMarket.collateralPerorder())
+      .withArgs(three.address, await feeMarket.collateralPerOrder())
     await logNonce()
 }
 
@@ -97,7 +97,7 @@ const receive_messages_delivery_proof = async (begin, end) => {
 
       let block = await ethers.provider.getBlock(tx.blockNumber)
       await expect(tx)
-        .to.emit(feeMarket, "OrderSettled")
+        .to.emit(feeMarket, "Settled")
         .withArgs(await outbound.encodeMessageKey(i), block.timestamp)
     }
     let n = end - begin + 1;
@@ -146,23 +146,23 @@ describe("sync message relay tests", () => {
     log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")
   });
 
-  it("add relayer", async () => {
+  it("enrol a relayer", async () => {
     const [one, two, three, four] = await ethers.getSigners();
     let overrides = { value: ethers.utils.parseEther("100") }
     let tx = await feeMarket.connect(four).enroll(three.address, ethers.utils.parseEther("40"), overrides)
     expect(tx)
-      .to.emit(feeMarket, "AddRelayer")
+      .to.emit(feeMarket, "Enrol")
       .withArgs(three.address, four.address, ethers.utils.parseEther("40"))
     expect(tx)
       .to.emit(feeMarket, "Deposit")
       .withArgs(four.address, ethers.utils.parseEther("100"))
   })
 
-  it("rm relayer", async () => {
+  it("delist a relayer", async () => {
     const [one, two, three, four] = await ethers.getSigners();
-    let tx = await feeMarket.connect(four).unenroll(three.address)
+    let tx = await feeMarket.connect(four).leave(three.address)
     expect(tx)
-      .to.emit(feeMarket, "RemoveRelayer")
+      .to.emit(feeMarket, "Delist")
       .withArgs(three.address, four.address)
     expect(tx)
       .to.emit(feeMarket, "Withdrawal")
