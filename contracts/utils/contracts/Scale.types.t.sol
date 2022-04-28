@@ -129,7 +129,7 @@ contract ScaleTypesTest is DSTest {
         BridgeMessages.SendMessageCall memory call = BridgeMessages.SendMessageCall(
             hex"2b03",
             bytes4(0x00000000),
-            message,
+            Types.encodeMessage(message),
             124568
         );
 
@@ -169,7 +169,7 @@ contract ScaleTypesTest is DSTest {
         BridgeMessages.SendMessageCall memory call = BridgeMessages.SendMessageCall(
             hex"2b03",
             bytes4(0x00000000),
-            message,
+            Types.encodeMessage(message),
             200000000000000000000
         );
 

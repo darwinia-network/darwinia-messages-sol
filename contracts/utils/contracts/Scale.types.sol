@@ -96,7 +96,7 @@ library BridgeMessages {
     struct SendMessageCall {
         bytes2 callIndex;
         bytes4 lineId;
-        Types.Message payload;
+        bytes message;
         uint128 deliveryAndDispatchFee;
     }
 
@@ -104,7 +104,7 @@ library BridgeMessages {
         return abi.encodePacked(
             call.callIndex, 
             call.lineId, 
-            Types.encodeMessage(call.payload),
+            call.message,
             ScaleCodec.encode128(call.deliveryAndDispatchFee)
         );
     }
