@@ -19,6 +19,8 @@ abstract contract SmartChainApp {
     function sendMessage(bytes2 callIndex, bytes4 laneId, uint256 fee, Types.Message memory message) internal {
     	// the pricision in contract is 18, and in pallet is 9, transform the fee value
         uint256 feeInPallet = fee/(10**9); 
+
+        // encode send_message call
         BridgeMessages.SendMessageCall memory sendMessageCall = 
             BridgeMessages.SendMessageCall(
                 callIndex,
@@ -27,10 +29,10 @@ abstract contract SmartChainApp {
                 uint128(feeInPallet)
             );
 
-        bytes memory sendMessageCallEncoded = abi.encode(
-            BridgeMessages.encodeSendMessageCall(sendMessageCall)
-        );
+        bytes memory sendMessageCallEncoded = 
+            BridgeMessages.encodeSendMessageCall(sendMessageCall);
         
+        // dispatch the send_message call
         (bool success, bytes memory result) = DISPATCH.call(sendMessageCallEncoded);
         emit DispatchResult(success, result);
     }

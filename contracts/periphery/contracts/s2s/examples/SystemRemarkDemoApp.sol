@@ -27,7 +27,6 @@ contract SystemRemarkDemoApp is SmartChainApp {
         //    or
         //    Pangolin.ToPangoro.sendMessage(message);
         sendMessage(bytes2(0x2b03), 0, 200000000000000000000, message);
-        //sendMessageOld(43, 0, 200000000000000000000, message);
 
 
 	}
