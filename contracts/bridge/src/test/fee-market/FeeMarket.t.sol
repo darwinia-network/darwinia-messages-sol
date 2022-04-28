@@ -42,7 +42,7 @@ contract FeeMarketTest is DSTest {
     }
 
     function test_constructor_args() public {
-        assertEq(market.owner(), self);
+        assertEq(market.setter(), self);
         assertEq(market.VAULT(), vault);
         assertEq(market.collateralPerorder(), COLLATERAL_PERORDER);
         assertEq(market.assignedRelayersNumber(), uint(ASSIGNED_RELAYERS_NUMBER));
@@ -50,9 +50,9 @@ contract FeeMarketTest is DSTest {
         assertEq(market.relayTime(), uint(RELAY_TIME));
     }
 
-    function test_set_owner() public {
-        market.setOwner(vault);
-        assertEq(market.owner(), vault);
+    function test_set_setter() public {
+        market.setSetter(vault);
+        assertEq(market.setter(), vault);
     }
 
     function test_set_outbound() public {

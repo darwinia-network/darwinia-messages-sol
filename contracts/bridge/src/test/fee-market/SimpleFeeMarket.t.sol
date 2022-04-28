@@ -38,15 +38,15 @@ contract SimpleFeeMarketTest is DSTest {
    }
 
    function test_constructor_args() public {
-       assertEq(market.owner(), self);
+       assertEq(market.setter(), self);
        assertEq(market.collateralPerorder(), COLLATERAL_PERORDER);
        assertEq(market.slashTime(), uint(SLASH_TIME));
        assertEq(market.relayTime(), uint(RELAY_TIME));
    }
 
-   function test_set_owner() public {
-       market.setOwner(address(0));
-       assertEq(market.owner(), address(0));
+   function test_set_setter() public {
+       market.setSetter(address(0));
+       assertEq(market.setter(), address(0));
    }
 
    function test_set_outbound() public {

@@ -6,9 +6,6 @@ pragma abicoder v2;
 import "../interfaces/IFeeMarket.sol";
 
 contract SimpleFeeMarket is IFeeMarket {
-    event SetOwner(address indexed o, address indexed n);
-    event SetOutbound(address indexed out, uint256 flag);
-    event SetParameters(uint32 slash_time, uint32 relay_time, uint256 collateral);
     event Slash(address indexed src, uint wad);
     event Reward(address indexed dst, uint wad);
     event Deposit(address indexed dst, uint wad);
@@ -30,7 +27,7 @@ contract SimpleFeeMarket is IFeeMarket {
     // The collateral relayer need to lock for each order.
     uint256 public collateralPerorder;
     // Governance role to decide which outbounds message to relay
-    address public owner;
+    address public setter;
     // Outbounds which message will be relayed by relayers
     mapping(address => uint256) public outbounds;
 
@@ -58,8 +55,8 @@ contract SimpleFeeMarket is IFeeMarket {
     // message_encoded_key => Order
     mapping(uint256 => Order) public orderOf;
 
-    modifier onlyOwner {
-        require(msg.sender == owner, "!owner");
+    modifier onlySetter {
+        require(msg.sender == setter, "!auth");
         _;
     }
 
@@ -79,7 +76,7 @@ contract SimpleFeeMarket is IFeeMarket {
         uint32 _relay_time
     ) {
         require(_slash_time > 0 && _relay_time > 0, "!0");
-        owner = msg.sender;
+        setter = msg.sender;
         collateralPerorder = _collateral_perorder;
         slashTime = _slash_time;
         relayTime = _relay_time;
@@ -91,22 +88,19 @@ contract SimpleFeeMarket is IFeeMarket {
         deposit();
     }
 
-    function setOwner(address _owner) external onlyOwner {
-        owner = _owner;
-        emit SetOwner(owner, _owner);
+    function setSetter(address _setter) external onlySetter {
+        setter = _setter;
     }
 
-    function setOutbound(address out, uint256 flag) external onlyOwner {
+    function setOutbound(address out, uint256 flag) external onlySetter {
         outbounds[out] = flag;
-        emit SetOutbound(out, flag);
     }
 
-    function setParameters(uint32 slash_time, uint32 relay_time, uint256 collateral_perorder) external onlyOwner {
+    function setParameters(uint32 slash_time, uint32 relay_time, uint256 collateral_perorder) external onlySetter {
         require(slash_time > 0 && relay_time > 0, "!0");
         slashTime = slash_time;
         relayTime = relay_time;
         collateralPerorder = collateral_perorder;
-        emit SetParameters(slash_time, relay_time, collateral_perorder);
     }
 
     // deposit native token for collateral to relay message

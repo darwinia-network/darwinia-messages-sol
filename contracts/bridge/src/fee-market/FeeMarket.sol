@@ -6,10 +6,6 @@ pragma abicoder v2;
 import "../interfaces/IFeeMarket.sol";
 
 contract FeeMarket is IFeeMarket {
-    event SetOwner(address indexed o, address indexed n);
-    event SetOutbound(address indexed out, uint256 flag);
-    event SetParaTime(uint32 slash_time, uint32 relay_time);
-    event SetParaRelay(uint32 assigned_relayers_number, uint256 collateral);
     event Slash(address indexed src, uint wad);
     event Reward(address indexed dst, uint wad);
     event Deposit(address indexed dst, uint wad);
@@ -35,7 +31,7 @@ contract FeeMarket is IFeeMarket {
     // The collateral relayer need to lock for each order.
     uint256 public collateralPerorder;
     // Governance role to decide which outbounds message to relay
-    address public owner;
+    address public setter;
     // Outbounds which message will be relayed by relayers
     mapping(address => uint256) public outbounds;
 
@@ -69,8 +65,8 @@ contract FeeMarket is IFeeMarket {
     // message_encoded_key => assigned_slot => assigned_relayer
     mapping(uint256 => mapping(uint256 => OrderExt)) public assignedRelayers;
 
-    modifier onlyOwner {
-        require(msg.sender == owner, "!owner");
+    modifier onlySetter {
+        require(msg.sender == setter, "!auth");
         _;
     }
 
@@ -93,7 +89,7 @@ contract FeeMarket is IFeeMarket {
     ) {
         require(_assigned_relayers_number > 0, "!0");
         require(_slash_time > 0 && _relay_time > 0, "!0");
-        owner = msg.sender;
+        setter = msg.sender;
         VAULT = _vault;
         collateralPerorder = _collateral_perorder;
         assignedRelayersNumber = _assigned_relayers_number;
@@ -107,28 +103,24 @@ contract FeeMarket is IFeeMarket {
         deposit();
     }
 
-    function setOwner(address _owner) external onlyOwner {
-        owner = _owner;
-        emit SetOwner(owner, _owner);
+    function setSetter(address _setter) external onlySetter {
+        setter = _setter;
     }
 
-    function setOutbound(address out, uint256 flag) external onlyOwner {
+    function setOutbound(address out, uint256 flag) external onlySetter {
         outbounds[out] = flag;
-        emit SetOutbound(out, flag);
     }
 
-    function setParaTime(uint32 slash_time, uint32 relay_time) external onlyOwner {
+    function setParaTime(uint32 slash_time, uint32 relay_time) external onlySetter {
         require(slash_time > 0 && relay_time > 0, "!0");
         slashTime = slash_time;
         relayTime = relay_time;
-        emit SetParaTime(slash_time, relay_time);
     }
 
-    function setParaRelay(uint32 assigned_relayers_number, uint256 collateral_perorder) external onlyOwner {
+    function setParaRelay(uint32 assigned_relayers_number, uint256 collateral_perorder) external onlySetter {
         require(assigned_relayers_number > 0, "!0");
         assignedRelayersNumber = assigned_relayers_number;
         collateralPerorder = collateral_perorder;
-        emit SetParaRelay(assigned_relayers_number, collateral_perorder);
     }
 
     // deposit native token for collateral to relay message
