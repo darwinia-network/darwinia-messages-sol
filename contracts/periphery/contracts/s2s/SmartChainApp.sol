@@ -2,12 +2,10 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "./interfaces/ISubToSubBridge.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
 abstract contract SmartChainApp {
-    address public constant DISPATCH_ENCODER = 0x0000000000000000000000000000000000000018;
     address public constant DISPATCH = 0x0000000000000000000000000000000000000019;
 
     event DispatchResult(bool success, bytes result);
@@ -35,25 +33,6 @@ abstract contract SmartChainApp {
         
         (bool success, bytes memory result) = DISPATCH.call(sendMessageCallEncoded);
         emit DispatchResult(success, result);
-    }
-
-    function sendMessageOld(uint32 palletIndex, bytes4 laneId, uint256 fee, bytes memory message) internal { 
-        // the pricision in contract is 18, and in pallet is 9, transform the fee value
-        uint256 feeInPallet = fee/(10**9); 
-        bytes memory data = abi.encodeWithSelector(
-            ISubToSubBridge.encode_send_message_dispatch_call.selector,
-            palletIndex,
-            laneId,
-            message,
-            uint128(feeInPallet)
-        );
-        (bool success, bytes memory result) = DISPATCH_ENCODER.staticcall(data);
-        if (success) {
-            (bool success2, bytes memory result2) = DISPATCH.call(result);
-            emit DispatchResult(success2, result2);
-        } else {
-            emit DispatchResult(success, result);
-        }
     }
 
     
