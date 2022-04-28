@@ -44,7 +44,7 @@ contract FeeMarketTest is DSTest {
     function test_constructor_args() public {
         assertEq(market.setter(), self);
         assertEq(market.VAULT(), vault);
-        assertEq(market.collateralPerorder(), COLLATERAL_PERORDER);
+        assertEq(market.collateralPerOrder(), COLLATERAL_PERORDER);
         assertEq(market.assignedRelayersNumber(), uint(ASSIGNED_RELAYERS_NUMBER));
         assertEq(market.slashTime(), uint(SLASH_TIME));
         assertEq(market.relayTime(), uint(RELAY_TIME));
@@ -69,7 +69,7 @@ contract FeeMarketTest is DSTest {
     function test_set_para_relay() public {
         market.setParaRelay(5, 1 wei);
         assertEq(market.assignedRelayersNumber(), uint(5));
-        assertEq(market.collateralPerorder(), 1 wei);
+        assertEq(market.collateralPerOrder(), 1 wei);
     }
 
     function test_initial_state() public {
@@ -161,7 +161,7 @@ contract FeeMarketTest is DSTest {
         perform_enroll           (a, address(1), 0.9 ether, 1 ether);
     }
 
-    function test_unenroll() public {
+    function test_leave() public {
         perform_enroll           (a, address(1), 7 ether, 1 ether);
         assert_market_is_relayer (a);
         assert_market_fee_of     (a, 1 ether);
@@ -169,7 +169,7 @@ contract FeeMarketTest is DSTest {
         assert_market_supply     (7 ether);
         assert_eth_balance       (a, 0 ether);
 
-        perform_unenroll         (a, address(1));
+        perform_leave         (a, address(1));
         assert_market_is_not_relayer (a);
         assert_market_fee_of     (a, 0 ether);
         assert_market_balance    (a, 0 ether);
@@ -182,14 +182,14 @@ contract FeeMarketTest is DSTest {
         perform_join             (b, 4 ether);
         perform_join             (c, 5 ether);
 
-        perform_add_relayer      (a, address     ( 1), 1 ether);
+        perform_enrol            (a, address     ( 1), 1 ether);
         assert_market_is_relayer (a);
         assert_market_fee_of     (a, 1 ether);
 
-        perform_add_relayer      (b, address     ( a), 1 ether);
+        perform_enrol            (b, address     ( a), 1 ether);
         assert_market_is_relayer (b);
         assert_market_fee_of     (b, 1 ether);
-        perform_add_relayer      (c, address     ( b), 1.1 ether);
+        perform_enrol            (c, address     ( b), 1.1 ether);
         assert_market_is_relayer (c);
         assert_market_fee_of     (c, 1.1 ether);
     }
@@ -199,13 +199,13 @@ contract FeeMarketTest is DSTest {
         perform_enroll           (b, address(a), 1 ether, 1 ether);
         perform_enroll           (c, address(b), 1 ether, 1.1 ether);
 
-        perform_remove_relayer   (a, address(1));
+        perform_delist           (a, address(1));
         assert_market_is_not_relayer (a);
         assert_market_fee_of     (a, 0 ether);
-        perform_remove_relayer   (b, address(1));
+        perform_delist           (b, address(1));
         assert_market_is_not_relayer (b);
         assert_market_fee_of     (b, 0 ether);
-        perform_remove_relayer   (c, address(1));
+        perform_delist           (c, address(1));
         assert_market_is_not_relayer (c);
         assert_market_fee_of     (c, 0 ether);
     }
@@ -215,7 +215,7 @@ contract FeeMarketTest is DSTest {
         perform_enroll           (b, address(a), 1 ether, 1 ether);
         perform_enroll           (c, address(b), 1 ether, 1.1 ether);
 
-        perform_move_relayer     (a, address(1), address(c), 1.2 ether);
+        perform_move             (a, address(1), address(c), 1.2 ether);
         assert_market_is_relayer (a);
         assert_market_fee_of     (a, 1.2 ether);
     }
@@ -547,20 +547,20 @@ contract FeeMarketTest is DSTest {
         guy.enroll{value: wad}(prev, fee);
     }
 
-    function perform_unenroll(Guy guy, address prev) public {
-        guy.unenroll(prev);
+    function perform_leave(Guy guy, address prev) public {
+        guy.leave(prev);
     }
 
-    function perform_add_relayer(Guy guy, address prev, uint fee) public {
-        guy.addRelayer(prev, fee);
+    function perform_enrol(Guy guy, address prev, uint fee) public {
+        guy.enrol(prev, fee);
     }
 
-    function perform_remove_relayer(Guy guy, address prev) public {
-        guy.removeRelayer(prev);
+    function perform_delist(Guy guy, address prev) public {
+        guy.delist(prev);
     }
 
-    function perform_move_relayer(Guy guy, address old_prev, address new_prev, uint new_fee) public {
-        guy.moveRelayer(old_prev, new_prev, new_fee);
+    function perform_move(Guy guy, address old_prev, address new_prev, uint new_fee) public {
+        guy.move(old_prev, new_prev, new_fee);
     }
 
     function perform_assign(uint key, uint wad) public {
@@ -589,19 +589,19 @@ contract Guy {
         market.enroll{value: msg.value}(prev, fee);
     }
 
-    function unenroll(address prev) public {
-        market.unenroll(prev);
+    function leave(address prev) public {
+        market.leave(prev);
     }
 
-    function addRelayer(address prev, uint fee) public {
-        market.addRelayer(prev, fee);
+    function enrol(address prev, uint fee) public {
+        market.enrol(prev, fee);
     }
 
-    function removeRelayer(address prev) public {
-        market.removeRelayer(prev);
+    function delist(address prev) public {
+        market.delist(prev);
     }
 
-    function moveRelayer(address old_prev, address new_prev, uint new_fee) public {
-        market.moveRelayer(old_prev, new_prev, new_fee);
+    function move(address old_prev, address new_prev, uint new_fee) public {
+        market.move(old_prev, new_prev, new_fee);
     }
 }
