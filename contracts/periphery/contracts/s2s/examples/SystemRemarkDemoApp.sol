@@ -7,9 +7,8 @@ import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 
 // contract SystemRemarkDemoApp is PangolinToPangoroApp {
 contract SystemRemarkDemoApp is SmartChainApp {
-	function doSystemRemark() public payable {
 
-
+	function systemRemark() public payable {
 		// 1. prepare the message
         //    this can be extract to a method:
         //        Types.Message message = Pangoro.buildSystemRemarkCallMessage(hex"12345678");
@@ -18,16 +17,13 @@ contract SystemRemarkDemoApp is SmartChainApp {
             hex"12345678"
         );
         bytes memory callEncoded = System.encodeRemarkCall(call);
-        Types.Message memory message = buildMessage(28080, 2654000000, callEncoded);
-
-
+        bytes memory message = buildMessage(28080, 2654000000, callEncoded);
 
         // 2. send the message
         //    Pangolin.sendMessageToPangoro(message);
         //    or
         //    Pangolin.ToPangoro.sendMessage(message);
         sendMessage(bytes2(0x2b03), 0, 200000000000000000000, message);
-
-
 	}
+
 }

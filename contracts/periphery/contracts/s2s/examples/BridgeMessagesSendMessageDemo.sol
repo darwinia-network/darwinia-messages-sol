@@ -7,8 +7,8 @@ import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
 contract BridgeMessagesSendMessageDemo is SmartChainApp {
-    function doSendMessage() public payable {
 
+    function unlockFromRemote() public payable {
         //////////////////////////////
         // 1. prepare the message
         //////////////////////////////
@@ -19,13 +19,12 @@ contract BridgeMessagesSendMessageDemo is SmartChainApp {
             hex"d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"
         );
         bytes memory callEncoded = S2SBacking.encodeUnlockFromRemoteCall(unlockFromRemotecall);
-        Types.Message memory message = buildMessage(28080, 2654000000, callEncoded);
+        bytes memory message = buildMessage(28080, 2654000000, callEncoded);
 
         //////////////////////////////
         // 2. send the message
         //////////////////////////////
         sendMessage(bytes2(0x2b03), 0, 200000000000000000000, message);
-
-
     }
+
 }
