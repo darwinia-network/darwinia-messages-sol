@@ -27,10 +27,20 @@ abstract contract SmartChainApp {
 
         bytes memory sendMessageCallEncoded = 
             BridgeMessages.encodeSendMessageCall(sendMessageCall);
-        
+
         // dispatch the send_message call
-        (bool success, bytes memory result) = DISPATCH.call(sendMessageCallEncoded);
-        emit DispatchResult(success, result);
+        (bool success, bytes memory returndata) = DISPATCH.call(sendMessageCallEncoded);
+        if (!success) {
+            if (returndata.length > 0) {
+                assembly {
+                    let returndata_size := mload(returndata)
+                    revert(add(32, returndata), returndata_size)
+                }
+            } else {
+                revert("Send message failed");
+            }
+        }
+        
     }
 
     
