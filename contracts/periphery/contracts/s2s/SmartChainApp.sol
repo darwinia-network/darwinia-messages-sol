@@ -10,10 +10,6 @@ abstract contract SmartChainApp {
 
     event DispatchResult(bool success, bytes result);
 
-    receive() external payable {}
-
-    fallback() external {}
-
     // TODO: 
     //   define constant from palletIndex and laneId
     function sendMessage(bytes2 callIndex, bytes4 laneId, uint256 fee, bytes memory message) internal {
