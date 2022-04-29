@@ -102,7 +102,7 @@ describe("send message tests", () => {
     [owner, addr1, addr2] = await ethers.getSigners();
     source = owner.address
 
-    let overrides = { value: ethers.utils.parseEther("3000") }
+    let overrides = { value: ethers.utils.parseEther("300") }
     await feeMarket.connect(owner).deposit(overrides)
     await feeMarket.connect(addr1).deposit(overrides)
     await feeMarket.connect(addr2).deposit(overrides)

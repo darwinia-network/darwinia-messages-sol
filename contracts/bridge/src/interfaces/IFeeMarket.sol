@@ -17,8 +17,8 @@ interface IFeeMarket {
         // encoded message key end
         uint256 end;
     }
-    /// @dev return the real time market fee
-    /// @notice if there is not enough relayers, revert with `!count` message
+    /// @dev return the real time market maker fee
+    /// @notice Revert `!top` when there is not enroll relayer in the fee-market
     function market_fee() external view returns (uint256 fee);
     // Assign new message encoded key to top N relayers in fee-market
     function assign(uint256 nonce) external payable returns(bool);

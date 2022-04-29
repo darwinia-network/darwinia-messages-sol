@@ -160,8 +160,9 @@ contract FeeMarket is IFeeMarket {
             if (balanceOf[cur] >= collateralPerOrder) {
                 array[index] = cur;
                 index++;
+            } else {
+                cur = relayers[cur];
             }
-            cur = relayers[cur];
         }
         require(index == assignedRelayersNumber, "!assigned");
         return array;
@@ -294,11 +295,12 @@ contract FeeMarket is IFeeMarket {
             if (balanceOf[cur] >= collateralPerOrder) {
                 array[index] = cur;
                 index++;
+                prev = cur;
+                cur = relayers[prev];
             } else {
                 prune(prev, cur);
+                cur = relayers[prev];
             }
-            prev = cur;
-            cur = relayers[cur];
         }
         require(index == assignedRelayersNumber, "!assigned");
         return array;
@@ -335,10 +337,8 @@ contract FeeMarket is IFeeMarket {
     }
 
     function _reward(address dst, uint wad) private {
-        if (wad > 0) {
-            balanceOf[dst] += wad;
-            emit Reward(dst, wad);
-        }
+        balanceOf[dst] += wad;
+        emit Reward(dst, wad);
     }
 
     /// Pay rewards to given relayers, optionally rewarding confirmation relayer.
