@@ -13,6 +13,9 @@
   - [hash](#hash)
   - [hash](#hash-1)
   - [hash](#hash-2)
+  - [hash](#hash-3)
+  - [hash](#hash-4)
+  - [hash](#hash-5)
   - [decodeMessageKey](#decodemessagekey)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -25,12 +28,56 @@
 | --- | --- |
 | OUTBOUNDLANEDATA_TYPEHASH | bytes32 |
 | MESSAGE_TYPEHASH | bytes32 |
-| MESSAGEKEY_TYPEHASH | bytes32 |
 | MESSAGEPAYLOAD_TYPEHASH | bytes32 |
 
 
 
 ## Functions
+
+### hash
+No description
+
+
+#### Declaration
+```solidity
+  function hash(
+  ) internal returns (bytes32)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### hash
+No description
+
+
+#### Declaration
+```solidity
+  function hash(
+  ) internal returns (bytes32)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### hash
+No description
+
+
+#### Declaration
+```solidity
+  function hash(
+  ) internal returns (bytes32)
+```
+
+#### Modifiers:
+No modifiers
+
+
 
 ### hash
 No description

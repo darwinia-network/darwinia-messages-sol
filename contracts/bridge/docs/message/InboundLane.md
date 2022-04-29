@@ -1,11 +1,9 @@
 # InboundLane
 
 
-
 The inbound lane is the message layer of the bridge
 
 > See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
-
 
 ## Contents
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -208,8 +206,7 @@ dispatch the cross chain message
 #### Declaration
 ```solidity
   function dispatch(
-    struct SourceChain.MessagePayload payload,
-    bytes encoded
+    struct SourceChain.MessagePayload payload
   ) internal returns (bool dispatch_result)
 ```
 
@@ -220,34 +217,47 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`payload` | struct SourceChain.MessagePayload | payload of the dispatch message
-|`encoded` | bytes | encoded calldata to dispatch
 
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`dispatch_result` | the dispatch call result
 - Return True:
-  1. filter return True and dispatch call successfully with no 32-length return data
+  1. filter return True and dispatch call successfully with none 32-length return data
   2. filter return True and dispatch call successfully with 32-length return data is True
 - Return False:
   1. filter return False
   2. filter return True and dispatch call failed
   3. filter return True and dispatch call successfully with 32-length return data is False
 ### filter
-No description
+filter the cross chain message
+
+> The app layer must implement the interface `ICrossChainFilter`
+to verify the source sender and payload of source chain messages.
 
 
 #### Declaration
 ```solidity
   function filter(
+    address target,
+    bytes encoded
   ) internal returns (bool canCall)
 ```
 
 #### Modifiers:
 No modifiers
 
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`target` | address | target of the dispatch message
+|`encoded` | bytes | encoded calldata of the dispatch message
 
-
+#### Returns:
+| Type | Description |
+| --- | --- |
+|`canCall` | the filter static call result, Return True only when target contract
+implement the `ICrossChainFilter` interface with return data is True.
 
 
 ## Events

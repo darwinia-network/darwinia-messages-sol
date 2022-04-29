@@ -1,7 +1,8 @@
 # IFeeMarket
 
 
-
+After enroll to be a relyer , you have the duty to relay
+the meesage which is assigned to you, or you will be slashed
 
 
 ## Contents
@@ -21,7 +22,8 @@
 ## Functions
 
 ### market_fee
-No description
+if there is not enough relayers, revert with `!count` message
+> return the real time market fee
 
 
 #### Declaration

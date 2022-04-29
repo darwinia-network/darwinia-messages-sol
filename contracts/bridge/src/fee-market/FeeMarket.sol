@@ -35,7 +35,6 @@ contract FeeMarket is IFeeMarket {
     address public setter;
     // Outbounds which message will be relayed by relayers
     mapping(address => uint256) public outbounds;
-
     // Balance of the relayer including deposit and eared fee
     mapping(address => uint256) public balanceOf;
     // Locked balance of relayer for relay messages

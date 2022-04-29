@@ -54,7 +54,7 @@
 | MAX_PENDING_MESSAGES | uint64 |
 | MAX_PRUNE_MESSAGES_ATONCE | uint64 |
 | outboundLaneNonce | struct OutboundLane.OutboundLaneNonce |
-| messages | mapping(uint64 => struct SourceChain.MessagePayload) |
+| messages | mapping(uint64 => bytes32) |
 | wards | mapping(address => uint256) |
 | fee_market | address |
 | setter | address |
@@ -238,7 +238,7 @@ No description
 #### Declaration
 ```solidity
   function receive_messages_delivery_proof(
-  ) public nonReentrant
+  ) external nonReentrant
 ```
 
 #### Modifiers:
@@ -270,7 +270,7 @@ No description
 #### Declaration
 ```solidity
   function data(
-  ) public returns (struct SourceChain.OutboundLaneData lane_data)
+  ) public returns (struct SourceChain.OutboundLaneDataStorage lane_data)
 ```
 
 #### Modifiers:

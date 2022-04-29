@@ -10,48 +10,45 @@
 
 - [Globals](#globals)
 - [Modifiers](#modifiers)
-  - [onlyOwner](#onlyowner)
+  - [onlySetter](#onlysetter)
   - [onlyOutBound](#onlyoutbound)
   - [enoughBalance](#enoughbalance)
 - [Functions](#functions)
   - [constructor](#constructor)
   - [receive](#receive)
-  - [setOwner](#setowner)
+  - [setSetter](#setsetter)
   - [setOutbound](#setoutbound)
   - [setParaTime](#setparatime)
   - [setParaRelay](#setpararelay)
-  - [deposit](#deposit)
-  - [withdraw](#withdraw)
   - [totalSupply](#totalsupply)
   - [getOrderBook](#getorderbook)
   - [getTopRelayers](#gettoprelayers)
   - [getOrderFee](#getorderfee)
   - [getOrder](#getorder)
   - [isRelayer](#isrelayer)
+  - [deposit](#deposit)
+  - [withdraw](#withdraw)
   - [market_fee](#market_fee)
   - [enroll](#enroll)
-  - [unenroll](#unenroll)
-  - [addRelayer](#addrelayer)
-  - [removeRelayer](#removerelayer)
-  - [pruneRelayer](#prunerelayer)
-  - [moveRelayer](#moverelayer)
+  - [leave](#leave)
+  - [enrol](#enrol)
+  - [delist](#delist)
+  - [prune](#prune)
+  - [move](#move)
   - [assign](#assign)
   - [settle](#settle)
 - [Events](#events)
-  - [SetOwner](#setowner)
   - [SetOutbound](#setoutbound)
-  - [SetParaTime](#setparatime)
-  - [SetParaRelay](#setpararelay)
   - [Slash](#slash)
   - [Reward](#reward)
   - [Deposit](#deposit)
   - [Withdrawal](#withdrawal)
   - [Locked](#locked)
   - [UnLocked](#unlocked)
-  - [AddRelayer](#addrelayer)
-  - [RemoveRelayer](#removerelayer)
-  - [OrderAssgigned](#orderassgigned)
-  - [OrderSettled](#ordersettled)
+  - [Enrol](#enrol)
+  - [Delist](#delist)
+  - [Assgigned](#assgigned)
+  - [Settled](#settled)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -65,8 +62,8 @@
 | slashTime | uint32 |
 | relayTime | uint32 |
 | assignedRelayersNumber | uint32 |
-| collateralPerorder | uint256 |
-| owner | address |
+| collateralPerOrder | uint256 |
+| setter | address |
 | outbounds | mapping(address => uint256) |
 | balanceOf | mapping(address => uint256) |
 | lockedOf | mapping(address => uint256) |
@@ -79,13 +76,13 @@
 
 ## Modifiers
 
-### onlyOwner
+### onlySetter
 No description
 
 
 #### Declaration
 ```solidity
-  modifier onlyOwner
+  modifier onlySetter
 ```
 
 
@@ -142,20 +139,20 @@ No modifiers
 
 
 
-### setOwner
+### setSetter
 No description
 
 
 #### Declaration
 ```solidity
-  function setOwner(
-  ) external onlyOwner
+  function setSetter(
+  ) external onlySetter
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| onlyOwner |
+| onlySetter |
 
 
 
@@ -166,13 +163,13 @@ No description
 #### Declaration
 ```solidity
   function setOutbound(
-  ) external onlyOwner
+  ) external onlySetter
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| onlyOwner |
+| onlySetter |
 
 
 
@@ -183,13 +180,13 @@ No description
 #### Declaration
 ```solidity
   function setParaTime(
-  ) external onlyOwner
+  ) external onlySetter
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| onlyOwner |
+| onlySetter |
 
 
 
@@ -200,43 +197,13 @@ No description
 #### Declaration
 ```solidity
   function setParaRelay(
-  ) external onlyOwner
+  ) external onlySetter
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| onlyOwner |
-
-
-
-### deposit
-No description
-
-
-#### Declaration
-```solidity
-  function deposit(
-  ) public
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### withdraw
-No description
-
-
-#### Declaration
-```solidity
-  function withdraw(
-  ) public
-```
-
-#### Modifiers:
-No modifiers
+| onlySetter |
 
 
 
@@ -330,6 +297,36 @@ No modifiers
 
 
 
+### deposit
+No description
+
+
+#### Declaration
+```solidity
+  function deposit(
+  ) public
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### withdraw
+No description
+
+
+#### Declaration
+```solidity
+  function withdraw(
+  ) public
+```
+
+#### Modifiers:
+No modifiers
+
+
+
 ### market_fee
 No description
 
@@ -360,13 +357,13 @@ No modifiers
 
 
 
-### unenroll
+### leave
 No description
 
 
 #### Declaration
 ```solidity
-  function unenroll(
+  function leave(
   ) public
 ```
 
@@ -375,13 +372,13 @@ No modifiers
 
 
 
-### addRelayer
+### enrol
 No description
 
 
 #### Declaration
 ```solidity
-  function addRelayer(
+  function enrol(
   ) public enoughBalance
 ```
 
@@ -392,13 +389,13 @@ No description
 
 
 
-### removeRelayer
+### delist
 No description
 
 
 #### Declaration
 ```solidity
-  function removeRelayer(
+  function delist(
   ) public
 ```
 
@@ -407,13 +404,13 @@ No modifiers
 
 
 
-### pruneRelayer
+### prune
 No description
 
 
 #### Declaration
 ```solidity
-  function pruneRelayer(
+  function prune(
   ) public
 ```
 
@@ -422,13 +419,13 @@ No modifiers
 
 
 
-### moveRelayer
+### move
 No description
 
 
 #### Declaration
 ```solidity
-  function moveRelayer(
+  function move(
   ) public
 ```
 
@@ -475,25 +472,7 @@ No description
 
 ## Events
 
-### SetOwner
-No description
-
-  
-
-
 ### SetOutbound
-No description
-
-  
-
-
-### SetParaTime
-No description
-
-  
-
-
-### SetParaRelay
 No description
 
   
@@ -535,25 +514,25 @@ No description
   
 
 
-### AddRelayer
+### Enrol
 No description
 
   
 
 
-### RemoveRelayer
+### Delist
 No description
 
   
 
 
-### OrderAssgigned
+### Assgigned
 No description
 
   
 
 
-### OrderSettled
+### Settled
 No description
 
   
