@@ -44,13 +44,11 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         app = new NormalApp(address(outlane));
         outlane.setFeeMarket(address(market));
         self = address(this);
-        outlane.rely(address(app));
     }
 
     function test_constructor_args() public {
         assertEq(outlane.setter(), self);
         assertEq(outlane.fee_market(), address(market));
-        assertEq(outlane.wards(address(app)), 1);
         (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.outboundLaneNonce();
         assertEq(latest_received_nonce, uint(0));
         assertEq(latest_generated_nonce, uint(0));
@@ -72,19 +70,6 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
     function test_change_setter() public {
         outlane.changeSetter(address(1));
         assertEq(outlane.setter(), address(1));
-    }
-
-    function test_rely_deny() public {
-        assertEq(outlane.wards(address(456)), 0);
-        assertTrue(_tryRely(address(456)));
-        assertEq(outlane.wards(address(456)), 1);
-        assertTrue(_tryDeny(address(456)));
-        assertEq(outlane.wards(address(456)), 0);
-
-        outlane.changeSetter(address(1));
-
-        assertTrue(!_tryRely(address(456)));
-        assertTrue(!_tryDeny(address(456)));
     }
 
     function test_send_message() public {
@@ -337,14 +322,6 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         assertEq(outlane.message_size(), uint(0));
         OutboundLaneDataStorage memory data = outlane.data();
         assertEq(data.latest_received_nonce, uint(_latest_received_nonce));
-    }
-
-    function _tryRely(address usr) internal returns (bool ok) {
-        (ok,) = address(outlane).call(abi.encodeWithSignature("rely(address)", usr));
-    }
-
-    function _tryDeny(address usr) internal returns (bool ok) {
-        (ok,) = address(outlane).call(abi.encodeWithSignature("deny(address)", usr));
     }
 
 }
