@@ -260,19 +260,16 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     // Prune at most `max_messages_to_prune` already received messages.
     //
     // Returns number of pruned messages.
-    function prune_messages(uint64 max_messages_to_prune) internal returns (uint64) {
-        uint64 pruned_messages = 0;
-        bool anything_changed = false;
+    function prune_messages(uint64 max_messages_to_prune) internal returns (uint64 pruned_messages) {
         OutboundLaneNonce memory nonce = outboundLaneNonce;
         while (pruned_messages < max_messages_to_prune &&
             nonce.oldest_unpruned_nonce <= nonce.latest_received_nonce)
         {
             delete messages[nonce.oldest_unpruned_nonce];
-            anything_changed = true;
             pruned_messages += 1;
             nonce.oldest_unpruned_nonce += 1;
         }
-        if (anything_changed) {
+        if (pruned_messages > 0) {
             outboundLaneNonce = nonce;
             emit MessagePruned(outboundLaneNonce.oldest_unpruned_nonce);
         }
