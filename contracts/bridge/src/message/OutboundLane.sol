@@ -94,12 +94,15 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     /// At the beginning of the launch, submmiter is permission, after the system is stable it will be permissionless.
     /// @param targetContract The target contract address which you would send cross chain message to
     /// @param encoded The calldata which encoded by ABI Encoding
-    function send_message(address targetContract, bytes calldata encoded) external payable override nonReentrant returns (uint256) {
+    function send_message(address targetContract, bytes calldata encoded) external payable override returns (uint256) {
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
         require(outboundLaneNonce.latest_generated_nonce < type(uint64).max, "Lane: Overflow");
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
+
         // assign the message to top relayers
-        require(IFeeMarket(FEE_MARKET).assign{value: msg.value}(encodeMessageKey(nonce)), "Lane: AssignRelayersFailed");
+        uint256 encoded_key = encodeMessageKey(nonce);
+        require(IFeeMarket(FEE_MARKET).assign{value: msg.value}(encoded_key), "Lane: AssignRelayersFailed");
+
         require(encoded.length <= MAX_CALLDATA_LENGTH, "Lane: Calldata is too large");
         outboundLaneNonce.latest_generated_nonce = nonce;
         MessagePayload memory payload = MessagePayload({
@@ -115,7 +118,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
             msg.sender,
             targetContract,
             encoded);
-        return encodeMessageKey(nonce);
+        return encoded_key;
     }
 
     // Receive messages delivery proof from bridged chain.
@@ -164,7 +167,6 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     // Confirm messages delivery.
     function confirm_delivery(InboundLaneData memory inboundLaneData) internal returns (DeliveredMessages memory confirmed_messages) {
         (uint64 total_messages, uint64 latest_delivered_nonce) = extract_inbound_lane_info(inboundLaneData);
-        require(total_messages < 256, "Lane: InvalidNumberOfMessages");
 
         UnrewardedRelayer[] memory relayers = inboundLaneData.relayers;
         OutboundLaneNonce memory nonce = outboundLaneNonce;
