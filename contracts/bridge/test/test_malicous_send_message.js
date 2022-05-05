@@ -109,7 +109,6 @@ describe("batch malicious app send message tests", () => {
 
     const MalicousApp = await ethers.getContractFactory("MalicousApp")
     malicousApp = await MalicousApp.deploy()
-    outbound.rely(malicousApp.address)
     log(" out bound lane                                   ->      in bound lane")
     log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")
   })

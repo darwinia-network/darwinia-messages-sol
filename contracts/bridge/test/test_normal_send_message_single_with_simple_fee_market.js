@@ -124,7 +124,6 @@ describe("normal app send single message tests", () => {
 
     const NormalApp = await ethers.getContractFactory("NormalApp")
     normalApp = await NormalApp.deploy("0x0000000000000000000000000000000000000000")
-    outbound.rely(normalApp.address)
     target = normalApp.address
 
     log(" out bound lane                                   ->      in bound lane")

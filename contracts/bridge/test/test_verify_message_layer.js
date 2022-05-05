@@ -126,7 +126,6 @@ describe("verify message relay tests", () => {
 
     targetLightClient = await MockBSCLightClient.deploy(LANE_COMMITMENT_POSITION)
     sourceOutbound = await OutboundLane.deploy(targetLightClient.address, sourceChainPos, sourceOutLanePos, targetChainPos, targetInLanePos, 1, 0, 0)
-    await sourceOutbound.rely(owner.address)
     sourceInbound = await InboundLane.deploy(targetLightClient.address, sourceChainPos, sourceInLanePos, targetChainPos, targetOutLanePos, 0, 0)
     darwiniaLaneCommitter0 = await LaneMessageCommitter.deploy(sourceChainPos, targetChainPos)
     await darwiniaLaneCommitter0.registry(sourceOutbound.address, sourceInbound.address)
@@ -135,7 +134,6 @@ describe("verify message relay tests", () => {
 
     sourceLightClient = await MockDarwiniaLightClient.deploy()
     targetOutbound = await OutboundLane.deploy(sourceLightClient.address, targetChainPos, targetOutLanePos, sourceChainPos, sourceInLanePos, 1, 0, 0)
-    await targetOutbound.rely(owner.address)
     targetInbound = await InboundLane.deploy(sourceLightClient.address, targetChainPos, targetInLanePos, sourceChainPos, sourceOutLanePos, 0, 0)
 
     await targetLightClient.setBound(sourceChainPos, targetOutLanePos, targetOutbound.address, targetInLanePos, targetInbound.address)

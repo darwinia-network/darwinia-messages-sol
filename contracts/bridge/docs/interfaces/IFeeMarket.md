@@ -22,8 +22,8 @@ the meesage which is assigned to you, or you will be slashed
 ## Functions
 
 ### market_fee
-if there is not enough relayers, revert with `!count` message
-> return the real time market fee
+Revert `!top` when there is not enroll relayer in the fee-market
+> return the real time market maker fee
 
 
 #### Declaration
