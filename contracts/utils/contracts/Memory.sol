@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 library Memory {
 
@@ -71,7 +71,7 @@ library Memory {
 		}
 
 		// Copy remaining bytes
-		uint mask = 256 ** (WORD_SIZE - len) - 1;
+		uint mask = len == 0 ?  0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff : 256 ** (WORD_SIZE - len) - 1;
 		assembly {
 			let srcpart := and(mload(src), not(mask))
 			let destpart := and(mload(dest), mask)

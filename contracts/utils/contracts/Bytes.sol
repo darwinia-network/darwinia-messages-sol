@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import {Memory} from "./Memory.sol";
 
@@ -99,7 +99,7 @@ library Bytes {
         returns (bytes16 out)
     {
         for (uint i = 0; i < 16; i++) {
-            out |= bytes16(byte(self[offset + i]) & 0xFF) >> (i * 8);
+            out |= bytes16(bytes1(self[offset + i]) & 0xFF) >> (i * 8);
         }
     }
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import "./Input.sol";
 import "./Bytes.sol";
@@ -54,7 +54,7 @@ library Scale {
                     backing: decodeEthereumAddress(data),
                     token: decodeEthereumAddress(data),
                     target: decodeEthereumAddress(data),
-                    recipient: address(0),
+                    recipient: payable(address(0)),
                     sender: address(0),
                     value: 0
                 });

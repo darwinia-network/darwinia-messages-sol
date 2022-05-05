@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 library Nibble {
     // keyToNibbles turns bytes into nibbles, assumes they are already ordered in LE
