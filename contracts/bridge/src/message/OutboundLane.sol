@@ -270,7 +270,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
             nonce.oldest_unpruned_nonce += 1;
         }
         if (pruned_messages > 0) {
-            outboundLaneNonce = nonce;
+            outboundLaneNonce.oldest_unpruned_nonce = nonce.oldest_unpruned_nonce;
             emit MessagePruned(outboundLaneNonce.oldest_unpruned_nonce);
         }
         return pruned_messages;
