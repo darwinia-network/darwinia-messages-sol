@@ -285,8 +285,10 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             // Deliver the message to the target
             bytes memory result_data;
             (dispatch_result, result_data) = payload.target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
-            if (dispatch_result && result_data.length == 32) {
-                dispatch_result = abi.decode(result_data, (bool));
+            if (dispatch_result) {
+                if (result_data.length == 32) {
+                    dispatch_result = abi.decode(result_data, (bool));
+                }
             }
         }
     }
