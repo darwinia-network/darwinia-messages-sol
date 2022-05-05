@@ -56,8 +56,6 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     // nonce => hash(MessagePayload)
     mapping(uint64 => bytes32) public messages;
 
-    address public setter;
-
     uint256 internal locked;
     // --- Synchronization ---
     modifier nonReentrant {
@@ -88,7 +86,6 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         uint64 _latest_generated_nonce
     ) OutboundLaneVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
         outboundLaneNonce = OutboundLaneNonce(_latest_received_nonce, _latest_generated_nonce, _oldest_unpruned_nonce);
-        setter = msg.sender;
         FEE_MARKET = _feeMarket;
     }
 

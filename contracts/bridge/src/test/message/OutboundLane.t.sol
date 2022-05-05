@@ -48,7 +48,6 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
 
     function test_constructor_args() public {
         assertEq(outlane.FEE_MARKET(), address(market));
-        assertEq(outlane.setter(), self);
         (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.outboundLaneNonce();
         assertEq(latest_received_nonce, uint(0));
         assertEq(latest_generated_nonce, uint(0));
