@@ -33,6 +33,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         market = new MockFeeMarket();
         outlane = new OutboundLane(
             address(lightclient),
+            address(market),
             THIS_CHAIN_POS,
             THIS_OUT_LANE_POS,
             BRIDGED_CHAIN_POS,
@@ -42,13 +43,12 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
             0
         );
         app = new NormalApp(address(outlane));
-        outlane.setFeeMarket(address(market));
         self = address(this);
     }
 
     function test_constructor_args() public {
+        assertEq(outlane.FEE_MARKET(), address(market));
         assertEq(outlane.setter(), self);
-        assertEq(outlane.fee_market(), address(market));
         (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.outboundLaneNonce();
         assertEq(latest_received_nonce, uint(0));
         assertEq(latest_generated_nonce, uint(0));
@@ -60,16 +60,6 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         OutboundLaneDataStorage memory data = outlane.data();
         assertEq(data.latest_received_nonce, uint(0));
         assertEq(data.messages.length, uint(0));
-    }
-
-    function test_set_fee_market() public {
-        outlane.setFeeMarket(address(1));
-        assertEq(outlane.fee_market(), address(1));
-    }
-
-    function test_change_setter() public {
-        outlane.changeSetter(address(1));
-        assertEq(outlane.setter(), address(1));
     }
 
     function test_send_message() public {

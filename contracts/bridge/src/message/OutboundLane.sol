@@ -34,6 +34,8 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     uint64 internal constant MAX_PENDING_MESSAGES = 30;
     uint64 internal constant MAX_PRUNE_MESSAGES_ATONCE = 5;
 
+    address public immutable FEE_MARKET;
+
     // Outbound lane nonce.
     struct OutboundLaneNonce {
         // Nonce of the latest message, received by bridged chain.
@@ -54,7 +56,6 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     // nonce => hash(MessagePayload)
     mapping(uint64 => bytes32) public messages;
 
-    address public fee_market;
     address public setter;
 
     uint256 internal locked;
@@ -64,11 +65,6 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         locked = 1;
         _;
         locked = 0;
-    }
-
-    modifier onlySetter {
-        require(msg.sender == setter, "Lane: NotAuthorized");
-        _;
     }
 
     /// @notice Deploys the OutboundLane contract
@@ -82,6 +78,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     /// @param _latest_generated_nonce The latest_generated_nonce of outbound lane
     constructor(
         address _lightClientBridge,
+        address _feeMarket,
         uint32 _thisChainPosition,
         uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,
@@ -92,14 +89,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     ) OutboundLaneVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
         outboundLaneNonce = OutboundLaneNonce(_latest_received_nonce, _latest_generated_nonce, _oldest_unpruned_nonce);
         setter = msg.sender;
-    }
-
-    function setFeeMarket(address _fee_market) external onlySetter nonReentrant {
-        fee_market = _fee_market;
-    }
-
-    function changeSetter(address _setter) external onlySetter nonReentrant {
-        setter = _setter;
+        FEE_MARKET = _feeMarket;
     }
 
     /// @notice Send message over lane.
@@ -112,7 +102,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         require(outboundLaneNonce.latest_generated_nonce < type(uint64).max, "Lane: Overflow");
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
         // assign the message to top relayers
-        require(IFeeMarket(fee_market).assign{value: msg.value}(encodeMessageKey(nonce)), "Lane: AssignRelayersFailed");
+        require(IFeeMarket(FEE_MARKET).assign{value: msg.value}(encodeMessageKey(nonce)), "Lane: AssignRelayersFailed");
         require(encoded.length <= MAX_CALLDATA_LENGTH, "Lane: Calldata is too large");
         outboundLaneNonce.latest_generated_nonce = nonce;
         MessagePayload memory payload = MessagePayload({
@@ -297,7 +287,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
             uint64 nonce_end = min(r.messages.end, received_end);
             delivery_relayers[i] = IFeeMarket.DeliveredRelayer(r.relayer, encodeMessageKey(nonce_begin), encodeMessageKey(nonce_end));
         }
-        require(IFeeMarket(fee_market).settle(delivery_relayers, msg.sender), "Lane: SettleFailed");
+        require(IFeeMarket(FEE_MARKET).settle(delivery_relayers, msg.sender), "Lane: SettleFailed");
     }
 
     // --- Math ---
