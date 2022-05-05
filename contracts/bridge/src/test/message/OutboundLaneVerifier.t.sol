@@ -27,12 +27,13 @@ contract OutboundLaneVerifierTest is DSTest {
     }
 
     function test_contructor_args() public {
-        assertEq(verifier.bridgedLanePosition(), uint(BRIDGED_IN_LANE_POS));
-        assertEq(verifier.bridgedChainPosition(), uint(BRIDGED_CHAIN_POS));
-        assertEq(verifier.thisLanePosition(), uint(THIS_OUT_LANE_POS));
-        assertEq(verifier.thisChainPosition(), uint(THIS_CHAIN_POS));
+        (uint32 bridgedLanePosition,uint32 bridgedChainPosition,uint32 thisLanePosition,uint32 thisChainPosition) = verifier.slot0();
+        assertEq(bridgedLanePosition, uint(BRIDGED_IN_LANE_POS));
+        assertEq(bridgedChainPosition, uint(BRIDGED_CHAIN_POS));
+        assertEq(thisLanePosition, uint(THIS_OUT_LANE_POS));
+        assertEq(thisChainPosition, uint(THIS_CHAIN_POS));
 
-        (uint32 thisChainPosition,uint32 thisLanePosition,uint32 bridgedChainPosition,uint32 bridgedLanePosition) = verifier.getLaneInfo();
+        (thisChainPosition, thisLanePosition, bridgedChainPosition, bridgedLanePosition) = verifier.getLaneInfo();
         assertEq(thisChainPosition, uint(THIS_CHAIN_POS));
         assertEq(thisLanePosition, uint(THIS_OUT_LANE_POS));
         assertEq(bridgedChainPosition, uint(BRIDGED_CHAIN_POS));

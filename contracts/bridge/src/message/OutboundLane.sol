@@ -3,7 +3,7 @@
 //
 // 1) the message is sent using `send_message()` call;
 // 2) every outbound message is assigned nonce;
-// 3) the messages are stored in the storage;
+// 3) the messages hash are stored in the storage;
 // 4) external component (relay) delivers messages to bridged chain;
 // 5) messages are processed in order (ordered by assigned nonce);
 // 6) relay may send proof-of-delivery back to this chain.
@@ -27,7 +27,6 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
     event MessagesDelivered(uint64 indexed begin, uint64 indexed end, uint256 results);
     event MessagePruned(uint64 indexed oldest_unpruned_nonce);
-    event MessageFeeIncreased(uint64 indexed nonce, uint256 fee);
     event CallbackMessageDelivered(uint64 indexed nonce, bool result);
     event Rely(address indexed usr);
     event Deny(address indexed usr);
@@ -124,9 +123,8 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
         require(outboundLaneNonce.latest_generated_nonce < type(uint64).max, "Lane: Overflow");
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
-        uint256 fee = msg.value;
         // assign the message to top relayers
-        require(IFeeMarket(fee_market).assign{value: fee}(encodeMessageKey(nonce)), "Lane: AssignRelayersFailed");
+        require(IFeeMarket(fee_market).assign{value: msg.value}(encodeMessageKey(nonce)), "Lane: AssignRelayersFailed");
         require(encoded.length <= MAX_CALLDATA_LENGTH, "Lane: Calldata is too large");
         outboundLaneNonce.latest_generated_nonce = nonce;
         MessagePayload memory payload = MessagePayload({

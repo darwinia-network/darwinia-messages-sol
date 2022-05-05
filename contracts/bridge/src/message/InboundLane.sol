@@ -221,16 +221,17 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             if (key.nonce < next) {
                 continue;
             }
+            Slot0 memory _slot0 = slot0;
             // check message nonce is correct and increment nonce for replay protection
             require(key.nonce == next, "Lane: InvalidNonce");
             // check message is from the correct source chain position
-            require(key.this_chain_id == bridgedChainPosition, "Lane: InvalidSourceChainId");
+            require(key.this_chain_id == _slot0.bridgedChainPosition, "Lane: InvalidSourceChainId");
             // check message is from the correct source lane position
-            require(key.this_lane_id == bridgedLanePosition, "Lane: InvalidSourceLaneId");
+            require(key.this_lane_id == _slot0.bridgedLanePosition, "Lane: InvalidSourceLaneId");
             // check message delivery to the correct target chain position
-            require(key.bridged_chain_id == thisChainPosition, "Lane: InvalidTargetChainId");
+            require(key.bridged_chain_id == _slot0.thisChainPosition, "Lane: InvalidTargetChainId");
             // check message delivery to the correct target lane position
-            require(key.bridged_lane_id == thisLanePosition, "Lane: InvalidTargetLaneId");
+            require(key.bridged_lane_id == _slot0.thisLanePosition, "Lane: InvalidTargetLaneId");
             // if there are more unconfirmed messages than we may accept, reject this message
             require(next - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "Lane: TooManyUnconfirmedMessages");
 
@@ -271,10 +272,11 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     ///   2. filter return True and dispatch call failed
     ///   3. filter return True and dispatch call successfully with 32-length return data is False
     function dispatch(MessagePayload memory payload) internal returns (bool dispatch_result) {
+        Slot0 memory _slot0 = slot0;
         bytes memory filterCallData = abi.encodeWithSelector(
             ICrossChainFilter.cross_chain_filter.selector,
-            bridgedChainPosition,
-            bridgedLanePosition,
+            _slot0.bridgedChainPosition,
+            _slot0.bridgedLanePosition,
             payload.source,
             payload.encoded
         );

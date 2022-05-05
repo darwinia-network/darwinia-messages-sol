@@ -239,8 +239,10 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 end = 3;
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 3;
-        MessagePayloadCompact[] memory compact = new MessagePayloadCompact[](1);
+        MessagePayloadCompact[] memory compact = new MessagePayloadCompact[](3);
         compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
+        compact[1] = MessagePayloadCompact(address(app), target, keccak256(encoded));
+        compact[2] = MessagePayloadCompact(address(app), target, keccak256(encoded));
         perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
 
         assert_empty_data(3, 3);

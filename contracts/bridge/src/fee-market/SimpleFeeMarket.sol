@@ -150,9 +150,8 @@ contract SimpleFeeMarket is IFeeMarket {
             if (balanceOf[cur] >= collateralPerOrder) {
                 top = cur;
                 break;
-            } else {
-                cur = relayers[cur];
             }
+            cur = relayers[cur];
         }
         require(top != address(0), "!top");
     }
