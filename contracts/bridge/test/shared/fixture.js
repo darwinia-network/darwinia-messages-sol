@@ -26,13 +26,12 @@ const Fixure = async () => {
   const MockLightClient = await ethers.getContractFactory("MockLightClient")
   const lightClient = await MockLightClient.deploy()
   const OutboundLane = await ethers.getContractFactory("OutboundLane")
-  outbound = await OutboundLane.deploy(lightClient.address, thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, 1, 0, 0)
+  outbound = await OutboundLane.deploy(lightClient.address, feeMarket.address, thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, 1, 0, 0)
   const InboundLane = await ethers.getContractFactory("InboundLane")
   inbound = await InboundLane.deploy(lightClient.address, bridgedChainPos, bridgedLanePos, thisChainPos, thisLanePos, 0, 0)
 
   await feeMarket.totalSupply()
   await feeMarket.setOutbound(outbound.address, 1)
-  await outbound.setFeeMarket(feeMarket.address)
   return {feeMarket, outbound, inbound}
 }
 

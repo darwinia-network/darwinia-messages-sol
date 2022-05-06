@@ -119,7 +119,6 @@ describe("normal app send single message tests", () => {
 
     let overrides = { value: ethers.utils.parseEther("3000") }
     await feeMarket.connect(owner).enroll("0x0000000000000000000000000000000000000001", fee, overrides)
-    await outbound.setFeeMarket(feeMarket.address)
     await feeMarket.setOutbound(outbound.address, 1)
 
     const NormalApp = await ethers.getContractFactory("NormalApp")

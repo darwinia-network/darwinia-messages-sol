@@ -115,6 +115,14 @@ const receive_messages_delivery_proof = async (outbound, tgtoutbound, tgtinbound
 describe("verify message relay tests", () => {
 
   before(async () => {
+    const VAULT = "0x0000000000000000000000000000000000000000"
+    const COLLATERAL_PERORDER = ethers.utils.parseEther("10")
+    const ASSIGNED_RELAYERS_NUMBER = 3;
+    const SLASH_TIME = 100
+    const RELAY_TIME = 100
+    const FeeMarket = await ethers.getContractFactory("FeeMarket")
+    const feeMarket = await FeeMarket.deploy(VAULT, COLLATERAL_PERORDER, ASSIGNED_RELAYERS_NUMBER, SLASH_TIME, RELAY_TIME)
+
     const [owner] = await ethers.getSigners();
     source = owner.address
     const MockBSCLightClient = await ethers.getContractFactory("MockBSCLightClient")
@@ -125,7 +133,7 @@ describe("verify message relay tests", () => {
     const LaneMessageCommitter = await ethers.getContractFactory("LaneMessageCommitter")
 
     targetLightClient = await MockBSCLightClient.deploy(LANE_COMMITMENT_POSITION)
-    sourceOutbound = await OutboundLane.deploy(targetLightClient.address, sourceChainPos, sourceOutLanePos, targetChainPos, targetInLanePos, 1, 0, 0)
+    sourceOutbound = await OutboundLane.deploy(targetLightClient.address, feeMarket.address, sourceChainPos, sourceOutLanePos, targetChainPos, targetInLanePos, 1, 0, 0)
     sourceInbound = await InboundLane.deploy(targetLightClient.address, sourceChainPos, sourceInLanePos, targetChainPos, targetOutLanePos, 0, 0)
     darwiniaLaneCommitter0 = await LaneMessageCommitter.deploy(sourceChainPos, targetChainPos)
     await darwiniaLaneCommitter0.registry(sourceOutbound.address, sourceInbound.address)
@@ -133,19 +141,12 @@ describe("verify message relay tests", () => {
     await darwiniaChainCommitter.registry(darwiniaLaneCommitter0.address)
 
     sourceLightClient = await MockDarwiniaLightClient.deploy()
-    targetOutbound = await OutboundLane.deploy(sourceLightClient.address, targetChainPos, targetOutLanePos, sourceChainPos, sourceInLanePos, 1, 0, 0)
+    targetOutbound = await OutboundLane.deploy(sourceLightClient.address, feeMarket.address, targetChainPos, targetOutLanePos, sourceChainPos, sourceInLanePos, 1, 0, 0)
     targetInbound = await InboundLane.deploy(sourceLightClient.address, targetChainPos, targetInLanePos, sourceChainPos, sourceOutLanePos, 0, 0)
 
     await targetLightClient.setBound(sourceChainPos, targetOutLanePos, targetOutbound.address, targetInLanePos, targetInbound.address)
 
-    const VAULT = "0x0000000000000000000000000000000000000000"
-    const COLLATERAL_PERORDER = ethers.utils.parseEther("10")
-    const ASSIGNED_RELAYERS_NUMBER = 3;
-    const SLASH_TIME = 100
-    const RELAY_TIME = 100
     const [one, two, three] = await ethers.getSigners();
-    const FeeMarket = await ethers.getContractFactory("FeeMarket")
-    const feeMarket = await FeeMarket.deploy(VAULT, COLLATERAL_PERORDER, ASSIGNED_RELAYERS_NUMBER, SLASH_TIME, RELAY_TIME)
     let overrides = {
         value: ethers.utils.parseEther("100")
     }
@@ -159,7 +160,6 @@ describe("verify message relay tests", () => {
     await feeMarket.connect(three).enroll(two.address, threeFee, overrides)
 
     await feeMarket.setOutbound(sourceOutbound.address, 1)
-    await sourceOutbound.setFeeMarket(feeMarket.address)
   });
 
   it("0", async function () {

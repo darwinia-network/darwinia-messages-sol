@@ -32,14 +32,16 @@ contract LaneMessageCommitter {
     }
 
     function registry(address outboundLane, address inboundLane) external onlySetter {
-        require(thisChainPosition == IMessageCommitment(outboundLane).thisChainPosition(), "Commit: invalid ThisChainPosition");
-        require(thisChainPosition == IMessageCommitment(inboundLane).thisChainPosition(), "Commit: invalid ThisChainPosition");
-        require(bridgedChainPosition == IMessageCommitment(outboundLane).bridgedChainPosition(), "Commit: invalid chain position");
-        require(bridgedChainPosition == IMessageCommitment(inboundLane).bridgedChainPosition(), "Commit: invalid chain position");
+        (uint32 _thisChainPositionOut, uint32 _thisLanePositionOut, uint32 _bridgedChainPositionOut, ) = IMessageCommitment(outboundLane).getLaneInfo();
+        (uint32 _thisChainPositionIn, uint32 _thisLanePositionIn, uint32 _bridgedChainPositionIn, ) = IMessageCommitment(inboundLane).getLaneInfo();
+        require(thisChainPosition == _thisChainPositionOut, "Commit: invalid ThisChainPosition");
+        require(thisChainPosition == _thisChainPositionIn, "Commit: invalid ThisChainPosition");
+        require(bridgedChainPosition == _bridgedChainPositionOut, "Commit: invalid chain position");
+        require(bridgedChainPosition == _bridgedChainPositionIn, "Commit: invalid chain position");
         uint256 outLanePos = laneCount;
         uint256 inLanePos = laneCount + 1;
-        require(outLanePos == IMessageCommitment(outboundLane).thisLanePosition(), "Commit: invalid outlane position");
-        require(inLanePos == IMessageCommitment(inboundLane).thisLanePosition(), "Commit: invalid inlane position");
+        require(outLanePos == _thisLanePositionOut, "Commit: invalid outlane position");
+        require(inLanePos == _thisLanePositionIn, "Commit: invalid inlane position");
         lanes[outLanePos] = outboundLane;
         lanes[inLanePos] = inboundLane;
         laneCount += 2;
