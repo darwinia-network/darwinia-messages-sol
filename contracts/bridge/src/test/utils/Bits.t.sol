@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.0;
+pragma solidity 0.7.6;
 
-import "../../../lib/ds-test/src/test.sol";
+import "../test.sol";
 import "../../utils/Bits.sol";
 
 contract BitsTest is DSTest {
@@ -13,10 +13,10 @@ contract BitsTest is DSTest {
 
     function test_bit_and() public {
         for (uint8 i = 0; i < 12; i++) {
-            assertEq(ONES.bitAnd(ONES, i*20), 1);
-            assertEq(ONES.bitAnd(ZERO, i*20), 0);
-            assertEq(ZERO.bitAnd(ONES, i*20), 0);
-            assertEq(ZERO.bitAnd(ZERO, i*20), 0);
+            assertEq(ONES.bitAnd(ONES, i*20), uint(1));
+            assertEq(ONES.bitAnd(ZERO, i*20), uint(0));
+            assertEq(ZERO.bitAnd(ONES, i*20), uint(0));
+            assertEq(ZERO.bitAnd(ZERO, i*20), uint(0));
         }
     }
 
@@ -29,10 +29,10 @@ contract BitsTest is DSTest {
 
     function test_bit_or() public {
         for (uint8 i = 0; i < 12; i++) {
-            assertEq(ONES.bitOr(ONES, i*20), 1);
-            assertEq(ONES.bitOr(ZERO, i*20), 1);
-            assertEq(ZERO.bitOr(ONES, i*20), 1);
-            assertEq(ZERO.bitOr(ZERO, i*20), 0);
+            assertEq(ONES.bitOr(ONES, i*20), uint(1));
+            assertEq(ONES.bitOr(ZERO, i*20), uint(1));
+            assertEq(ZERO.bitOr(ONES, i*20), uint(1));
+            assertEq(ZERO.bitOr(ZERO, i*20), uint(0));
         }
     }
 
@@ -76,42 +76,42 @@ contract BitsTest is DSTest {
 
     function test_bits_bit_xor() public {
         for (uint8 i = 0; i < 12; i++) {
-            assertEq(ONES.bitXor(ONES, i*20), 0);
-            assertEq(ONES.bitXor(ZERO, i*20), 1);
-            assertEq(ZERO.bitXor(ONES, i*20), 1);
-            assertEq(ZERO.bitXor(ZERO, i*20), 0);
+            assertEq(ONES.bitXor(ONES, i*20), uint(0));
+            assertEq(ONES.bitXor(ZERO, i*20), uint(1));
+            assertEq(ZERO.bitXor(ONES, i*20), uint(1));
+            assertEq(ZERO.bitXor(ZERO, i*20), uint(0));
         }
     }
 
     function test_bits_clear_bit() public {
         for (uint8 i = 0; i < 12; i++) {
-            assertEq(ONES.clearBit(i*20).bit(i*20), 0);
+            assertEq(ONES.clearBit(i*20).bit(i*20), uint(0));
         }
     }
 
     function test_bits_bit() public {
         for (uint8 i = 0; i < 12; i++) {
             uint v = (ONE << i*20) * (i % 2);
-            assertEq(v.bit(i*20), i % 2);
+            assertEq(v.bit(i*20), uint(i % 2));
         }
     }
 
     function test_bits_bit_not() public {
         for (uint8 i = 0; i < 12; i++) {
             uint v = (ONE << i*20) * (i % 2);
-            assertEq(v.bitNot(i*20), 1 - i % 2);
+            assertEq(v.bitNot(i*20), uint(1 - i % 2));
         }
     }
 
     function test_bits_highest_bit_set_all_lower_set() public {
         for (uint8 i = 0; i < 12; i += 20) {
-            assertEq((ONES >> i).highestBitSet(), (255 - i));
+            assertEq((ONES >> i).highestBitSet(), uint(255 - i));
         }
     }
 
     function test_bits_highest_bit_set_single_bit() public {
         for (uint8 i = 0; i < 12; i += 20) {
-            assertEq((ONE << i).highestBitSet(), i);
+            assertEq((ONE << i).highestBitSet(), uint(i));
         }
     }
 
@@ -121,13 +121,13 @@ contract BitsTest is DSTest {
 
     function test_bits_lowest_bit_set_all_higher_set() public {
         for (uint8 i = 0; i < 12; i += 20) {
-            assertEq((ONES << i).lowestBitSet(), i);
+            assertEq((ONES << i).lowestBitSet(), uint(i));
         }
     }
 
     function test_bits_lowest_bit_set_single_bit() public {
         for (uint8 i = 0; i < 12; i += 20) {
-            assertEq((ONE << i).lowestBitSet(), i);
+            assertEq((ONE << i).lowestBitSet(), uint(i));
         }
     }
 

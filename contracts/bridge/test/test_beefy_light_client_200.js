@@ -15,75 +15,65 @@ require("chai")
 
 const { expect } = require("chai");
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 describe("Light Client Gas Usage", function () {
 
   const testCases = [
     {
-      totalNumberOfValidators: 10,
-      totalNumberOfSignatures: 7,
-    },
-    {
-      totalNumberOfValidators: 15,
-      totalNumberOfSignatures: 15,
-    },
-    {
-      totalNumberOfValidators: 25,
-      totalNumberOfSignatures: 25,
-    },
-    {
-      totalNumberOfValidators: 30,
-      totalNumberOfSignatures: 30,
-    },
-    {
-      totalNumberOfValidators: 35,
-      totalNumberOfSignatures: 35,
-    },
-    {
-      totalNumberOfValidators: 36,
-      totalNumberOfSignatures: 36,
-    },
-    {
-      totalNumberOfValidators: 40,
-      totalNumberOfSignatures: 40,
-    },
-    {
-      totalNumberOfValidators: 50,
-      totalNumberOfSignatures: 50,
-    },
-    {
       totalNumberOfValidators: 100,
-      totalNumberOfSignatures: 100,
+      totalNumberOfSignatures: 67,
     },
     {
-      totalNumberOfValidators: 128,
-      totalNumberOfSignatures: 128,
+      totalNumberOfValidators: 110,
+      totalNumberOfSignatures: 74,
     },
     {
-      totalNumberOfValidators: 257,
-      totalNumberOfSignatures: 257,
+      totalNumberOfValidators: 120,
+      totalNumberOfSignatures: 81,
     },
     {
-      totalNumberOfValidators: 1000,
-      totalNumberOfSignatures: 1000,
+      totalNumberOfValidators: 130,
+      totalNumberOfSignatures: 87,
     },
     {
-      totalNumberOfValidators: 1000,
-      totalNumberOfSignatures: 667,
+      totalNumberOfValidators: 140,
+      totalNumberOfSignatures: 94,
     },
     {
-      totalNumberOfValidators: 1025,
-      totalNumberOfSignatures: 684,
+      totalNumberOfValidators: 150,
+      totalNumberOfSignatures: 101,
     },
     {
-      totalNumberOfValidators: 2048,
-      totalNumberOfSignatures: 1366,
+      totalNumberOfValidators: 160,
+      totalNumberOfSignatures: 107,
+    },
+    {
+      totalNumberOfValidators: 170,
+      totalNumberOfSignatures: 114,
+    },
+    {
+      totalNumberOfValidators: 180,
+      totalNumberOfSignatures: 121,
+    },
+    {
+      totalNumberOfValidators: 190,
+      totalNumberOfSignatures: 127,
+    },
+    {
+      totalNumberOfValidators: 200,
+      totalNumberOfSignatures: 134,
     },
   ]
 
   for (const testCase of testCases) {
     it(`runs full flow with ${testCase.totalNumberOfValidators} validators and ${testCase.totalNumberOfSignatures} signers with the complete transaction succeeding`,
       async function () {
-        this.timeout(1000 * 200);
+        this.timeout(1000 * 1200);
         await runFlow(testCase.totalNumberOfValidators, testCase.totalNumberOfSignatures)
       });
   }
@@ -96,7 +86,7 @@ describe("Light Client Gas Usage", function () {
     )
     const LightClientBridge = await ethers.getContractFactory("DarwiniaLightClient");
     const crab = beefyFixture.commitment.payload.network
-    const vault = "0x0000000000000000000000000000000000000000"
+    const vault = "0x0f14341a7f464320319025540e8fe48ad0fe5aec"
     beefyLightClient = await LightClientBridge.deploy(
       crab,
       vault,
@@ -110,7 +100,7 @@ describe("Light Client Gas Usage", function () {
     const firstPosition = initialBitfieldPositions[0]
 
     const initialBitfield = await beefyLightClient.createInitialBitfield(
-      initialBitfieldPositions, totalNumberOfValidators
+      initialBitfieldPositions
     );
 
     const commitmentHash = await beefyLightClient.hash(beefyFixture.commitment);
@@ -121,22 +111,28 @@ describe("Light Client Gas Usage", function () {
 
     let overrides = {
         value: ethers.utils.parseEther("4")
+        // value: 4
     };
+
+    const singleProof = {
+        signature: allValidatorProofs[firstPosition].signature,
+        position: firstPosition,
+        signer: allValidatorProofs[firstPosition].address,
+        proof: firstProof,
+    }
     const newSigTxPromise = beefyLightClient.newSignatureCommitment(
       commitmentHash,
       initialBitfield,
-      allValidatorProofs[firstPosition].signature,
-      firstPosition,
-      allValidatorProofs[firstPosition].address,
-      firstProof,
+      singleProof,
       overrides
     )
     printTxPromiseGas("1-step", await newSigTxPromise)
     await newSigTxPromise.should.be.fulfilled
 
-    const lastId = (await beefyLightClient.currentId()).sub(BigNumber.from(1));
-
     await mine(20);
+    // await sleep(1000 * 100)
+
+    const lastId = await beefyLightClient.getCurrentId() - 1;
 
     const completeValidatorProofs = await createCompleteValidatorProofs(lastId, beefyLightClient, allValidatorProofs, fixture);
 
@@ -147,8 +143,6 @@ describe("Light Client Gas Usage", function () {
     )
     await printTxPromiseGas("2-step", await completeSigTxPromise)
     await completeSigTxPromise.should.be.fulfilled
-    latestMMRRoot = await beefyLightClient.latestMMRRoot()
-    expect(latestMMRRoot).to.eq(beefyFixture.commitment.payload.mmr)
   }
 
 });

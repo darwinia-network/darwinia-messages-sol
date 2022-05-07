@@ -128,7 +128,7 @@ No description
 #### Declaration
 ```solidity
   function build_outlane(
-  ) internal returns (struct SourceChain.OutboundLaneData lane_data)
+  ) internal returns (struct SourceChain.OutboundLaneDataStorage lane_data)
 ```
 
 #### Modifiers:

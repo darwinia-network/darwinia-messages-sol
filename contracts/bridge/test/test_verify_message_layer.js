@@ -18,6 +18,11 @@ let darwiniaLaneCommitter0, darwiniaChainCommitter
 let sourceLightClient, targetLightClient
 let overrides = { value: ethers.utils.parseEther("30") }
 
+let owner, source
+const target = "0x0000000000000000000000000000000000000000"
+const encoded = "0x"
+const encoded_hash = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+
 // let getAndVerify = new GetAndVerify("http://127.0.0.1:8545 ")
 
 const build_proof = async () => {
@@ -27,12 +32,10 @@ const build_proof = async () => {
     const inb = await darwiniaLaneCommitter0['commitment(uint256)'](sourceInLanePos)
     const chainProof = {
       root: c,
-      count: 2,
       proof: [c0]
     }
     const laneProof = {
       root: c1,
-      count: 2,
       proof: [inb]
     }
     return { chainProof, laneProof }
@@ -41,44 +44,69 @@ const build_proof = async () => {
 const generate_darwinia_proof = async () => {
   const proof = await build_proof()
   return ethers.utils.defaultAbiCoder.encode([
-    "tuple(tuple(bytes32,uint256,bytes32[]),tuple(bytes32,uint256,bytes32[]))"
+    "tuple(tuple(bytes32,bytes32[]),tuple(bytes32,bytes32[]))"
     ], [
       [
-        [proof.chainProof.root, proof.chainProof.count, proof.chainProof.proof],
-        [proof.laneProof.root, proof.laneProof.count, proof.laneProof.proof]
+        [proof.chainProof.root, proof.chainProof.proof],
+        [proof.laneProof.root, proof.laneProof.proof]
       ]
     ])
 }
 
 const send_message = async (outbound, nonce) => {
     const tx = await outbound.send_message(
-      "0x0000000000000000000000000000000000000000",
-      "0x",
+      target,
+      encoded,
       overrides
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(nonce, "0x")
+      .withArgs(nonce, source, target, encoded)
+}
+
+const build_land_data = (laneData) => {
+    let data = {
+      latest_received_nonce: laneData.latest_received_nonce,
+      messages: []
+    }
+    for (let i = 0; i< laneData.messages.length; i++) {
+      let message = {
+        encoded_key: laneData.messages[i].encoded_key,
+        payload: {
+          source,
+          target,
+          encoded,
+        }
+      }
+      data.messages.push(message)
+    }
+    return data
 }
 
 const receive_messages_proof = async (inbound, srcoutbound, srcinbound, nonce) => {
     const o = await srcoutbound.data()
+    const data = build_land_data(o)
     const proof = await generate_darwinia_proof()
-    const calldata = Array(o.messages.length).fill("0x")
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
-    const tx = await inbound.receive_messages_proof(o, calldata, proof)
+    const tx = await inbound.receive_messages_proof(data, proof)
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(sourceChainPos, sourceOutLanePos, targetChainPos, targetInLanePos, from+i+1, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
+        .withArgs(from+i+1, false)
     }
 }
 
 const receive_messages_delivery_proof = async (outbound, tgtoutbound, tgtinbound, begin, end) => {
+    const payload = {
+      source,
+      target,
+      encoded_hash: "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+    }
+    const payloads = Array(end - begin + 1).fill(payload)
     const i = await tgtinbound.data()
     // const proof = await generate_bsc_proof()
-    const tx = await outbound.receive_messages_delivery_proof(i, "0x")
+    const tx = await outbound.receive_messages_delivery_proof(i, payloads, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 0)
@@ -87,7 +115,16 @@ const receive_messages_delivery_proof = async (outbound, tgtoutbound, tgtinbound
 describe("verify message relay tests", () => {
 
   before(async () => {
+    const VAULT = "0x0000000000000000000000000000000000000000"
+    const COLLATERAL_PERORDER = ethers.utils.parseEther("10")
+    const ASSIGNED_RELAYERS_NUMBER = 3;
+    const SLASH_TIME = 100
+    const RELAY_TIME = 100
+    const FeeMarket = await ethers.getContractFactory("FeeMarket")
+    const feeMarket = await FeeMarket.deploy(VAULT, COLLATERAL_PERORDER, ASSIGNED_RELAYERS_NUMBER, SLASH_TIME, RELAY_TIME)
+
     const [owner] = await ethers.getSigners();
+    source = owner.address
     const MockBSCLightClient = await ethers.getContractFactory("MockBSCLightClient")
     const MockDarwiniaLightClient = await ethers.getContractFactory("MockDarwiniaLightClient")
     const OutboundLane = await ethers.getContractFactory("OutboundLane")
@@ -96,8 +133,7 @@ describe("verify message relay tests", () => {
     const LaneMessageCommitter = await ethers.getContractFactory("LaneMessageCommitter")
 
     targetLightClient = await MockBSCLightClient.deploy(LANE_COMMITMENT_POSITION)
-    sourceOutbound = await OutboundLane.deploy(targetLightClient.address, sourceChainPos, sourceOutLanePos, targetChainPos, targetInLanePos, 1, 0, 0)
-    await sourceOutbound.rely(owner.address)
+    sourceOutbound = await OutboundLane.deploy(targetLightClient.address, feeMarket.address, sourceChainPos, sourceOutLanePos, targetChainPos, targetInLanePos, 1, 0, 0)
     sourceInbound = await InboundLane.deploy(targetLightClient.address, sourceChainPos, sourceInLanePos, targetChainPos, targetOutLanePos, 0, 0)
     darwiniaLaneCommitter0 = await LaneMessageCommitter.deploy(sourceChainPos, targetChainPos)
     await darwiniaLaneCommitter0.registry(sourceOutbound.address, sourceInbound.address)
@@ -105,20 +141,12 @@ describe("verify message relay tests", () => {
     await darwiniaChainCommitter.registry(darwiniaLaneCommitter0.address)
 
     sourceLightClient = await MockDarwiniaLightClient.deploy()
-    targetOutbound = await OutboundLane.deploy(sourceLightClient.address, targetChainPos, targetOutLanePos, sourceChainPos, sourceInLanePos, 1, 0, 0)
-    await targetOutbound.rely(owner.address)
+    targetOutbound = await OutboundLane.deploy(sourceLightClient.address, feeMarket.address, targetChainPos, targetOutLanePos, sourceChainPos, sourceInLanePos, 1, 0, 0)
     targetInbound = await InboundLane.deploy(sourceLightClient.address, targetChainPos, targetInLanePos, sourceChainPos, sourceOutLanePos, 0, 0)
 
     await targetLightClient.setBound(sourceChainPos, targetOutLanePos, targetOutbound.address, targetInLanePos, targetInbound.address)
 
-    const VAULT = "0x0000000000000000000000000000000000000000"
-    const COLLATERAL_PERORDER = ethers.utils.parseEther("10")
-    const ASSIGNED_RELAYERS_NUMBER = 3;
-    const SLASH_TIME = 100
-    const RELAY_TIME = 100
     const [one, two, three] = await ethers.getSigners();
-    const FeeMarket = await ethers.getContractFactory("FeeMarket")
-    const feeMarket = await FeeMarket.deploy(VAULT, COLLATERAL_PERORDER, ASSIGNED_RELAYERS_NUMBER, SLASH_TIME, RELAY_TIME)
     let overrides = {
         value: ethers.utils.parseEther("100")
     }
@@ -132,7 +160,6 @@ describe("verify message relay tests", () => {
     await feeMarket.connect(three).enroll(two.address, threeFee, overrides)
 
     await feeMarket.setOutbound(sourceOutbound.address, 1)
-    await sourceOutbound.setFeeMarket(feeMarket.address)
   });
 
   it("0", async function () {

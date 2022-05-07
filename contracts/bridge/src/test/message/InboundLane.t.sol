@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.7.6;
+pragma abicoder v2;
 
-import "../../../lib/ds-test/src/test.sol";
+import "../test.sol";
 import "../../message/InboundLane.sol";
 import "../../spec/TargetChain.sol";
 import "../../spec/SourceChain.sol";
@@ -45,34 +46,32 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
 
     function test_constructor_args() public {
         (uint64 last_confirmed_nonce, uint64 last_delivered_nonce, uint64 relayer_range_front, uint64 relayer_range_back) = inlane.inboundLaneNonce();
-        assertEq(last_confirmed_nonce, 0);
-        assertEq(last_delivered_nonce, 0);
-        assertEq(relayer_range_front, 1);
-        assertEq(relayer_range_back, 0);
-        assertEq(inlane.relayers_size(), 0);
+        assertEq(last_confirmed_nonce, uint(0));
+        assertEq(last_delivered_nonce, uint(0));
+        assertEq(relayer_range_front, uint(1));
+        assertEq(relayer_range_back, uint(0));
+        assertEq(inlane.relayers_size(), uint(0));
         assertEq(inlane.relayers_back(), address(0));
         InboundLaneData memory data = inlane.data();
         assertEq(data.relayers.length, 0);
-        assertEq(data.last_confirmed_nonce, 0);
-        assertEq(data.last_delivered_nonce, 0);
+        assertEq(data.last_confirmed_nonce, uint(0));
+        assertEq(data.last_delivered_nonce, uint(0));
         assertEq(inlane.commitment(), hex"66b5278e1f7507462f2157f72f3ce409601f7ca3fa7092dc8aaa869467b38413");
         assertEq(hevm.load(address(inlane), bytes32(uint(4))), bytes32(0));
     }
 
     function test_receive_messages_proof() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSignature("foo()");
-        inlane.receive_messages_proof(out_data, calldatas, hex"");
+        inlane.receive_messages_proof(out_data, hex"");
 
         InboundLaneData memory in_data = inlane.data();
-        assertEq(in_data.last_confirmed_nonce, 0);
-        assertEq(in_data.last_delivered_nonce, 1);
+        assertEq(in_data.last_confirmed_nonce, uint(0));
+        assertEq(in_data.last_delivered_nonce, uint(1));
         assertEq(in_data.relayers.length, 1);
         UnrewardedRelayer memory relayer = in_data.relayers[0];
         assertEq(relayer.relayer, self);
-        assertEq(relayer.messages.begin, 1);
-        assertEq(relayer.messages.end, 1);
+        assertEq(relayer.messages.begin, uint(1));
+        assertEq(relayer.messages.end, uint(1));
         assertEq(relayer.messages.dispatch_results, 1);
 
         assertEq(inlane.relayers_back(), self);
@@ -81,75 +80,51 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
     function testFail_receive_messages_proof0() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
         out_data.latest_received_nonce = 1;
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSignature("foo()");
-        inlane.receive_messages_proof(out_data, calldatas, hex"");
+        inlane.receive_messages_proof(out_data, hex"");
     }
 
     function testFail_receive_messages_proof1() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
-        bytes[] memory calldatas = new bytes[](2);
-        calldatas[0] = abi.encodeWithSignature("foo()");
-        calldatas[1] = abi.encodeWithSignature("foo()");
-        inlane.receive_messages_proof(out_data, calldatas, hex"");
+        out_data.messages[0].encoded_key = uint256(0x0000000000000000000000010000000000000000000000010000000000000002);
+        inlane.receive_messages_proof(out_data, hex"");
     }
 
     function testFail_receive_messages_proof2() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
-        out_data.messages[0].encoded_key = uint256(0x0000000000000000000000010000000000000000000000010000000000000002);
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSignature("foo()");
-        inlane.receive_messages_proof(out_data, calldatas, hex"");
+        out_data.messages[0].encoded_key = uint256(0x0000000000000000000000020000000000000000000000010000000000000001);
+        inlane.receive_messages_proof(out_data, hex"");
     }
 
     function testFail_receive_messages_proof3() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
-        out_data.messages[0].encoded_key = uint256(0x0000000000000000000000020000000000000000000000010000000000000001);
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSignature("foo()");
-        inlane.receive_messages_proof(out_data, calldatas, hex"");
+        out_data.messages[0].encoded_key = uint256(0x0000000000000000000000010000000100000000000000010000000000000001);
+        inlane.receive_messages_proof(out_data, hex"");
     }
 
     function testFail_receive_messages_proof4() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
-        out_data.messages[0].encoded_key = uint256(0x0000000000000000000000010000000100000000000000010000000000000001);
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSignature("foo()");
-        inlane.receive_messages_proof(out_data, calldatas, hex"");
+        out_data.messages[0].encoded_key = uint256(0x0000000000000000000000010000000000000001000000010000000000000001);
+        inlane.receive_messages_proof(out_data, hex"");
     }
 
     function testFail_receive_messages_proof5() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
-        out_data.messages[0].encoded_key = uint256(0x0000000000000000000000010000000000000001000000010000000000000001);
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSignature("foo()");
-        inlane.receive_messages_proof(out_data, calldatas, hex"");
-    }
-
-    function testFail_receive_messages_proof6() public {
-        OutboundLaneData memory out_data = _out_lane_data(1);
         out_data.messages[0].encoded_key = uint256(0x0000000000000000000000010000000000000000000000020000000000000001);
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSignature("foo()");
-        inlane.receive_messages_proof(out_data, calldatas, hex"");
+        inlane.receive_messages_proof(out_data, hex"");
     }
 
     function test_receive_messages_proof_multi0() public {
         OutboundLaneData memory out_data = _multi_out_lane_data();
-        bytes[] memory calldatas = new bytes[](3);
-        calldatas[0] = abi.encodeWithSignature("foo()");
-        calldatas[1] = abi.encodeWithSignature("foo()");
-        calldatas[2] = abi.encodeWithSignature("foo()");
-        inlane.receive_messages_proof(out_data, calldatas, hex"");
+        inlane.receive_messages_proof(out_data, hex"");
 
         InboundLaneData memory in_data = inlane.data();
-        assertEq(in_data.last_confirmed_nonce, 0);
-        assertEq(in_data.last_delivered_nonce, 3);
+        assertEq(in_data.last_confirmed_nonce, uint(0));
+        assertEq(in_data.last_delivered_nonce, uint(3));
         assertEq(in_data.relayers.length, 1);
         UnrewardedRelayer memory relayer = in_data.relayers[0];
         assertEq(relayer.relayer, self);
-        assertEq(relayer.messages.begin, 1);
-        assertEq(relayer.messages.end, 3);
+        assertEq(relayer.messages.begin, uint(1));
+        assertEq(relayer.messages.end, uint(3));
         assertEq(relayer.messages.dispatch_results, 7);
 
         assertEq(inlane.relayers_back(), self);
@@ -157,24 +132,22 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
 
     function test_receive_messages_proof_multi1() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSignature("foo()");
-        inlane.receive_messages_proof(out_data, calldatas, hex"");
+        inlane.receive_messages_proof(out_data, hex"");
 
         out_data = _out_lane_data(2);
-        inlane.receive_messages_proof(out_data, calldatas, hex"");
+        inlane.receive_messages_proof(out_data, hex"");
 
         out_data = _out_lane_data(3);
-        inlane.receive_messages_proof(out_data, calldatas, hex"");
+        inlane.receive_messages_proof(out_data, hex"");
 
         InboundLaneData memory in_data = inlane.data();
-        assertEq(in_data.last_confirmed_nonce, 0);
-        assertEq(in_data.last_delivered_nonce, 3);
+        assertEq(in_data.last_confirmed_nonce, uint(0));
+        assertEq(in_data.last_delivered_nonce, uint(3));
         assertEq(in_data.relayers.length, 1);
         UnrewardedRelayer memory relayer = in_data.relayers[0];
         assertEq(relayer.relayer, self);
-        assertEq(relayer.messages.begin, 1);
-        assertEq(relayer.messages.end, 3);
+        assertEq(relayer.messages.begin, uint(1));
+        assertEq(relayer.messages.end, uint(3));
         assertEq(relayer.messages.dispatch_results, 7);
 
         assertEq(inlane.relayers_back(), self);
@@ -184,8 +157,7 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
         address source = address(0);
         address target = address(app);
         bytes memory encoded = abi.encodeWithSignature("foo()");
-        bytes32 encodedHash = keccak256(encoded);
-        MessagePayload memory payload = MessagePayload(source, target, encodedHash);
+        MessagePayload memory payload = MessagePayload(source, target, encoded);
         uint256 encoded_key = inlane.encodeMessageKey(nonce);
         Message memory message = Message(encoded_key, payload);
         Message[] memory messages = new Message[](1);
@@ -197,8 +169,7 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
         address source = address(0);
         address target = address(app);
         bytes memory encoded = abi.encodeWithSignature("foo()");
-        bytes32 encodedHash = keccak256(encoded);
-        MessagePayload memory payload = MessagePayload(source, target, encodedHash);
+        MessagePayload memory payload = MessagePayload(source, target, encoded);
         uint256 encoded_key = inlane.encodeMessageKey(1);
         Message memory message = Message(encoded_key, payload);
         Message memory message1 = Message(encoded_key + 1, payload);

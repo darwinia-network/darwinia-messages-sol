@@ -9,19 +9,23 @@ const thisChainPos = 0
 const thisLanePos = 0
 const bridgedChainPos = 1
 const bridgedLanePos = 1
+let source
 let feeMarket, outbound, inbound
 let outboundData, inboundData, a, b, c, d
 let overrides = { value: ethers.utils.parseEther("30") }
+const target = "0x0000000000000000000000000000000000000000"
+const encoded = "0x"
+const encoded_hash = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
 
 const send_message = async (nonce) => {
     const tx = await outbound.send_message(
-      "0x0000000000000000000000000000000000000000",
-      "0x",
+      target,
+      encoded,
       overrides
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(nonce, "0x")
+      .withArgs(nonce, source, target, encoded)
 
     await logNonce()
 }
@@ -32,21 +36,46 @@ const logNonce = async () => {
   log(`(${out.latest_received_nonce}, ${out.latest_generated_nonce}]                                            ->     (${iin.last_confirmed_nonce}, ${iin.last_delivered_nonce}]`)
 }
 
+const build_land_data = (laneData) => {
+    let data = {
+      latest_received_nonce: laneData.latest_received_nonce,
+      messages: []
+    }
+    for (let i = 0; i< laneData.messages.length; i++) {
+      let message = {
+        encoded_key: laneData.messages[i].encoded_key,
+        payload: {
+          source,
+          target,
+          encoded,
+        }
+      }
+      data.messages.push(message)
+    }
+    return data
+}
+
 const receive_messages_proof = async (laneData, nonce) => {
-    const calldata = Array(laneData.messages.length).fill("0x")
+    let data = build_land_data(laneData)
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
-    const tx = await inbound.receive_messages_proof(laneData, calldata, "0x")
+    const tx = await inbound.receive_messages_proof(data, "0x")
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, from+i+1, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
+        .withArgs(from+i+1, false)
     }
     await logNonce()
 }
 
 const receive_messages_delivery_proof = async (laneData, begin, end) => {
-    const tx = await outbound.receive_messages_delivery_proof(laneData, "0x")
+    const payload = {
+      source,
+      target,
+      encoded_hash: "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+    }
+    const payloads = Array(end - begin + 1).fill(payload)
+    const tx = await outbound.receive_messages_delivery_proof(laneData, payloads, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 0)
@@ -76,6 +105,8 @@ const receive_messages_delivery_proof = async (laneData, begin, end) => {
 describe("async message relay tests", () => {
 
   before(async () => {
+    [source] = await ethers.getSigners();
+    source = source.address;
     ({ feeMarket, outbound, inbound } = await waffle.loadFixture(Fixure))
     log(" out bound lane                                   ->      in bound lane")
     log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")
