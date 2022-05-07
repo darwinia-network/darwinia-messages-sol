@@ -10,9 +10,7 @@ abstract contract SmartChainApp {
 
     event DispatchResult(bool success, bytes result);
 
-    // TODO: 
-    //   define constant from palletIndex and laneId
-    function sendMessage(bytes2 callIndex, bytes4 laneId, uint256 fee, bytes memory message) internal {
+    function sendMessage(bytes2 callIndexAtSourceChain, bytes4 laneId, uint256 fee, bytes memory message) internal {
     	// the pricision in contract is 18, and in pallet is 9, transform the fee value
         uint256 feeInPallet = fee/(10**9); 
 
@@ -44,7 +42,7 @@ abstract contract SmartChainApp {
     }
 
     
-    function buildMessage(uint32 specVersion, uint64 weight, bytes memory callEncoded) internal returns (bytes memory) {
+    function buildMessage(uint32 specVersionOfTargetChain, uint64 callWeight, bytes memory callEncoded) internal returns (bytes memory) {
         Types.EnumItemWithAccountId memory origin = Types.EnumItemWithAccountId(
             2, // index in enum
             AccountId.fromAddress(address(this)) // UserApp contract address
