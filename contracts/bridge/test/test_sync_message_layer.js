@@ -12,25 +12,29 @@ const bridgedLanePos = 1
 let feeMarket, outbound, inbound
 let outboundData, inboundData
 let overrides = { value: ethers.utils.parseEther("30") }
+let source
+const target = "0x0000000000000000000000000000000000000000"
+const encoded = "0x"
+const encoded_hash = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
 
 const send_message = async (nonce) => {
     const tx = await outbound.send_message(
-      "0x0000000000000000000000000000000000000000",
-      "0x",
+      target,
+      encoded,
       overrides
     )
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(nonce, "0x")
+      .withArgs(nonce, source, target, encoded)
     let block = await ethers.provider.getBlock(tx.blockNumber)
     await expect(tx)
-      .to.emit(feeMarket, "OrderAssgigned")
-      .withArgs(await outbound.encodeMessageKey(nonce), block.timestamp, await feeMarket.assignedRelayersNumber(), await feeMarket.collateralPerorder())
+      .to.emit(feeMarket, "Assgigned")
+      .withArgs(await outbound.encodeMessageKey(nonce), block.timestamp, await feeMarket.assignedRelayersNumber(), await feeMarket.collateralPerOrder())
 
     const [one, two, three] = await ethers.getSigners();
     await expect(tx)
       .to.emit(feeMarket, "Locked")
-      .withArgs(three.address, await feeMarket.collateralPerorder())
+      .withArgs(three.address, await feeMarket.collateralPerOrder())
     await logNonce()
 }
 
@@ -40,24 +44,49 @@ const logNonce = async () => {
   log(`(${out.latest_received_nonce}, ${out.latest_generated_nonce}]                                            ->     (${iin.last_confirmed_nonce}, ${iin.last_delivered_nonce}]`)
 }
 
+const build_land_data = (laneData) => {
+    let data = {
+      latest_received_nonce: laneData.latest_received_nonce,
+      messages: []
+    }
+    for (let i = 0; i< laneData.messages.length; i++) {
+      let message = {
+        encoded_key: laneData.messages[i].encoded_key,
+        payload: {
+          source,
+          target,
+          encoded,
+        }
+      }
+      data.messages.push(message)
+    }
+    return data
+}
+
 const receive_messages_proof = async (nonce) => {
-    laneData = await outbound.data()
-    const calldata = Array(laneData.messages.length).fill("0x")
+    const laneData = await outbound.data()
+    const data = build_land_data(laneData)
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
-    const tx = await inbound.receive_messages_proof(laneData, calldata, "0x")
+    const tx = await inbound.receive_messages_proof(data, "0x")
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, from+i+1, false, "0x4c616e653a204d65737361676543616c6c52656a6563746564")
+        .withArgs(from+i+1, false)
     }
     await logNonce()
 }
 
 const receive_messages_delivery_proof = async (begin, end) => {
     const [one, two, three, four] = await ethers.getSigners();
-    laneData = await inbound.data()
-    const tx = await outbound.connect(four).receive_messages_delivery_proof(laneData, "0x")
+    const laneData = await inbound.data()
+    const payload = {
+      source,
+      target,
+      encoded_hash: "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+    }
+    const payloads = Array(end - begin + 1).fill(payload)
+    const tx = await outbound.connect(four).receive_messages_delivery_proof(laneData, payloads, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 0)
@@ -68,7 +97,7 @@ const receive_messages_delivery_proof = async (begin, end) => {
 
       let block = await ethers.provider.getBlock(tx.blockNumber)
       await expect(tx)
-        .to.emit(feeMarket, "OrderSettled")
+        .to.emit(feeMarket, "Settled")
         .withArgs(await outbound.encodeMessageKey(i), block.timestamp)
     }
     let n = end - begin + 1;
@@ -110,28 +139,30 @@ const receive_messages_delivery_proof = async (begin, end) => {
 describe("sync message relay tests", () => {
 
   before(async () => {
-    ({ feeMarket, outbound, inbound } = await waffle.loadFixture(Fixure))
+    ({ feeMarket, outbound, inbound } = await waffle.loadFixture(Fixure));
+    [source] = await ethers.getSigners();
+    source = source.address;
     log(" out bound lane                                   ->      in bound lane")
     log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")
   });
 
-  it("add relayer", async () => {
+  it("enrol a relayer", async () => {
     const [one, two, three, four] = await ethers.getSigners();
     let overrides = { value: ethers.utils.parseEther("100") }
     let tx = await feeMarket.connect(four).enroll(three.address, ethers.utils.parseEther("40"), overrides)
     expect(tx)
-      .to.emit(feeMarket, "AddRelayer")
+      .to.emit(feeMarket, "Enrol")
       .withArgs(three.address, four.address, ethers.utils.parseEther("40"))
     expect(tx)
       .to.emit(feeMarket, "Deposit")
       .withArgs(four.address, ethers.utils.parseEther("100"))
   })
 
-  it("rm relayer", async () => {
+  it("delist a relayer", async () => {
     const [one, two, three, four] = await ethers.getSigners();
-    let tx = await feeMarket.connect(four).unenroll(three.address)
+    let tx = await feeMarket.connect(four).leave(three.address)
     expect(tx)
-      .to.emit(feeMarket, "RemoveRelayer")
+      .to.emit(feeMarket, "Delist")
       .withArgs(three.address, four.address)
     expect(tx)
       .to.emit(feeMarket, "Withdrawal")

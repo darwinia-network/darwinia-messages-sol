@@ -56,7 +56,6 @@ https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign[`eth_sign`]
 JSON-RPC method.
 
 See {recover}.
-/
 
 #### Declaration
 ```solidity

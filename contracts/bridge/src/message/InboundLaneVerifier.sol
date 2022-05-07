@@ -1,28 +1,30 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../interfaces/ILightClient.sol";
 
 contract InboundLaneVerifier {
-    /**
-     * @dev The contract address of on-chain light client
-     */
+    /// @dev The contract address of on-chain light client
     ILightClient public immutable lightClient;
 
+    struct Slot0 {
+        // Bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
+        uint32 bridgedLanePosition;
+        // Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
+        uint32 bridgedChainPosition;
+        // This lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
+        uint32 thisLanePosition;
+        // This chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
+        uint32 thisChainPosition;
+    }
+
     /* State */
+
     // indentify slot
     // slot 0 ------------------------------------------------------------
-    // @dev bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
-    uint32 public bridgedLanePosition;
-    // @dev Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-    uint32 public bridgedChainPosition;
-    // @dev This lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
-    uint32 public thisLanePosition;
-    // @dev This chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-    uint32 public thisChainPosition;
-
+    Slot0 public slot0;
     // ------------------------------------------------------------------
 
     constructor(
@@ -33,10 +35,10 @@ contract InboundLaneVerifier {
         uint32 _bridgedLanePosition
     ) {
         lightClient = ILightClient(_lightClient);
-        thisChainPosition = _thisChainPosition;
-        thisLanePosition = _thisLanePosition;
-        bridgedChainPosition = _bridgedChainPosition;
-        bridgedLanePosition = _bridgedLanePosition;
+        slot0.thisChainPosition = _thisChainPosition;
+        slot0.thisLanePosition = _thisLanePosition;
+        slot0.bridgedChainPosition = _bridgedChainPosition;
+        slot0.bridgedLanePosition = _bridgedLanePosition;
     }
 
     /* Private Functions */
@@ -45,14 +47,25 @@ contract InboundLaneVerifier {
         bytes32 outlane_data_hash,
         bytes memory encoded_proof
     ) internal view {
+        Slot0 memory _slot0 = slot0;
         require(
-            lightClient.verify_messages_proof(outlane_data_hash, thisChainPosition, bridgedLanePosition, encoded_proof),
-            "Verifer: InvalidProof"
+            lightClient.verify_messages_proof(
+                outlane_data_hash,
+                _slot0.thisChainPosition,
+                _slot0.bridgedLanePosition,
+                encoded_proof
+            ), "Verifer: InvalidProof"
         );
     }
 
     function getLaneInfo() external view returns (uint32,uint32,uint32,uint32) {
-        return (thisChainPosition,thisLanePosition,bridgedChainPosition,bridgedLanePosition);
+        Slot0 memory _slot0 = slot0;
+        return (
+           _slot0.thisChainPosition,
+           _slot0.thisLanePosition,
+           _slot0.bridgedChainPosition,
+           _slot0.bridgedLanePosition
+       );
     }
 
     // 32 bytes to identify an unique message from source chain
@@ -65,7 +78,12 @@ contract InboundLaneVerifier {
     // [20..24) bytes ---- ThisLanePosition
     // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
     function encodeMessageKey(uint64 nonce) public view returns (uint256) {
-        return (uint256(bridgedChainPosition) << 160) + (uint256(bridgedLanePosition) << 128) + (uint256(thisChainPosition) << 96) + (uint256(thisLanePosition) << 64) + uint256(nonce);
+        Slot0 memory _slot0 = slot0;
+        return (uint256(_slot0.bridgedChainPosition) << 160) +
+                (uint256(_slot0.bridgedLanePosition) << 128) +
+                (uint256(_slot0.thisChainPosition) << 96) +
+                (uint256(_slot0.thisLanePosition) << 64) +
+                uint256(nonce);
     }
 }
 

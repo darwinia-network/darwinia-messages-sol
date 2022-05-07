@@ -33,7 +33,6 @@
 | M32 | uint256 |
 | M64 | uint256 |
 | M128 | uint256 |
-| ONE | uint256 |
 | BIG_PRIME | uint256[20] |
 
 
@@ -48,7 +47,7 @@ yet set. Repeats that `n` times.
 #### Declaration
 ```solidity
   function randomNBitsWithPriorCheck(
-  ) internal returns (uint256[] bitfield)
+  ) internal returns (uint256 bitfield)
 ```
 
 #### Modifiers:
@@ -63,7 +62,7 @@ No description
 #### Declaration
 ```solidity
   function createBitfield(
-  ) internal returns (uint256[] bitfield)
+  ) internal returns (uint256 bitfield)
 ```
 
 #### Modifiers:
@@ -110,7 +109,7 @@ No description
 #### Declaration
 ```solidity
   function set(
-  ) internal
+  ) internal returns (uint256)
 ```
 
 #### Modifiers:
@@ -125,7 +124,7 @@ No description
 #### Declaration
 ```solidity
   function clear(
-  ) internal
+  ) internal returns (uint256)
 ```
 
 #### Modifiers:

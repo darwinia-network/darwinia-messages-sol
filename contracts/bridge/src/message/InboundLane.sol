@@ -12,7 +12,7 @@
 // The assigned nonce is reported using `MessageAccepted` event. When message is
 // delivered to the the bridged chain, it is reported using `MessagesDelivered` event.
 
-pragma solidity ^0.8.0;
+pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../interfaces/ICrossChainFilter.sol";
@@ -20,56 +20,39 @@ import "./InboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 
-/**
- * @title Everything about incoming messages receival
- * @author echo
- * @notice The inbound lane is the message layer of the bridge
- * @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
- */
+/// @title Everything about incoming messages receival
+/// @author echo
+/// @notice The inbound lane is the message layer of the bridge
+/// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
 contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
-    /**
-     * @notice Notifies an observer that the message has dispatched
-     * @param thisChainPosition The thisChainPosition of the message
-     * @param thisLanePosition The thisLanePosition of the message
-     * @param bridgedChainPosition The bridgedChainPosition of the message
-     * @param bridgedLanePosition The bridgedLanePosition of the message
-     * @param nonce The message nonce
-     * @param result The message result
-     * @param returndata The return data of message call, when return false, it's the reason of the error
-     */
-    event MessageDispatched(uint32 thisChainPosition, uint32 thisLanePosition, uint32 bridgedChainPosition, uint32 bridgedLanePosition, uint64 nonce, bool result, bytes returndata);
+    /// @notice Notifies an observer that the message has dispatched
+    /// @param nonce The message nonce
+    /// @param result The message result
+    event MessageDispatched(uint64 nonce, bool result);
 
     /* Constants */
 
-    /**
-     * @dev Gas used per message needs to be less than 100000 wei
-     */
+    /// @dev Gas used per message needs to be less than 100000 wei
     uint256 public constant MAX_GAS_PER_MESSAGE = 100000;
-    /**
-     * @dev Gas buffer for executing `send_message` tx
-     */
-    uint256 public constant GAS_BUFFER = 3000;
-    /**
-     * @notice This parameter must lesser than 256
-     * Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
-     * message has been delivered, but either confirmations haven't been delivered back to the
-     * source chain, or we haven't received reward confirmations for these messages yet.
-     *
-     * This constant limits difference between last message from last entry of the
-     * `InboundLaneData::relayers` and first message at the first entry.
-     *
-     * This value also represents maximal number of messages in single delivery transaction.
-     * Transaction that is declaring more messages than this value, will be rejected. Even if
-     * these messages are from different lanes.
-     */
+    /// @dev Gas buffer for executing `send_message` tx
+    uint256 public constant GAS_BUFFER = 6000;
+    /// @notice This parameter must lesser than 256
+    /// Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
+    /// message has been delivered, but either confirmations haven't been delivered back to the
+    /// source chain, or we haven't received reward confirmations for these messages yet.
+    //
+    /// This constant limits difference between last message from last entry of the
+    /// `InboundLaneData::relayers` and first message at the first entry.
+    //
+    /// This value also represents maximal number of messages in single delivery transaction.
+    /// Transaction that is declaring more messages than this value, will be rejected. Even if
+    /// these messages are from different lanes.
     uint256 public constant MAX_UNCONFIRMED_MESSAGES = 30;
 
     /* State */
 
-    /**
-     * @dev ID of the next message, which is incremented in strict order
-     * @notice When upgrading the lane, this value must be synchronized
-     */
+    /// @dev ID of the next message, which is incremented in strict order
+    /// @notice When upgrading the lane, this value must be synchronized
     struct InboundLaneNonce {
         // Nonce of the last message that
         // a) has been delivered to the target (this) chain and
@@ -149,7 +132,6 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     // this data in the transaction, so reward confirmations lags should be minimal.
     function receive_messages_proof(
         OutboundLaneData memory outboundLaneData,
-        bytes[] memory messagesCallData,
         bytes memory messagesProof
     ) public nonReentrant {
         verify_messages_proof(hash(outboundLaneData), messagesProof);
@@ -159,7 +141,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             "Lane: InsufficientGas"
         );
         receive_state_update(outboundLaneData.latest_received_nonce);
-        receive_message(outboundLaneData.messages, messagesCallData);
+        receive_message(outboundLaneData.messages);
     }
 
     function relayers_size() public view returns (uint64 size) {
@@ -228,40 +210,38 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     }
 
     // Receive new message.
-    function receive_message(Message[] memory messages, bytes[] memory messagesCallData) internal returns (uint256 dispatch_results) {
-        require(messages.length == messagesCallData.length, "Lane: InvalidLength");
+    function receive_message(Message[] memory messages) internal returns (uint256 dispatch_results) {
         address relayer = msg.sender;
         uint64 begin = inboundLaneNonce.last_delivered_nonce + 1;
         uint64 next = begin;
         for (uint256 i = 0; i < messages.length; i++) {
             Message memory message = messages[i];
             MessageKey memory key = decodeMessageKey(message.encoded_key);
-            MessagePayload memory message_payload = message.data;
+            MessagePayload memory message_payload = message.payload;
             if (key.nonce < next) {
                 continue;
             }
+            Slot0 memory _slot0 = slot0;
             // check message nonce is correct and increment nonce for replay protection
             require(key.nonce == next, "Lane: InvalidNonce");
             // check message is from the correct source chain position
-            require(key.this_chain_id == bridgedChainPosition, "Lane: InvalidSourceChainId");
+            require(key.this_chain_id == _slot0.bridgedChainPosition, "Lane: InvalidSourceChainId");
             // check message is from the correct source lane position
-            require(key.this_lane_id == bridgedLanePosition, "Lane: InvalidSourceLaneId");
+            require(key.this_lane_id == _slot0.bridgedLanePosition, "Lane: InvalidSourceLaneId");
             // check message delivery to the correct target chain position
-            require(key.bridged_chain_id == thisChainPosition, "Lane: InvalidTargetChainId");
+            require(key.bridged_chain_id == _slot0.thisChainPosition, "Lane: InvalidTargetChainId");
             // check message delivery to the correct target lane position
-            require(key.bridged_lane_id == thisLanePosition, "Lane: InvalidTargetLaneId");
+            require(key.bridged_lane_id == _slot0.thisLanePosition, "Lane: InvalidTargetLaneId");
             // if there are more unconfirmed messages than we may accept, reject this message
             require(next - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "Lane: TooManyUnconfirmedMessages");
-            // check message call data is correct
-            require(message_payload.encodedHash == keccak256(messagesCallData[i]));
 
             // update inbound lane nonce storage
             inboundLaneNonce.last_delivered_nonce = next;
 
             // then, dispatch message
-            (bool dispatch_result, bytes memory returndata) = dispatch(message_payload, messagesCallData[i]);
+            bool dispatch_result = dispatch(message_payload);
 
-            emit MessageDispatched(key.this_chain_id, key.this_lane_id, key.bridged_chain_id, key.bridged_lane_id, key.nonce, dispatch_result, returndata);
+            emit MessageDispatched(key.nonce, dispatch_result);
             dispatch_results |= (dispatch_result ? uint256(1) << (next - begin) : uint256(0));
 
             next += 1;
@@ -281,28 +261,46 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         }
     }
 
-    function dispatch(MessagePayload memory payload, bytes memory encoded) internal returns (bool dispatch_result, bytes memory returndata) {
+    /// @notice dispatch the cross chain message
+    /// @param payload payload of the dispatch message
+    /// @return dispatch_result the dispatch call result
+    /// - Return True:
+    ///   1. filter return True and dispatch call successfully with none 32-length return data
+    ///   2. filter return True and dispatch call successfully with 32-length return data is True
+    /// - Return False:
+    ///   1. filter return False
+    ///   2. filter return True and dispatch call failed
+    ///   3. filter return True and dispatch call successfully with 32-length return data is False
+    function dispatch(MessagePayload memory payload) internal returns (bool dispatch_result) {
+        Slot0 memory _slot0 = slot0;
         bytes memory filterCallData = abi.encodeWithSelector(
-            ICrossChainFilter.crossChainFilter.selector,
-            bridgedChainPosition,
-            bridgedLanePosition,
-            payload.sourceAccount,
-            encoded
+            ICrossChainFilter.cross_chain_filter.selector,
+            _slot0.bridgedChainPosition,
+            _slot0.bridgedLanePosition,
+            payload.source,
+            payload.encoded
         );
-        bool canCall = filter(payload.targetContract, filterCallData);
+        bool canCall = filter(payload.target, filterCallData);
         if (canCall) {
             // Deliver the message to the target
-            (dispatch_result, returndata) = payload.targetContract.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(encoded);
-        } else {
-            dispatch_result = false;
-            returndata = "Lane: MessageCallRejected";
+            bytes memory result_data;
+            (dispatch_result, result_data) = payload.target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
+            if (dispatch_result) {
+                if (result_data.length == 32) {
+                    dispatch_result = abi.decode(result_data, (bool));
+                }
+            }
         }
     }
 
+    /// @notice filter the cross chain message
+    /// @dev The app layer must implement the interface `ICrossChainFilter`
+    /// to verify the source sender and payload of source chain messages.
+    /// @param target target of the dispatch message
+    /// @param encoded encoded calldata of the dispatch message
+    /// @return canCall the filter static call result, Return True only when target contract
+    /// implement the `ICrossChainFilter` interface with return data is True.
     function filter(address target, bytes memory encoded) internal view returns (bool canCall) {
-        /**
-         * @notice The app layer must implement the interface `ICrossChainFilter`
-         */
         (bool ok, bytes memory result) = target.staticcall{gas: GAS_BUFFER}(encoded);
         if (ok) {
             if (result.length == 32) {

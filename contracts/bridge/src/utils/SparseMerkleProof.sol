@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity 0.7.6;
 
 /// @title A verifier for sparse merkle tree.
 /// @author echo
 /// @notice Sparse Merkle Tree is constructed from 2^n-length leaves, where n is the tree depth
 ///  equal to log2(number of leafs) and it's initially hashed using the `keccak256` hash function as the inner nodes.
 ///  Inner nodes are created by concatenating child hashes and hashing again.
-library SparseMerkleMultiProof {
+library SparseMerkleProof {
 
     function hash_node(bytes32 left, bytes32 right)
         internal
@@ -22,6 +22,33 @@ library SparseMerkleMultiProof {
         return hash;
     }
 
+    /// @notice Verify that a specific leaf element is part of the Sparse Merkle Tree at a specific position in the tree.
+    //
+    /// @param root The root of the merkle tree
+    /// @param leaf The leaf which needs to be proven
+    /// @param pos The position of the leaf, index starting with 0
+    /// @param proof The array of proofs to help verify the leaf's membership, ordered from leaf to root
+    /// @return A boolean value representing the success or failure of the verification
+    function singleVerify(
+        bytes32 root,
+        bytes32 leaf,
+        uint256 pos,
+        bytes32[] memory proof
+    ) internal pure returns (bool) {
+        uint256 depth = proof.length;
+        uint256 index = (1 << depth) + pos;
+        bytes32 value = leaf;
+        for (uint256 i = 0; i < depth; ++i) {
+            if (index & 1 == 0) {
+                value = hash_node(value, proof[i]);
+            } else {
+                value = hash_node(proof[i], value);
+            }
+            index = index >> 1;
+        }
+        return value == root && index == 1;
+    }
+
     /// @notice Verify that multi leafs in the Sparse Merkle Tree with generalized indices.
     /// @dev Indices are required to be sorted highest to lowest.
     /// @param root The root of the merkle tree
@@ -30,10 +57,10 @@ library SparseMerkleMultiProof {
     /// @param leaves The leaves which need to be proven
     /// @param decommitments A list of decommitments required to reconstruct the merkle root
     /// @return A boolean value representing the success or failure of the verification
-    function verify(
+    function multiVerify(
         bytes32 root,
         uint256 depth,
-        uint256[] memory indices,
+        bytes32 indices,
         bytes32[] memory leaves,
         bytes32[] memory decommitments
     )
@@ -41,19 +68,21 @@ library SparseMerkleMultiProof {
         pure
         returns (bool)
     {
-        require(indices.length == leaves.length, "LENGTH_MISMATCH");
-        uint256 n = indices.length;
+        require(depth <= 8, "DEPTH_TOO_LARGE");
+        uint256 n = leaves.length;
+        uint256 n1 = n + 1;
 
         // Dynamically allocate index and hash queue
-        uint256[] memory tree_indices = new uint256[](n + 1);
-        bytes32[] memory hashes = new bytes32[](n + 1);
+        uint256[] memory tree_indices = new uint256[](n1);
+        bytes32[] memory hashes = new bytes32[](n1);
         uint256 head = 0;
         uint256 tail = 0;
         uint256 di = 0;
 
         // Queue the leafs
+        uint256 offset = 1 << depth;
         for(; tail < n; ++tail) {
-            tree_indices[tail] = 2**depth + indices[tail];
+            tree_indices[tail] = offset + uint8(indices[tail]);
             hashes[tail] = leaves[tail];
         }
 
@@ -61,7 +90,7 @@ library SparseMerkleMultiProof {
         while (true) {
             uint256 index = tree_indices[head];
             bytes32 hash = hashes[head];
-            head = (head + 1) % (n + 1);
+            head = (head + 1) % n1;
 
             // Merkle root
             if (index == 1) {
@@ -72,14 +101,14 @@ library SparseMerkleMultiProof {
             // Odd node with sibbling in the queue
             } else if (head != tail && tree_indices[head] == index - 1) {
                 hash = hash_node(hashes[head], hash);
-                head = (head + 1) % (n + 1);
+                head = (head + 1) % n1;
             // Odd node with sibbling from decommitments
             } else {
                 hash = hash_node(decommitments[di++], hash);
             }
-            tree_indices[tail] = index / 2;
+            tree_indices[tail] = index >> 1;
             hashes[tail] = hash;
-            tail = (tail + 1) % (n + 1);
+            tail = (tail + 1) % n1;
         }
 
         // resolve warning

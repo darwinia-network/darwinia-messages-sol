@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.7.6;
+pragma abicoder v2;
 
-import "../../../lib/ds-test/src/test.sol";
+import "../test.sol";
 import "../../spec/SourceChain.sol";
 
 contract SourceChainTest is DSTest, SourceChain {
@@ -10,7 +11,9 @@ contract SourceChainTest is DSTest, SourceChain {
     function test_constants() public {
         assertEq(
             keccak256(abi.encodePacked(
-                "OutboundLaneData(uint256 latest_received_nonce,bytes32 messages)"
+                "OutboundLaneData(uint256 latest_received_nonce,Message[] messages)",
+                "Message(uint256 encoded_key,MessagePayload payload)",
+                "MessagePayload(address source,address target,bytes32 encoded_hash)"
                 )
             ),
             OUTBOUNDLANEDATA_TYPEHASH
@@ -18,8 +21,8 @@ contract SourceChainTest is DSTest, SourceChain {
 
         assertEq(
             keccak256(abi.encodePacked(
-                "Message(uint256 encoded_key,MessagePayload data)",
-                "MessagePayload(address sourceAccount,address targetContract,bytes32 encodedHash)"
+                "Message(uint256 encoded_key,MessagePayload payload)",
+                "MessagePayload(address source,address target,bytes32 encoded_hash)"
                 )
             ),
             MESSAGE_TYPEHASH
@@ -27,7 +30,7 @@ contract SourceChainTest is DSTest, SourceChain {
 
         assertEq(
             keccak256(abi.encodePacked(
-                "MessagePayload(address sourceAccount,address targetContract,bytes32 encodedHash)"
+                "MessagePayload(address source,address target,bytes32 encoded_hash)"
                 )
             ),
             MESSAGEPAYLOAD_TYPEHASH
@@ -38,32 +41,54 @@ contract SourceChainTest is DSTest, SourceChain {
         Message[] memory messages = new Message[](0);
         assertEq(hash(messages), hex"290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563");
         OutboundLaneData memory data = OutboundLaneData(0, messages);
-        assertEq(hash(data), hex"abf32e0b787b02d3d682d36d36f9d3ee2888aa8ca1e44c3846ce95b08916c018");
+        assertEq(hash(data), hex"d66c5be543d08bf2f429a31cb6dd5d4c8ab76b11d6ecaa6ab6124e1370923ec1");
     }
 
     function test_hash() public {
         address source = address(0);
         address target = address(1);
         bytes memory encoded = abi.encodeWithSignature("foo()");
-        bytes32 encodedHash = keccak256(encoded);
-        MessagePayload memory payload = MessagePayload(source, target, encodedHash);
-        assertEq(hash(payload), hex"51137fbb3428b95f656c0fe72c7b4edfedf5dd4891e7bc4b703975f2357c165a");
+        MessagePayload memory payload = MessagePayload(source, target, encoded);
+        assertEq(hash(payload), hex"1b9d19ffcdd3c5f3ce909d6f215b8ea1b93481e7d67781edba49e953e387a4c4");
+
+        MessagePayloadCompact memory payload_compact = MessagePayloadCompact(source, target, keccak256(encoded));
+        assertEq(hash(payload_compact), hash(payload));
+
+
         uint256 encoded_key = uint256(0x0000000000000000000000000000000000000001000000010000000000000001);
         Message memory message = Message(encoded_key, payload);
         Message[] memory messages = new Message[](1);
         messages[0] = message;
-        assertEq(hash(messages), hex"e612808be2be3f985efa8ffc44e0ade409f10045c6a9b563bcbbd0114f101433");
+        assertEq(hash(messages), hex"5b56e8b948933c311ad8846cf4208391de3dd1e60a09097bf661b2e22cc942a7");
+
+        MessageStorage memory message_storage = MessageStorage(encoded_key, hash(payload));
+        MessageStorage[] memory messages_storage = new MessageStorage[](1);
+        messages_storage[0] = message_storage;
+        assertEq(hash(messages_storage), hash(messages));
+
         OutboundLaneData memory data = OutboundLaneData(0, messages);
-        assertEq(hash(data), hex"792896df1f2766af7b6612013e8e024fd47e0563adf6b55328d2481806624102");
+        assertEq(hash(data), hex"28c4b9d94584813960c122787ef4647ba5464f534fbdc7010a7765dcf82b4222");
+
+        OutboundLaneDataStorage memory data_storage = OutboundLaneDataStorage(0, messages_storage);
+        assertEq(hash(data_storage), hash(data));
+    }
+
+    function test_hash_message() public {
+         MessagePayloadCompact memory payload_compact = MessagePayloadCompact(
+             0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266,
+             0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6,
+             keccak256("")
+         );
+        assertEq(hash(payload_compact), 0x4b7e76927f12905f720b644a483f3db0d1717b0cf58c1ce223b540707652fdbd);
     }
 
     function test_decode_message_key() public {
         uint256 encoded_key = uint256(0x0000000000000000000000000000000000000001000000010000000000000001);
         MessageKey memory key = decodeMessageKey(encoded_key);
-        assertEq(key.this_chain_id, 0);
-        assertEq(key.this_lane_id, 0);
-        assertEq(key.bridged_chain_id, 1);
-        assertEq(key.bridged_lane_id, 1);
-        assertEq(key.nonce, 1);
+        assertEq(key.this_chain_id, uint(0));
+        assertEq(key.this_lane_id, uint(0));
+        assertEq(key.bridged_chain_id, uint(1));
+        assertEq(key.bridged_lane_id, uint(1));
+        assertEq(key.nonce, uint(1));
     }
 }

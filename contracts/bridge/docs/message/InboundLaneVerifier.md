@@ -24,10 +24,7 @@
 | Var | Type |
 | --- | --- |
 | lightClient | contract ILightClient |
-| bridgedLanePosition | uint32 |
-| bridgedChainPosition | uint32 |
-| thisLanePosition | uint32 |
-| thisChainPosition | uint32 |
+| slot0 | struct InboundLaneVerifier.Slot0 |
 
 
 

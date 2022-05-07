@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../../utils/BinaryMerkleProof.sol";
+import "../../utils/SparseMerkleProof.sol";
 
 contract MockDarwiniaLightClient {
     struct MessagesProof {
@@ -12,7 +12,6 @@ contract MockDarwiniaLightClient {
     }
     struct MProof {
         bytes32 root;
-        uint256 count;
         bytes32[] proof;
     }
 
@@ -66,19 +65,17 @@ contract MockDarwiniaLightClient {
         MProof memory laneProof
     ) internal pure returns (bool) {
         return
-            BinaryMerkleProof.verifyMerkleLeafAtPosition(
+            SparseMerkleProof.singleVerify(
                 laneProof.root,
                 laneHash,
                 lanePosition,
-                laneProof.count,
                 laneProof.proof
             )
             &&
-            BinaryMerkleProof.verifyMerkleLeafAtPosition(
+            SparseMerkleProof.singleVerify(
                 chainProof.root,
                 laneProof.root,
                 chainPosition,
-                chainProof.count,
                 chainProof.proof
             );
     }

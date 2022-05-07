@@ -1,7 +1,8 @@
 # IFeeMarket
 
 
-
+After enroll to be a relyer , you have the duty to relay
+the meesage which is assigned to you, or you will be slashed
 
 
 ## Contents
@@ -21,7 +22,8 @@
 ## Functions
 
 ### market_fee
-No description
+Revert `!top` when there is not enroll relayer in the fee-market
+> return the real time market maker fee
 
 
 #### Declaration

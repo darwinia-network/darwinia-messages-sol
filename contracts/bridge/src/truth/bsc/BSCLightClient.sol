@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../../interfaces/ILightClient.sol";
@@ -107,12 +107,12 @@ contract BSCLightClient is SourceChain, TargetChain {
             proof.laneNonceProof
         ));
 
-        OutboundLaneData memory lane_data = build_outlane(identify_storage, nonce_storage, lane, proof);
+        OutboundLaneDataStorage memory lane_data = build_outlane(identify_storage, nonce_storage, lane, proof);
         // check the lane_data_hash
         return outlane_hash == hash(lane_data);
     }
 
-    function build_outlane(uint identify_storage, uint nonce_storage, address lane, ReceiveProof memory proof) internal view returns (OutboundLaneData memory lane_data) {
+    function build_outlane(uint identify_storage, uint nonce_storage, address lane, ReceiveProof memory proof) internal view returns (OutboundLaneDataStorage memory lane_data) {
         // restruct the outlane data
         uint64 latest_received_nonce = uint64(nonce_storage);
         uint64 size = uint64(nonce_storage >> 64) - latest_received_nonce;
@@ -128,16 +128,12 @@ contract BSCLightClient is SourceChain, TargetChain {
                 proof.laneMessagesProof
             );
 
-            require((3 * size) == values.length, "BSCLightClient: invalid values length");
-            Message[] memory messages = new Message[](size);
+            require(size == values.length, "BSCLightClient: invalid values length");
+            MessageStorage[] memory messages = new MessageStorage[](size);
             for (uint64 i=0; i < size; i++) {
-               MessagePayload memory payload = MessagePayload(
-                   address(uint160(toUint(values[3*i]))),
-                   address(uint160(toUint(values[3*i+1]))),
-                   toBytes32(values[3*i+2])
-               );
+               bytes32 payload = toBytes32(values[i]);
                uint256 key = (identify_storage << 64) + latest_received_nonce + 1 + i;
-               messages[i] = Message(key, payload);
+               messages[i] = MessageStorage(key, payload);
             }
             lane_data.messages = messages;
         }

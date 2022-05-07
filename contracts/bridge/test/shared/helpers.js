@@ -10,31 +10,31 @@ async function mine(n) {
 }
 
 async function printTxPromiseGas(func, tx) {
-    try {
-      let r = await tx.wait()
-      // console.log(r)
-      console.log(`Tx successful - ${func} gas used: ${r.gasUsed}`)
-    } catch (e) {
-      console.log(`Tx failed - ${func} gas used: ${r.gasUsed}`)
-    }
+  try {
+    let r = await tx.wait()
+    // console.log(r)
+    console.log(`Tx successful - ${func} gas used: ${r.gasUsed}`)
+  } catch (e) {
+    console.log(`Tx failed - ${func} gas used: ${r.gasUsed}`)
+  }
 }
 
 function printBitfield(bitfield) {
-  return bitfield.map(i => {
-    const bf = BigInt(i.toString(), 10).toString(2).split('')
-    while (bf.length < 256) {
-      bf.unshift('0')
-    }
-    return bf.join('')
-  }).reverse().join('').replace(/^0*/g, '')
+  const i = bitfield
+  const bf = BigInt(i.toString(), 10).toString(2).split('')
+  while (bf.length < 256) {
+    bf.unshift('0')
+  }
+  const b = bf.join('')
+  return b.replace(/^0*/g, '')
 }
 
 function roundUpToPow2(len) {
-    if (len <= 1) {
-      return 1
-    } else {
-      return 2 * roundUpToPow2(parseInt((len + 1) / 2));
-    }
+  if (len <= 1) {
+    return 1
+  } else {
+    return 2 * roundUpToPow2(parseInt((len + 1) / 2));
+  }
 }
 
 async function createBeefyValidatorFixture(numberOfValidators) {
@@ -101,7 +101,15 @@ async function createAllValidatorProofs(commitmentHash, beefyFixture) {
     const signature = Uint8Array.from(
       signatureECDSA.signature.join().split(',').concat(ethRecID)
     )
-    return { signature: ethers.utils.hexlify(signature), position, address };
+    const sig = ethers.utils.hexlify(signature)
+     const sign = ethers.utils.splitSignature(sig)
+     // const signa = ethers.utils.hexlify(
+     //   ethers.utils.concat([
+     //     sign.r,
+     //     sign._vs
+     //   ])
+     // )
+     return { signature: {r: sign.r, vs: sign._vs} , position, address };
   });
 }
 
@@ -130,14 +138,24 @@ async function createSingleValidatorProof(position, beefyFixture) {
   return beefyFixture.validatorsMerkleTree.proofHex(indices)
 }
 
+const toHexString = bytes =>
+  bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '0x');
+
+const hexZeroPad = (value, length) => {
+    while (value.length < 2 * length + 2) {
+        value =  "0x" + value.substring(2) + "0"
+    }
+    return value;
+}
+
 async function createCompleteValidatorProofs(id, beefyLightClient, allValidatorProofs, beefyFixture) {
   const bitfieldInts = await beefyLightClient.createRandomBitfield(id);
   const bitfieldString = printBitfield(bitfieldInts);
 
   const completeValidatorProofs = {
     depth: beefyFixture.validatorsMerkleTree.height(),
-    signatures: [],
     positions: [],
+    signatures: [],
     decommitments: [],
   }
 
@@ -153,6 +171,8 @@ async function createCompleteValidatorProofs(id, beefyLightClient, allValidatorP
   completeValidatorProofs.decommitments = beefyFixture.validatorsMerkleTree.proofHex(completeValidatorProofs.positions)
   completeValidatorProofs.positions.reverse()
   completeValidatorProofs.signatures.reverse()
+  const a = toHexString(completeValidatorProofs.positions)
+  completeValidatorProofs.positions = hexZeroPad(a, 32)
 
   return completeValidatorProofs
 }

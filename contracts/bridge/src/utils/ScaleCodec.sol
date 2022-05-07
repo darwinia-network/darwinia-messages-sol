@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.0;
+pragma solidity 0.7.6;
 
 library ScaleCodec {
     // Decodes a SCALE encoded uint256 by converting bytes (bid endian) to little endian format

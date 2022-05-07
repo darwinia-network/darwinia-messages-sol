@@ -1,4 +1,4 @@
-# FeeMarket
+# SimpleFeeMarket
 
 
 
@@ -18,17 +18,14 @@
   - [receive](#receive)
   - [setSetter](#setsetter)
   - [setOutbound](#setoutbound)
-  - [setParaTime](#setparatime)
-  - [setParaRelay](#setpararelay)
+  - [setParameters](#setparameters)
   - [totalSupply](#totalsupply)
   - [getOrderBook](#getorderbook)
-  - [getTopRelayers](#gettoprelayers)
-  - [getOrderFee](#getorderfee)
-  - [getOrder](#getorder)
+  - [getTopRelayer](#gettoprelayer)
   - [isRelayer](#isrelayer)
+  - [market_fee](#market_fee)
   - [deposit](#deposit)
   - [withdraw](#withdraw)
-  - [market_fee](#market_fee)
   - [enroll](#enroll)
   - [leave](#leave)
   - [enrol](#enrol)
@@ -58,10 +55,8 @@
 
 | Var | Type |
 | --- | --- |
-| VAULT | address |
 | slashTime | uint32 |
 | relayTime | uint32 |
-| assignedRelayersNumber | uint32 |
 | collateralPerOrder | uint256 |
 | setter | address |
 | outbounds | mapping(address => uint256) |
@@ -70,8 +65,7 @@
 | relayers | mapping(address => address) |
 | relayerCount | uint256 |
 | feeOf | mapping(address => uint256) |
-| orderOf | mapping(uint256 => struct FeeMarket.Order) |
-| assignedRelayers | mapping(uint256 => mapping(uint256 => struct FeeMarket.OrderExt)) |
+| orderOf | mapping(uint256 => struct SimpleFeeMarket.Order) |
 
 
 ## Modifiers
@@ -173,30 +167,13 @@ No description
 
 
 
-### setParaTime
+### setParameters
 No description
 
 
 #### Declaration
 ```solidity
-  function setParaTime(
-  ) external onlySetter
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlySetter |
-
-
-
-### setParaRelay
-No description
-
-
-#### Declaration
-```solidity
-  function setParaRelay(
+  function setParameters(
   ) external onlySetter
 ```
 
@@ -237,44 +214,14 @@ No modifiers
 
 
 
-### getTopRelayers
+### getTopRelayer
 No description
 
 
 #### Declaration
 ```solidity
-  function getTopRelayers(
-  ) public returns (address[])
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### getOrderFee
-No description
-
-
-#### Declaration
-```solidity
-  function getOrderFee(
-  ) public returns (uint256 fee)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### getOrder
-No description
-
-
-#### Declaration
-```solidity
-  function getOrder(
-  ) external returns (struct FeeMarket.Order, struct FeeMarket.OrderExt[])
+  function getTopRelayer(
+  ) public returns (address top)
 ```
 
 #### Modifiers:
@@ -290,6 +237,21 @@ No description
 ```solidity
   function isRelayer(
   ) public returns (bool)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### market_fee
+No description
+
+
+#### Declaration
+```solidity
+  function market_fee(
+  ) external returns (uint256 fee)
 ```
 
 #### Modifiers:
@@ -320,21 +282,6 @@ No description
 ```solidity
   function withdraw(
   ) public
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### market_fee
-No description
-
-
-#### Declaration
-```solidity
-  function market_fee(
-  ) external returns (uint256 fee)
 ```
 
 #### Modifiers:

@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { solidity } = require("ethereum-waffle");
 const chai = require("chai");
 const { Fixure } = require("./shared/fixture")
+const { keccakFromHexString } = require("ethereumjs-util");
 
 chai.use(solidity);
 const log = console.log
@@ -21,7 +22,7 @@ const send_message = async (nonce) => {
     const tx = await malicousApp.malicious(outbound.address, large, overrides);
     await expect(tx)
       .to.emit(outbound, "MessageAccepted")
-      .withArgs(nonce, encoded)
+      .withArgs(nonce, malicousApp.address, malicousApp.address, encoded)
     await logNonce()
 }
 
@@ -31,31 +32,58 @@ const logNonce = async () => {
   log(`(${out.latest_received_nonce}, ${out.latest_generated_nonce}]                                            ->     (${iin.last_confirmed_nonce}, ${iin.last_delivered_nonce}]`)
 }
 
+const build_land_data = (laneData) => {
+    let data = {
+      latest_received_nonce: laneData.latest_received_nonce,
+      messages: []
+    }
+    const payload = {
+      source: malicousApp.address,
+      target: malicousApp.address,
+      encoded,
+    }
+    for (let i = 0; i< laneData.messages.length; i++) {
+      let message = {
+        encoded_key: laneData.messages[i].encoded_key,
+        payload
+      }
+      data.messages.push(message)
+    }
+    return data
+}
+
 const receive_messages_proof = async (nonce) => {
-    laneData = await outbound.data()
+    let laneData = await outbound.data()
+    let data = build_land_data(laneData)
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
-    const calldata = Array(laneData.messages.length).fill(encoded)
     let relayer = ethers.Wallet.createRandom();
     await owner.sendTransaction({
         to: relayer.address,
         value: ethers.utils.parseEther("1.0")
     })
     relayer = relayer.connect(ethers.provider)
-    const tx = await inbound.connect(relayer).receive_messages_proof(laneData, calldata, "0x", {
+    const tx = await inbound.connect(relayer).receive_messages_proof(data, "0x", {
       gasLimit: 10000000
     })
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
-        .withArgs(thisChainPos, thisLanePos, bridgedChainPos, bridgedLanePos, from+i+1, false, "0x")
+        .withArgs(from+i+1, false)
     }
     await logNonce()
 }
 
 const receive_messages_delivery_proof = async (begin, end) => {
+    const encoded_hash = "0x" + keccakFromHexString(encoded).toString("hex")
+    const payload = {
+      source: malicousApp.address,
+      target: malicousApp.address,
+      encoded_hash: encoded_hash
+    }
     laneData = await inbound.data()
-    const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, "0x")
+    const payloads = Array(end - begin + 1).fill(payload)
+    const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, payloads, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 0)
@@ -81,7 +109,6 @@ describe("batch malicious app send message tests", () => {
 
     const MalicousApp = await ethers.getContractFactory("MalicousApp")
     malicousApp = await MalicousApp.deploy()
-    outbound.rely(malicousApp.address)
     log(" out bound lane                                   ->      in bound lane")
     log("(latest_received_nonce, latest_generated_nonce]   ->     (last_confirmed_nonce, last_delivered_nonce]")
   })
@@ -100,15 +127,15 @@ describe("batch malicious app send message tests", () => {
     await receive_messages_delivery_proof(1, batch)
   })
 
-  // it("3", async function () {
-  //   await receive_messages_proof(batch)
-  // })
+  it("3", async function () {
+    await receive_messages_proof(batch)
+  })
 
-  // it("4", async function () {
-  //   for(let i=batch+1; i <=2*batch; i++) {
-  //     await send_message(i)
-  //     await receive_messages_proof(i)
-  //   }
-  //   await receive_messages_delivery_proof(batch+1, 2*batch)
-  // })
+  it("4", async function () {
+    for(let i=batch+1; i <=2*batch; i++) {
+      await send_message(i)
+      await receive_messages_proof(i)
+    }
+    await receive_messages_delivery_proof(batch+1, 2*batch)
+  })
 })

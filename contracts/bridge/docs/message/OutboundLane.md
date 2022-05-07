@@ -11,12 +11,9 @@
 - [Globals](#globals)
 - [Modifiers](#modifiers)
   - [nonReentrant](#nonreentrant)
-  - [auth](#auth)
   - [onlySetter](#onlysetter)
 - [Functions](#functions)
   - [constructor](#constructor)
-  - [rely](#rely)
-  - [deny](#deny)
   - [setFeeMarket](#setfeemarket)
   - [changeSetter](#changesetter)
   - [send_message](#send_message)
@@ -36,10 +33,7 @@
   - [MessageAccepted](#messageaccepted)
   - [MessagesDelivered](#messagesdelivered)
   - [MessagePruned](#messagepruned)
-  - [MessageFeeIncreased](#messagefeeincreased)
   - [CallbackMessageDelivered](#callbackmessagedelivered)
-  - [Rely](#rely)
-  - [Deny](#deny)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -54,8 +48,7 @@
 | MAX_PENDING_MESSAGES | uint64 |
 | MAX_PRUNE_MESSAGES_ATONCE | uint64 |
 | outboundLaneNonce | struct OutboundLane.OutboundLaneNonce |
-| messages | mapping(uint64 => struct SourceChain.MessagePayload) |
-| wards | mapping(address => uint256) |
+| messages | mapping(uint64 => bytes32) |
 | fee_market | address |
 | setter | address |
 | locked | uint256 |
@@ -70,16 +63,6 @@ No description
 #### Declaration
 ```solidity
   modifier nonReentrant
-```
-
-
-### auth
-No description
-
-
-#### Declaration
-```solidity
-  modifier auth
 ```
 
 
@@ -132,42 +115,6 @@ Deploys the OutboundLane contract
 |`_latest_received_nonce` | uint64 | The latest_received_nonce of outbound lane
 |`_latest_generated_nonce` | uint64 | The latest_generated_nonce of outbound lane
 
-### rely
-No description
-
-
-#### Declaration
-```solidity
-  function rely(
-  ) external onlySetter nonReentrant
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlySetter |
-| nonReentrant |
-
-
-
-### deny
-No description
-
-
-#### Declaration
-```solidity
-  function deny(
-  ) external onlySetter nonReentrant
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlySetter |
-| nonReentrant |
-
-
-
 ### setFeeMarket
 No description
 
@@ -216,13 +163,12 @@ At the beginning of the launch, submmiter is permission, after the system is sta
   function send_message(
     address targetContract,
     bytes encoded
-  ) external auth nonReentrant returns (uint256)
+  ) external nonReentrant returns (uint256)
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| auth |
 | nonReentrant |
 
 #### Args:
@@ -238,7 +184,7 @@ No description
 #### Declaration
 ```solidity
   function receive_messages_delivery_proof(
-  ) public nonReentrant
+  ) external nonReentrant
 ```
 
 #### Modifiers:
@@ -270,7 +216,7 @@ No description
 #### Declaration
 ```solidity
   function data(
-  ) public returns (struct SourceChain.OutboundLaneData lane_data)
+  ) public returns (struct SourceChain.OutboundLaneDataStorage lane_data)
 ```
 
 #### Modifiers:
@@ -435,25 +381,7 @@ No description
   
 
 
-### MessageFeeIncreased
-No description
-
-  
-
-
 ### CallbackMessageDelivered
-No description
-
-  
-
-
-### Rely
-No description
-
-  
-
-
-### Deny
 No description
 
   

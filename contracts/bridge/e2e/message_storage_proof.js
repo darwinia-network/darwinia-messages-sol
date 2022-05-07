@@ -81,13 +81,8 @@ describe("bridge e2e test: verify message/storage proof", () => {
       await expect(tx)
         .to.emit(subClient.inbound, "MessageDispatched")
         .withArgs(
-          await ethClient.outbound.thisChainPosition(),
-          await ethClient.outbound.thisLanePosition(),
-          await ethClient.outbound.bridgedChainPosition(),
-          await ethClient.outbound.bridgedLanePosition(),
           i,
-          false,
-          "0x4c616e653a204d65737361676543616c6c52656a6563746564"
+          false
         )
     }
   })
@@ -132,13 +127,8 @@ describe("bridge e2e test: verify message/storage proof", () => {
       await expect(tx)
         .to.emit(ethClient.inbound, "MessageDispatched")
         .withArgs(
-          await subClient.outbound.thisChainPosition(),
-          await subClient.outbound.thisLanePosition(),
-          await subClient.outbound.bridgedChainPosition(),
-          await subClient.outbound.bridgedLanePosition(),
           i,
-          false,
-          "0x4c616e653a204d65737361676543616c6c52656a6563746564"
+          false
         )
     }
   })
@@ -171,13 +161,8 @@ describe("bridge e2e test: verify message/storage proof", () => {
       await expect(tx)
         .to.emit(ethClient.inbound, "MessageDispatched")
         .withArgs(
-          await subClient.outbound.thisChainPosition(),
-          await subClient.outbound.thisLanePosition(),
-          await subClient.outbound.bridgedChainPosition(),
-          await subClient.outbound.bridgedLanePosition(),
           i,
-          false,
-          "0x4c616e653a204d65737361676543616c6c52656a6563746564"
+          false
         )
     }
   })
