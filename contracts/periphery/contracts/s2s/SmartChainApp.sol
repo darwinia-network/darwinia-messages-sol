@@ -17,7 +17,7 @@ abstract contract SmartChainApp {
         // encode send_message call
         BridgeMessages.SendMessageCall memory sendMessageCall = 
             BridgeMessages.SendMessageCall(
-                callIndex,
+                sendMessageCallIndexAtSourceChain,
                 laneId,
                 message,
                 uint128(feeInPallet)
