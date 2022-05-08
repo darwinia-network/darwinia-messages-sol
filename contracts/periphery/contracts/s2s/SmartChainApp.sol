@@ -10,7 +10,7 @@ abstract contract SmartChainApp {
 
     event DispatchResult(bool success, bytes result);
 
-    function sendMessage(bytes2 callIndexAtSourceChain, bytes4 laneId, uint256 fee, bytes memory message) internal {
+    function sendMessage(bytes2 sendMessageCallIndexAtSourceChain, bytes4 laneId, uint256 fee, bytes memory message) internal {
     	// the pricision in contract is 18, and in pallet is 9, transform the fee value
         uint256 feeInPallet = fee/(10**9); 
 
