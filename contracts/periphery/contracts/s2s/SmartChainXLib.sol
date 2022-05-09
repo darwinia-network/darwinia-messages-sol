@@ -9,20 +9,19 @@ library SmartChainXLib {
     address public constant DISPATCH =
         0x0000000000000000000000000000000000000019;
 
-    // `Channel` is a helper term to define params to route message to target chain
-    // 
-    //  send message call index at source chain 
-    //   -> 
-    //  lane id in source chain
-    struct Channel {
+    // `LaneIndex` is call index + lane id
+    struct LaneIndex {
+        // send message call index at source chain 
         bytes2 sendMessageCallIndexAtSourceChain;
+        
+        // lane id in source chain
         bytes4 laneId;
     }
 
     event DispatchResult(bool success, bytes result);
 
     function sendMessage(
-        Channel memory channel,
+        LaneIndex memory laneIndex,
         uint256 deliveryAndDispatchFee,
         bytes memory message
     ) internal {
@@ -32,8 +31,8 @@ library SmartChainXLib {
         // encode send_message call
         BridgeMessages.SendMessageCall memory sendMessageCall = BridgeMessages
             .SendMessageCall(
-                channel.sendMessageCallIndexAtSourceChain,
-                channel.laneId,
+                laneIndex.sendMessageCallIndexAtSourceChain,
+                laneIndex.laneId,
                 message,
                 uint128(feeInPalletPricision)
             );

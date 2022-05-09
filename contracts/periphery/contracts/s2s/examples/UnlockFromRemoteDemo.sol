@@ -2,10 +2,14 @@
 
 pragma solidity >=0.6.0;
 
-import "../PangoroSmartChainXApp.sol";
+import "../SmartChainXApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 
-contract UnlockFromRemoteDemo is PangoroSmartChainXApp {
+contract UnlockFromRemoteDemo is SmartChainXApp {
+
+    constructor() public {
+        setLane(0, 0x2b03, 0);
+    }
     
     function unlockFromRemote() public payable {
         // 1. prepare the call that will be executed on the target chain
@@ -21,7 +25,8 @@ contract UnlockFromRemoteDemo is PangoroSmartChainXApp {
         );
 
         // 2. send the message
-        sendMessageToPangolin(
+        sendMessage(
+            0,
             200000000000000000000, // deliveryAndDispatchFee
             28110, // spec version of target chain
             2654000000, // call weight
