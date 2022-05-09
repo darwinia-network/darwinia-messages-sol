@@ -5,36 +5,40 @@ pragma solidity >=0.6.0;
 import "./SmartChainXLib.sol";
 
 abstract contract SmartChainXApp {
-    mapping(uint32 => SmartChainXLib.LaneIndex) lanes;
+    struct MessagePayload {
+        uint32 specVersionOfTargetChain;
+        uint64 callWeight;
+        bytes callEncoded;
+    }
 
+    // The call index of `send_message` on the source chain.
+    // The default value `0x3003` is the call index on Crab.
+    // https://github.com/darwinia-network/darwinia-bridges-substrate/blob/17a2211dc7a9e2f9ac88857d01a1376a4e559a83/modules/messages/src/lib.rs#L275
+    bytes2 sendMessageCallIndexOnSourceChain = 0x3003;
+
+    // Send message over lane.
     function sendMessage(
-        uint32 lanePosition,
-        uint256 deliveryAndDispatchFee,
-        uint32 specVersionOfTargetChain,
-        uint64 callWeight,
-        bytes memory callEncoded
+        bytes4 laneId,
+        MessagePayload memory payload,
+        uint256 deliveryAndDispatchFee
     ) internal {
         bytes memory message = SmartChainXLib.buildMessage(
-            specVersionOfTargetChain,
-            callWeight,
-            callEncoded
+            payload.specVersionOfTargetChain,
+            payload.callWeight,
+            payload.callEncoded
         );
+
         SmartChainXLib.sendMessage(
-            lanes[lanePosition],
+            sendMessageCallIndexOnSourceChain,
+            laneId,
             deliveryAndDispatchFee,
             message
         );
     }
 
-    function setLane(
-        uint32 lanePosition,
-        bytes2 sendMessageCallIndexAtSourceChain,
-        bytes4 laneId
-    ) public {
-        SmartChainXLib.LaneIndex memory laneIndex = SmartChainXLib.LaneIndex(
-            sendMessageCallIndexAtSourceChain,
-            laneId
-        );
-        lanes[lanePosition] = laneIndex;
+    function setSendMessageCallIndexOnSourceChain(
+        bytes2 _sendMessageCallIndexOnSourceChain
+    ) internal {
+        sendMessageCallIndexOnSourceChain = _sendMessageCallIndexOnSourceChain;
     }
 }

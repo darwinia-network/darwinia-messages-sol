@@ -6,9 +6,8 @@ import "../SmartChainXApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 
 contract UnlockFromRemoteDemo is SmartChainXApp {
-
     constructor() public {
-        setLane(0, 0x2b03, 0);
+        setSendMessageCallIndexOnSourceChain(0x2b03);
     }
     
     function unlockFromRemote() public payable {
@@ -25,12 +24,15 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
         );
 
         // 2. send the message
-        sendMessage(
-            0,
-            200000000000000000000, // deliveryAndDispatchFee
+        MessagePayload memory payload = MessagePayload(
             28110, // spec version of target chain
             2654000000, // call weight
             callEncoded // call encoded bytes
+        );
+        sendMessage(
+            0, // lane id
+            payload, // message payload
+            200000000000000000000 // deliveryAndDispatchFee
         );
     }
 

@@ -9,32 +9,26 @@ library SmartChainXLib {
     address public constant DISPATCH =
         0x0000000000000000000000000000000000000019;
 
-    // `LaneIndex` is call index + lane id
-    struct LaneIndex {
-        // send message call index at source chain 
-        bytes2 sendMessageCallIndexAtSourceChain;
-        
-        // lane id in source chain
-        bytes4 laneId;
-    }
-
     event DispatchResult(bool success, bytes result);
 
+    // Send message over lane by calling the `send_message` dispatch call on
+    // the source chain which is identified by the `callIndex` param.
     function sendMessage(
-        LaneIndex memory laneIndex,
+        bytes2 callIndex,
+        bytes4 laneId,
         uint256 deliveryAndDispatchFee,
         bytes memory message
     ) internal {
         // the pricision in contract is 18, and in pallet is 9, transform the fee value
-        uint256 feeInPalletPricision = deliveryAndDispatchFee / (10**9);
+        uint256 feeOfPalletPrecision = deliveryAndDispatchFee / (10**9);
 
         // encode send_message call
         BridgeMessages.SendMessageCall memory sendMessageCall = BridgeMessages
             .SendMessageCall(
-                laneIndex.sendMessageCallIndexAtSourceChain,
-                laneIndex.laneId,
+                callIndex,
+                laneId,
                 message,
-                uint128(feeInPalletPricision)
+                uint128(feeOfPalletPrecision)
             );
 
         bytes memory sendMessageCallEncoded = BridgeMessages
@@ -56,10 +50,11 @@ library SmartChainXLib {
         }
     }
 
+    // Build the scale encoded message for the target chain.
     function buildMessage(
-        uint32 specVersionOfTargetChain,
-        uint64 callWeight,
-        bytes memory callEncoded
+        uint32 specVersion,
+        uint64 weight,
+        bytes memory call
     ) internal view returns (bytes memory) {
         Types.EnumItemWithAccountId memory origin = Types.EnumItemWithAccountId(
                 2, // index in enum
@@ -72,11 +67,11 @@ library SmartChainXLib {
         return
             Types.encodeMessage(
                 Types.Message(
-                    specVersionOfTargetChain,
-                    callWeight,
+                    specVersion,
+                    weight,
                     origin,
                     dispatchFeePayment,
-                    callEncoded
+                    call
                 )
             );
     }
