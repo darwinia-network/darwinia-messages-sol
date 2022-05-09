@@ -14,12 +14,9 @@ library SmartChainXLib {
     //  send message call index at source chain 
     //   -> 
     //  lane id in source chain
-    //   -> 
-    //  spec version of target chain
     struct Channel {
         bytes2 sendMessageCallIndexAtSourceChain;
         bytes4 laneId;
-        uint32 specVersionOfTargetChain;
     }
 
     event DispatchResult(bool success, bytes result);
@@ -61,7 +58,7 @@ library SmartChainXLib {
     }
 
     function buildMessage(
-        Channel memory channel,
+        uint32 specVersionOfTargetChain,
         uint64 callWeight,
         bytes memory callEncoded
     ) internal view returns (bytes memory) {
@@ -76,7 +73,7 @@ library SmartChainXLib {
         return
             Types.encodeMessage(
                 Types.Message(
-                    channel.specVersionOfTargetChain,
+                    specVersionOfTargetChain,
                     callWeight,
                     origin,
                     dispatchFeePayment,

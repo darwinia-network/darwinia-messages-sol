@@ -18,6 +18,7 @@ contract RemarkDemo is CrabSmartChainXApp {
         // 2. send the message
         sendMessageToDarwinia(
             200000000000000000000, // deliveryAndDispatchFee
+            1200, // spec version of target chain
             2654000000, // call weight
             callEncoded // call encoded bytes
         );

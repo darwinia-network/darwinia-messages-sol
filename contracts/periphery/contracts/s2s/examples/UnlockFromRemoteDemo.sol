@@ -23,6 +23,7 @@ contract UnlockFromRemoteDemo is PangoroSmartChainXApp {
         // 2. send the message
         sendMessageToPangolin(
             200000000000000000000, // deliveryAndDispatchFee
+            28110, // spec version of target chain
             2654000000, // call weight
             callEncoded // call encoded bytes
         );
