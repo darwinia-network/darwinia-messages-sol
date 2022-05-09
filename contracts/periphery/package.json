@@ -23,6 +23,7 @@
     "hardhat": "^2.9.3",
     "hardhat-abi-exporter": "^2.2.1",
     "hardhat-gas-reporter": "^1.0.6",
-    "shx": "^0.3.3"
+    "shx": "^0.3.3",
+    "@darwinia/contracts-utils": "^1.0.0"
   }
 }
