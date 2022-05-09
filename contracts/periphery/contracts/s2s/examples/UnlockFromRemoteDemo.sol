@@ -5,7 +5,7 @@ pragma solidity >=0.6.0;
 import "../PangoroSmartChainXApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 
-contract BridgeMessagesSendMessageDemo is PangoroSmartChainXApp {
+contract UnlockFromRemoteDemo is PangoroSmartChainXApp {
     
     function unlockFromRemote() public payable {
         // 1. prepare the call that will be executed on the target chain

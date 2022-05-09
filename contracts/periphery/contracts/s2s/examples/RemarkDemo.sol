@@ -5,9 +5,9 @@ pragma solidity >=0.6.0;
 import "../CrabSmartChainXApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 
-contract SystemRemarkDemo is CrabSmartChainXApp {
+contract RemarkDemo is CrabSmartChainXApp {
 
-    function systemRemark() public payable {
+    function remark() public payable {
         // 1. prepare the call that will be executed on the target chain
         System.RemarkCall memory call = System.RemarkCall(
             hex"0001",
