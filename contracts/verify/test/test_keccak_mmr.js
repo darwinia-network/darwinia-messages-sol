@@ -70,9 +70,9 @@ describe('MerkleMountainRange', () => {
         expect(res.right.toString()).that.equals('29');
       });
       it('should be reverted for leaves like 1,2,4 (only reverted in javascript evm)', async () => {
-       await expect(mmrLib.getChildren(1)).to.revertedWith("VM Exception while processing transaction: revert Not a parent");
-       await expect(mmrLib.getChildren(2)).to.revertedWith("VM Exception while processing transaction: revert Not a parent");
-       await expect(mmrLib.getChildren(4)).to.revertedWith("VM Exception while processing transaction: revert Not a parent");
+       await expect(mmrLib.getChildren(1)).to.revertedWith("Not a parent");
+       await expect(mmrLib.getChildren(2)).to.revertedWith("Not a parent");
+       await expect(mmrLib.getChildren(4)).to.revertedWith("Not a parent");
       });
       it('get size', async () => {
         res = await mmrLib.getSize(9314);
