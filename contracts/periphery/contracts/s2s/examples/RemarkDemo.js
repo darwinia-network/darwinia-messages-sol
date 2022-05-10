@@ -1,5 +1,5 @@
 // Run RemarkDemo on Crab
-//   npx hardhat run --network pangolin contracts/s2s/examples/RemarkDemo.js
+//   npx hardhat run --network crab contracts/s2s/examples/RemarkDemo.js
 //
 // View result tx on subscan:
 //   https://crab.subscan.io/tx/0x...

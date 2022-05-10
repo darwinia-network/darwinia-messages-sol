@@ -24,7 +24,7 @@ contract RemarkDemo is SmartChainXApp {
         sendMessage(
             0, // lane id the lane to Darwinia
             payload, // message payload
-            200000000000000000000 // deliveryAndDispatchFee
+            msg.value // deliveryAndDispatchFee
         );
     }
 }

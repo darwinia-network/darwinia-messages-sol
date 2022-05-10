@@ -14,7 +14,7 @@ async function main() {
     // Send transaction
     const tx = await demo.unlockFromRemote({
       value: BigInt(200000000000000000000), // 200 PRING, The fee to use the cross-chain service, determined by the Fee Market
-    });, determined by the Fee Market
+    });
     await tx.wait();
     console.log("txhash:", tx["hash"]);
 }

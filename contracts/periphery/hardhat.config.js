@@ -68,7 +68,14 @@ module.exports = {
     },
     pangolin: {
       url: 'https://pangolin-rpc.darwinia.network',
-      network_id: "*",
+      network_id: "43",
+      accounts: [PRIVATE_KEY],
+      gas: 3_000_000,
+      gasPrice: 53100000000
+    },
+    crab: {
+      url: 'https://crab-rpc.darwinia.network',
+      network_id: "44",
       accounts: [PRIVATE_KEY],
       gas: 3_000_000,
       gasPrice: 53100000000

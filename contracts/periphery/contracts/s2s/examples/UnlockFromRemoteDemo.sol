@@ -35,7 +35,7 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
         sendMessage(
             0, // lane id, the lane to Pangoro
             payload, // message payload
-            200000000000000000000 // deliveryAndDispatchFee
+            msg.value // deliveryAndDispatchFee
         );
     }
 
