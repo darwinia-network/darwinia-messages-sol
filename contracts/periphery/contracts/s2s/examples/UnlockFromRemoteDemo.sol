@@ -5,8 +5,11 @@ pragma solidity >=0.6.0;
 import "../SmartChainXApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 
+// PangolinSmartChain remote call unlockFromRemote of Pangoro
 contract UnlockFromRemoteDemo is SmartChainXApp {
     constructor() public {
+        // set the callIndex of send_message dispatch call,
+        // 0x2b03 is the callIndex on Pangolin
         setSendMessageCallIndexOnSourceChain(0x2b03);
     }
     
@@ -25,12 +28,12 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
 
         // 2. send the message
         MessagePayload memory payload = MessagePayload(
-            28110, // spec version of target chain
+            28110, // spec version of target chain <----------- This may be changed, go to https://pangoro.subscan.io/runtime get the latest spec version
             2654000000, // call weight
             callEncoded // call encoded bytes
         );
         sendMessage(
-            0, // lane id
+            0, // lane id, the lane to Pangoro
             payload, // message payload
             200000000000000000000 // deliveryAndDispatchFee
         );

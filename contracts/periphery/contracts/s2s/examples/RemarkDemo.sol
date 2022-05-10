@@ -5,6 +5,7 @@ pragma solidity >=0.6.0;
 import "../SmartChainXApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 
+// CrabSmartChain remote call remark of Darwinia 
 contract RemarkDemo is SmartChainXApp {
     function remark() public payable {
         // 1. prepare the call that will be executed on the target chain
@@ -16,12 +17,12 @@ contract RemarkDemo is SmartChainXApp {
 
         // 2. send the message
         MessagePayload memory payload = MessagePayload(
-            1200, // spec version of target chain
+            1200, // spec version of target chain <----------- This may be changed, go to https://darwinia.subscan.io/runtime get the latest spec version
             2654000000, // call weight
             callEncoded // call encoded bytes
         );
         sendMessage(
-            0, // lane id
+            0, // lane id the lane to Darwinia
             payload, // message payload
             200000000000000000000 // deliveryAndDispatchFee
         );

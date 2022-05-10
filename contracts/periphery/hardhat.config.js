@@ -70,7 +70,7 @@ module.exports = {
       url: 'https://pangolin-rpc.darwinia.network',
       network_id: "*",
       accounts: [PRIVATE_KEY],
-      gas: 30_000_000,
+      gas: 3_000_000,
       gasPrice: 53100000000
     },
     ropsten: {
