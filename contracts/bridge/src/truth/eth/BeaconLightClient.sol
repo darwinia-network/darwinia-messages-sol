@@ -103,9 +103,22 @@ contract BeaconLightClient is Bitfield {
             && is_finality_update(update)
         ) {
             // Normal update through 2/3 threshold
-            // apply_light_client_update(store, update)
+            apply_light_client_update(update)
             // store.best_valid_update = None
         }
+    }
+
+    function apply_light_client_update(update: LightClientUpdate){
+        BeaconBlockHeader memory active_header = get_active_header(update)
+        uint64 finalized_period = compute_sync_committee_period(compute_epoch_at_slot(finalized_header.slot))
+        uint64 update_period = compute_sync_committee_period(compute_epoch_at_slot(active_header.slot))
+        if (update_period == finalized_period + 1) {
+            current_sync_committee = next_sync_committee
+            next_sync_committee = next_sync_committee
+        }
+        finalized_header = active_header
+        // if store.finalized_header.slot > store.optimistic_header.slot:
+        //     store.optimistic_header = store.finalized_header
     }
 
     function validate_light_client_update(
