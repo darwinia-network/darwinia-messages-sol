@@ -253,4 +253,57 @@ contract BeaconLightClient is Bitfield {
             r++;
         }
     }
+
+    function hash_tree_root(BeaconBlockHeader memory beacon_header) internal pure returns (bytes32) {
+        bytes32 memory leaves = new bytes32[](5);
+        leaves[0] = pack(to_little_endian_64(beacon_header.slot);
+        leaves[1] = pack(to_little_endian_64(beacon_header.proposer_index));
+        leaves[2] = beacon_header.parent_root;
+        leaves[3] = beacon_header.state_root;
+        leaves[4] = beacon_header.body_root;
+        return merkle_root(leaves);
+    }
+
+    function hash_tree_root(SyncCommittee memory sync_committee) internal pure returns (bytes32) {
+        bytes32 memory leaves = new bytes32[](5);
+    }
+
+    function merkle_root(bytes32[] memory leaves) internal pure return (bytes32) {
+        uint len = leaves.length;
+        if (len == 0) return bytes32(0);
+        else if (len == 1) return keccak256(leaves[0]);
+        else if (len == 2) return hash_node(leaves[0], leaves[1]);
+        uint bottom_length = get_power_of_two_ceil(len);
+        bytes32[] memory o = new bytes32[](bottom_length * 2);
+        for (uint i = 0; i < bottom_length * 2; ++i) {
+            o[bottom_length + i] = leaves[i];
+        }
+        for (uint i = bottom_length - 1; i >= 0; --i) {
+            o[i] = hash_node(o[i * 2], o[i * 2 + 1]);
+        }
+        return o[1];
+    }
+
+    //  Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.
+    function get_power_of_two_ceil(uint x) internal pure returns(uint){
+        if(x <= 1) return 1;
+        else if(x == 2) return 2;
+        else return 2 * get_power_of_two_ceil((x + 1) >> 2);
+    }
+
+    function pack(bytes8 value) internal pure returns (bytes32) {
+        return bytes32(value);
+    }
+
+    function to_little_endian_64(uint64 value) internal pure returns (bytes8 ret) {
+        bytes8 bytesValue = bytes8(value);
+        ret[0] = bytesValue[7];
+        ret[1] = bytesValue[6];
+        ret[2] = bytesValue[5];
+        ret[3] = bytesValue[4];
+        ret[4] = bytesValue[3];
+        ret[5] = bytesValue[2];
+        ret[6] = bytesValue[1];
+        ret[7] = bytesValue[0];
+    }
 }
