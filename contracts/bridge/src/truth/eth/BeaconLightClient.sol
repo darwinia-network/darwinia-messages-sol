@@ -26,7 +26,7 @@ contract BeaconLightClient is Bitfield {
 
     struct SigningData {
         bytes32 object_root;
-        bytes4 domain;
+        bytes32 domain;
     }
 
     // a BLS12-381 public key
@@ -46,8 +46,8 @@ contract BeaconLightClient is Bitfield {
     }
 
     struct SyncCommittee {
-        BLSPubkey pubkeys;
-        BLSPubkey[SYNC_COMMITTEE_SIZE] aggregate_pubkey;
+        BLSPubkey[SYNC_COMMITTEE_SIZE] pubkeys;
+        BLSPubkey aggregate_pubkey;
     }
 
     struct BeaconBlockHeader {
@@ -265,7 +265,28 @@ contract BeaconLightClient is Bitfield {
     }
 
     function hash_tree_root(SyncCommittee memory sync_committee) internal pure returns (bytes32) {
-        bytes32 memory leaves = new bytes32[](5);
+        bytes memory pubkeys_chunks = abi.encodePacked(sync_committee.pubkeys);
+        bytes32[] memory pubkeys_leaves = new bytes32[](768);
+        for (uint i = 0; i < 768 * 32; i += 32) {
+            bytes memory key = substr(pubkeys_chunks, i, 32);
+            pubkeys_leaves[i] = abi.decode(bytes32, key);
+        }
+        bytes32 pubkeys_root = merkle_root(pubkeys_leaves);
+
+        bytes32[] memory aggregate_pubkey_leaves = new bytes32[](2);
+        aggregate_pubkey_leaves[0] = sync_committee.aggregate_pubkey.a;
+        aggregate_pubkey_leaves[1] = pack(sync_committee.aggregate_pubkey.b);
+        bytes32 aggregate_pubkey_root = merkle_root(aggregate_pubkey_leaves);
+
+        return hash_node(pubkeys_root, aggregate_pubkey_root);
+    }
+
+    function hash_tree_root(SigningData memory signing_data) internal pure returns (bytes32) {
+        return hash_node(signing_data.object_root, signing_data.domain);
+    }
+
+    function hash_tree_root(ForkData memory fork_data) internal pure returns (bytes32) {
+        return hash_node(pack(fork_data.current_version), fork_data.genesis_validators_root);
     }
 
     function merkle_root(bytes32[] memory leaves) internal pure return (bytes32) {
@@ -284,6 +305,19 @@ contract BeaconLightClient is Bitfield {
         return o[1];
     }
 
+    function hash_node(bytes32 left, bytes32 right)
+        internal
+        pure
+        returns (bytes32 hash)
+    {
+        assembly {
+            mstore(0x00, left)
+            mstore(0x20, right)
+            hash := keccak256(0x00, 0x40)
+        }
+        return hash;
+    }
+
     //  Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.
     function get_power_of_two_ceil(uint x) internal pure returns(uint){
         if(x <= 1) return 1;
@@ -291,7 +325,15 @@ contract BeaconLightClient is Bitfield {
         else return 2 * get_power_of_two_ceil((x + 1) >> 2);
     }
 
+    function pack(bytes4 value) internal pure returns (bytes32) {
+        return bytes32(value);
+    }
+
     function pack(bytes8 value) internal pure returns (bytes32) {
+        return bytes32(value);
+    }
+
+    function pack(bytes16 value) internal pure returns (bytes32) {
         return bytes32(value);
     }
 
@@ -306,4 +348,63 @@ contract BeaconLightClient is Bitfield {
         ret[6] = bytesValue[1];
         ret[7] = bytesValue[0];
     }
+
+    // Copies 'len' bytes from 'self' into a new array, starting at the provided 'startIndex'.
+    // Returns the new copy.
+    // Requires that:
+    //  - 'startIndex + len <= self.length'
+    // The length of the substring is: 'len'
+    function substr(
+        bytes memory self,
+        uint256 startIndex,
+        uint256 len
+    ) internal pure returns (bytes memory) {
+        require(startIndex + len <= self.length);
+        if (len == 0) {
+            return "";
+        }
+        uint256 addr = dataPtr(self);
+        return Memory.toBytes(addr + startIndex, len);
+    }
+
+	// Returns a memory pointer to the data portion of the provided bytes array.
+	function dataPtr(bytes memory bts) internal pure returns (uint addr) {
+		assembly {
+			addr := add(bts, /*BYTES_HEADER_SIZE*/32)
+		}
+	}
+
+	// Creates a 'bytes memory' variable from the memory address 'addr', with the
+	// length 'len'. The function will allocate new memory for the bytes array, and
+	// the 'len bytes starting at 'addr' will be copied into that new memory.
+	function toBytes(uint addr, uint len) internal pure returns (bytes memory bts) {
+		bts = new bytes(len);
+		uint btsptr;
+		assembly {
+			btsptr := add(bts, /*BYTES_HEADER_SIZE*/32)
+		}
+		copy(addr, btsptr, len);
+	}
+
+	// Copy 'len' bytes from memory address 'src', to address 'dest'.
+	// This function does not check the or destination, it only copies
+	// the bytes.
+	function copy(uint src, uint dest, uint len) internal pure {
+		// Copy word-length chunks while possible
+		for (; len >= WORD_SIZE; len -= WORD_SIZE) {
+			assembly {
+				mstore(dest, mload(src))
+			}
+			dest += WORD_SIZE;
+			src += WORD_SIZE;
+		}
+
+		// Copy remaining bytes
+		uint mask = 256 ** (WORD_SIZE - len) - 1;
+		assembly {
+			let srcpart := and(mload(src), not(mask))
+			let destpart := and(mload(dest), mask)
+			mstore(dest, or(destpart, srcpart))
+		}
+	}
 }
