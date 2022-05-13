@@ -6,16 +6,11 @@ pragma abicoder v2;
 import "../../utils/Bitfield.sol";
 import "../../utils/Bytes.sol";
 
-// a BLS12-381 signature
-struct BLSSignature {
-    bytes32[3] sig;
-}
-
 interface BLS {
         function FastAggregateVerify(
             bytes[] calldata pubkeys,
             bytes calldata message,
-            BLSSignature calldata signature
+            bytes32[3] calldata signature
         ) external pure returns (bool);
 }
 
@@ -51,7 +46,7 @@ contract BeaconLightClient is Bitfield {
 
     struct SyncAggregate {
         uint256[2] sync_committee_bits;
-        BLSSignature sync_committee_signature;
+        bytes32[3] sync_committee_signature;
     }
 
     struct SyncCommittee {
@@ -356,20 +351,19 @@ contract BeaconLightClient is Bitfield {
         else return 2 * get_power_of_two_ceil((x + 1) >> 2);
     }
 
-    function to_little_endian_64(uint64 value) internal pure returns (bytes8 ret) {
-        uint64 v = value;
+    function to_little_endian_64(uint64 value) internal pure returns (bytes8 r) {
+        ret = new bytes(8);
+        bytes8 bytesValue = bytes8(value);
+        // Byteswapping during copying to bytes.
+        ret[0] = bytesValue[7];
+        ret[1] = bytesValue[6];
+        ret[2] = bytesValue[5];
+        ret[3] = bytesValue[4];
+        ret[4] = bytesValue[3];
+        ret[5] = bytesValue[2];
+        ret[6] = bytesValue[1];
+        ret[7] = bytesValue[0];
 
-        // swap bytes
-        v = ((v & 0xFF00FF00FF00FF00) >> 8) |
-            ((v & 0x00FF00FF00FF00FF) << 8);
-
-        // swap 2-byte long pairs
-        v = ((v & 0xFFFF0000FFFF0000) >> 16) |
-            ((v & 0x0000FFFF0000FFFF) << 16);
-
-        // swap 4-byte long pairs
-        v = (v >> 32) | (v << 32);
-
-        ret = bytes8(v);
+        r = abi.decode(ret, (bytes8));
     }
 }
