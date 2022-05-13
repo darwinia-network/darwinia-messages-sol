@@ -1,9 +1,29 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../../utils/Bitfield.sol";
+import "../../utils/Bytes.sol";
+
+// a BLS12-381 signature
+struct BLSSignature {
+    bytes32[3] sig;
+}
+
+interface BLS {
+        function FastAggregateVerify(
+            bytes[] calldata pubkeys,
+            bytes calldata message,
+            BLSSignature calldata signature
+        ) external pure returns (bool);
+}
 
 contract BeaconLightClient is Bitfield {
+    using Bytes for bytes;
+
+    address constant private bls = address(0x1b);
+
     // TODO: check
     uint64 constant private SYNC_COMMITTEE_SIZE = 512;
     uint64 constant private NEXT_SYNC_COMMITTEE_INDEX = 23;
@@ -21,23 +41,12 @@ contract BeaconLightClient is Bitfield {
 
     struct ForkData {
         bytes4 current_version;
-        bytes32 genesis_validators_root
+        bytes32 genesis_validators_root;
     }
 
     struct SigningData {
         bytes32 object_root;
         bytes32 domain;
-    }
-
-    // a BLS12-381 public key
-    struct BLSPubkey {
-        bytes32 key_a;
-        bytes16 key_b;
-    }
-
-    // a BLS12-381 signature
-    struct BLSSignature {
-        bytes32[3] sig;
     }
 
     struct SyncAggregate {
@@ -46,8 +55,8 @@ contract BeaconLightClient is Bitfield {
     }
 
     struct SyncCommittee {
-        BLSPubkey[SYNC_COMMITTEE_SIZE] pubkeys;
-        BLSPubkey aggregate_pubkey;
+        bytes serialized_pubkeys;
+        bytes aggregate_pubkey;
     }
 
     struct BeaconBlockHeader {
@@ -64,11 +73,11 @@ contract BeaconLightClient is Bitfield {
 
         // Next sync committee corresponding to the active header
         SyncCommittee next_sync_committee;
-        bytes32[NEXT_SYNC_COMMITTEE_DEPTH-1] next_sync_committee_branch;
+        bytes32[] next_sync_committee_branch;
 
         // The finalized beacon block header attested to by Merkle branch
         BeaconBlockHeader finalized_header;
-        bytes32[FINALIZED_ROOT_DEPTH-1] finality_branch;
+        bytes32[] finality_branch;
 
         // Sync committee aggregate signature
         SyncAggregate sync_aggregate;
@@ -103,20 +112,20 @@ contract BeaconLightClient is Bitfield {
             && is_finality_update(update)
         ) {
             // Normal update through 2/3 threshold
-            apply_light_client_update(update)
+            apply_light_client_update(update);
             // store.best_valid_update = None
         }
     }
 
-    function apply_light_client_update(update: LightClientUpdate){
-        BeaconBlockHeader memory active_header = get_active_header(update)
-        uint64 finalized_period = compute_sync_committee_period(compute_epoch_at_slot(finalized_header.slot))
-        uint64 update_period = compute_sync_committee_period(compute_epoch_at_slot(active_header.slot))
+    function apply_light_client_update(LightClientUpdate calldata update) internal {
+        BeaconBlockHeader memory active_header = get_active_header(update);
+        uint64 finalized_period = compute_sync_committee_period(compute_epoch_at_slot(finalized_header.slot));
+        uint64 update_period = compute_sync_committee_period(compute_epoch_at_slot(active_header.slot));
         if (update_period == finalized_period + 1) {
-            current_sync_committee = next_sync_committee
-            next_sync_committee = next_sync_committee
+            current_sync_committee = next_sync_committee;
+            next_sync_committee = next_sync_committee;
         }
-        finalized_header = active_header
+        finalized_header = active_header;
         // if store.finalized_header.slot > store.optimistic_header.slot:
         //     store.optimistic_header = store.finalized_header
     }
@@ -138,38 +147,41 @@ contract BeaconLightClient is Bitfield {
 
         // Verify that the `finalized_header`, if present, actually is the finalized header saved in the
         // state of the `attested header`
+        require(update.finality_branch.length == FINALIZED_ROOT_DEPTH - 1, "!finality_branch");
         if (!is_finality_update(update)) {
             for (uint64 i = 0; i < floorlog2(FINALIZED_ROOT_INDEX); ++i) {
                 require(update.finality_branch[i] == bytes32(0), "!zero");
             }
         } else {
             require(is_valid_merkle_branch(
-                    hash_tree_root(update.finalized_header),
-                    update.finality_branch,
-                    floorlog2(FINALIZED_ROOT_INDEX),
-                    get_subtree_index(FINALIZED_ROOT_INDEX),
-                    update.attested_header.state_root
-                ),
-                "!finalized_header"
+                        hash_tree_root(update.finalized_header),
+                        update.finality_branch,
+                        floorlog2(FINALIZED_ROOT_INDEX),
+                        get_subtree_index(FINALIZED_ROOT_INDEX),
+                        update.attested_header.state_root
+                    ),
+                    "!finalized_header"
             );
         }
 
         // Verify update next sync committee if the update period incremented
+        require(update.next_sync_committee_branch.length == NEXT_SYNC_COMMITTEE_DEPTH - 1, "!next_sync_committee_branch");
         SyncCommittee memory sync_committee;
-        if update_period == finalized_period{
-            sync_committee = current_sync_committee
+        if (update_period == finalized_period) {
+            sync_committee = current_sync_committee;
             for (uint64 i = 0; i < floorlog2(NEXT_SYNC_COMMITTEE_INDEX); ++i) {
                 require(update.next_sync_committee_branch[i] == bytes32(0), "!zero");
             }
         } else {
-            sync_committee = next_sync_committee
+            sync_committee = next_sync_committee;
             require(is_valid_merkle_branch(
-                hash_tree_root(update.next_sync_committee),
-                update.next_sync_committee_branch,
-                floorlog2(NEXT_SYNC_COMMITTEE_INDEX),
-                get_subtree_index(NEXT_SYNC_COMMITTEE_INDEX),
-                active_header.state_root),
-                "!sync_committee"
+                        hash_tree_root(update.next_sync_committee),
+                        update.next_sync_committee_branch,
+                        floorlog2(NEXT_SYNC_COMMITTEE_INDEX),
+                        get_subtree_index(NEXT_SYNC_COMMITTEE_INDEX),
+                        active_header.state_root
+                    ),
+                    "!sync_committee"
             );
         }
         SyncAggregate memory sync_aggregate = update.sync_aggregate;
@@ -178,23 +190,47 @@ contract BeaconLightClient is Bitfield {
         require(sum(sync_aggregate.sync_committee_bits) >= MIN_SYNC_COMMITTEE_PARTICIPANTS, "!participants");
 
         // Verify sync committee aggregate signature
-        uint64 participants = sum(sync_aggregate.sync_committee_bits);
-        BLSPubkey[] memory participant_pubkeys = new BLSPubkey[participants];
+        uint participants = sum(sync_aggregate.sync_committee_bits);
+        bytes[] memory participant_pubkeys = new bytes[](participants);
         uint64 n = 0;
         for (uint64 i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
             uint index = i / 256;
-            uint8 offset = i % 256;
+            uint8 offset = uint8(i % 256);
             if (isSet(sync_aggregate.sync_committee_bits[index], offset)) {
-                participant_pubkeys[n++] = sync_committee.pubkeys[i];
+                participant_pubkeys[n++] = sync_committee.serialized_pubkeys.substr(i * 48, 48);
             }
         }
         bytes32 domain = compute_domain(DOMAIN_SYNC_COMMITTEE, update.fork_version, genesis_validators_root);
         bytes32 signing_root = compute_signing_root(update.attested_header, domain);
-        require(BLS.FastAggregateVerify(participant_pubkeys, signing_root, sync_aggregate.sync_committee_signature), "!sig");
+        bytes memory message = abi.encode(signing_root);
+        require(BLS(bls).FastAggregateVerify(participant_pubkeys, message, sync_aggregate.sync_committee_signature), "!sig");
+    }
+
+    // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
+    function is_valid_merkle_branch(
+        bytes32 leaf,
+        bytes32[] memory branch,
+        uint64 depth,
+        uint64 index,
+        bytes32 root
+    ) internal pure returns (bool) {
+        bytes32 value = leaf;
+        for (uint i = 0; i < depth; ++i) {
+            if ((index / (2**i)) % 2 == 1) {
+                value = hash_node(branch[i], value);
+            } else {
+                value = hash_node(value, branch[i]);
+            }
+        }
+        return value == root;
+    }
+
+    function get_subtree_index(uint generalized_index) internal pure returns (uint64){
+        return uint64(generalized_index % 2**(floorlog2(generalized_index)));
     }
 
     // Return the signing root for the corresponding signing data.
-    function compute_signing_root(BeaconBlockHeader calldata beacon_header, domain: Domain) internal pure returns (bytes32){
+    function compute_signing_root(BeaconBlockHeader calldata beacon_header, bytes32 domain) internal pure returns (bytes32){
         return hash_tree_root(SigningData({
                 object_root: hash_tree_root(beacon_header),
                 domain: domain
@@ -215,10 +251,7 @@ contract BeaconLightClient is Bitfield {
     //  Return the domain for the ``domain_type`` and ``fork_version``.
     function compute_domain(bytes4 domain_type, bytes4 fork_version, bytes32 genesis_validators_root) internal pure returns (bytes32){
         bytes32 fork_data_root = compute_fork_data_root(fork_version, genesis_validators_root);
-        return abi.encodePacked(
-            domain_type,
-            bytes28(fork_data_root >> 32);
-        );
+        return bytes32(domain_type) | fork_data_root >> 32;
     }
 
     //  Return the epoch number at ``slot``.
@@ -255,9 +288,9 @@ contract BeaconLightClient is Bitfield {
     }
 
     function hash_tree_root(BeaconBlockHeader memory beacon_header) internal pure returns (bytes32) {
-        bytes32 memory leaves = new bytes32[](5);
-        leaves[0] = pack(to_little_endian_64(beacon_header.slot);
-        leaves[1] = pack(to_little_endian_64(beacon_header.proposer_index));
+        bytes32[] memory leaves = new bytes32[](5);
+        leaves[0] = bytes32(to_little_endian_64(beacon_header.slot));
+        leaves[1] = bytes32(to_little_endian_64(beacon_header.proposer_index));
         leaves[2] = beacon_header.parent_root;
         leaves[3] = beacon_header.state_root;
         leaves[4] = beacon_header.body_root;
@@ -265,18 +298,16 @@ contract BeaconLightClient is Bitfield {
     }
 
     function hash_tree_root(SyncCommittee memory sync_committee) internal pure returns (bytes32) {
-        bytes memory pubkeys_chunks = abi.encodePacked(sync_committee.pubkeys);
+        bytes memory pubkeys_chunks = sync_committee.serialized_pubkeys;
         bytes32[] memory pubkeys_leaves = new bytes32[](768);
         for (uint i = 0; i < 768 * 32; i += 32) {
-            bytes memory key = substr(pubkeys_chunks, i, 32);
-            pubkeys_leaves[i] = abi.decode(bytes32, key);
+            bytes memory key = pubkeys_chunks.substr(i, 32);
+            pubkeys_leaves[i] = abi.decode(key, (bytes32));
         }
         bytes32 pubkeys_root = merkle_root(pubkeys_leaves);
 
-        bytes32[] memory aggregate_pubkey_leaves = new bytes32[](2);
-        aggregate_pubkey_leaves[0] = sync_committee.aggregate_pubkey.a;
-        aggregate_pubkey_leaves[1] = pack(sync_committee.aggregate_pubkey.b);
-        bytes32 aggregate_pubkey_root = merkle_root(aggregate_pubkey_leaves);
+        bytes memory aggregate_pubkey_leaves = abi.encodePacked(sync_committee.aggregate_pubkey, bytes16(0));
+        bytes32 aggregate_pubkey_root = keccak256(aggregate_pubkey_leaves);
 
         return hash_node(pubkeys_root, aggregate_pubkey_root);
     }
@@ -286,13 +317,13 @@ contract BeaconLightClient is Bitfield {
     }
 
     function hash_tree_root(ForkData memory fork_data) internal pure returns (bytes32) {
-        return hash_node(pack(fork_data.current_version), fork_data.genesis_validators_root);
+        return hash_node(bytes32(fork_data.current_version), fork_data.genesis_validators_root);
     }
 
-    function merkle_root(bytes32[] memory leaves) internal pure return (bytes32) {
+    function merkle_root(bytes32[] memory leaves) internal pure returns (bytes32) {
         uint len = leaves.length;
         if (len == 0) return bytes32(0);
-        else if (len == 1) return keccak256(leaves[0]);
+        else if (len == 1) return keccak256(abi.encodePacked(leaves[0]));
         else if (len == 2) return hash_node(leaves[0], leaves[1]);
         uint bottom_length = get_power_of_two_ceil(len);
         bytes32[] memory o = new bytes32[](bottom_length * 2);
@@ -325,86 +356,20 @@ contract BeaconLightClient is Bitfield {
         else return 2 * get_power_of_two_ceil((x + 1) >> 2);
     }
 
-    function pack(bytes4 value) internal pure returns (bytes32) {
-        return bytes32(value);
-    }
-
-    function pack(bytes8 value) internal pure returns (bytes32) {
-        return bytes32(value);
-    }
-
-    function pack(bytes16 value) internal pure returns (bytes32) {
-        return bytes32(value);
-    }
-
     function to_little_endian_64(uint64 value) internal pure returns (bytes8 ret) {
-        bytes8 bytesValue = bytes8(value);
-        ret[0] = bytesValue[7];
-        ret[1] = bytesValue[6];
-        ret[2] = bytesValue[5];
-        ret[3] = bytesValue[4];
-        ret[4] = bytesValue[3];
-        ret[5] = bytesValue[2];
-        ret[6] = bytesValue[1];
-        ret[7] = bytesValue[0];
+        uint64 v = value;
+
+        // swap bytes
+        v = ((v & 0xFF00FF00FF00FF00) >> 8) |
+            ((v & 0x00FF00FF00FF00FF) << 8);
+
+        // swap 2-byte long pairs
+        v = ((v & 0xFFFF0000FFFF0000) >> 16) |
+            ((v & 0x0000FFFF0000FFFF) << 16);
+
+        // swap 4-byte long pairs
+        v = (v >> 32) | (v << 32);
+
+        ret = bytes8(v);
     }
-
-    // Copies 'len' bytes from 'self' into a new array, starting at the provided 'startIndex'.
-    // Returns the new copy.
-    // Requires that:
-    //  - 'startIndex + len <= self.length'
-    // The length of the substring is: 'len'
-    function substr(
-        bytes memory self,
-        uint256 startIndex,
-        uint256 len
-    ) internal pure returns (bytes memory) {
-        require(startIndex + len <= self.length);
-        if (len == 0) {
-            return "";
-        }
-        uint256 addr = dataPtr(self);
-        return Memory.toBytes(addr + startIndex, len);
-    }
-
-	// Returns a memory pointer to the data portion of the provided bytes array.
-	function dataPtr(bytes memory bts) internal pure returns (uint addr) {
-		assembly {
-			addr := add(bts, /*BYTES_HEADER_SIZE*/32)
-		}
-	}
-
-	// Creates a 'bytes memory' variable from the memory address 'addr', with the
-	// length 'len'. The function will allocate new memory for the bytes array, and
-	// the 'len bytes starting at 'addr' will be copied into that new memory.
-	function toBytes(uint addr, uint len) internal pure returns (bytes memory bts) {
-		bts = new bytes(len);
-		uint btsptr;
-		assembly {
-			btsptr := add(bts, /*BYTES_HEADER_SIZE*/32)
-		}
-		copy(addr, btsptr, len);
-	}
-
-	// Copy 'len' bytes from memory address 'src', to address 'dest'.
-	// This function does not check the or destination, it only copies
-	// the bytes.
-	function copy(uint src, uint dest, uint len) internal pure {
-		// Copy word-length chunks while possible
-		for (; len >= WORD_SIZE; len -= WORD_SIZE) {
-			assembly {
-				mstore(dest, mload(src))
-			}
-			dest += WORD_SIZE;
-			src += WORD_SIZE;
-		}
-
-		// Copy remaining bytes
-		uint mask = 256 ** (WORD_SIZE - len) - 1;
-		assembly {
-			let srcpart := and(mload(src), not(mask))
-			let destpart := and(mload(dest), mask)
-			mstore(dest, or(destpart, srcpart))
-		}
-	}
 }
