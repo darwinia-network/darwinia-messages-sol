@@ -352,7 +352,7 @@ contract BeaconLightClient is Bitfield {
     }
 
     function to_little_endian_64(uint64 value) internal pure returns (bytes8 r) {
-        ret = new bytes(8);
+        bytes memory ret = new bytes(8);
         bytes8 bytesValue = bytes8(value);
         // Byteswapping during copying to bytes.
         ret[0] = bytesValue[7];
