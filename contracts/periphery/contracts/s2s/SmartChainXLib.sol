@@ -87,16 +87,8 @@ library SmartChainXLib {
         bytes memory data = IStateStorage(storageAddress).state_storage(
             storageKey
         );
-        // // decode Option<Vec<Relayer>>
-        // uint8 firstByte = uint8(data[0]);
-        // if (firstByte == 0) {
-        //     revert("No relayers are working");
-        // } else if (firstByte == 1) {
-
         CommonTypes.Relayer memory relayer = CommonTypes
-            .decodeAndGetLastRelayer(data);
+            .getLastRelayerFromVec(data);
         return relayer.fee;
-
-        // }
     }
 }

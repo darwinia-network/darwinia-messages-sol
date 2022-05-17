@@ -16,8 +16,8 @@ describe('S2STypesTest', function (accounts) {
         await typesTest.deployed();
     });
 
-    it('testDecodeAndGetLastRelayer', async() => {
-        await typesTest.testDecodeAndGetLastRelayer();
+    it('testGetLastRelayerFromVec', async() => {
+        await typesTest.testGetLastRelayerFromVec();
     })
 
 });

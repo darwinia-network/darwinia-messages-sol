@@ -29,7 +29,7 @@ library CommonTypes {
         return Relayer(id, collateral, fee);
     }
 
-    function decodeAndGetLastRelayer(bytes memory data)
+    function getLastRelayerFromVec(bytes memory data)
         internal
         pure
         returns (Relayer memory)
