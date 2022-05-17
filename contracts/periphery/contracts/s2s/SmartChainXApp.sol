@@ -5,13 +5,17 @@ pragma solidity >=0.6.0;
 import "./SmartChainXLib.sol";
 
 abstract contract SmartChainXApp {
-    struct Vars {
-        // vars for dispatch call
+    struct Config {
+        // config for dispatch call
         address dispatchAddress;
         bytes2 dispatchCallIndex;
-        // vars for market fee
+        // config for market fee
         address storageAddress;
+    }
+
+    struct BridgeConfig {
         bytes storageKeyForMarketFee;
+        bytes4 laneId;
     }
 
     struct MessagePayload {
@@ -20,16 +24,18 @@ abstract contract SmartChainXApp {
         bytes callEncoded;
     }
 
-    Vars vars;
+    Config config;
+    // bridge id => BridgeConfig
+    mapping(uint16 => BridgeConfig) bridgeConfigs;
 
     // Send message over lane.
     function sendMessage(
-        bytes4 laneId,
+        uint16 bridgeId,
         MessagePayload memory payload
     ) internal {
         uint128 fee = SmartChainXLib.marketFee(
-            vars.storageAddress,
-            vars.storageKeyForMarketFee
+            config.storageAddress,
+            bridgeConfigs[bridgeId].storageKeyForMarketFee
         );
 
         require(msg.value >= fee, "Not enough fee to pay");
@@ -41,17 +47,21 @@ abstract contract SmartChainXApp {
         );
 
         SmartChainXLib.sendMessage(
-            vars.dispatchAddress,
-            vars.dispatchCallIndex,
-            laneId,
+            config.dispatchAddress,
+            config.dispatchCallIndex,
+            bridgeConfigs[bridgeId].laneId,
             msg.value,
             message
         );
     }
 
-    function set(
-        Vars memory _vars
+    function setConfig(
+        Config memory _config
     ) internal {
-        vars = _vars;
+        config = _config;
+    }
+
+    function addBridge(uint16 bridgeId, BridgeConfig memory bridgeConfig) internal {
+        bridgeConfigs[bridgeId] = bridgeConfig;
     }
 }
