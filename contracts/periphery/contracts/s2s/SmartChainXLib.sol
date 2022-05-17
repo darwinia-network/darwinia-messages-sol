@@ -4,16 +4,19 @@ pragma solidity >=0.6.0;
 
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
+import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
+import "@darwinia/contracts-utils/contracts/Bytes.sol";
+
+import "./interfaces/IStateStorage.sol";
+import "./types/CommonTypes.sol";
 
 library SmartChainXLib {
-    address public constant DISPATCH =
-        0x0000000000000000000000000000000000000019;
-
     event DispatchResult(bool success, bytes result);
 
     // Send message over lane by calling the `send_message` dispatch call on
     // the source chain which is identified by the `callIndex` param.
     function sendMessage(
+        address dispatchAddress,
         bytes2 callIndex,
         bytes4 laneId,
         uint256 deliveryAndDispatchFee,
@@ -35,7 +38,7 @@ library SmartChainXLib {
             .encodeSendMessageCall(sendMessageCall);
 
         // dispatch the send_message call
-        (bool success, bytes memory returndata) = DISPATCH.call(
+        (bool success, bytes memory returndata) = dispatchAddress.call(
             sendMessageCallEncoded
         );
         if (!success) {
@@ -74,5 +77,26 @@ library SmartChainXLib {
                     call
                 )
             );
+    }
+
+    function marketFee(address storageAddress, bytes memory storageKey)
+        internal
+        view
+        returns (uint128)
+    {
+        bytes memory data = IStateStorage(storageAddress).state_storage(
+            storageKey
+        );
+        // // decode Option<Vec<Relayer>>
+        // uint8 firstByte = uint8(data[0]);
+        // if (firstByte == 0) {
+        //     revert("No relayers are working");
+        // } else if (firstByte == 1) {
+
+        CommonTypes.Relayer memory relayer = CommonTypes
+            .decodeAndGetLastRelayer(data);
+        return relayer.fee;
+
+        // }
     }
 }

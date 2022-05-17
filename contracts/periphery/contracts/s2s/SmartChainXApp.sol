@@ -5,23 +5,35 @@ pragma solidity >=0.6.0;
 import "./SmartChainXLib.sol";
 
 abstract contract SmartChainXApp {
+    struct Vars {
+        // vars for dispatch call
+        address dispatchAddress;
+        bytes2 dispatchCallIndex;
+        // vars for market fee
+        address storageAddress;
+        bytes storageKeyForMarketFee;
+    }
+
     struct MessagePayload {
         uint32 specVersionOfTargetChain;
         uint64 callWeight;
         bytes callEncoded;
     }
 
-    // The call index of `send_message` on the source chain.
-    // The default value `0x3003` is the call index on Crab.
-    // https://github.com/darwinia-network/darwinia-bridges-substrate/blob/17a2211dc7a9e2f9ac88857d01a1376a4e559a83/modules/messages/src/lib.rs#L275
-    bytes2 sendMessageCallIndexOnSourceChain = 0x3003;
+    Vars vars;
 
     // Send message over lane.
     function sendMessage(
         bytes4 laneId,
-        MessagePayload memory payload,
-        uint256 deliveryAndDispatchFee
+        MessagePayload memory payload
     ) internal {
+        uint128 fee = SmartChainXLib.marketFee(
+            vars.storageAddress,
+            vars.storageKeyForMarketFee
+        );
+
+        require(msg.value >= fee, "Not enough fee to pay");
+
         bytes memory message = SmartChainXLib.buildMessage(
             payload.specVersionOfTargetChain,
             payload.callWeight,
@@ -29,16 +41,17 @@ abstract contract SmartChainXApp {
         );
 
         SmartChainXLib.sendMessage(
-            sendMessageCallIndexOnSourceChain,
+            vars.dispatchAddress,
+            vars.dispatchCallIndex,
             laneId,
-            deliveryAndDispatchFee,
+            msg.value,
             message
         );
     }
 
-    function setSendMessageCallIndexOnSourceChain(
-        bytes2 _sendMessageCallIndexOnSourceChain
+    function set(
+        Vars memory _vars
     ) internal {
-        sendMessageCallIndexOnSourceChain = _sendMessageCallIndexOnSourceChain;
+        vars = _vars;
     }
 }

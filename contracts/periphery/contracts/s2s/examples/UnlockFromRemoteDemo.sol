@@ -8,9 +8,12 @@ import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 // PangolinSmartChain remote call unlockFromRemote of Pangoro
 contract UnlockFromRemoteDemo is SmartChainXApp {
     constructor() public {
-        // set the callIndex of send_message dispatch call,
-        // 0x2b03 is the callIndex on Pangolin
-        setSendMessageCallIndexOnSourceChain(0x2b03);
+        set(Vars(
+            0x0000000000000000000000000000000000000019, // dispatch address
+            0x2b03, // dispatch call index
+            0x000000000000000000000000000000000000001a, // storage address
+            hex"190d00dd4103825c78f55e5b5dbf8bfe2edb70953213f33a6ef6b8a5e3ffcab2" // storage key for Pangoro market fee
+        ));
     }
     
     function unlockFromRemote() public payable {
@@ -34,8 +37,7 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
         );
         sendMessage(
             0, // lane id, the lane to Pangoro
-            payload, // message payload
-            msg.value // deliveryAndDispatchFee
+            payload // message payload
         );
     }
 
