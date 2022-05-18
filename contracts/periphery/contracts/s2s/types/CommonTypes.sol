@@ -4,8 +4,15 @@ pragma solidity >=0.6.0;
 
 import "@darwinia/contracts-utils/contracts/Bytes.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
+import "hardhat/console.sol";
 
 library CommonTypes {
+    function decodeUint128(bytes memory data) internal pure returns (uint128) {
+        require(data.length >= 16, "The data is not right");
+        bytes memory reversed = Bytes.reverse(data);
+        return uint128(Bytes.toBytes16(reversed, 0));
+    }
+
     struct Relayer {
         bytes32 id;
         uint128 collateral;
@@ -21,10 +28,10 @@ library CommonTypes {
         require(data.length >= 64, "The data length of the decoding relayer is not enough");
 
         bytes32 id = Bytes.toBytes32(Bytes.substr(data, 0, 32));
-        uint128 collateral = uint128(
-            Bytes.toBytes16(Bytes.substr(data, 32, 16), 0)
-        );
-        uint128 fee = uint128(Bytes.toBytes16(Bytes.substr(data, 32, 16), 0));
+
+        uint128 collateral = decodeUint128(Bytes.substr(data, 32, 16));
+
+        uint128 fee = decodeUint128(Bytes.substr(data, 48, 16));
 
         return Relayer(id, collateral, fee);
     }
