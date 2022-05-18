@@ -71,7 +71,7 @@ module.exports = {
     cache: "./cache",
     artifacts: "./artifacts"
   },
-  defaultNetwork: 'pangolin',
+  defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
     },
