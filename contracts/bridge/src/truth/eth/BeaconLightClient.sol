@@ -7,17 +7,17 @@ import "../../utils/Bitfield.sol";
 import "../../utils/Bytes.sol";
 
 interface BLS {
-        function FastAggregateVerify(
+        function fast_aggregate_verify(
             bytes[] calldata pubkeys,
             bytes calldata message,
-            bytes32[3] calldata signature
+            bytes calldata signature
         ) external pure returns (bool);
 }
 
 contract BeaconLightClient is Bitfield {
     using Bytes for bytes;
 
-    address constant private bls = address(0x1b);
+    address constant private BLS_PRECOMPILE = address(0x1c);
 
     // TODO: check
     uint64 constant private SYNC_COMMITTEE_SIZE = 512;
@@ -198,7 +198,7 @@ contract BeaconLightClient is Bitfield {
         bytes32 domain = compute_domain(DOMAIN_SYNC_COMMITTEE, update.fork_version, genesis_validators_root);
         bytes32 signing_root = compute_signing_root(update.attested_header, domain);
         bytes memory message = abi.encode(signing_root);
-        require(BLS(bls).FastAggregateVerify(participant_pubkeys, message, sync_aggregate.sync_committee_signature), "!sig");
+        require(BLS(BLS_PRECOMPILE).fast_aggregate_verify(participant_pubkeys, message, sync_aggregate.sync_committee_signature), "!sig");
     }
 
     // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
