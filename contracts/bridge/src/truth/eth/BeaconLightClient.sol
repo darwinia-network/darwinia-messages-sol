@@ -197,8 +197,9 @@ contract BeaconLightClient is Bitfield {
         }
         bytes32 domain = compute_domain(DOMAIN_SYNC_COMMITTEE, update.fork_version, genesis_validators_root);
         bytes32 signing_root = compute_signing_root(update.attested_header, domain);
-        bytes memory message = abi.encode(signing_root);
-        require(BLS(BLS_PRECOMPILE).fast_aggregate_verify(participant_pubkeys, message, sync_aggregate.sync_committee_signature), "!sig");
+        bytes memory message = abi.encodePacked(signing_root);
+        bytes memory signature = abi.encodePacked(sync_aggregate.sync_committee_signature);
+        require(BLS(BLS_PRECOMPILE).fast_aggregate_verify(participant_pubkeys, message, signature), "!sig");
     }
 
     // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
