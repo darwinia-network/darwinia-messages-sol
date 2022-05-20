@@ -38,14 +38,14 @@ library SmartChainXLib {
             .encodeSendMessageCall(sendMessageCall);
 
         // dispatch the send_message call
-        (bool success, bytes memory returndata) = dispatchAddress.call(
+        (bool success, bytes memory data) = dispatchAddress.call(
             sendMessageCallEncoded
         );
         if (!success) {
-            if (returndata.length > 0) {
+            if (data.length > 0) {
                 assembly {
-                    let returndata_size := mload(returndata)
-                    revert(add(32, returndata), returndata_size)
+                    let data_size := mload(data)
+                    revert(add(32, data), data_size)
                 }
             } else {
                 revert("Send message failed");
@@ -79,16 +79,32 @@ library SmartChainXLib {
             );
     }
 
+    // Get market fee from state storage of the substrate chain
     function marketFee(address storageAddress, bytes memory storageKey)
         internal
         view
         returns (uint128)
     {
-        bytes memory data = IStateStorage(storageAddress).state_storage(
-            storageKey
+        (bool success, bytes memory data) = address(storageAddress).staticcall(
+            abi.encodeWithSelector(
+                IStateStorage.state_storage.selector,
+                storageKey
+            )
         );
-        CommonTypes.Relayer memory relayer = CommonTypes
-            .getLastRelayerFromVec(data);
+        if (!success) {
+            if (data.length > 0) {
+                assembly {
+                    let data_size := mload(data)
+                    revert(add(32, data), data_size)
+                }
+            } else {
+                revert("Get market fee failed");
+            }
+        }
+
+        CommonTypes.Relayer memory relayer = CommonTypes.getLastRelayerFromVec(
+            data
+        );
         return relayer.fee;
     }
 }
