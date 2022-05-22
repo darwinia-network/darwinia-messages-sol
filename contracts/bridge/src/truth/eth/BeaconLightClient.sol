@@ -24,6 +24,9 @@ contract BeaconLightClient is Bitfield {
     uint64 constant private NEXT_SYNC_COMMITTEE_INDEX = 23;
     uint64 constant private NEXT_SYNC_COMMITTEE_DEPTH = 5;
 
+    uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX = 1;
+    uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH = 1;
+
     uint64 constant private FINALIZED_ROOT_INDEX = 41;
     uint64 constant private FINALIZED_ROOT_DEPTH = 6;
 
@@ -74,6 +77,10 @@ contract BeaconLightClient is Bitfield {
         BeaconBlockHeader finalized_header;
         bytes32[] finality_branch;
 
+        // Execution payload header in beacon state [New in Bellatrix]
+        bytes32 latest_execution_payload_state_root;
+        bytes32[] latest_execution_payload_state_root_branch;
+
         // Sync committee aggregate signature
         SyncAggregate sync_aggregate;
 
@@ -83,6 +90,9 @@ contract BeaconLightClient is Bitfield {
 
     // Beacon block header that is finalized
     BeaconBlockHeader finalized_header;
+
+    // Execution payload state root
+    bytes32 latest_execution_payload_state_root;
     // Sync committees corresponding to the header
     SyncCommittee current_sync_committee;
     SyncCommittee next_sync_committee;
@@ -121,6 +131,7 @@ contract BeaconLightClient is Bitfield {
             next_sync_committee = next_sync_committee;
         }
         finalized_header = active_header;
+        latest_execution_payload_state_root = update.latest_execution_payload_state_root;
         // if store.finalized_header.slot > store.optimistic_header.slot:
         //     store.optimistic_header = store.finalized_header
     }
@@ -179,6 +190,19 @@ contract BeaconLightClient is Bitfield {
                     "!sync_committee"
             );
         }
+
+        // Verify latest_execution_payload_state_root in beacon state
+        require(update.latest_execution_payload_state_root_branch.length == LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH - 1, "!execution_payload_state_root_branch");
+        require(is_valid_merkle_branch(
+                update.latest_execution_payload_state_root,
+                update.latest_execution_payload_state_root_branch,
+                floorlog2(LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH),
+                get_subtree_index(LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX),
+                update.attested_header.state_root
+            ),
+            "!state_root"
+        );
+
         SyncAggregate memory sync_aggregate = update.sync_aggregate;
 
         // Verify sync committee has sufficient participants
