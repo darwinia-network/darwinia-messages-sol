@@ -16,7 +16,7 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
         // Bridge settings
         bridgeConfigs[0] = BridgeConfig(
             // storage key for Darwinia market fee
-            hex"190d00dd4103825c78f55e5b5dbf8bfe2edb70953213f33a6ef6b8a5e3ffcab2",
+            0x190d00dd4103825c78f55e5b5dbf8bfe2edb70953213f33a6ef6b8a5e3ffcab2,
             // lane id, lane to Darwinia
             0
         );

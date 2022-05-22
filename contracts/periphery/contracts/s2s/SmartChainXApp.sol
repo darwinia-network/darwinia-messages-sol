@@ -22,7 +22,7 @@ abstract contract SmartChainXApp {
 
     struct BridgeConfig {
         // The storage key used to get market fee
-        bytes storageKeyForMarketFee;
+        bytes32 storageKeyForMarketFee;
         // The lane id
         bytes4 laneId;
     }
@@ -86,7 +86,7 @@ abstract contract SmartChainXApp {
     function getBridgeConfig(uint16 bridgeId)
         public
         view
-        returns (bytes memory, bytes4)
+        returns (bytes32, bytes4)
     {
         BridgeConfig memory config = bridgeConfigs[bridgeId];
         return (config.storageKeyForMarketFee, config.laneId);
