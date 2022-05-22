@@ -4,20 +4,46 @@ pragma solidity >=0.6.0;
 
 import "../SmartChainXApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
+import "@darwinia/contracts-utils/contracts/Ownable.sol";
 
-// CrabSmartChain remote call remark of Darwinia 
-contract RemarkDemo is SmartChainXApp {
+// CrabSmartChain remote call remark of Darwinia
+contract RemarkDemo is SmartChainXApp, Ownable {
     constructor() public {
-        setConfig(Config(
-            0x0000000000000000000000000000000000000019, // dispatch address
-            0x3003, // dispatch call index
-            0x000000000000000000000000000000000000001a // storage address
-        ));
+        // Globle settings
+        // The SmartChainXApp has default globle settings
 
-        addBridge(0, BridgeConfig(
-            hex"190d00dd4103825c78f55e5b5dbf8bfe2edb70953213f33a6ef6b8a5e3ffcab2", // storage key for Darwinia market fee
-            0 // lane id, lane to Darwinia
-        ));
+        // Bridge settings
+        bridgeConfigs[0] = BridgeConfig(
+            // storage key for Darwinia market fee
+            hex"190d00dd4103825c78f55e5b5dbf8bfe2edb70953213f33a6ef6b8a5e3ffcab2",
+            // lane id, lane to Darwinia
+            0
+        );
+    }
+
+    // You need to consider providing set methods with permission control
+    // if you want to make the settings upgradable
+    function setDispatchAddress(address _dispatchAddress) public onlyOwner {
+        dispatchAddress = _dispatchAddress;
+    }
+
+    function setCallIndexOfSendMessage(bytes2 _callIndexOfSendMessage)
+        public
+        onlyOwner
+    {
+        callIndexOfSendMessage = _callIndexOfSendMessage;
+    }
+
+    function setStorageAddress(address _storageAddress) public onlyOwner {
+        storageAddress = _storageAddress;
+    }
+
+    function setBridgeConfig(
+        uint16 bridgeId,
+        bytes memory storageKeyForMarketFee,
+        bytes4 laneId
+    ) public onlyOwner {
+        bridgeConfigs[0] = BridgeConfig(storageKeyForMarketFee, laneId);
     }
 
     function remark() public payable {

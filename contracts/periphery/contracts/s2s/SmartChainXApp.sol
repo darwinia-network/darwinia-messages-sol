@@ -4,62 +4,57 @@ pragma solidity >=0.6.0;
 
 import "./SmartChainXLib.sol";
 
+pragma experimental ABIEncoderV2;
+
 // The base contract for developers to inherit
 abstract contract SmartChainXApp {
-    struct Config {
-        // Precompile address for dispatching 'send_message'
-        address dispatchAddress;
-
-        // Call index of 'send_message'
-        bytes2 callIndexOfSendMessage;
-
-        // Precompile address for getting state storage
-        // The address is used to get market fee.
-        address storageAddress;
+    struct MessagePayload {
+        // The spec version of target chain
+        // This is used to compare against the on-chain spec version before the call dispatch on target chain.
+        uint32 specVersionOfTargetChain;
+        // The call weight
+        // We want passed weight to be at least equal to pre-dispatch weight of the call
+        // because otherwise Calls may be dispatched at lower price.
+        uint64 callWeight;
+        // The scale encoded call to be executed on the target chain
+        bytes callEncoded;
     }
 
     struct BridgeConfig {
         // The storage key used to get market fee
         bytes storageKeyForMarketFee;
-
-        // The lane id 
+        // The lane id
         bytes4 laneId;
     }
 
-    struct MessagePayload {
-        // The spec version of target chain
-        // This is used to compare against the on-chain spec version before the call dispatch on target chain.
-        uint32 specVersionOfTargetChain;
+    // Precompile address for dispatching 'send_message'
+    address internal dispatchAddress =
+        0x0000000000000000000000000000000000000019;
 
-        // The call weight
-		// We want passed weight to be at least equal to pre-dispatch weight of the call
-		// because otherwise Calls may be dispatched at lower price.
-        uint64 callWeight;
+    // Call index of 'send_message'
+    bytes2 internal callIndexOfSendMessage = 0x3003;
 
-        // The scale encoded call to be executed on the target chain
-        bytes callEncoded;
-    }
-
-    // Globle cross-chain config
-    Config private config;
+    // Precompile address for getting state storage
+    // The address is used to get market fee.
+    address internal storageAddress =
+        0x000000000000000000000000000000000000001a;
 
     // Config of each bridge
     // bridge id => BridgeConfig
-    mapping(uint16 => BridgeConfig) private bridgeConfigs;
+    mapping(uint16 => BridgeConfig) internal bridgeConfigs;
 
     // Send message over bridge id
-    function sendMessage(
-        uint16 bridgeId,
-        MessagePayload memory payload
-    ) internal {
+    function sendMessage(uint16 bridgeId, MessagePayload memory payload)
+        internal
+    {
         // Get the current market fee
         uint128 fee = SmartChainXLib.marketFee(
-            config.storageAddress,
+            storageAddress,
             bridgeConfigs[bridgeId].storageKeyForMarketFee
         );
         require(msg.value >= fee, "Not enough fee to pay");
 
-        // Build the encoded message to be sent 
+        // Build the encoded message to be sent
         bytes memory message = SmartChainXLib.buildMessage(
             payload.specVersionOfTargetChain,
             payload.callWeight,
@@ -68,21 +63,32 @@ abstract contract SmartChainXApp {
 
         // Send the message
         SmartChainXLib.sendMessage(
-            config.dispatchAddress,
-            config.callIndexOfSendMessage,
+            dispatchAddress,
+            callIndexOfSendMessage,
             bridgeConfigs[bridgeId].laneId,
             msg.value,
             message
         );
     }
 
-    function setConfig(
-        Config memory _config
-    ) internal {
-        config = _config;
+    function getDispatchAddress() public view returns (address) {
+        return dispatchAddress;
     }
 
-    function addBridge(uint16 bridgeId, BridgeConfig memory bridgeConfig) internal {
-        bridgeConfigs[bridgeId] = bridgeConfig;
+    function getCallIndexOfSendMessage() public view returns (bytes2) {
+        return callIndexOfSendMessage;
+    }
+
+    function getStorageAddress() public view returns (address) {
+        return storageAddress;
+    }
+
+    function getBridgeConfig(uint16 bridgeId)
+        public
+        view
+        returns (bytes memory, bytes4)
+    {
+        BridgeConfig memory config = bridgeConfigs[bridgeId];
+        return (config.storageKeyForMarketFee, config.laneId);
     }
 }
