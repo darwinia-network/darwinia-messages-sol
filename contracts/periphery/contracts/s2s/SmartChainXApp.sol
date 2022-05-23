@@ -23,6 +23,8 @@ abstract contract SmartChainXApp {
     struct BridgeConfig {
         // The storage key used to get market fee
         bytes32 storageKeyForMarketFee;
+        // The storage key used to get latest nonce
+        bytes storageKeyForLatestNonce;
         // The lane id
         bytes4 laneId;
     }
@@ -46,6 +48,7 @@ abstract contract SmartChainXApp {
     // Send message over bridge id
     function sendMessage(uint16 bridgeId, MessagePayload memory payload)
         internal
+        returns (uint64)
     {
         // Get the current market fee
         uint128 fee = SmartChainXLib.marketFee(
@@ -69,6 +72,13 @@ abstract contract SmartChainXApp {
             msg.value,
             message
         );
+
+        // Get nonce from storage
+        return
+            SmartChainXLib.latestNonce(
+                storageAddress,
+                bridgeConfigs[bridgeId].storageKeyForLatestNonce
+            );
     }
 
     function getDispatchAddress() public view returns (address) {
@@ -91,4 +101,10 @@ abstract contract SmartChainXApp {
         BridgeConfig memory config = bridgeConfigs[bridgeId];
         return (config.storageKeyForMarketFee, config.laneId);
     }
+
+    /// @notice Message delivered callback
+    /// @param lane Lane id
+    /// @param nonce Nonce of the callback message
+    /// @param result Dispatch result of cross chain message
+    function onMessageDelivered(bytes4 lane, uint256 nonce, bool result) external virtual;
 }

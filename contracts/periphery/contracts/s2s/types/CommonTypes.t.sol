@@ -17,4 +17,10 @@ contract CommonTypesTest is DSTest {
         CommonTypes.Relayer memory relayer = CommonTypes.getLastRelayerFromVec(data);
         assertTrue(relayer.fee == 20000000000);
     }
+
+    function testDecodeOutboundLaneData() public {
+        bytes memory data = hex"010000000000000000000000000000000c00000000000000";
+        CommonTypes.OutboundLaneData memory outboundLaneData = CommonTypes.decodeOutboundLaneData(data);
+        assertTrue(outboundLaneData.latestGeneratedNonce == 12);
+    }
 }

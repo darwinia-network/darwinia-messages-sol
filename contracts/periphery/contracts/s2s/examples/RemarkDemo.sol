@@ -16,6 +16,8 @@ contract RemarkDemo is SmartChainXApp, Ownable {
         bridgeConfigs[0] = BridgeConfig(
             // storage key for Darwinia market fee
             0x190d00dd4103825c78f55e5b5dbf8bfe2edb70953213f33a6ef6b8a5e3ffcab2,
+            // storage key for the latest nonce of Darwinia message lane
+            hex"c9b76e645ba80b6ca47619d64cb5e58d96c246acb9b55077390e3ca723a0ca1f11d2df4e979aa105cf552e9544ebd2b500000000",
             // lane id, lane to Darwinia
             0
         );
@@ -41,9 +43,10 @@ contract RemarkDemo is SmartChainXApp, Ownable {
     function setBridgeConfig(
         uint16 bridgeId,
         bytes32 storageKeyForMarketFee,
+        bytes memory storageKeyForLatestNonce,
         bytes4 laneId
     ) public onlyOwner {
-        bridgeConfigs[bridgeId] = BridgeConfig(storageKeyForMarketFee, laneId);
+        bridgeConfigs[bridgeId] = BridgeConfig(storageKeyForMarketFee, storageKeyForLatestNonce, laneId);
     }
 
     function remark() public payable {
@@ -60,9 +63,13 @@ contract RemarkDemo is SmartChainXApp, Ownable {
             2654000000, // call weight
             callEncoded // call encoded bytes
         );
-        sendMessage(
-            0, // bridge id
+        uint64 nonce = sendMessage(
+            0, // bridge id, which is the mapping key of bridgeConfigs
             payload // message payload
         );
+    }
+
+    function onMessageDelivered(bytes4 lane, uint256 nonce, bool result) external override {
+        // TODO: add your code here if you want to do something after the message delivered
     }
 }

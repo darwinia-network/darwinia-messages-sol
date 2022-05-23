@@ -107,4 +107,33 @@ library SmartChainXLib {
         );
         return relayer.fee;
     }
+
+    // Get the latest nonce from state storage
+    function latestNonce(address storageAddress, bytes memory storageKey)
+        internal
+        view
+        returns (uint64)
+    {
+        (bool success, bytes memory data) = address(storageAddress).staticcall(
+            abi.encodeWithSelector(
+                IStateStorage.state_storage.selector,
+                abi.encodePacked(storageKey)
+            )
+        );
+        if (!success) {
+            if (data.length > 0) {
+                assembly {
+                    let data_size := mload(data)
+                    revert(add(32, data), data_size)
+                }
+            } else {
+                revert("Get market fee failed");
+            }
+        }
+
+        CommonTypes.OutboundLaneData memory outboundLaneData = CommonTypes.decodeOutboundLaneData(
+            data
+        );
+        return outboundLaneData.latestGeneratedNonce;
+    }
 }

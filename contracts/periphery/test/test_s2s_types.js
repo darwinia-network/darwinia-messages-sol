@@ -19,5 +19,8 @@ describe('S2STypesTest', function (accounts) {
     it('testGetLastRelayerFromVec', async() => {
         await typesTest.testGetLastRelayerFromVec();
     })
-
+    
+    it('testDecodeOutboundLaneData', async() => {
+        await typesTest.testDecodeOutboundLaneData();
+    })
 });
