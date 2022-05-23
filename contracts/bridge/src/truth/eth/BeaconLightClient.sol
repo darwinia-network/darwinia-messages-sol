@@ -5,6 +5,7 @@ pragma abicoder v2;
 
 import "../../utils/Bitfield.sol";
 import "../../utils/Bytes.sol";
+import "../common/StorageVerifier.sol";
 
 interface BLS {
         function fast_aggregate_verify(
@@ -14,7 +15,7 @@ interface BLS {
         ) external pure returns (bool);
 }
 
-contract BeaconLightClient is Bitfield {
+contract BeaconLightClient is Bitfield, StorageVerifier {
     using Bytes for bytes;
 
     address constant private BLS_PRECOMPILE = address(0x1c);
@@ -104,6 +105,19 @@ contract BeaconLightClient is Bitfield {
     // // Max number of active participants in a sync committee (used to calculate safety threshold)
     // uint64 previous_max_active_participants;
     // uint64 current_max_active_participants;
+
+    constructor(
+        uint32 this_chain_position,
+        uint256 lane_identify_slot,
+        uint256 lane_nonce_slot,
+        uint256 lane_message_slot
+    ) StorageVerifier(this_chain_position, lane_identify_slot, lane_nonce_slot, lane_message_slot) {
+
+    }
+
+    function state_root() public view override returns (bytes32) {
+        return latest_execution_payload_state_root;
+    }
 
     function process_light_client_update(
         LightClientUpdate calldata update,
