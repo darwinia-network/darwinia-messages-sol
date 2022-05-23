@@ -186,7 +186,7 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
         uint64 back = uint64(nonce_storage >> 192);
         uint64 size = back >= front ? back - front + 1 : 0;
         // restruct the in lane data
-        InboundLaneData memory lane_data = build_inlane(size, front, back, last_confirmed_nonce, last_delivered_nonce, lane, proof);
+        InboundLaneData memory lane_data = build_inlane(size, front, last_confirmed_nonce, last_delivered_nonce, lane, proof);
         // check the lane_data_hash
         return inlane_hash == hash(lane_data);
     }
@@ -194,7 +194,6 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
     function build_inlane(
         uint64 size,
         uint64 front,
-        uint64 back,
         uint64 last_confirmed_nonce,
         uint64 last_delivered_nonce,
         address lane,
