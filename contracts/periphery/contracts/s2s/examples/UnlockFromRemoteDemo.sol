@@ -49,7 +49,7 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
         );
     }
 
-    function onMessageDelivered(bytes4 lane, uint256 nonce, bool result) external override {
+    function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override {
         // TODO: add your code here if you want to do something after the message delivered
     }
 }
