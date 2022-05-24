@@ -9,7 +9,7 @@ import "../../spec/BeaconChain.sol";
 import "../../spec/ChainMessagePosition.sol";
 import "../common/StorageVerifier.sol";
 
-interface BLS {
+interface IBLS {
         function fast_aggregate_verify(
             bytes[] calldata pubkeys,
             bytes calldata message,
@@ -23,13 +23,13 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     address constant private BLS_PRECOMPILE = address(0x1c);
 
     // TODO: check
-    uint64 constant private NEXT_SYNC_COMMITTEE_INDEX = 23;
+    uint64 constant private NEXT_SYNC_COMMITTEE_INDEX = 55;
     uint64 constant private NEXT_SYNC_COMMITTEE_DEPTH = 5;
 
     uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX = 1;
     uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH = 1;
 
-    uint64 constant private FINALIZED_ROOT_INDEX = 41;
+    uint64 constant private FINALIZED_ROOT_INDEX = 105;
     uint64 constant private FINALIZED_ROOT_DEPTH = 6;
 
     uint64 constant private EPOCHS_PER_SYNC_COMMITTEE_PERIOD = 256;
@@ -95,10 +95,12 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         bytes32 _parent_root,
         bytes32 _state_root,
         bytes32 _body_root,
-        bytes32 _current_sync_committee_hash
-    ) StorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
+        bytes32 _current_sync_committee_hash,
+        bytes32 _next_sync_committee_hash
+    ) StorageVerifier(uint32(ChainMessagePosition.ETH2), 0, 1, 2) {
         finalized_header = BeaconBlockHeader(_slot, _proposer_index, _parent_root, _state_root, _body_root);
         current_sync_committee_hash = _current_sync_committee_hash;
+        next_sync_committee_hash = _next_sync_committee_hash;
     }
 
     function state_root() public view override returns (bytes32) {
@@ -153,7 +155,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
 
         // Verify that the `finalized_header`, if present, actually is the finalized header saved in the
         // state of the `attested header`
-        require(update.finality_branch.length == FINALIZED_ROOT_DEPTH - 1, "!finality_branch");
+        require(update.finality_branch.length == FINALIZED_ROOT_DEPTH, "!finality_branch");
         if (!is_finality_update(update)) {
             for (uint64 i = 0; i < floorlog2(FINALIZED_ROOT_INDEX); ++i) {
                 require(update.finality_branch[i] == bytes32(0), "!zero");
@@ -171,7 +173,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         }
 
         // Verify update next sync committee if the update period incremented
-        require(update.next_sync_committee_branch.length == NEXT_SYNC_COMMITTEE_DEPTH - 1, "!next_sync_committee_branch");
+        require(update.next_sync_committee_branch.length == NEXT_SYNC_COMMITTEE_DEPTH, "!next_sync_committee_branch");
         SyncCommittee memory sync_committee = update.current_sync_committee;
         if (update_period == finalized_period) {
             require(hash_tree_root(sync_committee) == current_sync_committee_hash, "!sync_committee");
@@ -225,7 +227,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         bytes memory message = abi.encodePacked(signing_root);
         bytes memory signature = sync_aggregate.sync_committee_signature;
         require(signature.length == BLSSIGNATURE_LENGTH, "!signature");
-        require(BLS(BLS_PRECOMPILE).fast_aggregate_verify(participant_pubkeys, message, signature), "!sig");
+        require(IBLS(BLS_PRECOMPILE).fast_aggregate_verify(participant_pubkeys, message, signature), "!sig");
     }
 
     // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.

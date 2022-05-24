@@ -6,7 +6,7 @@ pragma abicoder v2;
 import "../../spec/BeaconChain.sol";
 
 contract SyncCommitteePreset is BeaconChain {
-    function sync_committee_case0() public view returns (SyncCommittee memory sync_committee) {
+    function sync_committee_case0() public pure returns (SyncCommittee memory sync_committee) {
         bytes[SYNC_COMMITTEE_SIZE] memory pubkeys;
         pubkeys[0]   = hex'9b039cdb8479cabc9005dce6c1116e4c911e5c8288f6b6b3e0bc763c8a4446db0d1289648bfcf16ccabf91fdc4ada15b';
         pubkeys[1]   = hex'e9e07ffa0bf12ff8f61bbbdfc6ec58ddca4cec3614227d38fa5ed52918edac8be4926d6275e4b40762832b9b28b3c9e5';
@@ -526,7 +526,7 @@ contract SyncCommitteePreset is BeaconChain {
         });
     }
 
-    function sync_committee_case1() public view returns (SyncCommittee memory sync_committee) {
+    function sync_committee_case1() public pure returns (SyncCommittee memory sync_committee) {
         bytes[SYNC_COMMITTEE_SIZE] memory pubkeys;
         pubkeys[0]   = hex'b4bf4717ad2d3fce3a11a84dee1b38469be9e783b298b200cc533be97e474bf94d6c7c591d3102992f908820bc63ac72';
         pubkeys[1]   = hex'969b4bcd84cabd5ba5f31705de51e2c4096402f832fdf543d88eb41ebb55f03a8715c1ceea92335d24febbea17a3bdd7';
