@@ -10,6 +10,7 @@ contract BeaconChain {
 
     uint64 constant internal SYNC_COMMITTEE_SIZE = 512;
     uint64 constant internal BLSPUBLICKEY_LENGTH = 48;
+    uint64 constant internal BLSSIGNATURE_LENGTH = 96;
 
     struct ForkData {
         bytes4 current_version;

@@ -41,7 +41,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
 
     struct SyncAggregate {
         uint256[2] sync_committee_bits;
-        bytes32[3] sync_committee_signature;
+        bytes sync_committee_signature;
     }
 
 
@@ -60,9 +60,9 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         BeaconBlockHeader finalized_header;
         bytes32[] finality_branch;
 
-        // Execution payload header in beacon state [New in Bellatrix]
-        bytes32 latest_execution_payload_state_root;
-        bytes32[] latest_execution_payload_state_root_branch;
+        // // Execution payload header in beacon state [New in Bellatrix]
+        // bytes32 latest_execution_payload_state_root;
+        // bytes32[] latest_execution_payload_state_root_branch;
 
         // Sync committee aggregate signature
         SyncAggregate sync_aggregate;
@@ -131,7 +131,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
             next_sync_committee_hash = hash_tree_root(update.next_sync_committee);
         }
         finalized_header = active_header;
-        latest_execution_payload_state_root = update.latest_execution_payload_state_root;
+        // latest_execution_payload_state_root = update.latest_execution_payload_state_root;
         // if store.finalized_header.slot > store.optimistic_header.slot:
         //     store.optimistic_header = store.finalized_header
     }
@@ -191,17 +191,17 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
             );
         }
 
-        // Verify latest_execution_payload_state_root in beacon state
-        require(update.latest_execution_payload_state_root_branch.length == LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH - 1, "!execution_payload_state_root_branch");
-        require(is_valid_merkle_branch(
-                update.latest_execution_payload_state_root,
-                update.latest_execution_payload_state_root_branch,
-                floorlog2(LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH),
-                get_subtree_index(LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX),
-                update.attested_header.state_root
-            ),
-            "!state_root"
-        );
+        // // Verify latest_execution_payload_state_root in beacon state
+        // require(update.latest_execution_payload_state_root_branch.length == LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH - 1, "!execution_payload_state_root_branch");
+        // require(is_valid_merkle_branch(
+        //         update.latest_execution_payload_state_root,
+        //         update.latest_execution_payload_state_root_branch,
+        //         floorlog2(LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH),
+        //         get_subtree_index(LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX),
+        //         update.attested_header.state_root
+        //     ),
+        //     "!state_root"
+        // );
 
         SyncAggregate memory sync_aggregate = update.sync_aggregate;
 
@@ -223,7 +223,8 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         bytes32 domain = compute_domain(DOMAIN_SYNC_COMMITTEE, update.fork_version, genesis_validators_root);
         bytes32 signing_root = compute_signing_root(update.attested_header, domain);
         bytes memory message = abi.encodePacked(signing_root);
-        bytes memory signature = abi.encodePacked(sync_aggregate.sync_committee_signature);
+        bytes memory signature = sync_aggregate.sync_committee_signature;
+        require(signature.length == BLSSIGNATURE_LENGTH, "!signature");
         require(BLS(BLS_PRECOMPILE).fast_aggregate_verify(participant_pubkeys, message, signature), "!sig");
     }
 
