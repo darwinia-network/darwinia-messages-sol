@@ -28,7 +28,7 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
 
     }
 
-    function testFail_process_light_client_update() public {
+    function test_process_light_client_update() public {
         BeaconLightClient.LightClientUpdate memory update = BeaconLightClient.LightClientUpdate({
             attested_header: BeaconBlockHeader({
                 slot: 1,
@@ -61,7 +61,7 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
         lightclient.process_light_client_update(update, genesis_validators_root);
     }
 
-    function testFail_process_light_client_update_finality_updated() public {
+    function test_process_light_client_update_finality_updated() public {
         bytes32[] memory finality_branch = new bytes32[](6);
         finality_branch[0] = 0x0300000000000000000000000000000000000000000000000000000000000000;
         finality_branch[1] = 0x504e8dfadf27180c21c80f1886b202de4c1c89ee2977562433abbbc92ea194e6;

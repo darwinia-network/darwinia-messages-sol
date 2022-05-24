@@ -218,7 +218,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
             uint index = i / 256;
             uint8 offset = uint8(i % 256);
             // TODO check
-            if (sync_aggregate.sync_committee_bits[index] >> offset == 1) {
+            if (isSet(sync_aggregate.sync_committee_bits[index], offset)) {
                 participant_pubkeys[n++] = sync_committee.pubkeys[i];
             }
         }
@@ -227,7 +227,31 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         bytes memory message = abi.encodePacked(signing_root);
         bytes memory signature = sync_aggregate.sync_committee_signature;
         require(signature.length == BLSSIGNATURE_LENGTH, "!signature");
-        require(IBLS(BLS_PRECOMPILE).fast_aggregate_verify(participant_pubkeys, message, signature), "!sig");
+        require(fast_aggregate_verify(participant_pubkeys, message, signature));
+    }
+
+    function fast_aggregate_verify(bytes[] memory pubkeys, bytes memory message, bytes memory signature) internal view returns (bool valid) {
+        bytes memory input = abi.encodeWithSelector(
+            IBLS.fast_aggregate_verify.selector,
+            pubkeys,
+            message,
+            signature
+        );
+        (bool ok, bytes memory out) = BLS_PRECOMPILE.staticcall(input);
+        if (ok) {
+            if (out.length == 32) {
+                valid = abi.decode(out, (bool));
+            }
+        } else {
+            if (out.length > 0) {
+                assembly {
+                    let returndata_size := mload(out)
+                    revert(add(32, out), returndata_size)
+                }
+            } else {
+                revert("!verify");
+            }
+        }
     }
 
     // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
