@@ -8,6 +8,9 @@ import "../utils/Bytes.sol";
 contract BeaconChain {
     using Bytes for bytes;
 
+    uint64 constant private SYNC_COMMITTEE_SIZE = 512;
+    uint64 constant private BLSPUBLICKEY_LENGTH = 48;
+
     struct ForkData {
         bytes4 current_version;
         bytes32 genesis_validators_root;
@@ -19,7 +22,7 @@ contract BeaconChain {
     }
 
     struct SyncCommittee {
-        bytes serialized_pubkeys;
+        bytes[SYNC_COMMITTEE_SIZE] pubkeys;
         bytes aggregate_pubkey;
     }
 
@@ -40,16 +43,15 @@ contract BeaconChain {
     }
 
     function hash_tree_root(SyncCommittee memory sync_committee) internal pure returns (bytes32) {
-        bytes memory pubkeys_chunks = sync_committee.serialized_pubkeys;
-        bytes32[] memory pubkeys_leaves = new bytes32[](768);
-        for (uint i = 0; i < 768 * 32; i += 32) {
-            bytes memory key = pubkeys_chunks.substr(i, 32);
-            pubkeys_leaves[i] = abi.decode(key, (bytes32));
+        bytes32[] memory pubkeys_leaves = new bytes32[](SYNC_COMMITTEE_SIZE);
+        for (uint i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
+            bytes memory key = sync_committee.pubkeys[i];
+            require(key.length == BLSPUBLICKEY_LENGTH, "!key");
+            pubkeys_leaves[i] = hash(abi.encodePacked(key, bytes16(0)));
         }
         bytes32 pubkeys_root = merkle_root(pubkeys_leaves);
 
-        bytes memory aggregate_pubkey_leaves = abi.encodePacked(sync_committee.aggregate_pubkey, bytes16(0));
-        bytes32 aggregate_pubkey_root = sha256(aggregate_pubkey_leaves);
+        bytes32 aggregate_pubkey_root = hash(abi.encodePacked(sync_committee.aggregate_pubkey, bytes16(0)));
 
         return hash_node(pubkeys_root, aggregate_pubkey_root);
     }
@@ -67,7 +69,7 @@ contract BeaconChain {
     function merkle_root(bytes32[] memory leaves) internal pure returns (bytes32) {
         uint len = leaves.length;
         if (len == 0) return bytes32(0);
-        else if (len == 1) return sha256(abi.encodePacked(leaves[0]));
+        else if (len == 1) return hash(abi.encodePacked(leaves[0]));
         else if (len == 2) return hash_node(leaves[0], leaves[1]);
         uint bottom_length = get_power_of_two_ceil(len);
         bytes32[] memory o = new bytes32[](bottom_length * 2);
@@ -83,9 +85,13 @@ contract BeaconChain {
     function hash_node(bytes32 left, bytes32 right)
         internal
         pure
-        returns (bytes32 hash)
+        returns (bytes32)
     {
-        return sha256(abi.encodePacked(left, right));
+        return hash(abi.encodePacked(left, right));
+    }
+
+    function hash(bytes memory value) internal pure returns (bytes32) {
+        return sha256(value);
     }
 
     //  Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.

@@ -208,8 +208,9 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         for (uint64 i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
             uint index = i / 256;
             uint8 offset = uint8(i % 256);
-            if (isSet(sync_aggregate.sync_committee_bits[index], offset)) {
-                participant_pubkeys[n++] = sync_committee.serialized_pubkeys.substr(i * 48, 48);
+            // TODO check
+            if (sync_aggregate.sync_committee_bits[index] >> offset == 1) {
+                participant_pubkeys[n++] = sync_committee.pubkeys[i];
             }
         }
         bytes32 domain = compute_domain(DOMAIN_SYNC_COMMITTEE, update.fork_version, genesis_validators_root);
