@@ -6,6 +6,7 @@ pragma abicoder v2;
 import "../../utils/Bytes.sol";
 import "../../utils/Bitfield.sol";
 import "../../spec/BeaconChain.sol";
+import "../../spec/ChainMessagePosition.sol";
 import "../common/StorageVerifier.sol";
 
 interface BLS {
@@ -22,7 +23,6 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     address constant private BLS_PRECOMPILE = address(0x1c);
 
     // TODO: check
-    uint64 constant private SYNC_COMMITTEE_SIZE = 512;
     uint64 constant private NEXT_SYNC_COMMITTEE_INDEX = 23;
     uint64 constant private NEXT_SYNC_COMMITTEE_DEPTH = 5;
 
@@ -49,6 +49,9 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         // The beacon block header that is attested to by the sync committee
         BeaconBlockHeader attested_header;
 
+        // Current sync committee corresponding to the attested header
+        SyncCommittee current_sync_committee;
+
         // Next sync committee corresponding to the active header
         SyncCommittee next_sync_committee;
         bytes32[] next_sync_committee_branch;
@@ -71,11 +74,12 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     // Beacon block header that is finalized
     BeaconBlockHeader finalized_header;
 
+    // Sync committees corresponding to the header
+    bytes32 current_sync_committee_hash;
+    bytes32 next_sync_committee_hash;
+
     // Execution payload state root
     bytes32 latest_execution_payload_state_root;
-    // Sync committees corresponding to the header
-    SyncCommittee current_sync_committee;
-    SyncCommittee next_sync_committee;
 
     // // Best available header to switch finalized head to if we see nothing else
     // LightClientUpdate best_valid_update;
@@ -86,12 +90,15 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     // uint64 current_max_active_participants;
 
     constructor(
-        uint32 this_chain_position,
-        uint256 lane_identify_slot,
-        uint256 lane_nonce_slot,
-        uint256 lane_message_slot
-    ) StorageVerifier(this_chain_position, lane_identify_slot, lane_nonce_slot, lane_message_slot) {
-
+        uint64 _slot,
+        uint64 _proposer_index,
+        bytes32 _parent_root,
+        bytes32 _state_root,
+        bytes32 _body_root,
+        bytes32 _current_sync_committee_hash
+    ) StorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
+        finalized_header = BeaconBlockHeader(_slot, _proposer_index, _parent_root, _state_root, _body_root);
+        current_sync_committee_hash = _current_sync_committee_hash;
     }
 
     function state_root() public view override returns (bytes32) {
@@ -120,8 +127,8 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         uint64 finalized_period = compute_sync_committee_period(compute_epoch_at_slot(finalized_header.slot));
         uint64 update_period = compute_sync_committee_period(compute_epoch_at_slot(active_header.slot));
         if (update_period == finalized_period + 1) {
-            current_sync_committee = next_sync_committee;
-            next_sync_committee = next_sync_committee;
+            current_sync_committee_hash = next_sync_committee_hash;
+            next_sync_committee_hash = hash_tree_root(update.next_sync_committee);
         }
         finalized_header = active_header;
         latest_execution_payload_state_root = update.latest_execution_payload_state_root;
@@ -165,14 +172,14 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
 
         // Verify update next sync committee if the update period incremented
         require(update.next_sync_committee_branch.length == NEXT_SYNC_COMMITTEE_DEPTH - 1, "!next_sync_committee_branch");
-        SyncCommittee memory sync_committee;
+        SyncCommittee memory sync_committee = update.current_sync_committee;
         if (update_period == finalized_period) {
-            sync_committee = current_sync_committee;
+            require(hash_tree_root(sync_committee) == current_sync_committee_hash, "!sync_committee");
             for (uint64 i = 0; i < floorlog2(NEXT_SYNC_COMMITTEE_INDEX); ++i) {
                 require(update.next_sync_committee_branch[i] == bytes32(0), "!zero");
             }
         } else {
-            sync_committee = next_sync_committee;
+            require(hash_tree_root(sync_committee) == next_sync_committee_hash, "!sync_committee");
             require(is_valid_merkle_branch(
                         hash_tree_root(update.next_sync_committee),
                         update.next_sync_committee_branch,

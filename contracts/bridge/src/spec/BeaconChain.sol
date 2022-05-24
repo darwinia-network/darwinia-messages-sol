@@ -8,8 +8,8 @@ import "../utils/Bytes.sol";
 contract BeaconChain {
     using Bytes for bytes;
 
-    uint64 constant private SYNC_COMMITTEE_SIZE = 512;
-    uint64 constant private BLSPUBLICKEY_LENGTH = 48;
+    uint64 constant internal SYNC_COMMITTEE_SIZE = 512;
+    uint64 constant internal BLSPUBLICKEY_LENGTH = 48;
 
     struct ForkData {
         bytes4 current_version;
@@ -51,6 +51,7 @@ contract BeaconChain {
         }
         bytes32 pubkeys_root = merkle_root(pubkeys_leaves);
 
+        require(sync_committee.aggregate_pubkey.length == BLSPUBLICKEY_LENGTH, "!agg_key");
         bytes32 aggregate_pubkey_root = hash(abi.encodePacked(sync_committee.aggregate_pubkey, bytes16(0)));
 
         return hash_node(pubkeys_root, aggregate_pubkey_root);
