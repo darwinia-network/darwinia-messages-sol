@@ -191,7 +191,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
                         get_subtree_index(NEXT_SYNC_COMMITTEE_INDEX),
                         active_header.state_root
                     ),
-                    "!sync_committee"
+                    "!sync_committee_branch"
             );
         }
 
@@ -260,25 +260,6 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
                 revert("!verify");
             }
         }
-    }
-
-    // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
-    function is_valid_merkle_branch(
-        bytes32 leaf,
-        bytes32[] memory branch,
-        uint64 depth,
-        uint64 index,
-        bytes32 root
-    ) internal pure returns (bool) {
-        bytes32 value = leaf;
-        for (uint i = 0; i < depth; ++i) {
-            if ((index / (2**i)) % 2 == 1) {
-                value = hash_node(branch[i], value);
-            } else {
-                value = hash_node(value, branch[i]);
-            }
-        }
-        return value == root;
     }
 
     function get_subtree_index(uint generalized_index) internal pure returns (uint64){

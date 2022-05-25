@@ -146,4 +146,24 @@ contract BeaconChain {
         // swap 4-byte long pairs
         v = (v >> 32) | (v << 32);
     }
+
+    // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
+    function is_valid_merkle_branch(
+        bytes32 leaf,
+        bytes32[] memory branch,
+        uint64 depth,
+        uint64 index,
+        bytes32 root
+    ) internal pure returns (bool) {
+        bytes32 value = leaf;
+        for (uint i = 0; i < depth; ++i) {
+            if ((index / (2**i)) % 2 == 1) {
+                value = hash_node(branch[i], value);
+            } else {
+                value = hash_node(value, branch[i]);
+            }
+        }
+        return value == root;
+    }
+
 }

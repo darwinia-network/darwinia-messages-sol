@@ -97,4 +97,40 @@ contract BeaconChainTest is DSTest, SyncCommitteePreset {
         });
         assertEq(hash_tree_root(case0), 0x9e6e0e0f2f91e820ac314cf7c39cc5bfcf950d518cf2343e5e67404be3a1d724);
     }
+
+    function test_is_valid_merkle_branch_case0() public {
+        bytes32[] memory branch = new bytes32[](5);
+        branch[0] = 0x5cf5804f5a8dc680445f5efd4069859f3c65dd2db869f1d091f454008f6d7ab7;
+        branch[1] = 0xc15a3515c2f69c510d27dc829bb763a071d12ed28861665a15eac18be09ec396;
+        branch[2] = 0xfeb3abafe78c2a78ed08962a29cb063c00ba6b3ae84ea7ec84bd8700182197dd;
+        branch[3] = 0xd2dc4ba9fd4edff6716984136831e70a6b2e74fca27b8097a820cbbaa5a6e3c3;
+        branch[4] = 0x988f0289fc602a4a1fb46f95edffddd456a27225f46428e279f97dd827589464;
+        assertTrue(
+            is_valid_merkle_branch(
+                0x5cf5804f5a8dc680445f5efd4069859f3c65dd2db869f1d091f454008f6d7ab7,
+                branch,
+                5,
+                23,
+                0xb2e9a7b6f6b11f62b9cfdd07d29c854606460fc8b9925e8ef46a9bbbe33e71e8
+            )
+        );
+    }
+
+    function test_is_valid_merkle_branch_case1() public {
+        bytes32[] memory branch = new bytes32[](5);
+        branch[0] = 0x5cf5804f5a8dc680445f5efd4069859f3c65dd2db869f1d091f454008f6d7ab7;
+        branch[1] = 0x4106a9dd5507877b9f091ff28efe02f5cb8a0fff67911b8a43f88962859ffe0e;
+        branch[2] = 0xfeb3abafe78c2a78ed08962a29cb063c00ba6b3ae84ea7ec84bd8700182197dd;
+        branch[3] = 0x601f645828951f190c119152e27b6314b5c4b3d2da0c5d2d0f6cbce679f5bb68;
+        branch[4] = 0x64232044a15df7c9c6d8c4b3be7606fa32c55a1dd79bf20aaf1ac3e5a6cb8a82;
+        assertTrue(
+            is_valid_merkle_branch(
+                0x86cb4c24efc89ccad5b019bd90cf46891eba6edcaafb374e4cd27ecca324cc4a,
+                branch,
+                5,
+                23,
+                0xe71648cecf3a7ac5b399927ec94501d4b8095004a45420c7faae9af314ac8400
+            )
+        );
+    }
 }
