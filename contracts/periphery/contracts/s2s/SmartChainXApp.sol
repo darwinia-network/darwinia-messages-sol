@@ -41,6 +41,11 @@ abstract contract SmartChainXApp {
     address internal storageAddress =
         0x000000000000000000000000000000000000001a;
 
+    // The 'onMessageDelivered' sender
+    // 'onMessageDelivered' is only allowed to be called by this address
+    address internal callbackFromAddress =
+        0x6461722f64766D70000000000000000000000000;
+
     // Config of each bridge
     // bridge id => BridgeConfig
     mapping(uint16 => BridgeConfig) internal bridgeConfigs;
@@ -93,6 +98,10 @@ abstract contract SmartChainXApp {
         return storageAddress;
     }
 
+    function getCallbackFromAddress() public view returns (address) {
+        return callbackFromAddress;
+    }
+
     function getBridgeConfig(uint16 bridgeId)
         public
         view
@@ -106,5 +115,9 @@ abstract contract SmartChainXApp {
     /// @param lane Lane id
     /// @param nonce Nonce of the callback message
     /// @param result Dispatch result of cross chain message
-    function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external virtual;
+    function onMessageDelivered(
+        bytes4 lane,
+        uint64 nonce,
+        bool result
+    ) external virtual;
 }

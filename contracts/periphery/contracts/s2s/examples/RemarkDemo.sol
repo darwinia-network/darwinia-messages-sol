@@ -36,6 +36,10 @@ contract RemarkDemo is SmartChainXApp, Ownable {
         callIndexOfSendMessage = _callIndexOfSendMessage;
     }
 
+    function setCallbackFromAddresss(address _callbackFromAddress) public onlyOwner {
+        callbackFromAddress = _callbackFromAddress;
+    }
+
     function setStorageAddress(address _storageAddress) public onlyOwner {
         storageAddress = _storageAddress;
     }
@@ -69,7 +73,8 @@ contract RemarkDemo is SmartChainXApp, Ownable {
         );
     }
 
-    function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override {
-        // TODO: add your code here if you want to do something after the message delivered
+    function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override view {
+        require(msg.sender == callbackFromAddress, "Only pallet address is allowed call 'onMessageDelivered'");
+        // TODO: Your code goes here...
     }
 }

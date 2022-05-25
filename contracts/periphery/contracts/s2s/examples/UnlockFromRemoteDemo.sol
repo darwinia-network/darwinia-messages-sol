@@ -12,6 +12,7 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
         dispatchAddress = 0x0000000000000000000000000000000000000019;
         callIndexOfSendMessage = 0x2b03;
         storageAddress = 0x000000000000000000000000000000000000001a;
+        callbackFromAddress = 0x6461722f64766D70000000000000000000000000;
         
         // Bridge settings
         bridgeConfigs[0] = BridgeConfig(
@@ -49,7 +50,8 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
         );
     }
 
-    function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override {
-        // TODO: add your code here if you want to do something after the message delivered
+    function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override view {
+        require(msg.sender == callbackFromAddress, "Only pallet address is allowed call 'onMessageDelivered'");
+        // TODO: Your code goes here...
     }
 }
