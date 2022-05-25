@@ -26,8 +26,8 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     uint64 constant private NEXT_SYNC_COMMITTEE_INDEX = 55;
     uint64 constant private NEXT_SYNC_COMMITTEE_DEPTH = 5;
 
-    uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX = 1;
-    uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH = 1;
+    uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX = 898;
+    uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH = 9;
 
     uint64 constant private FINALIZED_ROOT_INDEX = 105;
     uint64 constant private FINALIZED_ROOT_DEPTH = 6;
@@ -61,8 +61,8 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         bytes32[] finality_branch;
 
         // // Execution payload header in beacon state [New in Bellatrix]
-        // bytes32 latest_execution_payload_state_root;
-        // bytes32[] latest_execution_payload_state_root_branch;
+        bytes32 latest_execution_payload_state_root;
+        bytes32[] latest_execution_payload_state_root_branch;
 
         // Sync committee aggregate signature
         SyncAggregate sync_aggregate;
@@ -133,7 +133,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
             next_sync_committee_hash = hash_tree_root(update.next_sync_committee);
         }
         finalized_header = active_header;
-        // latest_execution_payload_state_root = update.latest_execution_payload_state_root;
+        latest_execution_payload_state_root = update.latest_execution_payload_state_root;
         // if store.finalized_header.slot > store.optimistic_header.slot:
         //     store.optimistic_header = store.finalized_header
     }
@@ -193,17 +193,23 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
             );
         }
 
-        // // Verify latest_execution_payload_state_root in beacon state
-        // require(update.latest_execution_payload_state_root_branch.length == LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH - 1, "!execution_payload_state_root_branch");
-        // require(is_valid_merkle_branch(
-        //         update.latest_execution_payload_state_root,
-        //         update.latest_execution_payload_state_root_branch,
-        //         floorlog2(LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH),
-        //         get_subtree_index(LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX),
-        //         update.attested_header.state_root
-        //     ),
-        //     "!state_root"
-        // );
+        // Verify latest_execution_payload_state_root in finalized beacon state
+        require(update.latest_execution_payload_state_root_branch.length == LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH, "!execution_payload_state_root_branch");
+        if (!is_finality_update(update)) {
+            for (uint64 i = 0; i < floorlog2(LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX); ++i) {
+                require(update.latest_execution_payload_state_root_branch[i] == bytes32(0), "!zero");
+            }
+        } else {
+            require(is_valid_merkle_branch(
+                    update.latest_execution_payload_state_root,
+                    update.latest_execution_payload_state_root_branch,
+                    floorlog2(LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX),
+                    get_subtree_index(LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX),
+                    active_header.state_root
+                ),
+                "!state_root"
+            );
+        }
 
         SyncAggregate memory sync_aggregate = update.sync_aggregate;
 
