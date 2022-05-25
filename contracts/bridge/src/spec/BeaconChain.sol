@@ -35,6 +35,31 @@ contract BeaconChain {
         bytes32 body_root;
     }
 
+    // Return the signing root for the corresponding signing data.
+    function compute_signing_root(BeaconBlockHeader calldata beacon_header, bytes32 domain) internal pure returns (bytes32){
+        return hash_tree_root(SigningData({
+                object_root: hash_tree_root(beacon_header),
+                domain: domain
+            })
+        );
+    }
+
+    // Return the 32-byte fork data root for the ``current_version`` and ``genesis_validators_root``.
+    // This is used primarily in signature domains to avoid collisions across forks/chains.
+    function compute_fork_data_root(bytes4 current_version, bytes32 genesis_validators_root) internal pure returns (bytes32){
+        return hash_tree_root(ForkData({
+                current_version: current_version,
+                genesis_validators_root: genesis_validators_root
+            })
+        );
+    }
+
+    //  Return the domain for the ``domain_type`` and ``fork_version``.
+    function compute_domain(bytes4 domain_type, bytes4 fork_version, bytes32 genesis_validators_root) internal pure returns (bytes32){
+        bytes32 fork_data_root = compute_fork_data_root(fork_version, genesis_validators_root);
+        return bytes32(domain_type) | fork_data_root >> 32;
+    }
+
     function hash_tree_root(ForkData memory fork_data) internal pure returns (bytes32) {
         return hash_node(bytes32(fork_data.current_version), fork_data.genesis_validators_root);
     }
