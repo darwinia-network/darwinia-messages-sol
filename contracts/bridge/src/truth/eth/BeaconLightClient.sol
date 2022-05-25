@@ -39,6 +39,8 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
 
     bytes4 constant private DOMAIN_SYNC_COMMITTEE = 0x07000000;
 
+    bytes32 constant private EMPTY_BEACON_HEADER_HASH = 0xc78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c;
+
     struct SyncAggregate {
         uint256[2] sync_committee_bits;
         bytes sync_committee_signature;
@@ -326,7 +328,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     }
 
     function is_finality_update(LightClientUpdate calldata update) internal view returns (bool) {
-        return hash_tree_root(update.finalized_header) != hash_tree_root(finalized_header);
+        return hash_tree_root(update.finalized_header) != EMPTY_BEACON_HEADER_HASH;
     }
 
     function sum(uint256[2] memory x) internal pure returns (uint256) {

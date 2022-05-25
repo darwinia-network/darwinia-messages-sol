@@ -74,14 +74,14 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
 
         bytes32[] memory latest_execution_payload_state_root_branch = new bytes32[](9);
         latest_execution_payload_state_root_branch[0] = 0x6e6f207265636569707473206865726500000000000000000000000000000000;
-        latest_execution_payload_state_root_branch[1] = 0x3c21409ed72e9d94c843c903ebd8190ed35fb28d9aa5e0d5911cf94bb62a31bc;
-        latest_execution_payload_state_root_branch[2] = 0x2102a2bacc7afbaa7cf3e2e7b184475cb87f23df7c1ee773038bc583e0e62bea;
-        latest_execution_payload_state_root_branch[3] = 0x71d55659103da6b70c2d718aa2a70c35f4c2ee60b9cf336afb6472c0614743b0;
+        latest_execution_payload_state_root_branch[1] = 0x0da04860fe44433e504e6cb82bd33d75e6777a42e61945b5b5fb1419c71154b0;
+        latest_execution_payload_state_root_branch[2] = 0x652fbde7e8c386fa3bb4eb78d00554151bde57883b291ab2518daec002b8b3b0;
+        latest_execution_payload_state_root_branch[3] = 0x812d7693874fe376731eed84416c67a6ed1a2a6799c562016882c88b866afc98;
         latest_execution_payload_state_root_branch[4] = 0x0000000000000000000000000000000000000000000000000000000000000000;
         latest_execution_payload_state_root_branch[5] = 0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b;
         latest_execution_payload_state_root_branch[6] = 0xdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71;
-        latest_execution_payload_state_root_branch[7] = 0xfc7f0b4d4110139d8a6fd0939f435846f18c02f46a2c35e1c2031c664961d11b;
-        latest_execution_payload_state_root_branch[8] = 0xd0c6412458c36a5c6d3d77cbbff88f3de7f430ca2da501fd206f7a1534044f50;
+        latest_execution_payload_state_root_branch[7] = 0x2e04867cf7c3b3e8e9e7b200d79e4a508ad69a3fe24fae94455458f5b151c573;
+        latest_execution_payload_state_root_branch[8] = 0x888fcb085245c3f527c9970cb9e2baa448489971cc2d642c579e43c43b48a931;
 
         BeaconLightClient.LightClientUpdate memory update = BeaconLightClient.LightClientUpdate({
             attested_header: BeaconBlockHeader({

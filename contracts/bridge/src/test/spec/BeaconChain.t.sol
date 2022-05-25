@@ -12,6 +12,11 @@ contract BeaconChainTest is DSTest, SyncCommitteePreset {
         assertEq(to_little_endian_64(5), hex"0500000000000000");
     }
 
+    function test_default_hash() public {
+        BeaconBlockHeader memory header;
+        assertEq(hash_tree_root(header), 0xc78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c);
+    }
+
     function test_beacon_block_header_hash() public {
         BeaconBlockHeader memory header = BeaconBlockHeader({
             slot:            0,
