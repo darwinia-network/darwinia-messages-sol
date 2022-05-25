@@ -227,7 +227,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         bytes memory message = abi.encodePacked(signing_root);
         bytes memory signature = sync_aggregate.sync_committee_signature;
         require(signature.length == BLSSIGNATURE_LENGTH, "!signature");
-        require(fast_aggregate_verify(participant_pubkeys, message, signature));
+        require(fast_aggregate_verify(participant_pubkeys, message, signature), "!bls");
     }
 
     function fast_aggregate_verify(bytes[] memory pubkeys, bytes memory message, bytes memory signature) internal view returns (bool valid) {
