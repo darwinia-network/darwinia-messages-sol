@@ -20,7 +20,6 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     // address(0x1c)
     address private immutable BLS_PRECOMPILE;
 
-    // TODO: check
     uint64 constant private NEXT_SYNC_COMMITTEE_INDEX = 55;
     uint64 constant private NEXT_SYNC_COMMITTEE_DEPTH = 5;
 
