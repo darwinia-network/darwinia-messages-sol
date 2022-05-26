@@ -4,15 +4,19 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../../test.sol";
-import "../../../truth/eth/BeaconLightClient.sol";
+import "../../mock/MockBLS.sol";
 import "../../spec/SyncCommittee.t.sol";
+import "../../../truth/eth/BeaconLightClient.sol";
 
 contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
     BeaconLightClient lightclient;
-    address public self;
+    MockBLS bls;
+    address self;
 
     function setUp() public {
+        bls = new MockBLS();
         lightclient = new BeaconLightClient(
+            address(bls),
             0,
             0,
             bytes32(0),

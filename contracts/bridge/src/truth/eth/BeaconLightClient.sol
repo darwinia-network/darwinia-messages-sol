@@ -20,7 +20,8 @@ interface IBLS {
 contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     using Bytes for bytes;
 
-    address constant private BLS_PRECOMPILE = address(0x1c);
+    // address(0x1c)
+    address private immutable BLS_PRECOMPILE;
 
     // TODO: check
     uint64 constant private NEXT_SYNC_COMMITTEE_INDEX = 55;
@@ -92,6 +93,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     // uint64 current_max_active_participants;
 
     constructor(
+        address _bls,
         uint64 _slot,
         uint64 _proposer_index,
         bytes32 _parent_root,
@@ -100,6 +102,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         bytes32 _current_sync_committee_hash,
         bytes32 _next_sync_committee_hash
     ) StorageVerifier(uint32(ChainMessagePosition.ETH2), 0, 1, 2) {
+        BLS_PRECOMPILE = _bls;
         finalized_header = BeaconBlockHeader(_slot, _proposer_index, _parent_root, _state_root, _body_root);
         current_sync_committee_hash = _current_sync_committee_hash;
         next_sync_committee_hash = _next_sync_committee_hash;
