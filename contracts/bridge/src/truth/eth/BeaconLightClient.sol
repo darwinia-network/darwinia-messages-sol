@@ -3,7 +3,6 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../../utils/Bytes.sol";
 import "../../utils/Bitfield.sol";
 import "../../spec/BeaconChain.sol";
 import "../../spec/ChainMessagePosition.sol";
@@ -18,8 +17,6 @@ interface IBLS {
 }
 
 contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
-    using Bytes for bytes;
-
     // address(0x1c)
     address private immutable BLS_PRECOMPILE;
 
@@ -77,20 +74,12 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     // Beacon block header that is finalized
     BeaconBlockHeader finalized_header;
 
+    // Execution payload state root of finalized header
+    bytes32 latest_execution_payload_state_root;
+
     // Sync committees corresponding to the header
     bytes32 current_sync_committee_hash;
     bytes32 next_sync_committee_hash;
-
-    // Execution payload state root
-    bytes32 latest_execution_payload_state_root;
-
-    // // Best available header to switch finalized head to if we see nothing else
-    // LightClientUpdate best_valid_update;
-    // // Most recent available reasonably-safe header
-    // BeaconBlockHeader optimistic_header;
-    // // Max number of active participants in a sync committee (used to calculate safety threshold)
-    // uint64 previous_max_active_participants;
-    // uint64 current_max_active_participants;
 
     constructor(
         address _bls,
@@ -125,7 +114,6 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         ) {
             // Normal update through 2/3 threshold
             apply_light_client_update(update);
-            // store.best_valid_update = None
         }
     }
 
@@ -139,8 +127,6 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         }
         finalized_header = active_header;
         latest_execution_payload_state_root = update.latest_execution_payload_state_root;
-        // if store.finalized_header.slot > store.optimistic_header.slot:
-        //     store.optimistic_header = store.finalized_header
     }
 
     function validate_light_client_update(

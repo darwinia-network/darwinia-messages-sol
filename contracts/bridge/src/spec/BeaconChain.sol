@@ -3,11 +3,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../utils/Bytes.sol";
-
 contract BeaconChain {
-    using Bytes for bytes;
-
     uint64 constant internal SYNC_COMMITTEE_SIZE = 512;
     uint64 constant internal BLSPUBLICKEY_LENGTH = 48;
     uint64 constant internal BLSSIGNATURE_LENGTH = 96;

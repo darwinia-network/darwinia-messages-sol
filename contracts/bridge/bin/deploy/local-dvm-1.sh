@@ -53,9 +53,6 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $CURRENT_SYNC_COMMITTEE_HASH \
   $NEXT_SYNC_COMMITTEE_HASH)
 
-ChainMessageCommitter=$(deploy ChainMessageCommitter $this_chain_pos)
-LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
-
 OutboundLane=$(deploy OutboundLane \
   $BeaconLightClient \
   $FeeMarket \
@@ -70,6 +67,9 @@ InboundLane=$(deploy InboundLane \
   $this_in_lane_pos \
   $bridged_chain_pos \
   $bridged_out_lane_pos 0 0)
+
+ChainMessageCommitter=$(deploy ChainMessageCommitter $this_chain_pos)
+LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
 
 seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
 seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
