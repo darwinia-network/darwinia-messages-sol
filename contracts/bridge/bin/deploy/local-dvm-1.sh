@@ -9,7 +9,7 @@ export ETH_FROM=${TEST_LOCAL_DVM_FROM:-0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91
 # import the deployment helpers
 . $(dirname $0)/common.sh
 
-# pangolin to bsctest bridge config
+# pangoro to ropsten bridge config
 this_chain_pos=0
 this_out_lane_pos=0
 this_in_lane_pos=1

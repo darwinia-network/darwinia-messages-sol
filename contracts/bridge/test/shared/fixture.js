@@ -4,9 +4,10 @@ const Fixure = async () => {
   const ASSIGNED_RELAYERS_NUMBER = 3;
   const SLASH_TIME = 100
   const RELAY_TIME = 100
+  const PRICE_RATIO = 800_000
   const [one, two, three] = await ethers.getSigners();
   const FeeMarket = await ethers.getContractFactory("FeeMarket")
-  const feeMarket = await FeeMarket.deploy(VAULT, COLLATERAL_PERORDER, ASSIGNED_RELAYERS_NUMBER, SLASH_TIME, RELAY_TIME)
+  const feeMarket = await FeeMarket.deploy(VAULT, COLLATERAL_PERORDER, ASSIGNED_RELAYERS_NUMBER, SLASH_TIME, RELAY_TIME, PRICE_RATIO)
   let overrides = {
       value: ethers.utils.parseEther("100")
   }

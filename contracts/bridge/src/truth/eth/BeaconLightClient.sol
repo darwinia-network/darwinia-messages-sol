@@ -278,7 +278,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         return epoch / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
     }
 
-    function get_active_header(LightClientUpdate calldata update) internal view returns (BeaconBlockHeader memory){
+    function get_active_header(LightClientUpdate calldata update) internal pure returns (BeaconBlockHeader memory){
         // The "active header" is the header that the update is trying to convince us
         // to accept. If a finalized header is present, it's the finalized header,
         // otherwise it's the attested header
@@ -286,7 +286,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         else return update.attested_header;
     }
 
-    function is_finality_update(LightClientUpdate calldata update) internal view returns (bool) {
+    function is_finality_update(LightClientUpdate calldata update) internal pure returns (bool) {
         return hash_tree_root(update.finalized_header) != EMPTY_BEACON_HEADER_HASH;
     }
 

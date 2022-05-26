@@ -29,6 +29,8 @@ contract FeeMarket is IFeeMarket {
     uint32 public relayTime;
     // Fee market assigned relayers numbers
     uint32 public assignedRelayersNumber;
+    // Ratio of two chain's native token price, denominator of ratio is 1_000_000
+    uint32 public priceRatio;
     // The collateral relayer need to lock for each order.
     uint256 public collateralPerOrder;
     // Governance role to decide which outbounds message to relay
@@ -85,7 +87,8 @@ contract FeeMarket is IFeeMarket {
         uint256 _collateral_perorder,
         uint32 _assigned_relayers_number,
         uint32 _slash_time,
-        uint32 _relay_time
+        uint32 _relay_time,
+        uint32 _price_rario
     ) {
         require(_assigned_relayers_number > 0, "!0");
         require(_slash_time > 0 && _relay_time > 0, "!0");
@@ -95,6 +98,7 @@ contract FeeMarket is IFeeMarket {
         assignedRelayersNumber = _assigned_relayers_number;
         slashTime = _slash_time;
         relayTime = _relay_time;
+        priceRatio = _price_rario;
         relayers[SENTINEL_HEAD] = SENTINEL_TAIL;
         feeOf[SENTINEL_TAIL] = type(uint256).max;
     }
@@ -112,10 +116,11 @@ contract FeeMarket is IFeeMarket {
         emit SetOutbound(out, flag);
     }
 
-    function setParaTime(uint32 slash_time, uint32 relay_time) external onlySetter {
+    function setParaTime(uint32 slash_time, uint32 relay_time, uint32 price_ratio) external onlySetter {
         require(slash_time > 0 && relay_time > 0, "!0");
         slashTime = slash_time;
         relayTime = relay_time;
+        priceRatio = price_ratio;
     }
 
     function setParaRelay(uint32 assigned_relayers_number, uint256 collateral_perorder) external onlySetter {
@@ -447,10 +452,10 @@ contract FeeMarket is IFeeMarket {
         vault_reward = message_fee - base_fee;
     }
 
-    function _distribute_fee(uint256 fee) private pure returns (uint256 delivery_reward, uint256 confirm_reward) {
-        // 80% * fee => delivery relayer
-        delivery_reward = fee * 80 / 100;
-        // 20% * fee => confirm relayer
+    function _distribute_fee(uint256 fee) private view returns (uint256 delivery_reward, uint256 confirm_reward) {
+        // fee * priceRatio / 1_000_000 => delivery relayer
+        delivery_reward = fee * priceRatio / 1_000_000;
+        // remaining fee => confirm relayer
         confirm_reward = fee - delivery_reward;
     }
 }
