@@ -72,14 +72,14 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     }
 
     // Beacon block header that is finalized
-    BeaconBlockHeader finalized_header;
+    BeaconBlockHeader public finalized_header;
 
     // Execution payload state root of finalized header
-    bytes32 latest_execution_payload_state_root;
+    bytes32 public latest_execution_payload_state_root;
 
     // Sync committees corresponding to the header
-    bytes32 current_sync_committee_hash;
-    bytes32 next_sync_committee_hash;
+    bytes32 public current_sync_committee_hash;
+    bytes32 public next_sync_committee_hash;
 
     constructor(
         address _bls,
