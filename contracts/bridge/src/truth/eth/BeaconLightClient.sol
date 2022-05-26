@@ -214,8 +214,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         for (uint64 i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
             uint index = i / 256;
             uint8 offset = uint8(i % 256);
-            // TODO check
-            if (isSet(sync_aggregate.sync_committee_bits[index], offset)) {
+            if (isSet(sync_aggregate.sync_committee_bits[index], (255 - offset))) {
                 participant_pubkeys[n++] = sync_committee.pubkeys[i];
             }
         }
