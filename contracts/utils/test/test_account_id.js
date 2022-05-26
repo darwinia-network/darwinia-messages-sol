@@ -20,4 +20,11 @@ describe('AccountIdTest', function (accounts) {
         await accountIdTest.testFromAddress();
     })
 
+    it('testDeriveEthereumAddressFromDvmAccountId', async() => {
+        await accountIdTest.testDeriveEthereumAddressFromDvmAccountId();
+    })
+
+    it('testDeriveEthereumAddressFromNormalAccountId', async() => {
+        await accountIdTest.testDeriveEthereumAddressFromNormalAccountId();
+    })
 });
