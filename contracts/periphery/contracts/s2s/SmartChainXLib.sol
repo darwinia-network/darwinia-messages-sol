@@ -11,6 +11,8 @@ import "./interfaces/IStateStorage.sol";
 import "./types/CommonTypes.sol";
 
 library SmartChainXLib {
+    bytes public constant account_derivation_prefix = "pallet-bridge/account-derivation/account";
+
     event DispatchResult(bool success, bytes result);
 
     // Send message over lane by calling the `send_message` dispatch call on
@@ -41,16 +43,7 @@ library SmartChainXLib {
         (bool success, bytes memory data) = dispatchAddress.call(
             sendMessageCallEncoded
         );
-        if (!success) {
-            if (data.length > 0) {
-                assembly {
-                    let data_size := mload(data)
-                    revert(add(32, data), data_size)
-                }
-            } else {
-                revert("Send message failed");
-            }
-        }
+        revertIfFailed(success, data, "Send message failed");
     }
 
     // Build the scale encoded message for the target chain.
@@ -91,16 +84,7 @@ library SmartChainXLib {
                 abi.encodePacked(storageKey)
             )
         );
-        if (!success) {
-            if (data.length > 0) {
-                assembly {
-                    let data_size := mload(data)
-                    revert(add(32, data), data_size)
-                }
-            } else {
-                revert("Get market fee failed");
-            }
-        }
+        revertIfFailed(success, data, "Get market fee failed");
 
         CommonTypes.Relayer memory relayer = CommonTypes.getLastRelayerFromVec(
             data
@@ -120,20 +104,42 @@ library SmartChainXLib {
                 abi.encodePacked(storageKey)
             )
         );
-        if (!success) {
-            if (data.length > 0) {
-                assembly {
-                    let data_size := mload(data)
-                    revert(add(32, data), data_size)
-                }
-            } else {
-                revert("Get market fee failed");
-            }
-        }
+        revertIfFailed(success, data, "Get latest nonce failed");
 
         CommonTypes.OutboundLaneData memory outboundLaneData = CommonTypes.decodeOutboundLaneData(
             data
         );
         return outboundLaneData.latestGeneratedNonce;
+    }
+
+    function blake2_256(address blake2bAddress, bytes memory data) internal returns (bytes32) {
+        (bool success, bytes memory result) = blake2bAddress.call(
+            abi.encodePacked(
+                bytes4(keccak256("blake2_256(bytes)")),
+                abi.encode(data)
+            )
+        );
+        revertIfFailed(success, result, "Blake2_256 failed");
+
+        return Bytes.toBytes32(result);
+    }
+
+    function deriveAccountId(address blake2bAddress, bytes4 sourceChainId, bytes32 accountId) internal returns (bytes32) {
+        bytes memory prefixLength = ScaleCodec.encodeUintCompact(account_derivation_prefix.length);
+        bytes memory data = abi.encodePacked(prefixLength, account_derivation_prefix, sourceChainId, accountId);
+        return blake2_256(blake2bAddress, data);
+    }
+
+    function revertIfFailed(bool success, bytes memory resultData, string memory revertMsg) private pure {
+        if (!success) {
+            if (resultData.length > 0) {
+                assembly {
+                    let resultDataSize := mload(resultData)
+                    revert(add(32, resultData), resultDataSize)
+                }
+            } else {
+                revert(revertMsg);
+            }
+        }
     }
 }
