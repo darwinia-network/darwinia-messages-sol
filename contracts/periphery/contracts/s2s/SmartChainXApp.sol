@@ -99,7 +99,7 @@ abstract contract SmartChainXApp {
                 derivedSubstrateAddress
             );
         address derivedEthereumAddress = AccountId.deriveEthereumAddress(derivedAccountId);
-        require(sourceChainEthereumAddress == derivedEthereumAddress, "Only the address from source smart chain is allowed");
+        require(msg.sender == derivedEthereumAddress, "msg.sender must equal to the address derived from source dapp sender");
     }
 
     function getDispatchAddress() public view returns (address) {
