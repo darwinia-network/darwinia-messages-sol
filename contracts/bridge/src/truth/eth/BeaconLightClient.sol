@@ -146,20 +146,6 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         latest_execution_payload_state_root = update.latest_execution_payload_state_root;
     }
 
-    function verify_latest_execution_payload_state_root(
-        bytes32 execution_payload_state_root,
-        bytes32[] calldata execution_payload_state_root_branch,
-        bytes32 finalized_header_state_root
-    ) internal pure returns (bool) {
-        return is_valid_merkle_branch(
-            execution_payload_state_root,
-            execution_payload_state_root_branch,
-            LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH,
-            LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX,
-            finalized_header_state_root
-        );
-    }
-
     function verify_signed_header(
         SyncAggregate calldata sync_aggregate,
         SyncCommittee calldata sync_committee,
@@ -187,13 +173,14 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
 
     function verify_finalized_header(
         BeaconBlockHeader calldata header,
-        bytes32[] calldata branch,
+        bytes32[] calldata finality_branch,
         bytes32 attested_header_root
     ) internal pure returns (bool) {
+        require(finality_branch.length == FINALIZED_ROOT_DEPTH, "!finality_branch");
         bytes32 header_root = hash_tree_root(header);
         return is_valid_merkle_branch(
             header_root,
-            branch,
+            finality_branch,
             FINALIZED_ROOT_DEPTH,
             FINALIZED_ROOT_INDEX,
             attested_header_root
@@ -201,19 +188,36 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     }
 
     function verify_next_sync_committee(
-        SyncCommittee calldata sync_committee,
-        bytes32[] calldata sync_committee_branch,
+        SyncCommittee calldata next_sync_committee,
+        bytes32[] calldata next_sync_committee_branch,
         bytes32 header_state_root
     ) internal pure returns (bool) {
-        bytes32 sync_committee_root = hash_tree_root(sync_committee);
+        require(next_sync_committee_branch.length == NEXT_SYNC_COMMITTEE_DEPTH, "!next_sync_committee_branch");
+        bytes32 next_sync_committee_root = hash_tree_root(next_sync_committee);
         return is_valid_merkle_branch(
-            sync_committee_root,
-            sync_committee_branch,
+            next_sync_committee_root,
+            next_sync_committee_branch,
             NEXT_SYNC_COMMITTEE_DEPTH,
             NEXT_SYNC_COMMITTEE_INDEX,
             header_state_root
         );
     }
+
+    function verify_latest_execution_payload_state_root(
+        bytes32 execution_payload_state_root,
+        bytes32[] calldata execution_payload_state_root_branch,
+        bytes32 finalized_header_state_root
+    ) internal pure returns (bool) {
+        require(execution_payload_state_root_branch.length == LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH, "!execution_payload_state_root_branch");
+        return is_valid_merkle_branch(
+            execution_payload_state_root,
+            execution_payload_state_root_branch,
+            LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH,
+            LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX,
+            finalized_header_state_root
+        );
+    }
+
 
     function is_supermajority(uint256[2] calldata sync_committee_bits) internal pure returns (bool) {
         return sum(sync_committee_bits) * 3 >= SYNC_COMMITTEE_SIZE * 2;
