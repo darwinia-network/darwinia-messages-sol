@@ -22,11 +22,13 @@ abstract contract SmartChainXApp {
 
     struct BridgeConfig {
         // The storage key used to get market fee
-        bytes32 storageKeyForMarketFee;
+        bytes32 srcStorageKeyForMarketFee;
         // The storage key used to get latest nonce
-        bytes storageKeyForLatestNonce;
+        bytes srcStorageKeyForLatestNonce;
         // The lane id
-        bytes4 laneId;
+        bytes4 srcOutlaneId;
+        // Source chain id
+        bytes4 srcChainId;
     }
 
     // Precompile address for dispatching 'send_message'
@@ -43,8 +45,11 @@ abstract contract SmartChainXApp {
 
     // The 'onMessageDelivered' sender
     // 'onMessageDelivered' is only allowed to be called by this address
-    address internal callbackFromAddress =
+    address internal callbackSender =
         0x6461722f64766D70000000000000000000000000;
+
+    address internal blake2bAddress =
+        0x000000000000000000000000000000000000001c;
 
     // Config of each bridge
     // bridge id => BridgeConfig
@@ -58,7 +63,7 @@ abstract contract SmartChainXApp {
         // Get the current market fee
         uint128 fee = SmartChainXLib.marketFee(
             storageAddress,
-            bridgeConfigs[bridgeId].storageKeyForMarketFee
+            bridgeConfigs[bridgeId].srcStorageKeyForMarketFee
         );
         require(msg.value >= fee, "Not enough fee to pay");
 
@@ -73,7 +78,7 @@ abstract contract SmartChainXApp {
         SmartChainXLib.sendMessage(
             dispatchAddress,
             callIndexOfSendMessage,
-            bridgeConfigs[bridgeId].laneId,
+            bridgeConfigs[bridgeId].srcOutlaneId,
             msg.value,
             message
         );
@@ -82,8 +87,19 @@ abstract contract SmartChainXApp {
         return
             SmartChainXLib.latestNonce(
                 storageAddress,
-                bridgeConfigs[bridgeId].storageKeyForLatestNonce
+                bridgeConfigs[bridgeId].srcStorageKeyForLatestNonce
             );
+    }
+
+    function requireSourceChainEthereumAddress(uint16 bridgeId, address sourceChainEthereumAddress) internal {
+        bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(sourceChainEthereumAddress);
+        bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
+                blake2bAddress,
+                bridgeConfigs[bridgeId].srcChainId,
+                derivedSubstrateAddress
+            );
+        address derivedEthereumAddress = AccountId.deriveEthereumAddress(derivedAccountId);
+        require(sourceChainEthereumAddress == derivedEthereumAddress, "Only the address from source smart chain is allowed");
     }
 
     function getDispatchAddress() public view returns (address) {
@@ -99,16 +115,21 @@ abstract contract SmartChainXApp {
     }
 
     function getCallbackFromAddress() public view returns (address) {
-        return callbackFromAddress;
+        return callbackSender;
     }
 
     function getBridgeConfig(uint16 bridgeId)
         public
         view
-        returns (bytes32, bytes4)
+        returns (bytes32, bytes memory, bytes4, bytes4)
     {
         BridgeConfig memory config = bridgeConfigs[bridgeId];
-        return (config.storageKeyForMarketFee, config.laneId);
+        return (
+            config.srcStorageKeyForMarketFee,
+            config.srcStorageKeyForLatestNonce,
+            config.srcOutlaneId,
+            config.srcChainId
+        );
     }
 
     /// @notice Message delivered callback

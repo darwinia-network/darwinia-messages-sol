@@ -124,9 +124,9 @@ library SmartChainXLib {
         return Bytes.toBytes32(result);
     }
 
-    function deriveAccountId(address blake2bAddress, bytes4 sourceChainId, bytes32 accountId) internal returns (bytes32) {
+    function deriveAccountId(address blake2bAddress, bytes4 srcChainId, bytes32 accountId) internal returns (bytes32) {
         bytes memory prefixLength = ScaleCodec.encodeUintCompact(account_derivation_prefix.length);
-        bytes memory data = abi.encodePacked(prefixLength, account_derivation_prefix, sourceChainId, accountId);
+        bytes memory data = abi.encodePacked(prefixLength, account_derivation_prefix, srcChainId, accountId);
         return blake2_256(blake2bAddress, data);
     }
 

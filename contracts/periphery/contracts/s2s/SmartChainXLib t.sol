@@ -13,11 +13,11 @@ contract SmartChainXLibTest is DSTest {
     function setUp() public {}
 
     function testDeriveAccountId() public {
-        bytes4 sourceChainId = 0x00000000;
+        bytes4 srcChainId = 0x00000000;
         bytes32 accountId = 0x64766d3a0000000000000061dc46385a09e7ed7688abe6f66bf3d8653618fd6c;
         bytes32 r = SmartChainXLib.deriveAccountId(
             0x000000000000000000000000000000000000001c, 
-            sourceChainId,
+            srcChainId,
             accountId
         );
 
