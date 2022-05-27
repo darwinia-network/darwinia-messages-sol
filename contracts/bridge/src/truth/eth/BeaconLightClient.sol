@@ -110,6 +110,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         );
 
         uint64 current_period = compute_sync_committee_period(finalized_header.slot);
+        require(sync_committee_roots[current_period + 1] == bytes32(0), "imported");
         sync_committee_roots[current_period + 1] = hash_tree_root(update.next_sync_committee);
     }
 
@@ -142,6 +143,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
                 update.attested_header),
                "!sign");
 
+        require(update.finalized_header.slot > finalized_header.slot, "!new");
         finalized_header = update.finalized_header;
         latest_execution_payload_state_root = update.latest_execution_payload_state_root;
     }
