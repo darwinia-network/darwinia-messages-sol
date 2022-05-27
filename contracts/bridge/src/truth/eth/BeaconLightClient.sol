@@ -79,7 +79,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
 
     // Sync committees corresponding to the header
     // Sync_committee_perid => sync_committee_root
-    mapping (uint64 => bytes32) sync_committee_roots;
+    mapping (uint64 => bytes32) public sync_committee_roots;
 
     constructor(
         address _bls,
