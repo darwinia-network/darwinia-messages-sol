@@ -73,7 +73,7 @@ contract RemarkDemo is SmartChainXApp, Ownable {
         );
     }
 
-    function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override view {
+    function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override {
         require(msg.sender == callbackFromAddress, "Only pallet address is allowed call 'onMessageDelivered'");
         // TODO: Your code goes here...
     }
