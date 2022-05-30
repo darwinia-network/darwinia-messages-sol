@@ -22,7 +22,9 @@ contract RemarkDemo is SmartChainXApp, Ownable {
             // outlane id, lane to Darwinia
             0,
             // source chain id
-            0x00000000
+            0x00000000,
+            //
+            address(0x0)
         );
     }
 
@@ -55,13 +57,15 @@ contract RemarkDemo is SmartChainXApp, Ownable {
         bytes32 srcStorageKeyForMarketFee,
         bytes memory srcStorageKeyForLatestNonce,
         bytes4 srcOutlaneId,
-        bytes4 srcChainId
+        bytes4 srcChainId,
+        address sourceChainEthereumAddress
     ) public onlyOwner {
         bridgeConfigs[bridgeId] = BridgeConfig(
             srcStorageKeyForMarketFee,
             srcStorageKeyForLatestNonce,
             srcOutlaneId,
-            srcChainId
+            srcChainId,
+            sourceChainEthereumAddress
         );
     }
 
@@ -95,9 +99,5 @@ contract RemarkDemo is SmartChainXApp, Ownable {
             "Only pallet address is allowed call 'onMessageDelivered'"
         );
         // TODO: Your code goes here...
-    }
-
-    function hello() external {
-        requireSourceChainEthereumAddress(0, 0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b);
     }
 }

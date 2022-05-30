@@ -23,7 +23,9 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
             // lane id, lane to Darwinia
             0,
             // source chain id
-            0x00000000
+            0x00000000,
+            //
+            address(0x0)
         );
     }
     

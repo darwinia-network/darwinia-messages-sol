@@ -27,8 +27,11 @@ abstract contract SmartChainXApp {
         bytes srcStorageKeyForLatestNonce;
         // The lane id
         bytes4 srcOutlaneId;
+        
         // Source chain id
         bytes4 srcChainId;
+        // Used by requireSourceChainEthereumAddress to check address
+        address sourceChainEthereumAddress;
     }
 
     // Precompile address for dispatching 'send_message'
@@ -91,15 +94,22 @@ abstract contract SmartChainXApp {
             );
     }
 
-    function requireSourceChainEthereumAddress(uint16 bridgeId, address sourceChainEthereumAddress) internal {
-        bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(sourceChainEthereumAddress);
+    function requireSourceChainEthereumAddress(uint16 bridgeId) internal {
+        bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
+            bridgeConfigs[bridgeId].sourceChainEthereumAddress
+        );
         bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
-                blake2bAddress,
-                bridgeConfigs[bridgeId].srcChainId,
-                derivedSubstrateAddress
-            );
-        address derivedEthereumAddress = AccountId.deriveEthereumAddress(derivedAccountId);
-        require(msg.sender == derivedEthereumAddress, "msg.sender must equal to the address derived from source dapp sender");
+            blake2bAddress,
+            bridgeConfigs[bridgeId].srcChainId,
+            derivedSubstrateAddress
+        );
+        address derivedEthereumAddress = AccountId.deriveEthereumAddress(
+            derivedAccountId
+        );
+        require(
+            msg.sender == derivedEthereumAddress,
+            "msg.sender must equal to the address derived from source dapp sender"
+        );
     }
 
     function getDispatchAddress() public view returns (address) {
@@ -118,10 +128,19 @@ abstract contract SmartChainXApp {
         return callbackSender;
     }
 
+    // function getBridgeConfig(uint16 bridgeId) public view returns (BridgeConfig memory) {
+    //     return bridgeConfigs[bridgeId];
+    // }
+
     function getBridgeConfig(uint16 bridgeId)
         public
         view
-        returns (bytes32, bytes memory, bytes4, bytes4)
+        returns (
+            bytes32,
+            bytes memory,
+            bytes4,
+            bytes4
+        )
     {
         BridgeConfig memory config = bridgeConfigs[bridgeId];
         return (
@@ -131,6 +150,8 @@ abstract contract SmartChainXApp {
             config.srcChainId
         );
     }
+
+    
 
     /// @notice Message delivered callback
     /// @param lane Lane id
