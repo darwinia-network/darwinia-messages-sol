@@ -10,13 +10,13 @@ import "../types/PalletEthereum.sol";
 contract RemoteTransactDemo is SmartChainXApp, Ownable {
     uint256 public number;
 
-      constructor() public {
+    constructor() public {
         // Globle settings
         dispatchAddress = 0x0000000000000000000000000000000000000019;
         callIndexOfSendMessage = 0x2b03;
         storageAddress = 0x000000000000000000000000000000000000001a;
         callbackSender = 0x6461722f64766D70000000000000000000000000;
-        
+
         // Bridge settings
         bridgeConfigs[0] = BridgeConfig(
             // storage key for Darwinia market fee
@@ -27,7 +27,7 @@ contract RemoteTransactDemo is SmartChainXApp, Ownable {
             0,
             // source chain id
             0x00000000,
-            // source chain ethereum sender address, 
+            // source chain ethereum sender address,
             // it will be updated after the app is deployed on the source chain.
             address(0x0)
         );
@@ -39,15 +39,18 @@ contract RemoteTransactDemo is SmartChainXApp, Ownable {
 
     function callAddOnTheTargetChain() public payable {
         // 1. prepare the call that will be executed on the target chain
-        PalletEthereum.SubstrateTransactCall memory call = PalletEthereum.SubstrateTransactCall(
-            // the call index of substrate_transact
-            0x2902,
-            // the address of the contract on the target chain
-            0x50275d3F95E0F2FCb2cAb2Ec7A231aE188d7319d, // <------------------ change to the contract address on the target chain
-            // the add function bytes that will be called on the target chain, add(2)
-            hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002"
+        PalletEthereum.SubstrateTransactCall memory call = PalletEthereum
+            .SubstrateTransactCall(
+                // the call index of substrate_transact
+                0x2902,
+                // the address of the contract on the target chain
+                0x50275d3F95E0F2FCb2cAb2Ec7A231aE188d7319d, // <------------------ change to the contract address on the target chain
+                // the add function bytes that will be called on the target chain, add(2)
+                hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002"
+            );
+        bytes memory callEncoded = PalletEthereum.encodeSubstrateTransactCall(
+            call
         );
-        bytes memory callEncoded = PalletEthereum.encodeSubstrateTransactCall(call);
 
         // 2. send the message
         MessagePayload memory payload = MessagePayload(
@@ -61,8 +64,15 @@ contract RemoteTransactDemo is SmartChainXApp, Ownable {
         );
     }
 
-	function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override {
-        require(msg.sender == callbackSender, "Only pallet address is allowed call 'onMessageDelivered'");
+    function onMessageDelivered(
+        bytes4 lane,
+        uint64 nonce,
+        bool result
+    ) external override {
+        require(
+            msg.sender == callbackSender,
+            "Only pallet address is allowed call 'onMessageDelivered'"
+        );
         // TODO: Your code goes here...
     }
 
@@ -70,15 +80,16 @@ contract RemoteTransactDemo is SmartChainXApp, Ownable {
     // used on the target chain
     ///////////////////////////////////////////
 
-    function setSourceChainEthereumAddress(uint16 bridgeId, address _sourceChainEthereumAddress)
-        public 
-        onlyOwner
-    {
-        bridgeConfigs[bridgeId].sourceChainEthereumAddress = _sourceChainEthereumAddress;
+    function setSourceChainEthereumAddress(
+        uint16 bridgeId,
+        address _sourceChainEthereumAddress
+    ) public onlyOwner {
+        bridgeConfigs[bridgeId]
+            .sourceChainEthereumAddress = _sourceChainEthereumAddress;
     }
 
-	function add(uint256 _value) public {
-		requireSourceChainEthereumAddress(0);
-		number = number + _value;
-	}  
+    function add(uint256 _value) public {
+        requireSourceChainEthereumAddress(0);
+        number = number + _value;
+    }
 }
