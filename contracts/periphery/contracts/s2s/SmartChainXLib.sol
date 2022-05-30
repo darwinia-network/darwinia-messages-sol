@@ -40,10 +40,11 @@ library SmartChainXLib {
             .encodeSendMessageCall(sendMessageCall);
 
         // dispatch the send_message call
-        (bool success, bytes memory data) = dispatchAddress.call(
-            sendMessageCallEncoded
+        dispatch(
+            dispatchAddress,
+            sendMessageCallEncoded,
+            "Dispatch send_message failed"
         );
-        revertIfFailed(success, data, "Send message failed");
     }
 
     // Build the scale encoded message for the target chain.
@@ -141,5 +142,18 @@ library SmartChainXLib {
                 revert(revertMsg);
             }
         }
+    }
+
+    // dispatch pallet dispatth-call
+    function dispatch(
+        address dispatchAddress,
+        bytes memory callEncoded,
+        string memory errMsg
+    ) internal {
+        // Dispatch the call
+        (bool success, bytes memory data) = dispatchAddress.call(
+            callEncoded
+        );
+        revertIfFailed(success, data, errMsg);
     }
 }
