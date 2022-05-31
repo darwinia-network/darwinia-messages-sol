@@ -27,11 +27,8 @@ abstract contract SmartChainXApp {
         bytes srcStorageKeyForLatestNonce;
         // The lane id
         bytes4 srcOutlaneId;
-        
         // Source chain id
         bytes4 srcChainId;
-        // Used by requireSourceChainEthereumAddress to check address
-        address sourceChainEthereumAddress;
     }
 
     // Precompile address for dispatching 'send_message'
@@ -91,9 +88,9 @@ abstract contract SmartChainXApp {
             );
     }
 
-    function requireSourceChainEthereumAddress(uint16 bridgeId) internal {
+    function requireSourceChainEthereumAddress(uint16 bridgeId, address sourceChainEthereumAddress) internal {
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
-            bridgeConfigs[bridgeId].sourceChainEthereumAddress
+            sourceChainEthereumAddress
         );
         bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
             bridgeConfigs[bridgeId].srcChainId,

@@ -10,6 +10,10 @@ import "../types/PalletEthereum.sol";
 contract RemoteTransactDemo is SmartChainXApp, Ownable {
     uint256 public number;
 
+    // source chain ethereum sender address,
+    // it will be updated after the app is deployed on the source chain.
+    address public sourceChainEthereumAddress;
+
     constructor() public {
         // Globle settings
         dispatchAddress = 0x0000000000000000000000000000000000000019;
@@ -26,10 +30,7 @@ contract RemoteTransactDemo is SmartChainXApp, Ownable {
             // lane id, lane to Darwinia
             0,
             // source chain id
-            0x00000000,
-            // source chain ethereum sender address,
-            // it will be updated after the app is deployed on the source chain.
-            address(0x0)
+            0x00000000
         );
     }
 
@@ -84,12 +85,11 @@ contract RemoteTransactDemo is SmartChainXApp, Ownable {
         uint16 bridgeId,
         address _sourceChainEthereumAddress
     ) public onlyOwner {
-        bridgeConfigs[bridgeId]
-            .sourceChainEthereumAddress = _sourceChainEthereumAddress;
+        sourceChainEthereumAddress = _sourceChainEthereumAddress;
     }
 
     function add(uint256 _value) public {
-        requireSourceChainEthereumAddress(0);
+        requireSourceChainEthereumAddress(0, sourceChainEthereumAddress);
         number = number + _value;
     }
 }

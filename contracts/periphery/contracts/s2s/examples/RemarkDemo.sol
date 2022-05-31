@@ -24,9 +24,7 @@ contract RemarkDemo is SmartChainXApp, Ownable {
             // outlane id, lane to Darwinia
             0,
             // source chain id
-            0x00000000,
-            //
-            address(0x0)
+            0x00000000
         );
     }
 
@@ -59,15 +57,13 @@ contract RemarkDemo is SmartChainXApp, Ownable {
         bytes32 srcStorageKeyForMarketFee,
         bytes memory srcStorageKeyForLatestNonce,
         bytes4 srcOutlaneId,
-        bytes4 srcChainId,
-        address sourceChainEthereumAddress
+        bytes4 srcChainId
     ) public onlyOwner {
         bridgeConfigs[bridgeId] = BridgeConfig(
             srcStorageKeyForMarketFee,
             srcStorageKeyForLatestNonce,
             srcOutlaneId,
-            srcChainId,
-            sourceChainEthereumAddress
+            srcChainId
         );
     }
 
