@@ -6,6 +6,7 @@ import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "@darwinia/contracts-utils/contracts/Bytes.sol";
+import "@darwinia/contracts-utils/contracts/Hash.sol";
 
 import "./interfaces/IStateStorage.sol";
 import "./types/CommonTypes.sol";
@@ -113,22 +114,11 @@ library SmartChainXLib {
         return outboundLaneData.latestGeneratedNonce;
     }
 
-    function blake2_256(address blake2bAddress, bytes memory data) internal returns (bytes32) {
-        (bool success, bytes memory result) = blake2bAddress.call(
-            abi.encodePacked(
-                bytes4(keccak256("blake2_256(bytes)")),
-                abi.encode(data)
-            )
-        );
-        revertIfFailed(success, result, "Blake2_256 failed");
 
-        return Bytes.toBytes32(result);
-    }
-
-    function deriveAccountId(address blake2bAddress, bytes4 srcChainId, bytes32 accountId) internal returns (bytes32) {
+    function deriveAccountId(bytes4 srcChainId, bytes32 accountId) internal returns (bytes32) {
         bytes memory prefixLength = ScaleCodec.encodeUintCompact(account_derivation_prefix.length);
         bytes memory data = abi.encodePacked(prefixLength, account_derivation_prefix, srcChainId, accountId);
-        return blake2_256(blake2bAddress, data);
+        return Hash.blake2bHash(data);
     }
 
     function revertIfFailed(bool success, bytes memory resultData, string memory revertMsg) private pure {

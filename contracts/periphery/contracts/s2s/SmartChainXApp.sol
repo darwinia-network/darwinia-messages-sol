@@ -51,9 +51,6 @@ abstract contract SmartChainXApp {
     address internal callbackSender =
         0x6461722f64766D70000000000000000000000000;
 
-    address internal blake2bAddress =
-        0x000000000000000000000000000000000000001c;
-
     // Config of each bridge
     // bridge id => BridgeConfig
     mapping(uint16 => BridgeConfig) internal bridgeConfigs;
@@ -99,7 +96,6 @@ abstract contract SmartChainXApp {
             bridgeConfigs[bridgeId].sourceChainEthereumAddress
         );
         bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
-            blake2bAddress,
             bridgeConfigs[bridgeId].srcChainId,
             derivedSubstrateAddress
         );
