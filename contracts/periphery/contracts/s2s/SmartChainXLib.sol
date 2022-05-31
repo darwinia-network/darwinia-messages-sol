@@ -6,11 +6,14 @@ import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "@darwinia/contracts-utils/contracts/Bytes.sol";
+import "@darwinia/contracts-utils/contracts/Hash.sol";
 
 import "./interfaces/IStateStorage.sol";
 import "./types/CommonTypes.sol";
 
 library SmartChainXLib {
+    bytes public constant account_derivation_prefix = "pallet-bridge/account-derivation/account";
+
     event DispatchResult(bool success, bytes result);
 
     // Send message over lane by calling the `send_message` dispatch call on
@@ -38,19 +41,11 @@ library SmartChainXLib {
             .encodeSendMessageCall(sendMessageCall);
 
         // dispatch the send_message call
-        (bool success, bytes memory data) = dispatchAddress.call(
-            sendMessageCallEncoded
+        dispatch(
+            dispatchAddress,
+            sendMessageCallEncoded,
+            "Dispatch send_message failed"
         );
-        if (!success) {
-            if (data.length > 0) {
-                assembly {
-                    let data_size := mload(data)
-                    revert(add(32, data), data_size)
-                }
-            } else {
-                revert("Send message failed");
-            }
-        }
     }
 
     // Build the scale encoded message for the target chain.
@@ -91,16 +86,7 @@ library SmartChainXLib {
                 abi.encodePacked(storageKey)
             )
         );
-        if (!success) {
-            if (data.length > 0) {
-                assembly {
-                    let data_size := mload(data)
-                    revert(add(32, data), data_size)
-                }
-            } else {
-                revert("Get market fee failed");
-            }
-        }
+        revertIfFailed(success, data, "Get market fee failed");
 
         CommonTypes.Relayer memory relayer = CommonTypes.getLastRelayerFromVec(
             data
@@ -120,20 +106,44 @@ library SmartChainXLib {
                 abi.encodePacked(storageKey)
             )
         );
-        if (!success) {
-            if (data.length > 0) {
-                assembly {
-                    let data_size := mload(data)
-                    revert(add(32, data), data_size)
-                }
-            } else {
-                revert("Get market fee failed");
-            }
-        }
+        revertIfFailed(success, data, "Get latest nonce failed");
 
         CommonTypes.OutboundLaneData memory outboundLaneData = CommonTypes.decodeOutboundLaneData(
             data
         );
         return outboundLaneData.latestGeneratedNonce;
+    }
+
+
+    function deriveAccountId(bytes4 srcChainId, bytes32 accountId) internal returns (bytes32) {
+        bytes memory prefixLength = ScaleCodec.encodeUintCompact(account_derivation_prefix.length);
+        bytes memory data = abi.encodePacked(prefixLength, account_derivation_prefix, srcChainId, accountId);
+        return Hash.blake2bHash(data);
+    }
+
+    function revertIfFailed(bool success, bytes memory resultData, string memory revertMsg) private pure {
+        if (!success) {
+            if (resultData.length > 0) {
+                assembly {
+                    let resultDataSize := mload(resultData)
+                    revert(add(32, resultData), resultDataSize)
+                }
+            } else {
+                revert(revertMsg);
+            }
+        }
+    }
+
+    // dispatch pallet dispatth-call
+    function dispatch(
+        address dispatchAddress,
+        bytes memory callEncoded,
+        string memory errMsg
+    ) internal {
+        // Dispatch the call
+        (bool success, bytes memory data) = dispatchAddress.call(
+            callEncoded
+        );
+        revertIfFailed(success, data, errMsg);
     }
 }

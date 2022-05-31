@@ -12,7 +12,7 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
         dispatchAddress = 0x0000000000000000000000000000000000000019;
         callIndexOfSendMessage = 0x2b03;
         storageAddress = 0x000000000000000000000000000000000000001a;
-        callbackFromAddress = 0x6461722f64766D70000000000000000000000000;
+        callbackSender = 0x6461722f64766D70000000000000000000000000;
         
         // Bridge settings
         bridgeConfigs[0] = BridgeConfig(
@@ -21,7 +21,11 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
             // storage key for the latest nonce of Darwinia message lane
             hex"c9b76e645ba80b6ca47619d64cb5e58d96c246acb9b55077390e3ca723a0ca1f11d2df4e979aa105cf552e9544ebd2b500000000",
             // lane id, lane to Darwinia
-            0
+            0,
+            // source chain id
+            0x00000000,
+            //
+            address(0x0)
         );
     }
     
@@ -51,7 +55,7 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
     }
 
     function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override {
-        require(msg.sender == callbackFromAddress, "Only pallet address is allowed call 'onMessageDelivered'");
+        require(msg.sender == callbackSender, "Only pallet address is allowed call 'onMessageDelivered'");
         // TODO: Your code goes here...
     }
 }
