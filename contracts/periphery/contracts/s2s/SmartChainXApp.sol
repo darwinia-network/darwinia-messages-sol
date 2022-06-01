@@ -45,7 +45,7 @@ abstract contract SmartChainXApp {
     /// @return nonce The nonce of the message
     function sendMessage(
         bytes4 srcOutlaneId,
-        bytes32 srcStorageKeyForMarketFee,
+        bytes memory srcStorageKeyForMarketFee,
         bytes memory srcStorageKeyForLatestNonce,
         MessagePayload memory payload
     ) internal returns (uint64) {

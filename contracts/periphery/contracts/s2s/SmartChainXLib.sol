@@ -75,7 +75,7 @@ library SmartChainXLib {
     }
 
     // Get market fee from state storage of the substrate chain
-    function marketFee(address storageAddress, bytes32 storageKey)
+    function marketFee(address storageAddress, bytes memory storageKey)
         internal
         view
         returns (uint128)
@@ -83,7 +83,7 @@ library SmartChainXLib {
         (bool success, bytes memory data) = address(storageAddress).staticcall(
             abi.encodeWithSelector(
                 IStateStorage.state_storage.selector,
-                abi.encodePacked(storageKey)
+                storageKey
             )
         );
         revertIfFailed(success, data, "Get market fee failed");
