@@ -13,18 +13,6 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
         callIndexOfSendMessage = 0x2b03;
         storageAddress = 0x000000000000000000000000000000000000001a;
         callbackSender = 0x6461722f64766D70000000000000000000000000;
-        
-        // Bridge settings
-        bridgeConfigs[0] = BridgeConfig(
-            // storage key for Darwinia market fee
-            0x190d00dd4103825c78f55e5b5dbf8bfe2edb70953213f33a6ef6b8a5e3ffcab2,
-            // storage key for the latest nonce of Darwinia message lane
-            hex"c9b76e645ba80b6ca47619d64cb5e58d96c246acb9b55077390e3ca723a0ca1f11d2df4e979aa105cf552e9544ebd2b500000000",
-            // lane id, lane to Darwinia
-            0,
-            // source chain id
-            0x00000000
-        );
     }
     
     function unlockFromRemote() public payable {
@@ -47,8 +35,14 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
             callEncoded // call encoded bytes
         );
         uint64 nonce = sendMessage(
-            0, // bridge id, which is the mapping key of bridgeConfigs
-            payload // message payload
+            // lane id, lane to Pangoro
+            0,
+            // storage key for Darwinia market fee
+            hex"190d00dd4103825c78f55e5b5dbf8bfe2edb70953213f33a6ef6b8a5e3ffcab2",
+            // storage key for the latest nonce of Darwinia message lane
+            hex"c9b76e645ba80b6ca47619d64cb5e58d96c246acb9b55077390e3ca723a0ca1f11d2df4e979aa105cf552e9544ebd2b500000000",
+            // the message payload
+            payload
         );
     }
 

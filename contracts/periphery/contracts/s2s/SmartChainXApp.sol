@@ -20,17 +20,6 @@ abstract contract SmartChainXApp {
         bytes callEncoded;
     }
 
-    struct BridgeConfig {
-        // The storage key used to get market fee
-        bytes32 srcStorageKeyForMarketFee;
-        // The storage key used to get latest nonce
-        bytes srcStorageKeyForLatestNonce;
-        // The lane id
-        bytes4 srcOutlaneId;
-        // Source chain id
-        bytes4 srcChainId;
-    }
-
     // Precompile address for dispatching 'send_message'
     address internal dispatchAddress =
         0x0000000000000000000000000000000000000019;
@@ -48,19 +37,22 @@ abstract contract SmartChainXApp {
     address internal callbackSender =
         0x6461722f64766D70000000000000000000000000;
 
-    // Config of each bridge
-    // bridge id => BridgeConfig
-    mapping(uint16 => BridgeConfig) internal bridgeConfigs;
-
-    // Send message over bridge id
-    function sendMessage(uint16 bridgeId, MessagePayload memory payload)
-        internal
-        returns (uint64)
-    {
+    /// @notice Send message over lane id
+    /// @param srcOutlaneId The lane id
+    /// @param srcStorageKeyForMarketFee The storage key used to get market fee
+    /// @param srcStorageKeyForLatestNonce The storage key used to get latest nonce
+    /// @param payload The message payload to be sent
+    /// @return nonce The nonce of the message
+    function sendMessage(
+        bytes4 srcOutlaneId,
+        bytes memory srcStorageKeyForMarketFee,
+        bytes memory srcStorageKeyForLatestNonce,
+        MessagePayload memory payload
+    ) internal returns (uint64) {
         // Get the current market fee
         uint128 fee = SmartChainXLib.marketFee(
             storageAddress,
-            bridgeConfigs[bridgeId].srcStorageKeyForMarketFee
+            srcStorageKeyForMarketFee
         );
         require(msg.value >= fee, "Not enough fee to pay");
 
@@ -75,7 +67,7 @@ abstract contract SmartChainXApp {
         SmartChainXLib.sendMessage(
             dispatchAddress,
             callIndexOfSendMessage,
-            bridgeConfigs[bridgeId].srcOutlaneId,
+            srcOutlaneId,
             msg.value,
             message
         );
@@ -84,16 +76,22 @@ abstract contract SmartChainXApp {
         return
             SmartChainXLib.latestNonce(
                 storageAddress,
-                bridgeConfigs[bridgeId].srcStorageKeyForLatestNonce
+                srcStorageKeyForLatestNonce
             );
     }
 
-    function requireSourceChainEthereumAddress(uint16 bridgeId, address sourceChainEthereumAddress) internal {
+    /// @notice This function is used to check the sender.
+    /// @param srcChainId The source chain id
+    /// @param sender The sender of the message on the source chain
+    function requireSenderOfSourceChain(
+        bytes4 srcChainId,
+        address sender
+    ) internal {
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
-            sourceChainEthereumAddress
+            sender
         );
         bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
-            bridgeConfigs[bridgeId].srcChainId,
+            srcChainId,
             derivedSubstrateAddress
         );
         address derivedEthereumAddress = AccountId.deriveEthereumAddress(
@@ -121,32 +119,7 @@ abstract contract SmartChainXApp {
         return callbackSender;
     }
 
-    // function getBridgeConfig(uint16 bridgeId) public view returns (BridgeConfig memory) {
-    //     return bridgeConfigs[bridgeId];
-    // }
-
-    function getBridgeConfig(uint16 bridgeId)
-        public
-        view
-        returns (
-            bytes32,
-            bytes memory,
-            bytes4,
-            bytes4
-        )
-    {
-        BridgeConfig memory config = bridgeConfigs[bridgeId];
-        return (
-            config.srcStorageKeyForMarketFee,
-            config.srcStorageKeyForLatestNonce,
-            config.srcOutlaneId,
-            config.srcChainId
-        );
-    }
-
-    
-
-    /// @notice Message delivered callback
+    /// @notice Callback function for 'send_message'
     /// @param lane Lane id
     /// @param nonce Nonce of the callback message
     /// @param result Dispatch result of cross chain message
