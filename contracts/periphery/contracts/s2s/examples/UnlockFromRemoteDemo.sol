@@ -47,7 +47,7 @@ contract UnlockFromRemoteDemo is SmartChainXApp {
     }
 
     function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override {
-        require(msg.sender == callbackSender, "Only pallet address is allowed call 'onMessageDelivered'");
+        require(msg.sender == callbackSender, "Only pallet address is allowed to call 'onMessageDelivered'");
         // TODO: Your code goes here...
     }
 }

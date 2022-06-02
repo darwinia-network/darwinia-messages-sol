@@ -7,7 +7,7 @@ import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "../types/PalletEthereum.sol";
 
 // deploy on the target chain first, then deploy on the source chain
-contract RemoteTransactDemo is SmartChainXApp, Ownable {
+contract TransactDemo is SmartChainXApp, Ownable {
     uint256 public number;
 
     // source chain ethereum sender address,
@@ -70,7 +70,7 @@ contract RemoteTransactDemo is SmartChainXApp, Ownable {
     ) external override {
         require(
             msg.sender == callbackSender,
-            "Only pallet address is allowed call 'onMessageDelivered'"
+            "Only pallet address is allowed to call 'onMessageDelivered'"
         );
         // TODO: Your code goes here...
     }
