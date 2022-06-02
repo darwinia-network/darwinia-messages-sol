@@ -6,7 +6,11 @@ import "../SmartChainXApp.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "../types/PalletEthereum.sol";
 
-// deploy on the target chain first, then deploy on the source chain
+/// 0. Correct the globle settings, line 22. Corrent the storage keys, line 60, 62
+/// 1. Deploy on the target chain, get the address of the deployed contract: `tgtAddress`.
+/// 2. Replace the `to` of evm transaction with `tgtAddress`, line 43.
+/// 3. Deploy on the source chain, get the address of the deployed contract: `srcAddress`.
+/// 4. Update the senderOfSourceChain to `srcAddress` by calling `setSenderOfSourceChain` function.
 contract TransactDemo is SmartChainXApp, Ownable {
     uint256 public number;
 
@@ -28,23 +32,20 @@ contract TransactDemo is SmartChainXApp, Ownable {
 
     function callAddOnTheTargetChain() public payable {
         // 1. prepare the call that will be executed on the target chain
-        PalletEthereum.TransactCall memory call = PalletEthereum
-            .TransactCall(
-                // the call index of substrate_transact
-                0x2902,
-                // the evm transaction to transact
-                PalletEthereum.buildTransactionV2(
-                    0, // evm tx nonce, nonce on the target chain + pending nonce on the source chain + 1
-                    1000000000, // gasPrice, get from the target chain
-                    600000, // gasLimit, get from the target chain
-                    0x50275d3F95E0F2FCb2cAb2Ec7A231aE188d7319d, // <------------------ change to the contract address on the target chain
-                    0, // value, 0 means no value transfer
-                    hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002" // the add function bytes that will be called on the target chain, add(2)
-                )
-            );
-        bytes memory callEncoded = PalletEthereum.encodeTransactCall(
-            call
+        PalletEthereum.TransactCall memory call = PalletEthereum.TransactCall(
+            // the call index of substrate_transact
+            0x2902,
+            // the evm transaction to transact
+            PalletEthereum.buildTransactionV2(
+                0, // evm tx nonce, nonce on the target chain + pending nonce on the source chain + 1
+                1000000000, // gasPrice, get from the target chain
+                600000, // gasLimit, get from the target chain
+                0x50275d3F95E0F2FCb2cAb2Ec7A231aE188d7319d, // <------------------ change to the contract address on the target chain
+                0, // value, 0 means no value transfer
+                hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002" // the add function bytes that will be called on the target chain, add(2)
+            )
         );
+        bytes memory callEncoded = PalletEthereum.encodeTransactCall(call);
 
         // 2. send the message
         MessagePayload memory payload = MessagePayload(
