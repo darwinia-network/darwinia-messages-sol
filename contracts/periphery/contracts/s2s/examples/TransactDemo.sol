@@ -83,4 +83,8 @@ contract TransactDemo is SmartChainXApp, Ownable {
         requireSenderOfSourceChain(0, senderOfSourceChain);
         number = number + _value;
     }
+
+    function setSenderOfSourceChain(address _senderOfSourceChain) public onlyOwner {
+        senderOfSourceChain = _senderOfSourceChain;
+    }
 }
