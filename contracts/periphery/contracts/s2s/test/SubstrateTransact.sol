@@ -9,11 +9,20 @@ import "../types/PalletEthereum.sol";
 contract SubstrateTransact {
     function substrateTransact() public payable {
         // 1. prepare the call that will be executed on the target chain
-        PalletEthereum.SubstrateTransactCall memory call = PalletEthereum.SubstrateTransactCall(
-            0x2902,
-            0xC2Bf5F29a4384b1aB0C063e1c666f02121B6084a,
-            hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002"
-        );
+        PalletEthereum.SubstrateTransactCall memory call = PalletEthereum
+            .SubstrateTransactCall(
+                // the call index of substrate_transact
+                0x2902,
+                // the evm transaction to transact
+                PalletEthereum.buildTransactionV2(
+                    0, // evm tx nonce, nonce on the target chain + pending nonce on the source chain + 1
+                    1000000000, // gasPrice, get from the target chain
+                    600000, // gasLimit, get from the target chain
+                    0x50275d3F95E0F2FCb2cAb2Ec7A231aE188d7319d, // <------------------ change to the contract address on the target chain
+                    0, // value, 0 means no value transfer
+                    hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002" // the add function bytes that will be called on the target chain, add(2)
+                )
+            );
         bytes memory callEncoded = PalletEthereum.encodeSubstrateTransactCall(call);
 
         // 2. send the message
