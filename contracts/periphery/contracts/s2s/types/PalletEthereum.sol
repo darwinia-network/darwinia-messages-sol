@@ -7,12 +7,12 @@ import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "./CommonTypes.sol";
 
 library PalletEthereum {
-    struct SubstrateTransactCall {
+    struct TransactCall {
         bytes2 callIndex;
         EnumItemTransactionV2WithLegacyTransaction transaction;
     }
 
-    function encodeSubstrateTransactCall(SubstrateTransactCall memory call)
+    function encodeTransactCall(TransactCall memory call)
         internal
         pure
         returns (bytes memory)

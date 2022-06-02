@@ -28,8 +28,8 @@ contract RemoteTransactDemo is SmartChainXApp, Ownable {
 
     function callAddOnTheTargetChain() public payable {
         // 1. prepare the call that will be executed on the target chain
-        PalletEthereum.SubstrateTransactCall memory call = PalletEthereum
-            .SubstrateTransactCall(
+        PalletEthereum.TransactCall memory call = PalletEthereum
+            .TransactCall(
                 // the call index of substrate_transact
                 0x2902,
                 // the evm transaction to transact
@@ -42,7 +42,7 @@ contract RemoteTransactDemo is SmartChainXApp, Ownable {
                     hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002" // the add function bytes that will be called on the target chain, add(2)
                 )
             );
-        bytes memory callEncoded = PalletEthereum.encodeSubstrateTransactCall(
+        bytes memory callEncoded = PalletEthereum.encodeTransactCall(
             call
         );
 

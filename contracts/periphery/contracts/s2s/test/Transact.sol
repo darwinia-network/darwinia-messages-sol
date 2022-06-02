@@ -6,11 +6,11 @@ import "../SmartChainXLib.sol";
 import "../types/PalletEthereum.sol";
 
 // used for testing
-contract SubstrateTransact {
-    function substrateTransact() public payable {
+contract Transact {
+    function transact() public payable {
         // 1. prepare the call that will be executed on the target chain
-        PalletEthereum.SubstrateTransactCall memory call = PalletEthereum
-            .SubstrateTransactCall(
+        PalletEthereum.TransactCall memory call = PalletEthereum
+            .TransactCall(
                 // the call index of substrate_transact
                 0x2902,
                 // the evm transaction to transact
@@ -23,7 +23,7 @@ contract SubstrateTransact {
                     hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002" // the add function bytes that will be called on the target chain, add(2)
                 )
             );
-        bytes memory callEncoded = PalletEthereum.encodeSubstrateTransactCall(call);
+        bytes memory callEncoded = PalletEthereum.encodeTransactCall(call);
 
         // 2. send the message
         SmartChainXLib.dispatch(
