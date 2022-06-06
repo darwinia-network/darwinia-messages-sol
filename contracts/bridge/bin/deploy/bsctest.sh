@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -e
 
+unset TARGET_CHAIN
+unset NETWORK_NAME
+unset ETH_RPC_URL
 export NETWORK_NAME=bsctest
+export TARGET_CHAIN=pangoro
 export ETH_RPC_URL=https://data-seed-prebsc-1-s1.binance.org:8545
 
 echo "ETH_FROM: ${ETH_FROM}"
@@ -19,13 +23,13 @@ bridged_in_lane_pos=1
 bridged_out_lane_pos=0
 
 # fee market config
-FEEMARKET_VAULT=$ETH_FROM
 COLLATERAL_PERORDER=$(seth --to-wei 0.01 ether)
-ASSIGNED_RELAYERS_NUMBER=3
 SLASH_TIME=86400
 RELAY_TIME=86400
+# 300 : 0.01
+PRICE_RATIO=100
 
-FeeMarket=$(deploy FeeMarket $FEEMARKET_VAULT $COLLATERAL_PERORDER $ASSIGNED_RELAYERS_NUMBER $SLASH_TIME $RELAY_TIME)
+SimpleFeeMarket=$(deploy SimpleFeeMarket $COLLATERAL_PERORDER $SLASH_TIME $RELAY_TIME $PRICE_RATIO)
 
 # darwinia beefy light client config
 # Pangoro
@@ -34,13 +38,29 @@ BEEFY_SLASH_VALUT=$ETH_FROM
 BEEFY_VALIDATOR_SET_ID=0
 BEEFY_VALIDATOR_SET_LEN=4
 BEEFY_VALIDATOR_SET_ROOT=0xde562c60e8a03c61ef0ab761968c14b50b02846dd35ab9faa9dea09d00247600
-DarwiniaLightClient=$(deploy DarwiniaLightClient $NETWORK $BEEFY_SLASH_VALUT $BEEFY_VALIDATOR_SET_ID $BEEFY_VALIDATOR_SET_LEN $BEEFY_VALIDATOR_SET_ROOT)
+DarwiniaLightClient=$(deploy DarwiniaLightClient \
+  $NETWORK \
+  $BEEFY_SLASH_VALUT \
+  $BEEFY_VALIDATOR_SET_ID \
+  $BEEFY_VALIDATOR_SET_LEN \
+  $BEEFY_VALIDATOR_SET_ROOT)
 
-OutboundLane=$(deploy OutboundLane $DarwiniaLightClient $this_chain_pos $this_out_lane_pos $bridged_chain_pos $bridged_in_lane_pos 1 0 0)
-InboundLane=$(deploy InboundLane $DarwiniaLightClient $this_chain_pos $this_in_lane_pos $bridged_chain_pos $bridged_out_lane_pos 0 0)
+OutboundLane=$(deploy OutboundLane \
+  $DarwiniaLightClient \
+  $SimpleFeeMarket \
+  $this_chain_pos \
+  $this_out_lane_pos \
+  $bridged_chain_pos \
+  $bridged_in_lane_pos 1 0 0)
 
-seth send -F $ETH_FROM $OutboundLane "setFeeMarket(address)" $FeeMarket --chain bsctest
-seth send -F $ETH_FROM $FeeMarket "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
+InboundLane=$(deploy InboundLane \
+  $DarwiniaLightClient \
+  $this_chain_pos \
+  $this_in_lane_pos \
+  $bridged_chain_pos \
+  $bridged_out_lane_pos 0 0)
 
-BSCLightClient=$(jq -r ".BSCLightClient" "$PWD/bin/addr/pangoro.json")
+seth send -F $ETH_FROM $SimpleFeeMarket "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
+
+BSCLightClient=$(jq -r ".bsctest.BSCLightClient" "$PWD/bin/addr/pangoro.json")
 seth send -F $ETH_FROM $BSCLightClient "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --chain pangoro

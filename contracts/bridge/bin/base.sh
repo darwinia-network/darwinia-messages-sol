@@ -88,7 +88,11 @@ save_contract() {
 	if [[ ! -e $ADDRESSES_FILE ]]; then
 		echo "{}" >"$ADDRESSES_FILE"
 	fi
-	result=$(cat "$ADDRESSES_FILE" | jq -r ". + {\"$1\": \"$2\"}")
+  if [[ -z ${TARGET_CHAIN} ]]; then
+      result=$(cat "$ADDRESSES_FILE" | jq -r ". + {\"$1\": \"$2\"}")
+  else
+      result=$(cat "$ADDRESSES_FILE" | jq -r ". + {\"$1\": {\"$TARGET_CHAIN\": \"$2\" }}")
+  fi
 	printf %s "$result" >"$ADDRESSES_FILE"
 }
 

@@ -2,10 +2,10 @@
 
 set -e
 
-export NETWORK_NAME=local-dvm
-export TARGET_CHAIN=local-evm
-export ETH_RPC_URL=${TEST_LOCAL_DVM_RPC:-http://192.168.2.100:9933}
-export ETH_FROM=${TEST_LOCAL_DVM_FROM:-0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b}
+export NETWORK_NAME=pangoro
+export TARGET_CHAIN=ropsten
+export ETH_RPC_URL=https://pangoro-rpc.darwinia.network
+# export ETH_RPC_URL=http://35.247.165.91:9933
 
 echo "ETH_FROM: ${ETH_FROM}"
 
@@ -38,8 +38,8 @@ FeeMarket=$(deploy FeeMarket \
 
 # becon light client config
 BLS_PRECOMPILE=0x000000000000000000000000000000000000001c
-SLOT=18590
-PROPOSER_INDEX=594880
+SLOT=0
+PROPOSER_INDEX=0
 PARENT_ROOT=
 STATE_ROOT=
 BODY_ROOT=
@@ -71,14 +71,9 @@ InboundLane=$(deploy InboundLane \
   $bridged_chain_pos \
   $bridged_out_lane_pos 0 0)
 
-ChainMessageCommitter=$(deploy ChainMessageCommitter $this_chain_pos)
-LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
-
-seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
-seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
 seth send -F $ETH_FROM $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
 
-amount=$(seth --to-wei 1000 ether)
-seth send -F $ETH_FROM -V $amount 0x3DFe30fb7b46b99e234Ed0F725B5304257F78992
-seth send -F $ETH_FROM -V $amount 0xB3c5310Dcf15A852b81d428b8B6D5Fb684300DF9
-seth send -F $ETH_FROM -V $amount 0xf4F07AAe298E149b902993B4300caB06D655f430
+LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
+seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
+
+seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter

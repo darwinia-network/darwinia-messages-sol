@@ -35,6 +35,7 @@
     "hardhat-gas-reporter": "^1.0.6",
     "merkle-patricia-tree": "3.0.0",
     "merkletreejs": "^0.2.18",
+    "node-fetch": "2",
     "shx": "^0.3.3",
     "solc-0.7": "npm:solc@^0.7.6",
     "solhint": "^3.3.6",
