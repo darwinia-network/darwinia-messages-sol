@@ -10,6 +10,7 @@ class SubClient {
   constructor(http_endpoint, ws_endpoint) {
     this.http_endpoint = http_endpoint
     this.sub_provider = new WsProvider(ws_endpoint)
+    this.provider = new ethers.providers.JsonRpcProvider(http_endpoint)
   }
 
   async init(wallets, fees, addresses, ns_eth, ns_bsc) {
@@ -28,12 +29,17 @@ class SubClient {
     const ChainMessageCommitter = await artifacts.readArtifact("ChainMessageCommitter");
     this.chainMessageCommitter = new ethers.Contract(addresses.ChainMessageCommitter, ChainMessageCommitter.abi, this.provider)
 
+    const LaneMessageCommitter = await artifacts.readArtifact("LaneMessageCommitter");
+    this.ethLaneMessageCommitter = new ethers.Contract(addresses[ns_eth].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
+    this.bscLaneMessageCommitter = new ethers.Contract(addresses[ns_bsc].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
+
     const BeaconLightClient = await artifacts.readArtifact("BeaconLightClient")
     const beaconLightClient = new ethers.Contract(addresses[ns_eth].BeaconLightClient, BeaconLightClient.abi, this.provider)
 
     const BSCLightClient = await artifacts.readArtifact("BSCLightClient")
     const bscLightClient = new ethers.Contract(addresses[ns_bsc].BSCLightClient, BSCLightClient.abi, this.provider)
 
+    this.signer = wallets[0].connect(this.provider)
     this.beaconLightClient = beaconLightClient.connect(this.signer)
     this.bscLightClient = bscLightClient.connect(this.signer)
   }

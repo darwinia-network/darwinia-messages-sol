@@ -18,8 +18,7 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    console.log(data)
-    return data
+    return data.data
   }
 
   async get_sync_committee(epoch) {
@@ -32,12 +31,12 @@ class Eth2Client {
   }
 
   async get_beacon_block(id) {
-    const url = `${this.endopoint}/eth/v2/beacon/headers/${id}`
+    const url = `${this.endopoint}/eth/v2/beacon/blocks/${id}`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
     console.log(data)
-    return data
+    return data.data
   }
 
   async get_beacon_block_root(id) {
@@ -46,7 +45,7 @@ class Eth2Client {
     const response = await fetch(url)
     const data = await response.json()
     console.log(data)
-    return data
+    return data.data
   }
 
   async get_genesis() {
@@ -95,16 +94,21 @@ class Eth2Client {
     const response = await fetch(url)
     const data = await response.json()
     console.log(data)
-    return data
+    return data.data
   }
 
   async get_latest_finalized_update() {
-    const url = `${this.endopoint}/eth/v1/lightclient/latest_finalized_head_update`
+    const url = `${this.endopoint}/eth/v1/lightclient/latest_finalized_head_update/`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
     console.log(data)
     return data
+  }
+
+  async get_finality_branch(state_id) {
+    const paths = [["finalized_checkpoint", "root"]]
+    return this.get_state_proof(state_id, paths)
   }
 
   async get_state_proof(state_id, json_paths) {
@@ -114,11 +118,21 @@ class Eth2Client {
     const response = await fetch(url)
 
     for await (const chunk of response.body) {
-      console.log(toHexString(chunk))
-      console.log(deserializeProof(chunk))
-      // console.log(Buffer.from(serializeProof(chunk)))
+      const proof = hexProof(deserializeProof(chunk))
+      console.log(proof)
+      return proof
     }
   }
-
 }
+
+function hexProof(proof) {
+  const hexJson = {
+    type: proof.type,
+    gindex: Number(proof.gindex),
+    leaf: toHexString(proof.leaf),
+    witnesses: proof.witnesses.map(toHexString),
+  }
+  return hexJson
+}
+
 module.exports.Eth2Client = Eth2Client

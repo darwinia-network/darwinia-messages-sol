@@ -17,9 +17,6 @@ class EvmClient {
       this.feeMarket = new ethers.Contract(addresses[ns].SimpleFeeMarket, SimpleFeeMarket.abi, this.provider)
     }
 
-    const LaneMessageCommitter = await artifacts.readArtifact("LaneMessageCommitter");
-    this.LaneMessageCommitter = new ethers.Contract(addresses[ns].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
-
     const OutboundLane = await artifacts.readArtifact("OutboundLane")
     const outbound = new ethers.Contract(addresses[ns].OutboundLane, OutboundLane.abi,  this.provider)
 
