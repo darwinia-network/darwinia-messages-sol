@@ -15,6 +15,7 @@ contract SimpleFeeMarketTest is DSTest {
     uint256 constant internal COLLATERAL_PERORDER = 1 ether;
     uint32  constant internal SLASH_TIME = 1 days;
     uint32  constant internal RELAY_TIME = 1 days;
+    uint32  constant internal PRICE_RATIO = 800_000;
 
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     address public self;
@@ -29,7 +30,8 @@ contract SimpleFeeMarketTest is DSTest {
        market = new SimpleFeeMarket(
            COLLATERAL_PERORDER,
            SLASH_TIME,
-           RELAY_TIME
+           RELAY_TIME,
+           PRICE_RATIO
        );
        self = address(this);
        a = new Guy(market);
@@ -42,6 +44,7 @@ contract SimpleFeeMarketTest is DSTest {
        assertEq(market.collateralPerOrder(), COLLATERAL_PERORDER);
        assertEq(market.slashTime(), uint(SLASH_TIME));
        assertEq(market.relayTime(), uint(RELAY_TIME));
+       assertEq(market.priceRatio(), uint(PRICE_RATIO));
    }
 
    function test_set_setter() public {
@@ -55,9 +58,10 @@ contract SimpleFeeMarketTest is DSTest {
    }
 
    function test_set_paras() public {
-       market.setParameters(2 days, 3 days, 1 wei);
+       market.setParameters(2 days, 3 days, 200_000, 1 wei);
        assertEq(market.slashTime(), uint(2 days));
        assertEq(market.relayTime(), uint(3 days));
+        assertEq(market.priceRatio(), uint(200_000));
        assertEq(market.collateralPerOrder(), 1 wei);
    }
 

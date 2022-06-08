@@ -16,6 +16,7 @@ contract FeeMarketTest is DSTest {
     uint32  constant internal ASSIGNED_RELAYERS_NUMBER = 3;
     uint32  constant internal SLASH_TIME = 1 days;
     uint32  constant internal RELAY_TIME = 1 days;
+    uint32  constant internal PRICE_RATIO = 800_000;
 
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     address public vault = address(111);
@@ -26,14 +27,14 @@ contract FeeMarketTest is DSTest {
     Guy       public b;
     Guy       public c;
 
-
     function setUp() public {
         market = new FeeMarket(
             vault,
             COLLATERAL_PERORDER,
             ASSIGNED_RELAYERS_NUMBER,
             SLASH_TIME,
-            RELAY_TIME
+            RELAY_TIME,
+            PRICE_RATIO
         );
         self = address(this);
         a = new Guy(market);
@@ -48,6 +49,7 @@ contract FeeMarketTest is DSTest {
         assertEq(market.assignedRelayersNumber(), uint(ASSIGNED_RELAYERS_NUMBER));
         assertEq(market.slashTime(), uint(SLASH_TIME));
         assertEq(market.relayTime(), uint(RELAY_TIME));
+        assertEq(market.priceRatio(), uint(PRICE_RATIO));
     }
 
     function test_set_setter() public {
@@ -61,9 +63,10 @@ contract FeeMarketTest is DSTest {
     }
 
     function test_set_para_time() public {
-        market.setParaTime(2 days, 3 days);
+        market.setParaTime(2 days, 3 days, 200_000);
         assertEq(market.slashTime(), uint(2 days));
         assertEq(market.relayTime(), uint(3 days));
+        assertEq(market.priceRatio(), uint(200_000));
     }
 
     function test_set_para_relay() public {
