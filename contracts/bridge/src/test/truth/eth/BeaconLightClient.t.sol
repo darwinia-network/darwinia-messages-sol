@@ -9,9 +9,11 @@ import "../../spec/SyncCommittee.t.sol";
 import "../../../truth/eth/BeaconLightClient.sol";
 
 contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
+
     bytes32 constant CURRENT_SYNC_COMMITTEE_ROOT = 0x5cf5804f5a8dc680445f5efd4069859f3c65dd2db869f1d091f454008f6d7ab7;
     bytes32 constant GENESIS_VALIDATORS_ROOT = 0x32251a5a748672e3acb1e574ec27caf3b6be68d581c44c402eb166d71a89808e;
     bytes32 constant LATEST_EXECUTION_PAYLOAD_STATE_ROOT = 0x2020202020202020202020202020202020202020202020202020202020202020;
+
     BeaconLightClient lightclient;
     MockBLS bls;
     address self;
@@ -34,7 +36,6 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
     function test_constructor_args() public {
 
     }
-
 
     function test_import_next_sync_committee() public {
         BeaconBlockHeader memory finalized_header = build_finalized_header();

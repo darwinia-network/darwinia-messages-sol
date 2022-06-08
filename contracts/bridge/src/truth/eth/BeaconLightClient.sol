@@ -165,6 +165,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
                 participant_pubkeys[n++] = sync_committee.pubkeys[i];
             }
         }
+
         bytes32 domain = compute_domain(DOMAIN_SYNC_COMMITTEE, fork_version, GENESIS_VALIDATORS_ROOT);
         bytes32 signing_root = compute_signing_root(header, domain);
         bytes memory message = abi.encodePacked(signing_root);

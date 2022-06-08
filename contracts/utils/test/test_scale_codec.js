@@ -39,6 +39,10 @@ describe('ScaleCodecTest', function (accounts) {
         await scaleTypesTest.deployed();
     });
 
+    it('abiEncode', async() => {
+        await scaleTypesTest.testAbiEncode();
+    })
+
     it('encodeUintCompact', async() => {
         await scaleCodecTest.testEncodeUintCompact_SingleByte();
         await scaleCodecTest.testEncodeUintCompact_TwoByte();
@@ -63,7 +67,7 @@ describe('ScaleCodecTest', function (accounts) {
     })
 
     it('encodeSendMessageCall', async() => {
-        await scaleTypesTest.testEncodeSendMessageCall();
+        await scaleTypesTest.testEncodeSendMessageCall2();
     })
 
     // it('ScaleTest', async() => {
