@@ -1,0 +1,9 @@
+{
+  "DEPLOYER": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
+  "local-dvm": {
+    "SimpleFeeMarket": "0x257B832F80E70b34349e38ad50167C60B15676e5",
+    "DarwiniaLightClient": "0x005CaCd7608302d9F64199Bd79b85d112617fE0A",
+    "OutboundLane": "0x71d18878F49d3a40f605baBbD81c24045fcB524a",
+    "InboundLane": "0xCF9BBEF603669B7aeCc2181D0F233b817264c2d5"
+  }
+}

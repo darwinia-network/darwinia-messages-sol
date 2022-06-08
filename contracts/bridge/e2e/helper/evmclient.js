@@ -7,16 +7,24 @@ class EvmClient {
     this.provider = new ethers.providers.JsonRpcProvider(endpoint)
   }
 
-  async init(wallets, fees, addresses) {
+  async init(wallets, fees, addresses, ns) {
     this.wallets = wallets
-    const FeeMarket = await artifacts.readArtifact("FeeMarket");
-    this.feeMarket = new ethers.Contract(addresses.FeeMarket, FeeMarket.abi, this.provider)
+    if (addresses[ns].FeeMarket) {
+      const FeeMarket = await artifacts.readArtifact("FeeMarket");
+      this.feeMarket = new ethers.Contract(addresses[ns].FeeMarket, FeeMarket.abi, this.provider)
+    } else {
+      const SimpleFeeMarket = await artifacts.readArtifact("SimpleFeeMarket");
+      this.feeMarket = new ethers.Contract(addresses[ns].SimpleFeeMarket, SimpleFeeMarket.abi, this.provider)
+    }
+
+    const LaneMessageCommitter = await artifacts.readArtifact("LaneMessageCommitter");
+    this.LaneMessageCommitter = new ethers.Contract(addresses[ns].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
 
     const OutboundLane = await artifacts.readArtifact("OutboundLane")
-    const outbound = new ethers.Contract(addresses.OutboundLane, OutboundLane.abi,  this.provider)
+    const outbound = new ethers.Contract(addresses[ns].OutboundLane, OutboundLane.abi,  this.provider)
 
     const InboundLane = await artifacts.readArtifact("InboundLane")
-    const inbound = new ethers.Contract(addresses.InboundLane, InboundLane.abi, this.provider)
+    const inbound = new ethers.Contract(addresses[ns].InboundLane, InboundLane.abi, this.provider)
 
     this.signer = wallets[0].connect(this.provider)
     this.outbound = outbound.connect(this.signer)
