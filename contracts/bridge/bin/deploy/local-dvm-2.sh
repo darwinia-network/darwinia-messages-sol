@@ -2,12 +2,15 @@
 
 set -e
 
-export NETWORK_NAME=local-dvm-2
+export NETWORK_NAME=local-dvm
+export TARGET_CHAIN=local-evm
 export ETH_RPC_URL=${TEST_LOCAL_DVM_RPC:-http://192.168.2.100:9933}
 export ETH_FROM=${TEST_LOCAL_DVM_FROM:-0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b}
 
-# import the deployment helpers
-. $(dirname $0)/common.sh
+echo "ETH_FROM: ${ETH_FROM}"
+
+. $(dirname $0)/base.sh
+load-addresses
 
 # darwinia to bsc bridge config
 this_chain_pos=0
@@ -18,8 +21,8 @@ bridged_in_lane_pos=1
 bridged_out_lane_pos=0
 
 # fee market config
-FEEMARKET_VAULT=0x0000000000000000000000000000000000000000
-COLLATERAL_PERORDER=$(seth --to-wei 1 ether)
+FEEMARKET_VAULT=$ETH_FROM
+COLLATERAL_PERORDER=$(seth --to-wei 0.01 ether)
 ASSIGNED_RELAYERS_NUMBER=3
 SLASH_TIME=86400
 RELAY_TIME=86400

@@ -1,6 +1,7 @@
 const EthClient = require('./ethclient').EthClient
 const SubClient = require('./subclient').SubClient
 const Bridge    = require('./bridge').Bridge
+const Eth2Client = require('./eth2client').Eth2Client
 
 const target  = process.env.TARGET || 'local'
 
@@ -9,12 +10,14 @@ if (target == 'local') {
   evm_addresses = require("../../bin/addr/local-evm.json")
   dvm_addresses = require("../../bin/addr/local-dvm.json")
 
-  // evm_endpoint = "http://127.0.0.1:8545"
-  // dvm_endpoint = "http://127.0.0.1:9933"
-  // sub_endpoint = "ws://127.0.0.1:9944"
-  evm_endpoint = "http://192.168.2.100:8545"
-  dvm_endpoint = "http://192.168.2.100:10033"
-  sub_endpoint = "ws://192.168.2.100:10044"
+  evm_endpoint = "http://127.0.0.1:8545"
+  dvm_endpoint = "http://127.0.0.1:9933"
+  sub_endpoint = "ws://127.0.0.1:9944"
+  beacon_endpoint = "http://127.0.0.1:5052"
+  // evm_endpoint = "http://192.168.2.100:8545"
+  // dvm_endpoint = "http://192.168.2.100:10033"
+  // sub_endpoint = "ws://192.168.2.100:10044"
+  // beacon_endpoint = "http://127.0.0.1:5052"
 } else if (target == 'test') {
   evm_addresses = require("../../bin/addr/bsctest.json")
   dvm_addresses = require("../../bin/addr/pangoro.json")
@@ -47,6 +50,7 @@ const fees = [
 async function bootstrap() {
   const ethClient = new EthClient(evm_endpoint)
   const subClient = new SubClient(dvm_endpoint, sub_endpoint)
+  const eth2Client = new Eth2Client(beacon_endpoint)
   const bridge = new Bridge(ethClient, subClient)
   await ethClient.init(wallets, fees, evm_addresses)
   await subClient.init(wallets, fees, dvm_addresses)
