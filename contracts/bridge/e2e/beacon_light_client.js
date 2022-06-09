@@ -31,32 +31,79 @@ describe("bridge e2e test: beacon light client", () => {
 
   it("import finalized header", async () => {
     const old_finalized_header = await subClient.beaconLightClient.finalized_header()
-    console.log(old_finalized_header)
+    log('old_finalized_header', old_finalized_header)
     const old_finalized_header_root = await eth2Client.get_beacon_block_root(old_finalized_header.slot)
     const snapshot = await eth2Client.get_light_client_snapshot(old_finalized_header_root)
-    const current_sync_committtee = snapshot.current_sync_committtee
-    let finalized_header_slot = old_finalized_header.slot.add(32)
-    let finalized_header = await eth2Client.get_header(finalized_header_slot)
-    while (!finalized_header) {
-      finalized_header_slot = finalized_header_slot.sub(1)
-      finalized_header = await eth2Client.get_header(finalized_header_slot)
-      console.log(finalized_header.header.message)
-    }
+    const current_sync_committee = snapshot.current_sync_committee
+    const old_period = old_finalized_header.slot.div(32).div(256)
     let attested_header_slot = old_finalized_header.slot.add(96)
     let attested_header = await eth2Client.get_header(attested_header_slot)
-    while (!attested_header && attested_header.header.message.finalized_checkpoint) {
-        attested_header_slot = attested_header_slot.sub(1)
-        attested_header = await eth2Client.get_header(attested_header_slot)
-        console.log(attested_header.header.message)
+    while (!attested_header) {
+      attested_header_slot = attested_header_slot.add(1)
+      attested_header = await eth2Client.get_header(attested_header_slot)
     }
-    let attested_block = await eth2Client.get_beacon_block(attested_header_slot)
-    let attested_block_body = attested_block.message.body
-    let sync_aggregate = attested_block_body.sync_aggregate
-    let finalized_checkpoint = attested_block_body.finalized_checkpoint
-    console.log(sync_aggregate)
-    console.log(finalized_checkpoint)
+    log('attested_header', attested_header)
+    let sync_aggregate_slot = attested_header_slot.add(1)
+    let sync_aggregate_header = await eth2Client.get_header(sync_aggregate_slot)
+    while (!sync_aggregate_header) {
+      sync_aggregate_slot = sync_aggregate_slot.add(1)
+      sync_aggregate_header = await eth2Client.get_header(sync_aggregate_slot)
+    }
+    log('sync_aggregate_header', sync_aggregate_header)
+    let sync_aggregate_block = await eth2Client.get_beacon_block(sync_aggregate_slot)
+    log('sync_aggregate_block', sync_aggregate_block)
+    const new_period = sync_aggregate_slot.div(32).div(256)
+    expect(~~new_period).to.eq(~~old_period)
+    let sync_aggregate = sync_aggregate_block.message.body.sync_aggregate
+    log(sync_aggregate)
+    let sync_committee_bits = []
+    sync_committee_bits.push(sync_aggregate.sync_committee_bits.slice(0, 66))
+    sync_committee_bits.push('0x' + sync_aggregate.sync_committee_bits.slice(66))
+    sync_aggregate.sync_committee_bits = sync_committee_bits;
+    log(sync_aggregate)
 
-    // const finaliy_branch = await eth2Client.get_finality_branch(attested_header_slot)
+    let cp = await eth2Client.get_checkpoint(attested_header_slot)
+    let finalized_header_root = cp.finalized.root
+    let finalized_header = await eth2Client.get_header(finalized_header_root)
+    log('finalized_header', finalized_header)
+
+    let attested_block = await eth2Client.get_beacon_block(attested_header_slot)
+
+    const finalized_block = await eth2Client.get_beacon_block(finalized_header.root)
+    const finality_branch = await eth2Client.get_finality_branch(attested_header_slot)
+
+    const latest_execution_payload_state_root = finalized_block.message.body.execution_payload.state_root
+    const latest_execution_payload_state_root_branch = await eth2Client.get_latest_execution_payload_state_root_branch(finalized_header.header.message.slot)
+    const fork_version = await eth2Client.get_fork_version(attested_header_slot)
+
+    const finalized_header_update = {
+      attested_header: attested_header.header.message,
+      current_sync_committee,
+
+      finalized_header: finalized_header.header.message,
+      finality_branch: finality_branch.witnesses,
+      latest_execution_payload_state_root,
+      latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch.witnesses,
+      sync_aggregate: sync_aggregate,
+      fork_version: fork_version.current_version
+    }
+
+    console.log(finalized_header_update)
+    // console.log(JSON.stringify(current_sync_committee.pubkeys, null, 2))
+
+    // gasLimit: 10000000,
+    // gasPrice: 1300000000
+    const tx = await subClient.beaconLightClient.import_finalized_header(finalized_header_update)
+    console.log(tx)
+
+    const new_finalized_header = await subClient.beaconLightClient.finalized_header()
+
+    console.log(new_finalized_header)
+    expect(finalized_header.header.message.slot).to.eq(new_finalized_header.slot)
+    expect(finalized_header.header.message.proposer_index).to.eq(new_finalized_header.proposer_index)
+    expect(finalized_header.header.message.parent_root).to.eq(new_finalized_header.parent_root)
+    expect(finalized_header.header.message.state_root).to.eq(new_finalized_header.state_root)
+    expect(finalized_header.header.message.body_root).to.eq(new_finalized_header.body_root)
 
   })
 })

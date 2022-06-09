@@ -17,7 +17,7 @@ interface IBLS {
 }
 
 contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
-    // address(0x1c)
+    // address(0x0800)
     address private immutable BLS_PRECOMPILE;
 
     bytes32 public immutable GENESIS_VALIDATORS_ROOT;
@@ -159,8 +159,8 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         bytes[] memory participant_pubkeys = new bytes[](participants);
         uint64 n = 0;
         for (uint64 i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
-            uint index = i / 256;
-            uint8 offset = uint8(i % 256);
+            uint index = i >> 8;
+            uint8 offset = uint8(i & 255);
             if (isSet(sync_aggregate.sync_committee_bits[index], (255 - offset))) {
                 participant_pubkeys[n++] = sync_committee.pubkeys[i];
             }

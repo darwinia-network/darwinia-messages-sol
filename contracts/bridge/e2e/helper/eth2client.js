@@ -26,7 +26,6 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    console.log(data)
     return data
   }
 
@@ -35,7 +34,6 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    console.log(data)
     return data.data
   }
 
@@ -44,7 +42,6 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    console.log(data)
     return data.data
   }
 
@@ -53,17 +50,15 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    console.log(data)
     return data
   }
 
-  async get_current_fork_version(id) {
+  async get_fork_version(id) {
     const url = `${this.endopoint}/eth/v1/beacon/states/${id}/fork`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    console.log(data)
-    return data
+    return data.data
   }
 
   async get_finalized_checkpoint() {
@@ -75,8 +70,7 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    console.log(data)
-    return data
+    return data.data
   }
 
   async get_sync_committee_period_update(from, to) {
@@ -84,7 +78,6 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    console.log(data)
     return data
   }
 
@@ -93,7 +86,6 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    console.log(data)
     return data.data
   }
 
@@ -102,12 +94,16 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    console.log(data)
     return data
   }
 
   async get_finality_branch(state_id) {
     const paths = [["finalized_checkpoint", "root"]]
+    return this.get_state_proof(state_id, paths)
+  }
+
+  async get_latest_execution_payload_state_root_branch(state_id) {
+    const paths = [["latest_execution_payload_header", "state_root"]]
     return this.get_state_proof(state_id, paths)
   }
 
@@ -119,7 +115,6 @@ class Eth2Client {
 
     for await (const chunk of response.body) {
       const proof = hexProof(deserializeProof(chunk))
-      console.log(proof)
       return proof
     }
   }
