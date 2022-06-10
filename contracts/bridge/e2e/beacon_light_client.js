@@ -29,7 +29,7 @@ describe("bridge e2e test: beacon light client", () => {
     bridge = clients.bridge
   })
 
-  it("import old finalized header", async () => {
+  it.skip("import old finalized header", async () => {
     const old_finalized_header = await subClient.beaconLightClient.finalized_header()
     log('old_finalized_header', old_finalized_header)
     const old_finalized_header_root = await eth2Client.get_beacon_block_root(old_finalized_header.slot)
@@ -109,7 +109,32 @@ describe("bridge e2e test: beacon light client", () => {
     expect(finalized_header.header.message.parent_root).to.eq(new_finalized_header.parent_root)
     expect(finalized_header.header.message.state_root).to.eq(new_finalized_header.state_root)
     expect(finalized_header.header.message.body_root).to.eq(new_finalized_header.body_root)
+  })
 
+
+  it("import old finalized header", async () => {
+    const old_finalized_header = await subClient.beaconLightClient.finalized_header()
+    log('old_finalized_header', old_finalized_header)
+    const old_period = old_finalized_header.slot.div(32).div(256)
+    log('old_period', old_period)
+
+    const sync_change = await eth2Client.get_sync_committee_period_update(~~old_period, ~~old_period)
+    const next_sync = sync_change[0]
+    log('next_sync', next_sync)
+    const next_sync_committee = next_sync.next_sync_committee
+    const next_sync_committee_branch = await eth2Client.get_next_sync_committee_branch(old_finalized_header.slot)
+
+    const sync_committee_period_update = {
+      next_sync_committee,
+      next_sync_committee_branch: next_sync_committee_branch.witnesses
+    }
+
+    log(sync_committee_period_update)
+
+    const tx = await subClient.beaconLightClient.import_next_sync_committee(sync_committee_period_update)
+    const next_period = ~~old_period + 1
+    const new_finalized_header = await subClient.beaconLightClient.sync_committee_roots(next_period)
+    log(new_finalized_header)
   })
 })
 

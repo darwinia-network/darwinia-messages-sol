@@ -6,9 +6,11 @@ const eth2Client = new Eth2Client(beacon_endpoint);
 const log = console.log;
 
 (async () => {
-  // const sync_change = await eth2Client.get_sync_committee_period_update(72, 73)
-  // log(sync_change[1])
-  // // log(JSON.stringify(sync_change, null, 2))
+  const sync_change = await eth2Client.get_sync_committee_period_update(79, 79)
+  log(JSON.stringify(sync_change, null, 2))
+  log(await eth2Client.get_next_sync_committee_branch(653120))
+  log(await eth2Client.get_latest_execution_payload_state_root_branch(653120))
+  log(await eth2Client.get_finality_branch(653120))
   // log(sync_change[1].attested_header)
   // log(sync_change[1].sync_aggregate)
   // let sync_slot = Number(sync_change[1].attested_header.slot) + 1
@@ -30,13 +32,13 @@ const log = console.log;
   // const update = await eth2Client.get_latest_finalized_update()
   // log(update)
   // const finalized_block = await eth2Client.get_beacon_block(update.finalized_header.slot)
-  const finalized_block = await eth2Client.get_beacon_block(651296)
-  const latest_execution_payload_state_root = finalized_block.message.body.execution_payload.state_root
-  log(latest_execution_payload_state_root)
-  const latest_execution_payload_state_root_branch = await eth2Client.get_latest_execution_payload_state_root_branch(finalized_block.message.slot)
-  log(latest_execution_payload_state_root_branch)
-  const fork_version = await eth2Client.get_fork_version(finalized_block.message.slot)
-  log('fork_version', fork_version)
+  // const finalized_block = await eth2Client.get_beacon_block(651296)
+  // const latest_execution_payload_state_root = finalized_block.message.body.execution_payload.state_root
+  // log(latest_execution_payload_state_root)
+  // const latest_execution_payload_state_root_branch = await eth2Client.get_latest_execution_payload_state_root_branch(finalized_block.message.slot)
+  // log(latest_execution_payload_state_root_branch)
+  // const fork_version = await eth2Client.get_fork_version(finalized_block.message.slot)
+  // log('fork_version', fork_version)
   // log(await eth2Client.get_fork_version(651232))
   // log(await eth2Client.get_genesis())
   // const header = await eth2Client.get_header(update.finalized_header.slot)

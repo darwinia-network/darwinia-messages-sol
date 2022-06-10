@@ -26,7 +26,7 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    return data
+    return data.data
   }
 
   async get_beacon_block(id) {
@@ -99,22 +99,24 @@ class Eth2Client {
   }
 
   async get_finality_branch(state_id) {
-    const paths = [["finalized_checkpoint", "root"]]
-    return this.get_state_proof(state_id, paths)
+    return this.get_state_proof(state_id, 105)
   }
 
   async get_latest_execution_payload_state_root_branch(state_id) {
-    const paths = [["latest_execution_payload_header", "state_root"]]
-    return this.get_state_proof(state_id, paths)
+    return this.get_state_proof(state_id, 898)
   }
 
-  async get_state_proof(state_id, json_paths) {
-    const paths = json_paths.map((path) => JSON.stringify(path))
-    const url = `${this.endopoint}/eth/v1/lightclient/proof/${state_id}?paths=${paths}`
+  async get_next_sync_committee_branch(state_id) {
+    return this.get_state_proof(state_id, 55)
+  }
+
+  async get_state_proof(state_id, gindex) {
+    const url = `${this.endopoint}/eth/v1/lightclient/single_proof/${state_id}?gindex=${gindex}`
     const headers = {'Content-Type': 'application/octet-stream'}
     const response = await fetch(url)
 
     for await (const chunk of response.body) {
+      console.log(toHexString(chunk))
       const proof = hexProof(deserializeProof(chunk))
       return proof
     }
