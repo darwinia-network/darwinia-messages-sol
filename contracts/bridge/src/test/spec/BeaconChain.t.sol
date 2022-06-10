@@ -7,6 +7,7 @@ import "../test.sol";
 import "./SyncCommittee.t.sol";
 
 contract BeaconChainTest is DSTest, SyncCommitteePreset {
+    bytes4 constant private DOMAIN_SYNC_COMMITTEE = 0x07000000;
 
     function test_to_little_endian_64() public {
         assertEq(to_little_endian_64(5), hex"0500000000000000");
@@ -96,6 +97,27 @@ contract BeaconChainTest is DSTest, SyncCommitteePreset {
             genesis_validators_root: hex'0b09cbef0906dd76ecde1aee95118a7a5138612503fd71405bef3ad92ff96bf7'
         });
         assertEq(hash_tree_root(case0), 0x9e6e0e0f2f91e820ac314cf7c39cc5bfcf950d518cf2343e5e67404be3a1d724);
+    }
+
+    function test_compute_signing_root() public {
+        BeaconBlockHeader memory header = BeaconBlockHeader({
+              slot:            594977,
+              proposer_index:  75461,
+              parent_root:     0x728e25e46c1a25871bf7fd2f166f9df498258a9a53b00da023bebe1af95802ca,
+              state_root:      0xfc0692a950c8eb6f0c1e979151ce07a4f01c13187bbf937406bfa2e71e3e4eb1,
+              body_root:       0x297f7ba3dad4b07d238ffab5af582c24c3441598f4901600926db5ed8a6a41ca
+        });
+        bytes4 fork_version = hex'70000071';
+        bytes32 genesis_validators_root = hex'99b09fcd43e5905236c370f184056bec6e6638cfc31a323b304fc4aa789cb4ad';
+        bytes32 domain = compute_domain(DOMAIN_SYNC_COMMITTEE, fork_version, genesis_validators_root);
+        assertEq(domain, hex'07000000e7acb21061790987fa1c1e745cccfb358370b33e8af2b2c18938e6c2');
+        assertEq(compute_signing_root(header, domain), hex'10463446888d7025d20898341d1aaf5a0937041013986c5478d5ab3ecd5fe5d7');
+    }
+
+    function test_compute_signing_root2() public {
+        bytes32 domain = hex'07000000e7acb21061790987fa1c1e745cccfb358370b33e8af2b2c18938e6c2';
+        bytes32 header = hex'b82ffe1e2e7d9dd678aaedd630e75192f1e8b802b9a3b61e6cc7fbaf8ecdd6ec';
+        assertEq(hash_node(header, domain), hex'0e8af0f2acda0f48227ed7a28b824716bc87dc6e25916bde8f3efd9459507068');
     }
 
     function test_is_valid_merkle_branch_case0() public {

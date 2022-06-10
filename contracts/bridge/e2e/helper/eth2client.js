@@ -30,6 +30,7 @@ class Eth2Client {
   }
 
   async get_beacon_block(id) {
+    // warning: rpc return value sync_aggregate is wrong!!!
     const url = `${this.endopoint}/eth/v2/beacon/blocks/${id}`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
@@ -78,7 +79,7 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    return data
+    return data.data
   }
 
   async get_light_client_snapshot(block_root) {
@@ -94,7 +95,7 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    return data
+    return data.data
   }
 
   async get_finality_branch(state_id) {
