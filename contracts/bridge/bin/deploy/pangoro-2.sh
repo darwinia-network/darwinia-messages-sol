@@ -37,8 +37,7 @@ FeeMarket=$(deploy FeeMarket \
   $PRICE_RATIO)
 
 # bsc light client config
-BSC_PRECOMPILE=0x000000000000000000000000000000000000001a
-BSCLightClient=$(deploy BSCLightClient $BSC_PRECOMPILE)
+BSCLightClient=$(deploy BSCLightClient)
 
 OutboundLane=$(deploy OutboundLane \
   $BSCLightClient \

@@ -36,11 +36,7 @@ FeeMarket=$(deploy FeeMarket \
   $SLASH_TIME $RELAY_TIME \
   $PRICE_RATIO)
 
-BSCLightClient=$(deploy BSCLightClient \
-  $bridged_chain_pos \
-  $LANE_IDENTIFY_SLOT \
-  $LANE_NONCE_SLOT \
-  $LANE_MESSAGE_SLOT)
+BSCLightClient=$(deploy BSCLightClient)
 
 LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
 

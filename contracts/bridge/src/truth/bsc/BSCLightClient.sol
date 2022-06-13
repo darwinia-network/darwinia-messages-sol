@@ -3,6 +3,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "../../interfaces/ISubStateStorage.sol";
 import "../../spec/ChainMessagePosition.sol";
 import "../common/StorageVerifier.sol";
 
@@ -11,19 +12,33 @@ interface IBSC {
 }
 
 contract BSCLightClient is StorageVerifier {
-    // address(0x1a)
-    address private immutable BSC_PRECOMPILE;
+    address private immutable STORAGE_PRECOMPILE = address(0x0400);
+    // subalfred storage-key --prefix Bsc --item FinalizedCheckpoint
+    bytes32 private immutable BSC_FINALIZED_CHECKPOINT_KEY = 0xdeeff83c81d2e28f78ad5890b33244d67d2d5aca142f290829575a29c215c204;
 
-    constructor(address bsc_precompile) StorageVerifier(uint32(ChainMessagePosition.BSC), 0, 1, 2) {
-        BSC_PRECOMPILE = bsc_precompile;
-    }
+    constructor() StorageVerifier(uint32(ChainMessagePosition.BSC), 0, 1, 2) {}
 
     function state_root() public view override returns (bytes32 root) {
-        (bool ok, bytes memory out) = BSC_PRECOMPILE.staticcall(abi.encodeWithSelector(IBSC.state_root.selector));
+        bytes memory finalized_header = state_storage(abi.encodePacked(BSC_FINALIZED_CHECKPOINT_KEY));
+        return decode_state_root_from_header(finalized_header);
+    }
+
+    function decode_state_root_from_header(bytes memory header) internal pure returns (bytes32 root) {
+        require(header.length > 116, "!header");
+        assembly {
+            root := mload(add(add(header, 0x20), 0x54))
+        }
+    }
+
+    function state_storage(bytes memory key) internal view returns (bytes memory value) {
+        (bool ok, bytes memory out) = STORAGE_PRECOMPILE.staticcall(
+            abi.encodeWithSelector(
+                ISubStateStorage.state_storage.selector,
+                key
+            )
+        );
         if (ok) {
-            if (out.length == 32) {
-                root = abi.decode(out, (bytes32));
-            }
+            return out;
         } else {
             if (out.length > 0) {
                 assembly {
@@ -31,7 +46,7 @@ contract BSCLightClient is StorageVerifier {
                     revert(add(32, out), returndata_size)
                 }
             } else {
-                revert("!call");
+                revert("!state_storage");
             }
         }
     }
