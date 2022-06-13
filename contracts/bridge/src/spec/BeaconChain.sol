@@ -32,7 +32,7 @@ contract BeaconChain {
     }
 
     // Return the signing root for the corresponding signing data.
-    function compute_signing_root(BeaconBlockHeader calldata beacon_header, bytes32 domain) internal pure returns (bytes32){
+    function compute_signing_root(BeaconBlockHeader memory beacon_header, bytes32 domain) internal pure returns (bytes32){
         return hash_tree_root(SigningData({
                 object_root: hash_tree_root(beacon_header),
                 domain: domain

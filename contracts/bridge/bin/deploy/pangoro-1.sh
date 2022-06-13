@@ -2,10 +2,10 @@
 
 set -e
 
-export NETWORK_NAME=local-dvm
-export TARGET_CHAIN=local-evm-eth2
-export ETH_RPC_URL=${TEST_LOCAL_DVM_RPC:-http://192.168.2.100:9933}
-export ETH_FROM=${TEST_LOCAL_DVM_FROM:-0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b}
+export NETWORK_NAME=pangoro
+export TARGET_CHAIN=ropsten
+export ETH_RPC_URL=https://pangoro-rpc.darwinia.network
+# export ETH_RPC_URL=http://35.247.165.91:9933
 
 echo "ETH_FROM: ${ETH_FROM}"
 
@@ -37,14 +37,14 @@ FeeMarket=$(deploy FeeMarket \
   $PRICE_RATIO)
 
 # becon light client config
-BLS_PRECOMPILE=0x0000000000000000000000000000000000000800
-SLOT=594880
-PROPOSER_INDEX=62817
-PARENT_ROOT=0x961949592705567a50aae3f4186852f44dfeeb9688df46f7f49ef4a626f60b9a
-STATE_ROOT=0x768a9a1694fd36f6d9523be1e49b690dc4ab2934ba46fa99ad110f03b4a785c4
-BODY_ROOT=0x2983d20d70763f6d1e619f98f83e9ba7a8a84e7b10d82085e4e192c6ff2b9b76
-CURRENT_SYNC_COMMITTEE_HASH=0x9c27f72afdc11a64a3f0c7246fe5ed2aa6303a1cb06bb0a7be746528ee97741d
-GENESIS_VALIDATORS_ROOT=0x99b09fcd43e5905236c370f184056bec6e6638cfc31a323b304fc4aa789cb4ad
+BLS_PRECOMPILE=0x000000000000000000000000000000000000001c
+SLOT=0
+PROPOSER_INDEX=0
+PARENT_ROOT=
+STATE_ROOT=
+BODY_ROOT=
+CURRENT_SYNC_COMMITTEE_HASH=
+GENESIS_VALIDATORS_ROOT=
 
 BeaconLightClient=$(deploy BeaconLightClient \
   $BLS_PRECOMPILE \
@@ -71,13 +71,9 @@ InboundLane=$(deploy InboundLane \
   $bridged_chain_pos \
   $bridged_out_lane_pos 0 0)
 
-LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
-
-seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
-seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
 seth send -F $ETH_FROM $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
 
-amount=$(seth --to-wei 1000 ether)
-seth send -F $ETH_FROM -V $amount 0x3DFe30fb7b46b99e234Ed0F725B5304257F78992
-seth send -F $ETH_FROM -V $amount 0xB3c5310Dcf15A852b81d428b8B6D5Fb684300DF9
-seth send -F $ETH_FROM -V $amount 0xf4F07AAe298E149b902993B4300caB06D655f430
+LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
+seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
+
+seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter

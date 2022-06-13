@@ -41,7 +41,7 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
         bytes[][] laneRelayersProof;
     }
 
-    address internal constant MPT_PRECOMPILE = address(0x1d);
+    address internal constant MPT_PRECOMPILE = address(0x0801);
 
     uint256 public immutable THIS_CHAIN_POSITION;
     uint256 public immutable LANE_IDENTIFY_SLOT;

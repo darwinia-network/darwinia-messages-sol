@@ -12,10 +12,14 @@
         "kton": "0x1994100c58753793D52c6f457f189aa3ce9cEe94"
     },
     "43": {
+        "WCRAB": "0xc52287b259b2431ba0f61BC7EBD0eD793B0b7044",
+        "WCKTON": "0x8809f9b3ACEF1dA309f49b5Ab97A4C0faA64E6Ae",
         "WormholeDaoTimeLock": "0xED1d1d219f85Bc634f250db5e77E0330Cddc9b2a",
         "WormholeDaoMultisig": "0xc8C1680B18D432732D07c044669915726fAF67D0"
     },
     "44": {
+        "WCRAB": "0x2d2b97ea380b0185e9fdf8271d1afb5d2bf18329",
+        "WCKTON": "0x159933C635570D5042723359fbD1619dFe83D3f3",
         "S2sMappingTokenFactoryProxyAdmin": "0x9f5098Dc064F6ca8D7f7Eb9e722706256b35bb37",
         "S2sMappingTokenFactoryLogic": "0xA1Ea474716fBe0f5101BA1ACF442201A97768aa4",
         "S2sMappingTokenFactoryProxy": "0x3CC8913088F79831c8335f0307f4FC92d79C1ac7",
