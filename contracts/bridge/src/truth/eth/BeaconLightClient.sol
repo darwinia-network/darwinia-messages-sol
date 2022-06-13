@@ -8,8 +8,8 @@
 // - Get finalized_header_update and sync_period_update at least once per period.
 //
 // To get light-client best finalized update at period N:
-// - Fetch best finalized sync_aggregate_header in period N
-// - Fetch parent_block/attested_block by sync_aggregate_header's _parent_root
+// - Fetch best finalized block's sync_aggregate_header in period N
+// - Fetch parent_block/attested_block by sync_aggregate_header's parent_root
 // - Fetch finalized_checkpoint_root and finalized_checkpoint_root_witness in attested_block
 // - Fetch finalized_header by finalized_checkpoint_root
 //
@@ -21,6 +21,7 @@
 // - Fetch next_sync_committee and next_sync_committee_witness in finalized_block
 //
 // - finalized_header -> next_sync_committee
+//
 // ```
 //                       Finalized               Block   Sync
 //                       Checkpoint              Header  Aggreate
