@@ -5,7 +5,7 @@
 // - Sync period updates: To advance to the next committee by `import_next_sync_committee`.
 //
 // To stay synced to the current sync period it needs:
-// - Get lightclient and committee_updates at least once per period.
+// - Get finalized_header_update and sync_period_update at least once per period.
 //
 // To get light-client best finalized update at period N:
 // - Fetch best finalized sync_aggregate_header in period N
