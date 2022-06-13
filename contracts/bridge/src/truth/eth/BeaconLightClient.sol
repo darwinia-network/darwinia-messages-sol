@@ -1,4 +1,52 @@
 // SPDX-License-Identifier: MIT
+// Etherum beacon light client.
+// Current arthitecture diverges from spec's proposed updated splitting them into:
+// - Finalized header updates: To import a recent finalized header signed by a known sync committee by `import_finalized_header`.
+// - Sync period updates: To advance to the next committee by `import_next_sync_committee`.
+//
+// To stay synced to the current sync period it needs:
+// - Get lightclient and committee_updates at least once per period.
+//
+// To get light-client best finalized update at period N:
+// - Fetch best finalized sync_aggregate_header in period N
+// - Fetch parent_block/attested_block by sync_aggregate_header's _parent_root
+// - Fetch finalized_checkpoint_root and finalized_checkpoint_root_witness in attested_block
+// - Fetch finalized_header by finalized_checkpoint_root
+//
+// - sync_aggregate -> parent_block/attested_block -> finalized_checkpoint -> finalized_header
+//
+// To get light-client sync period update at period N:
+// - Fetch the finalized_header in light-client
+// - Fetch the finalized_block by finalized_header.slot
+// - Fetch next_sync_committee and next_sync_committee_witness in finalized_block
+//
+// - finalized_header -> next_sync_committee
+// ```
+//                       Finalized               Block   Sync
+//                       Checkpoint              Header  Aggreate
+// ----------------------|-----------------------|-------|---------> time
+//                        <---------------------   <----
+//                         finalizes               signs
+// ```
+//
+// To initialize, it needs:
+// - BLS verify contract
+// - Trust finalized_header
+// - current_sync_committee of the trust finalized_header
+// - genesis_validators_root of genesis state
+//
+// When to trigger a committee update sync:
+//
+//  period 0         period 1         period 2
+// -|----------------|----------------|----------------|-> time
+//              | now
+//               - active current_sync_committee
+//               - known next_sync_committee, signed by current_sync_committee
+//
+//
+// next_sync_committee can be imported at any time of the period, not strictly at the period borders.
+// - No need to query for period 0 next_sync_committee until the end of period 0
+// - After the import next_sync_committee of period 0, populate period 1's committee
 
 pragma solidity 0.7.6;
 pragma abicoder v2;
@@ -22,14 +70,20 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
 
     bytes32 public immutable GENESIS_VALIDATORS_ROOT;
 
+    // An bellatrix beacon state has 25 fields, with a depth of 5.
+    // | field                               | gindex | depth |
+    // | ----------------------------------- | ------ | ----- |
+    // | next_sync_committee                 | 55     | 5     |
+    // | finalized_checkpoint_root           | 105    | 6     |
+    // | latest_execution_payload_state_root | 898    | 9     |
     uint64 constant private NEXT_SYNC_COMMITTEE_INDEX = 55;
     uint64 constant private NEXT_SYNC_COMMITTEE_DEPTH = 5;
 
     uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX = 898;
     uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH = 9;
 
-    uint64 constant private FINALIZED_ROOT_INDEX = 105;
-    uint64 constant private FINALIZED_ROOT_DEPTH = 6;
+    uint64 constant private FINALIZED_CHECKPOINT_ROOT_INDEX = 105;
+    uint64 constant private FINALIZED_CHECKPOINT_ROOT_DEPTH = 6;
 
     uint64 constant private EPOCHS_PER_SYNC_COMMITTEE_PERIOD = 256;
     uint64 constant private SLOTS_PER_EPOCH = 32;
@@ -78,7 +132,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     bytes32 public latest_execution_payload_state_root;
 
     // Sync committees corresponding to the header
-    // Sync_committee_perid => sync_committee_root
+    // sync_committee_perid => sync_committee_root
     mapping (uint64 => bytes32) public sync_committee_roots;
 
     constructor(
@@ -179,13 +233,13 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         bytes32[] calldata finality_branch,
         bytes32 attested_header_root
     ) internal pure returns (bool) {
-        require(finality_branch.length == FINALIZED_ROOT_DEPTH, "!finality_branch");
+        require(finality_branch.length == FINALIZED_CHECKPOINT_ROOT_DEPTH, "!finality_branch");
         bytes32 header_root = hash_tree_root(header);
         return is_valid_merkle_branch(
             header_root,
             finality_branch,
-            FINALIZED_ROOT_DEPTH,
-            FINALIZED_ROOT_INDEX,
+            FINALIZED_CHECKPOINT_ROOT_DEPTH,
+            FINALIZED_CHECKPOINT_ROOT_INDEX,
             attested_header_root
         );
     }
