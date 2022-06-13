@@ -37,14 +37,14 @@ FeeMarket=$(deploy FeeMarket \
   $PRICE_RATIO)
 
 # becon light client config
-BLS_PRECOMPILE=0x000000000000000000000000000000000000001c
-SLOT=0
-PROPOSER_INDEX=0
-PARENT_ROOT=
-STATE_ROOT=
-BODY_ROOT=
-CURRENT_SYNC_COMMITTEE_HASH=
-GENESIS_VALIDATORS_ROOT=
+BLS_PRECOMPILE=0x0000000000000000000000000000000000000800
+SLOT=594880
+PROPOSER_INDEX=62817
+PARENT_ROOT=0x961949592705567a50aae3f4186852f44dfeeb9688df46f7f49ef4a626f60b9a
+STATE_ROOT=0x768a9a1694fd36f6d9523be1e49b690dc4ab2934ba46fa99ad110f03b4a785c4
+BODY_ROOT=0x2983d20d70763f6d1e619f98f83e9ba7a8a84e7b10d82085e4e192c6ff2b9b76
+CURRENT_SYNC_COMMITTEE_HASH=0x9c27f72afdc11a64a3f0c7246fe5ed2aa6303a1cb06bb0a7be746528ee97741d
+GENESIS_VALIDATORS_ROOT=0x99b09fcd43e5905236c370f184056bec6e6638cfc31a323b304fc4aa789cb4ad
 
 BeaconLightClient=$(deploy BeaconLightClient \
   $BLS_PRECOMPILE \
@@ -71,9 +71,7 @@ InboundLane=$(deploy InboundLane \
   $bridged_chain_pos \
   $bridged_out_lane_pos 0 0)
 
-seth send -F $ETH_FROM $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
-
 LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
 seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
-
 seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
+seth send -F $ETH_FROM $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
