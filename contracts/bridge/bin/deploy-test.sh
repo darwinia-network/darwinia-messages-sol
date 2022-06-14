@@ -2,5 +2,6 @@
 
 set -e
 
-. $(dirname $0)/deploy/pangoro.sh
-. $(dirname $0)/deploy/bsctest.sh
+. $(dirname $0)/deploy/test/pangoro.sh
+. $(dirname $0)/deploy/test/ropsten.sh
+. $(dirname $0)/deploy/test/bsctest.sh

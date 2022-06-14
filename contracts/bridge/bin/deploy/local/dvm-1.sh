@@ -36,7 +36,7 @@ FeeMarket=$(deploy FeeMarket \
   $SLASH_TIME $RELAY_TIME \
   $PRICE_RATIO)
 
-# becon light client config
+# beacon light client config
 BLS_PRECOMPILE=0x0000000000000000000000000000000000000800
 SLOT=651232
 PROPOSER_INDEX=86325
