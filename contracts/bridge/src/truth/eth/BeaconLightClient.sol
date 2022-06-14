@@ -102,7 +102,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         // The beacon block header that is attested to by the sync committee
         BeaconBlockHeader attested_header;
 
-        // Current sync committee corresponding to the attested header
+        // Current sync committee corresponding to sign attested header
         SyncCommittee current_sync_committee;
 
         // The finalized beacon block header attested to by Merkle branch
@@ -118,6 +118,9 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
 
         // Fork version for the aggregate signature
         bytes4 fork_version;
+
+        // Slot at which the aggregate signature was created (untrusted)
+        uint64 signature_slot;
     }
 
     struct SyncCommitteePeriodUpdate {
@@ -185,8 +188,8 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
                "!execution_payload_state_root"
         );
 
-        uint64 current_period = compute_sync_committee_period(update.attested_header.slot);
-        bytes32 current_sync_committee_root = sync_committee_roots[current_period];
+        uint64 signature_period = compute_sync_committee_period(update.signature_slot);
+        bytes32 current_sync_committee_root = sync_committee_roots[signature_period];
 
         require(current_sync_committee_root != bytes32(0), "!missing");
         require(current_sync_committee_root == hash_tree_root(update.current_sync_committee), "!sync_committee");
