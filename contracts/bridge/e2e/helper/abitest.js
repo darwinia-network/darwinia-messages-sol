@@ -526,7 +526,7 @@ const BeaconLightClient = require("../../artifacts/src/truth/eth/BeaconLightClie
       state_root: '0xe5991d8aba197cc483b381bf29602fc9f32b602c5198cf268eb3fe2946b5942f',
       body_root: '0x1919d319f54f9e0b5de79fc86f9494ae651e27698488b211acccbd4da32ba3be'
     },
-    current_sync_committee: {
+    signature_sync_committee: {
       pubkeys: pubkeys,
       aggregate_pubkey: '0x9057fee428dbde6d021bb87be052c267ca60e5a12139df564aff59c05275900d175f14efc4f36c86b2221c083192db98'
     },

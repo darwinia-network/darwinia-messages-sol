@@ -105,8 +105,8 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         // The beacon block header that is attested to by the sync committee
         BeaconBlockHeader attested_header;
 
-        // Current sync committee corresponding to sign attested header
-        SyncCommittee current_sync_committee;
+        // Sync committee corresponding to sign attested header
+        SyncCommittee signature_sync_committee;
 
         // The finalized beacon block header attested to by Merkle branch
         BeaconBlockHeader finalized_header;
@@ -194,15 +194,19 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
                "!execution_payload_state_root"
         );
 
+        uint64 finalized_period = compute_sync_committee_period(finalized_header.slot);
         uint64 signature_period = compute_sync_committee_period(update.signature_slot);
-        bytes32 current_sync_committee_root = sync_committee_roots[signature_period];
+        require(signature_period == finalized_period ||
+                signature_period == finalized_period + 1,
+               "!signature_period");
+        bytes32 singature_sync_committee_root = sync_committee_roots[signature_period];
 
-        require(current_sync_committee_root != bytes32(0), "!missing");
-        require(current_sync_committee_root == hash_tree_root(update.current_sync_committee), "!sync_committee");
+        require(singature_sync_committee_root != bytes32(0), "!missing");
+        require(singature_sync_committee_root == hash_tree_root(update.signature_sync_committee), "!sync_committee");
 
         require(verify_signed_header(
                 update.sync_aggregate,
-                update.current_sync_committee,
+                update.signature_sync_committee,
                 update.fork_version,
                 update.attested_header),
                "!sign");
