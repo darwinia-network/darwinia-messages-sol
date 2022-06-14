@@ -66,6 +66,9 @@ interface IBLS {
 }
 
 contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
+    event FinalizedHeaderImported(BeaconBlockHeader finalized_header, bytes32 latest_execution_payload_state_root);
+    event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed next_sync_committee_root);
+
     // address(0x0800)
     address private immutable BLS_PRECOMPILE;
 
@@ -168,8 +171,11 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         );
 
         uint64 current_period = compute_sync_committee_period(finalized_header.slot);
-        require(sync_committee_roots[current_period + 1] == bytes32(0), "imported");
-        sync_committee_roots[current_period + 1] = hash_tree_root(update.next_sync_committee);
+        uint64 next_period = current_period + 1;
+        require(sync_committee_roots[next_period] == bytes32(0), "imported");
+        bytes32 next_sync_committee_root = hash_tree_root(update.next_sync_committee);
+        sync_committee_roots[next_period] = next_sync_committee_root;
+        emit NextSyncCommitteeImported(next_period, next_sync_committee_root);
     }
 
     function import_finalized_header(FinalizedHeaderUpdate calldata update) external payable {
@@ -204,6 +210,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         require(update.finalized_header.slot > finalized_header.slot, "!new");
         finalized_header = update.finalized_header;
         latest_execution_payload_state_root = update.latest_execution_payload_state_root;
+        emit FinalizedHeaderImported(update.finalized_header, update.latest_execution_payload_state_root);
     }
 
     function verify_signed_header(
