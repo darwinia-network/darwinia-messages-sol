@@ -97,7 +97,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     bytes32 constant private EMPTY_BEACON_HEADER_HASH = 0xc78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c;
 
     struct SyncAggregate {
-        uint256[2] sync_committee_bits;
+        bytes32[2] sync_committee_bits;
         bytes sync_committee_signature;
     }
 
@@ -225,8 +225,9 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         uint64 n = 0;
         for (uint64 i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
             uint index = i >> 8;
-            uint8 offset = uint8(i & 255);
-            if (isSet(sync_aggregate.sync_committee_bits[index], (255 - offset))) {
+            uint sindex = i / 8 % 32;
+            uint offset = i % 8;
+            if (uint8(sync_aggregate.sync_committee_bits[index][sindex]) >> offset & 1 == 1) {
                 participant_pubkeys[n++] = sync_committee.pubkeys[i];
             }
         }
@@ -287,7 +288,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
     }
 
 
-    function is_supermajority(uint256[2] calldata sync_committee_bits) internal pure returns (bool) {
+    function is_supermajority(bytes32[2] calldata sync_committee_bits) internal pure returns (bool) {
         return sum(sync_committee_bits) * 3 >= SYNC_COMMITTEE_SIZE * 2;
     }
 
@@ -319,7 +320,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         return slot / SLOTS_PER_EPOCH / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
     }
 
-    function sum(uint256[2] memory x) internal pure returns (uint256) {
-        return countSetBits(x[0]) + countSetBits(x[1]);
+    function sum(bytes32[2] memory x) internal pure returns (uint256) {
+        return countSetBits(uint(x[0])) + countSetBits(uint(x[1]));
     }
 }

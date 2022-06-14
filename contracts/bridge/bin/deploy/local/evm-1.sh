@@ -5,8 +5,8 @@ set -e
 unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
-export NETWORK_NAME=local-evm-eth2
-export TARGET_CHAIN=local-dvm
+export NETWORK_NAME=evm-eth2
+export TARGET_CHAIN=dvm
 export ETH_RPC_URL=${TEST_LOCAL_EVM_RPC:-http://127.0.0.1:8545}
 export ETH_FROM=${TEST_LOCAL_EVM_FROM:-$(seth ls --keystore $TMPDIR/8545/keystore | cut -f1)}
 export ETH_RPC_ACCOUNTS=true
@@ -64,5 +64,5 @@ InboundLane=$(deploy InboundLane \
 
 seth send -F $ETH_FROM $SimpleFeeMarket "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
 
-BeaconLightClient=$(jq -r ".[\"$NETWORK_NAME\"].BeaconLightClient" "$PWD/bin/addr/$TARGET_CHAIN.json")
+BeaconLightClient=$(jq -r ".[\"$NETWORK_NAME\"].BeaconLightClient" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
 (set -x; seth send -F 0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b $BeaconLightClient "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url http://127.0.0.1:9933)

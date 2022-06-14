@@ -86,8 +86,8 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
             latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch,
             sync_aggregate: BeaconLightClient.SyncAggregate({
                 sync_committee_bits:[
-                    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff,
-                    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+                    bytes32(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
+                    bytes32(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
                 ],
                 sync_committee_signature: hex'97f0ff2a00f9c8ffe0ff6b1bad3b97c6aa856c9ca3c49e10bb8aeab202ebffa6723a22ec28f9f94ab5f7719a14aa55301520b1ff6bb9f430d786e803096336697237036816d4be2355adfd7fb12d2c307ec6d25c051f3930d24c7ee1fd1ae1ee'
             }),

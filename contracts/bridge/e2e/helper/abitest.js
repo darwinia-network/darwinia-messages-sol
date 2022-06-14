@@ -547,8 +547,10 @@ const BeaconLightClient = require("../../artifacts/src/truth/eth/BeaconLightClie
     ],
     sync_aggregate: {
       sync_committee_bits: [
-        '0xefff7ff7d76bfff6f5feffbfbeffff7ff66ffdfdff7b7bffffffefffafefbe35',
-        '0xe7ffdffebbff75bfffff7ffff7ffbdffffdf67dffaffed7fbffefcfffffffddf',
+        '0xf7fffeefebd6ff6faf7ffffd7dfffffe6ff6bfbfffdedefffffff7fff5f77dac',
+        '0xe7fffb7fddffaefdfffffeffefffbdfffffbe6fb5fffb7fefd7f3fffffffbffb',
+        // '0xefff7ff7d76bfff6f5feffbfbeffff7ff66ffdfdff7b7bffffffefffafefbe35',
+        // '0xe7ffdffebbff75bfffff7ffff7ffbdffffdf67dffaffed7fbffefcfffffffddf',
       ],
       sync_committee_signature: '0x80eac761834d66e6e3b60a71c54302fd8cfa131f96041f59bfea31c0c877987ce047a0e937c316ef1faa047ed91a11d61561999f5d0c7180ad4b6d2114346a045a35b035574d2b3635668bda1871cd72157abd88a8f21f24ab6491760bf35089'
     },

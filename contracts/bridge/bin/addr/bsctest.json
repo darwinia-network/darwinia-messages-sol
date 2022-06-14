@@ -1,9 +1,0 @@
-{
-  "DEPLOYER": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
-  "pangoro": {
-    "SimpleFeeMarket": "0x2B79b866280CE6a0b140E0673e92d1763a1953fA",
-    "DarwiniaLightClient": "0xb87FADFC22d344E0A01a6175740c7f3dD6E20cd3",
-    "OutboundLane": "0x984eEe9Aef1E757b9A3FD73390Fe87efa2f92E04",
-    "InboundLane": "0x00f7E5e3e804E46Dc254129C8075bFC2e9B5D6A8"
-  }
-}

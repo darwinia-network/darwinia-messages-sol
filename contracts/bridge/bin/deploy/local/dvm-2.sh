@@ -2,8 +2,8 @@
 
 set -e
 
-export NETWORK_NAME=local-dvm
-export TARGET_CHAIN=local-evm-bsc
+export NETWORK_NAME=dvm
+export TARGET_CHAIN=evm-bsc
 export ETH_RPC_URL=${TEST_LOCAL_DVM_RPC:-http://192.168.2.100:9933}
 export ETH_FROM=${TEST_LOCAL_DVM_FROM:-0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b}
 

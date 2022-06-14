@@ -85,8 +85,8 @@ contract BeaconLightClientTest2 is DSTest, Bitfield, SyncCommitteePreset {
             latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch,
             sync_aggregate: BeaconLightClient.SyncAggregate({
                 sync_committee_bits:[
-                    0xfbbdffdeffff7efdcefebfffff37f7fffbddbbf7fffff7dfe77bbfffffcffbfd,
-                    0xeffffdff79fffffbffffbf9ffffff7fe7fffdd6feffb7fbfff7fbffb7ffbdffd
+                    bytes32(0xf7fffeefebd6ff6faf7ffffd7dfffffe6ff6bfbfffdedefffffff7fff5f77dac),
+                    bytes32(0xe7fffb7fddffaefdfffffeffefffbdfffffbe6fb5fffb7fefd7f3fffffffbffb)
                 ],
                 sync_committee_signature: hex'afef0939a9e716283e11070e716a96cbeab8af6e4d695bf3366ea9d4dcb5aaa24841da1f7c9534d6aafe2bf1d79ea2b10a7a2748d9c3b602eb5f364c7fac1a2b9fa986d4bb075d3d6a68ad1186a2a46f2359ee8c27ad7726703969255c6dcfdd'
             }),
@@ -142,14 +142,14 @@ contract BeaconLightClientTest2 is DSTest, Bitfield, SyncCommitteePreset {
         return latest_execution_payload_state_root_branch;
     }
 
-    function sum(uint256[2] memory x) internal pure returns (uint256) {
-        return countSetBits(x[0]) + countSetBits(x[1]);
+    function sum(bytes32[2] memory x) internal pure returns (uint256) {
+        return countSetBits(uint(x[0])) + countSetBits(uint(x[1]));
     }
 
     function test_sum_sync_committee_bits() public {
-        uint[2] memory sync_committee_bits = [
-            0xefff7ff7d76bfff6f5feffbfbeffff7ff66ffdfdff7b7bffffffefffafefbe35,
-            0xe7ffdffebbff75bfffff7ffff7ffbdffffdf67dffaffed7fbffefcfffffffddf
+        bytes32[2] memory sync_committee_bits = [
+            bytes32(0xf7fffeefebd6ff6faf7ffffd7dfffffe6ff6bfbfffdedefffffff7fff5f77dac),
+            bytes32(0xe7fffb7fddffaefdfffffeffefffbdfffffbe6fb5fffb7fefd7f3fffffffbffb)
         ];
         assertEq(sum(sync_committee_bits), 445);
     }
