@@ -73,7 +73,7 @@ describe("bridge e2e test: beacon light client", () => {
 
     const finalized_header_update = {
       attested_header: attested_header.header.message,
-      current_sync_committee,
+      signature_sync_committee: current_sync_committee,
       finalized_header: finalized_header.header.message,
       finality_branch: finality_branch.witnesses,
       latest_execution_payload_state_root,

@@ -78,7 +78,7 @@ contract BeaconLightClientTest2 is DSTest, Bitfield, SyncCommitteePreset {
                 state_root: 0xe5991d8aba197cc483b381bf29602fc9f32b602c5198cf268eb3fe2946b5942f,
                 body_root: 0x1919d319f54f9e0b5de79fc86f9494ae651e27698488b211acccbd4da32ba3be
             }),
-            current_sync_committee: sync_committee_case3(),
+            signature_sync_committee: sync_committee_case3(),
             finalized_header: finalized_header,
             finality_branch: finality_branch,
             latest_execution_payload_state_root: LATEST_EXECUTION_PAYLOAD_STATE_ROOT,

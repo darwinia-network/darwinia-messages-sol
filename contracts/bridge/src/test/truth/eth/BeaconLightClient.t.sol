@@ -79,7 +79,7 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
                 state_root: 0x8bfc033696d841842579ef3c57c9513d4e8ab433bb317bac2f7c31213c147ef9,
                 body_root: 0x4d9a9d5e540ea67b9c6fe1aa133dd4e28690baaf5bb52c323058027683d07700
             }),
-            current_sync_committee: sync_committee_case1(),
+            signature_sync_committee: sync_committee_case1(),
             finalized_header: finalized_header,
             finality_branch: finality_branch,
             latest_execution_payload_state_root: LATEST_EXECUTION_PAYLOAD_STATE_ROOT,
