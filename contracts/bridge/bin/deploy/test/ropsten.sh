@@ -5,9 +5,9 @@ set -e
 unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
-export NETWORK_NAME=bsctest
+export NETWORK_NAME=ropsten
 export TARGET_CHAIN=pangoro
-export ETH_RPC_URL=https://data-seed-prebsc-1-s1.binance.org:8545
+export ETH_RPC_URL=https://ropsten.infura.io/$INFURA_KEY
 
 echo "ETH_FROM: ${ETH_FROM}"
 
@@ -63,4 +63,4 @@ InboundLane=$(deploy InboundLane \
 seth send -F $ETH_FROM $SimpleFeeMarket "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
 
 BSCLightClient=$(jq -r ".bsctest.BSCLightClient" "$PWD/bin/addr/$MODE/pangoro.json")
-seth send -F $ETH_FROM $BSCLightClient "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --chain pangoro
+(set -x; seth send -F $ETH_FROM $BSCLightClient "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url https://pangoro-rpc.darwinia.network)
