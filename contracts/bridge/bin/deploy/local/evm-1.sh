@@ -64,5 +64,5 @@ InboundLane=$(deploy InboundLane \
 
 seth send -F $ETH_FROM $SimpleFeeMarket "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
 
-BeaconLightClient=$(jq -r ".[\"$NETWORK_NAME\"].BeaconLightClient" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
-(set -x; seth send -F 0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b $BeaconLightClient "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url http://127.0.0.1:9933)
+ExecutionLayer=$(jq -r ".[\"$NETWORK_NAME\"].ExecutionLayer" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
+(set -x; seth send -F 0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b $ExecutionLayer "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url http://127.0.0.1:9933)
