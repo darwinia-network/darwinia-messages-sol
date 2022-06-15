@@ -67,8 +67,6 @@ describe("bridge e2e test: beacon light client", () => {
     const finalized_block = await eth2Client.get_beacon_block(finalized_header.root)
     const finality_branch = await eth2Client.get_finality_branch(attested_header_slot)
 
-    const latest_execution_payload_state_root = finalized_block.message.body.execution_payload.state_root
-    const latest_execution_payload_state_root_branch = await eth2Client.get_latest_execution_payload_state_root_branch(finalized_header.header.message.slot)
     const fork_version = await eth2Client.get_fork_version(sync_aggregate_slot)
 
     const finalized_header_update = {
@@ -76,8 +74,6 @@ describe("bridge e2e test: beacon light client", () => {
       signature_sync_committee: current_sync_committee,
       finalized_header: finalized_header.header.message,
       finality_branch: finality_branch.witnesses,
-      latest_execution_payload_state_root,
-      latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch.witnesses,
       sync_aggregate: sync_aggregate,
       fork_version: fork_version.current_version,
       signature_slot: sync_aggregate_slot
