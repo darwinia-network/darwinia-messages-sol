@@ -20,6 +20,15 @@ abstract contract SmartChainXApp {
         bytes callEncoded;
     }
 
+    struct BridgeConfig {
+        // The lane id
+        bytes4 srcOutlaneId;
+        // The storage key used to get market fee
+        bytes srcStorageKeyForMarketFee;
+        // The storage key used to get latest nonce
+        bytes srcStorageKeyForLatestNonce;
+    }
+
     // Precompile address for dispatching 'send_message'
     address internal dispatchAddress =
         0x0000000000000000000000000000000000000019;
@@ -38,21 +47,17 @@ abstract contract SmartChainXApp {
         0x6461722f64766D70000000000000000000000000;
 
     /// @notice Send message over lane id
-    /// @param srcOutlaneId The lane id
-    /// @param srcStorageKeyForMarketFee The storage key used to get market fee
-    /// @param srcStorageKeyForLatestNonce The storage key used to get latest nonce
+    /// @param bridge The bridge config
     /// @param payload The message payload to be sent
     /// @return nonce The nonce of the message
     function sendMessage(
-        bytes4 srcOutlaneId,
-        bytes memory srcStorageKeyForMarketFee,
-        bytes memory srcStorageKeyForLatestNonce,
+        BridgeConfig memory bridge,
         MessagePayload memory payload
     ) internal returns (uint64) {
         // Get the current market fee
         uint128 fee = SmartChainXLib.marketFee(
             storageAddress,
-            srcStorageKeyForMarketFee
+            bridge.srcStorageKeyForMarketFee
         );
         require(msg.value >= fee, "Not enough fee to pay");
 
@@ -67,7 +72,7 @@ abstract contract SmartChainXApp {
         SmartChainXLib.sendMessage(
             dispatchAddress,
             callIndexOfSendMessage,
-            srcOutlaneId,
+            bridge.srcOutlaneId,
             msg.value,
             message
         );
@@ -76,7 +81,7 @@ abstract contract SmartChainXApp {
         return
             SmartChainXLib.latestNonce(
                 storageAddress,
-                srcStorageKeyForLatestNonce
+                bridge.srcStorageKeyForLatestNonce
             );
     }
 
