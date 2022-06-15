@@ -29,7 +29,7 @@ describe("bridge e2e test: beacon light client", () => {
     bridge = clients.bridge
   })
 
-  it.skip("import old finalized header", async () => {
+  it("import finalized header", async () => {
     const old_finalized_header = await subClient.beaconLightClient.finalized_header()
     const old_finalized_header_root = await eth2Client.get_beacon_block_root(old_finalized_header.slot)
     const snapshot = await eth2Client.get_light_client_snapshot(old_finalized_header_root)
@@ -69,17 +69,18 @@ describe("bridge e2e test: beacon light client", () => {
 
     const latest_execution_payload_state_root = finalized_block.message.body.execution_payload.state_root
     const latest_execution_payload_state_root_branch = await eth2Client.get_latest_execution_payload_state_root_branch(finalized_header.header.message.slot)
-    const fork_version = await eth2Client.get_fork_version(attested_header_slot)
+    const fork_version = await eth2Client.get_fork_version(sync_aggregate_slot)
 
     const finalized_header_update = {
       attested_header: attested_header.header.message,
-      current_sync_committee,
+      signature_sync_committee: current_sync_committee,
       finalized_header: finalized_header.header.message,
       finality_branch: finality_branch.witnesses,
       latest_execution_payload_state_root,
       latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch.witnesses,
       sync_aggregate: sync_aggregate,
-      fork_version: fork_version.current_version
+      fork_version: fork_version.current_version,
+      signature_slot: sync_aggregate_slot
     }
 
     // gasLimit: 10000000,
@@ -96,7 +97,7 @@ describe("bridge e2e test: beacon light client", () => {
   })
 
 
-  it("import old finalized header", async () => {
+  it("import next_sync_committee", async () => {
     const old_finalized_header = await subClient.beaconLightClient.finalized_header()
     const old_period = old_finalized_header.slot.div(32).div(256)
 

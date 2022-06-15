@@ -79,7 +79,7 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
                 state_root: 0x8bfc033696d841842579ef3c57c9513d4e8ab433bb317bac2f7c31213c147ef9,
                 body_root: 0x4d9a9d5e540ea67b9c6fe1aa133dd4e28690baaf5bb52c323058027683d07700
             }),
-            current_sync_committee: sync_committee_case1(),
+            signature_sync_committee: sync_committee_case1(),
             finalized_header: finalized_header,
             finality_branch: finality_branch,
             latest_execution_payload_state_root: LATEST_EXECUTION_PAYLOAD_STATE_ROOT,
@@ -91,7 +91,8 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
                 ],
                 sync_committee_signature: hex'97f0ff2a00f9c8ffe0ff6b1bad3b97c6aa856c9ca3c49e10bb8aeab202ebffa6723a22ec28f9f94ab5f7719a14aa55301520b1ff6bb9f430d786e803096336697237036816d4be2355adfd7fb12d2c307ec6d25c051f3930d24c7ee1fd1ae1ee'
             }),
-            fork_version: 0x02000000
+            fork_version: 0x02000000,
+            signature_slot: 161
         });
         lightclient.import_finalized_header(update);
     }

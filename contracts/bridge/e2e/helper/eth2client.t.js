@@ -8,9 +8,9 @@ const log = console.log;
 (async () => {
   const sync_change = await eth2Client.get_sync_committee_period_update(79, 79)
   log(JSON.stringify(sync_change, null, 2))
-  log(await eth2Client.get_next_sync_committee_branch(653120))
-  log(await eth2Client.get_latest_execution_payload_state_root_branch(653120))
-  log(await eth2Client.get_finality_branch(653120))
+  log(await eth2Client.get_next_sync_committee_branch(651296))
+  // log(await eth2Client.get_latest_execution_payload_state_root_branch(653120))
+  // log(await eth2Client.get_finality_branch(653120))
   // log(sync_change[1].attested_header)
   // log(sync_change[1].sync_aggregate)
   // let sync_slot = Number(sync_change[1].attested_header.slot) + 1
