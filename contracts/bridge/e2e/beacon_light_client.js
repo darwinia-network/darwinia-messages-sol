@@ -112,7 +112,7 @@ describe("bridge e2e test: beacon light client", () => {
     log(next_period_sync_committee_root)
   })
 
-  it("import import_latest_execution_payload_state_root", async () => {
+  it("import latest_execution_payload_state_root on execution layer", async () => {
     const finalized_header = await subClient.beaconLightClient.finalized_header()
     const finalized_block = await eth2Client.get_beacon_block(finalized_header.root)
 
