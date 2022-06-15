@@ -36,6 +36,9 @@ class SubClient {
     const BeaconLightClient = await artifacts.readArtifact("BeaconLightClient")
     const beaconLightClient = new ethers.Contract(addresses[ns_eth].BeaconLightClient, BeaconLightClient.abi, this.provider)
 
+    const ExecutionLayer = await artifacts.readArtifact("ExecutionLayer")
+    const executionLayer = new ethers.Contract(addresses[ns_eth].ExecutionLayer, ExecutionLayer.abi, this.provider)
+
     const BSCLightClient = await artifacts.readArtifact("BSCLightClient")
     const bscLightClient = new ethers.Contract(addresses[ns_bsc].BSCLightClient, BSCLightClient.abi, this.provider)
 
@@ -49,6 +52,7 @@ class SubClient {
   }
 
   async set_chain_committer() {
+    console.log(this.api.tx.beefyGadget)
     const call = await this.api.tx.beefyGadget.setCommitmentContract(this.chainMessageCommitter.address)
     const tx = await this.api.tx.sudo.sudo(call).signAndSend(this.alice)
     console.log(`Set chain committer tx submitted with hash: ${tx}`)

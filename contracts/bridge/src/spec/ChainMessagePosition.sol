@@ -5,6 +5,6 @@ pragma abicoder v2;
 
 enum ChainMessagePosition {
     Darwinia,
-    ETH2,
+    ETH,
     BSC
 }

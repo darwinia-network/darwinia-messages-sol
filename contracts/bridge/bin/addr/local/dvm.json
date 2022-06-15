@@ -1,18 +1,11 @@
 {
   "DEPLOYER": "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b",
-  "ChainMessageCommitter": "0xC2Bf5F29a4384b1aB0C063e1c666f02121B6084a",
+  "ChainMessageCommitter": "",
   "evm-eth2": {
     "FeeMarket": "0x5c4242beB94dE30b922f57241f1D02f36e906915",
     "BeaconLightClient": "0x42e2EE7Ba8975c473157634Ac2AF4098190fc741",
     "OutboundLane": "0xF8cef78E923919054037a1D03662bBD884fF4edf",
     "InboundLane": "0xe573BCA813c741229ffB2488F7856C6cAa841041",
     "LaneMessageCommitter": "0xBb0CC0fb3e0c06725c67167501f850B4900D6DB5"
-  },
-  "evm-bsc": {
-    "FeeMarket": "0x596fB37d99bd679d1af76fBCB658f7a1a31A1205",
-    "BSCLightClient": "0x4d6942683D051FF95804B08EF11F98A7F41C1b44",
-    "LaneMessageCommitter": "0x79885EBC79783C9174faC36Ed99cD9467CB8cDbE",
-    "OutboundLane": "0xe9CC152481642D7a3Ea207E3930067B19663770F",
-    "InboundLane": "0x0484C33Bad127FA77CC64d6475aDD6483c70BbB9"
   }
 }

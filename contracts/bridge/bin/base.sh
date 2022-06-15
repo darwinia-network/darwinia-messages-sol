@@ -173,6 +173,7 @@ load-addresses() {
     echo "Addresses file not found: $path not found"
     exit 1
   fi
+  set -x
   echo $path
   local exports
   [[ -z "${2}" ]] && {
@@ -184,4 +185,5 @@ load-addresses() {
       to_entries|map(\"\(.key)=\(.value|strings)\")|.[]")
     for e in $exports; do export "$2-$e"; done
   }
+set +x
 }

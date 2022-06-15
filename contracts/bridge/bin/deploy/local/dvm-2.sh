@@ -38,8 +38,6 @@ FeeMarket=$(deploy FeeMarket \
 
 BSCLightClient=$(deploy BSCLightClient)
 
-LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
-
 OutboundLane=$(deploy OutboundLane \
   $BSCLightClient \
   $FeeMarket \
@@ -55,8 +53,10 @@ InboundLane=$(deploy InboundLane \
   $bridged_chain_pos \
   $bridged_out_lane_pos 0 0)
 
-seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
+LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
 seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
+seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
+
 seth send -F $ETH_FROM $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
 
 amount=$(seth --to-wei 1000 ether)

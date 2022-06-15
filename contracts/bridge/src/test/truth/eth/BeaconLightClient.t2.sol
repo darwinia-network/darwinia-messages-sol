@@ -8,12 +8,15 @@ import "../../mock/MockBLS.sol";
 import "../../../utils/Bitfield.sol";
 import "../../spec/SyncCommittee.t.sol";
 import "../../../truth/eth/BeaconLightClient.sol";
+import "../../../truth/eth/ExecutionLayer.sol";
 
 contract BeaconLightClientTest2 is DSTest, Bitfield, SyncCommitteePreset {
     bytes32 constant CURRENT_SYNC_COMMITTEE_ROOT = 0x21053f2ba6bbb6c6d452697ea35aa1c77edfb48aae52612169d01290d90f7155;
     bytes32 constant GENESIS_VALIDATORS_ROOT = 0x99b09fcd43e5905236c370f184056bec6e6638cfc31a323b304fc4aa789cb4ad;
     bytes32 constant LATEST_EXECUTION_PAYLOAD_STATE_ROOT = 0xe55ce819dcd715afb77bac000eb6495ea0dc93e3380501100718403c063a70b0;
+
     BeaconLightClient lightclient;
+    ExecutionLayer executionlayer;
     MockBLS bls;
     address self;
 
@@ -29,6 +32,7 @@ contract BeaconLightClientTest2 is DSTest, Bitfield, SyncCommitteePreset {
             CURRENT_SYNC_COMMITTEE_ROOT,
             GENESIS_VALIDATORS_ROOT
         );
+        executionlayer = new ExecutionLayer(address(lightclient));
         self = address(this);
     }
 
@@ -49,6 +53,18 @@ contract BeaconLightClientTest2 is DSTest, Bitfield, SyncCommitteePreset {
         assertEq(hash_tree_root(sync_committee_case4()), stored_next_sync_committee_root);
     }
 
+    function test_import_latest_execution_payload_state_root() public {
+        BeaconBlockHeader memory finalized_header = build_finalized_header();
+        process_import_finalized_header(finalized_header);
+        bytes32[] memory latest_execution_payload_state_root_branch = build_latest_execution_payload_state_root_branch();
+        ExecutionLayer.ExecutionPayloadStateRootUpdate memory update = ExecutionLayer.ExecutionPayloadStateRootUpdate({
+            latest_execution_payload_state_root: LATEST_EXECUTION_PAYLOAD_STATE_ROOT,
+            latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch
+        });
+        executionlayer.import_latest_execution_payload_state_root(update);
+        assertEq(executionlayer.state_root(), LATEST_EXECUTION_PAYLOAD_STATE_ROOT);
+    }
+
     function test_import_finalized_header() public {
         BeaconBlockHeader memory finalized_header = build_finalized_header();
         process_import_finalized_header(finalized_header);
@@ -57,18 +73,15 @@ contract BeaconLightClientTest2 is DSTest, Bitfield, SyncCommitteePreset {
 
     function assert_finalized_header(BeaconBlockHeader memory finalized_header) public {
         (uint64 slot, uint64 proposer_index, bytes32 parent_root, bytes32 state_root, bytes32 body_root) = lightclient.finalized_header();
-        bytes32 stored_latest_execution_payload_state_root = lightclient.state_root();
         assertEq(uint(slot), finalized_header.slot);
         assertEq(uint(proposer_index), finalized_header.proposer_index);
         assertEq(parent_root, finalized_header.parent_root);
         assertEq(state_root, finalized_header.state_root);
         assertEq(body_root, finalized_header.body_root);
-        assertEq(stored_latest_execution_payload_state_root, LATEST_EXECUTION_PAYLOAD_STATE_ROOT);
     }
 
     function process_import_finalized_header(BeaconBlockHeader memory finalized_header) public {
         bytes32[] memory finality_branch = build_finality_branch();
-        bytes32[] memory latest_execution_payload_state_root_branch = build_latest_execution_payload_state_root_branch();
 
         BeaconLightClient.FinalizedHeaderUpdate memory update = BeaconLightClient.FinalizedHeaderUpdate({
             attested_header: BeaconBlockHeader({
@@ -81,8 +94,6 @@ contract BeaconLightClientTest2 is DSTest, Bitfield, SyncCommitteePreset {
             signature_sync_committee: sync_committee_case3(),
             finalized_header: finalized_header,
             finality_branch: finality_branch,
-            latest_execution_payload_state_root: LATEST_EXECUTION_PAYLOAD_STATE_ROOT,
-            latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch,
             sync_aggregate: BeaconLightClient.SyncAggregate({
                 sync_committee_bits:[
                     bytes32(0xf7fffeefebd6ff6faf7ffffd7dfffffe6ff6bfbfffdedefffffff7fff5f77dac),

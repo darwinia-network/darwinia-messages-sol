@@ -56,6 +56,8 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $CURRENT_SYNC_COMMITTEE_HASH \
   $GENESIS_VALIDATORS_ROOT)
 
+ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
+
 OutboundLane=$(deploy OutboundLane \
   $BeaconLightClient \
   $FeeMarket \
@@ -74,4 +76,5 @@ InboundLane=$(deploy InboundLane \
 LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
 seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
 seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
+
 seth send -F $ETH_FROM $FeeMarket "setOutbound(address,uint)" $OutboundLane 1

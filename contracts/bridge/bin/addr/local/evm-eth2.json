@@ -1,9 +1,9 @@
 {
   "DEPLOYER": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
   "dvm": {
-    "SimpleFeeMarket": "0xa4c99BCAE00d215c1f8ffb5e1c760F0C3918900E",
-    "DarwiniaLightClient": "0xE1dD343fC5a9ac04f210E82Ea01d1c5Aa8e89687",
-    "OutboundLane": "0xf39Ba9a9f63A789A60a8d7d401c7d1c4616d8340",
-    "InboundLane": "0x84FEba8Aca4572D2386555cfB61bCCD12e4D018b"
+    "SimpleFeeMarket": "",
+    "DarwiniaLightClient": "",
+    "OutboundLane": "",
+    "InboundLane": ""
   }
 }
