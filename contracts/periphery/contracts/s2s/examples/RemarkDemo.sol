@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0;
 
-import "../CrabXApp.sol";
+import "../xapps/CrabXApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
@@ -27,5 +27,10 @@ contract RemarkDemo is CrabXApp {
         );
         uint64 nonce = sendMessage(toDarwinia, payload);
         emit OutputNonce(nonce);
+    }
+
+    function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override {
+        require(msg.sender == callbackSender, "Only pallet address is allowed call 'onMessageDelivered'");
+        // TODO: Your code goes here...
     }
 }
