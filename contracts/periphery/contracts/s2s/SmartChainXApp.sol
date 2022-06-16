@@ -46,6 +46,8 @@ abstract contract SmartChainXApp {
     address internal callbackSender =
         0x6461722f64766D70000000000000000000000000;
 
+    bytes4 internal srcChainId = 0;
+
     /// @notice Send message over lane id
     /// @param bridge The bridge config
     /// @param payload The message payload to be sent
@@ -85,13 +87,12 @@ abstract contract SmartChainXApp {
             );
     }
 
-    /// @notice This function is used to check the sender.
-    /// @param srcChainId The source chain id
+    /// @notice Derive the sender address from the sender address of the message on the source chain.
     /// @param sender The sender of the message on the source chain
-    function requireSenderOfSourceChain(
-        bytes4 srcChainId,
+    /// @return address The sender address on the target chain
+    function deriveSenderFrom(
         address sender
-    ) internal {
+    ) internal returns (address) {
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
             sender
         );
@@ -99,13 +100,7 @@ abstract contract SmartChainXApp {
             srcChainId,
             derivedSubstrateAddress
         );
-        address derivedEthereumAddress = AccountId.deriveEthereumAddress(
-            derivedAccountId
-        );
-        require(
-            msg.sender == derivedEthereumAddress,
-            "msg.sender must equal to the address derived from source dapp sender"
-        );
+        return AccountId.deriveEthereumAddress(derivedAccountId);
     }
 
     function getDispatchAddress() public view returns (address) {

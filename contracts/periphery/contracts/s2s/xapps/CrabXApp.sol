@@ -12,6 +12,7 @@ pragma experimental ABIEncoderV2;
 // CrabSmartChain remote call remark of Darwinia
 abstract contract CrabXApp is SmartChainXApp, Ownable {
     function init() internal {
+        srcChainId = 0;
         dispatchAddress = 0x0000000000000000000000000000000000000019;
         callIndexOfSendMessage = 0x2b03;
         storageAddress = 0x000000000000000000000000000000000000001a;
