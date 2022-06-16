@@ -5,8 +5,14 @@ pragma solidity >=0.6.0;
 import "../xapps/PangolinXApp.sol";
 import "../types/PalletEthereum.sol";
 
+pragma experimental ABIEncoderV2;
+
 // deploy on the target chain first, then deploy on the source chain
 contract RemoteTransactDemo is PangolinXApp {
+    constructor() public {
+        init();
+    }
+
     uint256 public number;
 
     // source chain ethereum sender address,

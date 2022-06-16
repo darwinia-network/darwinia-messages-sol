@@ -5,8 +5,14 @@ pragma solidity >=0.6.0;
 import "../xapps/PangolinXApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 
+pragma experimental ABIEncoderV2;
+
 // PangolinSmartChain remote call unlockFromRemote of Pangoro
 contract UnlockFromRemoteDemo is PangolinXApp {
+    constructor() public {
+        init();
+    }
+
     function unlockFromRemote() public payable {
         // 1. prepare the call that will be executed on the target chain
         S2SBacking.UnlockFromRemoteCall memory unlockFromRemotecall = S2SBacking

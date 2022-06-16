@@ -7,9 +7,15 @@ import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
+pragma experimental ABIEncoderV2;
+
 // CrabSmartChain remote call remark of Darwinia
 contract RemarkDemo is CrabXApp {
     event OutputNonce(uint256 nonce);
+
+    constructor() public {
+        init();
+    }
     
     function remark() public payable {
         // 1. prepare the call that will be executed on the target chain
@@ -30,7 +36,10 @@ contract RemarkDemo is CrabXApp {
     }
 
     function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override {
-        require(msg.sender == callbackSender, "Only pallet address is allowed call 'onMessageDelivered'");
+        require(
+            msg.sender == callbackSender,
+            "Only pallet address is allowed call 'onMessageDelivered'"
+        );
         // TODO: Your code goes here...
     }
 }
