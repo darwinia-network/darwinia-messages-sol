@@ -16,7 +16,7 @@ contract RemarkDemo is CrabXApp {
     constructor() public {
         init();
     }
-    
+
     function remark() public payable {
         // 1. prepare the call that will be executed on the target chain
         System.RemarkCall memory call = System.RemarkCall(
@@ -31,11 +31,16 @@ contract RemarkDemo is CrabXApp {
             2654000000, // call weight
             callEncoded // call encoded bytes
         );
-        uint64 nonce = sendMessage(toDarwinia, payload);
+        bytes4 lane = 0;
+        uint64 nonce = sendMessage(toDarwinia, lane, payload);
         emit OutputNonce(nonce);
     }
 
-    function onMessageDelivered(bytes4 lane, uint64 nonce, bool result) external override {
+    function onMessageDelivered(
+        bytes4 lane,
+        uint64 nonce,
+        bool result
+    ) external override {
         require(
             msg.sender == callbackSender,
             "Only pallet address is allowed call 'onMessageDelivered'"

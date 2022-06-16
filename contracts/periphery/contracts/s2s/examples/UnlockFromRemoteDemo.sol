@@ -32,6 +32,7 @@ contract UnlockFromRemoteDemo is PangolinXApp {
             2654000000, // call weight
             callEncoded // call encoded bytes
         );
-        sendMessage(toPangoro, payload);
+        bytes4 lane = 0;
+        sendMessage(toPangoro, lane, payload);
     }
 }

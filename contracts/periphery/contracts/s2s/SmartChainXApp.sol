@@ -19,8 +19,6 @@ abstract contract SmartChainXApp {
     }
 
     struct BridgeConfig {
-        // The lane id
-        bytes4 srcOutlaneId;
         // The storage key used to get market fee
         bytes srcStorageKeyForMarketFee;
         // The storage key used to get latest nonce
@@ -53,17 +51,19 @@ abstract contract SmartChainXApp {
     address public messageSenderOnSrcChain;
 
     /// @notice Send message over lane id
-    /// @param bridge The bridge config
+    /// @param bridgeConfig The bridge config
+    /// @param throughLane The outlane id
     /// @param payload The message payload to be sent
     /// @return nonce The nonce of the message
     function sendMessage(
-        BridgeConfig memory bridge,
+        BridgeConfig memory bridgeConfig,
+        bytes4 throughLane,
         MessagePayload memory payload
     ) internal returns (uint64) {
         // Get the current market fee
         uint128 fee = SmartChainXLib.marketFee(
             storageAddress,
-            bridge.srcStorageKeyForMarketFee
+            bridgeConfig.srcStorageKeyForMarketFee
         );
         require(msg.value >= fee, "Not enough fee to pay");
 
@@ -78,7 +78,7 @@ abstract contract SmartChainXApp {
         SmartChainXLib.sendMessage(
             dispatchAddress,
             callIndexOfSendMessage,
-            bridge.srcOutlaneId,
+            throughLane,
             msg.value,
             message
         );
@@ -87,7 +87,7 @@ abstract contract SmartChainXApp {
         return
             SmartChainXLib.latestNonce(
                 storageAddress,
-                bridge.srcStorageKeyForLatestNonce
+                bridgeConfig.srcStorageKeyForLatestNonce
             );
     }
 
