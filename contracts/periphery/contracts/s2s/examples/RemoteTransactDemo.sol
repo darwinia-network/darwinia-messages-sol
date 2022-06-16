@@ -15,10 +15,6 @@ contract RemoteTransactDemo is PangolinXApp {
 
     uint256 public number;
 
-    // message sender address on the source chain,
-    // it will be updated after the app is deployed on the source chain.
-    address public messageSenderOnSourceChain;
-
     ///////////////////////////////////////////
     // used on the source chain
     ///////////////////////////////////////////
@@ -50,8 +46,9 @@ contract RemoteTransactDemo is PangolinXApp {
     // used on the target chain
     ///////////////////////////////////////////
     function add(uint256 _value) public {
+        // this 'require' makes this function only be called by the dapp contract on the source chain
         require(
-            msg.sender == deriveSenderFrom(messageSenderOnSourceChain),
+            msg.sender == deriveSenderFromRemote(),
             "msg.sender must equal to the address derived from the message sender address on the source chain"
         );
         number = number + _value;

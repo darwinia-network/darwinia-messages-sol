@@ -4,8 +4,6 @@ pragma solidity >=0.6.0;
 
 import "./SmartChainXLib.sol";
 
-pragma experimental ABIEncoderV2;
-
 // The base contract for developers to inherit
 abstract contract SmartChainXApp {
     struct MessagePayload {
@@ -29,24 +27,30 @@ abstract contract SmartChainXApp {
         bytes srcStorageKeyForLatestNonce;
     }
 
+    bytes4 public srcChainId = 0;
+
     // Precompile address for dispatching 'send_message'
-    address internal dispatchAddress =
+    address public dispatchAddress =
         0x0000000000000000000000000000000000000019;
 
     // Call index of 'send_message'
-    bytes2 internal callIndexOfSendMessage = 0x3003;
+    bytes2 public callIndexOfSendMessage = 0x3003;
 
     // Precompile address for getting state storage
     // The address is used to get market fee.
-    address internal storageAddress =
+    address public storageAddress =
         0x000000000000000000000000000000000000001a;
 
     // The 'onMessageDelivered' sender
     // 'onMessageDelivered' is only allowed to be called by this address
-    address internal callbackSender =
+    address public callbackSender =
         0x6461722f64766D70000000000000000000000000;
 
-    bytes4 internal srcChainId = 0;
+    // Message sender address on the source chain.
+    // It will be used on the target chain.
+    // It should be updated after the dapp is deployed on the source chain.
+    // See more details in the 'deriveSenderFromRemote' below.
+    address public messageSenderOnSrcChain;
 
     /// @notice Send message over lane id
     /// @param bridge The bridge config
@@ -88,35 +92,24 @@ abstract contract SmartChainXApp {
     }
 
     /// @notice Derive the sender address from the sender address of the message on the source chain.
-    /// @param sender The sender of the message on the source chain
+    ///
+    ///    // Add this 'require' to your function on the target chain which will be called by the 'send_message'
+    ///    // This 'require' makes your function only allowed be called by the dapp contract on the source chain
+    ///    require(
+    ///        msg.sender == deriveSenderFromRemote(),
+    ///        "msg.sender must equal to the address derived from the message sender address on the source chain"
+    ///    );
+    /// 
     /// @return address The sender address on the target chain
-    function deriveSenderFrom(
-        address sender
-    ) internal returns (address) {
+    function deriveSenderFromRemote() internal returns (address) {
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
-            sender
+            messageSenderOnSrcChain
         );
         bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
             srcChainId,
             derivedSubstrateAddress
         );
         return AccountId.deriveEthereumAddress(derivedAccountId);
-    }
-
-    function getDispatchAddress() public view returns (address) {
-        return dispatchAddress;
-    }
-
-    function getCallIndexOfSendMessage() public view returns (bytes2) {
-        return callIndexOfSendMessage;
-    }
-
-    function getStorageAddress() public view returns (address) {
-        return storageAddress;
-    }
-
-    function getCallbackFromAddress() public view returns (address) {
-        return callbackSender;
     }
 
     /// @notice Callback function for 'send_message'
