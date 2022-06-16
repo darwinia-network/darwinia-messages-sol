@@ -25,6 +25,8 @@ contract SimpleFeeMarket is IFeeMarket {
     uint32 public slashTime;
     // Time assigned relayer to relay messages
     uint32 public relayTime;
+    // Ratio of two chain's native token price, denominator of ratio is 1_000_000
+    uint32 public priceRatio;
     // The collateral relayer need to lock for each order.
     uint256 public collateralPerOrder;
     // Governance role to decide which outbounds message to relay
@@ -73,13 +75,15 @@ contract SimpleFeeMarket is IFeeMarket {
     constructor(
         uint256 _collateral_perorder,
         uint32 _slash_time,
-        uint32 _relay_time
+        uint32 _relay_time,
+        uint32 _price_rario
     ) {
         require(_slash_time > 0 && _relay_time > 0, "!0");
         setter = msg.sender;
         collateralPerOrder = _collateral_perorder;
         slashTime = _slash_time;
         relayTime = _relay_time;
+        priceRatio = _price_rario;
         relayers[SENTINEL_HEAD] = SENTINEL_TAIL;
         feeOf[SENTINEL_TAIL] = type(uint256).max;
     }
@@ -100,11 +104,13 @@ contract SimpleFeeMarket is IFeeMarket {
     function setParameters(
         uint32 slash_time,
         uint32 relay_time,
+        uint32 price_ratio,
         uint256 collateral_perorder
     ) external onlySetter {
         require(slash_time > 0 && relay_time > 0, "!0");
         slashTime = slash_time;
         relayTime = relay_time;
+        priceRatio = price_ratio;
         collateralPerOrder = collateral_perorder;
     }
 
@@ -407,10 +413,10 @@ contract SimpleFeeMarket is IFeeMarket {
         }
     }
 
-    function _distribute_fee(uint256 fee) private pure returns (uint256 delivery_reward, uint256 confirm_reward) {
-        // 80% * fee => delivery relayer
-        delivery_reward = fee * 80 / 100;
-        // 20% * fee => confirm relayer
+    function _distribute_fee(uint256 fee) private view returns (uint256 delivery_reward, uint256 confirm_reward) {
+        // fee * priceRatio / 1_000_000 => delivery relayer
+        delivery_reward = fee * priceRatio / 1_000_000;
+        // remaining fee => confirm relayer
         confirm_reward = fee - delivery_reward;
     }
 }

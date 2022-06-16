@@ -5,9 +5,11 @@ set -e
 unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
-export NETWORK_NAME=bsctest
-export TARGET_CHAIN=pangoro
-export ETH_RPC_URL=https://data-seed-prebsc-1-s1.binance.org:8545
+export NETWORK_NAME=local-evm-bsc
+export TARGET_CHAIN=local-dvm
+export ETH_RPC_URL=${TEST_LOCAL_EVM_RPC:-http://127.0.0.1:8545}
+export ETH_FROM=${TEST_LOCAL_EVM_FROM:-$(seth ls --keystore $TMPDIR/8545/keystore | cut -f1)}
+export ETH_RPC_ACCOUNTS=true
 
 echo "ETH_FROM: ${ETH_FROM}"
 
@@ -15,7 +17,7 @@ echo "ETH_FROM: ${ETH_FROM}"
 . $(dirname $0)/common.sh
 
 # bsctest to pangoro bridge config
-this_chain_pos=1
+this_chain_pos=2
 this_out_lane_pos=0
 this_in_lane_pos=1
 bridged_chain_pos=0
@@ -62,5 +64,5 @@ InboundLane=$(deploy InboundLane \
 
 seth send -F $ETH_FROM $SimpleFeeMarket "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
 
-BSCLightClient=$(jq -r ".bsctest.BSCLightClient" "$PWD/bin/addr/pangoro.json")
-seth send -F $ETH_FROM $BSCLightClient "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --chain pangoro
+BSCLightClient=$(jq -r ".[\"$NETWORK_NAME\"].BSCLightClient" "$PWD/bin/addr/$TARGET_CHAIN.json")
+(set -x; seth send -F 0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b $BSCLightClient "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url http://127.0.0.1:9933)

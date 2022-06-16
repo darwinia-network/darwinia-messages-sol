@@ -1,20 +1,30 @@
 const EthClient = require('./ethclient').EthClient
 const SubClient = require('./subclient').SubClient
 const Bridge    = require('./bridge').Bridge
+const Eth2Client = require('./eth2client').Eth2Client
 
 const target  = process.env.TARGET || 'local'
 
-let evm_addresses, dvm_addresses, evm_endpoint, dvm_endpoint, sub_endpoint
+let evm_eth_addresses, evm_bsc_addresses, dvm_addresses, evm_endpoint, dvm_endpoint, sub_endpoint
+let ns_eth, ns_bsc, ns_dvm
 if (target == 'local') {
-  evm_addresses = require("../../bin/addr/local-evm.json")
+  evm_eth_addresses = require("../../bin/addr/local-evm-eth2.json")
+  evm_bsc_addresses = require("../../bin/addr/local-evm-bsc.json")
   dvm_addresses = require("../../bin/addr/local-dvm.json")
 
-  // evm_endpoint = "http://127.0.0.1:8545"
-  // dvm_endpoint = "http://127.0.0.1:9933"
-  // sub_endpoint = "ws://127.0.0.1:9944"
-  evm_endpoint = "http://192.168.2.100:8545"
-  dvm_endpoint = "http://192.168.2.100:10033"
-  sub_endpoint = "ws://192.168.2.100:10044"
+  evm_eth_endpoint = "http://127.0.0.1:8545"
+  evm_bsc_endpoint = "http://127.0.0.1:8545"
+  dvm_endpoint = "http://127.0.0.1:9933"
+  sub_endpoint = "ws://127.0.0.1:9944"
+  beacon_endpoint = "http://127.0.0.1:5052"
+  // evm_endpoint = "http://192.168.2.100:8545"
+  // dvm_endpoint = "http://192.168.2.100:10033"
+  // sub_endpoint = "ws://192.168.2.100:10044"
+  // beacon_endpoint = "http://127.0.0.1:5052"
+
+  ns_eth = 'local-evm-eth2'
+  ns_bsc = 'local-evm-bsc'
+  ns_dvm = 'local-dvm'
 } else if (target == 'test') {
   evm_addresses = require("../../bin/addr/bsctest.json")
   dvm_addresses = require("../../bin/addr/pangoro.json")
@@ -45,12 +55,21 @@ const fees = [
 ]
 
 async function bootstrap() {
-  const ethClient = new EthClient(evm_endpoint)
+  const ethClient = new EthClient(evm_eth_endpoint)
+  const bscClient = new EthClient(evm_bsc_endpoint)
   const subClient = new SubClient(dvm_endpoint, sub_endpoint)
+  const eth2Client = new Eth2Client(beacon_endpoint)
   const bridge = new Bridge(ethClient, subClient)
-  await ethClient.init(wallets, fees, evm_addresses)
-  await subClient.init(wallets, fees, dvm_addresses)
-  return { ethClient, subClient, bridge }
+  await ethClient.init(wallets, fees, evm_eth_addresses, ns_dvm)
+  await bscClient.init(wallets, fees, evm_bsc_addresses, ns_dvm)
+  await subClient.init(wallets, fees, dvm_addresses, ns_eth, ns_bsc)
+  return {
+    ethClient,
+    bscClient,
+    eth2Client,
+    subClient,
+    bridge
+  }
 }
 
 module.exports = {

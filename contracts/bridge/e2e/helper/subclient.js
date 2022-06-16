@@ -5,15 +5,19 @@ const { encodeNextAuthoritySet } = require('./encode')
 /**
  * The Substrate client for Bridge interaction
  */
-class SubClient extends EvmClient {
+class SubClient {
 
   constructor(http_endpoint, ws_endpoint) {
-    super(http_endpoint)
+    this.http_endpoint = http_endpoint
     this.sub_provider = new WsProvider(ws_endpoint)
+    this.provider = new ethers.providers.JsonRpcProvider(http_endpoint)
   }
 
-  async init(wallets, fees, addresses) {
-    await super.init(wallets, fees, addresses)
+  async init(wallets, fees, addresses, ns_eth, ns_bsc) {
+    this.eth = new EvmClient(this.http_endpoint)
+    this.bsc = new EvmClient(this.http_endpoint)
+    this.eth.init(wallets, fees, addresses, ns_eth)
+    this.bsc.init(wallets, fees, addresses, ns_bsc)
 
     this.api = await ApiPromise.create({
       provider: this.sub_provider
@@ -26,12 +30,18 @@ class SubClient extends EvmClient {
     this.chainMessageCommitter = new ethers.Contract(addresses.ChainMessageCommitter, ChainMessageCommitter.abi, this.provider)
 
     const LaneMessageCommitter = await artifacts.readArtifact("LaneMessageCommitter");
-    this.laneMessageCommitter = new ethers.Contract(addresses.LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
+    this.ethLaneMessageCommitter = new ethers.Contract(addresses[ns_eth].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
+    this.bscLaneMessageCommitter = new ethers.Contract(addresses[ns_bsc].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
+
+    const BeaconLightClient = await artifacts.readArtifact("BeaconLightClient")
+    const beaconLightClient = new ethers.Contract(addresses[ns_eth].BeaconLightClient, BeaconLightClient.abi, this.provider)
 
     const BSCLightClient = await artifacts.readArtifact("BSCLightClient")
-    const lightClient = new ethers.Contract(addresses.BSCLightClient, BSCLightClient.abi, this.provider)
+    const bscLightClient = new ethers.Contract(addresses[ns_bsc].BSCLightClient, BSCLightClient.abi, this.provider)
 
-    this.lightClient = lightClient.connect(this.signer)
+    this.signer = wallets[0].connect(this.provider)
+    this.beaconLightClient = beaconLightClient.connect(this.signer)
+    this.bscLightClient = bscLightClient.connect(this.signer)
   }
 
   chill() {

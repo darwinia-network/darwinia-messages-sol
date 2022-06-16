@@ -88,7 +88,11 @@ save_contract() {
 	if [[ ! -e $ADDRESSES_FILE ]]; then
 		echo "{}" >"$ADDRESSES_FILE"
 	fi
-	result=$(cat "$ADDRESSES_FILE" | jq -r ". + {\"$1\": \"$2\"}")
+  if [[ -z ${TARGET_CHAIN} ]]; then
+      result=$(cat "$ADDRESSES_FILE" | jq -r ". + {\"$1\": \"$2\"}")
+  else
+      result=$(cat "$ADDRESSES_FILE" | jq -r ".\"$TARGET_CHAIN\" += {\"$1\": \"$2\" }")
+  fi
 	printf %s "$result" >"$ADDRESSES_FILE"
 }
 
@@ -168,9 +172,17 @@ load-addresses() {
     echo "Addresses file not found: $path not found"
     exit 1
   fi
+  set -x
   echo $path
   local exports
-  exports=$(cat $path | jq -r " . | \
-    to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]")
-  for e in $exports; do export "$e"; done
+  [[ -z "${2}" ]] && {
+    exports=$(cat $path | jq -r " . | \
+      to_entries|map(\"\(.key)=\(.value|strings)\")|.[]")
+    for e in $exports; do export "$e"; done
+  } || {
+    exports=$(cat $path | jq -r " .[\"$2\"] | \
+      to_entries|map(\"\(.key)=\(.value|strings)\")|.[]")
+    for e in $exports; do export "$2-$e"; done
+  }
+set +x
 }

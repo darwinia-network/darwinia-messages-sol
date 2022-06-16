@@ -31,11 +31,11 @@ class EthClient extends EvmClient {
     super(endpoint)
   }
 
-  async init(wallets, fees, addresses) {
-    await super.init(wallets, fees, addresses)
+  async init(wallets, fees, addresses, ns) {
+    await super.init(wallets, fees, addresses, ns)
 
     const DarwiniaLightClient = await artifacts.readArtifact("DarwiniaLightClient")
-    const lightClient = new ethers.Contract(addresses.DarwiniaLightClient, DarwiniaLightClient.abi, this.provider)
+    const lightClient = new ethers.Contract(addresses[ns].DarwiniaLightClient, DarwiniaLightClient.abi, this.provider)
 
     this.lightClient = lightClient.connect(this.signer)
   }
