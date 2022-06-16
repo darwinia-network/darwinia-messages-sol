@@ -161,5 +161,4 @@ contract BeaconChain {
         }
         return value == root;
     }
-
 }

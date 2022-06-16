@@ -6,12 +6,7 @@ import "../../spec/ChainMessagePosition.sol";
 import "../common/StorageVerifier.sol";
 
 interface IConsensusLayer {
-    function verify_storage_proof(
-        bytes32 leaf,
-        bytes32[] calldata branch,
-        uint64 depth,
-        uint64 index
-    ) external view returns (bool);
+    function state_root() external view returns (bytes32);
 }
 
 contract ExecutionLayer is StorageVerifier {
@@ -54,11 +49,42 @@ contract ExecutionLayer is StorageVerifier {
         bytes32[] calldata execution_payload_state_root_branch
     ) internal view returns (bool) {
         require(execution_payload_state_root_branch.length == LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH, "!execution_payload_state_root_branch");
-        return IConsensusLayer(CONSENSUS_LAYER).verify_storage_proof(
+        return is_valid_merkle_branch(
             execution_payload_state_root,
             execution_payload_state_root_branch,
             LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH,
-            LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX
+            LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX,
+            IConsensusLayer(CONSENSUS_LAYER).state_root()
         );
+    }
+
+    function is_valid_merkle_branch(
+        bytes32 leaf,
+        bytes32[] memory branch,
+        uint64 depth,
+        uint64 index,
+        bytes32 root
+    ) internal pure returns (bool) {
+        bytes32 value = leaf;
+        for (uint i = 0; i < depth; ++i) {
+            if ((index / (2**i)) % 2 == 1) {
+                value = hash_node(branch[i], value);
+            } else {
+                value = hash_node(value, branch[i]);
+            }
+        }
+        return value == root;
+    }
+
+    function hash_node(bytes32 left, bytes32 right)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return hash(abi.encodePacked(left, right));
+    }
+
+    function hash(bytes memory value) internal pure returns (bytes32) {
+        return sha256(value);
     }
 }

@@ -150,21 +150,6 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         return finalized_header.state_root;
     }
 
-    function verify_storage_proof(
-        bytes32 leaf,
-        bytes32[] memory branch,
-        uint64 depth,
-        uint64 index
-    ) public view returns (bool) {
-        return is_valid_merkle_branch(
-            leaf,
-            branch,
-            depth,
-            index,
-            state_root()
-        );
-    }
-
     function import_next_sync_committee(SyncCommitteePeriodUpdate calldata update) external payable {
         require(verify_next_sync_committee(
                 update.next_sync_committee,
