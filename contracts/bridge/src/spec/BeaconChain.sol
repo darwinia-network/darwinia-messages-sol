@@ -3,7 +3,9 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-contract BeaconChain {
+import "./MerkleProof.sol";
+
+contract BeaconChain is MerkleProof {
     uint64 constant internal SYNC_COMMITTEE_SIZE = 512;
     uint64 constant internal BLSPUBLICKEY_LENGTH = 48;
     uint64 constant internal BLSSIGNATURE_LENGTH = 96;
@@ -105,18 +107,6 @@ contract BeaconChain {
         return o[1];
     }
 
-    function hash_node(bytes32 left, bytes32 right)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return hash(abi.encodePacked(left, right));
-    }
-
-    function hash(bytes memory value) internal pure returns (bytes32) {
-        return sha256(value);
-    }
-
     //  Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.
     function get_power_of_two_ceil(uint256 x) internal pure returns (uint256) {
         if (x <= 1) return 1;
@@ -141,24 +131,5 @@ contract BeaconChain {
 
         // swap 4-byte long pairs
         v = (v >> 32) | (v << 32);
-    }
-
-    // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
-    function is_valid_merkle_branch(
-        bytes32 leaf,
-        bytes32[] memory branch,
-        uint64 depth,
-        uint64 index,
-        bytes32 root
-    ) internal pure returns (bool) {
-        bytes32 value = leaf;
-        for (uint i = 0; i < depth; ++i) {
-            if ((index / (2**i)) % 2 == 1) {
-                value = hash_node(branch[i], value);
-            } else {
-                value = hash_node(value, branch[i]);
-            }
-        }
-        return value == root;
     }
 }
