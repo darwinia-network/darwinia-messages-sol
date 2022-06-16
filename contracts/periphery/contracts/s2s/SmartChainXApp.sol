@@ -19,6 +19,8 @@ abstract contract SmartChainXApp {
     }
 
     struct BridgeConfig {
+        // Call index of 'send_message'
+        bytes2 callIndexOfSendMessage;
         // The storage key used to get market fee
         bytes32 srcStorageKeyForMarketFee;
         // The storage key used to get latest nonce
@@ -29,9 +31,6 @@ abstract contract SmartChainXApp {
 
     // Precompile address for dispatching 'send_message'
     address public dispatchAddress = 0x0000000000000000000000000000000000000019;
-
-    // Call index of 'send_message'
-    bytes2 public callIndexOfSendMessage = 0x3003;
 
     // Precompile address for getting state storage
     // The address is used to get market fee.
@@ -74,7 +73,7 @@ abstract contract SmartChainXApp {
         // Send the message
         SmartChainXLib.sendMessage(
             dispatchAddress,
-            callIndexOfSendMessage,
+            bridgeConfig.callIndexOfSendMessage,
             laneId,
             msg.value,
             message
@@ -99,7 +98,7 @@ abstract contract SmartChainXApp {
     ///    );
     ///
     /// @return address The sender address on the target chain
-    function deriveSenderFromRemote() internal returns (address) {
+    function deriveSenderFromRemote() internal view returns (address) {
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
             messageSenderOnSrcChain
         );
