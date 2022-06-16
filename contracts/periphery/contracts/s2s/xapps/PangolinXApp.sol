@@ -7,6 +7,8 @@ import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
+pragma experimental ABIEncoderV2;
+
 // CrabSmartChain remote call remark of Darwinia
 abstract contract PangolinXApp is SmartChainXApp, Ownable {
     function init() internal {
@@ -44,6 +46,10 @@ abstract contract PangolinXApp is SmartChainXApp, Ownable {
 
     function setStorageAddress(address _storageAddress) public onlyOwner {
         storageAddress = _storageAddress;
+    }
+
+    function setToPangoro(BridgeConfig memory config) public onlyOwner {
+        toPangoro = config;
     }
 
     function onMessageDelivered(

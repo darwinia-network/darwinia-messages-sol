@@ -7,6 +7,8 @@ import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
+pragma experimental ABIEncoderV2;
+
 // CrabSmartChain remote call remark of Darwinia
 abstract contract CrabXApp is SmartChainXApp, Ownable {
     function init() internal {
@@ -55,6 +57,14 @@ abstract contract CrabXApp is SmartChainXApp, Ownable {
         storageAddress = _storageAddress;
     }
 
+    function setToDarwinia(BridgeConfig memory config) public onlyOwner {
+        toDarwinia = config;
+    }
+
+    function setToCrabParachain(BridgeConfig memory config) public onlyOwner {
+        toCrabParachain = config;
+    }
+
     function onMessageDelivered(
         bytes4 lane,
         uint64 nonce,
@@ -64,6 +74,5 @@ abstract contract CrabXApp is SmartChainXApp, Ownable {
             msg.sender == callbackSender,
             "Only pallet address is allowed call 'onMessageDelivered'"
         );
-        
     }
 }
