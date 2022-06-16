@@ -20,29 +20,26 @@ abstract contract SmartChainXApp {
 
     struct BridgeConfig {
         // The storage key used to get market fee
-        bytes srcStorageKeyForMarketFee;
+        bytes32 srcStorageKeyForMarketFee;
         // The storage key used to get latest nonce
-        bytes srcStorageKeyForLatestNonce;
+        bytes32 srcStorageKeyForLatestNonce;
     }
 
     bytes4 public srcChainId = 0;
 
     // Precompile address for dispatching 'send_message'
-    address public dispatchAddress =
-        0x0000000000000000000000000000000000000019;
+    address public dispatchAddress = 0x0000000000000000000000000000000000000019;
 
     // Call index of 'send_message'
     bytes2 public callIndexOfSendMessage = 0x3003;
 
     // Precompile address for getting state storage
     // The address is used to get market fee.
-    address public storageAddress =
-        0x000000000000000000000000000000000000001a;
+    address public storageAddress = 0x000000000000000000000000000000000000001a;
 
     // The 'onMessageDelivered' sender
     // 'onMessageDelivered' is only allowed to be called by this address
-    address public callbackSender =
-        0x6461722f64766D70000000000000000000000000;
+    address public callbackSender = 0x6461722f64766D70000000000000000000000000;
 
     // Message sender address on the source chain.
     // It will be used on the target chain.
@@ -52,12 +49,12 @@ abstract contract SmartChainXApp {
 
     /// @notice Send message over lane id
     /// @param bridgeConfig The bridge config
-    /// @param throughLane The outlane id
+    /// @param laneId The outlane id
     /// @param payload The message payload to be sent
     /// @return nonce The nonce of the message
     function sendMessage(
         BridgeConfig memory bridgeConfig,
-        bytes4 throughLane,
+        bytes4 laneId,
         MessagePayload memory payload
     ) internal returns (uint64) {
         // Get the current market fee
@@ -78,7 +75,7 @@ abstract contract SmartChainXApp {
         SmartChainXLib.sendMessage(
             dispatchAddress,
             callIndexOfSendMessage,
-            throughLane,
+            laneId,
             msg.value,
             message
         );
@@ -87,7 +84,8 @@ abstract contract SmartChainXApp {
         return
             SmartChainXLib.latestNonce(
                 storageAddress,
-                bridgeConfig.srcStorageKeyForLatestNonce
+                bridgeConfig.srcStorageKeyForLatestNonce,
+                laneId
             );
     }
 
@@ -99,7 +97,7 @@ abstract contract SmartChainXApp {
     ///        msg.sender == deriveSenderFromRemote(),
     ///        "msg.sender must equal to the address derived from the message sender address on the source chain"
     ///    );
-    /// 
+    ///
     /// @return address The sender address on the target chain
     function deriveSenderFromRemote() internal returns (address) {
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(

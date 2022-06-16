@@ -21,14 +21,14 @@ abstract contract PangolinXApp is SmartChainXApp, Ownable {
 
     BridgeConfig internal toPangoro =
         BridgeConfig(
-            hex"7621b367d09b75f6876b13089ee0ded52edb70953213f33a6ef6b8a5e3ffcab2",
-            hex"c9b76e645ba80b6ca47619d64cb5e58d96c246acb9b55077390e3ca723a0ca1f11d2df4e979aa105cf552e9544ebd2b500000000"
+            0x7621b367d09b75f6876b13089ee0ded52edb70953213f33a6ef6b8a5e3ffcab2,
+            0xc9b76e645ba80b6ca47619d64cb5e58d96c246acb9b55077390e3ca723a0ca1f
         );
     
      BridgeConfig internal toPangolinParachain =
         BridgeConfig(
-            hex"39bf2363dd0720bd6e11a4c86f4949322edb70953213f33a6ef6b8a5e3ffcab2",
-            hex"dcdffe6202217f0ecb0ec75d8a09b32c96c246acb9b55077390e3ca723a0ca1f11d2df4e979aa105cf552e9544ebd2b500000000"
+            0x39bf2363dd0720bd6e11a4c86f4949322edb70953213f33a6ef6b8a5e3ffcab2,
+            0xdcdffe6202217f0ecb0ec75d8a09b32c96c246acb9b55077390e3ca723a0ca1f
         );
 
     // You need to consider providing set methods with permission control
