@@ -13,8 +13,6 @@ pragma experimental ABIEncoderV2;
 abstract contract PangolinXApp is SmartChainXApp, Ownable {
     function init() internal {
         srcChainId = 0;
-        dispatchAddress = 0x0000000000000000000000000000000000000019;
-        storageAddress = 0x000000000000000000000000000000000000001a;
     }
 
     BridgeConfig internal toPangoro =
@@ -31,14 +29,12 @@ abstract contract PangolinXApp is SmartChainXApp, Ownable {
             0xdcdffe6202217f0ecb0ec75d8a09b32c96c246acb9b55077390e3ca723a0ca1f
         );
 
-    // You need to consider providing set methods with permission control
-    // if you want to make the settings upgradable
-    function setDispatchAddress(address _dispatchAddress) public onlyOwner {
-        dispatchAddress = _dispatchAddress;
-    }
-    
     function setStorageAddress(address _storageAddress) public onlyOwner {
         storageAddress = _storageAddress;
+    }
+
+    function setDispatchAddress(address _dispatchAddress) public onlyOwner {
+        dispatchAddress = _dispatchAddress;
     }
 
     function setMessageSenderOnSrcChain(address _messageSenderOnSrcChain)

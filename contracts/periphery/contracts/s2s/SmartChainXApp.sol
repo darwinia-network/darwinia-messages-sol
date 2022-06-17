@@ -29,12 +29,12 @@ abstract contract SmartChainXApp {
 
     bytes4 public srcChainId = 0;
 
-    // Precompile address for dispatching 'send_message'
-    address public dispatchAddress = 0x0000000000000000000000000000000000000019;
-
     // Precompile address for getting state storage
     // The address is used to get market fee.
-    address public storageAddress = 0x000000000000000000000000000000000000001a;
+    address public storageAddress = address(1024);
+
+    // Precompile address for dispatching 'send_message'
+    address public dispatchAddress = address(1025);
 
     // Message sender address on the source chain.
     // It will be used on the target chain.
