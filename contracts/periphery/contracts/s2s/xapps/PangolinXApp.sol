@@ -59,15 +59,4 @@ abstract contract PangolinXApp is SmartChainXApp, Ownable {
     function setToPangoro(BridgeConfig memory config) public onlyOwner {
         toPangoro = config;
     }
-
-    function onMessageDelivered(
-        bytes4 lane,
-        uint64 nonce,
-        bool result
-    ) external override {
-        require(
-            msg.sender == callbackSender,
-            "Only pallet address is allowed call 'onMessageDelivered'"
-        );
-    }
 }

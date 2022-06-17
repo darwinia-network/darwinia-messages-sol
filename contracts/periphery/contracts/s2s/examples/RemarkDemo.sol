@@ -35,16 +35,4 @@ contract RemarkDemo is CrabXApp {
         uint64 nonce = sendMessage(toDarwinia, lane, payload);
         emit OutputNonce(nonce);
     }
-
-    function onMessageDelivered(
-        bytes4 lane,
-        uint64 nonce,
-        bool result
-    ) external override {
-        require(
-            msg.sender == callbackSender,
-            "Only pallet address is allowed to call 'onMessageDelivered'"
-        );
-        // TODO: Your code goes here...
-    }
 }

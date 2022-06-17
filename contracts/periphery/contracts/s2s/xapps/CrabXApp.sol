@@ -63,15 +63,4 @@ abstract contract CrabXApp is SmartChainXApp, Ownable {
     function setToCrabParachain(BridgeConfig memory config) public onlyOwner {
         toCrabParachain = config;
     }
-
-    function onMessageDelivered(
-        bytes4 lane,
-        uint64 nonce,
-        bool result
-    ) external virtual override {
-        require(
-            msg.sender == callbackSender,
-            "Only pallet address is allowed call 'onMessageDelivered'"
-        );
-    }
 }

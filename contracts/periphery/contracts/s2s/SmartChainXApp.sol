@@ -108,14 +108,4 @@ abstract contract SmartChainXApp {
         );
         return AccountId.deriveEthereumAddress(derivedAccountId);
     }
-
-    /// @notice Callback function for 'send_message'
-    /// @param lane Lane id
-    /// @param nonce Nonce of the callback message
-    /// @param result Dispatch result of cross chain message
-    function onMessageDelivered(
-        bytes4 lane,
-        uint64 nonce,
-        bool result
-    ) external virtual;
 }
