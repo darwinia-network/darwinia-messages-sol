@@ -74,7 +74,7 @@ contract RemarkDemo is SmartChainXApp, Ownable {
     ) external override {
         require(
             msg.sender == callbackSender,
-            "Only pallet address is allowed call 'onMessageDelivered'"
+            "Only pallet address is allowed to call 'onMessageDelivered'"
         );
         // TODO: Your code goes here...
     }
