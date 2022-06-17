@@ -2,34 +2,22 @@
 
 pragma solidity >=0.6.0;
 
-import "../SmartChainXApp.sol";
-import "@darwinia/contracts-utils/contracts/Ownable.sol";
+import "../xapps/PangolinXApp.sol";
 import "../types/PalletEthereum.sol";
 
-/// 0. Correct the globle settings, line 22. Corrent the storage keys, line 60, 62
-/// 1. Deploy on the target chain, get the address of the deployed contract: `tgtAddress`.
-/// 2. Replace the `to` of evm transaction with `tgtAddress`, line 43.
-/// 3. Deploy on the source chain, get the address of the deployed contract: `srcAddress`.
-/// 4. Update the senderOfSourceChain to `srcAddress` by calling `setSenderOfSourceChain` function.
-contract TransactDemo is SmartChainXApp, Ownable {
-    uint256 public number;
+pragma experimental ABIEncoderV2;
 
-    // source chain ethereum sender address,
-    // it will be updated after the app is deployed on the source chain.
-    address public senderOfSourceChain;
-
+// deploy on the target chain first, then deploy on the source chain
+contract RemoteTransactDemo is PangolinXApp {
     constructor() public {
-        // Globle settings
-        dispatchAddress = 0x0000000000000000000000000000000000000019;
-        callIndexOfSendMessage = 0x2b03;
-        storageAddress = 0x000000000000000000000000000000000000001a;
-        callbackSender = 0x6461722f64766D70000000000000000000000000;
+        init();
     }
+
+    uint256 public number;
 
     ///////////////////////////////////////////
     // used on the source chain
     ///////////////////////////////////////////
-
     function callAddOnTheTargetChain() public payable {
         // 1. prepare the call that will be executed on the target chain
         PalletEthereum.TransactCall memory call = PalletEthereum.TransactCall(
@@ -53,39 +41,19 @@ contract TransactDemo is SmartChainXApp, Ownable {
             2654000000, // call weight
             callEncoded // call encoded bytes
         );
-        uint64 nonce = sendMessage(
-            // lane id
-            0,
-            // storage key for Darwinia market fee
-            hex"190d00dd4103825c78f55e5b5dbf8bfe2edb70953213f33a6ef6b8a5e3ffcab2",
-            // storage key for the latest nonce of Darwinia message lane
-            hex"c9b76e645ba80b6ca47619d64cb5e58d96c246acb9b55077390e3ca723a0ca1f11d2df4e979aa105cf552e9544ebd2b500000000",
-            payload // message payload
-        );
-    }
-
-    function onMessageDelivered(
-        bytes4 lane,
-        uint64 nonce,
-        bool result
-    ) external override {
-        require(
-            msg.sender == callbackSender,
-            "Only pallet address is allowed to call 'onMessageDelivered'"
-        );
-        // TODO: Your code goes here...
+        bytes4 lane = 0;
+        sendMessage(toPangoro, lane, payload);
     }
 
     ///////////////////////////////////////////
     // used on the target chain
     ///////////////////////////////////////////
-
     function add(uint256 _value) public {
-        requireSenderOfSourceChain(0, senderOfSourceChain);
+        // this 'require' makes this function only be called by the dapp contract on the source chain
+        require(
+            msg.sender == deriveSenderFromRemote(),
+            "msg.sender must equal to the address derived from the message sender address on the source chain"
+        );
         number = number + _value;
-    }
-
-    function setSenderOfSourceChain(address _senderOfSourceChain) public onlyOwner {
-        senderOfSourceChain = _senderOfSourceChain;
     }
 }

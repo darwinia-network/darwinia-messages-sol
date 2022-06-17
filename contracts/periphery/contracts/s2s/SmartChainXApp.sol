@@ -4,8 +4,6 @@ pragma solidity >=0.6.0;
 
 import "./SmartChainXLib.sol";
 
-pragma experimental ABIEncoderV2;
-
 // The base contract for developers to inherit
 abstract contract SmartChainXApp {
     struct MessagePayload {
@@ -20,39 +18,48 @@ abstract contract SmartChainXApp {
         bytes callEncoded;
     }
 
-    // Precompile address for dispatching 'send_message'
-    address internal dispatchAddress =
-        0x0000000000000000000000000000000000000019;
+    struct BridgeConfig {
+        // Call index of 'send_message'
+        bytes2 callIndexOfSendMessage;
+        // The storage key used to get market fee
+        bytes32 srcStorageKeyForMarketFee;
+        // The storage key used to get latest nonce
+        bytes32 srcStorageKeyForLatestNonce;
+    }
 
-    // Call index of 'send_message'
-    bytes2 internal callIndexOfSendMessage = 0x3003;
+    bytes4 public srcChainId = 0;
+
+    // Precompile address for dispatching 'send_message'
+    address public dispatchAddress = 0x0000000000000000000000000000000000000019;
 
     // Precompile address for getting state storage
     // The address is used to get market fee.
-    address internal storageAddress =
-        0x000000000000000000000000000000000000001a;
+    address public storageAddress = 0x000000000000000000000000000000000000001a;
 
     // The 'onMessageDelivered' sender
     // 'onMessageDelivered' is only allowed to be called by this address
-    address internal callbackSender =
-        0x6461722f64766D70000000000000000000000000;
+    address public callbackSender = 0x6461722f64766D70000000000000000000000000;
+
+    // Message sender address on the source chain.
+    // It will be used on the target chain.
+    // It should be updated after the dapp is deployed on the source chain.
+    // See more details in the 'deriveSenderFromRemote' below.
+    address public messageSenderOnSrcChain;
 
     /// @notice Send message over lane id
-    /// @param srcOutlaneId The lane id
-    /// @param srcStorageKeyForMarketFee The storage key used to get market fee
-    /// @param srcStorageKeyForLatestNonce The storage key used to get latest nonce
+    /// @param bridgeConfig The bridge config
+    /// @param laneId The outlane id
     /// @param payload The message payload to be sent
     /// @return nonce The nonce of the message
     function sendMessage(
-        bytes4 srcOutlaneId,
-        bytes memory srcStorageKeyForMarketFee,
-        bytes memory srcStorageKeyForLatestNonce,
+        BridgeConfig memory bridgeConfig,
+        bytes4 laneId,
         MessagePayload memory payload
     ) internal returns (uint64) {
         // Get the current market fee
         uint128 fee = SmartChainXLib.marketFee(
             storageAddress,
-            srcStorageKeyForMarketFee
+            bridgeConfig.srcStorageKeyForMarketFee
         );
         require(msg.value >= fee, "Not enough fee to pay");
 
@@ -66,8 +73,8 @@ abstract contract SmartChainXApp {
         // Send the message
         SmartChainXLib.sendMessage(
             dispatchAddress,
-            callIndexOfSendMessage,
-            srcOutlaneId,
+            bridgeConfig.callIndexOfSendMessage,
+            laneId,
             msg.value,
             message
         );
@@ -76,47 +83,30 @@ abstract contract SmartChainXApp {
         return
             SmartChainXLib.latestNonce(
                 storageAddress,
-                srcStorageKeyForLatestNonce
+                bridgeConfig.srcStorageKeyForLatestNonce,
+                laneId
             );
     }
 
-    /// @notice This function is used to check the sender.
-    /// @param srcChainId The source chain id
-    /// @param sender The sender of the message on the source chain
-    function requireSenderOfSourceChain(
-        bytes4 srcChainId,
-        address sender
-    ) internal {
+    /// @notice Derive the sender address from the sender address of the message on the source chain.
+    ///
+    ///    // Add this 'require' to your function on the target chain which will be called by the 'send_message'
+    ///    // This 'require' makes your function only allowed be called by the dapp contract on the source chain
+    ///    require(
+    ///        msg.sender == deriveSenderFromRemote(),
+    ///        "msg.sender must equal to the address derived from the message sender address on the source chain"
+    ///    );
+    ///
+    /// @return address The sender address on the target chain
+    function deriveSenderFromRemote() internal view returns (address) {
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
-            sender
+            messageSenderOnSrcChain
         );
         bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
             srcChainId,
             derivedSubstrateAddress
         );
-        address derivedEthereumAddress = AccountId.deriveEthereumAddress(
-            derivedAccountId
-        );
-        require(
-            msg.sender == derivedEthereumAddress,
-            "msg.sender must equal to the address derived from source dapp sender"
-        );
-    }
-
-    function getDispatchAddress() public view returns (address) {
-        return dispatchAddress;
-    }
-
-    function getCallIndexOfSendMessage() public view returns (bytes2) {
-        return callIndexOfSendMessage;
-    }
-
-    function getStorageAddress() public view returns (address) {
-        return storageAddress;
-    }
-
-    function getCallbackFromAddress() public view returns (address) {
-        return callbackSender;
+        return AccountId.deriveEthereumAddress(derivedAccountId);
     }
 
     /// @notice Callback function for 'send_message'

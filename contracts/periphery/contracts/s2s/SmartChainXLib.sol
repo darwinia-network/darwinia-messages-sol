@@ -12,7 +12,8 @@ import "./interfaces/IStateStorage.sol";
 import "./types/CommonTypes.sol";
 
 library SmartChainXLib {
-    bytes public constant account_derivation_prefix = "pallet-bridge/account-derivation/account";
+    bytes public constant account_derivation_prefix =
+        "pallet-bridge/account-derivation/account";
 
     event DispatchResult(bool success, bytes result);
 
@@ -75,7 +76,7 @@ library SmartChainXLib {
     }
 
     // Get market fee from state storage of the substrate chain
-    function marketFee(address storageAddress, bytes memory storageKey)
+    function marketFee(address storageAddress, bytes32 storageKey)
         internal
         view
         returns (uint128)
@@ -95,33 +96,58 @@ library SmartChainXLib {
     }
 
     // Get the latest nonce from state storage
-    function latestNonce(address storageAddress, bytes memory storageKey)
-        internal
-        view
-        returns (uint64)
-    {
+    function latestNonce(
+        address storageAddress,
+        bytes32 storageKey,
+        bytes4 laneId
+    ) internal view returns (uint64) {
+        // 1. Get `OutboundLaneData` from storage
+        // Full storage key == storageKey + Blake2_128Concat(laneId)
+        bytes memory hashedLaneId = Hash.blake2b128Concat(
+            abi.encodePacked(laneId)
+        );
+        bytes memory fullStorageKey = abi.encodePacked(
+            storageKey,
+            hashedLaneId
+        );
+
+        // Do get data by calling state storage precompile
         (bool success, bytes memory data) = address(storageAddress).staticcall(
             abi.encodeWithSelector(
                 IStateStorage.state_storage.selector,
-                abi.encodePacked(storageKey)
+                fullStorageKey
             )
         );
         revertIfFailed(success, data, "Get latest nonce failed");
 
-        CommonTypes.OutboundLaneData memory outboundLaneData = CommonTypes.decodeOutboundLaneData(
-            data
-        );
+        // 2. Decode `OutboundLaneData` and return the latest nonce
+        CommonTypes.OutboundLaneData memory outboundLaneData = CommonTypes
+            .decodeOutboundLaneData(data);
         return outboundLaneData.latestGeneratedNonce;
     }
 
-
-    function deriveAccountId(bytes4 srcChainId, bytes32 accountId) internal returns (bytes32) {
-        bytes memory prefixLength = ScaleCodec.encodeUintCompact(account_derivation_prefix.length);
-        bytes memory data = abi.encodePacked(prefixLength, account_derivation_prefix, srcChainId, accountId);
+    function deriveAccountId(bytes4 srcChainId, bytes32 accountId)
+        internal
+        view
+        returns (bytes32)
+    {
+        bytes memory prefixLength = ScaleCodec.encodeUintCompact(
+            account_derivation_prefix.length
+        );
+        bytes memory data = abi.encodePacked(
+            prefixLength,
+            account_derivation_prefix,
+            srcChainId,
+            accountId
+        );
         return Hash.blake2bHash(data);
     }
 
-    function revertIfFailed(bool success, bytes memory resultData, string memory revertMsg) private pure {
+    function revertIfFailed(
+        bool success,
+        bytes memory resultData,
+        string memory revertMsg
+    ) private pure {
         if (!success) {
             if (resultData.length > 0) {
                 assembly {
@@ -141,9 +167,7 @@ library SmartChainXLib {
         string memory errMsg
     ) internal {
         // Dispatch the call
-        (bool success, bytes memory data) = dispatchAddress.call(
-            callEncoded
-        );
+        (bool success, bytes memory data) = dispatchAddress.call(callEncoded);
         revertIfFailed(success, data, errMsg);
     }
 }
