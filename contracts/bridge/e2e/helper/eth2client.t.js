@@ -6,9 +6,12 @@ const eth2Client = new Eth2Client(beacon_endpoint);
 const log = console.log;
 
 (async () => {
-  const sync_change = await eth2Client.get_sync_committee_period_update(79, 79)
-  log(JSON.stringify(sync_change, null, 2))
-  log(await eth2Client.get_next_sync_committee_branch(651296))
+  // const sync_change = await eth2Client.get_sync_committee_period_update(79, 79)
+  // log(JSON.stringify(sync_change, null, 2))
+  // log(await eth2Client.get_next_sync_committee_branch(651296))
+  // const sync_change = await eth2Client.get_sync_committee_period_update(79, 79)
+  // log(JSON.stringify(sync_change, null, 2))
+  // log(await eth2Client.get_next_sync_committee_branch(651296))
   // log(await eth2Client.get_latest_execution_payload_state_root_branch(653120))
   // log(await eth2Client.get_finality_branch(653120))
   // log(sync_change[1].attested_header)
@@ -32,7 +35,9 @@ const log = console.log;
   // const update = await eth2Client.get_latest_finalized_update()
   // log(update)
   // const finalized_block = await eth2Client.get_beacon_block(update.finalized_header.slot)
-  // const finalized_block = await eth2Client.get_beacon_block(651296)
+  const finalized_block = await eth2Client.get_beacon_block(651366)
+  const ssz_sync_committee_bits = finalized_block.message.body.sync_aggregate.sync_committee_bits
+  log(ssz_sync_committee_bits)
   // const latest_execution_payload_state_root = finalized_block.message.body.execution_payload.state_root
   // log(latest_execution_payload_state_root)
   // const latest_execution_payload_state_root_branch = await eth2Client.get_latest_execution_payload_state_root_branch(finalized_block.message.slot)

@@ -67,8 +67,6 @@ describe("bridge e2e test: beacon light client", () => {
     const finalized_block = await eth2Client.get_beacon_block(finalized_header.root)
     const finality_branch = await eth2Client.get_finality_branch(attested_header_slot)
 
-    const latest_execution_payload_state_root = finalized_block.message.body.execution_payload.state_root
-    const latest_execution_payload_state_root_branch = await eth2Client.get_latest_execution_payload_state_root_branch(finalized_header.header.message.slot)
     const fork_version = await eth2Client.get_fork_version(sync_aggregate_slot)
 
     const finalized_header_update = {
@@ -76,8 +74,6 @@ describe("bridge e2e test: beacon light client", () => {
       signature_sync_committee: current_sync_committee,
       finalized_header: finalized_header.header.message,
       finality_branch: finality_branch.witnesses,
-      latest_execution_payload_state_root,
-      latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch.witnesses,
       sync_aggregate: sync_aggregate,
       fork_version: fork_version.current_version,
       signature_slot: sync_aggregate_slot
@@ -96,7 +92,6 @@ describe("bridge e2e test: beacon light client", () => {
     expect(finalized_header.header.message.body_root).to.eq(new_finalized_header.body_root)
   })
 
-
   it("import next_sync_committee", async () => {
     const old_finalized_header = await subClient.beaconLightClient.finalized_header()
     const old_period = old_finalized_header.slot.div(32).div(256)
@@ -113,8 +108,26 @@ describe("bridge e2e test: beacon light client", () => {
 
     const tx = await subClient.beaconLightClient.import_next_sync_committee(sync_committee_period_update)
     const next_period = ~~old_period + 1
-    const next_period_sync_committee = await subClient.beaconLightClient.sync_committee_roots(next_period)
-    log(next_period_sync_committee)
+    const next_period_sync_committee_root = await subClient.beaconLightClient.sync_committee_roots(next_period)
+    log(next_period_sync_committee_root)
+  })
+
+  it("import latest_execution_payload_state_root on execution layer", async () => {
+    const finalized_header = await subClient.beaconLightClient.finalized_header()
+    const finalized_block = await eth2Client.get_beacon_block(finalized_header.root)
+
+    const latest_execution_payload_state_root = finalized_block.message.body.execution_payload.state_root
+    const latest_execution_payload_state_root_branch = await eth2Client.get_latest_execution_payload_state_root_branch(finalized_header.slot)
+
+    const execution_payload_state_root_update = {
+      latest_execution_payload_state_root,
+      latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch.witnesses
+    }
+
+    const tx = await subClient.executionLayer.import_latest_execution_payload_state_root(sync_committee_period_update)
+    const state_root = await subClient.executionLayer.state_root()
+    log(state_root)
+    expect(latest_execution_payload_state_root).to.eq(state_root)
   })
 })
 

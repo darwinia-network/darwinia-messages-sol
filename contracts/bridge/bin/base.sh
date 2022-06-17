@@ -4,8 +4,9 @@ set -eo pipefail
 
 # All contracts are output to `bin/addr/{chain}/addresses.json` by default
 network_name=${NETWORK_NAME?}
+mode=${MODE?}
 root_dir=$(realpath .)
-ADDRESSES_FILE="${root_dir}/bin/addr/${network_name}.json"
+ADDRESSES_FILE="${root_dir}/bin/addr/${mode}/${network_name}.json"
 CONFIG_FILE="${root_dir}/bin/conf/${network_name}.json"
 OUT_DIR=$root_dir/out
 
@@ -172,7 +173,6 @@ load-addresses() {
     echo "Addresses file not found: $path not found"
     exit 1
   fi
-  set -x
   echo $path
   local exports
   [[ -z "${2}" ]] && {
@@ -184,5 +184,4 @@ load-addresses() {
       to_entries|map(\"\(.key)=\(.value|strings)\")|.[]")
     for e in $exports; do export "$2-$e"; done
   }
-set +x
 }

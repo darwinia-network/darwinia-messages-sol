@@ -111,7 +111,7 @@ describe("bridge e2e test: beefy light client", () => {
     });
   })
 
-  it.skip("set committer", async () => {
+  it("set committer", async () => {
     await subClient.set_chain_committer()
   })
 

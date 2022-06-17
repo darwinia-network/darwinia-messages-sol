@@ -54,8 +54,6 @@ pragma abicoder v2;
 
 import "../../utils/Bitfield.sol";
 import "../../spec/BeaconChain.sol";
-import "../../spec/ChainMessagePosition.sol";
-import "../common/StorageVerifier.sol";
 
 interface IBLS {
         function fast_aggregate_verify(
@@ -65,8 +63,8 @@ interface IBLS {
         ) external pure returns (bool);
 }
 
-contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
-    event FinalizedHeaderImported(BeaconBlockHeader finalized_header, bytes32 latest_execution_payload_state_root);
+contract BeaconLightClient is BeaconChain, Bitfield {
+    event FinalizedHeaderImported(BeaconBlockHeader finalized_header);
     event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed next_sync_committee_root);
 
     // address(0x0800)
@@ -74,17 +72,13 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
 
     bytes32 public immutable GENESIS_VALIDATORS_ROOT;
 
-    // An bellatrix beacon state has 25 fields, with a depth of 5.
+    // A bellatrix beacon state has 25 fields, with a depth of 5.
     // | field                               | gindex | depth |
     // | ----------------------------------- | ------ | ----- |
     // | next_sync_committee                 | 55     | 5     |
     // | finalized_checkpoint_root           | 105    | 6     |
-    // | latest_execution_payload_state_root | 898    | 9     |
     uint64 constant private NEXT_SYNC_COMMITTEE_INDEX = 55;
     uint64 constant private NEXT_SYNC_COMMITTEE_DEPTH = 5;
-
-    uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX = 898;
-    uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH = 9;
 
     uint64 constant private FINALIZED_CHECKPOINT_ROOT_INDEX = 105;
     uint64 constant private FINALIZED_CHECKPOINT_ROOT_DEPTH = 6;
@@ -94,10 +88,8 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
 
     bytes4 constant private DOMAIN_SYNC_COMMITTEE = 0x07000000;
 
-    bytes32 constant private EMPTY_BEACON_HEADER_HASH = 0xc78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c;
-
     struct SyncAggregate {
-        uint256[2] sync_committee_bits;
+        bytes32[2] sync_committee_bits;
         bytes sync_committee_signature;
     }
 
@@ -111,10 +103,6 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         // The finalized beacon block header attested to by Merkle branch
         BeaconBlockHeader finalized_header;
         bytes32[] finality_branch;
-
-        // Execution payload header in beacon state [New in Bellatrix]
-        bytes32 latest_execution_payload_state_root;
-        bytes32[] latest_execution_payload_state_root_branch;
 
         // Sync committee aggregate signature
         SyncAggregate sync_aggregate;
@@ -151,15 +139,15 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         bytes32 _body_root,
         bytes32 _current_sync_committee_hash,
         bytes32 _genesis_validators_root
-    ) StorageVerifier(uint32(ChainMessagePosition.ETH2), 0, 1, 2) {
+    ) {
         BLS_PRECOMPILE = _bls;
         finalized_header = BeaconBlockHeader(_slot, _proposer_index, _parent_root, _state_root, _body_root);
         sync_committee_roots[compute_sync_committee_period(_slot)] = _current_sync_committee_hash;
         GENESIS_VALIDATORS_ROOT = _genesis_validators_root;
     }
 
-    function state_root() public view override returns (bytes32) {
-        return latest_execution_payload_state_root;
+    function state_root() public view returns (bytes32) {
+        return finalized_header.state_root;
     }
 
     function import_next_sync_committee(SyncCommitteePeriodUpdate calldata update) external payable {
@@ -187,13 +175,6 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
                 "!finalized_header"
         );
 
-        require(verify_latest_execution_payload_state_root(
-                update.latest_execution_payload_state_root,
-                update.latest_execution_payload_state_root_branch,
-                update.finalized_header.state_root),
-               "!execution_payload_state_root"
-        );
-
         uint64 finalized_period = compute_sync_committee_period(finalized_header.slot);
         uint64 signature_period = compute_sync_committee_period(update.signature_slot);
         require(signature_period == finalized_period ||
@@ -213,8 +194,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
 
         require(update.finalized_header.slot > finalized_header.slot, "!new");
         finalized_header = update.finalized_header;
-        latest_execution_payload_state_root = update.latest_execution_payload_state_root;
-        emit FinalizedHeaderImported(update.finalized_header, update.latest_execution_payload_state_root);
+        emit FinalizedHeaderImported(update.finalized_header);
     }
 
     function verify_signed_header(
@@ -229,8 +209,9 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         uint64 n = 0;
         for (uint64 i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
             uint index = i >> 8;
-            uint8 offset = uint8(i & 255);
-            if (isSet(sync_aggregate.sync_committee_bits[index], (255 - offset))) {
+            uint sindex = i / 8 % 32;
+            uint offset = i % 8;
+            if (uint8(sync_aggregate.sync_committee_bits[index][sindex]) >> offset & 1 == 1) {
                 participant_pubkeys[n++] = sync_committee.pubkeys[i];
             }
         }
@@ -275,23 +256,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         );
     }
 
-    function verify_latest_execution_payload_state_root(
-        bytes32 execution_payload_state_root,
-        bytes32[] calldata execution_payload_state_root_branch,
-        bytes32 finalized_header_state_root
-    ) internal pure returns (bool) {
-        require(execution_payload_state_root_branch.length == LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH, "!execution_payload_state_root_branch");
-        return is_valid_merkle_branch(
-            execution_payload_state_root,
-            execution_payload_state_root_branch,
-            LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH,
-            LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX,
-            finalized_header_state_root
-        );
-    }
-
-
-    function is_supermajority(uint256[2] calldata sync_committee_bits) internal pure returns (bool) {
+    function is_supermajority(bytes32[2] calldata sync_committee_bits) internal pure returns (bool) {
         return sum(sync_committee_bits) * 3 >= SYNC_COMMITTEE_SIZE * 2;
     }
 
@@ -323,7 +288,7 @@ contract BeaconLightClient is BeaconChain, Bitfield, StorageVerifier {
         return slot / SLOTS_PER_EPOCH / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
     }
 
-    function sum(uint256[2] memory x) internal pure returns (uint256) {
-        return countSetBits(x[0]) + countSetBits(x[1]);
+    function sum(bytes32[2] memory x) internal pure returns (uint256) {
+        return countSetBits(uint(x[0])) + countSetBits(uint(x[1]));
     }
 }

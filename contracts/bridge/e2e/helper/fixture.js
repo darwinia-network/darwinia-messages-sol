@@ -4,13 +4,14 @@ const Bridge    = require('./bridge').Bridge
 const Eth2Client = require('./eth2client').Eth2Client
 
 const target  = process.env.TARGET || 'local'
+const INFURA_KEY = process.env.INFURA_KEY
 
 let evm_eth_addresses, evm_bsc_addresses, dvm_addresses, evm_endpoint, dvm_endpoint, sub_endpoint
 let ns_eth, ns_bsc, ns_dvm
 if (target == 'local') {
-  evm_eth_addresses = require("../../bin/addr/local-evm-eth2.json")
-  evm_bsc_addresses = require("../../bin/addr/local-evm-bsc.json")
-  dvm_addresses = require("../../bin/addr/local-dvm.json")
+  evm_eth_addresses = require("../../bin/addr/local/evm-eth2.json")
+  evm_bsc_addresses = require("../../bin/addr/local/evm-bsc.json")
+  dvm_addresses = require("../../bin/addr/local/dvm.json")
 
   evm_eth_endpoint = "http://127.0.0.1:8545"
   evm_bsc_endpoint = "http://127.0.0.1:8545"
@@ -22,16 +23,23 @@ if (target == 'local') {
   // sub_endpoint = "ws://192.168.2.100:10044"
   // beacon_endpoint = "http://127.0.0.1:5052"
 
-  ns_eth = 'local-evm-eth2'
-  ns_bsc = 'local-evm-bsc'
-  ns_dvm = 'local-dvm'
+  ns_eth = 'evm-eth2'
+  ns_bsc = 'evm-bsc'
+  ns_dvm = 'dvm'
 } else if (target == 'test') {
-  evm_addresses = require("../../bin/addr/bsctest.json")
-  dvm_addresses = require("../../bin/addr/pangoro.json")
+  evm_eth_addresses = require("../../bin/addr/test/ropsten.json")
+  evm_bsc_addresses = require("../../bin/addr/test/bsctest.json")
+  dvm_addresses = require("../../bin/addr/test/pangoro.json")
 
-  evm_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
+  evm_eth_endpoint = "https://ropsten.infura.io/" + INFURA_KEY
+  evm_bsc_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
   dvm_endpoint = "https://pangoro-rpc.darwinia.network"
   sub_endpoint = "wss://pangoro-rpc.darwinia.network"
+  beacon_endpoint = "https://lodestar-kiln.chainsafe.io"
+
+  ns_eth = 'ropsten'
+  ns_bsc = 'bsctest'
+  ns_dvm = 'pangoro'
 }
 
 const addr1 = "0x3DFe30fb7b46b99e234Ed0F725B5304257F78992"
