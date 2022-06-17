@@ -1,7 +1,0 @@
-{
-  "DEPLOYER": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
-  "ChainMessageCommitter": "0x9F04c46AB2531c95FbC7325DF22187dCE9248cF2",
-  "FeeMarket": {
-    "ropsten": "0xf23257e8c5eA4b78091BBf026B26E97F262cF748"
-  }
-}

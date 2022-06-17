@@ -30,7 +30,6 @@ class Eth2Client {
   }
 
   async get_beacon_block(id) {
-    // warning: rpc return value sync_aggregate is wrong!!!
     const url = `${this.endopoint}/eth/v2/beacon/blocks/${id}`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)

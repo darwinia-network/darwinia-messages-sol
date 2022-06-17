@@ -7,6 +7,7 @@ import "../../test.sol";
 import "../../mock/MockBLS.sol";
 import "../../spec/SyncCommittee.t.sol";
 import "../../../truth/eth/BeaconLightClient.sol";
+import "../../../truth/eth/ExecutionLayer.sol";
 
 contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
 
@@ -15,6 +16,7 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
     bytes32 constant LATEST_EXECUTION_PAYLOAD_STATE_ROOT = 0x2020202020202020202020202020202020202020202020202020202020202020;
 
     BeaconLightClient lightclient;
+    ExecutionLayer executionlayer;
     MockBLS bls;
     address self;
 
@@ -30,6 +32,7 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
             CURRENT_SYNC_COMMITTEE_ROOT,
             GENESIS_VALIDATORS_ROOT
         );
+        executionlayer = new ExecutionLayer(address(lightclient));
         self = address(this);
     }
 
@@ -50,6 +53,18 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
         assertEq(hash_tree_root(sync_committee_case1()), stored_next_sync_committee_root);
     }
 
+    function test_import_latest_execution_payload_state_root() public {
+        BeaconBlockHeader memory finalized_header = build_finalized_header();
+        process_import_finalized_header(finalized_header);
+        bytes32[] memory latest_execution_payload_state_root_branch = build_latest_execution_payload_state_root_branch();
+        ExecutionLayer.ExecutionPayloadStateRootUpdate memory update = ExecutionLayer.ExecutionPayloadStateRootUpdate({
+            latest_execution_payload_state_root: LATEST_EXECUTION_PAYLOAD_STATE_ROOT,
+            latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch
+        });
+        executionlayer.import_latest_execution_payload_state_root(update);
+        assertEq(executionlayer.state_root(), LATEST_EXECUTION_PAYLOAD_STATE_ROOT);
+    }
+
     function test_import_finalized_header() public {
         BeaconBlockHeader memory finalized_header = build_finalized_header();
         process_import_finalized_header(finalized_header);
@@ -58,18 +73,15 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
 
     function assert_finalized_header(BeaconBlockHeader memory finalized_header) public {
         (uint64 slot, uint64 proposer_index, bytes32 parent_root, bytes32 state_root, bytes32 body_root) = lightclient.finalized_header();
-        bytes32 stored_latest_execution_payload_state_root = lightclient.state_root();
         assertEq(uint(slot), finalized_header.slot);
         assertEq(uint(proposer_index), finalized_header.proposer_index);
         assertEq(parent_root, finalized_header.parent_root);
         assertEq(state_root, finalized_header.state_root);
         assertEq(body_root, finalized_header.body_root);
-        assertEq(stored_latest_execution_payload_state_root, LATEST_EXECUTION_PAYLOAD_STATE_ROOT);
     }
 
     function process_import_finalized_header(BeaconBlockHeader memory finalized_header) public {
         bytes32[] memory finality_branch = build_finality_branch();
-        bytes32[] memory latest_execution_payload_state_root_branch = build_latest_execution_payload_state_root_branch();
 
         BeaconLightClient.FinalizedHeaderUpdate memory update = BeaconLightClient.FinalizedHeaderUpdate({
             attested_header: BeaconBlockHeader({
@@ -82,12 +94,10 @@ contract BeaconLightClientTest is DSTest, SyncCommitteePreset {
             signature_sync_committee: sync_committee_case1(),
             finalized_header: finalized_header,
             finality_branch: finality_branch,
-            latest_execution_payload_state_root: LATEST_EXECUTION_PAYLOAD_STATE_ROOT,
-            latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch,
             sync_aggregate: BeaconLightClient.SyncAggregate({
                 sync_committee_bits:[
-                    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff,
-                    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+                    bytes32(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
+                    bytes32(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
                 ],
                 sync_committee_signature: hex'97f0ff2a00f9c8ffe0ff6b1bad3b97c6aa856c9ca3c49e10bb8aeab202ebffa6723a22ec28f9f94ab5f7719a14aa55301520b1ff6bb9f430d786e803096336697237036816d4be2355adfd7fb12d2c307ec6d25c051f3930d24c7ee1fd1ae1ee'
             }),
