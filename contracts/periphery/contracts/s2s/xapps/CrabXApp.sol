@@ -15,7 +15,6 @@ abstract contract CrabXApp is SmartChainXApp, Ownable {
         srcChainId = 0;
         dispatchAddress = 0x0000000000000000000000000000000000000019;
         storageAddress = 0x000000000000000000000000000000000000001a;
-        callbackSender = 0x6461722f64766D70000000000000000000000000;
     }
 
     BridgeConfig internal toDarwinia =
@@ -38,13 +37,6 @@ abstract contract CrabXApp is SmartChainXApp, Ownable {
         dispatchAddress = _dispatchAddress;
     }
 
-    function setCallbackFromAddresss(address _callbackFromAddress)
-        public
-        onlyOwner
-    {
-        callbackSender = _callbackFromAddress;
-    }
-
     function setStorageAddress(address _storageAddress) public onlyOwner {
         storageAddress = _storageAddress;
     }
@@ -62,16 +54,5 @@ abstract contract CrabXApp is SmartChainXApp, Ownable {
 
     function setToCrabParachain(BridgeConfig memory config) public onlyOwner {
         toCrabParachain = config;
-    }
-
-    function onMessageDelivered(
-        bytes4 lane,
-        uint64 nonce,
-        bool result
-    ) external virtual override {
-        require(
-            msg.sender == callbackSender,
-            "Only pallet address is allowed call 'onMessageDelivered'"
-        );
     }
 }

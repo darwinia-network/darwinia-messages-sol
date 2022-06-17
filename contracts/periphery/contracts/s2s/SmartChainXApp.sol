@@ -36,10 +36,6 @@ abstract contract SmartChainXApp {
     // The address is used to get market fee.
     address public storageAddress = 0x000000000000000000000000000000000000001a;
 
-    // The 'onMessageDelivered' sender
-    // 'onMessageDelivered' is only allowed to be called by this address
-    address public callbackSender = 0x6461722f64766D70000000000000000000000000;
-
     // Message sender address on the source chain.
     // It will be used on the target chain.
     // It should be updated after the dapp is deployed on the source chain.
@@ -108,14 +104,4 @@ abstract contract SmartChainXApp {
         );
         return AccountId.deriveEthereumAddress(derivedAccountId);
     }
-
-    /// @notice Callback function for 'send_message'
-    /// @param lane Lane id
-    /// @param nonce Nonce of the callback message
-    /// @param result Dispatch result of cross chain message
-    function onMessageDelivered(
-        bytes4 lane,
-        uint64 nonce,
-        bool result
-    ) external virtual;
 }
