@@ -51,9 +51,11 @@ library CommonTypes {
         returns (Relayer memory)
     {
         (uint256 length, uint8 mode) = ScaleCodec.decodeUintCompact(data);
-        uint8 compactLength = uint8(2**mode);
 
+        // Compact mode is one of 0, 1, 2, 3
         require(mode < 3, "Wrong compact mode"); // Now, mode 3 is not supported yet
+
+        uint8 compactLength = uint8(2**mode);
         require(
             data.length >= compactLength + length * 64,
             "The data length of the decoding relayers is not enough"
