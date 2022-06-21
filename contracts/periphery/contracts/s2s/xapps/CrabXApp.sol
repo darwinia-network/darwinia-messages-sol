@@ -3,7 +3,6 @@
 pragma solidity >=0.6.0;
 
 import "../SmartChainXApp.sol";
-import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 

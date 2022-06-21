@@ -3,7 +3,7 @@
 pragma solidity >=0.6.0;
 
 import "../xapps/CrabXApp.sol";
-import "@darwinia/contracts-utils/contracts/Scale.types.sol";
+import "../types/PalletSystem.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
@@ -19,11 +19,11 @@ contract RemarkDemo is CrabXApp {
 
     function remark() public payable {
         // 1. prepare the call that will be executed on the target chain
-        System.RemarkCall memory call = System.RemarkCall(
+        PalletSystem.RemarkCall memory call = PalletSystem.RemarkCall(
             hex"0009", // the call index of remark_with_event
             hex"12345678"
         );
-        bytes memory callEncoded = System.encodeRemarkCall(call);
+        bytes memory callEncoded = PalletSystem.encodeRemarkCall(call);
 
         // 2. send the message
         MessagePayload memory payload = MessagePayload(

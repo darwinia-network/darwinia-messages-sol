@@ -97,4 +97,39 @@ library CommonTypes {
                 latestGeneratedNonce
             );
     }
+
+    struct EnumItemWithAccountId {
+        uint8 index;
+        bytes32 accountId;
+    }
+
+    function encodeEnumItemWithAccountId(EnumItemWithAccountId memory item) internal pure returns (bytes memory) {
+        return abi.encodePacked(item.index, item.accountId);
+    }
+
+    struct EnumItemWithNull {
+        uint8 index;
+    }
+
+    function encodeEnumItemWithNull(EnumItemWithNull memory item) internal pure returns (bytes memory) {
+        return abi.encodePacked(item.index);
+    }
+
+    struct Message {
+        uint32 specVersion;
+        uint64 weight;
+        EnumItemWithAccountId origin;
+        EnumItemWithNull dispatchFeePayment;
+        bytes call;
+    }
+
+    function encodeMessage(Message memory msg1) internal pure returns (bytes memory) {
+        return abi.encodePacked(
+            ScaleCodec.encode32(msg1.specVersion), 
+            ScaleCodec.encode64(msg1.weight),
+            encodeEnumItemWithAccountId(msg1.origin),
+            encodeEnumItemWithNull(msg1.dispatchFeePayment),
+            ScaleCodec.encodeBytes(msg1.call)
+        );
+    }
 }
