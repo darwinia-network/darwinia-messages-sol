@@ -2,7 +2,6 @@
 
 pragma solidity >=0.6.0;
 
-import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "@darwinia/contracts-utils/contracts/Bytes.sol";
@@ -10,6 +9,7 @@ import "@darwinia/contracts-utils/contracts/Hash.sol";
 
 import "./interfaces/IStateStorage.sol";
 import "./types/CommonTypes.sol";
+import "./types/PalletBridgeMessages.sol";
 
 library SmartChainXLib {
     bytes public constant account_derivation_prefix =
@@ -30,7 +30,7 @@ library SmartChainXLib {
         uint256 feeOfPalletPrecision = deliveryAndDispatchFee / (10**9);
 
         // encode send_message call
-        BridgeMessages.SendMessageCall memory sendMessageCall = BridgeMessages
+        PalletBridgeMessages.SendMessageCall memory sendMessageCall = PalletBridgeMessages
             .SendMessageCall(
                 callIndex,
                 laneId,
@@ -38,7 +38,7 @@ library SmartChainXLib {
                 uint128(feeOfPalletPrecision)
             );
 
-        bytes memory sendMessageCallEncoded = BridgeMessages
+        bytes memory sendMessageCallEncoded = PalletBridgeMessages
             .encodeSendMessageCall(sendMessageCall);
 
         // dispatch the send_message call
@@ -55,17 +55,17 @@ library SmartChainXLib {
         uint64 weight,
         bytes memory call
     ) internal view returns (bytes memory) {
-        Types.EnumItemWithAccountId memory origin = Types.EnumItemWithAccountId(
+        CommonTypes.EnumItemWithAccountId memory origin = CommonTypes.EnumItemWithAccountId(
                 2, // index in enum
                 AccountId.fromAddress(address(this)) // UserApp contract address
             );
 
-        Types.EnumItemWithNull memory dispatchFeePayment = Types
+        CommonTypes.EnumItemWithNull memory dispatchFeePayment = CommonTypes
             .EnumItemWithNull(0);
 
         return
-            Types.encodeMessage(
-                Types.Message(
+            CommonTypes.encodeMessage(
+                CommonTypes.Message(
                     specVersion,
                     weight,
                     origin,

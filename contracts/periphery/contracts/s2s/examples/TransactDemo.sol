@@ -8,7 +8,7 @@ import "../types/PalletEthereum.sol";
 pragma experimental ABIEncoderV2;
 
 // deploy on the target chain first, then deploy on the source chain
-contract RemoteTransactDemo is PangolinXApp {
+contract TransactDemo is PangolinXApp {
     constructor() public {
         init();
     }
@@ -18,7 +18,7 @@ contract RemoteTransactDemo is PangolinXApp {
     ///////////////////////////////////////////
     // used on the source chain
     ///////////////////////////////////////////
-    function callAddOnTheTargetChain() public payable {
+    function callAddOnTargetChain() public payable {
         // 1. prepare the call that will be executed on the target chain
         PalletEthereum.TransactCall memory call = PalletEthereum.TransactCall(
             // the call index of substrate_transact
