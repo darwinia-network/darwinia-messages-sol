@@ -10,7 +10,7 @@ import "@darwinia/contracts-utils/contracts/AccountId.sol";
 pragma experimental ABIEncoderV2;
 
 // CrabSmartChain remote call remark of Darwinia
-contract RemarkDemo is CrabXApp {
+contract RemarkDemo is CrabXApp, Ownable {
     event OutputNonce(uint256 nonce);
 
     constructor() public {
@@ -34,5 +34,29 @@ contract RemarkDemo is CrabXApp {
         bytes4 lane = 0;
         uint64 nonce = sendMessage(toDarwinia, lane, payload);
         emit OutputNonce(nonce);
+    }
+
+    // If you want to update the configs, you can add the following function
+    function setStorageAddress(address _storageAddress) public onlyOwner {
+        storageAddress = _storageAddress;
+    }
+
+    function setDispatchAddress(address _dispatchAddress) public onlyOwner {
+        dispatchAddress = _dispatchAddress;
+    }
+
+    function setMessageSenderOnSrcChain(address _messageSenderOnSrcChain)
+        public
+        onlyOwner
+    {
+        messageSenderOnSrcChain = _messageSenderOnSrcChain;
+    }
+
+    function setToDarwinia(BridgeConfig memory config) public onlyOwner {
+        toDarwinia = config;
+    }
+
+    function setToCrabParachain(BridgeConfig memory config) public onlyOwner {
+        toCrabParachain = config;
     }
 }
