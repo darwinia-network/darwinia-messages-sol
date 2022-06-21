@@ -95,6 +95,7 @@ abstract contract SmartChainXApp {
     ///
     /// @return address The sender address on the target chain
     function deriveSenderFromRemote() internal view returns (address) {
+        // H160 > AccountId32 > derived AccountId32 > H160
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
             messageSenderOnSrcChain
         );

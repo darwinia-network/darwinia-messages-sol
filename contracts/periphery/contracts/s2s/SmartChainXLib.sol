@@ -147,7 +147,7 @@ library SmartChainXLib {
         bool success,
         bytes memory resultData,
         string memory revertMsg
-    ) private pure {
+    ) internal pure {
         if (!success) {
             if (resultData.length > 0) {
                 assembly {
