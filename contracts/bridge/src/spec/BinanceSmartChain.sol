@@ -3,6 +3,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "../../utils/RLPEncode.sol";
+
 contract BinanceSmartChain {
     /// BSC(Binance Smart Chain) header
     struct BSCHeader {
@@ -35,7 +37,7 @@ contract BinanceSmartChain {
         /// Block mix digest
         bytes32 mix_digest;
         /// Block nonce, represents a 64-bit hash
-        bytes8 nonce;
+        uint64 nonce;
     }
 
     function hash(BSCHeader memory header) internal pure returns (bytes32) {
@@ -46,12 +48,49 @@ contract BinanceSmartChain {
         return keccack256(rlp_chain_id(header, chain_id));
     }
 
-    function rlp(BSCHeader memory header) internal pure returns (bytes32) {
+    function rlp(BSCHeader memory header) internal pure returns (bytes memory data) {
+        bytes[] memory list = new bytes[](15);
 
+        list[0] = RLPEncode.encodeBytes(abi.encodePacked(header.parent_hash));
+        list[1] = RLPEncode.encodeBytes(abi.encodePacked(header.uncle_hash));
+        list[2] = RLPEncode.Address(header.coinbase);
+        list[3] = RLPEncode.encodeBytes(abi.encodePacked(header.state_root));
+        list[4] = RLPEncode.encodeBytes(abi.encodePacked(header.transactions_root));
+        list[5] = RLPEncode.encodeBytes(abi.encodePacked(header.receipts_root));
+        list[6] = RLPEncode.encodeBytes(header.log_bloom);
+        list[7] = RLPEncode.encodeUint(header.difficulty);
+        list[8] = RLPEncode.encodeUint(header.number);
+        list[9] = RLPEncode.encodeUint(header.gas_limit);
+        list[10] = RLPEncode.encodeUint(header.gas_used);
+        list[11] = RLPEncode.encodeUint(header.timestamp);
+        list[12] = RLPEncode.encodeBytes(header.extra_data);
+        list[13] = RLPEncode.encodeBytes(abi.encodePacked(header.mix_digest));
+        list[14] = RLPEncode.encodeUint(header.nonce);
+
+        data = RLPEncode.encodeList(list);
     }
 
-    function rlp_chain_id(BSCHeader memory header, chain_id) internal pure returns (bytes32) {
+    function rlp_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes memory) {
+        bytes[] memory list = new bytes[](16);
 
+        list[0] = RLPEncode.encodeUint(chain_id);
+        list[1] = RLPEncode.encodeBytes(abi.encodePacked(header.parent_hash));
+        list[2] = RLPEncode.encodeBytes(abi.encodePacked(header.uncle_hash));
+        list[3] = RLPEncode.Address(header.coinbase);
+        list[4] = RLPEncode.encodeBytes(abi.encodePacked(header.state_root));
+        list[5] = RLPEncode.encodeBytes(abi.encodePacked(header.transactions_root));
+        list[6] = RLPEncode.encodeBytes(abi.encodePacked(header.receipts_root));
+        list[7] = RLPEncode.encodeBytes(header.log_bloom);
+        list[8] = RLPEncode.encodeUint(header.difficulty);
+        list[9] = RLPEncode.encodeUint(header.number);
+        list[10] = RLPEncode.encodeUint(header.gas_limit);
+        list[11] = RLPEncode.encodeUint(header.gas_used);
+        list[12] = RLPEncode.encodeUint(header.timestamp);
+        list[13] = RLPEncode.encodeBytes(header.extra_data);
+        list[14] = RLPEncode.encodeBytes(abi.encodePacked(header.mix_digest));
+        list[15] = RLPEncode.encodeUint(header.nonce);
+
+        data = RLPEncode.encodeList(list);
     }
 
     function hash(address[] memory signers) internal pure returns (bytes32) {
