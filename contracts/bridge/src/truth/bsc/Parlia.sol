@@ -5,10 +5,12 @@ pragma abicoder v2;
 
 import "../../utils/Bytes.sol";
 import "../../utils/ECDSA.sol";
+import "../../utils/EnumerableSet.sol";
 import "../../spec/BinanceSmartChain.sol";
 
 contract Parlia is BinanceSmartChain {
     using Bytes for bytes;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     uint64 public immutable CHAIN_ID;
     uint64 public immutable PERIOD;
@@ -39,10 +41,12 @@ contract Parlia is BinanceSmartChain {
     // Finalized BSC checkpoint
     StoredBlockHeader public finalized_checkpoint;
     // Finalized BSC authorities root
-    bytes32 public finalized_authorities_root;
+    // bytes32 public finalized_authorities_root;
+    EnumerableSet.AddressSet private _finalized_authorities;
 
     constructor(uint64 chain_id, uint64 period, BSCHeader memory header) {
-        finalized_authorities_root = hash(extract_authorities(header.extra_data));
+        address[] memory authorities = extract_authorities(header.extra_data);
+        save(authorities);
         bytes32 block_hash = hash(header);
         finalized_checkpoint = StoredBlockHeader({
             parent_hash: header.parent_hash,
@@ -57,12 +61,12 @@ contract Parlia is BinanceSmartChain {
         PERIOD = period;
     }
 
-    function import_finalized_epoch_header(BSCHeader[] calldata headers, address[] calldata finalized_authorities) external payable {
-        // check finalized_authorities is correct
-        require(hash(finalized_authorities) == finalized_authorities_root, "!finalized_authorities");
+    function import_finalized_epoch_header(
+        BSCHeader[] calldata headers
+    ) external payable {
         // ensure valid length
-        // we should submit at least `N/2 + 1` headers
-        require(finalized_authorities.length / 2 < headers.length, "!headers_size");
+        // we should submit `N/2 + 1` headers
+        require(_finalized_authorities.length() / 2 + 1 == headers.length, "!headers_size");
         BSCHeader memory checkpoint = headers[0];
 
         // ensure valid header number
@@ -79,13 +83,11 @@ contract Parlia is BinanceSmartChain {
 
         // check signer
         address signer0 = recover_creator(checkpoint);
-        bytes32 leaf = keccak256(abi.encodePacked(signer0));
+        require(_finalized_authorities.contains(signer0), "!signer0");
 
-        // TODO: check signer in finalized_authorities_root
+        _finalized_authorities.remove(signer0);
 
-        // extract new authority set from submitted checkpoint header
-        address[] memory new_authority_set = extract_authorities(checkpoint.extra_data);
-
+        // check already have `N/2` valid headers signed by different authority separately
         for (uint i = 1; i < headers.length; i++) {
             contextless_checks(headers[i]);
             // check parent
@@ -93,15 +95,19 @@ contract Parlia is BinanceSmartChain {
 
             // who signed this header
             address signerN = recover_creator(headers[i]);
-            bytes32 leafN = keccak256(abi.encodePacked(signerN));
-
-            // TODO: signerN must in finalized_checkpint_root
-            // TODO: headers must signed by different authority
+            require(_finalized_authorities.contains(signerN), "!signerN");
         }
 
-        // TODO: if already have `N/2` valid headers signed by different authority separately
+        // clean old finalized_authorities
+        clean();
+
+        // extract new authority set from submitted checkpoint header
+        // TODO:: check extract from checkpoint's parent or just checkpoint
+        address[] memory new_authority_set = extract_authorities(checkpoint.extra_data);
+
         // do finalize new authority set
-        finalized_authorities_root = hash(new_authority_set);
+        save(new_authority_set);
+
         finalized_checkpoint = StoredBlockHeader({
             parent_hash: checkpoint.parent_hash,
             state_root: checkpoint.state_root,
@@ -111,6 +117,17 @@ contract Parlia is BinanceSmartChain {
             timestamp: checkpoint.timestamp,
             hash: hash(checkpoint)
         });
+    }
+
+    function clean() internal {
+        address[] memory v = _finalized_authorities.values();
+        for (uint i = 0; i < v.length; i++) {
+            _finalized_authorities.remove(v[i]);
+        }
+    }
+
+    function save(address[] memory authorities) internal {
+
     }
 
     function contextless_checks(BSCHeader memory header) internal pure {
@@ -178,13 +195,18 @@ contract Parlia is BinanceSmartChain {
         // split `signed extra_data` and `signature`
         bytes memory signed_data = extra_data.substr(0, extra_data.length - SIGNATURE_LENGTH);
         bytes memory signature = extra_data.substr(extra_data.length - SIGNATURE_LENGTH, extra_data.length);
-        bytes32 message = hash_with_chain_id(header, CHAIN_ID);
+
+        // modify header and hash it
+        BSCHeader memory unsigned_header = header;
+        unsigned_header.extra_data = signed_data;
+
+        bytes32 message = hash_with_chain_id(unsigned_header, CHAIN_ID);
         require(signature.length == 65, "!signature");
         (bytes32 r, bytes32 vs) = extract_sign(signature);
         return ECDSA.recover(message, r, vs);
     }
 
-    function extract_sign(bytes memory signature) internal pure returns(bytes32 r, bytes32 vs) {
+    function extract_sign(bytes memory signature) internal pure returns(bytes32, bytes32) {
         bytes32 r;
         bytes32 s;
         uint8 v;
@@ -228,6 +250,22 @@ contract Parlia is BinanceSmartChain {
     }
     function sub(uint x, uint y) internal pure returns (uint z) {
         require((z = x - y) <= x);
+    }
+
+    function contains(address value) public view returns (bool) {
+        return _finalized_authorities.contains(value);
+    }
+
+    function length() public view returns (uint256) {
+        return _finalized_authorities.length();
+    }
+
+    function at(uint256 index) public view returns (address) {
+        return _finalized_authorities.at(index);
+    }
+
+    function values() public view returns (address[] memory) {
+        return _finalized_authorities.values();
     }
 }
 
