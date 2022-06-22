@@ -46,10 +46,11 @@ contract TransactDemo is PangoroXApp {
     // used on the target chain
     ///////////////////////////////////////////
     function add(uint256 _value) public {
-        // this 'require' makes this function only be called by the dapp contract on the source chain
+        // the sender is only allowed to be called by the derived address 
+        // of dapp address on the source chain.
         require(
-            msg.sender == deriveSenderFromRemote(),
-            "msg.sender must equal to the address derived from the message sender address on the source chain"
+            derivedFromRemote(msg.sender), 
+            "msg.sender is not derived from remote"
         );
         number = number + _value;
     }
