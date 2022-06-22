@@ -2,13 +2,13 @@
 
 pragma solidity >=0.6.0;
 
-import "../xapps/PangolinXApp.sol";
+import "../xapps/PangoroXApp.sol";
 import "../types/PalletEthereum.sol";
 
 pragma experimental ABIEncoderV2;
 
 // deploy on the target chain first, then deploy on the source chain
-contract TransactDemo is PangolinXApp {
+contract TransactDemo is PangoroXApp {
     constructor() public {
         init();
     }
@@ -42,7 +42,7 @@ contract TransactDemo is PangolinXApp {
             callEncoded // call encoded bytes
         );
         bytes4 lane = 0;
-        sendMessage(toPangoro, lane, payload);
+        sendMessage(toPangolin, lane, payload);
     }
 
     ///////////////////////////////////////////

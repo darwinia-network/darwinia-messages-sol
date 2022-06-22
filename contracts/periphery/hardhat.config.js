@@ -80,6 +80,13 @@ module.exports = {
       network_id: "*",
       accounts: [PRIVATE_KEY]
     },
+    pangoro: {
+      url: 'https://pangoro-rpc.darwinia.network',
+      network_id: "45",
+      accounts: [PRIVATE_KEY],
+      gas: 3_000_000,
+      gasPrice: 53100000000
+    },
     pangolin: {
       url: 'https://pangolin-rpc.darwinia.network',
       network_id: "43",
