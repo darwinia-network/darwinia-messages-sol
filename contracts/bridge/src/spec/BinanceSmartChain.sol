@@ -3,49 +3,49 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../../utils/RLPEncode.sol";
+import "../utils/RLPEncode.sol";
 
 contract BinanceSmartChain {
-    /// BSC(Binance Smart Chain) header
+    // BSC(Binance Smart Chain) header
     struct BSCHeader {
-        /// Parent block hash
+        // Parent block hash
         bytes32 parent_hash;
-        /// Block uncles hash
+        // Block uncles hash
         bytes32 uncle_hash;
-        /// validator address
+        // validator address
         address coinbase;
-        /// Block state root
+        // Block state root
         bytes32 state_root;
-        /// Block transactions root
+        // Block transactions root
         bytes32 transactions_root;
-        /// Block receipts root
+        // Block receipts root
         bytes32 receipts_root;
-        /// Block logs bloom, represents a 2048 bit bloom filter
+        // Block logs bloom, represents a 2048 bit bloom filter
         bytes log_bloom;
-        /// Block difficulty
+        // Block difficulty
         uint256 difficulty;
-        /// Block number
+        // Block number
         uint256 number;
-        /// Block gas limit
+        // Block gas limit
         uint64 gas_limit;
-        /// Gas used for transactions execution
+        // Gas used for transactions execution
         uint64 gas_used;
-        /// Block timestamp
+        // Block timestamp
         uint64 timestamp;
-        /// Block extra data
+        // Block extra data
         bytes extra_data;
-        /// Block mix digest
+        // Block mix digest
         bytes32 mix_digest;
-        /// Block nonce, represents a 64-bit hash
+        // Block nonce, represents a 64-bit hash
         uint64 nonce;
     }
 
     function hash(BSCHeader memory header) internal pure returns (bytes32) {
-        return keccack256(rlp(header));
+        return keccak256(rlp(header));
     }
 
-    function hash_with_chain_id(BSCHeader memory header, uint64 chain_id) internal pure (bytes32) {
-        return keccack256(rlp_chain_id(header, chain_id));
+    function hash_with_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes32) {
+        return keccak256(rlp_chain_id(header, chain_id));
     }
 
     function rlp(BSCHeader memory header) internal pure returns (bytes memory data) {
@@ -53,7 +53,7 @@ contract BinanceSmartChain {
 
         list[0] = RLPEncode.encodeBytes(abi.encodePacked(header.parent_hash));
         list[1] = RLPEncode.encodeBytes(abi.encodePacked(header.uncle_hash));
-        list[2] = RLPEncode.Address(header.coinbase);
+        list[2] = RLPEncode.encodeAddress(header.coinbase);
         list[3] = RLPEncode.encodeBytes(abi.encodePacked(header.state_root));
         list[4] = RLPEncode.encodeBytes(abi.encodePacked(header.transactions_root));
         list[5] = RLPEncode.encodeBytes(abi.encodePacked(header.receipts_root));
@@ -70,13 +70,13 @@ contract BinanceSmartChain {
         data = RLPEncode.encodeList(list);
     }
 
-    function rlp_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes memory) {
+    function rlp_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes memory data) {
         bytes[] memory list = new bytes[](16);
 
         list[0] = RLPEncode.encodeUint(chain_id);
         list[1] = RLPEncode.encodeBytes(abi.encodePacked(header.parent_hash));
         list[2] = RLPEncode.encodeBytes(abi.encodePacked(header.uncle_hash));
-        list[3] = RLPEncode.Address(header.coinbase);
+        list[3] = RLPEncode.encodeAddress(header.coinbase);
         list[4] = RLPEncode.encodeBytes(abi.encodePacked(header.state_root));
         list[5] = RLPEncode.encodeBytes(abi.encodePacked(header.transactions_root));
         list[6] = RLPEncode.encodeBytes(abi.encodePacked(header.receipts_root));
@@ -94,7 +94,7 @@ contract BinanceSmartChain {
     }
 
     function hash(address[] memory signers) internal pure returns (bytes32) {
-        bytes32[] hashed_signers = new bytes32[](signers.length);
+        bytes32[] memory hashed_signers = new bytes32[](signers.length);
         for (uint i = 0; i < signers.length; i++) {
             hashed_signers[i] = keccak256(abi.encodePacked(signers[i]));
         }
@@ -126,13 +126,12 @@ contract BinanceSmartChain {
     function hash_node(bytes32 left, bytes32 right)
         internal
         pure
-        returns (bytes32 hash)
+        returns (bytes32 h)
     {
         assembly {
             mstore(0x00, left)
             mstore(0x20, right)
-            hash := keccak256(0x00, 0x40)
+            h := keccak256(0x00, 0x40)
         }
-        return hash;
     }
 }
