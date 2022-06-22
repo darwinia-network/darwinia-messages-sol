@@ -45,11 +45,11 @@ contract RemarkDemo is CrabXApp, Ownable {
         dispatchAddress = _dispatchAddress;
     }
 
-    function setMessageSenderOnSrcChain(address _messageSenderOnSrcChain)
+    function setRemoteSender(address _remoteSender)
         public
         onlyOwner
     {
-        messageSenderOnSrcChain = _messageSenderOnSrcChain;
+        remoteSender = _remoteSender;
     }
 
     function setToDarwinia(BridgeConfig memory config) public onlyOwner {

@@ -40,7 +40,7 @@ abstract contract SmartChainXApp {
     // It will be used on the target chain.
     // It should be updated after the dapp is deployed on the source chain.
     // See more details in the 'deriveSenderFromRemote' below.
-    address public messageSenderOnSrcChain;
+    address public remoteSender;
 
     /// @notice Send message over lane id
     /// @param bridgeConfig The bridge config
@@ -98,7 +98,7 @@ abstract contract SmartChainXApp {
             sender ==
             SmartChainXLib.deriveSenderFromRemote(
                 srcChainId,
-                messageSenderOnSrcChain
+                remoteSender
             );
     }
 }

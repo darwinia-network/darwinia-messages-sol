@@ -16,8 +16,8 @@ contract Issuing is PangolinXApp {
 
     event TokenIssued(address mappedToken, address recipient, uint256 amount);
 
-    function setMessageSenderOnSrcChain(address _messageSenderOnSrcChain) public {
-        messageSenderOnSrcChain = _messageSenderOnSrcChain;
+    function setRemoteSender(address _remoteSender) public {
+        remoteSender = _remoteSender;
     }
 
     function issueFromRemote(
@@ -25,10 +25,11 @@ contract Issuing is PangolinXApp {
         address recipient,
         uint256 amount
     ) external {
-        // ensure this function only be called by the dapp contract on the source chain
+        // the sender is only allowed to be called by the derived address 
+        // of dapp address on the source chain.
         require(
-            msg.sender == deriveSenderFromRemote(),
-            "msg.sender must equal to the address derived from the message sender address on the source chain"
+            derivedFromRemote(msg.sender), 
+            "msg.sender is not derived from remote"
         );
 
         // issue erc20 tokens

@@ -5,7 +5,7 @@
   2. Deploy the `Issuing` contract to OSC. Here we get a `Issuing` contract address
   3. Update the `Issuing` contract address in the `Backing.sol`
   4. Deploy the `Backing` to PSC. Here we get a `Backing` contract address
-  5. Call `setMessageSenderOnSrcChain(backingContractAddress)` of the `Issuing` contract
+  5. Call `setRemoteSender(contractAddressOfBacking)` of the `Issuing` contract
   6. Call `lockAndRemoteIssue` of the `Backing` contract
 
 #### On the PSC:

@@ -176,11 +176,11 @@ library SmartChainXLib {
     // H160(sender on the sourc chain) > AccountId32 > derived AccountId32 > H160
     function deriveSenderFromRemote(
         bytes4 srcChainId,
-        address messageSenderOnSrcChain
+        address remoteSender
     ) internal view returns (address) {
         // H160(sender on the sourc chain) > AccountId32
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
-            messageSenderOnSrcChain
+            remoteSender
         );
 
         // AccountId32 > derived AccountId32
