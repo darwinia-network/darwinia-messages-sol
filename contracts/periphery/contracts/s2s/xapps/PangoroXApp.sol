@@ -8,7 +8,7 @@ import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
 pragma experimental ABIEncoderV2;
 
-// Remote call from Pangolin SmartChain 
+// Remote call from Pangoro SmartChain 
 abstract contract PangoroXApp is SmartChainXApp {
     function init() internal {
         srcChainId = 0;

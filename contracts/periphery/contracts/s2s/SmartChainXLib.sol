@@ -30,8 +30,8 @@ library SmartChainXLib {
         uint256 feeOfPalletPrecision = deliveryAndDispatchFee / (10**9);
 
         // encode send_message call
-        PalletBridgeMessages.SendMessageCall memory sendMessageCall = PalletBridgeMessages
-            .SendMessageCall(
+        PalletBridgeMessages.SendMessageCall
+            memory sendMessageCall = PalletBridgeMessages.SendMessageCall(
                 callIndex,
                 laneId,
                 message,
@@ -55,7 +55,8 @@ library SmartChainXLib {
         uint64 weight,
         bytes memory call
     ) internal view returns (bytes memory) {
-        CommonTypes.EnumItemWithAccountId memory origin = CommonTypes.EnumItemWithAccountId(
+        CommonTypes.EnumItemWithAccountId memory origin = CommonTypes
+            .EnumItemWithAccountId(
                 2, // index in enum
                 AccountId.fromAddress(address(this)) // UserApp contract address
             );
@@ -169,5 +170,28 @@ library SmartChainXLib {
         // Dispatch the call
         (bool success, bytes memory data) = dispatchAddress.call(callEncoded);
         revertIfFailed(success, data, errMsg);
+    }
+
+    // derive an address from remote(source chain) sender address
+    // H160(sender on the sourc chain) > AccountId32 > derived AccountId32 > H160
+    function deriveSenderFromRemote(
+        bytes4 srcChainId,
+        address messageSenderOnSrcChain
+    ) internal view returns (address) {
+        // H160(sender on the sourc chain) > AccountId32
+        bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
+            messageSenderOnSrcChain
+        );
+
+        // AccountId32 > derived AccountId32
+        bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
+            srcChainId,
+            derivedSubstrateAddress
+        );
+        
+        // derived AccountId32 > H160
+        address result = AccountId.deriveEthereumAddress(derivedAccountId);
+
+        return result;
     }
 }
