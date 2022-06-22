@@ -84,25 +84,21 @@ abstract contract SmartChainXApp {
             );
     }
 
-    /// @notice Derive the sender address from the sender address of the message on the source chain.
+    /// @notice Determine if the `sender` is derived from remote.
     ///
-    ///    // Add this 'require' to your function on the target chain which will be called by the 'send_message'
-    ///    // This 'require' makes your function only allowed be called by the dapp contract on the source chain
+    ///    // Add this 'require' to your function on the target chain which will be called
     ///    require(
-    ///        msg.sender == deriveSenderFromRemote(),
-    ///        "msg.sender must equal to the address derived from the message sender address on the source chain"
+    ///         derivedFromRemote(msg.sender),
+    ///        "msg.sender is not derived from remote"
     ///    );
     ///
-    /// @return address The sender address on the target chain
-    function deriveSenderFromRemote() internal view returns (address) {
-        // H160 > AccountId32 > derived AccountId32 > H160
-        bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
-            messageSenderOnSrcChain
-        );
-        bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
-            srcChainId,
-            derivedSubstrateAddress
-        );
-        return AccountId.deriveEthereumAddress(derivedAccountId);
+    /// @return bool Does the sender address authorized?
+    function derivedFromRemote(address sender) internal view returns (bool) {
+        return
+            sender ==
+            SmartChainXLib.deriveSenderFromRemote(
+                srcChainId,
+                messageSenderOnSrcChain
+            );
     }
 }
