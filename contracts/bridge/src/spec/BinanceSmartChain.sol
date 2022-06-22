@@ -37,7 +37,7 @@ contract BinanceSmartChain {
         // Block mix digest
         bytes32 mix_digest;
         // Block nonce, represents a 64-bit hash
-        uint64 nonce;
+        bytes8 nonce;
     }
 
     function hash(BSCHeader memory header) internal pure returns (bytes32) {
@@ -65,7 +65,7 @@ contract BinanceSmartChain {
         list[11] = RLPEncode.encodeUint(header.timestamp);
         list[12] = RLPEncode.encodeBytes(header.extra_data);
         list[13] = RLPEncode.encodeBytes(abi.encodePacked(header.mix_digest));
-        list[14] = RLPEncode.encodeUint(header.nonce);
+        list[14] = RLPEncode.encodeBytes(abi.encodePacked(header.nonce));
 
         data = RLPEncode.encodeList(list);
     }
@@ -88,7 +88,7 @@ contract BinanceSmartChain {
         list[12] = RLPEncode.encodeUint(header.timestamp);
         list[13] = RLPEncode.encodeBytes(header.extra_data);
         list[14] = RLPEncode.encodeBytes(abi.encodePacked(header.mix_digest));
-        list[15] = RLPEncode.encodeUint(header.nonce);
+        list[15] = RLPEncode.encodeBytes(abi.encodePacked(header.nonce));
 
         data = RLPEncode.encodeList(list);
     }
