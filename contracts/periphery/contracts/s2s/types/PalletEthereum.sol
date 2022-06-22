@@ -26,6 +26,25 @@ library PalletEthereum {
             );
     }
 
+    struct MessageTransactCall {
+        bytes2 callIndex;
+        EnumItemTransactionV2WithLegacyTransaction transaction;
+    }
+
+    function encodeMessageTransactCall(MessageTransactCall memory call)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return
+            abi.encodePacked(
+                call.callIndex,
+                encodeEnumItemTransactionV2WithLegacyTransaction(
+                    call.transaction
+                )
+            );
+    }
+
     struct EnumItemTransactionActionWithAddress {
         uint8 index;
         address h160;
@@ -115,5 +134,18 @@ library PalletEthereum {
                 0, // enum index
                 transaction // legacyTransaction
             );
+    }
+
+    function buildTransactionV2ForMessageTransact(
+        uint256 gasLimit,
+        address to,
+        bytes memory input
+    )
+        internal
+        pure
+        returns (EnumItemTransactionV2WithLegacyTransaction memory)
+    {
+        // nonce and gasPrice will be set by target chain
+        return buildTransactionV2(0, 0, gasLimit, to, 0, input);
     }
 }

@@ -1,8 +1,8 @@
-// Run TransactDemo on Pangolin
-//   npx hardhat run --network pangolin contracts/s2s/examples/TransactDemo.js
+// Run TransactDemo on the Pangoro Testnet
+//   npx hardhat run --network pangoro contracts/s2s/examples/TransactDemo.js
 //
 // View result tx on subscan:
-//   https://pangolin.subscan.io/tx/0x...
+//   https://pangoro.subscan.io/tx/0x...
 async function main() {
     // We get the contract to deploy
     const TransactDemo = await ethers.getContractFactory("TransactDemo");
