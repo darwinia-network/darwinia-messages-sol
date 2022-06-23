@@ -1,4 +1,55 @@
 // SPDX-License-Identifier: Apache-2.0
+// # BSC(Binance Smart Chain) parlia light client
+//
+// The bsc parlia light client provides functionality for import finalized headers which submitted by
+// relayer and import finalized authority set
+//
+// ## Overview
+//
+// The bsc-light-client provides functions for:
+//
+// - Import finalized bsc block header
+// - Verify message storage proof from latest finalized block header
+//
+// ### Terminology
+//
+// - [`BSCHeader`]: The header structure of Binance Smart Chain.
+//
+// - `genesis_header` The initial header which set to this contract before it accepts the headers
+//   submitted by relayers. We extract the initial authority set from this header and verify the
+//   headers submitted later with the extracted initial authority set. So the genesis_header must
+//   be verified manually.
+//
+// - `checkpoint` checkpoint is the block that fulfill block number % epoch_length == 0. This
+//   concept comes from the implementation of Proof of Authority consensus algorithm
+//
+// ### Implementations
+// If you want to review the code, you may need to read about Authority Round and Proof of
+// Authority consensus algorithms first. Then you may look into the go implementation of bsc source
+// code and probably focus on the consensus algorithm that bsc is using. Read the bsc official docs
+// if you need them. For this pallet:
+// The first thing you should care about is the configuration parameters of this pallet. Check the
+// bsc official docs even the go source code to make sure you set them correctly
+// In bsc explorer, choose a checkpoint block's header to set as the genesis header of this pallet.
+// It's not important which block you take, but it's important that the relayers should submit
+// headers from `genesis_header.number + epoch_length` Probably you need a tool to finish this,
+// like POSTMAN For bsc testnet, you can access API https://data-seed-prebsc-1-s1.binance.org:8545 with
+// following body input to get the header content.
+// ```json
+// {
+//    "jsonrpc": "2.0",
+//    "method": "eth_getBlockByNumber",
+//    "params": [
+//        "0x913640",
+//        false
+//    ],
+//    "id": 83
+// }
+// ```
+// According to the official doc of Binance Smart Chain, when the authority set changed at
+// checkpoint header, the new authority set is not taken as finalized immediately.
+// We will wait(accept and verify) N / 2 blocks(only headers) to make sure it's safe to finalize
+// the new authority set. N is the authority set size.
 
 pragma solidity 0.7.6;
 pragma abicoder v2;
@@ -17,18 +68,16 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
     uint64 public immutable CHAIN_ID;
     uint64 public immutable PERIOD;
 
-    uint constant private EPOCH = 200;
-    uint64 constant private MAX_GAS_LIMIT = 0x7fffffffffffffff;
     uint64 constant private MIN_GAS_LIMIT = 5000;
+    uint64 constant private MAX_GAS_LIMIT = 0x7fffffffffffffff;
 
+    uint256 constant private EPOCH = 200;
+    uint256 constant private DIFF_NOTURN = 1;
+    uint256 constant private DIFF_INTURN = 2;
+    uint256 constant private VANITY_LENGTH = 32;
+    uint256 constant private ADDRESS_LENGTH = 20;
+    uint256 constant private SIGNATURE_LENGTH = 65;
     bytes32 constant private KECCAK_EMPTY_LIST_RLP = 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347;
-
-    uint constant private DIFF_INTURN = 2;
-    uint constant private DIFF_NOTURN = 1;
-
-    uint constant private VANITY_LENGTH = 32;
-    uint constant private SIGNATURE_LENGTH = 65;
-    uint constant private ADDRESS_LENGTH = 20;
 
     struct StoredBlockHeader {
         bytes32 parent_hash;
@@ -42,13 +91,12 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
 
     // Finalized BSC checkpoint
     StoredBlockHeader public finalized_checkpoint;
-    // Finalized BSC authorities root
-    // bytes32 public finalized_authorities_root;
+    // Finalized BSC authorities
     EnumerableSet.AddressSet private _finalized_authorities;
 
     constructor(uint64 chain_id, uint64 period, BSCHeader memory header) StorageVerifier(uint32(ChainMessagePosition.BSC), 0, 1, 2) {
         address[] memory authorities = _extract_authorities(header.extra_data);
-        save(authorities);
+        _finalize_authority_set(authorities);
         bytes32 block_hash = hash(header);
         finalized_checkpoint = StoredBlockHeader({
             parent_hash: header.parent_hash,
@@ -65,6 +113,22 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
 
     function state_root() public view override returns (bytes32) {
         return finalized_checkpoint.state_root;
+    }
+
+    function finalized_authorities_contains(address value) public view returns (bool) {
+        return _finalized_authorities.contains(value);
+    }
+
+    function length_of_finalized_authorities() public view returns (uint256) {
+        return _finalized_authorities.length();
+    }
+
+    function finalized_authorities_at(uint256 index) public view returns (address) {
+        return _finalized_authorities.at(index);
+    }
+
+    function finalized_authorities() public view returns (address[] memory) {
+        return _finalized_authorities.values();
     }
 
     function import_finalized_epoch_header(BSCHeader[] calldata headers) external payable {
@@ -103,15 +167,15 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         }
 
         // clean old finalized_authorities
-        clean();
+        _clean_finalized_authority_set();
 
         // extract new authority set from submitted checkpoint header
-        // TODO:: check extract from checkpoint's parent or just checkpoint
         address[] memory new_authority_set = _extract_authorities(checkpoint.extra_data);
 
         // do finalize new authority set
-        save(new_authority_set);
+        _finalize_authority_set(new_authority_set);
 
+        // do finalize new checkpoint
         finalized_checkpoint = StoredBlockHeader({
             parent_hash: checkpoint.parent_hash,
             state_root: checkpoint.state_root,
@@ -123,14 +187,14 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         });
     }
 
-    function clean() internal {
+    function _clean_finalized_authority_set() internal {
         address[] memory v = _finalized_authorities.values();
         for (uint i = 0; i < v.length; i++) {
             _finalized_authorities.remove(v[i]);
         }
     }
 
-    function save(address[] memory authorities) internal {
+    function _finalize_authority_set(address[] memory authorities) internal {
         for (uint i = 0; i < authorities.length; i++) {
             _finalized_authorities.add(authorities[i]);
         }
@@ -204,22 +268,21 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
 
         // modify header and hash it
         BSCHeader memory unsigned_header = BSCHeader({
-			difficulty: header.difficulty,
-			extra_data: signed_data,
-			gas_limit: header.gas_limit,
-			gas_used: header.gas_used,
-			log_bloom: header.log_bloom,
-			coinbase: header.coinbase,
-			mix_digest: header.mix_digest,
-			nonce: header.nonce,
-			number: header.number,
-			parent_hash: header.parent_hash,
-			receipts_root: header.receipts_root,
-			uncle_hash: header.uncle_hash,
-			state_root: header.state_root,
-			timestamp: header.timestamp,
-			transactions_root: header.transactions_root
-
+            difficulty: header.difficulty,
+            extra_data: signed_data,
+            gas_limit: header.gas_limit,
+            gas_used: header.gas_used,
+            log_bloom: header.log_bloom,
+            coinbase: header.coinbase,
+            mix_digest: header.mix_digest,
+            nonce: header.nonce,
+            number: header.number,
+            parent_hash: header.parent_hash,
+            receipts_root: header.receipts_root,
+            uncle_hash: header.uncle_hash,
+            state_root: header.state_root,
+            timestamp: header.timestamp,
+            transactions_root: header.transactions_root
         });
 
         bytes32 message = hash_with_chain_id(unsigned_header, CHAIN_ID);
@@ -241,7 +304,7 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         return (r, vs);
     }
 
-	/// Extract authority set from extra_data.
+    /// Extract authority set from extra_data.
     ///
     /// Layout of extra_data:
     /// ----
@@ -253,6 +316,7 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         uint len = extra_data.length;
         require(len > VANITY_LENGTH + SIGNATURE_LENGTH, "!signer");
         bytes memory signers_raw = extra_data.substr(VANITY_LENGTH, len - VANITY_LENGTH - SIGNATURE_LENGTH);
+        require(signers_raw.length % ADDRESS_LENGTH == 0, "!signers");
         uint num_signers = signers_raw.length / ADDRESS_LENGTH;
         address[] memory signers = new address[](num_signers);
         for (uint i = 0; i < num_signers; i++) {
@@ -261,7 +325,7 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         return signers;
     }
 
-    function bytesToAddress(bytes memory bys) private pure returns (address addr) {
+    function bytesToAddress(bytes memory bys) internal pure returns (address addr) {
         assembly {
           addr := mload(add(bys,20))
         }
@@ -272,22 +336,6 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
     }
     function sub(uint x, uint y) internal pure returns (uint z) {
         require((z = x - y) <= x);
-    }
-
-    function contains(address value) public view returns (bool) {
-        return _finalized_authorities.contains(value);
-    }
-
-    function length() public view returns (uint256) {
-        return _finalized_authorities.length();
-    }
-
-    function at(uint256 index) public view returns (address) {
-        return _finalized_authorities.at(index);
-    }
-
-    function values() public view returns (address[] memory) {
-        return _finalized_authorities.values();
     }
 }
 

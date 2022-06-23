@@ -41,9 +41,9 @@ contract BSCLightClientTest is DSTest, BinanceSmartChain {
         assertEq(timestamp, cp.timestamp);
         assertEq(hash, parlia.hash_block(cp));
         address[] memory expected_signers = parlia.extract_authorities(cp.extra_data);
-        assertEq(parlia.length(), expected_signers.length);
+        assertEq(parlia.length_of_finalized_authorities(), expected_signers.length);
         for (uint i = 0; i < expected_signers.length; i++) {
-            assertEq(parlia.at(i), expected_signers[i]);
+            assertEq(parlia.finalized_authorities_at(i), expected_signers[i]);
         }
     }
 
