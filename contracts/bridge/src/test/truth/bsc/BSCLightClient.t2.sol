@@ -4,10 +4,10 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../../test.sol";
-import "../../../truth/bsc/Parlia.sol";
+import "../../../truth/bsc/BSCLightClient.sol";
 import "../../../spec/BinanceSmartChain.sol";
 
-contract ParliaTest2 is DSTest, BinanceSmartChain {
+contract BSCLightClientTest2 is DSTest, BinanceSmartChain {
     uint64 constant private CHAIN_ID = 97;
     uint64 constant private PERIOD = 3;
 
@@ -240,8 +240,8 @@ contract ParliaTest2 is DSTest, BinanceSmartChain {
     }
 }
 
-contract ParliaWrapper is Parlia {
-    constructor(uint64 chain_id, uint64 period, BSCHeader memory header) Parlia(chain_id, period, header) {}
+contract ParliaWrapper is BSCLightClient {
+    constructor(uint64 chain_id, uint64 period, BSCHeader memory header) BSCLightClient(chain_id, period, header) {}
 
     function recover_creator(BSCHeader memory header) public view returns (address) {
         return _recover_creator(header);
