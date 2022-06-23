@@ -45,7 +45,7 @@ contract Parlia is BinanceSmartChain {
     EnumerableSet.AddressSet private _finalized_authorities;
 
     constructor(uint64 chain_id, uint64 period, BSCHeader memory header) {
-        address[] memory authorities = extract_authorities(header.extra_data);
+        address[] memory authorities = _extract_authorities(header.extra_data);
         save(authorities);
         bytes32 block_hash = hash(header);
         finalized_checkpoint = StoredBlockHeader({
@@ -61,9 +61,7 @@ contract Parlia is BinanceSmartChain {
         PERIOD = period;
     }
 
-    function import_finalized_epoch_header(
-        BSCHeader[] calldata headers
-    ) external payable {
+    function import_finalized_epoch_header(BSCHeader[] calldata headers) external payable {
         // ensure valid length
         // we should submit `N/2 + 1` headers
         require(_finalized_authorities.length() / 2 + 1 == headers.length, "!headers_size");
@@ -82,7 +80,7 @@ contract Parlia is BinanceSmartChain {
         contextless_checks(checkpoint);
 
         // check signer
-        address signer0 = recover_creator(checkpoint);
+        address signer0 = _recover_creator(checkpoint);
         require(_finalized_authorities.contains(signer0), "!signer0");
 
         _finalized_authorities.remove(signer0);
@@ -94,7 +92,7 @@ contract Parlia is BinanceSmartChain {
             contextual_checks(headers[i], headers[i-1]);
 
             // who signed this header
-            address signerN = recover_creator(headers[i]);
+            address signerN = _recover_creator(headers[i]);
             require(_finalized_authorities.contains(signerN), "!signerN");
         }
 
@@ -103,7 +101,7 @@ contract Parlia is BinanceSmartChain {
 
         // extract new authority set from submitted checkpoint header
         // TODO:: check extract from checkpoint's parent or just checkpoint
-        address[] memory new_authority_set = extract_authorities(checkpoint.extra_data);
+        address[] memory new_authority_set = _extract_authorities(checkpoint.extra_data);
 
         // do finalize new authority set
         save(new_authority_set);
@@ -127,7 +125,9 @@ contract Parlia is BinanceSmartChain {
     }
 
     function save(address[] memory authorities) internal {
-
+        for (uint i = 0; i < authorities.length; i++) {
+            _finalized_authorities.add(authorities[i]);
+        }
     }
 
     function contextless_checks(BSCHeader memory header) internal pure {
@@ -178,15 +178,15 @@ contract Parlia is BinanceSmartChain {
     function contextual_checks(BSCHeader calldata header, BSCHeader calldata parent) internal view {
         // parent sanity check
         require(hash(parent) == header.parent_hash &&
-                parent.number == header.number + 1,
+                parent.number + 1 == header.number,
                 "!ancestor");
 
         // ensure block's timestamp isn't too close to it's parent
         // and header. timestamp is greater than parents'
-        require(header.timestamp < add(parent.timestamp, PERIOD), "!timestamp");
+        require(header.timestamp >= add(parent.timestamp, PERIOD), "!timestamp");
     }
 
-    function recover_creator(BSCHeader memory header) internal view returns (address) {
+    function _recover_creator(BSCHeader memory header) internal view returns (address) {
         bytes memory extra_data = header.extra_data;
 
         require(extra_data.length > VANITY_LENGTH, "!vanity");
@@ -194,11 +194,27 @@ contract Parlia is BinanceSmartChain {
 
         // split `signed extra_data` and `signature`
         bytes memory signed_data = extra_data.substr(0, extra_data.length - SIGNATURE_LENGTH);
-        bytes memory signature = extra_data.substr(extra_data.length - SIGNATURE_LENGTH, extra_data.length);
+        bytes memory signature = extra_data.substr(extra_data.length - SIGNATURE_LENGTH, SIGNATURE_LENGTH);
 
         // modify header and hash it
-        BSCHeader memory unsigned_header = header;
-        unsigned_header.extra_data = signed_data;
+        BSCHeader memory unsigned_header = BSCHeader({
+			difficulty: header.difficulty,
+			extra_data: signed_data,
+			gas_limit: header.gas_limit,
+			gas_used: header.gas_used,
+			log_bloom: header.log_bloom,
+			coinbase: header.coinbase,
+			mix_digest: header.mix_digest,
+			nonce: header.nonce,
+			number: header.number,
+			parent_hash: header.parent_hash,
+			receipts_root: header.receipts_root,
+			uncle_hash: header.uncle_hash,
+			state_root: header.state_root,
+			timestamp: header.timestamp,
+			transactions_root: header.transactions_root
+
+        });
 
         bytes32 message = hash_with_chain_id(unsigned_header, CHAIN_ID);
         require(signature.length == 65, "!signature");
@@ -227,10 +243,10 @@ contract Parlia is BinanceSmartChain {
     /// Signers: N * 32 bytes as hex encoded (20 characters)
     /// Signature: 65 bytes
     /// --
-    function extract_authorities(bytes memory extra_data) internal pure returns (address[] memory) {
+    function _extract_authorities(bytes memory extra_data) internal pure returns (address[] memory) {
         uint len = extra_data.length;
         require(len > VANITY_LENGTH + SIGNATURE_LENGTH, "!signer");
-        bytes memory signers_raw = extra_data.substr(VANITY_LENGTH, len - SIGNATURE_LENGTH);
+        bytes memory signers_raw = extra_data.substr(VANITY_LENGTH, len - VANITY_LENGTH - SIGNATURE_LENGTH);
         uint num_signers = signers_raw.length / ADDRESS_LENGTH;
         address[] memory signers = new address[](num_signers);
         for (uint i = 0; i < num_signers; i++) {
