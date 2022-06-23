@@ -329,11 +329,11 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
     /// Signature: 65 bytes
     /// --
     function _extract_authorities(bytes memory extra_data) internal pure returns (address[] memory) {
-        uint len = extra_data.length;
+        uint256 len = extra_data.length;
         require(len > VANITY_LENGTH + SIGNATURE_LENGTH, "!signer");
         bytes memory signers_raw = extra_data.substr(VANITY_LENGTH, len - VANITY_LENGTH - SIGNATURE_LENGTH);
         require(signers_raw.length % ADDRESS_LENGTH == 0, "!signers");
-        uint num_signers = signers_raw.length / ADDRESS_LENGTH;
+        uint256 num_signers = signers_raw.length / ADDRESS_LENGTH;
         address[] memory signers = new address[](num_signers);
         for (uint i = 0; i < num_signers; i++) {
             signers[i] = bytesToAddress(signers_raw.substr(i * ADDRESS_LENGTH, ADDRESS_LENGTH));

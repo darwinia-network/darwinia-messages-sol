@@ -92,46 +92,4 @@ contract BinanceSmartChain {
 
         data = RLPEncode.encodeList(list);
     }
-
-    function hash(address[] memory signers) internal pure returns (bytes32) {
-        bytes32[] memory hashed_signers = new bytes32[](signers.length);
-        for (uint i = 0; i < signers.length; i++) {
-            hashed_signers[i] = keccak256(abi.encodePacked(signers[i]));
-        }
-        return hash(hashed_signers);
-    }
-
-    function hash(bytes32[] memory leaves) internal pure returns (bytes32) {
-        uint len = leaves.length;
-        if (len == 0) return bytes32(0);
-        else if (len == 1) return leaves[0];
-        else if (len == 2) return hash_node(leaves[0], leaves[1]);
-        uint bottom_length = get_power_of_two_ceil(len);
-        bytes32[] memory o = new bytes32[](bottom_length * 2);
-        for (uint i = 0; i < len; ++i) {
-            o[bottom_length + i] = leaves[i];
-        }
-        for (uint i = bottom_length - 1; i > 0; --i) {
-            o[i] = hash_node(o[i * 2], o[i * 2 + 1]);
-        }
-        return o[1];
-    }
-
-    function get_power_of_two_ceil(uint256 x) internal pure returns (uint256) {
-        if (x <= 1) return 1;
-        else if (x == 2) return 2;
-        else return 2 * get_power_of_two_ceil((x + 1) >> 1);
-    }
-
-    function hash_node(bytes32 left, bytes32 right)
-        internal
-        pure
-        returns (bytes32 h)
-    {
-        assembly {
-            mstore(0x00, left)
-            mstore(0x20, right)
-            h := keccak256(0x00, 0x40)
-        }
-    }
 }
