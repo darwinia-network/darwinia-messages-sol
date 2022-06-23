@@ -50,6 +50,14 @@
 // checkpoint header, the new authority set is not taken as finalized immediately.
 // We will wait(accept and verify) N / 2 blocks(only headers) to make sure it's safe to finalize
 // the new authority set. N is the authority set size.
+//
+// ```
+//                       Finalized               Block
+//                       Checkpoint              Header
+// ----------------------|-----------------------|---------> time
+//                       |-------- N/2 ----------|
+//                                Authority set
+// ```
 
 pragma solidity 0.7.6;
 pragma abicoder v2;
@@ -131,6 +139,11 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         return _finalized_authorities.values();
     }
 
+    /// Import finalized checkpoint
+    /// @notice len(headers) == N/2 + 1, headers[0] == finalized_checkpoint
+    /// the first group headers that relayer submitted should exactly follow the initial
+    /// checkpoint eg. the initial header number is x, the first call of this extrinsic
+    /// should submit headers with numbers [x + epoch_length, x + epoch_length + 1, ... , x + epoch_length + N/2]
     function import_finalized_epoch_header(BSCHeader[] calldata headers) external payable {
         // ensure valid length
         // we should submit `N/2 + 1` headers
@@ -138,9 +151,6 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         BSCHeader memory checkpoint = headers[0];
 
         // ensure valid header number
-        // the first group headers that relayer submitted should exactly follow the initial
-        // checkpoint eg. the initial header number is x, the first call of this extrinsic
-        // should submit headers with numbers [x + epoch_length, x + epoch_length + 1, ...]
         require(finalized_checkpoint.number + EPOCH == checkpoint.number, "!number");
         // ensure first element is checkpoint block header
         require(checkpoint.number % EPOCH == 0, "!checkpoint");
@@ -187,6 +197,7 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         });
     }
 
+    // Clean finalized authority set
     function _clean_finalized_authority_set() internal {
         address[] memory v = _finalized_authorities.values();
         for (uint i = 0; i < v.length; i++) {
@@ -194,12 +205,14 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         }
     }
 
+    // Save new finalized authority set to storage
     function _finalize_authority_set(address[] memory authorities) internal {
         for (uint i = 0; i < authorities.length; i++) {
             _finalized_authorities.add(authorities[i]);
         }
     }
 
+    // Perform basic checks that only require header itself
     function contextless_checks(BSCHeader memory header) internal pure {
         // genesis block is always valid dead-end
         if (header.number == 0) return;
@@ -245,6 +258,7 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         }
     }
 
+    // Perform checks that require access to parent header
     function contextual_checks(BSCHeader calldata header, BSCHeader calldata parent) internal view {
         // parent sanity check
         require(hash(parent) == header.parent_hash &&
@@ -256,6 +270,7 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         require(header.timestamp >= add(parent.timestamp, PERIOD), "!timestamp");
     }
 
+    // Recover block creator from signature
     function _recover_creator(BSCHeader memory header) internal view returns (address) {
         bytes memory extra_data = header.extra_data;
 
@@ -291,6 +306,7 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         return ECDSA.recover(message, r, vs);
     }
 
+    // Extract r, vs from signature
     function extract_sign(bytes memory signature) internal pure returns(bytes32, bytes32) {
         bytes32 r;
         bytes32 s;
