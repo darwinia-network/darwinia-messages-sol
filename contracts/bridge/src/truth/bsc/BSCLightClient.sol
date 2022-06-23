@@ -185,6 +185,7 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
             // who signed this header
             address signerN = _recover_creator(headers[i]);
             require(_finalized_authorities.contains(signerN), "!signerN");
+            _finalized_authorities.remove(signerN);
         }
 
         // clean old finalized_authorities
