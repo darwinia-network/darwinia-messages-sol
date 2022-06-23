@@ -34,6 +34,8 @@ contract ParliaTest2 is DSTest, BinanceSmartChain {
             bytes32 hash
         ) = parlia.finalized_checkpoint();
         assertEq(parent_hash, cp.parent_hash);
+        assertEq(state_root, cp.state_root);
+        assertEq(receipts_root, cp.receipts_root);
         assertEq(transactions_root, cp.transactions_root);
         assertEq(number, cp.number);
         assertEq(timestamp, cp.timestamp);
