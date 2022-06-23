@@ -40,14 +40,17 @@ contract BinanceSmartChain {
         bytes8 nonce;
     }
 
+    // Compute hash of this header (keccak of the RLP with seal)
     function hash(BSCHeader memory header) internal pure returns (bytes32) {
         return keccak256(rlp(header));
     }
 
+    // Compute hash of this header with chain id
     function hash_with_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes32) {
         return keccak256(rlp_chain_id(header, chain_id));
     }
 
+    // Compute the RLP of this header
     function rlp(BSCHeader memory header) internal pure returns (bytes memory data) {
         bytes[] memory list = new bytes[](15);
 
@@ -70,6 +73,7 @@ contract BinanceSmartChain {
         data = RLPEncode.encodeList(list);
     }
 
+    // Compute the RLP of this header with chain id
     function rlp_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes memory data) {
         bytes[] memory list = new bytes[](16);
 

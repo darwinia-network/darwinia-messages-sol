@@ -73,18 +73,29 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
     using Bytes for bytes;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    // Chaind ID
     uint64 public immutable CHAIN_ID;
+    // Block period
     uint64 public immutable PERIOD;
 
+    // Minimum gas limit
     uint64 constant private MIN_GAS_LIMIT = 5000;
+    // Maximum gas limit
     uint64 constant private MAX_GAS_LIMIT = 0x7fffffffffffffff;
 
+    // Epoch length
     uint256 constant private EPOCH = 200;
+    // Difficulty for NOTURN block
     uint256 constant private DIFF_NOTURN = 1;
+    // Difficulty for INTURN block
     uint256 constant private DIFF_INTURN = 2;
+    // Fixed number of extra-data prefix bytes reserved for signer vanity
     uint256 constant private VANITY_LENGTH = 32;
+    // Address length
     uint256 constant private ADDRESS_LENGTH = 20;
+    // Fixed number of extra-data suffix bytes reserved for signer signature
     uint256 constant private SIGNATURE_LENGTH = 65;
+    // Keccak of RLP encoding of empty list
     bytes32 constant private KECCAK_EMPTY_LIST_RLP = 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347;
 
     struct StoredBlockHeader {
