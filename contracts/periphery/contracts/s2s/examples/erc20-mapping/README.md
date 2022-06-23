@@ -1,5 +1,7 @@
 ## Pangolin SmartChain(PSC) -> Pangoro SmartChain(OSC)
 
+Back tokens on the PSC, Issue tokens on the OSC.
+
 #### Prepare:
   1. Deploy the same ERC20 to the PSC and OSC
   2. Deploy the `Issuing` contract to OSC. Here we get a `Issuing` contract address
