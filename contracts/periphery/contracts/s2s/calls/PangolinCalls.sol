@@ -11,7 +11,7 @@ library PangolinCalls {
 
     // According to the EVM gas benchmark, 1 gas ~= 40_000 weight.
     uint64 public constant WEIGHT_PER_GAS = 40_000;
-    
+
     // The cap limitation for gas limit
     // https://github.com/darwinia-network/darwinia-messages-substrate/issues/107#issuecomment-1164185135
     uint64 public constant MAX_GAS_LIMIT  = 100_000_000_000;
@@ -29,7 +29,12 @@ library PangolinCalls {
         pure
         returns (bytes memory, uint64)
     {
-        return SystemCalls.remarkWithEvent(remark);
+        (bytes memory call, uint64 weight) = SystemCalls.remarkWithEvent(remark);
+
+        // uint256 weight = remark.length.mul(1_000);
+        require(remark.length <= MAX_GAS_LIMIT * WEIGHT_PER_GAS / 1_000, "The remark is too long");
+
+        return (call, weight);
     }
 
     function ethereum_messageTransact(
@@ -37,7 +42,7 @@ library PangolinCalls {
         address to,
         bytes memory input
     ) internal pure returns (bytes memory, uint64) {
-        require(gasLimit > MAX_GAS_LIMIT, "Gas limit too high");
+        require(gasLimit <= MAX_GAS_LIMIT, "Gas limit is too high");
 
         PalletEthereum.MessageTransactCall memory call = PalletEthereum
             .MessageTransactCall(
@@ -50,7 +55,7 @@ library PangolinCalls {
                     input
                 )
             );
-        uint256 weight = gasLimit.mul(WEIGHT_PER_GAS);
+        uint256 weight = gasLimit * WEIGHT_PER_GAS;
         return (PalletEthereum.encodeMessageTransactCall(call), uint64(weight));
     }
 }
