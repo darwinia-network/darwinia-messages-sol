@@ -12,7 +12,7 @@ async function main() {
     console.log("Deployed to:", demo.address);
 
     // Send transaction
-    const tx = await demo.callAddOnTargetChain({
+    const tx = await demo.remoteAdd({
       value: BigInt(200000000000000000000), // 200 PRING, The fee to use the cross-chain service, determined by the Fee Market
     });
     await tx.wait();
