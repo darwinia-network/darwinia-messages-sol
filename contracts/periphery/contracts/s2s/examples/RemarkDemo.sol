@@ -24,14 +24,14 @@ contract RemarkDemo is CrabXApp, Ownable {
 
         // 2. Construct the message payload
         MessagePayload memory payload = MessagePayload(
-            1210, // spec version of target chain <----------- go to https://darwinia.subscan.io/runtime get the latest spec version
+            1210, // spec version of the target chain <----------- go to https://darwinia.subscan.io/runtime get the latest spec version
             weight, // call weight
-            call // call encoded bytes
+            call // call bytes
         );
 
         // 3. Send the message payload to the Darwinia Chain through a lane
-        bytes4 laneId = 0;
-        uint64 messageNonce = sendMessage(toDarwinia, laneId, payload);
+        bytes4 outboundLaneId = 0;
+        uint64 messageNonce = sendMessage(toDarwinia, outboundLaneId, payload);
         emit OutputNonce(messageNonce);
     }
 
@@ -50,6 +50,12 @@ contract RemarkDemo is CrabXApp, Ownable {
 
     function setSrcMessageSender(address _srcMessageSender) public onlyOwner {
         srcMessageSender = _srcMessageSender;
+    }
+
+    function setTgtStorageKeyForLastDeliveredNonce(
+        bytes32 _tgtStorageKeyForLastDeliveredNonce
+    ) public onlyOwner {
+        tgtStorageKeyForLastDeliveredNonce = _tgtStorageKeyForLastDeliveredNonce;
     }
 
     function setToDarwinia(BridgeConfig memory config) public onlyOwner {

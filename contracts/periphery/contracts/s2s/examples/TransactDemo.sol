@@ -29,9 +29,9 @@ contract TransactDemo is PangoroXApp {
 
         // 2. Construct the message payload
         MessagePayload memory payload = MessagePayload(
-            28110, // spec version of target chain <----------- go to https://pangolin.subscan.io/runtime get the latest spec version
+            28110, // spec version of the target chain <----------- go to https://pangolin.subscan.io/runtime get the latest spec version
             weight, // call weight
-            call // call encoded bytes
+            call // call bytes
         );
 
         // 3. Send the message payload to the Pangolin Chain through a lane
@@ -43,8 +43,8 @@ contract TransactDemo is PangoroXApp {
     // used on the target chain
     ///////////////////////////////////////////
     function add(uint256 _value) public {
-        // the sender is only allowed to be called by the derived address
-        // of dapp address on the source chain.
+        // This function is only allowed to be called by the derived address
+        // of the message sender on the source chain.
         require(
             derivedFromRemote(msg.sender),
             "msg.sender is not derived from remote"
