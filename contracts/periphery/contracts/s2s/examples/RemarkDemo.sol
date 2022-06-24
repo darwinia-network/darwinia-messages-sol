@@ -36,19 +36,20 @@ contract RemarkDemo is CrabXApp, Ownable {
     }
 
     // If you want to update the configs, you can add the following function
-    function setStorageAddress(address _storageAddress) public onlyOwner {
-        storageAddress = _storageAddress;
+    function setSrcStoragePrecompileAddress(
+        address _srcStoragePrecompileAddress
+    ) public onlyOwner {
+        srcStoragePrecompileAddress = _srcStoragePrecompileAddress;
     }
 
-    function setDispatchAddress(address _dispatchAddress) public onlyOwner {
-        dispatchAddress = _dispatchAddress;
+    function setSrcDispatchPrecompileAddress(
+        address _srcDispatchPrecompileAddress
+    ) public onlyOwner {
+        srcDispatchPrecompileAddress = _srcDispatchPrecompileAddress;
     }
 
-    function setMessageSenderOnSrcChain(address _messageSenderOnSrcChain)
-        public
-        onlyOwner
-    {
-        messageSenderOnSrcChain = _messageSenderOnSrcChain;
+    function setSrcMessageSender(address _srcMessageSender) public onlyOwner {
+        srcMessageSender = _srcMessageSender;
     }
 
     function setToDarwinia(BridgeConfig memory config) public onlyOwner {

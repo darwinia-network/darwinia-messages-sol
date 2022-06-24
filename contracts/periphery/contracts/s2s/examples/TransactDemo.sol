@@ -35,8 +35,8 @@ contract TransactDemo is PangoroXApp {
         );
 
         // 3. Send the message payload to the Pangolin Chain through a lane
-        bytes4 laneId = 0;
-        sendMessage(toPangolin, laneId, payload);
+        bytes4 outboundLaneId = 0;
+        sendMessage(toPangolin, outboundLaneId, payload);
     }
 
     ///////////////////////////////////////////
@@ -50,5 +50,13 @@ contract TransactDemo is PangoroXApp {
             "msg.sender is not derived from remote"
         );
         number = number + _value;
+    }
+
+    function getLastDeliveredNonce(bytes4 inboundLaneId)
+        public
+        view
+        returns (uint64)
+    {
+        return lastDeliveredNonceOfPangolin(inboundLaneId);
     }
 }
