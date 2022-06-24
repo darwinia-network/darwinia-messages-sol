@@ -12,9 +12,10 @@ library PangolinCalls {
     // According to the EVM gas benchmark, 1 gas ~= 40_000 weight.
     uint64 public constant WEIGHT_PER_GAS = 40_000;
 
-    // The cap limitation for gas limit
+    // The cap limitation for gas limit, we use 1/5 of max block gas limit 
+    // The minimum limitations of max block gas limit and considerations of MaxUsableBalanceFromRelayer  fee limit
     // https://github.com/darwinia-network/darwinia-messages-substrate/issues/107#issuecomment-1164185135
-    uint64 public constant MAX_GAS_LIMIT  = 100_000_000_000;
+    uint64 public constant MAX_GAS_LIMIT  = 10_000_000;
 
     function system_remark(bytes memory remark)
         internal
