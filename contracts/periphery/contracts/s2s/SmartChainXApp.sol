@@ -25,8 +25,6 @@ abstract contract SmartChainXApp {
         bytes32 srcStorageKeyForMarketFee;
         // The storage key used to get latest nonce
         bytes32 srcStorageKeyForLatestNonce;
-        // The storage key used to get last delivered nonce
-        bytes32 tgtStorageKeyForLastDeliveredNonce;
     }
 
     ////////////////////////////////////
@@ -54,6 +52,9 @@ abstract contract SmartChainXApp {
 
     // Precompile address for getting state storage on the source chain
     address public tgtStoragePrecompileAddress = address(1024);
+
+    // The storage key used to get last delivered nonce
+    bytes32 public tgtStorageKeyForLastDeliveredNonce;
 
     ////////////////////////////////////
     // Internal functions
@@ -116,14 +117,16 @@ abstract contract SmartChainXApp {
             SmartChainXLib.deriveSenderFromRemote(srcChainId, srcMessageSender);
     }
 
-    function lastDeliveredNonceOf(
-        BridgeConfig memory bridgeConfig,
-        bytes4 inboundLaneId
-    ) internal view returns (uint64) {
-        return SmartChainXLib.lastDeliveredNonce(
-            tgtStoragePrecompileAddress,
-            bridgeConfig.tgtStorageKeyForLastDeliveredNonce,
-            inboundLaneId
-        );
+    function lastDeliveredNonceOf(bytes4 inboundLaneId)
+        internal
+        view
+        returns (uint64)
+    {
+        return
+            SmartChainXLib.lastDeliveredNonce(
+                tgtStoragePrecompileAddress,
+                tgtStorageKeyForLastDeliveredNonce,
+                inboundLaneId
+            );
     }
 }
