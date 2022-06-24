@@ -29,24 +29,4 @@ abstract contract PangolinXApp is SmartChainXApp {
             0xdcdffe6202217f0ecb0ec75d8a09b32c96c246acb9b55077390e3ca723a0ca1f,
             0xd86d7f611f4d004e041fda08f633f101e5f83cf83f2127eb47afdc35d6e43fab
         );
-
-    function lastDeliveredNonceOfPangoro(
-        bytes4 inboundLaneId
-    ) internal view returns (uint64) {
-        return SmartChainXLib.lastDeliveredNonce(
-            tgtStoragePrecompileAddress,
-            toPangoro.tgtStorageKeyForLastDeliveredNonce,
-            inboundLaneId
-        );
-    }
-
-    function lastDeliveredNonceOfPangolinParachain(
-        bytes4 inboundLaneId
-    ) internal view returns (uint64) {
-        return SmartChainXLib.lastDeliveredNonce(
-            tgtStoragePrecompileAddress,
-            toPangolinParachain.tgtStorageKeyForLastDeliveredNonce,
-            inboundLaneId
-        );
-    }
 }

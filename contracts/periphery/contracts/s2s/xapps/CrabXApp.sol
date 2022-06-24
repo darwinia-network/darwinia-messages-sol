@@ -29,24 +29,4 @@ abstract contract CrabXApp is SmartChainXApp {
             0xef3be8173575ddc682e1a72d92ce0b2696c246acb9b55077390e3ca723a0ca1f,
             0xf4e61b17ce395203fe0f3c53a0d39860e5f83cf83f2127eb47afdc35d6e43fab
         );
-    
-    function lastDeliveredNonceOfDarwinia(
-        bytes4 inboundLaneId
-    ) internal view returns (uint64) {
-        return SmartChainXLib.lastDeliveredNonce(
-            tgtStoragePrecompileAddress,
-            toDarwinia.tgtStorageKeyForLastDeliveredNonce,
-            inboundLaneId
-        );
-    }
-
-    function lastDeliveredNonceOfCrabParachain(
-        bytes4 inboundLaneId
-    ) internal view returns (uint64) {
-        return SmartChainXLib.lastDeliveredNonce(
-            tgtStoragePrecompileAddress,
-            toCrabParachain.tgtStorageKeyForLastDeliveredNonce,
-            inboundLaneId
-        );
-    }
 }

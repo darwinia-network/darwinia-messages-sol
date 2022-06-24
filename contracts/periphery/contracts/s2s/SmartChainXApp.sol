@@ -115,4 +115,15 @@ abstract contract SmartChainXApp {
             sender ==
             SmartChainXLib.deriveSenderFromRemote(srcChainId, srcMessageSender);
     }
+
+    function lastDeliveredNonceOf(
+        BridgeConfig memory bridgeConfig,
+        bytes4 inboundLaneId
+    ) internal view returns (uint64) {
+        return SmartChainXLib.lastDeliveredNonce(
+            tgtStoragePrecompileAddress,
+            bridgeConfig.tgtStorageKeyForLastDeliveredNonce,
+            inboundLaneId
+        );
+    }
 }

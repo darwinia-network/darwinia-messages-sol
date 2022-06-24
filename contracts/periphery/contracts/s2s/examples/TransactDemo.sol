@@ -57,6 +57,6 @@ contract TransactDemo is PangoroXApp {
         view
         returns (uint64)
     {
-        return lastDeliveredNonceOfPangolin(inboundLaneId);
+        return lastDeliveredNonceOf(toPangolin, inboundLaneId);
     }
 }
