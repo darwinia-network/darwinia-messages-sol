@@ -7,13 +7,7 @@ const { solidity } = waffle;
 
 chai.use(solidity)
 const log = console.log
-let ethClient, eth2Client, subClient, bridge
-
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
+let eth2Client, subClient
 
 describe("bridge e2e test: beacon light client", () => {
 
@@ -22,11 +16,8 @@ describe("bridge e2e test: beacon light client", () => {
 
   it("bootstrap", async () => {
     const clients = await bootstrap()
-    ethClient = clients.ethClient
-    bscClient = clients.bscClient
     eth2Client = clients.eth2Client
     subClient = clients.subClient
-    bridge = clients.bridge
   })
 
   it("import finalized header", async () => {

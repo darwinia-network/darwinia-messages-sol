@@ -82,6 +82,43 @@ deploy() {
 	echo "$ADDRESS"
 }
 
+deploy_v2() {
+	NAME=$1
+	ARGS=${@:2}
+
+	# find file path
+	CONTRACT_PATH=$(find ./src -name $NAME.sol)
+	CONTRACT_PATH=${CONTRACT_PATH:2}
+
+	# select the filename and the contract in it
+	PATTERN=".contracts[\"$CONTRACT_PATH\"].$NAME"
+
+	# get the constructor's signature
+	ABI=$(jq -r "$PATTERN.abi" $OUT_DIR/dapp.sol.json)
+	SIG=$(echo "$ABI" | seth --abi-constructor)
+
+  FUNCHASH=$(seth keccak "$SIG")
+  FUNCSIG=${FUNCHASH:2:8}
+
+	# get the bytecode from the compiled file
+	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
+
+	# estimate gas
+	GAS=$(seth estimate --create "$BYTECODE" "$FUNCSIG$ARGS" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
+
+	# deploy
+	ADDRESS=$(seth send --create "$BYTECODE" "$FUNCSIG$ARGS" -- --gas "$GAS" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
+
+	# save the addrs to the json
+	# TODO: It'd be nice if we could evolve this into a minimal versioning system
+	# e.g. via commit / chainid etc.
+	save_contract "$NAME" "$ADDRESS"
+
+  log "$NAME deployed at" $ADDRESS
+
+	echo "$ADDRESS"
+}
+
 # Call as `save_contract ContractName 0xYourAddress` to store the contract name
 # & address to the addresses json file
 save_contract() {

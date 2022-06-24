@@ -56,6 +56,10 @@ class EvmClient {
       })
     }
   }
+
+  async get_block(number) {
+    return await this.provider.getBlock(number)
+  }
 }
 
 module.exports.EvmClient = EvmClient
