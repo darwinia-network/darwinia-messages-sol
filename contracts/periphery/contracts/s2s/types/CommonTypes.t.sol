@@ -36,12 +36,12 @@ contract CommonTypesTest is DSTest {
         // {
         //     relayers: [
         //         {
-        //         relayer: 5CVJNZNyGFjj3NsYPV7xkDnLS3UKsCRSxWdKdDuCjbT7qWhH
-        //         messages: {
-        //             begin: 536
-        //             end: 536
-        //             dispatchResults: 0b00000001
-        //         }
+        //             relayer: 5CVJNZNyGFjj3NsYPV7xkDnLS3UKsCRSxWdKdDuCjbT7qWhH
+        //             messages: {
+        //                 begin: 536
+        //                 end: 536
+        //                 dispatchResults: 0b00000001
+        //             }
         //         }
         //     ]
         //     lastConfirmedNonce: 535
@@ -53,7 +53,16 @@ contract CommonTypesTest is DSTest {
         // assertTrue(relayer.messages.begin == 536);
         // assertTrue(relayer.messages.end == 536);
         // console.logBytes1(relayer.messages.dispatch_results); // Why 0x04?
-        assertTrue(lastDeliveredNonce == 535);
-         
+        assertTrue(lastDeliveredNonce == 536);
+        
+        // No relayer, last delivered nonce is from lastConfirmedNonce
+        // {
+        //     relayers: []
+        //     lastConfirmedNonce: 535
+        // }
+        bytes memory data2 = hex"00801702000000000000";
+        uint64 lastDeliveredNonce2 = CommonTypes
+            .getLastDeliveredNonceFromInboundLaneData(data2);
+        assertTrue(lastDeliveredNonce2 == 535);
     }
 }
