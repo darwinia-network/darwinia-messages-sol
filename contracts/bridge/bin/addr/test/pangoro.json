@@ -1,19 +1,15 @@
 {
   "DEPLOYER": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
-  "ChainMessageCommitter": "0x729c68d391b19790e012d4651697b2a6fE18753f",
+  "ChainMessageCommitter": "0x29285e3CBF2F0ff7d09D93d71661e3A63c9F2026",
   "ropsten": {
-    "FeeMarket": "0xa0aaFf128C1dCBB5fE95Ff021927622fA165014E",
-    "BeaconLightClient": "0x6322939f62FB624403DA7299a9B13e7AD53D7826",
-    "ExecutionLayer": "0x5F06F27aA05032FAfBfd84BED8375F4eDA1F03b2",
-    "OutboundLane": "0xc386f939A928b0B6aBfABa700cacf01E3b80fa61",
-    "InboundLane": "0x7462F575EE9325a9a454545396c8C5fE8aca984b",
-    "LaneMessageCommitter": "0xF8ca6Df2b8c82dC4723214dABC8Dfa7f16f5eFc0"
+    "FeeMarket": "0xacB261730556B069DCf0A9ee0A01e8169f98c856",
+    "BeaconLightClient": "0x0d8bF6eb2707cEe2ed8f37afe16470755E9F5D08",
+    "ExecutionLayer": "0x8bB7e28Fe89037e2695aec1f28DAc94398580b37",
+    "OutboundLane": "0x0DB80Ffa3Aa8b23D1A613c422225893A02f57Fd6",
+    "InboundLane": "0x42866eb5Fc4d0e2789d7b4646e3026ae06336863",
+    "LaneMessageCommitter": "0xfd4a424503Ad09bD0Bf2Bf89D927800EAc1a93f4"
   },
   "bsctest": {
-    "FeeMarket": "0xA64DdDD67B8720Bd8D9D36e111B268c30878e120",
-    "BSCLightClient": "0xadbf03caf28ee80ff939f726d6c53c51ffff3aa9",
-    "OutboundLane": "0x03847f9904DB0adB0028a459AE89e31DE5C04215",
-    "InboundLane": "0x57E5a27e1f4e18EDae7f513b6AbA159Fd4a34502",
-    "LaneMessageCommitter": "0x6268c09FCDefD20C60daEbE674D20567Fe3bdE0A"
+    "FeeMarket": "0x97Bb5Fae11605c4C5eee5e149Fa8E4C77C135F04"
   }
 }
