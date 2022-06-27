@@ -29,26 +29,34 @@ contract TransactDemo is PangoroXApp {
 
         // 2. Construct the message payload
         MessagePayload memory payload = MessagePayload(
-            28110, // spec version of target chain <----------- go to https://pangolin.subscan.io/runtime get the latest spec version
+            28110, // spec version of the target chain <----------- go to https://pangolin.subscan.io/runtime get the latest spec version
             weight, // call weight
-            call // call encoded bytes
+            call // call bytes
         );
 
         // 3. Send the message payload to the Pangolin Chain through a lane
-        bytes4 laneId = 0;
-        sendMessage(toPangolin, laneId, payload);
+        bytes4 outboundLaneId = 0;
+        sendMessage(toPangolin, outboundLaneId, payload);
     }
 
     ///////////////////////////////////////////
     // used on the target chain
     ///////////////////////////////////////////
     function add(uint256 _value) public {
-        // the sender is only allowed to be called by the derived address
-        // of dapp address on the source chain.
+        // This function is only allowed to be called by the derived address
+        // of the message sender on the source chain.
         require(
             derivedFromRemote(msg.sender),
             "msg.sender is not derived from remote"
         );
         number = number + _value;
+    }
+
+    function getLastDeliveredNonce(bytes4 inboundLaneId)
+        public
+        view
+        returns (uint64)
+    {
+        return lastDeliveredNonceOf(inboundLaneId);
     }
 }

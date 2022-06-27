@@ -24,31 +24,38 @@ contract RemarkDemo is CrabXApp, Ownable {
 
         // 2. Construct the message payload
         MessagePayload memory payload = MessagePayload(
-            1210, // spec version of target chain <----------- go to https://darwinia.subscan.io/runtime get the latest spec version
+            1210, // spec version of the target chain <----------- go to https://darwinia.subscan.io/runtime get the latest spec version
             weight, // call weight
-            call // call encoded bytes
+            call // call bytes
         );
 
         // 3. Send the message payload to the Darwinia Chain through a lane
-        bytes4 laneId = 0;
-        uint64 messageNonce = sendMessage(toDarwinia, laneId, payload);
+        bytes4 outboundLaneId = 0;
+        uint64 messageNonce = sendMessage(toDarwinia, outboundLaneId, payload);
         emit OutputNonce(messageNonce);
     }
 
     // If you want to update the configs, you can add the following function
-    function setStorageAddress(address _storageAddress) public onlyOwner {
-        storageAddress = _storageAddress;
+    function setSrcStoragePrecompileAddress(
+        address _srcStoragePrecompileAddress
+    ) public onlyOwner {
+        srcStoragePrecompileAddress = _srcStoragePrecompileAddress;
     }
 
-    function setDispatchAddress(address _dispatchAddress) public onlyOwner {
-        dispatchAddress = _dispatchAddress;
+    function setSrcDispatchPrecompileAddress(
+        address _srcDispatchPrecompileAddress
+    ) public onlyOwner {
+        srcDispatchPrecompileAddress = _srcDispatchPrecompileAddress;
     }
 
-    function setMessageSenderOnSrcChain(address _messageSenderOnSrcChain)
-        public
-        onlyOwner
-    {
-        messageSenderOnSrcChain = _messageSenderOnSrcChain;
+    function setSrcMessageSender(address _srcMessageSender) public onlyOwner {
+        srcMessageSender = _srcMessageSender;
+    }
+
+    function setTgtStorageKeyForLastDeliveredNonce(
+        bytes32 _tgtStorageKeyForLastDeliveredNonce
+    ) public onlyOwner {
+        tgtStorageKeyForLastDeliveredNonce = _tgtStorageKeyForLastDeliveredNonce;
     }
 
     function setToDarwinia(BridgeConfig memory config) public onlyOwner {
