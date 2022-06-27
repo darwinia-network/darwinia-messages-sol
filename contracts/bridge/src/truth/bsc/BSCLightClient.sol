@@ -73,6 +73,8 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
     using Bytes for bytes;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    event FinalizedHeaderImported(StoredBlockHeader finalized_header, address[] signers);
+
     // Chaind ID
     uint64 public immutable CHAIN_ID;
     // Block period
@@ -207,6 +209,8 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
             timestamp: checkpoint.timestamp,
             hash: hash(checkpoint)
         });
+
+        emit FinalizedHeaderImported(finalized_checkpoint, new_authority_set);
     }
 
     // Clean finalized authority set
