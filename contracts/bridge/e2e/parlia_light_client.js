@@ -23,18 +23,18 @@ describe("bridge e2e test: parlia light client", () => {
 
   it("import finalized header", async () => {
     const old_finalized_checkpoint = await subClient.bscLightClient.finalized_checkpoint()
-    log(old_finalized_checkpoint)
     const finalized_checkpoint_number = old_finalized_checkpoint.number.add(200)
-    const finalized_checkpoint = await bscClient.get_block(finalized_checkpoint_number)
+    const finalized_checkpoint = await bscClient.get_block(finalized_checkpoint_number.toHexString())
     const length = await subClient.bscLightClient.length_of_finalized_authorities()
     let headers = [finalized_checkpoint]
+    let number = finalized_checkpoint_number
     for (let i=0; i < ~~length.div(2); i++) {
-      const number = finalized_checkpoint_number.add(1)
-      const header = await bscClient.get_block(number)
+      number = number.add(1)
+      const header = await bscClient.get_block(number.toHexString())
       headers.push(header)
     }
-    log(headers)
     const tx = await subClient.bscLightClient.import_finalized_epoch_header(headers)
+    log(tx)
   })
 })
 

@@ -58,7 +58,24 @@ class EvmClient {
   }
 
   async get_block(number) {
-    return await this.provider.getBlock(number)
+    const b = await this.provider.send("eth_getBlockByNumber", [ number, false ])
+    return {
+        parent_hash: b.parentHash,
+        uncle_hash: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347', // hack it
+        coinbase: b.miner,
+        state_root: b.stateRoot,
+        transactions_root: b.transactionsRoot,
+        receipts_root: b.receiptsRoot,
+        log_bloom: b.logsBloom,
+        difficulty: b.difficulty,
+        number: b.number,
+        gas_limit: b.gasLimit,
+        gas_used: b.gasUsed,
+        timestamp: b.timestamp,
+        extra_data: b.extraData,
+        mix_digest: b.mixHash,
+        nonce: b.nonce
+    }
   }
 }
 
