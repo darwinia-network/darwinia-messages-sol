@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../xapps/PangolinXApp.sol";
-import "../../types/PalletEthereum.sol";
+import "../../calls/PangolinCalls.sol";
 
 pragma experimental ABIEncoderV2;
 
@@ -41,11 +41,11 @@ contract Backing is PangolinXApp {
 
     function lockAndRemoteIssue(
         uint32 specVersion,
-        uint64 weight,
         bytes4 laneId,
         
         // Lock `amount` of `token` on the source chain
         address token,
+
         // Remote issue `amount` of `mappedToken` to `recipient` on the target chain
         address issuingContractAddress,
         address mappedToken,
@@ -55,29 +55,23 @@ contract Backing is PangolinXApp {
         // 0. transfer msg.sender's amount to this contract address
         IERC20(token).transferFrom(msg.sender, address(this), amount);
 
-        // 1. prepare the call that will be executed on the target chain
-        PalletEthereum.MessageTransactCall memory call = PalletEthereum.MessageTransactCall(
-            // the call index of message_transact
-            0x2901,
-            // the evm transaction to transact
-            PalletEthereum.buildTransactionV2ForMessageTransact(
-                600000, // gas limit
-                issuingContractAddress,
-                abi.encodeWithSelector(
-                    IIssuing.issueFromRemote.selector,
-                    mappedToken,
-                    recipient,
-                    amount
-                )
+        // 1. Prepare the call with its weight that will be executed on the target chain
+        (bytes memory call, uint64 weight) = PangolinCalls.ethereum_messageTransact(
+            600000, 
+            issuingContractAddress, 
+            abi.encodeWithSelector(
+                IIssuing.issueFromRemote.selector,
+                mappedToken,
+                recipient,
+                amount
             )
         );
-        bytes memory callEncoded = PalletEthereum.encodeMessageTransactCall(call);
 
         // 2. send the message
         uint64 messageNonce = sendMessage(
             toPangoro,
             laneId,
-            MessagePayload(specVersion, weight, callEncoded)
+            MessagePayload(specVersion, weight, call)
         );
 
         // 3. record the lock info

@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 import "../../interfaces/IERC20.sol";
 import "../../xapps/PangolinXApp.sol";
 import "../../SmartChainXLib.sol";
-import "../../types/PalletEthereum.sol";
 
 pragma experimental ABIEncoderV2;
 
@@ -16,8 +15,8 @@ contract Issuing is PangolinXApp {
 
     event TokenIssued(address mappedToken, address recipient, uint256 amount);
 
-    function setRemoteSender(address _remoteSender) public {
-        remoteSender = _remoteSender;
+    function setSrcMessageSender(address _srcMessageSender) public {
+        srcMessageSender = _srcMessageSender;
     }
 
     function issueFromRemote(
