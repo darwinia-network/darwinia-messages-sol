@@ -19,7 +19,6 @@ library SparseMerkleProof {
             mstore(0x20, right)
             hash := keccak256(0x00, 0x40)
         }
-        return hash;
     }
 
     /// @notice Verify that a specific leaf element is part of the Sparse Merkle Tree at a specific position in the tree.
