@@ -20,7 +20,7 @@ library SmartChainXLib {
     // Send message over lane by calling the `send_message` dispatch call on
     // the source chain which is identified by the `callIndex` param.
     function sendMessage(
-        address dispatchAddress,
+        address srcDispatchPrecompileAddress,
         bytes2 callIndex,
         bytes4 laneId,
         uint256 deliveryAndDispatchFee,
@@ -43,7 +43,7 @@ library SmartChainXLib {
 
         // dispatch the send_message call
         dispatch(
-            dispatchAddress,
+            srcDispatchPrecompileAddress,
             sendMessageCallEncoded,
             "Dispatch send_message failed"
         );
@@ -77,12 +77,12 @@ library SmartChainXLib {
     }
 
     // Get market fee from state storage of the substrate chain
-    function marketFee(address storageAddress, bytes32 storageKey)
+    function marketFee(address srcStoragePrecompileAddress, bytes32 storageKey)
         internal
         view
         returns (uint128)
     {
-        (bool success, bytes memory data) = address(storageAddress).staticcall(
+        (bool success, bytes memory data) = address(srcStoragePrecompileAddress).staticcall(
             abi.encodeWithSelector(
                 IStateStorage.state_storage.selector,
                 storageKey
@@ -98,7 +98,7 @@ library SmartChainXLib {
 
     // Get the latest nonce from state storage
     function latestNonce(
-        address storageAddress,
+        address srcStoragePrecompileAddress,
         bytes32 storageKey,
         bytes4 laneId
     ) internal view returns (uint64) {
@@ -113,7 +113,7 @@ library SmartChainXLib {
         );
 
         // Do get data by calling state storage precompile
-        (bool success, bytes memory data) = address(storageAddress).staticcall(
+        (bool success, bytes memory data) = address(srcStoragePrecompileAddress).staticcall(
             abi.encodeWithSelector(
                 IStateStorage.state_storage.selector,
                 fullStorageKey
@@ -163,12 +163,12 @@ library SmartChainXLib {
 
     // dispatch pallet dispatth-call
     function dispatch(
-        address dispatchAddress,
+        address srcDispatchPrecompileAddress,
         bytes memory callEncoded,
         string memory errMsg
     ) internal {
         // Dispatch the call
-        (bool success, bytes memory data) = dispatchAddress.call(callEncoded);
+        (bool success, bytes memory data) = srcDispatchPrecompileAddress.call(callEncoded);
         revertIfFailed(success, data, errMsg);
     }
 
@@ -176,11 +176,11 @@ library SmartChainXLib {
     // H160(sender on the sourc chain) > AccountId32 > derived AccountId32 > H160
     function deriveSenderFromRemote(
         bytes4 srcChainId,
-        address remoteSender
+        address srcMessageSender
     ) internal view returns (address) {
         // H160(sender on the sourc chain) > AccountId32
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
-            remoteSender
+            srcMessageSender
         );
 
         // AccountId32 > derived AccountId32
@@ -193,5 +193,34 @@ library SmartChainXLib {
         address result = AccountId.deriveEthereumAddress(derivedAccountId);
 
         return result;
+    }
+
+    // Get the last delivered nonce from the state storage of the target chain's inbound lane
+    function lastDeliveredNonce(
+        address tgtStoragePrecompileAddress,
+        bytes32 storageKey,
+        bytes4 inboundLaneId
+    ) internal view returns (uint64) {
+        // 1. Get `inboundLaneData` from storage
+        // Full storage key == storageKey + Blake2_128Concat(laneId)
+        bytes memory hashedLaneId = Hash.blake2b128Concat(
+            abi.encodePacked(inboundLaneId)
+        );
+        bytes memory fullStorageKey = abi.encodePacked(
+            storageKey,
+            hashedLaneId
+        );
+
+        // Do get data by calling state storage precompile
+        (bool success, bytes memory data) = address(tgtStoragePrecompileAddress).staticcall(
+            abi.encodeWithSelector(
+                IStateStorage.state_storage.selector,
+                fullStorageKey
+            )
+        );
+        revertIfFailed(success, data, "get last delivered nonce failed");
+
+        // 2. Decode `InboundLaneData` and return the last delivered nonce
+        return CommonTypes.getLastDeliveredNonceFromInboundLaneData(data);
     }
 }
