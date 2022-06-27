@@ -27,34 +27,52 @@ abstract contract SmartChainXApp {
         bytes32 srcStorageKeyForLatestNonce;
     }
 
+    ////////////////////////////////////
+    // Config for the source chain
+    ////////////////////////////////////
+
+    // The chain id of the source chain
     bytes4 public srcChainId = 0;
 
-    // Precompile address for getting state storage
-    // The address is used to get market fee.
-    address public storageAddress = address(1024);
+    // Precompile address for getting state storage on the source chain
+    address public srcStoragePrecompileAddress = address(1024);
 
     // Precompile address for dispatching 'send_message'
-    address public dispatchAddress = address(1025);
+    address public srcDispatchPrecompileAddress = address(1025);
 
     // Message sender address on the source chain.
     // It will be used on the target chain.
     // It should be updated after the dapp is deployed on the source chain.
     // See more details in the 'deriveSenderFromRemote' below.
-    address public messageSenderOnSrcChain;
+    address public srcMessageSender;
+
+    ////////////////////////////////////
+    // Config for the target chain
+    ////////////////////////////////////
+
+    // Precompile address for getting state storage on the source chain
+    address public tgtStoragePrecompileAddress = address(1024);
+
+    // The storage key used to get last delivered nonce
+    bytes32 public tgtStorageKeyForLastDeliveredNonce;
+
+    ////////////////////////////////////
+    // Internal functions
+    ////////////////////////////////////
 
     /// @notice Send message over lane id
     /// @param bridgeConfig The bridge config
-    /// @param laneId The outlane id
+    /// @param outboundLaneId The outboundLane id
     /// @param payload The message payload to be sent
     /// @return nonce The nonce of the message
     function sendMessage(
         BridgeConfig memory bridgeConfig,
-        bytes4 laneId,
+        bytes4 outboundLaneId,
         MessagePayload memory payload
     ) internal returns (uint64) {
         // Get the current market fee
         uint128 fee = SmartChainXLib.marketFee(
-            storageAddress,
+            srcStoragePrecompileAddress,
             bridgeConfig.srcStorageKeyForMarketFee
         );
         require(msg.value >= fee, "Not enough fee to pay");
@@ -68,9 +86,9 @@ abstract contract SmartChainXApp {
 
         // Send the message
         SmartChainXLib.sendMessage(
-            dispatchAddress,
+            srcDispatchPrecompileAddress,
             bridgeConfig.callIndexOfSendMessage,
-            laneId,
+            outboundLaneId,
             msg.value,
             message
         );
@@ -78,30 +96,37 @@ abstract contract SmartChainXApp {
         // Get nonce from storage
         return
             SmartChainXLib.latestNonce(
-                storageAddress,
+                srcStoragePrecompileAddress,
                 bridgeConfig.srcStorageKeyForLatestNonce,
-                laneId
+                outboundLaneId
             );
     }
 
-    /// @notice Derive the sender address from the sender address of the message on the source chain.
+    /// @notice Determine if the `sender` is derived from remote.
     ///
-    ///    // Add this 'require' to your function on the target chain which will be called by the 'send_message'
-    ///    // This 'require' makes your function only allowed be called by the dapp contract on the source chain
+    ///    // Add this 'require' to your function on the target chain which will be called
     ///    require(
-    ///        msg.sender == deriveSenderFromRemote(),
-    ///        "msg.sender must equal to the address derived from the message sender address on the source chain"
+    ///         derivedFromRemote(msg.sender),
+    ///        "msg.sender is not derived from remote"
     ///    );
     ///
-    /// @return address The sender address on the target chain
-    function deriveSenderFromRemote() internal view returns (address) {
-        bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
-            messageSenderOnSrcChain
-        );
-        bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
-            srcChainId,
-            derivedSubstrateAddress
-        );
-        return AccountId.deriveEthereumAddress(derivedAccountId);
+    /// @return bool Does the sender address authorized?
+    function derivedFromRemote(address sender) internal view returns (bool) {
+        return
+            sender ==
+            SmartChainXLib.deriveSenderFromRemote(srcChainId, srcMessageSender);
+    }
+
+    function lastDeliveredNonceOf(bytes4 inboundLaneId)
+        internal
+        view
+        returns (uint64)
+    {
+        return
+            SmartChainXLib.lastDeliveredNonce(
+                tgtStoragePrecompileAddress,
+                tgtStorageKeyForLastDeliveredNonce,
+                inboundLaneId
+            );
     }
 }

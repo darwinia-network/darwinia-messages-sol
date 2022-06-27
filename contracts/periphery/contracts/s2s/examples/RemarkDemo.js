@@ -12,7 +12,7 @@ async function main() {
     console.log("Deployed to:", demo.address);
 
     // Send transaction
-    const tx = await demo.remark({
+    const tx = await demo.remoteRemark({
       value: BigInt(200000000000000000000), // 200 CRAB, The fee to use the cross-chain service, determined by the Fee Market
     });
     await tx.wait();

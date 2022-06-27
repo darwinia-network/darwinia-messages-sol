@@ -4,15 +4,15 @@ pragma solidity >=0.6.0;
 
 import "../SmartChainXApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
-import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
 pragma experimental ABIEncoderV2;
 
-// CrabSmartChain remote call remark of Darwinia
-abstract contract CrabXApp is SmartChainXApp, Ownable {
+// Remote call from Crab SmartChain 
+abstract contract CrabXApp is SmartChainXApp {
     function init() internal {
         srcChainId = 0;
+        tgtStorageKeyForLastDeliveredNonce = 0xf4e61b17ce395203fe0f3c53a0d39860e5f83cf83f2127eb47afdc35d6e43fab;
     }
 
     BridgeConfig internal toDarwinia =
@@ -28,27 +28,4 @@ abstract contract CrabXApp is SmartChainXApp, Ownable {
             0x2158e364c657788d669f15db7687496b2edb70953213f33a6ef6b8a5e3ffcab2,
             0xef3be8173575ddc682e1a72d92ce0b2696c246acb9b55077390e3ca723a0ca1f
         );
-
-    function setStorageAddress(address _storageAddress) public onlyOwner {
-        storageAddress = _storageAddress;
-    }
-
-    function setDispatchAddress(address _dispatchAddress) public onlyOwner {
-        dispatchAddress = _dispatchAddress;
-    }
-
-    function setMessageSenderOnSrcChain(address _messageSenderOnSrcChain)
-        public
-        onlyOwner
-    {
-        messageSenderOnSrcChain = _messageSenderOnSrcChain;
-    }
-
-    function setToDarwinia(BridgeConfig memory config) public onlyOwner {
-        toDarwinia = config;
-    }
-
-    function setToCrabParachain(BridgeConfig memory config) public onlyOwner {
-        toCrabParachain = config;
-    }
 }

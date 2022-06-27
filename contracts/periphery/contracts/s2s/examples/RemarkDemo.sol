@@ -3,36 +3,66 @@
 pragma solidity >=0.6.0;
 
 import "../xapps/CrabXApp.sol";
-import "@darwinia/contracts-utils/contracts/Scale.types.sol";
+import "../calls/DarwiniaCalls.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
 pragma experimental ABIEncoderV2;
 
 // CrabSmartChain remote call remark of Darwinia
-contract RemarkDemo is CrabXApp {
+contract RemarkDemo is CrabXApp, Ownable {
     event OutputNonce(uint256 nonce);
 
     constructor() public {
         init();
     }
 
-    function remark() public payable {
-        // 1. prepare the call that will be executed on the target chain
-        System.RemarkCall memory call = System.RemarkCall(
-            hex"0009", // the call index of remark_with_event
-            hex"12345678"
-        );
-        bytes memory callEncoded = System.encodeRemarkCall(call);
+    function remoteRemark() public payable {
+        // 1. Prepare the call with its weight that will be executed on the target chain
+        (bytes memory call, uint64 weight) = DarwiniaCalls
+            .system_remarkWithEvent(hex"12345678");
 
-        // 2. send the message
+        // 2. Construct the message payload
         MessagePayload memory payload = MessagePayload(
-            1210, // spec version of target chain <----------- This may be changed, go to https://darwinia.subscan.io/runtime get the latest spec version
-            2654000000, // call weight
-            callEncoded // call encoded bytes
+            1210, // spec version of the target chain <----------- go to https://darwinia.subscan.io/runtime get the latest spec version
+            weight, // call weight
+            call // call bytes
         );
-        bytes4 lane = 0;
-        uint64 nonce = sendMessage(toDarwinia, lane, payload);
-        emit OutputNonce(nonce);
+
+        // 3. Send the message payload to the Darwinia Chain through a lane
+        bytes4 outboundLaneId = 0;
+        uint64 messageNonce = sendMessage(toDarwinia, outboundLaneId, payload);
+        emit OutputNonce(messageNonce);
+    }
+
+    // If you want to update the configs, you can add the following function
+    function setSrcStoragePrecompileAddress(
+        address _srcStoragePrecompileAddress
+    ) public onlyOwner {
+        srcStoragePrecompileAddress = _srcStoragePrecompileAddress;
+    }
+
+    function setSrcDispatchPrecompileAddress(
+        address _srcDispatchPrecompileAddress
+    ) public onlyOwner {
+        srcDispatchPrecompileAddress = _srcDispatchPrecompileAddress;
+    }
+
+    function setSrcMessageSender(address _srcMessageSender) public onlyOwner {
+        srcMessageSender = _srcMessageSender;
+    }
+
+    function setTgtStorageKeyForLastDeliveredNonce(
+        bytes32 _tgtStorageKeyForLastDeliveredNonce
+    ) public onlyOwner {
+        tgtStorageKeyForLastDeliveredNonce = _tgtStorageKeyForLastDeliveredNonce;
+    }
+
+    function setToDarwinia(BridgeConfig memory config) public onlyOwner {
+        toDarwinia = config;
+    }
+
+    function setToCrabParachain(BridgeConfig memory config) public onlyOwner {
+        toCrabParachain = config;
     }
 }
