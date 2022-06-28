@@ -88,9 +88,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 end = 1;
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 1;
-        MessagePayloadCompact[] memory compact = new MessagePayloadCompact[](1);
-        compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
 
         assert_empty_data(1, 1);
     }
@@ -104,9 +102,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 end = 1;
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 0;
-        MessagePayloadCompact[] memory compact = new MessagePayloadCompact[](1);
-        compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
     }
 
     function testFail_receive_messages_delivery_proof1() public {
@@ -118,9 +114,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 end = 1;
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 2;
-        MessagePayloadCompact[] memory compact = new MessagePayloadCompact[](1);
-        compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
     }
 
     function testFail_receive_messages_delivery_proof2() public {
@@ -132,9 +126,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 end = 1;
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 256;
-        MessagePayloadCompact[] memory compact = new MessagePayloadCompact[](1);
-        compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
     }
 
     function testFail_receive_messages_delivery_proof3() public {
@@ -146,9 +138,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 end = 1;
         uint64 last_confirmed_nonce = 1;
         uint64 last_delivered_nonce = 1;
-        MessagePayloadCompact[] memory compact = new MessagePayloadCompact[](1);
-        compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
     }
 
     function testFail_receive_messages_delivery_proof4() public {
@@ -160,9 +150,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 end = 2;
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 1;
-        MessagePayloadCompact[] memory compact = new MessagePayloadCompact[](1);
-        compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
     }
 
     function testFail_receive_messages_delivery_proof5() public {
@@ -174,9 +162,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 end = 1;
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 1;
-        MessagePayloadCompact[] memory compact = new MessagePayloadCompact[](1);
-        compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
     }
 
     function test_send_multi_message() public {
@@ -213,11 +199,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 end = 3;
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 3;
-        MessagePayloadCompact[] memory compact = new MessagePayloadCompact[](3);
-        compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        compact[1] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        compact[2] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
 
         assert_empty_data(3, 3);
     }
@@ -233,18 +215,14 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 end = 2;
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 2;
-        MessagePayloadCompact[] memory compact = new MessagePayloadCompact[](2);
-        compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        compact[1] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
         assert_data(2, 3, 1);
 
         begin = 3;
         end = 3;
         last_confirmed_nonce = 0;
         last_delivered_nonce = 3;
-        compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
 
         assert_empty_data(3, 3);
     }
@@ -260,18 +238,13 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         uint64 end = 3;
         uint64 last_confirmed_nonce = 0;
         uint64 last_delivered_nonce = 3;
-        MessagePayloadCompact[] memory compact = new MessagePayloadCompact[](3);
-        compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        compact[1] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        compact[2] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
 
         begin = 3;
         end = 3;
         last_confirmed_nonce = 0;
         last_delivered_nonce = 3;
-        compact[0] = MessagePayloadCompact(address(app), target, keccak256(encoded));
-        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce, compact);
+        perform_receive_messages_delivery_proof(begin, end, last_confirmed_nonce, last_delivered_nonce);
     }
 
     //------------------------------------------------------------------
@@ -283,12 +256,12 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         return app.send_message{value: fee}(target, encoded);
     }
 
-    function perform_receive_messages_delivery_proof(uint64 begin, uint64 end, uint64 last_confirmed_nonce, uint64 last_delivered_nonce, MessagePayloadCompact[] memory compact) public {
+    function perform_receive_messages_delivery_proof(uint64 begin, uint64 end, uint64 last_confirmed_nonce, uint64 last_delivered_nonce) public {
         DeliveredMessages memory messages = DeliveredMessages(begin, end, 0);
         UnrewardedRelayer[] memory relayers = new UnrewardedRelayer[](1);
         relayers[0] = UnrewardedRelayer(self, messages);
         InboundLaneData memory data = InboundLaneData(relayers, last_confirmed_nonce, last_delivered_nonce);
-        outlane.receive_messages_delivery_proof(data, compact, hex"");
+        outlane.receive_messages_delivery_proof(data, hex"");
     }
 
     function assert_data(uint64 _latest_received_nonce, uint64 _latest_generated_nonce, uint64 _message_size) public {

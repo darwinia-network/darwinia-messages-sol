@@ -1,4 +1,4 @@
-# SourceChain
+# Memory
 
 
 
@@ -10,12 +10,13 @@
 
 - [Globals](#globals)
 - [Functions](#functions)
-  - [hash](#hash)
-  - [hash](#hash-1)
-  - [hash](#hash-2)
-  - [hash](#hash-3)
-  - [hash](#hash-4)
-  - [decodeMessageKey](#decodemessagekey)
+  - [equals](#equals)
+  - [equals](#equals-1)
+  - [dataPtr](#dataptr)
+  - [toBytes](#tobytes)
+  - [toBytes](#tobytes-1)
+  - [copy](#copy)
+  - [fromBytes](#frombytes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -25,22 +26,20 @@
 
 | Var | Type |
 | --- | --- |
-| OUTBOUNDLANEDATA_TYPEHASH | bytes32 |
-| MESSAGE_TYPEHASH | bytes32 |
-| MESSAGEPAYLOAD_TYPEHASH | bytes32 |
+| WORD_SIZE | uint256 |
 
 
 
 ## Functions
 
-### hash
+### equals
 No description
 
 
 #### Declaration
 ```solidity
-  function hash(
-  ) internal returns (bytes32)
+  function equals(
+  ) internal returns (bool equal)
 ```
 
 #### Modifiers:
@@ -48,14 +47,14 @@ No modifiers
 
 
 
-### hash
+### equals
 No description
 
 
 #### Declaration
 ```solidity
-  function hash(
-  ) internal returns (bytes32)
+  function equals(
+  ) internal returns (bool equal)
 ```
 
 #### Modifiers:
@@ -63,14 +62,14 @@ No modifiers
 
 
 
-### hash
+### dataPtr
 No description
 
 
 #### Declaration
 ```solidity
-  function hash(
-  ) internal returns (bytes32)
+  function dataPtr(
+  ) internal returns (uint256 addr)
 ```
 
 #### Modifiers:
@@ -78,14 +77,14 @@ No modifiers
 
 
 
-### hash
+### toBytes
 No description
 
 
 #### Declaration
 ```solidity
-  function hash(
-  ) internal returns (bytes32)
+  function toBytes(
+  ) internal returns (bytes bts)
 ```
 
 #### Modifiers:
@@ -93,14 +92,14 @@ No modifiers
 
 
 
-### hash
+### toBytes
 No description
 
 
 #### Declaration
 ```solidity
-  function hash(
-  ) internal returns (bytes32)
+  function toBytes(
+  ) internal returns (bytes bts)
 ```
 
 #### Modifiers:
@@ -108,14 +107,29 @@ No modifiers
 
 
 
-### decodeMessageKey
+### copy
 No description
 
 
 #### Declaration
 ```solidity
-  function decodeMessageKey(
-  ) public returns (struct SourceChain.MessageKey key)
+  function copy(
+  ) internal
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### fromBytes
+No description
+
+
+#### Declaration
+```solidity
+  function fromBytes(
+  ) internal returns (uint256 addr, uint256 len)
 ```
 
 #### Modifiers:

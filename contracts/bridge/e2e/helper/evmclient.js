@@ -61,7 +61,7 @@ class EvmClient {
     const b = await this.provider.send("eth_getBlockByNumber", [ number, false ])
     return {
         parent_hash: b.parentHash,
-        uncle_hash: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347', // hack it
+        uncle_hash: b.sha3Uncles,
         coinbase: b.miner,
         state_root: b.stateRoot,
         transactions_root: b.transactionsRoot,

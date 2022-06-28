@@ -76,14 +76,8 @@ const receive_messages_proof = async (nonce) => {
 
 const receive_messages_delivery_proof = async (begin, end) => {
     const encoded_hash = "0x" + keccakFromHexString(encoded).toString("hex")
-    const payload = {
-      source: malicousApp.address,
-      target: malicousApp.address,
-      encoded_hash: encoded_hash
-    }
     laneData = await inbound.data()
-    const payloads = Array(end - begin + 1).fill(payload)
-    const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, payloads, "0x")
+    const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 0)
