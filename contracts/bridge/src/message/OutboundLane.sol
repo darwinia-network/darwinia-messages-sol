@@ -55,15 +55,6 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     // nonce => hash(MessagePayload)
     mapping(uint64 => bytes32) public messages;
 
-    uint256 internal locked;
-    // --- Synchronization ---
-    modifier nonReentrant {
-        require(locked == 0, "Lane: locked");
-        locked = 1;
-        _;
-        locked = 0;
-    }
-
     /// @notice Deploys the OutboundLane contract
     /// @param _lightClientBridge The contract address of on-chain light client
     /// @param _thisChainPosition The thisChainPosition of outbound lane
@@ -124,7 +115,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     function receive_messages_delivery_proof(
         InboundLaneData calldata inboundLaneData,
         bytes memory messagesProof
-    ) external nonReentrant {
+    ) external {
         verify_messages_delivery_proof(hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
         // settle the confirmed_messages at fee market
