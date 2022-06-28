@@ -9,13 +9,8 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [Globals](#globals)
-- [Modifiers](#modifiers)
-  - [nonReentrant](#nonreentrant)
-  - [onlySetter](#onlysetter)
 - [Functions](#functions)
   - [constructor](#constructor)
-  - [setFeeMarket](#setfeemarket)
-  - [changeSetter](#changesetter)
   - [send_message](#send_message)
   - [receive_messages_delivery_proof](#receive_messages_delivery_proof)
   - [message_size](#message_size)
@@ -24,7 +19,6 @@
   - [extract_inbound_lane_info](#extract_inbound_lane_info)
   - [confirm_delivery](#confirm_delivery)
   - [extract_dispatch_results](#extract_dispatch_results)
-  - [on_messages_delivered](#on_messages_delivered)
   - [prune_messages](#prune_messages)
   - [settle_messages](#settle_messages)
   - [min](#min)
@@ -33,7 +27,6 @@
   - [MessageAccepted](#messageaccepted)
   - [MessagesDelivered](#messagesdelivered)
   - [MessagePruned](#messagepruned)
-  - [CallbackMessageDelivered](#callbackmessagedelivered)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -47,33 +40,9 @@
 | MAX_CALLDATA_LENGTH | uint256 |
 | MAX_PENDING_MESSAGES | uint64 |
 | MAX_PRUNE_MESSAGES_ATONCE | uint64 |
+| FEE_MARKET | address |
 | outboundLaneNonce | struct OutboundLane.OutboundLaneNonce |
 | messages | mapping(uint64 => bytes32) |
-| fee_market | address |
-| setter | address |
-| locked | uint256 |
-
-
-## Modifiers
-
-### nonReentrant
-No description
-
-
-#### Declaration
-```solidity
-  modifier nonReentrant
-```
-
-
-### onlySetter
-No description
-
-
-#### Declaration
-```solidity
-  modifier onlySetter
-```
 
 
 
@@ -88,11 +57,11 @@ Deploys the OutboundLane contract
 ```solidity
   function constructor(
     address _lightClientBridge,
-    uint32 _thisChainPosition,
+    address _thisChainPosition,
     uint32 _thisLanePosition,
     uint32 _bridgedChainPosition,
     uint32 _bridgedLanePosition,
-    uint64 _oldest_unpruned_nonce,
+    uint32 _oldest_unpruned_nonce,
     uint64 _latest_received_nonce,
     uint64 _latest_generated_nonce
   ) public OutboundLaneVerifier
@@ -107,49 +76,13 @@ Deploys the OutboundLane contract
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_lightClientBridge` | address | The contract address of on-chain light client
-|`_thisChainPosition` | uint32 | The thisChainPosition of outbound lane
+|`_thisChainPosition` | address | The thisChainPosition of outbound lane
 |`_thisLanePosition` | uint32 | The lanePosition of this outbound lane
 |`_bridgedChainPosition` | uint32 | The bridgedChainPosition of outbound lane
 |`_bridgedLanePosition` | uint32 | The lanePosition of target inbound lane
-|`_oldest_unpruned_nonce` | uint64 | The oldest_unpruned_nonce of outbound lane
+|`_oldest_unpruned_nonce` | uint32 | The oldest_unpruned_nonce of outbound lane
 |`_latest_received_nonce` | uint64 | The latest_received_nonce of outbound lane
 |`_latest_generated_nonce` | uint64 | The latest_generated_nonce of outbound lane
-
-### setFeeMarket
-No description
-
-
-#### Declaration
-```solidity
-  function setFeeMarket(
-  ) external onlySetter nonReentrant
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlySetter |
-| nonReentrant |
-
-
-
-### changeSetter
-No description
-
-
-#### Declaration
-```solidity
-  function changeSetter(
-  ) external onlySetter nonReentrant
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlySetter |
-| nonReentrant |
-
-
 
 ### send_message
 Send message over lane.
@@ -163,13 +96,11 @@ At the beginning of the launch, submmiter is permission, after the system is sta
   function send_message(
     address targetContract,
     bytes encoded
-  ) external nonReentrant returns (uint256)
+  ) external returns (uint256)
 ```
 
 #### Modifiers:
-| Modifier |
-| --- |
-| nonReentrant |
+No modifiers
 
 #### Args:
 | Arg | Type | Description |
@@ -184,13 +115,11 @@ No description
 #### Declaration
 ```solidity
   function receive_messages_delivery_proof(
-  ) external nonReentrant
+  ) external
 ```
 
 #### Modifiers:
-| Modifier |
-| --- |
-| nonReentrant |
+No modifiers
 
 
 
@@ -284,21 +213,6 @@ No modifiers
 
 
 
-### on_messages_delivered
-No description
-
-
-#### Declaration
-```solidity
-  function on_messages_delivered(
-  ) internal
-```
-
-#### Modifiers:
-No modifiers
-
-
-
 ### prune_messages
 No description
 
@@ -306,7 +220,7 @@ No description
 #### Declaration
 ```solidity
   function prune_messages(
-  ) internal returns (uint64)
+  ) internal returns (uint64 pruned_messages)
 ```
 
 #### Modifiers:
@@ -376,12 +290,6 @@ No description
 
 
 ### MessagePruned
-No description
-
-  
-
-
-### CallbackMessageDelivered
 No description
 
   

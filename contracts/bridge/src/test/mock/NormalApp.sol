@@ -3,10 +3,9 @@
 pragma solidity 0.7.6;
 
 import "../../interfaces/ICrossChainFilter.sol";
-import "../../interfaces/IOnMessageDelivered.sol";
 import "../../interfaces/IOutboundLane.sol";
 
-contract NormalApp is ICrossChainFilter, IOnMessageDelivered {
+contract NormalApp is ICrossChainFilter {
 
     IOutboundLane outlane;
 
@@ -20,10 +19,6 @@ contract NormalApp is ICrossChainFilter, IOnMessageDelivered {
 
     function cross_chain_filter(uint32, uint32, address, bytes calldata) external pure override returns (bool) {
         return true;
-    }
-
-    function on_messages_delivered(uint256, bool) external pure override {
-        return;
     }
 
     function send_message(address target, bytes calldata encoded) external payable returns (uint256) {
