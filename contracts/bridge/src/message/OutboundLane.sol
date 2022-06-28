@@ -16,7 +16,6 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../interfaces/IOutboundLane.sol";
-import "../interfaces/IOnMessageDelivered.sol";
 import "../interfaces/IFeeMarket.sol";
 import "./OutboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
@@ -124,12 +123,10 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     // Receive messages delivery proof from bridged chain.
     function receive_messages_delivery_proof(
         InboundLaneData calldata inboundLaneData,
-        MessagePayloadCompact[] calldata payloads,
         bytes memory messagesProof
     ) external nonReentrant {
         verify_messages_delivery_proof(hash(inboundLaneData), messagesProof);
         DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
-        on_messages_delivered(confirmed_messages, payloads);
         // settle the confirmed_messages at fee market
         settle_messages(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
     }
@@ -235,25 +232,6 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
             // => let's extract dispatch results
             received_dispatch_result |= ((dispatch_results >> extend_begin) << padding);
             padding += (new_messages_end - new_messages_begin + 1 - extend_begin);
-        }
-    }
-
-    function on_messages_delivered(DeliveredMessages memory confirmed_messages, MessagePayloadCompact[] calldata payloads) internal {
-        uint i = 0;
-        for (uint64 nonce = confirmed_messages.begin; nonce <= confirmed_messages.end; nonce++) {
-            MessagePayloadCompact memory payload = payloads[i++];
-            require(hash(payload) == messages[nonce], "Lane: Invalid Payload");
-            uint256 offset = nonce - confirmed_messages.begin;
-            bool dispatch_result = ((confirmed_messages.dispatch_results >> offset) & 1) > 0;
-            // Submitter could be a contract or just an EOA address.
-            address submitter = payload.source;
-            bytes memory deliveredCallbackData = abi.encodeWithSelector(
-                IOnMessageDelivered.on_messages_delivered.selector,
-                encodeMessageKey(nonce),
-                dispatch_result
-            );
-            (bool ok,) = submitter.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(deliveredCallbackData);
-            emit CallbackMessageDelivered(nonce, ok);
         }
     }
 
