@@ -26,7 +26,6 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
     event MessagesDelivered(uint64 indexed begin, uint64 indexed end, uint256 results);
     event MessagePruned(uint64 indexed oldest_unpruned_nonce);
-    event CallbackMessageDelivered(uint64 indexed nonce, bool result);
 
     uint256 internal constant MAX_GAS_PER_MESSAGE = 100000;
     uint256 internal constant MAX_CALLDATA_LENGTH = 2048;

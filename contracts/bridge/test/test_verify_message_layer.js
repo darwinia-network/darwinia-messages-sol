@@ -98,15 +98,9 @@ const receive_messages_proof = async (inbound, srcoutbound, srcinbound, nonce) =
 }
 
 const receive_messages_delivery_proof = async (outbound, tgtoutbound, tgtinbound, begin, end) => {
-    const payload = {
-      source,
-      target,
-      encoded_hash: "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
-    }
-    const payloads = Array(end - begin + 1).fill(payload)
     const i = await tgtinbound.data()
     // const proof = await generate_bsc_proof()
-    const tx = await outbound.receive_messages_delivery_proof(i, payloads, "0x")
+    const tx = await outbound.receive_messages_delivery_proof(i, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 0)
