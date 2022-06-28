@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 import "./RLPDecode.sol";
 
-library MerklePatriciaProof {
+library MerklePatriciaProofV2 {
     using RLPDecode for RLPDecode.RLPItem;
     using RLPDecode for RLPDecode.Iterator;
 
