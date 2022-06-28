@@ -85,7 +85,7 @@ library SmartChainXLib {
         (bool success, bytes memory data) = address(srcStoragePrecompileAddress).staticcall(
             abi.encodeWithSelector(
                 IStateStorage.state_storage.selector,
-                storageKey
+                abi.encodePacked(storageKey)
             )
         );
         revertIfFailed(success, data, "Get market fee failed");
