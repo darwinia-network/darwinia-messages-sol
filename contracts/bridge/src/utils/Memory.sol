@@ -19,7 +19,6 @@ library Memory {
     // 'bts'. It is allowed to set 'len' to a lower value then 'bts.length', in which case only
     // the first 'len' bytes will be compared.
     // Requires that 'bts.length >= len'
-
     function equals(uint addr, uint len, bytes memory bts) internal pure returns (bool equal) {
         require(bts.length >= len);
         uint addr2;
@@ -28,6 +27,7 @@ library Memory {
         }
         return equals(addr, addr2, len);
     }
+
 	// Returns a memory pointer to the data portion of the provided bytes array.
 	function dataPtr(bytes memory bts) internal pure returns (uint addr) {
 		assembly {

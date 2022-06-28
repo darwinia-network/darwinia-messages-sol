@@ -7,7 +7,8 @@ unset NETWORK_NAME
 unset ETH_RPC_URL
 export NETWORK_NAME=ropsten
 export TARGET_CHAIN=pangoro
-export ETH_RPC_URL=https://ropsten.infura.io/$INFURA_KEY
+# export ETH_RPC_URL=https://ropsten.infura.io/$INFURA_KEY
+export ETH_RPC_URL=https://rpc.kiln.themerge.dev
 
 echo "ETH_FROM: ${ETH_FROM}"
 
