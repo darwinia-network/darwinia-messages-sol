@@ -3,14 +3,15 @@
 pragma solidity 0.7.6;
 
 import "../test.sol";
+import "../../spec/State.sol";
 import "../../utils/MerklePatriciaProofV1.sol";
 import "../../utils/RLPDecode.sol";
 import "../../utils/RLPEncode.sol";
 
 contract MerklePatriciaProofV1Test is DSTest {
+    using State for bytes;
     using RLPDecode for bytes;
     using RLPDecode for RLPDecode.RLPItem;
-    using RLPDecode for RLPDecode.Iterator;
 
     function test_verify_single_storage_proof() public {
         bytes32 root = 0xb85b566e523eab932fb0a61d793849eb87db81c39b008d9146589423eee299f1;
@@ -27,7 +28,7 @@ contract MerklePatriciaProofV1Test is DSTest {
         proof[7] = hex'f8669d3d6ef56197b6a07600138cb2a498a2139c82f3dff1c1958c3fe99fdc77b846f8440180a088bf311c759a8e9f6dac6b21a06d907ce6f192bdf08aa7de7c2fe008f7956087a0bea4e8de3e083450d67658272d677d5b235afa1fb72bc1ee3aa9b93e4cf7d23f';
         bytes memory data = MerklePatriciaProofV1.validateMPTProof(root, key, RLPEncode.encodeList(proof));
         assertEq0(data, hex'f8440180a088bf311c759a8e9f6dac6b21a06d907ce6f192bdf08aa7de7c2fe008f7956087a0bea4e8de3e083450d67658272d677d5b235afa1fb72bc1ee3aa9b93e4cf7d23f');
-        Account memory account = toAccount(data);
+        State.Account memory account = data.toAccount();
         assertEq(account.nonce, 1);
         assertEq(account.balance, 0);
         assertEq(account.storage_root, hex'88bf311c759a8e9f6dac6b21a06d907ce6f192bdf08aa7de7c2fe008f7956087');
@@ -43,30 +44,4 @@ contract MerklePatriciaProofV1Test is DSTest {
         assertEq0(data.toRlpItem().toBytes(), hex'1234');
     }
 
-    struct Account {
-        uint256 nonce;
-        uint256 balance;
-        bytes32 storage_root;
-        bytes32 code_hash;
-    }
-
-    function toAccount(bytes memory data) internal pure returns (Account memory account) {
-        RLPDecode.Iterator memory it = RLPDecode.toRlpItem(data).iterator();
-
-        uint256 idx;
-        while (it.hasNext()) {
-            if (idx == 0) account.nonce = it.next().toUint();
-            else if (idx == 1) account.balance = it.next().toUint();
-            else if (idx == 2) account.storage_root = toBytes32(it.next().toBytes());
-            else if (idx == 3) account.code_hash = toBytes32(it.next().toBytes());
-            else it.next();
-            idx++;
-        }
-    }
-
-    function toBytes32(bytes memory data) internal pure returns (bytes32 _data) {
-        assembly {
-            _data := mload(add(data, 32))
-        }
-    }
 }
