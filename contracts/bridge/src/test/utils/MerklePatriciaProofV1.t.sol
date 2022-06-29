@@ -8,6 +8,7 @@ import "../../utils/RLPDecode.sol";
 import "../../utils/RLPEncode.sol";
 
 contract MerklePatriciaProofV1Test is DSTest {
+    using RLPDecode for bytes;
     using RLPDecode for RLPDecode.RLPItem;
     using RLPDecode for RLPDecode.Iterator;
 
@@ -29,15 +30,24 @@ contract MerklePatriciaProofV1Test is DSTest {
         Account memory account = toAccount(data);
         assertEq(account.nonce, 1);
         assertEq(account.balance, 0);
-        assertEq(account.storageRoot, hex'88bf311c759a8e9f6dac6b21a06d907ce6f192bdf08aa7de7c2fe008f7956087');
-        assertEq(account.codeHash, hex'bea4e8de3e083450d67658272d677d5b235afa1fb72bc1ee3aa9b93e4cf7d23f');
+        assertEq(account.storage_root, hex'88bf311c759a8e9f6dac6b21a06d907ce6f192bdf08aa7de7c2fe008f7956087');
+        assertEq(account.code_hash, hex'bea4e8de3e083450d67658272d677d5b235afa1fb72bc1ee3aa9b93e4cf7d23f');
+
+        bytes32 storage_key = 0x0000000000000000000000000000000000000000000000000000000000000000;
+        key = abi.encodePacked(keccak256(abi.encodePacked(storage_key)));
+        proof = new bytes[](2);
+        proof[0] = hex'f8d1a0dc7313472cd8065ddc532e619f3ef35a9ebfb84191c126f6569b8e774f176e2180a070ba5864d605be428532599eeb5598e3a59860e7d618d04c42b5bdf86d1e6865808080a0541b758702fdb0de028839b604b3e2275a66af6bf174ee824fcc10f65b5f922380808080a050e8102abba78167ad8fd8574a6ccc0eb5a41136f6ad9f091a324b2ceb7cb6ffa00d453ef130e3c18edb02bf0c586c2a4935ab62bb8b6d8f7db06747295b785e3e80a022c6150a0df9e33bf366d5c39a8f37955c3bc4daa01524986f72b737d29354518080';
+        proof[1] = hex'e5a0390decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56383821234';
+        data = MerklePatriciaProofV1.validateMPTProof(account.storage_root, key, RLPEncode.encodeList(proof));
+        assertEq0(data, hex'821234');
+        assertEq0(data.toRlpItem().toBytes(), hex'1234');
     }
 
     struct Account {
         uint256 nonce;
         uint256 balance;
-        bytes32 storageRoot;
-        bytes32 codeHash;
+        bytes32 storage_root;
+        bytes32 code_hash;
     }
 
     function toAccount(bytes memory data) internal pure returns (Account memory account) {
@@ -47,8 +57,8 @@ contract MerklePatriciaProofV1Test is DSTest {
         while (it.hasNext()) {
             if (idx == 0) account.nonce = it.next().toUint();
             else if (idx == 1) account.balance = it.next().toUint();
-            else if (idx == 2) account.storageRoot = toBytes32(it.next().toBytes());
-            else if (idx == 3) account.codeHash = toBytes32(it.next().toBytes());
+            else if (idx == 2) account.storage_root = toBytes32(it.next().toBytes());
+            else if (idx == 3) account.code_hash = toBytes32(it.next().toBytes());
             else it.next();
             idx++;
         }

@@ -9,9 +9,9 @@ pragma solidity 0.7.6;
  */
 library RLPDecode {
     uint8 constant STRING_SHORT_START = 0x80;
-    uint8 constant STRING_LONG_START = 0xb8;
-    uint8 constant LIST_SHORT_START = 0xc0;
-    uint8 constant LIST_LONG_START = 0xf8;
+    uint8 constant STRING_LONG_START  = 0xb8;
+    uint8 constant LIST_SHORT_START   = 0xc0;
+    uint8 constant LIST_LONG_START    = 0xf8;
     uint8 constant WORD_SIZE = 32;
 
     struct RLPItem {
