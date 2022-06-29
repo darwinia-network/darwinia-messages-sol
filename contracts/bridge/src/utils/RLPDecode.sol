@@ -2,11 +2,6 @@
 
 pragma solidity 0.7.6;
 
-/*
- * @author Hamdi Allam hamdi.allam97@gmail.com
- *   Updated by Tuan Vu (tuanvd@gmail.com)
- * Please reach out with any questions or concerns
- */
 library RLPDecode {
     uint8 constant STRING_SHORT_START = 0x80;
     uint8 constant STRING_LONG_START  = 0xb8;

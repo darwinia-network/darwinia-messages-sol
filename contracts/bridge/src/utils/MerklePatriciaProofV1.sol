@@ -6,8 +6,8 @@ pragma abicoder v2;
 import "./RLPDecode.sol";
 
 library MerklePatriciaProofV1 {
-    using RLPDecode for RLPDecode.RLPItem;
     using RLPDecode for bytes;
+    using RLPDecode for RLPDecode.RLPItem;
 
     function isEmpty(RLPDecode.RLPItem memory item)
         internal
