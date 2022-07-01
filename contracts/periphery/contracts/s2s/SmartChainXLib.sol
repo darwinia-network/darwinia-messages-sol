@@ -237,10 +237,6 @@ library SmartChainXLib {
         // TODO: Use try/catch instead for error
         revertIfFailed(success, data, failedMsg);
 
-        if (success && data.length == 0) {
-            revert("The storage precompile may not exist");
-        }
-
         return abi.decode(data, (bytes));
     }
 }
