@@ -44,4 +44,15 @@ contract MerklePatriciaProofV1Test is DSTest {
         assertEq0(data.toRlpItem().toBytes(), hex'1234');
     }
 
+    function test_verify_single_storage_proof2() public {
+        bytes[] memory proof = new bytes[](1);
+        proof[0] = hex'f843a120bb1a6e4ccaed62181ab95a202f4e45c3f9f171ce3aff3cad7b56641d0929f678a0de3ab968a3335494010c90e8741a537971d635808651318a7b752898fd30cdeb';
+        bytes memory key = hex'4813e1accd49d41aaf8367652523c2bab26fd7a0b9d52871b65877018e105c1d';
+        bytes memory data = RLPEncode.encodeList(proof);
+        assertEq0(data, hex'f845f843a120bb1a6e4ccaed62181ab95a202f4e45c3f9f171ce3aff3cad7b56641d0929f678a0de3ab968a3335494010c90e8741a537971d635808651318a7b752898fd30cdeb');
+        key = abi.encodePacked(keccak256(key));
+        bytes32 root = 0x2fce25d833b3324f81ccdc48ff50e684c2cf3563fc563e82175743c47e8f3159;
+        bytes memory rlp_v = MerklePatriciaProofV1.validateMPTProof(root, key, data);
+        assertEq0(rlp_v, hex'de3ab968a3335494010c90e8741a537971d635808651318a7b752898fd30cdeb');
+    }
 }

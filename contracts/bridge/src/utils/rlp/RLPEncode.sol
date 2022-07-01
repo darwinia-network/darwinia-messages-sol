@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 
 /**
- * @title RLPWriter
+ * @title RLPEncode
  * @author Bakaoh (with modifications)
  */
 library RLPEncode {

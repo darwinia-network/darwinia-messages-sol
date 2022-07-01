@@ -2,8 +2,8 @@
 pragma solidity 0.7.6;
 
 /**
- * @title RLPReader
- * @dev Adapted from "RLPReader" by Hamdi Allam (hamdi.allam97@gmail.com).
+ * @title RLDecode
+ * @dev Adapted from "RLPDecode" by Hamdi Allam (hamdi.allam97@gmail.com).
  */
 library RLPDecode {
     /*************
@@ -203,7 +203,7 @@ library RLPDecode {
             out := byte(0, mload(ptr))
         }
 
-        require(out == 0 || out == 1, "Lib_RLPReader: Invalid RLP boolean value, must be 0 or 1");
+        require(out == 0 || out == 1, "RLPDecode: Invalid RLP boolean value, must be 0 or 1");
 
         return out != 0;
     }

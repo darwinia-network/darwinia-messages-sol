@@ -4,7 +4,6 @@ pragma solidity 0.7.6;
 /* Library Imports */
 import "../BytesUtils.sol";
 import "../rlp/RLPDecode.sol";
-import "../rlp/RLPEncode.sol";
 
 /**
  * @title MerkleTrie

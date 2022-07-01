@@ -67,4 +67,11 @@ contract RLPEncodeTest is DSTest {
             hex'80'
         );
     }
+
+    function test_encode_list() public {
+        bytes[] memory p = new bytes[](1);
+        p[0] = RLPEncode.encodeBytes(hex'f843a120bb1a6e4ccaed62181ab95a202f4e45c3f9f171ce3aff3cad7b56641d0929f678a0de3ab968a3335494010c90e8741a537971d635808651318a7b752898fd30cdeb');
+        bytes memory data = RLPEncode.encodeList(p);
+        assertEq0(data, hex'f847b845f843a120bb1a6e4ccaed62181ab95a202f4e45c3f9f171ce3aff3cad7b56641d0929f678a0de3ab968a3335494010c90e8741a537971d635808651318a7b752898fd30cdeb');
+    }
 }
