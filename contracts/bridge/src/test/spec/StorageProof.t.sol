@@ -27,9 +27,9 @@ contract StorageProofTest is DSTest {
         assertEq0(StorageProof.verify_single_storage_proof(
             root,
             account,
-            account_proof,
+            RLPEncode.writeList(account_proof),
             storage_key,
-            storage_proof
+            RLPEncode.writeList(storage_proof)
         ), hex'1234');
     }
 }

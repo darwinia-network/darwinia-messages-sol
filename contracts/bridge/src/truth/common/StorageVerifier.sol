@@ -12,16 +12,16 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
     event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
 
     struct ReceiveProof {
-        bytes[] accountProof;
-        bytes[] laneIDProof;
-        bytes[] laneNonceProof;
-        bytes[][] laneMessagesProof;
+        bytes accountProof;
+        bytes laneIDProof;
+        bytes laneNonceProof;
+        bytes[] laneMessagesProof;
     }
 
     struct DeliveryProof {
-        bytes[] accountProof;
-        bytes[] laneNonceProof;
-        bytes[][] laneRelayersProof;
+        bytes accountProof;
+        bytes laneNonceProof;
+        bytes[] laneRelayersProof;
     }
 
     uint256 public immutable THIS_CHAIN_POSITION;
