@@ -2,14 +2,14 @@
 
 pragma solidity >=0.6.0;
 
-import "../SmartChainApp.sol";
+import "../BaseApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
 pragma experimental ABIEncoderV2;
 
 // Remote call from Crab SmartChain 
-abstract contract CrabApp is SmartChainApp {
+abstract contract CrabApp is BaseApp {
     function init() internal {
         bridgeConfigs[DARWINIA_CHAIN_ID] = BridgeConfig(
             0x3003,

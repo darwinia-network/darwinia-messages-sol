@@ -2,14 +2,14 @@
 
 pragma solidity >=0.6.0;
 
-import "../SmartChainApp.sol";
+import "../BaseApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
 pragma experimental ABIEncoderV2;
 
 // Remote call from Pangolin SmartChain
-abstract contract PangolinApp is SmartChainApp {
+abstract contract PangolinApp is BaseApp {
     function init() internal {
         bridgeConfigs[PANGORO_CHAIN_ID] = BridgeConfig(
             0x2b03,

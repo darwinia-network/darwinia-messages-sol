@@ -3,10 +3,10 @@
 pragma solidity >=0.6.0;
 
 import "../SmartChainXLib.sol";
-import "./Base.sol";
+import "./AppShare.sol";
 
 // The base contract for developers to inherit
-abstract contract SmartChainAppOnTarget is Base {
+abstract contract BaseAppOnTarget is AppShare {
     // The chain id of the source chain
     bytes4 public srcChainId = 0;
 

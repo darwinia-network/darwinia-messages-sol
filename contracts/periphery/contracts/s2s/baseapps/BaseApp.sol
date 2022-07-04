@@ -3,10 +3,10 @@
 pragma solidity >=0.6.0;
 
 import "../SmartChainXLib.sol";
-import "./Base.sol";
+import "./AppShare.sol";
 
 // The base contract for developers to inherit
-abstract contract SmartChainApp is Base {
+abstract contract BaseApp is AppShare {
     struct MessagePayload {
         // The spec version of target chain
         // This is used to compare against the on-chain spec version before the call dispatch on target chain.
