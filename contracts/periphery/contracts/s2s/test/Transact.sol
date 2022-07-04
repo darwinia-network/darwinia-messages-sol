@@ -19,6 +19,7 @@ contract Transact {
                     1000000000, // gasPrice, get from the target chain
                     600000, // gasLimit, get from the target chain
                     0x50275d3F95E0F2FCb2cAb2Ec7A231aE188d7319d, // <------------------ change to the contract address on the target chain
+                    43, // smart chain id
                     0, // value, 0 means no value transfer
                     hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002" // the add function bytes that will be called on the target chain, add(2)
                 )
