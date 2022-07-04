@@ -3,9 +3,9 @@
 pragma solidity 0.7.6;
 
 import "./State.sol";
-import "../utils/RLPDecode.sol";
-import "../utils/RLPEncode.sol";
-import "../utils/MerklePatriciaProofV1.sol";
+import "../utils/rlp/RLPDecode.sol";
+import "../utils/rlp/RLPEncode.sol";
+import "../utils/trie/SecureMerkleTrie.sol";
 
 library StorageProof {
     using State for bytes;
@@ -19,20 +19,22 @@ library StorageProof {
         bytes32 storage_key,
         bytes[] memory storage_proof
     ) internal view returns (bytes memory value) {
-        bytes memory account_hash = abi.encodePacked(keccak256(abi.encodePacked(account)));
-        bytes memory data = MerklePatriciaProofV1.validateMPTProof(
-            root,
+        bytes memory account_hash = abi.encodePacked(account);
+        (bool exists, bytes memory data) = SecureMerkleTrie.get(
             account_hash,
-            RLPEncode.encodeList(account_proof)
+            RLPEncode.writeList(account_proof),
+            root
         );
-        State.Account memory acc = data.toAccount();
-        bytes memory storage_key_hash = abi.encodePacked(keccak256(abi.encodePacked(storage_key)));
-        bytes memory rlp_value = MerklePatriciaProofV1.validateMPTProof(
-            acc.storage_root,
+        require(exists == true, "!account_proof");
+        State.EVMAccount memory acc = data.toEVMAccount();
+        bytes memory storage_key_hash = abi.encodePacked(storage_key);
+        (exists, value) = SecureMerkleTrie.get(
             storage_key_hash,
-            RLPEncode.encodeList(storage_proof)
+            RLPEncode.writeList(storage_proof),
+            acc.storage_root
         );
-        value = rlp_value.toRlpItem().toBytes();
+        require(exists == true, "!storage_proof");
+        value = value.toRLPItem().readBytes();
     }
 
     function verify_multi_storage_proof(

@@ -2,10 +2,16 @@
 pragma solidity 0.7.6;
 
 import "../../test.sol";
+import "../../../spec/State.sol";
+import "../../../utils/rlp/RLPDecode.sol";
 import "../../../utils/rlp/RLPEncode.sol";
 import "../../../utils/trie/SecureMerkleTrie.sol";
 
 contract SecureMerkleTrieTest is DSTest {
+    using State for bytes;
+    using RLPDecode for bytes;
+    using RLPDecode for RLPDecode.RLPItem;
+
     function test_verify_inclusion_proof() public {
         bytes32 root = 0xb85b566e523eab932fb0a61d793849eb87db81c39b008d9146589423eee299f1;
         address addr = 0x2091125994a6836252118Ddae37d019F8E6CA455;
@@ -22,6 +28,25 @@ contract SecureMerkleTrieTest is DSTest {
         (bool exists, bytes memory rlp_acc) = SecureMerkleTrie.get(key, RLPEncode.writeList(proof), root);
         assertTrue(exists);
         assertEq0(rlp_acc, hex'f8440180a088bf311c759a8e9f6dac6b21a06d907ce6f192bdf08aa7de7c2fe008f7956087a0bea4e8de3e083450d67658272d677d5b235afa1fb72bc1ee3aa9b93e4cf7d23f');
+        State.EVMAccount memory account = rlp_acc.toEVMAccount();
+        assertEq(account.nonce, 1);
+        assertEq(account.balance, 0);
+        assertEq(account.storage_root, hex'88bf311c759a8e9f6dac6b21a06d907ce6f192bdf08aa7de7c2fe008f7956087');
+        assertEq(account.code_hash, hex'bea4e8de3e083450d67658272d677d5b235afa1fb72bc1ee3aa9b93e4cf7d23f');
+
+        bytes32 storage_key = 0x0000000000000000000000000000000000000000000000000000000000000000;
+        key = abi.encodePacked(storage_key);
+        proof = new bytes[](2);
+        proof[0] = RLPEncode.writeBytes(hex'f8d1a0dc7313472cd8065ddc532e619f3ef35a9ebfb84191c126f6569b8e774f176e2180a070ba5864d605be428532599eeb5598e3a59860e7d618d04c42b5bdf86d1e6865808080a0541b758702fdb0de028839b604b3e2275a66af6bf174ee824fcc10f65b5f922380808080a050e8102abba78167ad8fd8574a6ccc0eb5a41136f6ad9f091a324b2ceb7cb6ffa00d453ef130e3c18edb02bf0c586c2a4935ab62bb8b6d8f7db06747295b785e3e80a022c6150a0df9e33bf366d5c39a8f37955c3bc4daa01524986f72b737d29354518080');
+        proof[1] = RLPEncode.writeBytes(hex'e5a0390decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56383821234');
+        (bool exists2, bytes memory data) = SecureMerkleTrie.get(
+            key,
+            RLPEncode.writeList(proof),
+            account.storage_root
+        );
+        assertTrue(exists2);
+        assertEq0(data, hex'821234');
+        assertEq0(data.toRLPItem().readBytes(), hex'1234');
     }
 
     function test_verify_inclusion_proof2() public {

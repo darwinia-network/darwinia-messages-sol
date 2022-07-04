@@ -2,38 +2,28 @@
 
 pragma solidity 0.7.6;
 
-import "../utils/RLPDecode.sol";
-import "../utils/RLPEncode.sol";
+import "../utils/rlp/RLPDecode.sol";
+import "../utils/rlp/RLPEncode.sol";
 
 library State {
     using RLPDecode for RLPDecode.RLPItem;
-    using RLPDecode for RLPDecode.Iterator;
 
-    struct Account {
+    struct EVMAccount {
         uint256 nonce;
         uint256 balance;
         bytes32 storage_root;
         bytes32 code_hash;
     }
 
-    function toAccount(bytes memory data) internal pure returns (Account memory account) {
-        RLPDecode.Iterator memory it = RLPDecode.toRlpItem(data).iterator();
+    function toEVMAccount(bytes memory data) internal pure returns (EVMAccount memory account) {
+        RLPDecode.RLPItem[] memory account = RLPDecode.readList(data);
 
-        uint256 idx;
-        while (it.hasNext()) {
-            if (idx == 0) account.nonce = it.next().toUint();
-            else if (idx == 1) account.balance = it.next().toUint();
-            else if (idx == 2) account.storage_root = toBytes32(it.next().toBytes());
-            else if (idx == 3) account.code_hash = toBytes32(it.next().toBytes());
-            else it.next();
-            idx++;
-        }
+        return
+            EVMAccount({
+                nonce: account[0].readUint256(),
+                balance: account[1].readUint256(),
+                storage_root: account[2].readBytes32(),
+                code_hash: account[3].readBytes32()
+            });
     }
-
-    function toBytes32(bytes memory data) internal pure returns (bytes32 _data) {
-        assembly {
-            _data := mload(add(data, 32))
-        }
-    }
-
 }
