@@ -17,6 +17,8 @@ library PangolinCalls {
     // https://github.com/darwinia-network/darwinia-messages-substrate/issues/107#issuecomment-1164185135
     uint64 public constant MAX_GAS_LIMIT  = 10_000_000;
 
+    uint64 public constant SMART_CHAIN_ID = 43;
+
     function system_remark(bytes memory remark)
         internal
         pure
@@ -53,6 +55,7 @@ library PangolinCalls {
                 PalletEthereum.buildTransactionV2ForMessageTransact(
                     gasLimit,
                     to,
+                    SMART_CHAIN_ID,
                     input
                 )
             );
