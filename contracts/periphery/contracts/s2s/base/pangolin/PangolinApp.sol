@@ -2,19 +2,14 @@
 
 pragma solidity >=0.6.0;
 
-import "../SmartChainXApp.sol";
+import "../../SmartChainApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
 pragma experimental ABIEncoderV2;
 
 // Remote call from Pangolin SmartChain
-abstract contract PangolinXApp is SmartChainXApp {
-    function init() internal {
-        srcChainId = 0x7061676c; // pagl
-        tgtStorageKeyForLastDeliveredNonce = 0xd86d7f611f4d004e041fda08f633f101e5f83cf83f2127eb47afdc35d6e43fab;
-    }
-
+abstract contract PangolinApp is SmartChainApp {
     BridgeConfig internal toPangoro =
         BridgeConfig(
             0x2b03,

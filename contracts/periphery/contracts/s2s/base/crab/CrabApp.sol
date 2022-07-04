@@ -2,19 +2,14 @@
 
 pragma solidity >=0.6.0;
 
-import "../SmartChainXApp.sol";
+import "../../SmartChainApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
 pragma experimental ABIEncoderV2;
 
 // Remote call from Crab SmartChain 
-abstract contract CrabXApp is SmartChainXApp {
-    function init() internal {
-        srcChainId = 0x63726162; // crab
-        tgtStorageKeyForLastDeliveredNonce = 0xf4e61b17ce395203fe0f3c53a0d39860e5f83cf83f2127eb47afdc35d6e43fab;
-    }
-
+abstract contract CrabApp is SmartChainApp {
     BridgeConfig internal toDarwinia =
         BridgeConfig(
             0x3003,

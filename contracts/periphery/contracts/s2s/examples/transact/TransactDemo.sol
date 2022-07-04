@@ -2,22 +2,13 @@
 
 pragma solidity >=0.6.0;
 
-import "../xapps/PangoroXApp.sol";
-import "../calls/PangolinCalls.sol";
+import "../../base/pangoro/PangoroApp.sol";
+import "../../calls/PangolinCalls.sol";
 
 pragma experimental ABIEncoderV2;
 
 // deploy on the target chain first, then deploy on the source chain
-contract TransactDemo is PangoroXApp {
-    constructor() public {
-        init();
-    }
-
-    uint256 public number;
-
-    ///////////////////////////////////////////
-    // used on the source chain
-    ///////////////////////////////////////////
+contract TransactDemo is PangoroApp {
     function remoteAdd() public payable {
         // 1. Prepare the call with its weight that will be executed on the target chain
         (bytes memory call, uint64 weight) = PangolinCalls
@@ -37,26 +28,5 @@ contract TransactDemo is PangoroXApp {
         // 3. Send the message payload to the Pangolin Chain through a lane
         bytes4 outboundLaneId = 0x726f6c69;
         sendMessage(toPangolin, outboundLaneId, payload);
-    }
-
-    ///////////////////////////////////////////
-    // used on the target chain
-    ///////////////////////////////////////////
-    function add(uint256 _value) public {
-        // This function is only allowed to be called by the derived address
-        // of the message sender on the source chain.
-        require(
-            derivedFromRemote(msg.sender),
-            "msg.sender is not derived from remote"
-        );
-        number = number + _value;
-    }
-
-    function getLastDeliveredNonce(bytes4 inboundLaneId)
-        public
-        view
-        returns (uint64)
-    {
-        return lastDeliveredNonceOf(inboundLaneId);
     }
 }
