@@ -82,13 +82,11 @@ library SmartChainXLib {
         view
         returns (uint128)
     {
-        (bool success, bytes memory data) = address(srcStoragePrecompileAddress).staticcall(
-            abi.encodeWithSelector(
-                IStateStorage.state_storage.selector,
-                abi.encodePacked(storageKey)
-            )
+        bytes memory data = getStateStorage(
+            srcStoragePrecompileAddress,
+            abi.encodePacked(storageKey),
+            "Get market fee failed"
         );
-        revertIfFailed(success, data, "Get market fee failed");
 
         CommonTypes.Relayer memory relayer = CommonTypes.getLastRelayerFromVec(
             data
@@ -113,13 +111,11 @@ library SmartChainXLib {
         );
 
         // Do get data by calling state storage precompile
-        (bool success, bytes memory data) = address(srcStoragePrecompileAddress).staticcall(
-            abi.encodeWithSelector(
-                IStateStorage.state_storage.selector,
-                fullStorageKey
-            )
+        bytes memory data = getStateStorage(
+            srcStoragePrecompileAddress,
+            fullStorageKey,
+            "Get OutboundLaneData failed"
         );
-        revertIfFailed(success, data, "Get latest nonce failed");
 
         // 2. Decode `OutboundLaneData` and return the latest nonce
         CommonTypes.OutboundLaneData memory outboundLaneData = CommonTypes
@@ -161,23 +157,26 @@ library SmartChainXLib {
         }
     }
 
-    // dispatch pallet dispatth-call
+    // dispatch pallet dispatch-call
     function dispatch(
         address srcDispatchPrecompileAddress,
         bytes memory callEncoded,
         string memory errMsg
     ) internal {
         // Dispatch the call
-        (bool success, bytes memory data) = srcDispatchPrecompileAddress.call(callEncoded);
+        (bool success, bytes memory data) = srcDispatchPrecompileAddress.call(
+            callEncoded
+        );
         revertIfFailed(success, data, errMsg);
     }
 
     // derive an address from remote(source chain) sender address
     // H160(sender on the sourc chain) > AccountId32 > derived AccountId32 > H160
-    function deriveSenderFromRemote(
-        bytes4 srcChainId,
-        address srcMessageSender
-    ) internal view returns (address) {
+    function deriveSenderFromRemote(bytes4 srcChainId, address srcMessageSender)
+        internal
+        view
+        returns (address)
+    {
         // H160(sender on the sourc chain) > AccountId32
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
             srcMessageSender
@@ -188,7 +187,7 @@ library SmartChainXLib {
             srcChainId,
             derivedSubstrateAddress
         );
-        
+
         // derived AccountId32 > H160
         address result = AccountId.deriveEthereumAddress(derivedAccountId);
 
@@ -212,15 +211,32 @@ library SmartChainXLib {
         );
 
         // Do get data by calling state storage precompile
-        (bool success, bytes memory data) = address(tgtStoragePrecompileAddress).staticcall(
-            abi.encodeWithSelector(
-                IStateStorage.state_storage.selector,
-                fullStorageKey
-            )
+        bytes memory data = getStateStorage(
+            tgtStoragePrecompileAddress,
+            fullStorageKey,
+            "Get InboundLaneData failed"
         );
-        revertIfFailed(success, data, "get last delivered nonce failed");
 
         // 2. Decode `InboundLaneData` and return the last delivered nonce
         return CommonTypes.getLastDeliveredNonceFromInboundLaneData(data);
+    }
+
+    function getStateStorage(
+        address storagePrecompileAddress,
+        bytes memory storageKey,
+        string memory failedMsg
+    ) internal view returns (bytes memory) {
+        (bool success, bytes memory data) = storagePrecompileAddress
+            .staticcall(
+                abi.encodeWithSelector(
+                    IStateStorage.state_storage.selector,
+                    storageKey
+                )
+            );
+        
+        // TODO: Use try/catch instead for error
+        revertIfFailed(success, data, failedMsg);
+
+        return abi.decode(data, (bytes));
     }
 }
