@@ -117,6 +117,7 @@ class Eth2Client {
     for await (const chunk of response.body) {
       console.log(toHexString(chunk))
       const proof = hexProof(deserializeProof(chunk))
+      console.log(proof)
       return proof
     }
   }

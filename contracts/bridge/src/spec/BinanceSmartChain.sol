@@ -3,7 +3,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../utils/RLPEncode.sol";
+import "../utils/rlp/RLPEncode.sol";
 
 contract BinanceSmartChain {
     // BSC(Binance Smart Chain) header
@@ -54,46 +54,46 @@ contract BinanceSmartChain {
     function rlp(BSCHeader memory header) internal pure returns (bytes memory data) {
         bytes[] memory list = new bytes[](15);
 
-        list[0] = RLPEncode.encodeBytes(abi.encodePacked(header.parent_hash));
-        list[1] = RLPEncode.encodeBytes(abi.encodePacked(header.uncle_hash));
-        list[2] = RLPEncode.encodeAddress(header.coinbase);
-        list[3] = RLPEncode.encodeBytes(abi.encodePacked(header.state_root));
-        list[4] = RLPEncode.encodeBytes(abi.encodePacked(header.transactions_root));
-        list[5] = RLPEncode.encodeBytes(abi.encodePacked(header.receipts_root));
-        list[6] = RLPEncode.encodeBytes(header.log_bloom);
-        list[7] = RLPEncode.encodeUint(header.difficulty);
-        list[8] = RLPEncode.encodeUint(header.number);
-        list[9] = RLPEncode.encodeUint(header.gas_limit);
-        list[10] = RLPEncode.encodeUint(header.gas_used);
-        list[11] = RLPEncode.encodeUint(header.timestamp);
-        list[12] = RLPEncode.encodeBytes(header.extra_data);
-        list[13] = RLPEncode.encodeBytes(abi.encodePacked(header.mix_digest));
-        list[14] = RLPEncode.encodeBytes(abi.encodePacked(header.nonce));
+        list[0] = RLPEncode.writeBytes(abi.encodePacked(header.parent_hash));
+        list[1] = RLPEncode.writeBytes(abi.encodePacked(header.uncle_hash));
+        list[2] = RLPEncode.writeAddress(header.coinbase);
+        list[3] = RLPEncode.writeBytes(abi.encodePacked(header.state_root));
+        list[4] = RLPEncode.writeBytes(abi.encodePacked(header.transactions_root));
+        list[5] = RLPEncode.writeBytes(abi.encodePacked(header.receipts_root));
+        list[6] = RLPEncode.writeBytes(header.log_bloom);
+        list[7] = RLPEncode.writeUint(header.difficulty);
+        list[8] = RLPEncode.writeUint(header.number);
+        list[9] = RLPEncode.writeUint(header.gas_limit);
+        list[10] = RLPEncode.writeUint(header.gas_used);
+        list[11] = RLPEncode.writeUint(header.timestamp);
+        list[12] = RLPEncode.writeBytes(header.extra_data);
+        list[13] = RLPEncode.writeBytes(abi.encodePacked(header.mix_digest));
+        list[14] = RLPEncode.writeBytes(abi.encodePacked(header.nonce));
 
-        data = RLPEncode.encodeList(list);
+        data = RLPEncode.writeList(list);
     }
 
     // Compute the RLP of this header with chain id
     function rlp_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes memory data) {
         bytes[] memory list = new bytes[](16);
 
-        list[0] = RLPEncode.encodeUint(chain_id);
-        list[1] = RLPEncode.encodeBytes(abi.encodePacked(header.parent_hash));
-        list[2] = RLPEncode.encodeBytes(abi.encodePacked(header.uncle_hash));
-        list[3] = RLPEncode.encodeAddress(header.coinbase);
-        list[4] = RLPEncode.encodeBytes(abi.encodePacked(header.state_root));
-        list[5] = RLPEncode.encodeBytes(abi.encodePacked(header.transactions_root));
-        list[6] = RLPEncode.encodeBytes(abi.encodePacked(header.receipts_root));
-        list[7] = RLPEncode.encodeBytes(header.log_bloom);
-        list[8] = RLPEncode.encodeUint(header.difficulty);
-        list[9] = RLPEncode.encodeUint(header.number);
-        list[10] = RLPEncode.encodeUint(header.gas_limit);
-        list[11] = RLPEncode.encodeUint(header.gas_used);
-        list[12] = RLPEncode.encodeUint(header.timestamp);
-        list[13] = RLPEncode.encodeBytes(header.extra_data);
-        list[14] = RLPEncode.encodeBytes(abi.encodePacked(header.mix_digest));
-        list[15] = RLPEncode.encodeBytes(abi.encodePacked(header.nonce));
+        list[0] = RLPEncode.writeUint(chain_id);
+        list[1] = RLPEncode.writeBytes(abi.encodePacked(header.parent_hash));
+        list[2] = RLPEncode.writeBytes(abi.encodePacked(header.uncle_hash));
+        list[3] = RLPEncode.writeAddress(header.coinbase);
+        list[4] = RLPEncode.writeBytes(abi.encodePacked(header.state_root));
+        list[5] = RLPEncode.writeBytes(abi.encodePacked(header.transactions_root));
+        list[6] = RLPEncode.writeBytes(abi.encodePacked(header.receipts_root));
+        list[7] = RLPEncode.writeBytes(header.log_bloom);
+        list[8] = RLPEncode.writeUint(header.difficulty);
+        list[9] = RLPEncode.writeUint(header.number);
+        list[10] = RLPEncode.writeUint(header.gas_limit);
+        list[11] = RLPEncode.writeUint(header.gas_used);
+        list[12] = RLPEncode.writeUint(header.timestamp);
+        list[13] = RLPEncode.writeBytes(header.extra_data);
+        list[14] = RLPEncode.writeBytes(abi.encodePacked(header.mix_digest));
+        list[15] = RLPEncode.writeBytes(abi.encodePacked(header.nonce));
 
-        data = RLPEncode.encodeList(list);
+        data = RLPEncode.writeList(list);
     }
 }
