@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0;
 
-import "./SmartChainXLib.sol";
+import "../SmartChainXLib.sol";
 
 // The base contract for developers to inherit
 abstract contract SmartChainAppOnTarget {

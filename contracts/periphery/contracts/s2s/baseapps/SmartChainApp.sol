@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0;
 
-import "./SmartChainXLib.sol";
+import "../SmartChainXLib.sol";
 
 // The base contract for developers to inherit
 abstract contract SmartChainApp {
@@ -27,26 +27,38 @@ abstract contract SmartChainApp {
         bytes32 srcStorageKeyForLatestNonce;
     }
 
+    bytes4 public constant DARWINIA_CHAIN_ID = 0x64617277; // darw
+    bytes4 public constant CRAB_CHAIN_ID = 0x63726162; // crab
+    bytes4 public constant PANGORO_CHAIN_ID = 0x70616772; // pagr
+    bytes4 public constant PANGOLIN_CHAIN_ID = 0x7061676c; // pagl
+    bytes4 public constant PANGOLIN_PARACHAIN_CHAIN_ID = 0x70676c70; // pglp
+    bytes4 public constant CRAB_PARACHAIN_CHAIN_ID = 0x63726170; // crap
+
     // Precompile address for getting state storage on the source chain
     address public srcStoragePrecompileAddress = address(1024);
 
     // Precompile address for dispatching 'send_message'
     address public srcDispatchPrecompileAddress = address(1025);
 
+    // Chain id => BridgeConfig
+    mapping(bytes4 => BridgeConfig) public bridgeConfigs;
+
     ////////////////////////////////////
     // Internal functions
     ////////////////////////////////////
 
     /// @notice Send message over lane id
-    /// @param bridgeConfig The bridge config
+    /// @param targetChainId The target chain id
     /// @param outboundLaneId The outboundLane id
     /// @param payload The message payload to be sent
     /// @return nonce The nonce of the message
     function sendMessage(
-        BridgeConfig memory bridgeConfig,
+        bytes4 targetChainId,
         bytes4 outboundLaneId,
         MessagePayload memory payload
     ) internal returns (uint64) {
+        BridgeConfig memory bridgeConfig = bridgeConfigs[targetChainId];
+
         // Get the current market fee
         uint128 fee = SmartChainXLib.marketFee(
             srcStoragePrecompileAddress,

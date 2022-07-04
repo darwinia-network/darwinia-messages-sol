@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0;
 
-import "../../SmartChainAppOnTarget.sol";
+import "../SmartChainAppOnTarget.sol";
 
 pragma experimental ABIEncoderV2;
 

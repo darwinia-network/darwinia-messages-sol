@@ -2,13 +2,17 @@
 
 pragma solidity >=0.6.0;
 
-import "../../base/pangoro/PangoroApp.sol";
+import "../../baseapps/pangoro/PangoroApp.sol";
 import "../../calls/PangolinCalls.sol";
 
 pragma experimental ABIEncoderV2;
 
 // deploy on the target chain first, then deploy on the source chain
 contract TransactDemo is PangoroApp {
+    constructor() public {
+        init();
+    }
+
     function remoteAdd() public payable {
         // 1. Prepare the call with its weight that will be executed on the target chain
         (bytes memory call, uint64 weight) = PangolinCalls
@@ -27,6 +31,6 @@ contract TransactDemo is PangoroApp {
 
         // 3. Send the message payload to the Pangolin Chain through a lane
         bytes4 outboundLaneId = 0x726f6c69;
-        sendMessage(toPangolin, outboundLaneId, payload);
+        sendMessage(PANGOLIN_CHAIN_ID, outboundLaneId, payload);
     }
 }

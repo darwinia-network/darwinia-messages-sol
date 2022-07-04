@@ -2,13 +2,13 @@
 
 pragma solidity >=0.6.0;
 
-import "../../base/pangoro/PangoroAppOnPangolin.sol";
+import "../../baseapps/pangoro/PangoroAppOnPangolin.sol";
 import "../../calls/PangolinCalls.sol";
 
 pragma experimental ABIEncoderV2;
 
 // deploy on the target chain first, then deploy on the source chain
-contract TransactDemoOnPangolin is PangoroAppOnPangolin {
+contract TransactDemo is PangoroAppOnPangolin {
     uint256 public number;
 
     constructor() public {
@@ -31,5 +31,15 @@ contract TransactDemoOnPangolin is PangoroAppOnPangolin {
         returns (uint64)
     {
         return lastDeliveredNonceOf(inboundLaneId);
+    }
+
+    function setSrcMessageSender(address _srcMessageSender) public {
+        srcMessageSender = _srcMessageSender;
+    }
+
+    function setTgtStorageKeyForLastDeliveredNonce(
+        bytes32 _tgtStorageKeyForLastDeliveredNonce
+    ) public {
+        tgtStorageKeyForLastDeliveredNonce = _tgtStorageKeyForLastDeliveredNonce;
     }
 }
