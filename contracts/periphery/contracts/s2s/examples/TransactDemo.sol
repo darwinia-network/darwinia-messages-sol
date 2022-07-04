@@ -13,8 +13,6 @@ contract TransactDemo is PangoroXApp {
         init();
     }
 
-    uint256 public number;
-
     ///////////////////////////////////////////
     // used on the source chain
     ///////////////////////////////////////////
@@ -42,6 +40,8 @@ contract TransactDemo is PangoroXApp {
     ///////////////////////////////////////////
     // used on the target chain
     ///////////////////////////////////////////
+    uint256 public number;
+
     function add(uint256 _value) public {
         // This function is only allowed to be called by the derived address
         // of the message sender on the source chain.

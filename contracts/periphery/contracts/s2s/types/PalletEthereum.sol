@@ -108,6 +108,7 @@ library PalletEthereum {
         uint256 gasLimit,
         address to,
         uint256 value,
+        uint64 smartChainId,
         bytes memory input
     )
         internal
@@ -124,9 +125,9 @@ library PalletEthereum {
             ),
             value,
             input,
-            0, // v
-            0, // r
-            0 // s
+            smartChainId * 2 + 36, // v
+            0x3737373737373737373737373737373737373737373737373737373737373737, // r
+            0x3737373737373737373737373737373737373737373737373737373737373737 // s
         );
 
         return
@@ -139,6 +140,7 @@ library PalletEthereum {
     function buildTransactionV2ForMessageTransact(
         uint256 gasLimit,
         address to,
+        uint64 smartChainId,
         bytes memory input
     )
         internal
@@ -146,6 +148,6 @@ library PalletEthereum {
         returns (EnumItemTransactionV2WithLegacyTransaction memory)
     {
         // nonce and gasPrice will be set by target chain
-        return buildTransactionV2(0, 0, gasLimit, to, 0, input);
+        return buildTransactionV2(0, 0, gasLimit, to, 0, smartChainId, input);
     }
 }
