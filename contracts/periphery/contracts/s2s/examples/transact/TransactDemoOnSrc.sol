@@ -13,7 +13,7 @@ contract TransactDemo is PangoroApp {
         init();
     }
 
-    function remoteAdd() public payable {
+    function remoteAdd1() public payable {
         // 1. Prepare the call with its weight that will be executed on the target chain
         (bytes memory call, uint64 weight) = PangolinCalls
             .ethereum_messageTransact(
@@ -31,5 +31,19 @@ contract TransactDemo is PangoroApp {
 
         // 3. Send the message payload to the Pangolin Chain through a lane
         sendMessage(PANGOLIN_CHAIN_ID, ROLI_LANE_ID, payload);
+    }
+
+    function remoteAdd2(
+        bytes4 outboundLaneId,
+        uint32 specVersionOfPangolin,
+        address to
+    ) public payable {
+        transactOnPangolin(
+            outboundLaneId,
+            specVersionOfPangolin,
+            to,
+            hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002",
+            600000
+        );
     }
 }

@@ -3,6 +3,7 @@
 pragma solidity >=0.6.0;
 
 import "../BaseApp.sol";
+import "../../calls/PangoroCalls.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
@@ -22,5 +23,23 @@ abstract contract PangolinApp is BaseApp {
             0x39bf2363dd0720bd6e11a4c86f4949322edb70953213f33a6ef6b8a5e3ffcab2,
             0xdcdffe6202217f0ecb0ec75d8a09b32c96c246acb9b55077390e3ca723a0ca1f
         );
+    }
+
+    function transactOnPangoro(
+        bytes4 outboundLaneId,
+        uint32 specVersionOfPangoro,
+        address to,
+        bytes memory input,
+        uint256 gasLimit
+    ) internal returns (uint64) {
+        (bytes memory call, uint64 weight) = PangoroCalls
+            .ethereum_messageTransact(gasLimit, to, input);
+
+        return
+            sendMessage(
+                PANGORO_CHAIN_ID,
+                outboundLaneId,
+                MessagePayload(specVersionOfPangoro, weight, call)
+            );
     }
 }
