@@ -1,9 +1,9 @@
 {
   "name": "@darwinia/contracts-periphery",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Peripheral smart contracts for interacting with message protocal.",
   "main": "index.js",
-  "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
+  "repository": "https://github.com/darwinia-network/darwinia-messages-sol.git",
   "scripts": {
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
