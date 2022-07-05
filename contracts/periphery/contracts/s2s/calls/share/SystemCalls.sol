@@ -29,7 +29,7 @@ library SystemCalls {
             hex"0009",
             rmk
         );
-        uint256 weight = rmk.length.mul(1_000);
+        uint256 weight = rmk.length.mul(2_000);
         return (PalletSystem.encodeRemarkCall(call), uint64(weight));
     }
 }
