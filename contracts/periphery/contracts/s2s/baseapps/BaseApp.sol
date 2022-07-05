@@ -54,7 +54,7 @@ abstract contract BaseApp is AppShare {
         BridgeConfig memory bridgeConfig = bridgeConfigs[targetChainId];
 
         // Get the current market fee
-        uint128 fee = SmartChainXLib.marketFee(
+        uint256 fee = SmartChainXLib.marketFee(
             srcStoragePrecompileAddress,
             bridgeConfig.srcStorageKeyForMarketFee
         );

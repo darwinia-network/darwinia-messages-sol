@@ -80,7 +80,7 @@ library SmartChainXLib {
     function marketFee(address srcStoragePrecompileAddress, bytes32 storageKey)
         internal
         view
-        returns (uint128)
+        returns (uint256)
     {
         bytes memory data = getStateStorage(
             srcStoragePrecompileAddress,
@@ -91,7 +91,7 @@ library SmartChainXLib {
         CommonTypes.Relayer memory relayer = CommonTypes.getLastRelayerFromVec(
             data
         );
-        return relayer.fee;
+        return relayer.fee * 10**9;
     }
 
     // Get the latest nonce from state storage
