@@ -30,7 +30,6 @@ contract TransactDemo is PangoroApp {
         );
 
         // 3. Send the message payload to the Pangolin Chain through a lane
-        bytes4 outboundLaneId = 0x726f6c69;
-        sendMessage(PANGOLIN_CHAIN_ID, outboundLaneId, payload);
+        sendMessage(PANGOLIN_CHAIN_ID, ROLI_LANE_ID, payload);
     }
 }

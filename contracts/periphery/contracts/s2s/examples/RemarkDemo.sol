@@ -30,10 +30,9 @@ contract RemarkDemo is CrabApp, Ownable {
         );
 
         // 3. Send the message payload to the Darwinia Chain through a lane
-        bytes4 outboundLaneId = 0x00000000;
         uint64 messageNonce = sendMessage(
             DARWINIA_CHAIN_ID,
-            outboundLaneId,
+            ZERO_LANE_ID,
             payload
         );
         emit OutputNonce(messageNonce);
