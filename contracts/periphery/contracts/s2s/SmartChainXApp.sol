@@ -71,7 +71,7 @@ abstract contract SmartChainXApp {
         MessagePayload memory payload
     ) internal returns (uint64) {
         // Get the current market fee
-        uint128 fee = SmartChainXLib.marketFee(
+        uint256 fee = SmartChainXLib.marketFee(
             srcStoragePrecompileAddress,
             bridgeConfig.srcStorageKeyForMarketFee
         );
