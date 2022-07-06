@@ -14,12 +14,6 @@ contract SourceChain {
         bytes encoded; /*(abi.encodePacked(SELECTOR, PARAMS))*/
     }
 
-    struct MessagePayloadCompact {
-        address source;
-        address target;
-        bytes32 encoded_hash; /*keccak256(abi.encodePacked(SELECTOR, PARAMS))*/
-    }
-
     // Message key (unique message identifier) as it is stored in the storage.
     struct MessageKey {
         // This chain position
@@ -153,21 +147,6 @@ contract SourceChain {
             );
         }
         return keccak256(encoded);
-    }
-
-    function hash(MessagePayloadCompact memory payload)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(
-            abi.encode(
-                MESSAGEPAYLOAD_TYPEHASH,
-                payload.source,
-                payload.target,
-                payload.encoded_hash
-            )
-        );
     }
 
     function hash(MessagePayload memory payload)

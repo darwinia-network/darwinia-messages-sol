@@ -13,17 +13,17 @@ library PalletBridgeMessages {
         uint128 deliveryAndDispatchFee;
     }
 
-    function encodeSendMessageCall(SendMessageCall memory call)
+    function encodeSendMessageCall(SendMessageCall memory _call)
         internal
         pure
         returns (bytes memory)
     {
         return
             abi.encodePacked(
-                call.callIndex,
-                call.lineId,
-                call.message,
-                ScaleCodec.encode128(call.deliveryAndDispatchFee)
+                _call.callIndex,
+                _call.lineId,
+                _call.message,
+                ScaleCodec.encode128(_call.deliveryAndDispatchFee)
             );
     }
 }

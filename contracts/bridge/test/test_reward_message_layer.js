@@ -69,17 +69,8 @@ const receive_messages_proof = async (nonce) => {
 }
 
 const receive_messages_delivery_proof = async (begin, end) => {
-    let payloads = []
-    for(let i=begin; i<=end; i++){
-      let payload = {
-        source,
-        target,
-        encoded_hash
-      }
-      payloads.push(payload)
-    }
     const laneData = await inbound.data()
-    const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, payloads, "0x")
+    const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
       .withArgs(begin, end, 0)

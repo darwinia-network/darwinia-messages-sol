@@ -72,16 +72,7 @@ const receive_messages_proof = async (laneData, nonce) => {
 }
 
 const receive_messages_delivery_proof = async (laneData, begin, end) => {
-    let payloads = []
-    for(let i=begin; i<=end; i++){
-      let payload = {
-        source,
-        target: i%2 == 0 ? normalApp.address : target,
-        encoded_hash
-      }
-      payloads.push(payload)
-    }
-    const tx = await outbound.receive_messages_delivery_proof(laneData, payloads, "0x")
+    const tx = await outbound.receive_messages_delivery_proof(laneData, "0x")
     let result = 0
     if (end%2 == 0) {
       result = 1

@@ -62,6 +62,7 @@
 | slashTime | uint32 |
 | relayTime | uint32 |
 | assignedRelayersNumber | uint32 |
+| priceRatio | uint32 |
 | collateralPerOrder | uint256 |
 | setter | address |
 | outbounds | mapping(address => uint256) |

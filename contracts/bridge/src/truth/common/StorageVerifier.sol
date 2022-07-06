@@ -6,42 +6,23 @@ pragma abicoder v2;
 import "../../interfaces/ILightClient.sol";
 import "../../spec/SourceChain.sol";
 import "../../spec/TargetChain.sol";
-
-interface IMerklePatriciaTrie {
-    function verify_single_storage_proof(
-        bytes32 root,
-        address account,
-        bytes[] calldata accountProof,
-        bytes32 storageKey,
-        bytes[] calldata storageProof
-    ) external view returns (bytes memory value);
-
-    function verify_multi_storage_proof(
-        bytes32 root,
-        address account,
-        bytes[] calldata accountProof,
-        bytes32[] calldata storageKeys,
-        bytes[][] calldata storageProof
-    ) external view returns (bytes[] memory values);
-}
+import "../../spec/StorageProof.sol";
 
 abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
     event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
 
     struct ReceiveProof {
-        bytes[] accountProof;
-        bytes[] laneIDProof;
-        bytes[] laneNonceProof;
-        bytes[][] laneMessagesProof;
+        bytes accountProof;
+        bytes laneIDProof;
+        bytes laneNonceProof;
+        bytes[] laneMessagesProof;
     }
 
     struct DeliveryProof {
-        bytes[] accountProof;
-        bytes[] laneNonceProof;
-        bytes[][] laneRelayersProof;
+        bytes accountProof;
+        bytes laneNonceProof;
+        bytes[] laneRelayersProof;
     }
-
-    address internal constant MPT_PRECOMPILE = address(0x0801);
 
     uint256 public immutable THIS_CHAIN_POSITION;
     uint256 public immutable LANE_IDENTIFY_SLOT;
@@ -96,7 +77,7 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
         ReceiveProof memory proof = abi.decode(encoded_proof, (ReceiveProof));
 
         // extract identify storage value from proof
-        uint identify_storage = toUint(IMerklePatriciaTrie(MPT_PRECOMPILE).verify_single_storage_proof(
+        uint identify_storage = toUint(StorageProof.verify_single_storage_proof(
             state_root(),
             lane,
             proof.accountProof,
@@ -105,7 +86,7 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
         ));
 
         // extract nonce storage value from proof
-        uint nonce_storage = toUint(IMerklePatriciaTrie(MPT_PRECOMPILE).verify_single_storage_proof(
+        uint nonce_storage = toUint(StorageProof.verify_single_storage_proof(
             state_root(),
             lane,
             proof.accountProof,
@@ -127,7 +108,7 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
             bytes32[] memory storage_keys = build_message_keys(latest_received_nonce, size);
 
             // extract messages storage value from proof
-            bytes[] memory values = IMerklePatriciaTrie(MPT_PRECOMPILE).verify_multi_storage_proof(
+            bytes[] memory values = StorageProof.verify_multi_storage_proof(
                 state_root(),
                 lane,
                 proof.accountProof,
@@ -172,7 +153,7 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
         DeliveryProof memory proof = abi.decode(encoded_proof, (DeliveryProof));
 
         // extract nonce storage value from proof
-        uint nonce_storage = toUint(IMerklePatriciaTrie(MPT_PRECOMPILE).verify_single_storage_proof(
+        uint nonce_storage = toUint(StorageProof.verify_single_storage_proof(
             state_root(),
             lane,
             proof.accountProof,
@@ -212,7 +193,7 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
             }
 
             // extract messages storage value from proof
-            bytes[] memory values = IMerklePatriciaTrie(MPT_PRECOMPILE).verify_multi_storage_proof(
+            bytes[] memory values = StorageProof.verify_multi_storage_proof(
                 state_root(),
                 lane,
                 proof.accountProof,
