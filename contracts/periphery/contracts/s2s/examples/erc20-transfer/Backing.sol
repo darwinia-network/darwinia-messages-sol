@@ -40,8 +40,7 @@ contract Backing is PangolinApp {
     );
 
     function lockAndRemoteIssue(
-        uint32 specVersion,
-        bytes4 laneId,
+        uint32 specVersionOfPangoro,
         
         // Lock `amount` of `token` on the source chain
         address token,
@@ -58,7 +57,7 @@ contract Backing is PangolinApp {
         // Remote issuing
         uint64 messageNonce = _transactOnPangoro(
             ROLI_LANE_ID, 
-            specVersion, 
+            specVersionOfPangoro, 
             issuingContractAddress, 
             abi.encodeWithSelector(
                 IIssuing.issueFromRemote.selector,
@@ -70,10 +69,10 @@ contract Backing is PangolinApp {
         );
 
         // Record the lock info
-        bytes memory messageId = abi.encode(laneId, messageNonce);
+        bytes memory messageId = abi.encode(ROLI_LANE_ID, messageNonce);
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
 
         // Emit an event
-        emit TokenLocked(laneId, messageNonce, token, recipient, amount);
+        emit TokenLocked(ROLI_LANE_ID, messageNonce, token, recipient, amount);
     }
 }
