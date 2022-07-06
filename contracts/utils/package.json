@@ -1,6 +1,6 @@
 {
   "name": "@darwinia/contracts-utils",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Smart contract utils of darwinia",
   "main": "index.js",
   "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
