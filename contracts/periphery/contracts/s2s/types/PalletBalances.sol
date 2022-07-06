@@ -12,11 +12,11 @@ library PalletBalances {
         uint128 value;
     }
 
-    function encodeTransferCall(TransferCall memory call) internal pure returns (bytes memory) {
-        bytes memory destEncoded = CommonTypes.encodeEnumItemWithAccountId(call.dest);
-        bytes memory valueEncoded = ScaleCodec.encodeUintCompact(call.value);
+    function encodeTransferCall(TransferCall memory _call) internal pure returns (bytes memory) {
+        bytes memory destEncoded = CommonTypes.encodeEnumItemWithAccountId(_call.dest);
+        bytes memory valueEncoded = ScaleCodec.encodeUintCompact(_call.value);
         return abi.encodePacked(
-            call.callIndex, 
+            _call.callIndex, 
             destEncoded, 
             valueEncoded
         );

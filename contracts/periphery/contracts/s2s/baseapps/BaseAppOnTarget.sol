@@ -35,13 +35,13 @@ abstract contract BaseAppOnTarget is AppShare {
     ///    );
     ///
     /// @return bool Does the sender address authorized?
-    function derivedFromRemote(address sender) internal view returns (bool) {
+    function derivedFromRemote(address _sender) internal view returns (bool) {
         return
-            sender ==
+            _sender ==
             SmartChainXLib.deriveSenderFromRemote(srcChainId, srcMessageSender);
     }
 
-    function lastDeliveredNonceOf(bytes4 inboundLaneId)
+    function lastDeliveredNonceOf(bytes4 _inboundLaneId)
         internal
         view
         returns (uint64)
@@ -50,7 +50,7 @@ abstract contract BaseAppOnTarget is AppShare {
             SmartChainXLib.lastDeliveredNonce(
                 tgtStoragePrecompileAddress,
                 tgtStorageKeyForLastDeliveredNonce,
-                inboundLaneId
+                _inboundLaneId
             );
     }
 }

@@ -12,16 +12,16 @@ library PalletEthereum {
         EnumItemTransactionV2WithLegacyTransaction transaction;
     }
 
-    function encodeTransactCall(TransactCall memory call)
+    function encodeTransactCall(TransactCall memory _call)
         internal
         pure
         returns (bytes memory)
     {
         return
             abi.encodePacked(
-                call.callIndex,
+                _call.callIndex,
                 encodeEnumItemTransactionV2WithLegacyTransaction(
-                    call.transaction
+                    _call.transaction
                 )
             );
     }
@@ -31,16 +31,16 @@ library PalletEthereum {
         EnumItemTransactionV2WithLegacyTransaction transaction;
     }
 
-    function encodeMessageTransactCall(MessageTransactCall memory call)
+    function encodeMessageTransactCall(MessageTransactCall memory _call)
         internal
         pure
         returns (bytes memory)
     {
         return
             abi.encodePacked(
-                call.callIndex,
+                _call.callIndex,
                 encodeEnumItemTransactionV2WithLegacyTransaction(
-                    call.transaction
+                    _call.transaction
                 )
             );
     }
@@ -51,9 +51,9 @@ library PalletEthereum {
     }
 
     function encodeEnumItemTransactionActionWithAddress(
-        EnumItemTransactionActionWithAddress memory item
+        EnumItemTransactionActionWithAddress memory _item
     ) internal pure returns (bytes memory) {
-        return abi.encodePacked(item.index, item.h160);
+        return abi.encodePacked(_item.index, _item.h160);
     }
 
     struct LegacyTransaction {
@@ -68,22 +68,22 @@ library PalletEthereum {
         bytes32 s;
     }
 
-    function encodeLegacyTransaction(LegacyTransaction memory transaction)
+    function encodeLegacyTransaction(LegacyTransaction memory _transaction)
         internal
         pure
         returns (bytes memory)
     {
         return
             abi.encodePacked(
-                ScaleCodec.encode256(transaction.nonce),
-                ScaleCodec.encode256(transaction.gasPrice),
-                ScaleCodec.encode256(transaction.gasLimit),
-                encodeEnumItemTransactionActionWithAddress(transaction.action),
-                ScaleCodec.encode256(transaction.value),
-                ScaleCodec.encodeBytes(transaction.input),
-                ScaleCodec.encode64(transaction.v),
-                transaction.r,
-                transaction.s
+                ScaleCodec.encode256(_transaction.nonce),
+                ScaleCodec.encode256(_transaction.gasPrice),
+                ScaleCodec.encode256(_transaction.gasLimit),
+                encodeEnumItemTransactionActionWithAddress(_transaction.action),
+                ScaleCodec.encode256(_transaction.value),
+                ScaleCodec.encodeBytes(_transaction.input),
+                ScaleCodec.encode64(_transaction.v),
+                _transaction.r,
+                _transaction.s
             );
     }
 
@@ -93,39 +93,39 @@ library PalletEthereum {
     }
 
     function encodeEnumItemTransactionV2WithLegacyTransaction(
-        EnumItemTransactionV2WithLegacyTransaction memory item
+        EnumItemTransactionV2WithLegacyTransaction memory _item
     ) internal pure returns (bytes memory) {
         return
             abi.encodePacked(
-                item.index,
-                encodeLegacyTransaction(item.legacyTransaction)
+                _item.index,
+                encodeLegacyTransaction(_item.legacyTransaction)
             );
     }
 
     function buildTransactionV2(
-        uint256 nonce,
-        uint256 gasPrice,
-        uint256 gasLimit,
-        address to,
-        uint256 value,
-        uint64 smartChainId,
-        bytes memory input
+        uint256 _nonce,
+        uint256 _gasPrice,
+        uint256 _gasLimit,
+        address _to,
+        uint256 _value,
+        uint64 _smartChainId,
+        bytes memory _input
     )
         internal
         pure
         returns (EnumItemTransactionV2WithLegacyTransaction memory)
     {
         LegacyTransaction memory transaction = LegacyTransaction(
-            nonce,
-            gasPrice,
-            gasLimit,
+            _nonce,
+            _gasPrice,
+            _gasLimit,
             PalletEthereum.EnumItemTransactionActionWithAddress(
                 0, // enum index
-                to
+                _to
             ),
-            value,
-            input,
-            smartChainId * 2 + 36, // v
+            _value,
+            _input,
+            _smartChainId * 2 + 36, // v
             0x3737373737373737373737373737373737373737373737373737373737373737, // r
             0x3737373737373737373737373737373737373737373737373737373737373737 // s
         );
@@ -138,16 +138,16 @@ library PalletEthereum {
     }
 
     function buildTransactionV2ForMessageTransact(
-        uint256 gasLimit,
-        address to,
-        uint64 smartChainId,
-        bytes memory input
+        uint256 _gasLimit,
+        address _to,
+        uint64 _smartChainId,
+        bytes memory _input
     )
         internal
         pure
         returns (EnumItemTransactionV2WithLegacyTransaction memory)
     {
         // nonce and gasPrice will be set by target chain
-        return buildTransactionV2(0, 0, gasLimit, to, 0, smartChainId, input);
+        return buildTransactionV2(0, 0, _gasLimit, _to, 0, _smartChainId, _input);
     }
 }

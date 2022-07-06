@@ -26,20 +26,20 @@ abstract contract PangolinApp is BaseApp {
     }
 
     function transactOnPangoro(
-        bytes4 outboundLaneId,
-        uint32 specVersionOfPangoro,
-        address to,
-        bytes memory input,
+        bytes4 _outboundLaneId,
+        uint32 _specVersionOfPangoro,
+        address _to,
+        bytes memory _input,
         uint256 gasLimit
     ) internal returns (uint64) {
         (bytes memory call, uint64 weight) = PangoroCalls
-            .ethereum_messageTransact(gasLimit, to, input);
+            .ethereum_messageTransact(gasLimit, _to, _input);
 
         return
             sendMessage(
                 PANGORO_CHAIN_ID,
-                outboundLaneId,
-                MessagePayload(specVersionOfPangoro, weight, call)
+                _outboundLaneId,
+                MessagePayload(_specVersionOfPangoro, weight, call)
             );
     }
 }
