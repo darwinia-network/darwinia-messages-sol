@@ -19,7 +19,7 @@ library SmartChainXLib {
 
     // Send message over lane by calling the `send_message` dispatch call on
     // the source chain which is identified by the `callIndex` param.
-    function sendMessage(
+    function _sendMessage(
         address _srcDispatchPrecompileAddress,
         bytes2 _callIndex,
         bytes4 _laneId,
@@ -42,7 +42,7 @@ library SmartChainXLib {
             .encodeSendMessageCall(sendMessageCall);
 
         // dispatch the send_message call
-        dispatch(
+        _dispatch(
             _srcDispatchPrecompileAddress,
             sendMessageCallEncoded,
             "Dispatch send_message failed"
@@ -50,7 +50,7 @@ library SmartChainXLib {
     }
 
     // Build the scale encoded message for the target chain.
-    function buildMessage(
+    function _buildMessage(
         uint32 _specVersion,
         uint64 _weight,
         bytes memory _call
@@ -77,12 +77,12 @@ library SmartChainXLib {
     }
 
     // Get market fee from state storage of the substrate chain
-    function marketFee(address _srcStoragePrecompileAddress, bytes32 _storageKey)
+    function _marketFee(address _srcStoragePrecompileAddress, bytes32 _storageKey)
         internal
         view
         returns (uint256)
     {
-        bytes memory data = getStateStorage(
+        bytes memory data = _getStateStorage(
             _srcStoragePrecompileAddress,
             abi.encodePacked(_storageKey),
             "Get market fee failed"
@@ -95,7 +95,7 @@ library SmartChainXLib {
     }
 
     // Get the latest nonce from state storage
-    function latestNonce(
+    function _latestNonce(
         address _srcStoragePrecompileAddress,
         bytes32 _storageKey,
         bytes4 _laneId
@@ -111,7 +111,7 @@ library SmartChainXLib {
         );
 
         // Do get data by calling state storage precompile
-        bytes memory data = getStateStorage(
+        bytes memory data = _getStateStorage(
             _srcStoragePrecompileAddress,
             fullStorageKey,
             "Get OutboundLaneData failed"
@@ -123,7 +123,7 @@ library SmartChainXLib {
         return outboundLaneData.latestGeneratedNonce;
     }
 
-    function deriveAccountId(bytes4 _srcChainId, bytes32 _accountId)
+    function _deriveAccountId(bytes4 _srcChainId, bytes32 _accountId)
         internal
         view
         returns (bytes32)
@@ -140,7 +140,7 @@ library SmartChainXLib {
         return Hash.blake2bHash(data);
     }
 
-    function revertIfFailed(
+    function _revertIfFailed(
         bool _success,
         bytes memory _resultData,
         string memory _revertMsg
@@ -158,7 +158,7 @@ library SmartChainXLib {
     }
 
     // dispatch pallet dispatch-call
-    function dispatch(
+    function _dispatch(
         address _srcDispatchPrecompileAddress,
         bytes memory _callEncoded,
         string memory _errMsg
@@ -167,12 +167,12 @@ library SmartChainXLib {
         (bool success, bytes memory data) = _srcDispatchPrecompileAddress.call(
             _callEncoded
         );
-        revertIfFailed(success, data, _errMsg);
+        _revertIfFailed(success, data, _errMsg);
     }
 
     // derive an address from remote(source chain) sender address
     // H160(sender on the sourc chain) > AccountId32 > derived AccountId32 > H160
-    function deriveSenderFromRemote(bytes4 _srcChainId, address _srcMessageSender)
+    function _deriveSenderFromRemote(bytes4 _srcChainId, address _srcMessageSender)
         internal
         view
         returns (address)
@@ -183,7 +183,7 @@ library SmartChainXLib {
         );
 
         // AccountId32 > derived AccountId32
-        bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
+        bytes32 derivedAccountId = SmartChainXLib._deriveAccountId(
             _srcChainId,
             derivedSubstrateAddress
         );
@@ -195,7 +195,7 @@ library SmartChainXLib {
     }
 
     // Get the last delivered nonce from the state storage of the target chain's inbound lane
-    function lastDeliveredNonce(
+    function _lastDeliveredNonce(
         address _tgtStoragePrecompileAddress,
         bytes32 _storageKey,
         bytes4 _inboundLaneId
@@ -211,7 +211,7 @@ library SmartChainXLib {
         );
 
         // Do get data by calling state storage precompile
-        bytes memory data = getStateStorage(
+        bytes memory data = _getStateStorage(
             _tgtStoragePrecompileAddress,
             fullStorageKey,
             "Get InboundLaneData failed"
@@ -221,7 +221,7 @@ library SmartChainXLib {
         return CommonTypes.getLastDeliveredNonceFromInboundLaneData(data);
     }
 
-    function getStateStorage(
+    function _getStateStorage(
         address _storagePrecompileAddress,
         bytes memory _storageKey,
         string memory _failedMsg
@@ -235,7 +235,7 @@ library SmartChainXLib {
             );
         
         // TODO: Use try/catch instead for error
-        revertIfFailed(success, data, _failedMsg);
+        _revertIfFailed(success, data, _failedMsg);
 
         return abi.decode(data, (bytes));
     }
