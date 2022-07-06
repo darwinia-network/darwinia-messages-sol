@@ -23,7 +23,7 @@ describe("bridge e2e test: beacon light client", () => {
   it("import finalized header", async () => {
     const old_finalized_header = await subClient.beaconLightClient.finalized_header()
     const old_finalized_header_root = await eth2Client.get_beacon_block_root(old_finalized_header.slot)
-    const snapshot = await eth2Client.get_light_client_snapshot(old_finalized_header_root)
+    const snapshot = await eth2Client.get_bootstrap(old_finalized_header_root)
     const current_sync_committee = snapshot.current_sync_committee
     const old_period = old_finalized_header.slot.div(32).div(256)
 
@@ -87,7 +87,7 @@ describe("bridge e2e test: beacon light client", () => {
     const old_finalized_header = await subClient.beaconLightClient.finalized_header()
     const old_period = old_finalized_header.slot.div(32).div(256)
 
-    const sync_change = await eth2Client.get_sync_committee_period_update(~~old_period, ~~old_period)
+    const sync_change = await eth2Client.get_sync_committee_period_update(~~old_period, 1)
     const next_sync = sync_change[0]
     const next_sync_committee = next_sync.next_sync_committee
     const next_sync_committee_branch = await eth2Client.get_next_sync_committee_branch(old_finalized_header.slot)
@@ -105,7 +105,7 @@ describe("bridge e2e test: beacon light client", () => {
 
   it("import latest_execution_payload_state_root on execution layer", async () => {
     const finalized_header = await subClient.beaconLightClient.finalized_header()
-    const finalized_block = await eth2Client.get_beacon_block(finalized_header.root)
+    const finalized_block = await eth2Client.get_beacon_block(finalized_header.slot)
 
     const latest_execution_payload_state_root = finalized_block.message.body.execution_payload.state_root
     const latest_execution_payload_state_root_branch = await eth2Client.get_latest_execution_payload_state_root_branch(finalized_header.slot)
@@ -115,7 +115,7 @@ describe("bridge e2e test: beacon light client", () => {
       latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch.witnesses
     }
 
-    const tx = await subClient.executionLayer.import_latest_execution_payload_state_root(sync_committee_period_update)
+    const tx = await subClient.executionLayer.import_latest_execution_payload_state_root(execution_payload_state_root_update)
     const state_root = await subClient.executionLayer.state_root()
     log(state_root)
     expect(latest_execution_payload_state_root).to.eq(state_root)

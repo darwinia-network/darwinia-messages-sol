@@ -81,7 +81,7 @@ class Eth2Client {
     return data.data
   }
 
-  async get_finality_update(start_period, count) {
+  async get_finality_update() {
     const url = `${this.endopoint}/eth/v1/light_client/finality_update/`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
@@ -89,7 +89,7 @@ class Eth2Client {
     return data.data
   }
 
-  async get_optimistic_update(start_period, count) {
+  async get_optimistic_update() {
     const url = `${this.endopoint}/eth/v1/light_client/optimistic_update/`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
@@ -99,14 +99,6 @@ class Eth2Client {
 
   async get_bootstrap(block_root) {
     const url = `${this.endopoint}/eth/v1/light_client/bootstrap/${block_root}`
-    const headers = {'accept': 'application/json'}
-    const response = await fetch(url)
-    const data = await response.json()
-    return data.data
-  }
-
-  async get_latest_finalized_update() {
-    const url = `${this.endopoint}/eth/v1/lightclient/latest_finalized_head_update/`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
@@ -126,7 +118,7 @@ class Eth2Client {
   }
 
   async get_state_proof(state_id, gindex) {
-    const url = `${this.endopoint}/eth/v1/lightclient/single_proof/${state_id}?gindex=${gindex}`
+    const url = `${this.endopoint}/eth/v1/light_client/single_proof/${state_id}?gindex=${gindex}`
     const headers = {'Content-Type': 'application/octet-stream'}
     const response = await fetch(url)
 
