@@ -33,9 +33,8 @@ library PangoroCalls {
             remark
         );
 
-        // uint256 weight = remark.length.mul(1_000);
         require(
-            remark.length <= (MAX_GAS_LIMIT * WEIGHT_PER_GAS) / 1_000,
+            weight <= MAX_GAS_LIMIT * WEIGHT_PER_GAS,
             "The remark is too long"
         );
 
