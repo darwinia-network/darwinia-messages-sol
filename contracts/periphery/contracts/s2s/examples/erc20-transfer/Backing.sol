@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../../xapps/PangolinXApp.sol";
+import "../../baseapps/pangolin/PangolinApp.sol";
 import "../../calls/PangolinCalls.sol";
 
 pragma experimental ABIEncoderV2;
@@ -17,9 +17,9 @@ interface IIssuing {
     ) external;
 }
 
-contract Backing is PangolinXApp {
+contract Backing is PangolinApp {
     constructor() {
-        init();
+        _init();
     }
 
     struct LockedInfo {
@@ -52,33 +52,28 @@ contract Backing is PangolinXApp {
         address recipient,
         uint256 amount
     ) external payable {
-        // 0. transfer msg.sender's amount to this contract address
+        // Lock
         IERC20(token).transferFrom(msg.sender, address(this), amount);
 
-        // 1. Prepare the call with its weight that will be executed on the target chain
-        (bytes memory call, uint64 weight) = PangolinCalls.ethereum_messageTransact(
-            600000, 
+        // Remote issuing
+        uint64 messageNonce = _transactOnPangoro(
+            ROLI_LANE_ID, 
+            specVersion, 
             issuingContractAddress, 
             abi.encodeWithSelector(
                 IIssuing.issueFromRemote.selector,
                 mappedToken,
                 recipient,
                 amount
-            )
+            ), 
+            600000
         );
 
-        // 2. send the message
-        uint64 messageNonce = sendMessage(
-            toPangoro,
-            laneId,
-            MessagePayload(specVersion, weight, call)
-        );
-
-        // 3. record the lock info
+        // Record the lock info
         bytes memory messageId = abi.encode(laneId, messageNonce);
         lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
 
-        // 4. emit an event
+        // Emit an event
         emit TokenLocked(laneId, messageNonce, token, recipient, amount);
     }
 }
