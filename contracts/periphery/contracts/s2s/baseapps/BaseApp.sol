@@ -46,7 +46,7 @@ abstract contract BaseApp is AppShare {
     /// @param _outboundLaneId The outboundLane id
     /// @param _payload The message payload to be sent
     /// @return nonce The nonce of the message
-    function sendMessage(
+    function _sendMessage(
         bytes4 _targetChainId,
         bytes4 _outboundLaneId,
         MessagePayload memory _payload
@@ -54,21 +54,21 @@ abstract contract BaseApp is AppShare {
         BridgeConfig memory bridgeConfig = bridgeConfigs[_targetChainId];
 
         // Get the current market fee
-        uint256 fee = SmartChainXLib.marketFee(
+        uint256 fee = SmartChainXLib._marketFee(
             srcStoragePrecompileAddress,
             bridgeConfig.srcStorageKeyForMarketFee
         );
         require(msg.value >= fee, "Not enough fee to pay");
 
         // Build the encoded message to be sent
-        bytes memory message = SmartChainXLib.buildMessage(
+        bytes memory message = SmartChainXLib._buildMessage(
             _payload.specVersionOfTargetChain,
             _payload.callWeight,
             _payload.callEncoded
         );
 
         // Send the message
-        SmartChainXLib.sendMessage(
+        SmartChainXLib._sendMessage(
             srcDispatchPrecompileAddress,
             bridgeConfig.callIndexOfSendMessage,
             _outboundLaneId,
@@ -78,7 +78,7 @@ abstract contract BaseApp is AppShare {
 
         // Get nonce from storage
         return
-            SmartChainXLib.latestNonce(
+            SmartChainXLib._latestNonce(
                 srcStoragePrecompileAddress,
                 bridgeConfig.srcStorageKeyForLatestNonce,
                 _outboundLaneId

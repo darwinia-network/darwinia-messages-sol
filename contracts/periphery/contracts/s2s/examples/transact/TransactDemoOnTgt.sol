@@ -12,14 +12,14 @@ contract TransactDemo is PangoroAppOnPangolin {
     uint256 public number;
 
     constructor() public {
-        init();
+        _init();
     }
 
     function add(uint256 _value) public {
         // This function is only allowed to be called by the derived address
         // of the message sender on the source chain.
         require(
-            derivedFromRemote(msg.sender),
+            _derivedFromRemote(msg.sender),
             "msg.sender is not derived from remote"
         );
         number = number + _value;
@@ -30,7 +30,7 @@ contract TransactDemo is PangoroAppOnPangolin {
         view
         returns (uint64)
     {
-        return lastDeliveredNonceOf(inboundLaneId);
+        return _lastDeliveredNonceOf(inboundLaneId);
     }
 
     function setSrcMessageSender(address _srcMessageSender) public {

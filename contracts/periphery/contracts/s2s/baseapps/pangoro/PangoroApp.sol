@@ -11,7 +11,7 @@ pragma experimental ABIEncoderV2;
 
 // Remote call from Pangoro SmartChain
 abstract contract PangoroApp is BaseApp {
-    function init() internal {
+    function _init() internal {
         bridgeConfigs[PANGOLIN_CHAIN_ID] = BridgeConfig(
             0x1103,
             0x30d35416864cf657db51d3bc8505602f2edb70953213f33a6ef6b8a5e3ffcab2,
@@ -19,7 +19,7 @@ abstract contract PangoroApp is BaseApp {
         );
     }
 
-    function transactOnPangolin(
+    function _transactOnPangolin(
         bytes4 _outboundLaneId,
         uint32 _specVersionOfPangolin,
         address _to,
@@ -30,7 +30,7 @@ abstract contract PangoroApp is BaseApp {
             .ethereum_messageTransact(gasLimit, _to, _input);
 
         return
-            sendMessage(
+            _sendMessage(
                 PANGOLIN_CHAIN_ID,
                 _outboundLaneId,
                 MessagePayload(_specVersionOfPangolin, weight, call)

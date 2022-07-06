@@ -12,7 +12,7 @@ pragma experimental ABIEncoderV2;
 // CrabSmartChain remote call remark of Darwinia
 contract RemarkDemo is CrabApp, Ownable {
     constructor() public {
-        init();
+        _init();
     }
 
     event OutputNonce(uint256 nonce);
@@ -30,7 +30,7 @@ contract RemarkDemo is CrabApp, Ownable {
         );
 
         // 3. Send the message payload to the Darwinia Chain through a lane
-        uint64 messageNonce = sendMessage(
+        uint64 messageNonce = _sendMessage(
             DARWINIA_CHAIN_ID,
             ZERO_LANE_ID,
             payload
