@@ -29,7 +29,11 @@ library SystemCalls {
             hex"0009",
             rmk
         );
+
+        // Note: the params we used to calc weight should be set carefully.
+        // https://github.com/darwinia-network/substrate/blob/1df7fe589a94caa33e8b9290dd474613bc170416/frame/system/src/weights.rs#L68
         uint256 weight = rmk.length.mul(2_000);
+
         return (PalletSystem.encodeRemarkCall(call), uint64(weight));
     }
 }
