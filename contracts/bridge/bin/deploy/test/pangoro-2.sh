@@ -4,8 +4,8 @@ set -e
 
 export NETWORK_NAME=pangoro
 export TARGET_CHAIN=bsctest
-export ETH_RPC_URL=https://pangoro-rpc.darwinia.network
-# export ETH_RPC_URL=http://35.247.165.91:9933
+# export ETH_RPC_URL=https://pangoro-rpc.darwinia.network
+export ETH_RPC_URL=http://35.247.165.91:9933
 
 echo "ETH_FROM: ${ETH_FROM}"
 

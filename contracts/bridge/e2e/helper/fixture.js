@@ -35,7 +35,8 @@ if (target == 'local') {
   evm_bsc_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
   dvm_endpoint = "https://pangoro-rpc.darwinia.network"
   sub_endpoint = "wss://pangoro-rpc.darwinia.network"
-  beacon_endpoint = "https://lodestar-kiln.chainsafe.io"
+  // beacon_endpoint = "https://lodestar-kiln.chainsafe.io"
+  beacon_endpoint = "http://127.0.0.1:5052"
 
   ns_eth = 'sepolia'
   ns_bsc = 'bsctest'
