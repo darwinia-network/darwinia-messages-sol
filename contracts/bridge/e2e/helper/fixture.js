@@ -31,7 +31,8 @@ if (target == 'local') {
   evm_bsc_addresses = require("../../bin/addr/test/bsctest.json")
   dvm_addresses = require("../../bin/addr/test/pangoro.json")
 
-  evm_eth_endpoint = "https://rpc.sepolia.dev"
+  // evm_eth_endpoint = "https://rpc.sepolia.dev"
+  evm_eth_endpoint = "https://rpc.sepolia.org"
   evm_bsc_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
   dvm_endpoint = "https://pangoro-rpc.darwinia.network"
   sub_endpoint = "wss://pangoro-rpc.darwinia.network"
@@ -68,7 +69,7 @@ async function bootstrap() {
   const bscClient = new EthClient(evm_bsc_endpoint)
   const subClient = new SubClient(dvm_endpoint, sub_endpoint)
   const eth2Client = new Eth2Client(beacon_endpoint)
-  const bridge = new Bridge(ethClient, subClient)
+  const bridge = new Bridge(ethClient, eth2Client, subClient)
   await ethClient.init(wallets, fees, evm_eth_addresses, ns_dvm)
   await bscClient.init(wallets, fees, evm_bsc_addresses, ns_dvm)
   await subClient.init(wallets, fees, dvm_addresses, ns_eth, ns_bsc)

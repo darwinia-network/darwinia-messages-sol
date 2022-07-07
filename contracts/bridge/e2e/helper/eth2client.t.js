@@ -8,8 +8,8 @@ const log = console.log;
 (async () => {
   // const sync_change = await eth2Client.get_sync_committee_period_update(11, 1)
   // log(sync_change)
-  // const finality_update = await eth2Client.get_finality_update()
-  // log(finality_update)
+  const finality_update = await eth2Client.get_finality_update()
+  log(finality_update)
   // const optimistic_update = await eth2Client.get_optimistic_update()
   // log(optimistic_update)
   // const bootstrap = await eth2Client.get_bootstrap('0x91d8726435c53b12e360fce5579f989ea397d993ad1ab00edad8833e09796f90')
