@@ -38,7 +38,7 @@ abstract contract BaseAppOnTarget is AppShare {
     function _derivedFromRemote(address _sender) internal view returns (bool) {
         return
             _sender ==
-            SmartChainXLib._deriveSenderFromRemote(srcChainId, srcMessageSender);
+            SmartChainXLib.deriveSenderFromRemote(srcChainId, srcMessageSender);
     }
 
     function _lastDeliveredNonceOf(bytes4 _inboundLaneId)
@@ -47,7 +47,7 @@ abstract contract BaseAppOnTarget is AppShare {
         returns (uint64)
     {
         return
-            SmartChainXLib._lastDeliveredNonce(
+            SmartChainXLib.lastDeliveredNonce(
                 tgtStoragePrecompileAddress,
                 tgtStorageKeyForLastDeliveredNonce,
                 _inboundLaneId

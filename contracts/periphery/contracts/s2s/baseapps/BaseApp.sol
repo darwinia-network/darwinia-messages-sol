@@ -54,21 +54,21 @@ abstract contract BaseApp is AppShare {
         BridgeConfig memory bridgeConfig = bridgeConfigs[_targetChainId];
 
         // Get the current market fee
-        uint256 fee = SmartChainXLib._marketFee(
+        uint256 fee = SmartChainXLib.marketFee(
             srcStoragePrecompileAddress,
             bridgeConfig.srcStorageKeyForMarketFee
         );
         require(msg.value >= fee, "Not enough fee to pay");
 
         // Build the encoded message to be sent
-        bytes memory message = SmartChainXLib._buildMessage(
+        bytes memory message = SmartChainXLib.buildMessage(
             _payload.specVersionOfTargetChain,
             _payload.callWeight,
             _payload.callEncoded
         );
 
         // Send the message
-        SmartChainXLib._sendMessage(
+        SmartChainXLib.sendMessage(
             srcDispatchPrecompileAddress,
             bridgeConfig.callIndexOfSendMessage,
             _outboundLaneId,
@@ -78,7 +78,7 @@ abstract contract BaseApp is AppShare {
 
         // Get nonce from storage
         return
-            SmartChainXLib._latestNonce(
+            SmartChainXLib.latestNonce(
                 srcStoragePrecompileAddress,
                 bridgeConfig.srcStorageKeyForLatestNonce,
                 _outboundLaneId

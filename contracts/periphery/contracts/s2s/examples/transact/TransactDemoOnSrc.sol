@@ -30,7 +30,7 @@ contract TransactDemo is PangoroApp {
         );
 
         // 3. Send the message payload to the Pangolin Chain through a lane
-        _sendMessage(PANGOLIN_CHAIN_ID, ROLI_LANE_ID, payload);
+        _sendMessage(_PANGOLIN_CHAIN_ID, _PANGORO_PANGOLIN_LANE_ID, payload);
     }
 
     function remoteAdd2(
