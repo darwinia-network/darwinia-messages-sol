@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0;
 
-import "../xapps/CrabXApp.sol";
+import "../baseapps/crab/CrabApp.sol";
 import "../calls/DarwiniaCalls.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
@@ -10,12 +10,12 @@ import "@darwinia/contracts-utils/contracts/AccountId.sol";
 pragma experimental ABIEncoderV2;
 
 // CrabSmartChain remote call remark of Darwinia
-contract RemarkDemo is CrabXApp, Ownable {
-    event OutputNonce(uint256 nonce);
-
+contract RemarkDemo is CrabApp, Ownable {
     constructor() public {
         init();
     }
+
+    event OutputNonce(uint256 nonce);
 
     function remoteRemark() public payable {
         // 1. Prepare the call with its weight that will be executed on the target chain
@@ -30,8 +30,11 @@ contract RemarkDemo is CrabXApp, Ownable {
         );
 
         // 3. Send the message payload to the Darwinia Chain through a lane
-        bytes4 outboundLaneId = 0x00000000;
-        uint64 messageNonce = sendMessage(toDarwinia, outboundLaneId, payload);
+        uint64 messageNonce = sendMessage(
+            DARWINIA_CHAIN_ID,
+            DARWINIA_CRAB_LANE_ID,
+            payload
+        );
         emit OutputNonce(messageNonce);
     }
 
@@ -46,23 +49,5 @@ contract RemarkDemo is CrabXApp, Ownable {
         address _srcDispatchPrecompileAddress
     ) public onlyOwner {
         srcDispatchPrecompileAddress = _srcDispatchPrecompileAddress;
-    }
-
-    function setSrcMessageSender(address _srcMessageSender) public onlyOwner {
-        srcMessageSender = _srcMessageSender;
-    }
-
-    function setTgtStorageKeyForLastDeliveredNonce(
-        bytes32 _tgtStorageKeyForLastDeliveredNonce
-    ) public onlyOwner {
-        tgtStorageKeyForLastDeliveredNonce = _tgtStorageKeyForLastDeliveredNonce;
-    }
-
-    function setToDarwinia(BridgeConfig memory config) public onlyOwner {
-        toDarwinia = config;
-    }
-
-    function setToCrabParachain(BridgeConfig memory config) public onlyOwner {
-        toCrabParachain = config;
     }
 }

@@ -2,21 +2,18 @@
 
 pragma solidity >=0.6.0;
 
-import "../xapps/PangoroXApp.sol";
-import "../calls/PangolinCalls.sol";
+import "../../baseapps/pangoro/PangoroApp.sol";
+import "../../calls/PangolinCalls.sol";
 
 pragma experimental ABIEncoderV2;
 
 // deploy on the target chain first, then deploy on the source chain
-contract TransactDemo is PangoroXApp {
+contract TransactDemo is PangoroApp {
     constructor() public {
         init();
     }
 
-    ///////////////////////////////////////////
-    // used on the source chain
-    ///////////////////////////////////////////
-    function remoteAdd() public payable {
+    function remoteAdd1() public payable {
         // 1. Prepare the call with its weight that will be executed on the target chain
         (bytes memory call, uint64 weight) = PangolinCalls
             .ethereum_messageTransact(
@@ -33,30 +30,20 @@ contract TransactDemo is PangoroXApp {
         );
 
         // 3. Send the message payload to the Pangolin Chain through a lane
-        bytes4 outboundLaneId = 0x726f6c69;
-        sendMessage(toPangolin, outboundLaneId, payload);
+        sendMessage(PANGOLIN_CHAIN_ID, PANGORO_PANGOLIN_LANE_ID, payload);
     }
 
-    ///////////////////////////////////////////
-    // used on the target chain
-    ///////////////////////////////////////////
-    uint256 public number;
-
-    function add(uint256 _value) public {
-        // This function is only allowed to be called by the derived address
-        // of the message sender on the source chain.
-        require(
-            derivedFromRemote(msg.sender),
-            "msg.sender is not derived from remote"
+    function remoteAdd2(
+        bytes4 outboundLaneId,
+        uint32 specVersionOfPangolin,
+        address to
+    ) public payable {
+        transactOnPangolin(
+            outboundLaneId,
+            specVersionOfPangolin,
+            to,
+            hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002",
+            600000
         );
-        number = number + _value;
-    }
-
-    function getLastDeliveredNonce(bytes4 inboundLaneId)
-        public
-        view
-        returns (uint64)
-    {
-        return lastDeliveredNonceOf(inboundLaneId);
     }
 }
