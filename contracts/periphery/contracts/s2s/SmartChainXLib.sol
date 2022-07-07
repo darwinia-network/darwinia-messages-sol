@@ -20,21 +20,21 @@ library SmartChainXLib {
     // Send message over lane by calling the `send_message` dispatch call on
     // the source chain which is identified by the `callIndex` param.
     function sendMessage(
-        address srcDispatchPrecompileAddress,
-        bytes2 callIndex,
-        bytes4 laneId,
-        uint256 deliveryAndDispatchFee,
-        bytes memory message
+        address _srcDispatchPrecompileAddress,
+        bytes2 _callIndex,
+        bytes4 _laneId,
+        uint256 _deliveryAndDispatchFee,
+        bytes memory _message
     ) internal {
         // the pricision in contract is 18, and in pallet is 9, transform the fee value
-        uint256 feeOfPalletPrecision = deliveryAndDispatchFee / (10**9);
+        uint256 feeOfPalletPrecision = _deliveryAndDispatchFee / (10**9);
 
         // encode send_message call
         PalletBridgeMessages.SendMessageCall
             memory sendMessageCall = PalletBridgeMessages.SendMessageCall(
-                callIndex,
-                laneId,
-                message,
+                _callIndex,
+                _laneId,
+                _message,
                 uint128(feeOfPalletPrecision)
             );
 
@@ -43,7 +43,7 @@ library SmartChainXLib {
 
         // dispatch the send_message call
         dispatch(
-            srcDispatchPrecompileAddress,
+            _srcDispatchPrecompileAddress,
             sendMessageCallEncoded,
             "Dispatch send_message failed"
         );
@@ -51,9 +51,9 @@ library SmartChainXLib {
 
     // Build the scale encoded message for the target chain.
     function buildMessage(
-        uint32 specVersion,
-        uint64 weight,
-        bytes memory call
+        uint32 _specVersion,
+        uint64 _weight,
+        bytes memory _call
     ) internal view returns (bytes memory) {
         CommonTypes.EnumItemWithAccountId memory origin = CommonTypes
             .EnumItemWithAccountId(
@@ -67,24 +67,24 @@ library SmartChainXLib {
         return
             CommonTypes.encodeMessage(
                 CommonTypes.Message(
-                    specVersion,
-                    weight,
+                    _specVersion,
+                    _weight,
                     origin,
                     dispatchFeePayment,
-                    call
+                    _call
                 )
             );
     }
 
     // Get market fee from state storage of the substrate chain
-    function marketFee(address srcStoragePrecompileAddress, bytes32 storageKey)
+    function marketFee(address _srcStoragePrecompileAddress, bytes32 _storageKey)
         internal
         view
         returns (uint256)
     {
         bytes memory data = getStateStorage(
-            srcStoragePrecompileAddress,
-            abi.encodePacked(storageKey),
+            _srcStoragePrecompileAddress,
+            abi.encodePacked(_storageKey),
             "Get market fee failed"
         );
 
@@ -96,23 +96,23 @@ library SmartChainXLib {
 
     // Get the latest nonce from state storage
     function latestNonce(
-        address srcStoragePrecompileAddress,
-        bytes32 storageKey,
-        bytes4 laneId
+        address _srcStoragePrecompileAddress,
+        bytes32 _storageKey,
+        bytes4 _laneId
     ) internal view returns (uint64) {
         // 1. Get `OutboundLaneData` from storage
         // Full storage key == storageKey + Blake2_128Concat(laneId)
         bytes memory hashedLaneId = Hash.blake2b128Concat(
-            abi.encodePacked(laneId)
+            abi.encodePacked(_laneId)
         );
         bytes memory fullStorageKey = abi.encodePacked(
-            storageKey,
+            _storageKey,
             hashedLaneId
         );
 
         // Do get data by calling state storage precompile
         bytes memory data = getStateStorage(
-            srcStoragePrecompileAddress,
+            _srcStoragePrecompileAddress,
             fullStorageKey,
             "Get OutboundLaneData failed"
         );
@@ -123,7 +123,7 @@ library SmartChainXLib {
         return outboundLaneData.latestGeneratedNonce;
     }
 
-    function deriveAccountId(bytes4 srcChainId, bytes32 accountId)
+    function deriveAccountId(bytes4 _srcChainId, bytes32 _accountId)
         internal
         view
         returns (bytes32)
@@ -134,57 +134,57 @@ library SmartChainXLib {
         bytes memory data = abi.encodePacked(
             prefixLength,
             account_derivation_prefix,
-            srcChainId,
-            accountId
+            _srcChainId,
+            _accountId
         );
         return Hash.blake2bHash(data);
     }
 
     function revertIfFailed(
-        bool success,
-        bytes memory resultData,
-        string memory revertMsg
+        bool _success,
+        bytes memory _resultData,
+        string memory _revertMsg
     ) internal pure {
-        if (!success) {
-            if (resultData.length > 0) {
+        if (!_success) {
+            if (_resultData.length > 0) {
                 assembly {
-                    let resultDataSize := mload(resultData)
-                    revert(add(32, resultData), resultDataSize)
+                    let resultDataSize := mload(_resultData)
+                    revert(add(32, _resultData), resultDataSize)
                 }
             } else {
-                revert(revertMsg);
+                revert(_revertMsg);
             }
         }
     }
 
     // dispatch pallet dispatch-call
     function dispatch(
-        address srcDispatchPrecompileAddress,
-        bytes memory callEncoded,
-        string memory errMsg
+        address _srcDispatchPrecompileAddress,
+        bytes memory _callEncoded,
+        string memory _errMsg
     ) internal {
         // Dispatch the call
-        (bool success, bytes memory data) = srcDispatchPrecompileAddress.call(
-            callEncoded
+        (bool success, bytes memory data) = _srcDispatchPrecompileAddress.call(
+            _callEncoded
         );
-        revertIfFailed(success, data, errMsg);
+        revertIfFailed(success, data, _errMsg);
     }
 
     // derive an address from remote(source chain) sender address
     // H160(sender on the sourc chain) > AccountId32 > derived AccountId32 > H160
-    function deriveSenderFromRemote(bytes4 srcChainId, address srcMessageSender)
+    function deriveSenderFromRemote(bytes4 _srcChainId, address _srcMessageSender)
         internal
         view
         returns (address)
     {
         // H160(sender on the sourc chain) > AccountId32
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
-            srcMessageSender
+            _srcMessageSender
         );
 
         // AccountId32 > derived AccountId32
-        bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
-            srcChainId,
+        bytes32 derivedAccountId = deriveAccountId(
+            _srcChainId,
             derivedSubstrateAddress
         );
 
@@ -196,23 +196,23 @@ library SmartChainXLib {
 
     // Get the last delivered nonce from the state storage of the target chain's inbound lane
     function lastDeliveredNonce(
-        address tgtStoragePrecompileAddress,
-        bytes32 storageKey,
-        bytes4 inboundLaneId
+        address _tgtStoragePrecompileAddress,
+        bytes32 _storageKey,
+        bytes4 _inboundLaneId
     ) internal view returns (uint64) {
         // 1. Get `inboundLaneData` from storage
         // Full storage key == storageKey + Blake2_128Concat(laneId)
         bytes memory hashedLaneId = Hash.blake2b128Concat(
-            abi.encodePacked(inboundLaneId)
+            abi.encodePacked(_inboundLaneId)
         );
         bytes memory fullStorageKey = abi.encodePacked(
-            storageKey,
+            _storageKey,
             hashedLaneId
         );
 
         // Do get data by calling state storage precompile
         bytes memory data = getStateStorage(
-            tgtStoragePrecompileAddress,
+            _tgtStoragePrecompileAddress,
             fullStorageKey,
             "Get InboundLaneData failed"
         );
@@ -222,20 +222,20 @@ library SmartChainXLib {
     }
 
     function getStateStorage(
-        address storagePrecompileAddress,
-        bytes memory storageKey,
-        string memory failedMsg
+        address _storagePrecompileAddress,
+        bytes memory _storageKey,
+        string memory _failedMsg
     ) internal view returns (bytes memory) {
-        (bool success, bytes memory data) = storagePrecompileAddress
+        (bool success, bytes memory data) = _storagePrecompileAddress
             .staticcall(
                 abi.encodeWithSelector(
                     IStateStorage.state_storage.selector,
-                    storageKey
+                    _storageKey
                 )
             );
         
         // TODO: Use try/catch instead for error
-        revertIfFailed(success, data, failedMsg);
+        revertIfFailed(success, data, _failedMsg);
 
         return abi.decode(data, (bytes));
     }

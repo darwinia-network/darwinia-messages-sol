@@ -42,16 +42,16 @@ abstract contract BaseApp is AppShare {
     ////////////////////////////////////
 
     /// @notice Send message over lane id
-    /// @param targetChainId The target chain id
-    /// @param outboundLaneId The outboundLane id
-    /// @param payload The message payload to be sent
+    /// @param _targetChainId The target chain id
+    /// @param _outboundLaneId The outboundLane id
+    /// @param _payload The message payload to be sent
     /// @return nonce The nonce of the message
-    function sendMessage(
-        bytes4 targetChainId,
-        bytes4 outboundLaneId,
-        MessagePayload memory payload
+    function _sendMessage(
+        bytes4 _targetChainId,
+        bytes4 _outboundLaneId,
+        MessagePayload memory _payload
     ) internal returns (uint64) {
-        BridgeConfig memory bridgeConfig = bridgeConfigs[targetChainId];
+        BridgeConfig memory bridgeConfig = bridgeConfigs[_targetChainId];
 
         // Get the current market fee
         uint256 fee = SmartChainXLib.marketFee(
@@ -62,16 +62,16 @@ abstract contract BaseApp is AppShare {
 
         // Build the encoded message to be sent
         bytes memory message = SmartChainXLib.buildMessage(
-            payload.specVersionOfTargetChain,
-            payload.callWeight,
-            payload.callEncoded
+            _payload.specVersionOfTargetChain,
+            _payload.callWeight,
+            _payload.callEncoded
         );
 
         // Send the message
         SmartChainXLib.sendMessage(
             srcDispatchPrecompileAddress,
             bridgeConfig.callIndexOfSendMessage,
-            outboundLaneId,
+            _outboundLaneId,
             msg.value,
             message
         );
@@ -81,7 +81,7 @@ abstract contract BaseApp is AppShare {
             SmartChainXLib.latestNonce(
                 srcStoragePrecompileAddress,
                 bridgeConfig.srcStorageKeyForLatestNonce,
-                outboundLaneId
+                _outboundLaneId
             );
     }
 }

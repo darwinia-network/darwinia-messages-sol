@@ -19,21 +19,21 @@ library PangolinCalls {
 
     uint64 public constant SMART_CHAIN_ID = 43;
 
-    function system_remark(bytes memory remark)
+    function system_remark(bytes memory _remark)
         internal
         pure
         returns (bytes memory, uint64)
     {
-        return SystemCalls.remark(remark);
+        return SystemCalls.remark(_remark);
     }
 
-    function system_remarkWithEvent(bytes memory remark)
+    function system_remarkWithEvent(bytes memory _remark)
         internal
         pure
         returns (bytes memory, uint64)
     {
         (bytes memory call, uint64 weight) = SystemCalls.remarkWithEvent(
-            remark
+            _remark
         );
 
         require(
@@ -45,11 +45,11 @@ library PangolinCalls {
     }
 
     function ethereum_messageTransact(
-        uint256 gasLimit,
-        address to,
-        bytes memory input
+        uint256 _gasLimit,
+        address _to,
+        bytes memory _input
     ) internal pure returns (bytes memory, uint64) {
-        require(gasLimit <= MAX_GAS_LIMIT, "Gas limit is too high");
+        require(_gasLimit <= MAX_GAS_LIMIT, "Gas limit is too high");
 
         PalletEthereum.MessageTransactCall memory call = PalletEthereum
             .MessageTransactCall(
@@ -57,13 +57,13 @@ library PangolinCalls {
                 0x2901,
                 // the evm transaction to transact
                 PalletEthereum.buildTransactionV2ForMessageTransact(
-                    gasLimit,
-                    to,
+                    _gasLimit,
+                    _to,
                     SMART_CHAIN_ID,
-                    input
+                    _input
                 )
             );
-        uint256 weight = gasLimit * WEIGHT_PER_GAS;
+        uint256 weight = _gasLimit * WEIGHT_PER_GAS;
         return (PalletEthereum.encodeMessageTransactCall(call), uint64(weight));
     }
 }

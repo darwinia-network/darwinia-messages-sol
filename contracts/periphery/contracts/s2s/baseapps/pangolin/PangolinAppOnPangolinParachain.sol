@@ -7,8 +7,8 @@ import "../BaseAppOnTarget.sol";
 pragma experimental ABIEncoderV2;
 
 abstract contract PangolinAppOnPangolinParachain is BaseAppOnTarget {
-    function init() internal {
-        srcChainId = PANGOLIN_CHAIN_ID;
+    function _init() internal {
+        srcChainId = _PANGOLIN_CHAIN_ID;
         tgtStorageKeyForLastDeliveredNonce = 0xd86d7f611f4d004e041fda08f633f101e5f83cf83f2127eb47afdc35d6e43fab;
     }
 }

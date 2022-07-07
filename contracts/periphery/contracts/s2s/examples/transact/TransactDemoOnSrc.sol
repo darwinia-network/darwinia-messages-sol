@@ -10,7 +10,7 @@ pragma experimental ABIEncoderV2;
 // deploy on the target chain first, then deploy on the source chain
 contract TransactDemo is PangoroApp {
     constructor() public {
-        init();
+        _init();
     }
 
     function remoteAdd1() public payable {
@@ -30,7 +30,7 @@ contract TransactDemo is PangoroApp {
         );
 
         // 3. Send the message payload to the Pangolin Chain through a lane
-        sendMessage(PANGOLIN_CHAIN_ID, PANGORO_PANGOLIN_LANE_ID, payload);
+        _sendMessage(_PANGOLIN_CHAIN_ID, _PANGORO_PANGOLIN_LANE_ID, payload);
     }
 
     function remoteAdd2(
@@ -38,7 +38,7 @@ contract TransactDemo is PangoroApp {
         uint32 specVersionOfPangolin,
         address to
     ) public payable {
-        transactOnPangolin(
+        _transactOnPangolin(
             outboundLaneId,
             specVersionOfPangolin,
             to,

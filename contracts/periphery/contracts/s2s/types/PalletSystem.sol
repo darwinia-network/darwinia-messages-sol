@@ -10,15 +10,15 @@ library PalletSystem {
         bytes remark;
     }
 
-    function encodeRemarkCall(RemarkCall memory call)
+    function encodeRemarkCall(RemarkCall memory _call)
         internal
         pure
         returns (bytes memory)
     {
         return
             abi.encodePacked(
-                call.callIndex,
-                ScaleCodec.encodeBytes(call.remark)
+                _call.callIndex,
+                ScaleCodec.encodeBytes(_call.remark)
             );
     }
 }
