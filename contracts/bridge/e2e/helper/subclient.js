@@ -45,6 +45,7 @@ class SubClient {
     this.signer = wallets[0].connect(this.provider)
     this.beaconLightClient = beaconLightClient.connect(this.signer)
     this.bscLightClient = bscLightClient.connect(this.signer)
+    this.executionLayer = executionLayer.connect(this.signer)
   }
 
   chill() {
