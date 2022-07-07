@@ -7,8 +7,6 @@ import "../calls/DarwiniaCalls.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
-pragma experimental ABIEncoderV2;
-
 // CrabSmartChain remote call remark of Darwinia
 contract RemarkDemo is CrabApp, Ownable {
     constructor() public {
