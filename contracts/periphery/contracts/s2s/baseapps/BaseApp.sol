@@ -53,6 +53,10 @@ abstract contract BaseApp is AppShare {
     ) internal returns (uint64) {
         BridgeConfig memory bridgeConfig = bridgeConfigs[_targetChainId];
 
+        if (bridgeConfig.callIndexOfSendMessage == bytes2(0x0)) {
+            revert("Unsupported target chain");
+        }
+
         // Get the current market fee
         uint256 fee = SmartChainXLib.marketFee(
             srcStoragePrecompileAddress,
@@ -84,4 +88,34 @@ abstract contract BaseApp is AppShare {
                 _outboundLaneId
             );
     }
+
+    function _remoteTransact(
+        bytes4 _tgtChainId,
+        bytes4 _outboundLaneId,
+        uint32 _tgtSpecVersion,
+        address _to,
+        bytes memory _input,
+        uint256 _gasLimit
+    ) internal returns (uint64) {
+        (bytes memory call, uint64 weight) = _buildMessageTransactCall(
+            _tgtChainId,
+            _to,
+            _input,
+            _gasLimit
+        );
+
+        return
+            _sendMessage(
+                _tgtChainId,
+                _outboundLaneId,
+                MessagePayload(_tgtSpecVersion, weight, call)
+            );
+    }
+
+    function _buildMessageTransactCall(
+        bytes4 _targetChainId,
+        address _to,
+        bytes memory _input,
+        uint256 _gasLimit
+    ) internal pure virtual returns (bytes memory, uint64);
 }

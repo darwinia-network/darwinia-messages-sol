@@ -8,7 +8,7 @@ import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
 pragma experimental ABIEncoderV2;
 
-// Remote call from Crab SmartChain 
+// Remote call from Crab SmartChain
 abstract contract CrabApp is BaseApp {
     function _init() internal {
         bridgeConfigs[_DARWINIA_CHAIN_ID] = BridgeConfig(
@@ -22,5 +22,14 @@ abstract contract CrabApp is BaseApp {
             0x2158e364c657788d669f15db7687496b2edb70953213f33a6ef6b8a5e3ffcab2,
             0xef3be8173575ddc682e1a72d92ce0b2696c246acb9b55077390e3ca723a0ca1f
         );
+    }
+
+    function _buildMessageTransactCall(
+        bytes4,
+        address,
+        bytes memory,
+        uint256
+    ) internal pure override returns (bytes memory, uint64) {
+        revert("Unsupported target chain");
     }
 }
