@@ -7,6 +7,7 @@ const LANE_NONCE_SLOT="0x0000000000000000000000000000000000000000000000000000000
 const LANE_MESSAGE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000002"
 
 const get_storage_proof = async (client, addr, storageKeys, blockNumber = 'latest') => {
+  blockNumber = '0x1635e7'
   return await client.provider.send("eth_getProof",
     [
       addr,
@@ -166,9 +167,11 @@ class Bridge {
       signature_slot: sync_aggregate_slot
     }
 
-    // // gasLimit: 10000000,
-    // // gasPrice: 1300000000
-    const tx = await this.subClient.beaconLightClient.import_finalized_header(finalized_header_update)
+    const tx = await this.subClient.beaconLightClient.import_finalized_header(finalized_header_update,
+      {
+        gasPrice: 1000000000,
+        gasLimit: 50000000
+      })
 
     const new_finalized_header = await this.subClient.beaconLightClient.finalized_header()
     console.log(new_finalized_header)
@@ -215,6 +218,7 @@ class Bridge {
     const nonce = await this.ethClient.outbound.outboundLaneNonce()
     const begin = nonce.latest_received_nonce.add(1)
     const end = nonce.latest_generated_nonce
+    console.log(nonce)
     const proof = await generate_storage_proof(this.ethClient, begin.toHexString(), end.toHexString())
     return await this.subClient.eth.inbound.receive_messages_proof(data, proof, { gasLimit: 6000000 })
   }

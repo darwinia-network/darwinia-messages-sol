@@ -10,7 +10,7 @@ const log = console.log
 const LANE_IDENTIFY_SLOT="0x0000000000000000000000000000000000000000000000000000000000000000"
 const LANE_NONCE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000001"
 const LANE_MESSAGE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000002"
-const overrides = { value: ethers.utils.parseEther("0.0001") }
+const overrides = { value: ethers.utils.parseEther("0.0001"), gasPrice: 1000000000 }
 let ethClient, subClient, bridge
 let signer, source
 const target = "0x0000000000000000000000000000000000000000"
@@ -63,14 +63,15 @@ describe("bridge e2e test: verify message/storage proof", () => {
       ethers.utils.parseEther("0.0001"),
       {
         value: ethers.utils.parseEther("0.0001"),
+        gasPrice: 1000000000,
         gasLimit: 300000
       }
     )
   })
 
-  // it("deposit", async () => {
-  //   await bridge.deposit()
-  // })
+  it.skip("deposit", async () => {
+    await bridge.deposit()
+  })
 
   it.skip("0.1", async function () {
     const nonce = await ethClient.outbound.outboundLaneNonce()
