@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "../../interfaces/IERC20.sol";
 import "../../baseapps/pangolin/PangolinAppOnPangoro.sol";
-import "../../SmartChainXLib.sol";
 
 contract Issuing is PangolinAppOnPangoro {
     constructor() {
@@ -25,10 +24,12 @@ contract Issuing is PangolinAppOnPangoro {
         );
 
         // Issue
-        (bool success, bytes memory data) = mappedToken.call(
+        (bool success,) = mappedToken.call(
             abi.encodeWithSelector(IERC20.mint.selector, recipient, amount)
         );
-        SmartChainXLib.revertIfFailed(success, data, "Issue failed");
+        if (!success) {
+            revert("Issue failed");
+        }
 
         // Emit an event
         emit TokenIssued(mappedToken, recipient, amount);
