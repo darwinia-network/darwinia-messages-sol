@@ -20,7 +20,7 @@ contract Issuing is PangolinAppOnPangoro {
     ) external {
         // Check that the sender is authorized
         require(
-            _derivedFromRemote(msg.sender), 
+            _isDerivedFromRemote(msg.sender), 
             "msg.sender is not derived from remote"
         );
 
@@ -28,7 +28,7 @@ contract Issuing is PangolinAppOnPangoro {
         (bool success, bytes memory data) = mappedToken.call(
             abi.encodeWithSelector(IERC20.mint.selector, recipient, amount)
         );
-        SmartChainXLib._revertIfFailed(success, data, "Issue failed");
+        SmartChainXLib.revertIfFailed(success, data, "Issue failed");
 
         // Emit an event
         emit TokenIssued(mappedToken, recipient, amount);

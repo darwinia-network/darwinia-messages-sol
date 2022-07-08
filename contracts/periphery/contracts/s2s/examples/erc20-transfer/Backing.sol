@@ -2,12 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../baseapps/pangolin/PangolinApp.sol";
-import "../../calls/PangolinCalls.sol";
-
-pragma experimental ABIEncoderV2;
 
 interface IIssuing {
     function issueFromRemote(
@@ -21,15 +17,6 @@ contract Backing is PangolinApp {
     constructor() {
         _init();
     }
-
-    struct LockedInfo {
-        address token;
-        address sender;
-        uint256 amount;
-    }
-
-    // (messageId => lockedInfo)
-    mapping(bytes => LockedInfo) public lockMessages;
 
     event TokenLocked(
         bytes4 laneId,
@@ -55,8 +42,9 @@ contract Backing is PangolinApp {
         IERC20(token).transferFrom(msg.sender, address(this), amount);
 
         // Remote issuing
-        uint64 messageNonce = _transactOnPangoro(
-            ROLI_LANE_ID, 
+        uint64 messageNonce = _remoteTransact(
+            _PANGORO_CHAIN_ID,
+            _PANGORO_PANGOLIN_LANE_ID, 
             specVersionOfPangoro, 
             issuingContractAddress, 
             abi.encodeWithSelector(
@@ -68,11 +56,7 @@ contract Backing is PangolinApp {
             600000
         );
 
-        // Record the lock info
-        bytes memory messageId = abi.encode(ROLI_LANE_ID, messageNonce);
-        lockMessages[messageId] = LockedInfo(token, msg.sender, amount);
-
         // Emit an event
-        emit TokenLocked(ROLI_LANE_ID, messageNonce, token, recipient, amount);
+        emit TokenLocked(_PANGORO_PANGOLIN_LANE_ID, messageNonce, token, recipient, amount);
     }
 }
