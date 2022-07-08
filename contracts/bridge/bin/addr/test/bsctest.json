@@ -1,9 +1,9 @@
 {
   "DEPLOYER": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
   "pangoro": {
-    "SimpleFeeMarket": "0x6d22097fFCb7c20a20cf9c4136b1c6Bd08c7d978",
-    "DarwiniaLightClient": "0xCe38c833424561014Aa43eE1a165730FD87826A5",
-    "OutboundLane": "0xBCfc761c28029517Bc47AF499980410121EDA660",
-    "InboundLane": "0x0ed177839a7694536cd914cF653eA838a4286dF9"
+    "SimpleFeeMarket": "0xBcE38E2dbF0C44E3ef243C7cb2Bd6Fb0b460be9d",
+    "DarwiniaLightClient": "0x8Cc101741204a973b4BB03ED05Ad6c93BFA15DD0",
+    "OutboundLane": "0x2cF60328b05dd4Dc8D12E0719309F041cc590Fea",
+    "InboundLane": "0x77142B0aB381A0653536af15125ba8afFd5136be"
   }
 }

@@ -69,7 +69,6 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
   const laneIdProof = await get_storage_proof(client, addr, [LANE_IDENTIFY_SLOT], block_number)
   const laneNonceProof = await get_storage_proof(client, addr, [LANE_NONCE_SLOT], block_number)
   const keys = build_message_keys(begin, end)
-  console.log(keys)
   const laneMessageProof = await get_storage_proof(client, addr, keys, block_number)
   const proof = {
     "accountProof": toHexString(rlp.encode(laneIdProof.accountProof)),
@@ -77,7 +76,6 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
     "laneNonceProof": toHexString(rlp.encode(laneNonceProof.storageProof[0].proof)),
     "laneMessagesProof": laneMessageProof.storageProof.map((p) => toHexString(rlp.encode(p.proof))),
   }
-  console.log(proof)
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(bytes accountProof, bytes laneIDProof, bytes laneNonceProof, bytes[] laneMessagesProof)"
     ], [ proof ])
@@ -190,6 +188,23 @@ class Bridge {
 
     const new_finalized_header = await this.subClient.beaconLightClient.finalized_header()
     console.log(new_finalized_header)
+  }
+
+  async relay_eth_execution_payload() {
+    const finalized_header = await this.subClient.beaconLightClient.finalized_header()
+    const finalized_block = await this.eth2Client.get_beacon_block(finalized_header.slot)
+
+    const latest_execution_payload_state_root = finalized_block.message.body.execution_payload.state_root
+    const latest_execution_payload_state_root_branch = await this.eth2Client.get_latest_execution_payload_state_root_branch(finalized_header.slot)
+
+    const execution_payload_state_root_update = {
+      latest_execution_payload_state_root,
+      latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch.witnesses
+    }
+
+    const tx = await this.subClient.executionLayer.import_latest_execution_payload_state_root(execution_payload_state_root_update)
+    const state_root = await this.subClient.executionLayer.state_root()
+    console.log(state_root)
   }
 
   async relay_sub_header() {
