@@ -25,7 +25,7 @@ describe("bridge e2e test: beacon light client", () => {
     const old_period = old_finalized_header.slot.div(32).div(256)
 
     let attested_header_slot = old_finalized_header.slot.add(96)
-    // let attested_header_slot = old_finalized_header.slot.add(6464)
+    // let attested_header_slot = old_finalized_header.slot.add(3392)
     let attested_header = await eth2Client.get_header(attested_header_slot)
     while (!attested_header) {
       attested_header_slot = attested_header_slot.add(1)

@@ -36,6 +36,7 @@ contract ExecutionLayer is MerkleProof, StorageVerifier {
     }
 
     function import_latest_execution_payload_state_root(ExecutionPayloadStateRootUpdate calldata update) external payable {
+        require(latest_execution_payload_state_root != update.latest_execution_payload_state_root, "same");
         require(verify_latest_execution_payload_state_root(
             update.latest_execution_payload_state_root,
             update.latest_execution_payload_state_root_branch),

@@ -7,7 +7,6 @@ const LANE_NONCE_SLOT="0x0000000000000000000000000000000000000000000000000000000
 const LANE_MESSAGE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000002"
 
 const get_storage_proof = async (client, addr, storageKeys, blockNumber = 'latest') => {
-  blockNumber = '0x1635e7'
   return await client.provider.send("eth_getProof",
     [
       addr,
@@ -50,12 +49,12 @@ const generate_storage_delivery_proof = async (client, front, end) => {
     ], [ proof ])
 }
 
-const generate_storage_proof = async (client, begin, end) => {
+const generate_storage_proof = async (client, begin, end, block_number) => {
   const addr = client.outbound.address
-  const laneIdProof = await get_storage_proof(client, addr, [LANE_IDENTIFY_SLOT])
-  const laneNonceProof = await get_storage_proof(client, addr, [LANE_NONCE_SLOT])
+  const laneIdProof = await get_storage_proof(client, addr, [LANE_IDENTIFY_SLOT], block_number)
+  const laneNonceProof = await get_storage_proof(client, addr, [LANE_NONCE_SLOT], block_number)
   const keys = build_message_keys(begin, end)
-  const laneMessageProof = await get_storage_proof(client, addr, keys)
+  const laneMessageProof = await get_storage_proof(client, addr, keys, block_number)
   const proof = {
     "accountProof": toHexString(rlp.encode(laneIdProof.accountProof)),
     "laneIDProof": toHexString(rlp.encode(laneIdProof.storageProof[0].proof)),
@@ -170,7 +169,7 @@ class Bridge {
     const tx = await this.subClient.beaconLightClient.import_finalized_header(finalized_header_update,
       {
         gasPrice: 1000000000,
-        gasLimit: 50000000
+        gasLimit: 5000000
       })
 
     const new_finalized_header = await this.subClient.beaconLightClient.finalized_header()
@@ -218,8 +217,11 @@ class Bridge {
     const nonce = await this.ethClient.outbound.outboundLaneNonce()
     const begin = nonce.latest_received_nonce.add(1)
     const end = nonce.latest_generated_nonce
-    console.log(nonce)
-    const proof = await generate_storage_proof(this.ethClient, begin.toHexString(), end.toHexString())
+    const finalized_header = await this.subClient.beaconLightClient.finalized_header()
+    const finality_block = await this.eth2Client.get_beacon_block(finalized_header.slot)
+    console.log(finality_block)
+    const execution_layer_block_number = finality_block.message.body.execution_payload.block_number
+    const proof = await generate_storage_proof(this.ethClient, begin.toHexString(), end.toHexString(), execution_layer_block_number)
     return await this.subClient.eth.inbound.receive_messages_proof(data, proof, { gasLimit: 6000000 })
   }
 
