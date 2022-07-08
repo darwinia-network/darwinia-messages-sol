@@ -1,0 +1,6 @@
+{
+  "plugins": [],
+  "rules": {
+    "private-vars-leading-underscore": "warn"
+  }
+}

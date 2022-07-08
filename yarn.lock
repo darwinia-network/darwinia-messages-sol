@@ -91,9 +91,7 @@
 
 "@darwinia/contracts-periphery@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/periphery":
   "resolved" "file:contracts/periphery"
-  "version" "1.0.0"
-  dependencies:
-    "@openzeppelin/contracts" "^4.6.0"
+  "version" "1.0.3"
 
 "@darwinia/contracts-tokens@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/tokens":
   "resolved" "file:contracts/tokens"
@@ -103,7 +101,7 @@
 
 "@darwinia/contracts-utils@^1.0.0", "@darwinia/contracts-utils@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/utils":
   "resolved" "file:contracts/utils"
-  "version" "1.0.0"
+  "version" "1.0.3"
 
 "@darwinia/contracts-verify@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/verify":
   "resolved" "file:contracts/verify"
@@ -918,11 +916,6 @@
     "strip-ansi" "^6.0.0"
     "widest-line" "^3.1.0"
     "wrap-ansi" "^4.0.0"
-
-"@openzeppelin/contracts@^4.6.0":
-  "integrity" "sha512-8vi4d50NNya/bQqCmaVzvHNmwHvS0OBKb7HNtuNwEE3scXWrP31fKQoGxNMT+KbzmrNZzatE3QK5p2gFONI/hg=="
-  "resolved" "https://registry.npmjs.org/@openzeppelin/contracts/-/contracts-4.6.0.tgz"
-  "version" "4.6.0"
 
 "@polkadot/api-augment@7.4.1":
   "integrity" "sha512-wpOOFJWN2RZwaejcpWWfmskprpB9mmn9ujHfMtubeECTZn42e72bsAGeUuxKcjItNo4zgVpG1r53xjvZus9cyw=="

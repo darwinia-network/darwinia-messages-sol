@@ -30,15 +30,15 @@ abstract contract BaseAppOnTarget is AppShare {
     ///
     ///    // Add this 'require' to your function on the target chain which will be called
     ///    require(
-    ///         _derivedFromRemote(msg.sender),
+    ///         _isDerivedFromRemote(msg.sender),
     ///        "msg.sender is not derived from remote"
     ///    );
     ///
-    /// @return bool Does the sender address authorized?
-    function _derivedFromRemote(address _sender) internal view returns (bool) {
+    /// @return bool Is the sender address authorized?
+    function _isDerivedFromRemote(address _sender) internal view returns (bool) {
         return
             _sender ==
-            SmartChainXLib._deriveSenderFromRemote(srcChainId, srcMessageSender);
+            SmartChainXLib.deriveSenderFromRemote(srcChainId, srcMessageSender);
     }
 
     function _lastDeliveredNonceOf(bytes4 _inboundLaneId)
@@ -47,7 +47,7 @@ abstract contract BaseAppOnTarget is AppShare {
         returns (uint64)
     {
         return
-            SmartChainXLib._lastDeliveredNonce(
+            SmartChainXLib.lastDeliveredNonce(
                 tgtStoragePrecompileAddress,
                 tgtStorageKeyForLastDeliveredNonce,
                 _inboundLaneId

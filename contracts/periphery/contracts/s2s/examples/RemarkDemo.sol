@@ -7,8 +7,6 @@ import "../calls/DarwiniaCalls.sol";
 import "@darwinia/contracts-utils/contracts/Ownable.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
-pragma experimental ABIEncoderV2;
-
 // CrabSmartChain remote call remark of Darwinia
 contract RemarkDemo is CrabApp, Ownable {
     constructor() public {
@@ -31,8 +29,8 @@ contract RemarkDemo is CrabApp, Ownable {
 
         // 3. Send the message payload to the Darwinia Chain through a lane
         uint64 messageNonce = _sendMessage(
-            DARWINIA_CHAIN_ID,
-            ZERO_LANE_ID,
+            _DARWINIA_CHAIN_ID,
+            _DARWINIA_CRAB_LANE_ID,
             payload
         );
         emit OutputNonce(messageNonce);

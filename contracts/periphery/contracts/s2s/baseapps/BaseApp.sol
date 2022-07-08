@@ -53,22 +53,26 @@ abstract contract BaseApp is AppShare {
     ) internal returns (uint64) {
         BridgeConfig memory bridgeConfig = bridgeConfigs[_targetChainId];
 
+        if (bridgeConfig.callIndexOfSendMessage == bytes2(0x0)) {
+            revert("Unsupported target chain");
+        }
+
         // Get the current market fee
-        uint256 fee = SmartChainXLib._marketFee(
+        uint256 fee = SmartChainXLib.marketFee(
             srcStoragePrecompileAddress,
             bridgeConfig.srcStorageKeyForMarketFee
         );
         require(msg.value >= fee, "Not enough fee to pay");
 
         // Build the encoded message to be sent
-        bytes memory message = SmartChainXLib._buildMessage(
+        bytes memory message = SmartChainXLib.buildMessage(
             _payload.specVersionOfTargetChain,
             _payload.callWeight,
             _payload.callEncoded
         );
 
         // Send the message
-        SmartChainXLib._sendMessage(
+        SmartChainXLib.sendMessage(
             srcDispatchPrecompileAddress,
             bridgeConfig.callIndexOfSendMessage,
             _outboundLaneId,
@@ -78,10 +82,40 @@ abstract contract BaseApp is AppShare {
 
         // Get nonce from storage
         return
-            SmartChainXLib._latestNonce(
+            SmartChainXLib.latestNonce(
                 srcStoragePrecompileAddress,
                 bridgeConfig.srcStorageKeyForLatestNonce,
                 _outboundLaneId
             );
     }
+
+    function _remoteTransact(
+        bytes4 _tgtChainId,
+        bytes4 _outboundLaneId,
+        uint32 _tgtSpecVersion,
+        address _to,
+        bytes memory _input,
+        uint256 _gasLimit
+    ) internal returns (uint64) {
+        (bytes memory call, uint64 weight) = _buildMessageTransactCall(
+            _tgtChainId,
+            _to,
+            _input,
+            _gasLimit
+        );
+
+        return
+            _sendMessage(
+                _tgtChainId,
+                _outboundLaneId,
+                MessagePayload(_tgtSpecVersion, weight, call)
+            );
+    }
+
+    function _buildMessageTransactCall(
+        bytes4 _targetChainId,
+        address _to,
+        bytes memory _input,
+        uint256 _gasLimit
+    ) internal pure virtual returns (bytes memory, uint64);
 }
