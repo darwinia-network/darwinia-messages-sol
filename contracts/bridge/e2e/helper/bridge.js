@@ -7,6 +7,9 @@ const LANE_NONCE_SLOT="0x0000000000000000000000000000000000000000000000000000000
 const LANE_MESSAGE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000002"
 
 const get_storage_proof = async (client, addr, storageKeys, blockNumber = 'latest') => {
+  if (blockNumber != 'latest') {
+    blockNumber = (BigNumber.from(blockNumber)).toHexString()
+  }
   return await client.provider.send("eth_getProof",
     [
       addr,
@@ -17,6 +20,18 @@ const get_storage_proof = async (client, addr, storageKeys, blockNumber = 'lates
 }
 
 const build_message_keys = (front, end) => {
+  const keys = []
+  for (let index=front; index<=end; index++) {
+    const newKey = ethers.utils.concat([
+      ethers.utils.hexZeroPad(index, 32),
+      LANE_MESSAGE_SLOT
+    ])
+    keys.push(ethers.utils.keccak256(newKey))
+  }
+  return keys
+}
+
+const build_relayer_keys = (front, end) => {
   const keys = []
   for (let index=front; index<=end; index++) {
     const newKey = ethers.utils.concat([
@@ -37,7 +52,7 @@ const generate_storage_delivery_proof = async (client, front, end) => {
   const addr = client.inbound.address
   const laneIDProof = await get_storage_proof(client, addr, [LANE_IDENTIFY_SLOT])
   const laneNonceProof = await get_storage_proof(client, addr, [LANE_NONCE_SLOT])
-  const keys = build_message_keys(front, end)
+  const keys = build_relayer_keys(front, end)
   const laneRelayersProof = await get_storage_proof(client, addr, keys)
   const proof = {
     "accountProof": toHexString(rlp.encode(laneIDProof.accountProof)),
@@ -54,6 +69,7 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
   const laneIdProof = await get_storage_proof(client, addr, [LANE_IDENTIFY_SLOT], block_number)
   const laneNonceProof = await get_storage_proof(client, addr, [LANE_NONCE_SLOT], block_number)
   const keys = build_message_keys(begin, end)
+  console.log(keys)
   const laneMessageProof = await get_storage_proof(client, addr, keys, block_number)
   const proof = {
     "accountProof": toHexString(rlp.encode(laneIdProof.accountProof)),
@@ -219,7 +235,6 @@ class Bridge {
     const end = nonce.latest_generated_nonce
     const finalized_header = await this.subClient.beaconLightClient.finalized_header()
     const finality_block = await this.eth2Client.get_beacon_block(finalized_header.slot)
-    console.log(finality_block)
     const execution_layer_block_number = finality_block.message.body.execution_payload.block_number
     const proof = await generate_storage_proof(this.ethClient, begin.toHexString(), end.toHexString(), execution_layer_block_number)
     return await this.subClient.eth.inbound.receive_messages_proof(data, proof, { gasLimit: 6000000 })

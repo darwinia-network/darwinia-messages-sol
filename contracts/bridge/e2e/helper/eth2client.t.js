@@ -14,9 +14,9 @@ const log = console.log;
   // log(optimistic_update)
   // let finalized_header = await eth2Client.get_header(finality_update.finalized_header.slot)
   // const bootstrap = await eth2Client.get_bootstrap(finalized_header.root)
-  // log(JSON.stringify(bootstrap, null, 2))
+  const bootstrap = await eth2Client.get_bootstrap('0xe1ae844281cb49a64ccc6ed6bc3d87e17f9ec401b83361d780f052ecff2baefb')
+  log(JSON.stringify(bootstrap, null, 2))
   // log(await eth2Client.get_finality_branch(105728))
-  // log(bootstrap)
   // log(JSON.stringify(sync_change, null, 2))
   // log(await eth2Client.get_next_sync_committee_branch(651296))
   // const sync_change = await eth2Client.get_sync_committee_period_update(79, 79)
@@ -45,8 +45,8 @@ const log = console.log;
   // const update = await eth2Client.get_latest_finalized_update()
   // log(update)
   // const finalized_block = await eth2Client.get_beacon_block(update.finalized_header.slot)
-  const finalized_block = await eth2Client.get_beacon_block(122336)
-  log(finalized_block)
+  // const finalized_block = await eth2Client.get_beacon_block(127200)
+  // log(finalized_block)
   // const ssz_sync_committee_bits = finalized_block.message.body.sync_aggregate.sync_committee_bits
   // log(ssz_sync_committee_bits)
   // const latest_execution_payload_state_root = finalized_block.message.body.execution_payload.state_root

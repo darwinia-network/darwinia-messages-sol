@@ -109,6 +109,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
 
   it.skip("1", async function () {
     await bridge.relay_eth_header()
+    // await bridge.relay_eth_execution_payload()
     await sleep(4000)
   })
 

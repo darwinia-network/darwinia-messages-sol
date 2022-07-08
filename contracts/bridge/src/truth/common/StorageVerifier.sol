@@ -129,15 +129,10 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
     }
 
     function build_message_keys(uint64 latest_received_nonce, uint64 size) internal view returns (bytes32[] memory) {
-        uint64 len = 3 * size;
-        bytes32[] memory storage_keys = new bytes32[](len);
+        bytes32[] memory storage_keys = new bytes32[](size);
         uint64 begin = latest_received_nonce + 1;
-        for (uint64 index=0; index < len;) {
-            uint64 nonce = begin + index/3;
-            uint256 messagesLocation = mapLocation(LANE_MESSAGE_SLOT, nonce);
-            storage_keys[index++] = bytes32(messagesLocation);
-            storage_keys[index++] = bytes32(messagesLocation + 1);
-            storage_keys[index++] = bytes32(messagesLocation + 2);
+        for (uint64 index=0; index < size;) {
+            storage_keys[index++] = bytes32(mapLocation(LANE_MESSAGE_SLOT, begin + index));
         }
         return storage_keys;
     }
