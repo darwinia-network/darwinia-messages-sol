@@ -69,7 +69,7 @@ async function bootstrap() {
   const bscClient = new EthClient(evm_bsc_endpoint)
   const subClient = new SubClient(dvm_endpoint, sub_endpoint)
   const eth2Client = new Eth2Client(beacon_endpoint)
-  const bridge = new Bridge(ethClient, eth2Client, subClient)
+  const bridge = new Bridge(ethClient, bscClient, eth2Client, subClient)
   await ethClient.init(wallets, fees, evm_eth_addresses, ns_dvm)
   await bscClient.init(wallets, fees, evm_bsc_addresses, ns_dvm)
   await subClient.init(wallets, fees, dvm_addresses, ns_eth, ns_bsc)

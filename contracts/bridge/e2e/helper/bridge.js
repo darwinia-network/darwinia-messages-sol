@@ -8,7 +8,7 @@ const LANE_MESSAGE_SLOT="0x00000000000000000000000000000000000000000000000000000
 
 const get_storage_proof = async (client, addr, storageKeys, blockNumber = 'latest') => {
   if (blockNumber != 'latest') {
-    blockNumber = (BigNumber.from(blockNumber)).toHexString()
+    blockNumber = "0x" + Number(blockNumber).toString(16)
   }
   return await client.provider.send("eth_getProof",
     [
@@ -76,6 +76,8 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
     "laneNonceProof": toHexString(rlp.encode(laneNonceProof.storageProof[0].proof)),
     "laneMessagesProof": laneMessageProof.storageProof.map((p) => toHexString(rlp.encode(p.proof))),
   }
+  console.log(laneIdProof)
+  console.log(proof)
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(bytes accountProof, bytes laneIDProof, bytes laneNonceProof, bytes[] laneMessagesProof)"
     ], [ proof ])
@@ -129,14 +131,16 @@ const generate_message_proof = async (subClient, type) => {
  * The Mock Bridge for testing
  */
 class Bridge {
-  constructor(ethClient, eth2Client, subClient) {
+  constructor(ethClient, bscClient, eth2Client, subClient) {
     this.ethClient = ethClient
+    this.bscClient = bscClient
     this.eth2Client = eth2Client
     this.subClient = subClient
   }
 
   async enroll_relayer() {
     await this.ethClient.enroll_relayer()
+    await this.bscClient.enroll_relayer()
     await this.subClient.enroll_relayer()
   }
 
@@ -207,6 +211,22 @@ class Bridge {
     console.log(state_root)
   }
 
+  async relay_bsc_header() {
+    const old_finalized_checkpoint = await this.subClient.bscLightClient.finalized_checkpoint()
+    const finalized_checkpoint_number = old_finalized_checkpoint.number.add(200)
+    const finalized_checkpoint = await this.bscClient.get_block('0x' + finalized_checkpoint_number.toNumber().toString(16))
+    const length = await this.subClient.bscLightClient.length_of_finalized_authorities()
+    let headers = [finalized_checkpoint]
+    let number = finalized_checkpoint_number
+    for (let i=0; i < ~~length.div(2); i++) {
+      number = number.add(1)
+      const header = await this.bscClient.get_block('0x' + number.toNumber().toString(16))
+      headers.push(header)
+    }
+    const tx = await this.subClient.bscLightClient.import_finalized_epoch_header(headers)
+    console.log(tx)
+  }
+
   async relay_sub_header() {
     const header = await this.subClient.block_header()
     const message_root = await this.subClient.chainMessageCommitter['commitment()']()
@@ -253,6 +273,17 @@ class Bridge {
     const execution_layer_block_number = finality_block.message.body.execution_payload.block_number
     const proof = await generate_storage_proof(this.ethClient, begin.toHexString(), end.toHexString(), execution_layer_block_number)
     return await this.subClient.eth.inbound.receive_messages_proof(data, proof, { gasLimit: 6000000 })
+  }
+
+  async dispatch_bsc_messages(data) {
+    const o = await this.bscClient.outbound.data()
+    const nonce = await this.bscClient.outbound.outboundLaneNonce()
+    const begin = nonce.latest_received_nonce.add(1)
+    const end = nonce.latest_generated_nonce
+    const finalized_header = await this.subClient.bscLightClient.finalized_checkpoint()
+    const block_number = finalized_header.number
+    const proof = await generate_storage_proof(this.bscClient, begin.toHexString(), end.toHexString(), block_number)
+    return await this.subClient.bsc.inbound.receive_messages_proof(data, proof, { gasLimit: 6000000 })
   }
 
   async confirm_sub_messages() {
