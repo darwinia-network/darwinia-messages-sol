@@ -7,11 +7,9 @@ import "../../calls/PangoroCalls.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
-pragma experimental ABIEncoderV2;
-
 // Remote call from Pangolin SmartChain
 abstract contract PangolinApp is BaseApp {
-    function _init() internal {
+    constructor() internal {
         bridgeConfigs[_PANGORO_CHAIN_ID] = BridgeConfig(
             0x2b03,
             0x7621b367d09b75f6876b13089ee0ded52edb70953213f33a6ef6b8a5e3ffcab2,
