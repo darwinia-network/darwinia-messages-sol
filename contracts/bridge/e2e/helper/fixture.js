@@ -5,6 +5,7 @@ const Eth2Client = require('./eth2client').Eth2Client
 
 const target  = process.env.TARGET || 'local'
 const INFURA_KEY = process.env.INFURA_KEY
+const MORALIS_KEY = process.env.MORALIS_KEY
 
 let evm_eth_addresses, evm_bsc_addresses, dvm_addresses, evm_endpoint, dvm_endpoint, sub_endpoint
 let ns_eth, ns_bsc, ns_dvm
@@ -33,7 +34,7 @@ if (target == 'local') {
 
   // evm_eth_endpoint = "https://rpc.sepolia.org"
   evm_eth_endpoint = "http://127.0.0.1:8545"
-  evm_bsc_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
+  evm_bsc_endpoint = `https://speedy-nodes-nyc.moralis.io/${MORALIS_KEY}/bsc/testnet/archive`
   dvm_endpoint = "https://pangoro-rpc.darwinia.network"
   sub_endpoint = "wss://pangoro-rpc.darwinia.network"
   // beacon_endpoint = "https://lodestar-kiln.chainsafe.io"
