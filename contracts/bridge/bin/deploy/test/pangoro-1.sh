@@ -38,12 +38,12 @@ FeeMarket=$(deploy FeeMarket \
 
 # beacon light client config
 BLS_PRECOMPILE=0x0000000000000000000000000000000000000800
-SLOT=105728
-PROPOSER_INDEX=50
-PARENT_ROOT=0x281f08600981a103c91b0c3de9fa4fb11b84f404aab93e2aeac897e2f9f6f691
-STATE_ROOT=0x815e1625aef94346f44f075b9e652cec9004f3f124a966360c38f4f9dbb3123f
-BODY_ROOT=0x37dbe6372bed5fde1a347060abfccffd43f07f020aabe569576f804a83f2b3ae
-CURRENT_SYNC_COMMITTEE_HASH=0xbbbec2f8eda5f6904d6833f25d1f40e2ccb9fe6c5fb161c06ee2bd0e7c2520e7
+SLOT=127200
+PROPOSER_INDEX=1217
+PARENT_ROOT=0x6993a448025e7faa1cc1842abd031c13f5b3657f4fbe70670eb7184889f97262
+STATE_ROOT=0x884eba4f4b3acd2ad15027032d9b7f1dc577464b5e6b6589653bf4cd7dab8ee5
+BODY_ROOT=0xe7aafbacea28d81653dd39da73db8fd0f0a350e51b5a7b4afcefc8a32e0a4942
+CURRENT_SYNC_COMMITTEE_HASH=0xa9e95f2261d1dab62ceb9a9bf09e5be9e582598147e0f2fa354ee914ee5f3545
 GENESIS_VALIDATORS_ROOT=0xd8ea171f3c94aea21ebc42a1ed61052acf3f9209c00e4efbaaddac09ed9b8078
 
 BeaconLightClient=$(deploy BeaconLightClient \
@@ -59,7 +59,7 @@ BeaconLightClient=$(deploy BeaconLightClient \
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
 
 OutboundLane=$(deploy OutboundLane \
-  $BeaconLightClient \
+  $ExecutionLayer \
   $FeeMarket \
   $this_chain_pos \
   $this_out_lane_pos \
@@ -67,7 +67,7 @@ OutboundLane=$(deploy OutboundLane \
   $bridged_in_lane_pos 1 0 0)
 
 InboundLane=$(deploy InboundLane \
-  $BeaconLightClient \
+  $ExecutionLayer \
   $this_chain_pos \
   $this_in_lane_pos \
   $bridged_chain_pos \

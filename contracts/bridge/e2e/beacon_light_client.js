@@ -22,18 +22,18 @@ describe("bridge e2e test: beacon light client", () => {
 
   it("import finalized header", async () => {
     const old_finalized_header = await subClient.beaconLightClient.finalized_header()
-    const old_finalized_header_root = await eth2Client.get_beacon_block_root(old_finalized_header.slot)
-    const snapshot = await eth2Client.get_bootstrap(old_finalized_header_root)
-    const current_sync_committee = snapshot.current_sync_committee
     const old_period = old_finalized_header.slot.div(32).div(256)
 
     let attested_header_slot = old_finalized_header.slot.add(96)
-    // let attested_header_slot = old_finalized_header.slot.add(128)
+    // let attested_header_slot = old_finalized_header.slot.add(3392)
     let attested_header = await eth2Client.get_header(attested_header_slot)
     while (!attested_header) {
       attested_header_slot = attested_header_slot.add(1)
       attested_header = await eth2Client.get_header(attested_header_slot)
     }
+
+    const snapshot = await eth2Client.get_bootstrap(attested_header.root)
+    const current_sync_committee = snapshot.current_sync_committee
 
     let sync_aggregate_slot = attested_header_slot.add(1)
     let sync_aggregate_header = await eth2Client.get_header(sync_aggregate_slot)

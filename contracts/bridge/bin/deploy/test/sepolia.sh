@@ -7,7 +7,7 @@ unset NETWORK_NAME
 unset ETH_RPC_URL
 export NETWORK_NAME=sepolia
 export TARGET_CHAIN=pangoro
-export ETH_RPC_URL=https://rpc.sepolia.dev
+export ETH_RPC_URL=https://rpc-sepolia.rockx.com
 
 echo "ETH_FROM: ${ETH_FROM}"
 
@@ -23,7 +23,7 @@ bridged_in_lane_pos=1
 bridged_out_lane_pos=0
 
 # fee market config
-COLLATERAL_PERORDER=$(seth --to-wei 0.01 ether)
+COLLATERAL_PERORDER=$(seth --to-wei 0.0001 ether)
 SLASH_TIME=86400
 RELAY_TIME=86400
 # 300 : 0.01

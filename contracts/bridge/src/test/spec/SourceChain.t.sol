@@ -51,8 +51,6 @@ contract SourceChainTest is DSTest, SourceChain {
         MessagePayload memory payload = MessagePayload(source, target, encoded);
         assertEq(hash(payload), hex"1b9d19ffcdd3c5f3ce909d6f215b8ea1b93481e7d67781edba49e953e387a4c4");
 
-
-
         uint256 encoded_key = uint256(0x0000000000000000000000000000000000000001000000010000000000000001);
         Message memory message = Message(encoded_key, payload);
         Message[] memory messages = new Message[](1);
@@ -69,6 +67,23 @@ contract SourceChainTest is DSTest, SourceChain {
 
         OutboundLaneDataStorage memory data_storage = OutboundLaneDataStorage(0, messages_storage);
         assertEq(hash(data_storage), hash(data));
+    }
+
+    function test_hash2() public {
+        address source = address(0x3DFe30fb7b46b99e234Ed0F725B5304257F78992);
+        address target = address(0);
+        bytes memory encoded = bytes("");
+        MessagePayload memory payload = MessagePayload(source, target, encoded);
+        assertEq(hash(payload), hex"3340d482234ce7e8a40473a2903cceccffc8c0c39559be0720e1092494ded74c");
+
+        uint256 encoded_key = uint256(0x0000000000000000000000010000000000000000000000010000000000000001);
+        Message memory message = Message(encoded_key, payload);
+        Message[] memory messages = new Message[](1);
+        messages[0] = message;
+        assertEq(hash(messages), hex"8653f2c4b14937dd0c6a582cb6460f49109bee3d515c411135ea9e73bb0ebe92");
+
+        OutboundLaneData memory data = OutboundLaneData(0, messages);
+        assertEq(hash(data), hex"502c3362776b751e7f69fdbf349af81a3dbbcc9dcc60bc6f13cfc9d41c77be7e");
     }
 
     function test_decode_message_key() public {

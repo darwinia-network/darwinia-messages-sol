@@ -59,7 +59,7 @@ BeaconLightClient=$(deploy BeaconLightClient \
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
 
 OutboundLane=$(deploy OutboundLane \
-  $BeaconLightClient \
+  $ExecutionLayer \
   $FeeMarket \
   $this_chain_pos \
   $this_out_lane_pos \
@@ -67,7 +67,7 @@ OutboundLane=$(deploy OutboundLane \
   $bridged_in_lane_pos 1 0 0)
 
 InboundLane=$(deploy InboundLane \
-  $BeaconLightClient \
+  $ExecutionLayer \
   $this_chain_pos \
   $this_in_lane_pos \
   $bridged_chain_pos \
