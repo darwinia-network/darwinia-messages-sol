@@ -24,10 +24,10 @@
     "ethereum-waffle": "^3.0.0",
     "ethereumjs-util": "^7.0.10",
     "ethers": "^5.0.0",
-    "hardhat": "2.3.0",
+    "hardhat": "^2.3.0",
     "hardhat-abi-exporter": "^2.2.1",
     "hardhat-gas-reporter": "^1.0.6",
-    "merkletreejs": "^0.2.18",
+    "merkletreejs": "0.2.18",
     "shx": "^0.3.3"
   }
 }
