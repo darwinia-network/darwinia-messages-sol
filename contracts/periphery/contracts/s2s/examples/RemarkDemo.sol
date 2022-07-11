@@ -9,10 +9,6 @@ import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
 // CrabSmartChain remote call remark of Darwinia
 contract RemarkDemo is CrabApp, Ownable {
-    constructor() public {
-        _init();
-    }
-
     event OutputNonce(uint256 nonce);
 
     function remoteRemark() public payable {

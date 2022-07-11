@@ -6,11 +6,9 @@ import "../BaseApp.sol";
 import "@darwinia/contracts-utils/contracts/Scale.types.sol";
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 
-pragma experimental ABIEncoderV2;
-
 // Remote call from Crab SmartChain
 abstract contract CrabApp is BaseApp {
-    function _init() internal {
+    constructor() internal {
         bridgeConfigs[_DARWINIA_CHAIN_ID] = BridgeConfig(
             0x3003,
             0xe0c938a0fbc88db6078b53e160c7c3ed2edb70953213f33a6ef6b8a5e3ffcab2,

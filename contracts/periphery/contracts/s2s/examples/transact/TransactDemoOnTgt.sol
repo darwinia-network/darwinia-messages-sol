@@ -8,10 +8,6 @@ import "../../baseapps/pangoro/PangoroAppOnPangolin.sol";
 contract TransactDemo is PangoroAppOnPangolin {
     uint256 public number;
 
-    constructor() public {
-        _init();
-    }
-
     function add(uint256 _value) public {
         // This function is only allowed to be called by the derived address
         // of the message sender on the source chain.

@@ -7,10 +7,6 @@ import "../../calls/PangolinCalls.sol";
 
 // deploy on the target chain first, then deploy on the source chain
 contract TransactDemo is PangoroApp {
-    constructor() public {
-        _init();
-    }
-
     function remoteAdd_way1(
         uint32 specVersionOfPangolin, // https://pangolin.subscan.io/runtime
         address receivingContract
