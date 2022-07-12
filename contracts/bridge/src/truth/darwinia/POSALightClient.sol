@@ -4,9 +4,10 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "./RelayAuthorities.sol";
+import "../common/MessageVerifier.sol";
 import "../../spec/POSACommitmentScheme.sol";
 
-contract POSALightClient is POSACommitmentScheme, RelayAuthorities {
+contract POSALightClient is POSACommitmentScheme, MessageVerifier, RelayAuthorities {
 
     event MessageRootImported(uint256 blockNumber, bytes32 messageRoot);
 
@@ -23,6 +24,10 @@ contract POSALightClient is POSACommitmentScheme, RelayAuthorities {
         address[] memory _relayers,
         uint256 _threshold
     ) RelayAuthorities(_network, _relayers, _threshold) {}
+
+    function message_root() public view override returns (bytes32) {
+        return latestChainMessagesRoot;
+    }
 
     function import_message_commitment(
         Commitment calldata commitment,
@@ -44,7 +49,7 @@ contract POSALightClient is POSACommitmentScheme, RelayAuthorities {
                 abi.encode(
                     COMMIT_TYPEHASH,
                     NETWORK,
-                    commitment,
+                    commitmentHash,
                     nonce
                 )
             );
