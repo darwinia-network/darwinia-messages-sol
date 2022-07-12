@@ -43,7 +43,12 @@ contract RelayAuthorities {
     /// @param _network source chain network name
     /// @param _relayers List of relayers.
     /// @param _threshold Number of required confirmations for check commitment or change relayers.
-    constructor(bytes32 _network, address[] memory _relayers, uint256 _threshold) public {
+    constructor(
+        bytes32 _network,
+        address[] memory _relayers,
+        uint256 _threshold,
+        uint256 _nonce
+    ) public {
         // Threshold can only be 0 at initialization.
         // Check ensures that setup function can only be called once.
         require(threshold == 0, "setup");
@@ -67,6 +72,7 @@ contract RelayAuthorities {
         count = _relayers.length;
         threshold = _threshold;
         NETWORK = _network;
+        nonce = _nonce;
     }
 
     /// @dev Allows to add a new relayer to the registry and update the threshold at the same time.

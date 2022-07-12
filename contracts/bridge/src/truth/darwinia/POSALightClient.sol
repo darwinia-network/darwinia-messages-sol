@@ -21,8 +21,9 @@ contract POSALightClient is POSACommitmentScheme, MessageVerifier, RelayAuthorit
     constructor(
         bytes32 _network,
         address[] memory _relayers,
-        uint256 _threshold
-    ) RelayAuthorities(_network, _relayers, _threshold) {}
+        uint256 _threshold,
+        uint256 _nonce
+    ) RelayAuthorities(_network, _relayers, _threshold, _nonce) {}
 
     function message_root() public view override returns (bytes32) {
         return latest_messages_root;
