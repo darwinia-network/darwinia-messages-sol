@@ -8,16 +8,15 @@ import "../common/MessageVerifier.sol";
 import "../../spec/POSACommitmentScheme.sol";
 
 contract POSALightClient is POSACommitmentScheme, MessageVerifier, RelayAuthorities {
-
-    event MessageRootImported(uint256 blockNumber, bytes32 messageRoot);
+    event MessageRootImported(uint256 block_number, bytes32 message_root);
 
     // keccak256(
     //     "SignCommitment(bytes32 network,bytes32 commitment,uint256 nonce)"
     // );
-    bytes32 internal constant COMMIT_TYPEHASH = 0x0324ca0ca4d529e0eefcc6d123bd17ec982498cf2e732160cc47d2504825e4b2;
+    bytes32 private constant COMMIT_TYPEHASH = 0x0324ca0ca4d529e0eefcc6d123bd17ec982498cf2e732160cc47d2504825e4b2;
 
-    uint256 public latestBlockNumber;
-    bytes32 public latestChainMessagesRoot;
+    uint256 public latest_block_number;
+    bytes32 public latest_messages_root;
 
     constructor(
         bytes32 _network,
@@ -26,7 +25,7 @@ contract POSALightClient is POSACommitmentScheme, MessageVerifier, RelayAuthorit
     ) RelayAuthorities(_network, _relayers, _threshold) {}
 
     function message_root() public view override returns (bytes32) {
-        return latestChainMessagesRoot;
+        return latest_messages_root;
     }
 
     function import_message_commitment(
@@ -34,25 +33,25 @@ contract POSALightClient is POSACommitmentScheme, MessageVerifier, RelayAuthorit
         bytes[] calldata signatures
     ) external payable {
         // Encode and hash the commitment
-        bytes32 commitmentHash = hash(commitment);
-        verifyCommitment(commitmentHash, signatures);
+        bytes32 commitment_hash = hash(commitment);
+        _verify_commitment(commitment_hash, signatures);
 
-        require(commitment.blockNumber > latestBlockNumber, "!new");
-        latestBlockNumber = commitment.blockNumber;
-        latestChainMessagesRoot = commitment.messageRoot;
-        emit MessageRootImported(commitment.blockNumber, commitment.messageRoot);
+        require(commitment.block_number > latest_block_number, "!new");
+        latest_block_number = commitment.block_number;
+        latest_messages_root = commitment.message_root;
+        emit MessageRootImported(commitment.block_number, commitment.message_root);
     }
 
-    function verifyCommitment(bytes32 commitmentHash, bytes[] memory signatures) internal view {
-        bytes32 structHash =
+    function _verify_commitment(bytes32 commitment_hash, bytes[] memory signatures) internal view {
+        bytes32 struct_hash =
             keccak256(
                 abi.encode(
                     COMMIT_TYPEHASH,
                     NETWORK,
-                    commitmentHash,
+                    commitment_hash,
                     nonce
                 )
             );
-        checkRelayerSignatures(structHash, signatures);
+        _checkRelayerSignatures(struct_hash, signatures);
     }
 }

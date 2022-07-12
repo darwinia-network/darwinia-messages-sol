@@ -9,14 +9,14 @@ contract POSACommitmentScheme {
     using ScaleCodec for uint32;
 
     /// The Commitment, with its payload, is the core thing we are trying to verify with this contract.
-    /// @param blockNumber block number for the given commitment
-    /// @param messageRoot Darwnia message root commitment hash
+    /// @param block_number block number for the given commitment
+    /// @param message_root Darwnia message root commitment hash
     struct Commitment {
-        uint32 blockNumber;
-        bytes32 messageRoot;
+        uint32 block_number;
+        bytes32 message_root;
     }
 
-    bytes4 internal constant PAYLOAD_SCALE_ENCOD_PREFIX = 0x04646280;
+    bytes4 private constant PAYLOAD_SCALE_ENCOD_PREFIX = 0x04646280;
 
     function hash(Commitment memory commitment)
         public
@@ -27,8 +27,8 @@ contract POSACommitmentScheme {
         return keccak256(
             abi.encodePacked(
                 PAYLOAD_SCALE_ENCOD_PREFIX,
-                commitment.blockNumber.encode32(),
-                commitment.messageRoot
+                commitment.block_number.encode32(),
+                commitment.message_root
             )
         );
     }

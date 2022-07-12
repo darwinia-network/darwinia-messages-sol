@@ -15,14 +15,14 @@ contract RelayAuthorities {
     // keccak256(
     //     "RelayAuthorities()"
     // );
-    bytes32 internal constant DOMAIN_SEPARATOR_TYPEHASH = 0x5bc5177d952a43fbebee7e0da0540faefba2dec8fc94a6caeda2dba0fc92776d;
+    bytes32 private constant DOMAIN_SEPARATOR_TYPEHASH = 0x5bc5177d952a43fbebee7e0da0540faefba2dec8fc94a6caeda2dba0fc92776d;
 
     // keccak256(
     //     "ChangeRelayer(bytes32 network,bytes4 sig,bytes params,uint256 nonce)"
     // );
-    bytes32 internal constant RELAY_TYPEHASH = 0x0324ca0ca4d529e0eefcc6d123bd17ec982498cf2e732160cc47d2504825e4b2;
+    bytes32 private constant RELAY_TYPEHASH = 0x0324ca0ca4d529e0eefcc6d123bd17ec982498cf2e732160cc47d2504825e4b2;
 
-    address internal constant SENTINEL = address(0x1);
+    address private constant SENTINEL = address(0x1);
 
     /// @dev NETWORK Source chain network identifier ('Crab', 'Darwinia', 'Pangolin')
     bytes32 public immutable NETWORK;
@@ -206,7 +206,7 @@ contract RelayAuthorities {
                     nonce
                 )
             );
-        checkRelayerSignatures(structHash, signatures);
+        _checkRelayerSignatures(structHash, signatures);
         nonce++;
     }
 
@@ -214,16 +214,16 @@ contract RelayAuthorities {
     /// @param structHash The struct Hash of the data (could be either a message/commitment hash).
     /// @param signatures Signature data that should be verified. only ECDSA signature.
     ///  Signers need to be sorted in ascending order
-    function checkRelayerSignatures(
+    function _checkRelayerSignatures(
         bytes32 structHash,
         bytes[] memory signatures
-    ) public view {
+    ) internal view {
         // Load threshold to avoid multiple storage loads
         uint256 _threshold = threshold;
         // Check that a threshold is set
         require(_threshold > 0, "!threshold");
         bytes32 dataHash = encodeDataHash(structHash);
-        checkNSignatures(dataHash, signatures, _threshold);
+        _checkNSignatures(dataHash, signatures, _threshold);
     }
 
     /// @dev Checks whether the signature provided is valid for the provided data, hash. Will revert otherwise.
@@ -231,11 +231,11 @@ contract RelayAuthorities {
     /// @param signatures Signature data that should be verified. only ECDSA signature.
     /// Signers need to be sorted in ascending order
     /// @param requiredSignatures Amount of required valid signatures.
-    function checkNSignatures(
+    function _checkNSignatures(
         bytes32 dataHash,
         bytes[] memory signatures,
         uint256 requiredSignatures
-    ) public view {
+    ) internal view {
         // Check that the provided signature data is not too short
         require(signatures.length >= requiredSignatures, "signatures");
         // There cannot be an owner with address 0.
