@@ -35,10 +35,20 @@ abstract contract BaseAppOnTarget is AppShare {
     ///    );
     ///
     /// @return bool Is the sender address authorized?
-    function _isDerivedFromRemote(address _sender) internal view returns (bool) {
-        return
-            _sender ==
-            SmartChainXLib.deriveSenderFromRemote(srcChainId, srcMessageSender);
+    function _isDerivedFromRemote(address _sender)
+        internal
+        view
+        returns (bool)
+    {
+        return _sender == _deriveFromRemote();
+    }
+
+    function _deriveFromRemote()
+        internal
+        view
+        returns (address)
+    {
+        return SmartChainXLib.deriveSenderFromRemote(srcChainId, srcMessageSender);
     }
 
     function _lastDeliveredNonceOf(bytes4 _inboundLaneId)
