@@ -58,11 +58,14 @@ abstract contract BaseApp is AppShare {
         }
 
         // Get the current market fee
-        uint256 fee = SmartChainXLib.marketFee(
+        uint256 marketFee = SmartChainXLib.marketFee(
             srcStoragePrecompileAddress,
             bridgeConfig.srcStorageKeyForMarketFee
         );
-        require(msg.value >= fee, "Not enough fee to pay");
+        require(
+            address(this).balance >= marketFee,
+            "Insufficient balance to pay market fee"
+        );
 
         // Build the encoded message to be sent
         bytes memory message = SmartChainXLib.buildMessage(
@@ -76,7 +79,7 @@ abstract contract BaseApp is AppShare {
             srcDispatchPrecompileAddress,
             bridgeConfig.callIndexOfSendMessage,
             _outboundLaneId,
-            msg.value,
+            marketFee,
             message
         );
 
