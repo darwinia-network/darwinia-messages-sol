@@ -8,7 +8,7 @@ import "../utils/ScaleCodec.sol";
 contract POSACommitmentScheme {
     using ScaleCodec for uint32;
 
-    /// The Commitment, with its payload, is the core thing we are trying to verify with this contract.
+    /// The Commitment contains the message_root with block_number that is used for message verify
     /// @param block_number block number for the given commitment
     /// @param message_root Darwnia message root commitment hash
     struct Commitment {
