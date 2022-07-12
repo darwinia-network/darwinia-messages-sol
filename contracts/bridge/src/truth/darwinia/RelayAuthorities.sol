@@ -75,7 +75,7 @@ contract RelayAuthorities {
     /// @param _relayer New relayer address.
     /// @param _threshold New threshold.
     /// @param _signatures The signatures of the relayers which to add new relayer and update the `threshold` .
-    function addRelayerWithThreshold(
+    function add_relayer_with_threshold(
         address _relayer,
         uint256 _threshold,
         bytes[] memory _signatures
@@ -84,13 +84,13 @@ contract RelayAuthorities {
         require(_relayer != address(0) && _relayer != SENTINEL && _relayer != address(this), "!replay");
         // No duplicate relayers allowed.
         require(relayers[_relayer] == address(0), "duplicate");
-        verifyRelayerSignatures(msg.sig, abi.encode(_relayer, _threshold), _signatures);
+        _verify_relayer_signatures(msg.sig, abi.encode(_relayer, _threshold), _signatures);
         relayers[_relayer] = relayers[SENTINEL];
         relayers[SENTINEL] = _relayer;
         count++;
         emit AddedRelayer(_relayer);
         // Change threshold if threshold was changed.
-        if (threshold != _threshold) _changeThreshold(_threshold);
+        if (threshold != _threshold) _change_threshold(_threshold);
     }
 
     /// @dev Allows to remove a relayer from the registry and update the threshold at the same time.
@@ -100,7 +100,7 @@ contract RelayAuthorities {
     /// @param _relayer Relayer address to be removed.
     /// @param _threshold New threshold.
     /// @param _signatures The signatures of the relayers which to remove a relayer and update the `threshold` .
-    function removeRelayer(
+    function remove_relayer(
         address _prevRelayer,
         address _relayer,
         uint256 _threshold,
@@ -111,13 +111,13 @@ contract RelayAuthorities {
         // Validate relayer address and check that it corresponds to relayer index.
         require(_relayer != address(0) && _relayer != SENTINEL, "!relayer");
         require(relayers[_prevRelayer] == _relayer, "!pair");
-        verifyRelayerSignatures(msg.sig, abi.encode(_prevRelayer, _relayer, _threshold), _signatures);
+        _verify_relayer_signatures(msg.sig, abi.encode(_prevRelayer, _relayer, _threshold), _signatures);
         relayers[_prevRelayer] = relayers[_relayer];
         relayers[_relayer] = address(0);
         count--;
         emit RemovedRelayer(_relayer);
         // Change threshold if threshold was changed.
-        if (threshold != _threshold) _changeThreshold(_threshold);
+        if (threshold != _threshold) _change_threshold(_threshold);
     }
 
     /// @dev Allows to swap/replace a relayer from the registry with another address.
@@ -127,7 +127,7 @@ contract RelayAuthorities {
     /// @param _oldRelayer Relayer address to be replaced.
     /// @param _newRelayer New relayer address.
     /// @param _signatures The signatures of the guards which to swap/replace a relayer and update the `threshold` .
-    function swapRelayer(
+    function swap_relayer(
         address _prevRelayer,
         address _oldRelayer,
         address _newRelayer,
@@ -140,7 +140,7 @@ contract RelayAuthorities {
         // Validate oldRelayer address and check that it corresponds to relayer index.
         require(_oldRelayer != address(0) && _oldRelayer != SENTINEL, "!oldRelayer");
         require(relayers[_prevRelayer] == _oldRelayer, "!pair");
-        verifyRelayerSignatures(msg.sig, abi.encode(_prevRelayer, _oldRelayer, _newRelayer), _signatures);
+        _verify_relayer_signatures(msg.sig, abi.encode(_prevRelayer, _oldRelayer, _newRelayer), _signatures);
         relayers[_newRelayer] = relayers[_oldRelayer];
         relayers[_prevRelayer] = _newRelayer;
         relayers[_oldRelayer] = address(0);
@@ -153,12 +153,12 @@ contract RelayAuthorities {
     /// @notice Changes the threshold of the registry to `_threshold`.
     /// @param _threshold New threshold.
     /// @param _signatures The signatures of the guards which to update the `threshold` .
-    function changeThreshold(uint256 _threshold, bytes[] memory _signatures) public {
-        verifyRelayerSignatures(msg.sig, abi.encode(_threshold), _signatures);
-        _changeThreshold(_threshold);
+    function change_threshold(uint256 _threshold, bytes[] memory _signatures) public {
+        _verify_relayer_signatures(msg.sig, abi.encode(_threshold), _signatures);
+        _change_threshold(_threshold);
     }
 
-    function _changeThreshold(uint256 _threshold) internal {
+    function _change_threshold(uint256 _threshold) internal {
         // Validate that threshold is smaller than number of owners.
         require(_threshold <= count, "!threshold");
         // There has to be at least one guard.
@@ -167,17 +167,17 @@ contract RelayAuthorities {
         emit ChangedThreshold(threshold);
     }
 
-    function getThreshold() public view returns (uint256) {
+    function get_threshold() public view returns (uint256) {
         return threshold;
     }
 
-    function isRelayer(address _relayer) public view returns (bool) {
+    function is_relayer(address _relayer) public view returns (bool) {
         return _relayer != SENTINEL && relayers[_relayer] != address(0);
     }
 
     /// @dev Returns array of relayers.
     /// @return Array of relayers.
-    function getRelayers() public view returns (address[] memory) {
+    function get_relayers() public view returns (address[] memory) {
         address[] memory array = new address[](count);
 
         // populate return array
@@ -191,7 +191,7 @@ contract RelayAuthorities {
         return array;
     }
 
-    function verifyRelayerSignatures(
+    function _verify_relayer_signatures(
         bytes4 methodID,
         bytes memory params,
         bytes[] memory signatures
@@ -206,7 +206,7 @@ contract RelayAuthorities {
                     nonce
                 )
             );
-        _checkRelayerSignatures(structHash, signatures);
+        _check_relayer_signatures(structHash, signatures);
         nonce++;
     }
 
@@ -214,7 +214,7 @@ contract RelayAuthorities {
     /// @param structHash The struct Hash of the data (could be either a message/commitment hash).
     /// @param signatures Signature data that should be verified. only ECDSA signature.
     ///  Signers need to be sorted in ascending order
-    function _checkRelayerSignatures(
+    function _check_relayer_signatures(
         bytes32 structHash,
         bytes[] memory signatures
     ) internal view {
@@ -222,8 +222,8 @@ contract RelayAuthorities {
         uint256 _threshold = threshold;
         // Check that a threshold is set
         require(_threshold > 0, "!threshold");
-        bytes32 dataHash = encodeDataHash(structHash);
-        _checkNSignatures(dataHash, signatures, _threshold);
+        bytes32 dataHash = encode_data_hash(structHash);
+        _check_n_signatures(dataHash, signatures, _threshold);
     }
 
     /// @dev Checks whether the signature provided is valid for the provided data, hash. Will revert otherwise.
@@ -231,7 +231,7 @@ contract RelayAuthorities {
     /// @param signatures Signature data that should be verified. only ECDSA signature.
     /// Signers need to be sorted in ascending order
     /// @param requiredSignatures Amount of required valid signatures.
-    function _checkNSignatures(
+    function _check_n_signatures(
         bytes32 dataHash,
         bytes[] memory signatures,
         uint256 requiredSignatures
@@ -248,11 +248,11 @@ contract RelayAuthorities {
         }
     }
 
-    function domainSeparator() public view returns (bytes32) {
+    function domain_separator() public view returns (bytes32) {
         return DOMAIN_SEPARATOR_TYPEHASH;
     }
 
-    function encodeDataHash(bytes32 structHash) internal view returns (bytes32) {
-        return ECDSA.toTypedDataHash(domainSeparator(), structHash);
+    function encode_data_hash(bytes32 structHash) internal view returns (bytes32) {
+        return ECDSA.toTypedDataHash(domain_separator(), structHash);
     }
 }

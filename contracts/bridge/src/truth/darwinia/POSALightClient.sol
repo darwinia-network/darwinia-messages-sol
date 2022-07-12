@@ -52,6 +52,6 @@ contract POSALightClient is POSACommitmentScheme, MessageVerifier, RelayAuthorit
                     nonce
                 )
             );
-        _checkRelayerSignatures(struct_hash, signatures);
+        _check_relayer_signatures(struct_hash, signatures);
     }
 }
