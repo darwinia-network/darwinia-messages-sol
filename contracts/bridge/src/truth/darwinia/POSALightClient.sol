@@ -10,6 +10,11 @@ contract POSALightClient is POSACommitmentScheme, RelayAuthorities {
 
     event MessageRootImported(uint256 blockNumber, bytes32 messageRoot);
 
+    // keccak256(
+    //     "SignCommitment(bytes32 network,bytes32 commitment,uint256 nonce)"
+    // );
+    bytes32 internal constant COMMIT_TYPEHASH = 0x0324ca0ca4d529e0eefcc6d123bd17ec982498cf2e732160cc47d2504825e4b2;
+
     uint256 public latestBlockNumber;
     bytes32 public latestChainMessagesRoot;
 
@@ -25,11 +30,24 @@ contract POSALightClient is POSACommitmentScheme, RelayAuthorities {
     ) external payable {
         // Encode and hash the commitment
         bytes32 commitmentHash = hash(commitment);
-        checkRelayerSignatures(commitmentHash, signatures);
+        verifyCommitment(commitmentHash, signatures);
 
         require(commitment.blockNumber > latestBlockNumber, "!new");
         latestBlockNumber = commitment.blockNumber;
         latestChainMessagesRoot = commitment.messageRoot;
         emit MessageRootImported(commitment.blockNumber, commitment.messageRoot);
+    }
+
+    function verifyCommitment(bytes32 commitmentHash, bytes[] memory signatures) internal view {
+        bytes32 structHash =
+            keccak256(
+                abi.encode(
+                    COMMIT_TYPEHASH,
+                    NETWORK,
+                    commitment,
+                    nonce
+                )
+            );
+        checkRelayerSignatures(structHash, signatures);
     }
 }
