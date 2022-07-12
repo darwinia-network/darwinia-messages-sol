@@ -16,8 +16,6 @@ contract POSACommitmentScheme {
         bytes32 message_root;
     }
 
-    bytes4 private constant PAYLOAD_SCALE_ENCOD_PREFIX = 0x04646280;
-
     function hash(Commitment memory commitment)
         public
         pure
@@ -26,7 +24,6 @@ contract POSACommitmentScheme {
         // Encode and hash the Commitment
         return keccak256(
             abi.encodePacked(
-                PAYLOAD_SCALE_ENCOD_PREFIX,
                 commitment.block_number.encode32(),
                 commitment.message_root
             )

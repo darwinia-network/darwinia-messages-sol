@@ -28,6 +28,9 @@ contract POSALightClient is POSACommitmentScheme, MessageVerifier, RelayAuthorit
         return latest_messages_root;
     }
 
+    /// @dev Import message commitment which signed by RelayAuthorities
+    /// @param commitment contains the message_root with block_number that is used for message verify
+    /// @param signatures The signatures of the relayers signed the commitment.
     function import_message_commitment(
         Commitment calldata commitment,
         bytes[] calldata signatures
