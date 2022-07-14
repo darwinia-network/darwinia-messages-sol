@@ -1,0 +1,3 @@
+[submodule "contracts/bridge/lib/memview.sol"]
+	path = contracts/bridge/lib/memview.sol
+	url = https://github.com/summa-tx/memview.sol
