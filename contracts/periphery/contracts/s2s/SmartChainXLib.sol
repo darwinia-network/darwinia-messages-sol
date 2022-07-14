@@ -10,6 +10,7 @@ import "@darwinia/contracts-utils/contracts/Hash.sol";
 import "./interfaces/IStateStorage.sol";
 import "./types/CommonTypes.sol";
 import "./types/PalletBridgeMessages.sol";
+import "./types/PalletEthereum.sol";
 
 library SmartChainXLib {
     bytes public constant account_derivation_prefix =
@@ -17,9 +18,45 @@ library SmartChainXLib {
 
     event DispatchResult(bool success, bytes result);
 
+    function sendMessage(
+        address srcStorageAddress,
+        address srcDispatchAddress,
+        bytes32 srcStorageKeyForMarketFee,
+        bytes32 srcStorageKeyForLatestNonce,
+        bytes2  srcSendMessageCallIndex,
+        bytes4 laneId,
+        uint32 tgtSpecVersion,
+        bytes memory tgtCallEncoded,
+        uint64 tgtCallWeight
+    ) internal returns (uint64) {
+        // Get the current market fee
+        uint256 fee = marketFee(srcStorageAddress, srcStorageKeyForMarketFee);
+        require(address(this).balance >= fee, "Insufficient balance");
+
+        // Build the encoded message to be sent
+        bytes memory message = buildMessage(
+            tgtSpecVersion,
+            tgtCallWeight,
+            tgtCallEncoded
+        );
+
+        // Send the message
+        doSendMessage(
+            srcDispatchAddress,
+            srcSendMessageCallIndex,
+            laneId,
+            fee,
+            message
+        );
+
+        // Get nonce from storage
+        return
+            latestNonce(srcStorageAddress, srcStorageKeyForLatestNonce, laneId);
+    }
+
     // Send message over lane by calling the `send_message` dispatch call on
     // the source chain which is identified by the `callIndex` param.
-    function sendMessage(
+    function doSendMessage(
         address _srcDispatchPrecompileAddress,
         bytes2 _callIndex,
         bytes4 _laneId,
@@ -77,11 +114,10 @@ library SmartChainXLib {
     }
 
     // Get market fee from state storage of the substrate chain
-    function marketFee(address _srcStoragePrecompileAddress, bytes32 _storageKey)
-        internal
-        view
-        returns (uint256)
-    {
+    function marketFee(
+        address _srcStoragePrecompileAddress,
+        bytes32 _storageKey
+    ) internal view returns (uint256) {
         bytes memory data = getStateStorage(
             _srcStoragePrecompileAddress,
             abi.encodePacked(_storageKey),
@@ -172,11 +208,10 @@ library SmartChainXLib {
 
     // derive an address from remote(source chain) sender address
     // H160(sender on the sourc chain) > AccountId32 > derived AccountId32 > H160
-    function deriveSenderFromRemote(bytes4 _srcChainId, address _srcMessageSender)
-        internal
-        view
-        returns (address)
-    {
+    function deriveSenderFromRemote(
+        bytes4 _srcChainId,
+        address _srcMessageSender
+    ) internal view returns (address) {
         // H160(sender on the sourc chain) > AccountId32
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
             _srcMessageSender
@@ -233,7 +268,7 @@ library SmartChainXLib {
                     _storageKey
                 )
             );
-        
+
         // TODO: Use try/catch instead for error
         revertIfFailed(success, data, _failedMsg);
 
