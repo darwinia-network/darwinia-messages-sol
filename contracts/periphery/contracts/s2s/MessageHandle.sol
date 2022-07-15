@@ -37,7 +37,7 @@ contract MessageHandle {
     ///////////////////////////////
     // Source
     ///////////////////////////////
-    // External functions
+    // External & public functions
     function fee() public view returns (uint256) {
         return
             SmartChainXLib.marketFee(
@@ -46,13 +46,21 @@ contract MessageHandle {
             );
     }
 
+    function encodeMessageId(bytes4 laneId, uint64 nonce)
+        public
+        pure
+        returns (uint256)
+    {
+        return (uint256(uint32(laneId)) << 64) + uint256(nonce);
+    }
+
     // Internal functions
     function _remoteExecute(
         uint32 tgtSpecVersion,
         address callReceiver,
         bytes calldata callPayload,
         uint256 gasLimit
-    ) internal returns (uint64) {
+    ) internal returns (uint256) {
         bytes memory input = abi.encodeWithSelector(
             this.execute.selector,
             callReceiver,
@@ -66,7 +74,7 @@ contract MessageHandle {
         uint32 tgtSpecVersion,
         bytes memory input,
         uint256 gasLimit
-    ) internal returns (uint64) {
+    ) internal returns (uint256) {
         PalletEthereum.MessageTransactCall memory call = PalletEthereum
             .MessageTransactCall(
                 // the call index of message_transact
@@ -91,9 +99,12 @@ contract MessageHandle {
         uint32 tgtSpecVersion,
         bytes memory tgtCallEncoded,
         uint64 tgtCallWeight
-    ) internal returns (uint64) {
+    ) internal returns (uint256) {
         // Get the current market fee
-        uint256 marketFee = SmartChainXLib.marketFee(srcStorageAddress, srcStorageKeyForMarketFee);
+        uint256 marketFee = SmartChainXLib.marketFee(
+            srcStorageAddress,
+            srcStorageKeyForMarketFee
+        );
         require(msg.value >= marketFee, "Insufficient balance");
 
         // Build the encoded message to be sent
@@ -113,8 +124,13 @@ contract MessageHandle {
         );
 
         // Get nonce from storage
-        return
-            SmartChainXLib.latestNonce(srcStorageAddress, srcStorageKeyForLatestNonce, srcOutboundLaneId);
+        uint64 nonce = SmartChainXLib.latestNonce(
+            srcStorageAddress,
+            srcStorageKeyForLatestNonce,
+            srcOutboundLaneId
+        );
+
+        return encodeMessageId(srcOutboundLaneId, nonce);
     }
 
     function _setTgtHandle(address _tgtHandle) internal {
@@ -172,7 +188,7 @@ contract MessageHandle {
         _;
     }
 
-    // External functions
+    // External & public functions
     function execute(address callReceiver, bytes calldata callPayload)
         external
         onlyMessageSender
@@ -190,8 +206,29 @@ contract MessageHandle {
             );
     }
 
+    function decodeMessageId(uint256 messageId)
+        public
+        pure
+        returns (bytes4, uint64)
+    {
+        return (
+            bytes4(uint32(messageId >> 64)),
+            uint64(messageId & 0xffffffffffffffff)
+        );
+    }
+
+    function isMessageDelivered(uint256 messageId) public view returns (bool) {
+        (bytes4 laneId, uint64 nonce) = decodeMessageId(messageId);
+        uint64 latestNonce = SmartChainXLib.lastDeliveredNonce(
+            tgtStorageAddress,
+            tgtStorageKeyForLastDeliveredNonce,
+            laneId
+        );
+        return nonce <= latestNonce;
+    }
+
     // Internal functions
-    function setSrcHandle(address _srcHandle) internal {
+    function _setSrcHandle(address _srcHandle) internal {
         srcHandle = _srcHandle;
         derivedMessageSender = SmartChainXLib.deriveSenderFromRemote(
             srcChainId,
