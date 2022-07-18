@@ -2,14 +2,12 @@
 
 pragma solidity ^0.8.9;
 
-import "./AccessController.sol";
 import "./SmartChainXLib.sol";
 import "./types/PalletEthereum.sol";
 
-contract MessageHandle is AccessController {
-    bytes4 public laneId;
-
+contract MessageHandle {
     address public tgtHandle;
+    bytes4 public srcOutboundLaneId;
     // target chain's `message_transact` call index
     bytes2 public tgtMessageTransactCallIndex;
     // precompile addresses
@@ -24,6 +22,7 @@ contract MessageHandle is AccessController {
     uint64 public tgtWeightPerGas = 40_000;
 
     address public srcHandle;
+    bytes4 public tgtInboundLaneId;
     // source chain id
     bytes4 public srcChainId;
     // target smart chain id
@@ -35,24 +34,33 @@ contract MessageHandle is AccessController {
     // readonly storage keys
     bytes32 public tgtStorageKeyForLastDeliveredNonce;
 
-    constructor() {
-        _initialize(msg.sender);
-    }
-
-    function setLaneId(bytes4 _laneId) external onlyAdmin {
-        laneId = _laneId;
-    }
-
     ///////////////////////////////
     // Source
     ///////////////////////////////
-    // External functions
-    function remoteExecute(
+    // External & public functions
+    function fee() public view returns (uint256) {
+        return
+            SmartChainXLib.marketFee(
+                srcStorageAddress,
+                srcStorageKeyForMarketFee
+            );
+    }
+
+    function encodeMessageId(bytes4 laneId, uint64 nonce)
+        public
+        pure
+        returns (uint256)
+    {
+        return (uint256(uint32(laneId)) << 64) + uint256(nonce);
+    }
+
+    // Internal functions
+    function _remoteExecute(
         uint32 tgtSpecVersion,
         address callReceiver,
         bytes calldata callPayload,
         uint256 gasLimit
-    ) external onlyCaller payable returns (uint64) {
+    ) internal returns (uint256) {
         bytes memory input = abi.encodeWithSelector(
             this.execute.selector,
             callReceiver,
@@ -62,71 +70,11 @@ contract MessageHandle is AccessController {
         return _remoteTransact(tgtSpecVersion, input, gasLimit);
     }
 
-    function fee() public view returns (uint256) {
-        return
-            SmartChainXLib.marketFee(
-                srcStorageAddress,
-                srcStorageKeyForMarketFee
-            );
-    }
-
-    function setTgtHandle(address _tgtHandle) external onlyAdmin {
-        tgtHandle = _tgtHandle;
-    }
-
-    function setTgtMessageTransactCallIndex(bytes2 _tgtMessageTransactCallIndex)
-        external
-        onlyAdmin
-    {
-        tgtMessageTransactCallIndex = _tgtMessageTransactCallIndex;
-    }
-
-    function setSrcStorageAddress(address _srcStorageAddress)
-        external
-        onlyAdmin
-    {
-        srcStorageAddress = _srcStorageAddress;
-    }
-
-    function setSrcDispatchAddress(address _srcDispatchAddress)
-        external
-        onlyAdmin
-    {
-        srcDispatchAddress = _srcDispatchAddress;
-    }
-
-    function setSrcSendMessageCallIndex(bytes2 _srcSendMessageCallIndex)
-        external
-        onlyAdmin
-    {
-        srcSendMessageCallIndex = _srcSendMessageCallIndex;
-    }
-
-    function setSrcStorageKeyForMarketFee(bytes32 _srcStorageKeyForMarketFee)
-        external
-        onlyAdmin
-    {
-        srcStorageKeyForMarketFee = _srcStorageKeyForMarketFee;
-    }
-
-    function setSrcStorageKeyForLatestNonce(
-        bytes32 _srcStorageKeyForLatestNonce
-    ) external onlyAdmin {
-        srcStorageKeyForLatestNonce = _srcStorageKeyForLatestNonce;
-    }
-
-    function setSrcStorageKeyForLatestNonce(
-        uint64 _tgtWeightPerGas
-    ) external onlyAdmin {
-        tgtWeightPerGas = _tgtWeightPerGas;
-    }
-
-    // Internal functions
     function _remoteTransact(
         uint32 tgtSpecVersion,
         bytes memory input,
         uint256 gasLimit
-    ) internal returns (uint64) {
+    ) internal returns (uint256) {
         PalletEthereum.MessageTransactCall memory call = PalletEthereum
             .MessageTransactCall(
                 // the call index of message_transact
@@ -144,18 +92,89 @@ contract MessageHandle is AccessController {
         );
         uint64 weight = uint64(gasLimit * tgtWeightPerGas);
 
-        return
-            SmartChainXLib.sendMessage(
-                srcStorageAddress,
-                srcDispatchAddress,
-                srcStorageKeyForMarketFee,
-                srcStorageKeyForLatestNonce,
-                srcSendMessageCallIndex,
-                laneId,
-                tgtSpecVersion,
-                callEncoded,
-                weight
-            );
+        return _sendMessage(tgtSpecVersion, callEncoded, weight);
+    }
+
+    function _sendMessage(
+        uint32 tgtSpecVersion,
+        bytes memory tgtCallEncoded,
+        uint64 tgtCallWeight
+    ) internal returns (uint256) {
+        // Get the current market fee
+        uint256 marketFee = SmartChainXLib.marketFee(
+            srcStorageAddress,
+            srcStorageKeyForMarketFee
+        );
+        require(msg.value >= marketFee, "Insufficient balance");
+
+        // Build the encoded message to be sent
+        bytes memory message = SmartChainXLib.buildMessage(
+            tgtSpecVersion,
+            tgtCallWeight,
+            tgtCallEncoded
+        );
+
+        // Send the message
+        SmartChainXLib.sendMessage(
+            srcDispatchAddress,
+            srcSendMessageCallIndex,
+            srcOutboundLaneId,
+            msg.value,
+            message
+        );
+
+        // Get nonce from storage
+        uint64 nonce = SmartChainXLib.latestNonce(
+            srcStorageAddress,
+            srcStorageKeyForLatestNonce,
+            srcOutboundLaneId
+        );
+
+        return encodeMessageId(srcOutboundLaneId, nonce);
+    }
+
+    function _setTgtHandle(address _tgtHandle) internal {
+        tgtHandle = _tgtHandle;
+    }
+
+    function _setSrcOutboundLaneId(bytes4 _srcOutboundLaneId) internal {
+        srcOutboundLaneId = _srcOutboundLaneId;
+    }
+
+    function _setTgtMessageTransactCallIndex(
+        bytes2 _tgtMessageTransactCallIndex
+    ) internal {
+        tgtMessageTransactCallIndex = _tgtMessageTransactCallIndex;
+    }
+
+    function _setSrcStorageAddress(address _srcStorageAddress) internal {
+        srcStorageAddress = _srcStorageAddress;
+    }
+
+    function _setSrcDispatchAddress(address _srcDispatchAddress) internal {
+        srcDispatchAddress = _srcDispatchAddress;
+    }
+
+    function _setSrcSendMessageCallIndex(bytes2 _srcSendMessageCallIndex)
+        internal
+    {
+        srcSendMessageCallIndex = _srcSendMessageCallIndex;
+    }
+
+    function _setSrcStorageKeyForMarketFee(bytes32 _srcStorageKeyForMarketFee)
+        internal
+    {
+        srcStorageKeyForMarketFee = _srcStorageKeyForMarketFee;
+    }
+
+    function _setSrcStorageKeyForLatestNonce(
+        bytes32 _srcStorageKeyForLatestNonce
+    ) internal {
+        srcStorageKeyForLatestNonce = _srcStorageKeyForLatestNonce;
+    }
+
+    function _setSrcStorageKeyForLatestNonce(uint64 _tgtWeightPerGas) internal {
+        tgtWeightPerGas = _tgtWeightPerGas;
     }
 
     ///////////////////////////////
@@ -169,15 +188,11 @@ contract MessageHandle is AccessController {
         _;
     }
 
+    // External & public functions
     function execute(address callReceiver, bytes calldata callPayload)
         external
         onlyMessageSender
-        whenNotPaused
     {
-        require(
-            hasRole(CALLER_ROLE, callReceiver),
-            "MessageHandle: Unauthorized receiver"
-        );
         (bool success, ) = callReceiver.call(callPayload);
         require(success, "MessageHandle: Call execution failed");
     }
@@ -187,11 +202,33 @@ contract MessageHandle is AccessController {
             SmartChainXLib.lastDeliveredNonce(
                 tgtStorageAddress,
                 tgtStorageKeyForLastDeliveredNonce,
-                laneId
+                tgtInboundLaneId
             );
     }
 
-    function setSrcHandle(address _srcHandle) external onlyAdmin {
+    function decodeMessageId(uint256 messageId)
+        public
+        pure
+        returns (bytes4, uint64)
+    {
+        return (
+            bytes4(uint32(messageId >> 64)),
+            uint64(messageId & 0xffffffffffffffff)
+        );
+    }
+
+    function isMessageDelivered(uint256 messageId) public view returns (bool) {
+        (bytes4 laneId, uint64 nonce) = decodeMessageId(messageId);
+        uint64 latestNonce = SmartChainXLib.lastDeliveredNonce(
+            tgtStorageAddress,
+            tgtStorageKeyForLastDeliveredNonce,
+            laneId
+        );
+        return nonce <= latestNonce;
+    }
+
+    // Internal functions
+    function _setSrcHandle(address _srcHandle) internal {
         srcHandle = _srcHandle;
         derivedMessageSender = SmartChainXLib.deriveSenderFromRemote(
             srcChainId,
@@ -199,24 +236,25 @@ contract MessageHandle is AccessController {
         );
     }
 
-    function setSrcChainId(bytes4 _srcChainId) external onlyAdmin {
+    function _setTgtInboundLaneId(bytes4 _tgtInboundLaneId) internal {
+        tgtInboundLaneId = _tgtInboundLaneId;
+    }
+
+    function _setSrcChainId(bytes4 _srcChainId) internal {
         srcChainId = _srcChainId;
     }
 
-    function setTgtSmartChainId(uint64 _tgtSmartChainId) external onlyAdmin {
+    function _setTgtSmartChainId(uint64 _tgtSmartChainId) internal {
         tgtSmartChainId = _tgtSmartChainId;
     }
 
-    function setTgtStorageAddress(address _tgtStorageAddress)
-        external
-        onlyAdmin
-    {
+    function _setTgtStorageAddress(address _tgtStorageAddress) internal {
         tgtStorageAddress = _tgtStorageAddress;
     }
 
-    function setTgtStorageKeyForLastDeliveredNonce(
+    function _setTgtStorageKeyForLastDeliveredNonce(
         bytes32 _tgtStorageKeyForLastDeliveredNonce
-    ) external onlyAdmin {
+    ) internal {
         tgtStorageKeyForLastDeliveredNonce = _tgtStorageKeyForLastDeliveredNonce;
     }
 }

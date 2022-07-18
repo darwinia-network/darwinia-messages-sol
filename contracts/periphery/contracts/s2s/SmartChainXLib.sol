@@ -18,45 +18,9 @@ library SmartChainXLib {
 
     event DispatchResult(bool success, bytes result);
 
-    function sendMessage(
-        address srcStorageAddress,
-        address srcDispatchAddress,
-        bytes32 srcStorageKeyForMarketFee,
-        bytes32 srcStorageKeyForLatestNonce,
-        bytes2  srcSendMessageCallIndex,
-        bytes4 laneId,
-        uint32 tgtSpecVersion,
-        bytes memory tgtCallEncoded,
-        uint64 tgtCallWeight
-    ) internal returns (uint64) {
-        // Get the current market fee
-        uint256 fee = marketFee(srcStorageAddress, srcStorageKeyForMarketFee);
-        require(address(this).balance >= fee, "Insufficient balance");
-
-        // Build the encoded message to be sent
-        bytes memory message = buildMessage(
-            tgtSpecVersion,
-            tgtCallWeight,
-            tgtCallEncoded
-        );
-
-        // Send the message
-        doSendMessage(
-            srcDispatchAddress,
-            srcSendMessageCallIndex,
-            laneId,
-            fee,
-            message
-        );
-
-        // Get nonce from storage
-        return
-            latestNonce(srcStorageAddress, srcStorageKeyForLatestNonce, laneId);
-    }
-
     // Send message over lane by calling the `send_message` dispatch call on
     // the source chain which is identified by the `callIndex` param.
-    function doSendMessage(
+    function sendMessage(
         address _srcDispatchPrecompileAddress,
         bytes2 _callIndex,
         bytes4 _laneId,

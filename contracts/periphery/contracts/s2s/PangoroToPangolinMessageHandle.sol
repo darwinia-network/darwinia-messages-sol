@@ -6,7 +6,7 @@ import "./MessageHandle.sol";
 
 contract PangoroToPangolinMessageHandle is MessageHandle {
     constructor() {
-        laneId = 0x726f6c69;
+        srcOutboundLaneId = 0x726f6c69;
         tgtMessageTransactCallIndex = 0x2901;
         srcStorageAddress = address(1024);
         srcDispatchAddress = address(1025);
@@ -14,6 +14,8 @@ contract PangoroToPangolinMessageHandle is MessageHandle {
         srcStorageKeyForMarketFee = 0x30d35416864cf657db51d3bc8505602f2edb70953213f33a6ef6b8a5e3ffcab2;
         srcStorageKeyForLatestNonce = 0xd86d7f611f4d004e041fda08f633f10196c246acb9b55077390e3ca723a0ca1f;
         tgtWeightPerGas = 40_000;
+
+        tgtInboundLaneId = 0x726f6c69;
         srcChainId = 0x70616772;
         tgtSmartChainId = 43;
         tgtStorageAddress = address(1024);
