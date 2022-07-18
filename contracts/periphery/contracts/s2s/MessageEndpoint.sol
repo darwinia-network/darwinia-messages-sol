@@ -71,10 +71,10 @@ abstract contract MessageEndpoint {
         );
         uint64 weight = uint64(gasLimit * remoteWeightPerGas);
 
-        return _sendMessage(tgtSpecVersion, callEncoded, weight);
+        return _remoteDispatch(tgtSpecVersion, callEncoded, weight);
     }
 
-    function _sendMessage(
+    function _remoteDispatch(
         uint32 tgtSpecVersion,
         bytes memory tgtCallEncoded,
         uint64 tgtCallWeight
