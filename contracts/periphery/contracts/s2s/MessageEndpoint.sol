@@ -131,6 +131,7 @@ abstract contract MessageEndpoint {
     // Check if the call to execute is approved
     function _approved(address callReceiver, bytes calldata callPayload)
         internal
+        view
         virtual
         returns (bool);
 
