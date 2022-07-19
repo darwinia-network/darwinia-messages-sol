@@ -83,7 +83,7 @@
 
 "@darwinia/contracts-periphery@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/periphery":
   "resolved" "file:contracts/periphery"
-  "version" "1.0.3"
+  "version" "2.0.0"
 
 "@darwinia/contracts-tokens@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/tokens":
   "resolved" "file:contracts/tokens"
