@@ -72,4 +72,33 @@ contract BLSTest is DSTest {
         bytes32 message = 0x3a896ca4b5db102b9dfd47528b06220a91bd12461dcc86793ce2d591f41ea4f8;
         assertEq0(BLS.expand_message_xmd(message), hex'96b5f290540c141d2952c2b57c8c48b949c2b8aae625a3a5bab1e279455a3ffdeda87d153bcbe3a6badec0451f0cb18499291952bfe663b37c1ab5d07d72599a18bfd073699d6e75dee027d6607fa9712f944f1bee7faa631a820baf583c04b9fe9d7bc4f792cbcb1771ad9326c8e83222b78e7df6d7ac5be93734bf62182fe3b0da1c878cf716c890feb30d52b646abaad7f897f32a21cf26e3dd6a7cd16ae1a9addc303ad34d37d20f4662c0a51738d1052a55e451d65ef7710d954b29efec7ca24d1a527280adfce3cde1354f3a49b7e1d2dd821d22aff0ea91acf773d724e954e63f03ad942a07d503d7b6d2e9914176d77964f7dd4e3ab335d5608b61c3');
     }
+
+    function test_hash_to_field_fq2() public {
+        bytes32 message = 0x3a896ca4b5db102b9dfd47528b06220a91bd12461dcc86793ce2d591f41ea4f8;
+        B12.Fp2[2] memory expect = [
+            B12.Fp2({
+                a: B12.Fp({
+                    a: 18775604437575152535554998505519730575,
+                    b: 115072466216551891925297684016243411108613671708051101952807657705898295510609
+                }),
+                b: B12.Fp({
+                    a: 29472162847099851509296176051420522048,
+                    b: 46072049827588396192569751285311502150599650387549752789887495975066133463856
+                })
+            }),
+            B12.Fp2({
+                a: B12.Fp({
+                    a: 4717284846403363267710214151150143834,
+                    b: 103794126429544023686835943623993672013403721146269693672785425590589880355932
+                }),
+                b: B12.Fp({
+                    a: 10874805418113783588154913244247336343,
+                    b: 76227657196987847616772441647273971944444958450683914551013945823463274233240
+                })
+            })
+        ];
+        B12.Fp2[2] memory u = BLS.hash_to_field_fq2(message);
+        assertTrue(B12.Fp2Eq(u[0], expect[0]));
+        assertTrue(B12.Fp2Eq(u[1], expect[1]));
+    }
 }
