@@ -26,57 +26,12 @@ library BLS {
     }
 
 
-    // Faster ate2 evaualtion checks e(PK, H) * e(-G1, S) == 1
+    // Faster evaualtion checks e(PK, H) * e(-G1, S) == 1
     function bls_pairing_check(B12.G1Point memory publicKey, B12.G2Point memory messageOnCurve, B12.G2Point memory signature) internal view returns (bool) {
-        uint[24] memory input;
-
-        input[0] =  publicKey.X.a;
-        input[1] =  publicKey.X.b;
-        input[2] =  publicKey.Y.a;
-        input[3] =  publicKey.Y.b;
-
-        input[4] =  messageOnCurve.X.a.a;
-        input[5] =  messageOnCurve.X.a.b;
-        input[6] =  messageOnCurve.X.b.a;
-        input[7] =  messageOnCurve.X.b.b;
-        input[8] =  messageOnCurve.Y.a.a;
-        input[9] =  messageOnCurve.Y.a.b;
-        input[10] = messageOnCurve.Y.b.a;
-        input[11] = messageOnCurve.Y.b.b;
-
-        // NOTE: this constant is -P1, where P1 is the generator of the group G1.
-        input[12] = 31827880280837800241567138048534752271;
-        input[13] = 88385725958748408079899006800036250932223001591707578097800747617502997169851;
-        input[14] = 22997279242622214937712647648895181298;
-        input[15] = 46816884707101390882112958134453447585552332943769894357249934112654335001290;
-
-        input[16] =  signature.X.a.a;
-        input[17] =  signature.X.a.b;
-        input[18] =  signature.X.b.a;
-        input[19] =  signature.X.b.b;
-        input[20] =  signature.Y.a.a;
-        input[21] =  signature.Y.a.b;
-        input[22] =  signature.Y.b.a;
-        input[23] =  signature.Y.b.b;
-
-        uint[1] memory output;
-
-        bool success;
-        assembly {
-            success := staticcall(
-                sub(gas(), 2000),
-                0x10,
-                input,
-                768,
-                output,
-                32
-            )
-            // Use "invalid" to make gas estimation work
-            switch success case 0 { invalid() }
-        }
-        require(success, "call to pairing precompile failed");
-
-        return output[0] == 1;
+        B12.PairingArg[] memory args = new B12.PairingArg[](2);
+        args[0] = B12.PairingArg(publicKey, messageOnCurve);
+        args[1] = B12.PairingArg(B12_381Lib.negativeP1(), signature);
+        return B12_381Lib.pairing(args);
     }
 
     function aggregate_pks(bytes[] calldata pubkeys) internal view returns (B12.G1Point memory) {
@@ -122,7 +77,7 @@ library BLS {
     //
     // Take a message and convert it to pseudo random bytes of specified length
     // https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-5.4
-    function expand_message_xmd(bytes32 message) public pure returns (bytes memory) {
+    function expand_message_xmd(bytes32 message) internal pure returns (bytes memory) {
         bytes memory b0Input = new bytes(143);
         for (uint i = 0; i < 32; i++) {
             b0Input[i+64] = message[i];
