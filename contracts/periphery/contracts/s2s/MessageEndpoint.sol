@@ -111,7 +111,7 @@ abstract contract MessageEndpoint {
     modifier onlyMessageSender() {
         require(
             derivedMessageSender == msg.sender,
-            "MessageHandle: Invalid sender"
+            "MessageEndpoint: Invalid sender"
         );
         _;
     }
@@ -122,9 +122,9 @@ abstract contract MessageEndpoint {
     {
         if (_canBeExecuted(callReceiver, callPayload)) {
             (bool success, ) = callReceiver.call(callPayload);
-            require(success, "MessageHandle: Call execution failed");
+            require(success, "MessageEndpoint: Call execution failed");
         } else {
-            revert("MessageHandle: Unapproved call");
+            revert("MessageEndpoint: Unapproved call");
         }
         
     }
