@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import "./ToPangolinEndpoint.sol";
+import "../ToPangolinEndpoint.sol";
 import "../../types/PalletSystem.sol";
 
 // Call Pangolin.remark_with_event from Pangoro
@@ -13,7 +13,11 @@ contract RemarkDemo {
         endpoint = _endpoint;
     }
 
-    function remoteRemark(bytes memory _remark) external returns (uint256) {
+    function remoteRemark(bytes memory _remark)
+        external
+        payable
+        returns (uint256)
+    {
         // 1. Prepare the call and its weight which will be executed on the target chain
         PalletSystem.RemarkCall memory call = PalletSystem.RemarkCall(
             hex"0009",
@@ -23,7 +27,9 @@ contract RemarkDemo {
         uint64 weight = uint64(_remark.length * 2_000);
 
         // 2. Dispatch the call
-        uint256 messageId = ToPangolinEndpoint(endpoint).remoteDispatch(
+        uint256 messageId = ToPangolinEndpoint(endpoint).remoteDispatch{
+            value: msg.value
+        }(
             28140, // latest spec version of pangolin
             encodedCall,
             weight

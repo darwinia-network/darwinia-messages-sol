@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import "../../MessageEndpoint.sol";
+import "../MessageEndpoint.sol";
 
 // Pangoro to Pangolin
 contract ToPangolinEndpoint is MessageEndpoint {
@@ -16,7 +16,6 @@ contract ToPangolinEndpoint is MessageEndpoint {
         storageKeyForLastDeliveredNonce = 0xd86d7f611f4d004e041fda08f633f101e5f83cf83f2127eb47afdc35d6e43fab;
         sendMessageCallIndex = 0x1103;
         remoteMessageTransactCallIndex = 0x2901;
-        // remoteChainId = 0x7061676c;
         remoteSmartChainId = 43;
     }
 
@@ -33,7 +32,7 @@ contract ToPangolinEndpoint is MessageEndpoint {
         uint32 pangolinSpecVersion,
         bytes memory pangolinCallEncoded,
         uint64 pangolinCallWeight
-    ) external returns (uint256) {
+    ) external payable returns (uint256) {
         return
             _remoteDispatch(
                 pangolinSpecVersion,
