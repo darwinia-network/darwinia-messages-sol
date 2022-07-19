@@ -692,7 +692,7 @@ library B12 {
         PairingArg[] memory argVec,
         uint8 precompile,
         uint256 gasEstimate
-    ) internal view returns (bool result) {
+    ) internal view returns (bool) {
         uint256 len = argVec.length;
         uint256[] memory input = new uint256[](len * 12);
 
@@ -712,6 +712,8 @@ library B12 {
             input[idx + 11] = argVec[i].g2.Y.b.b;
         }
 
+        uint[1] memory output;
+
         bool success;
         assembly {
             success := staticcall(
@@ -719,14 +721,14 @@ library B12 {
                 precompile,
                 add(input, 0x20), // the body of the array
                 mul(384, len), // 384 bytes per arg
-                mload(0x40), // write to earliest freemem
+                output,
                 32
             )
-            result := mload(mload(0x40)) // load what we just wrote
-            // deallocate the input, leaving dirty memory
-            mstore(0x40, input)
+            switch success case 0 { invalid() }
         }
         require(success, "pairing precompile failed");
+
+        return output[0] == 1;
     }
 }
 
@@ -744,6 +746,7 @@ library B12_381Lib {
     uint8 constant MAP_TO_G1 = 0x11;
     uint8 constant MAP_TO_G2 = 0x12;
 
+    // NOTE: this constant is -P1, where P1 is the generator of the group G1.
     function negativeP1() internal pure returns (B12.G1Point memory p) {
         p.X.a = 31827880280837800241567138048534752271;
         p.X.b = 88385725958748408079899006800036250932223001591707578097800747617502997169851;
@@ -860,7 +863,7 @@ library B12_381Lib {
     function pairing(B12.PairingArg[] memory argVec)
         internal
         view
-        returns (bool result)
+        returns (bool)
     {
         uint256 roughCost = (23000 * argVec.length) + 115000;
         return B12.pairing(argVec, PAIRING, roughCost);
