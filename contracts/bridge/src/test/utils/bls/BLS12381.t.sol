@@ -4,7 +4,7 @@ pragma solidity 0.7.6;
 import "../../test.sol";
 import {B12_381Lib, B12} from "../../../utils/bls/BLS12381.sol";
 
-contract BSC12381Test is DSTest {
+contract BLS12381Test is DSTest {
 
     function test_pairing() public {
         B12.G1Point memory g1 = B12.G1Point({

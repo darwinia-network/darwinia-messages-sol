@@ -9,6 +9,11 @@ library BLS {
     // Domain Separation Tag for signatures on G2 with a single byte the length of the DST appended
     string constant DST_G2 = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_+";
 
+    // FastAggregateVerify
+    //
+    // Verifies an AggregateSignature against a list of PublicKeys.
+    // PublicKeys must all be verified via Proof of Possession before running this function.
+    // https://tools.ietf.org/html/draft-irtf-cfrg-bls-signature-02#section-3.3.4
     function fast_aggregate_verify(
         bytes[] calldata pubkeys,
         bytes32 message,
@@ -22,7 +27,7 @@ library BLS {
 
 
     // Faster ate2 evaualtion checks e(PK, H) * e(-G1, S) == 1
-    function bls_pairing_check(B12.G1Point memory publicKey, B12.G2Point memory messageOnCurve, B12.G2Point memory signature) public view returns (bool) {
+    function bls_pairing_check(B12.G1Point memory publicKey, B12.G2Point memory messageOnCurve, B12.G2Point memory signature) internal view returns (bool) {
         uint[24] memory input;
 
         input[0] =  publicKey.X.a;
