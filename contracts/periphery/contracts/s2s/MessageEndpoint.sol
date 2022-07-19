@@ -120,16 +120,17 @@ abstract contract MessageEndpoint {
         external
         onlyMessageSender
     {
-        require(
-            _approved(callReceiver, callPayload),
-            "MessageHandle: Unapproved call"
-        );
-        (bool success, ) = callReceiver.call(callPayload);
-        require(success, "MessageHandle: Call execution failed");
+        if (_canBeExecuted(callReceiver, callPayload)) {
+            (bool success, ) = callReceiver.call(callPayload);
+            require(success, "MessageHandle: Call execution failed");
+        } else {
+            revert("MessageHandle: Unapproved call");
+        }
+        
     }
 
-    // Check if the call to execute is approved
-    function _approved(address callReceiver, bytes calldata callPayload)
+    // Check if the call can be executed
+    function _canBeExecuted(address callReceiver, bytes calldata callPayload)
         internal
         view
         virtual
