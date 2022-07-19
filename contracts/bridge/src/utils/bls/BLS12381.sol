@@ -771,6 +771,7 @@ library B12_381Lib {
                 b, // write directly to pre-allocated result
                 128
             )
+            switch success case 0 { invalid() }
             // deallocate the input
             mstore(add(input, 0), 0)
             mstore(add(input, 0x20), 0)
@@ -800,6 +801,7 @@ library B12_381Lib {
                 b, // write directly to pre-allocated result
                 256
             )
+            switch success case 0 { invalid() }
             // deallocate the input
             mstore(add(input, 0), 0)
             mstore(add(input, 0x20), 0)

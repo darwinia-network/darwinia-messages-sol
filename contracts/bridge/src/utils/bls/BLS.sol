@@ -5,20 +5,24 @@ pragma abicoder v2;
 import { B12_381Lib, B12 } from "./BLS12381.sol";
 
 library BLS {
-    string constant BLS_SIG_DST = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_+";
+
+    // Domain Separation Tag for signatures on G2 with a single byte the length of the DST appended
+    string constant DST_G2 = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_+";
 
     function fast_aggregate_verify(
         bytes[] calldata pubkeys,
-        bytes32 calldata message,
+        bytes32 message,
         bytes calldata signature
     ) internal view returns (bool) {
         B12.G1Point memory agg_key = aggregate_pks(pubkeys);
         B12.G2Point memory sign_point = B12.parseG2(signature, 0);
-        B12.G2Point memory msg_point = hash_to_curve(message);
-        return blsPairingCheck(agg_key, msg_point, sign_point);
+        B12.G2Point memory msg_point = hash_to_curve_g2(message);
+        return bls_pairing_check(agg_key, msg_point, sign_point);
     }
 
-    function blsPairingCheck(B12.G1Point memory publicKey, B12.G2Point memory messageOnCurve, B12.G2Point memory signature) public view returns (bool) {
+
+    // Faster ate2 evaualtion checks e(PK, H) * e(-G1, S) == 1
+    function bls_pairing_check(B12.G1Point memory publicKey, B12.G2Point memory messageOnCurve, B12.G2Point memory signature) public view returns (bool) {
         uint[24] memory input;
 
         input[0] =  publicKey.X.a;
@@ -81,39 +85,52 @@ library BLS {
         return g1;
     }
 
-    function hash_to_curve(bytes32 message) internal view returns (B12.G2Point memory) {
-        B12.Fp2[2] memory messageElementsInField = hash_to_field(message);
+    // Hash to Curve
+    //
+    // Takes a message as input and converts it to a Curve Point
+    // https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-3
+    function hash_to_curve_g2(bytes32 message) internal view returns (B12.G2Point memory) {
+        B12.Fp2[2] memory messageElementsInField = hash_to_field_fq2(message);
         B12.G2Point memory firstPoint = B12_381Lib.mapToG2(messageElementsInField[0]);
         B12.G2Point memory secondPoint = B12_381Lib.mapToG2(messageElementsInField[1]);
         return B12_381Lib.g2Add(firstPoint, secondPoint);
     }
 
-    function hash_to_field(bytes32 message) internal view returns (B12.Fp2[2] memory result) {
-        bytes memory some_bytes = expand_message(message);
+
+    // Hash To Field - Fp
+    //
+    // Take a message as bytes and convert it to a Field Point
+    // https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-5.3
+    function hash_to_field_fq2(bytes32 message) internal view returns (B12.Fp2[2] memory result) {
+        bytes memory uniform_bytes = expand_message_xmd(message);
         result[0] = B12.Fp2(
-            convert_slice_to_fp(some_bytes, 0, 64),
-            convert_slice_to_fp(some_bytes, 64, 128)
+            convert_slice_to_fp(uniform_bytes, 0, 64),
+            convert_slice_to_fp(uniform_bytes, 64, 128)
         );
         result[1] = B12.Fp2(
-            convert_slice_to_fp(some_bytes, 128, 192),
-            convert_slice_to_fp(some_bytes, 192, 256)
+            convert_slice_to_fp(uniform_bytes, 128, 192),
+            convert_slice_to_fp(uniform_bytes, 192, 256)
         );
     }
 
-    function expand_message(bytes32 message) public pure returns (bytes memory) {
+    // Expand Message XMD
+    //
+    // Take a message and convert it to pseudo random bytes of specified length
+    // https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-5.4
+    function expand_message_xmd(bytes32 message) public pure returns (bytes memory) {
         bytes memory b0Input = new bytes(143);
         for (uint i = 0; i < 32; i++) {
             b0Input[i+64] = message[i];
         }
         b0Input[96] = 0x01;
         for (uint i = 0; i < 44; i++) {
-            b0Input[i+99] = bytes(BLS_SIG_DST)[i];
+            b0Input[i+99] = bytes(DST_G2)[i];
         }
 
-        bytes32 b0 = sha256(abi.encodePacked(b0Input));
+        bytes32 b0 = sha256(b0Input);
 
         bytes memory output = new bytes(256);
-        bytes32 chunk = sha256(abi.encodePacked(b0, byte(0x01), bytes(BLS_SIG_DST)));
+        bytes32 chunk = sha256(abi.encodePacked(b0, byte(0x01), bytes(DST_G2)));
         assembly {
             mstore(add(output, 0x20), chunk)
         }
@@ -122,7 +139,7 @@ library BLS {
             assembly {
                 input := xor(b0, mload(add(output, add(0x20, mul(0x20, sub(i, 2))))))
             }
-            chunk = sha256(abi.encodePacked(input, byte(uint8(i)), bytes(BLS_SIG_DST)));
+            chunk = sha256(abi.encodePacked(input, byte(uint8(i)), bytes(DST_G2)));
             assembly {
                 mstore(add(output, add(0x20, mul(0x20, sub(i, 1)))), chunk)
             }
@@ -193,7 +210,7 @@ library BLS {
             mstore(add(p, add(0x90, length)), 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab) // pt 2
             success := staticcall(
                 sub(gas(), 2000),
-                MOD_EXP_PRECOMPILE_ADDRESS,
+                0x05,
                 p,
                 add(0xB0, length),
                 add(result, 0x20),
