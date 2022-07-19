@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import "../../MessageEndpoint.sol";
+import "../MessageEndpoint.sol";
 
 // Pangoro to Pangolin
 contract ToPangolinEndpoint is MessageEndpoint {
@@ -39,6 +39,19 @@ contract ToPangolinEndpoint is MessageEndpoint {
                 pangolinSpecVersion,
                 pangolinCallEncoded,
                 pangolinCallWeight
+            );
+    }
+
+    function remoteTransact(
+        uint32 pangolinSpecVersion,
+        bytes memory input,
+        uint256 gasLimit
+    ) external returns (uint256) {
+        return
+            _remoteTransact(
+                pangolinSpecVersion,
+                input,
+                gasLimit
             );
     }
 }

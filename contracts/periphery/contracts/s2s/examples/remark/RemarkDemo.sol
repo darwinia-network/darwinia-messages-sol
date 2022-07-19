@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import "./ToPangolinEndpoint.sol";
+import "../ToPangolinEndpoint.sol";
 import "../../types/PalletSystem.sol";
 
 // Call Pangolin.remark_with_event from Pangoro
