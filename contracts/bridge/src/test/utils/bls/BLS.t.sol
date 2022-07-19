@@ -7,7 +7,6 @@ import { BLS } from "../../../utils/bls/BLS.sol";
 import { B12 } from "../../../utils/bls/BLS12381.sol";
 
 contract BLSTest is DSTest {
-
     function test_bls_pairing_check() public {
         B12.G1Point memory key_point = B12.G1Point({
             X: B12.Fp({
@@ -67,5 +66,10 @@ contract BLSTest is DSTest {
         });
 
         assertTrue(BLS.bls_pairing_check(key_point, msg_hash, sig_point));
+    }
+
+    function test_expand_message_xmd() public {
+        bytes32 message = 0x3a896ca4b5db102b9dfd47528b06220a91bd12461dcc86793ce2d591f41ea4f8;
+        assertEq0(BLS.expand_message_xmd(message), hex'96b5f290540c141d2952c2b57c8c48b949c2b8aae625a3a5bab1e279455a3ffdeda87d153bcbe3a6badec0451f0cb18499291952bfe663b37c1ab5d07d72599a18bfd073699d6e75dee027d6607fa9712f944f1bee7faa631a820baf583c04b9fe9d7bc4f792cbcb1771ad9326c8e83222b78e7df6d7ac5be93734bf62182fe3b0da1c878cf716c890feb30d52b646abaad7f897f32a21cf26e3dd6a7cd16ae1a9addc303ad34d37d20f4662c0a51738d1052a55e451d65ef7710d954b29efec7ca24d1a527280adfce3cde1354f3a49b7e1d2dd821d22aff0ea91acf773d724e954e63f03ad942a07d503d7b6d2e9914176d77964f7dd4e3ab335d5608b61c3');
     }
 }
