@@ -17,6 +17,13 @@ library G1 {
     uint8 private constant G1_MUL = 0x0B;
     uint8 private constant MAP_FP_TO_G1 = 0x11;
 
+    function negativeP1() internal pure returns (G1Point memory p) {
+        p.x.a = 31827880280837800241567138048534752271;
+        p.x.b = 88385725958748408079899006800036250932223001591707578097800747617502997169851;
+        p.y.a = 22997279242622214937712647648895181298;
+        p.y.b = 46816884707101390882112958134453447585552332943769894357249934112654335001290;
+    }
+
     function eq(G1Point memory p, G1Point memory q)
         internal
         pure

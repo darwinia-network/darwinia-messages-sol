@@ -25,7 +25,13 @@ library BLS {
         G2Point memory sign_point = G2.decode(signature);
         G2Point memory msg_point = hash_to_curve_g2(message);
         // Faster evaualtion checks e(PK, H) * e(-G1, S) == 1
-        return Pairing.paring(agg_key, msg_point, sign_point);
+        return bls_pairing_check(agg_key, msg_point, sign_point);
+    }
+
+    // e(PK, H) * e(-G1, S) == 1
+    function bls_pairing_check(G1Point memory pk, G2Point memory h, G2Point memory s) internal view returns (bool) {
+        G1Point memory ng1 = G1.negativeP1();
+        return Pairing.pairing(pk, h, ng1, s);
     }
 
     function aggregate_pks(bytes[] calldata pubkeys) internal view returns (G1Point memory) {
@@ -161,12 +167,15 @@ library BLS {
             mstore(add(p, add(0x60, length)), 1)
             // modulus
             let modulusAddr := add(p, add(0x60, add(0x10, length)))
-            mstore(modulusAddr, or(mload(modulusAddr), 0x1a0111ea397fe69a4b1ba7b6434bacd7)) // pt 1
-            mstore(add(p, add(0x90, length)), 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab) // pt 2
-            success := staticcall(sub(gas(), 2000), 0x05, p, add(0xB0, length), add(result, 0x20), 48)
-            switch success case 0 { invalid() }
+            // p.a
+            mstore(modulusAddr, or(mload(modulusAddr), 0x1a0111ea397fe69a4b1ba7b6434bacd7))
+            // p.b
+            mstore(add(p, add(0x90, length)), 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab)
+            if iszero(staticcall(gas(), 0x05, p, add(0xB0, length), add(result, 0x20), 48)) {
+                returndatacopy(0, 0, returndatasize())
+                revert(0, returndatasize())
+            }
         }
-        require(success, "call to modular exponentiation precompile failed");
         return result;
     }
 }

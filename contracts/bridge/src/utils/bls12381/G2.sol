@@ -87,7 +87,7 @@ library G2 {
         uint[8] memory output;
 
         assembly {
-            if iszero(staticcall(75000, MAP_FP2_TO_G2, input, 64, output, 128)) {
+            if iszero(staticcall(75000, MAP_FP2_TO_G2, input, 128, output, 256)) {
                 returndatacopy(0, 0, returndatasize())
                 revert(0, returndatasize())
             }

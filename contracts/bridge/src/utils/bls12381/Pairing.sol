@@ -16,26 +16,25 @@ library Pairing {
         p.y.b = 46816884707101390882112958134453447585552332943769894357249934112654335001290;
     }
 
-    // e(PK, H) * e(-G1, S) == 1
-    function paring(G1Point memory pk, G2Point memory h, G2Point memory s) public view returns (bool) {
-        G1Point memory ng1 = negativeP1();
+    // e(P,Q) * e(R,S)
+    function pairing(G1Point memory p, G2Point memory q, G1Point memory r, G2Point memory s) internal view returns (bool) {
         uint[24] memory input;
-        input[0]  = pk.x.a;
-        input[1]  = pk.x.b;
-        input[2]  = pk.y.a;
-        input[3]  = pk.y.b;
-        input[4]  = h.x.c0.a;
-        input[5]  = h.x.c0.b;
-        input[6]  = h.x.c1.a;
-        input[7]  = h.x.c1.b;
-        input[8]  = h.y.c0.a;
-        input[9]  = h.y.c0.b;
-        input[10] = h.y.c1.a;
-        input[11] = h.y.c1.b;
-        input[12] = ng1.x.a;
-        input[13] = ng1.x.b;
-        input[14] = ng1.y.a;
-        input[15] = ng1.y.b;
+        input[0]  = p.x.a;
+        input[1]  = p.x.b;
+        input[2]  = p.y.a;
+        input[3]  = p.y.b;
+        input[4]  = q.x.c0.a;
+        input[5]  = q.x.c0.b;
+        input[6]  = q.x.c1.a;
+        input[7]  = q.x.c1.b;
+        input[8]  = q.y.c0.a;
+        input[9]  = q.y.c0.b;
+        input[10] = q.y.c1.a;
+        input[11] = q.y.c1.b;
+        input[12] = r.x.a;
+        input[13] = r.x.b;
+        input[14] = r.y.a;
+        input[15] = r.y.b;
         input[16] = s.x.c0.a;
         input[17] = s.x.c0.b;
         input[18] = s.x.c1.a;
