@@ -324,7 +324,7 @@ library B12 {
         return FpEq(a.X, b.X) && FpEq(a.Y, b.Y);
     }
 
-    function g1Eq(G2Point memory a, G2Point memory b)
+    function g2Eq(G2Point memory a, G2Point memory b)
         internal
         pure
         returns (bool)
@@ -793,25 +793,33 @@ library B12_381Lib {
         input[2] = a.b.a;
         input[3] = a.b.b;
 
+        uint[8] memory output;
+
         bool success;
-        uint8 ADDR = MAP_TO_G2;
         assembly {
             success := staticcall(
                 120000,
-                ADDR,
-                input, // the body of the array
+                MAP_TO_G2,
+                input,
                 128,
-                b, // write directly to pre-allocated result
+                output,
                 256
             )
             switch success case 0 { invalid() }
-            // deallocate the input
-            mstore(add(input, 0), 0)
-            mstore(add(input, 0x20), 0)
-            mstore(add(input, 0x40), 0)
-            mstore(add(input, 0x60), 0)
-            mstore(0x40, input)
         }
+
+        require(success, "call to map to g2 precompile failed");
+
+        return B12.G2Point(
+            B12.Fp2(
+                B12.Fp(output[0], output[1]),
+                B12.Fp(output[2], output[3])
+            ),
+            B12.Fp2(
+                B12.Fp(output[4], output[5]),
+                B12.Fp(output[6], output[7])
+            )
+        );
     }
 
     function g1Add(B12.G1Point memory a, B12.G1Point memory b)

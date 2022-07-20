@@ -49,6 +49,7 @@ library BLS {
     //
     // Takes a message as input and converts it to a Curve Point
     // https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-3
+    // `MapToCurve` precompile includes `clear_cofactor`
     function hash_to_curve_g2(bytes32 message) internal view returns (B12.G2Point memory) {
         B12.Fp2[2] memory u = hash_to_field_fq2(message);
         B12.G2Point memory q0 = B12_381Lib.mapToG2(u[0]);
