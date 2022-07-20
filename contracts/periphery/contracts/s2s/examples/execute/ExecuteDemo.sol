@@ -4,17 +4,18 @@ pragma solidity ^0.8.9;
 
 import "../ToPangolinEndpoint.sol";
 
-// Call Pangolin.add(2) from Pangoro
-contract TransactDemo {
+// Call Pangolin.callee.add(2) on Pangoro
+contract ExecuteDemo {
     address public endpoint;
 
     constructor(address _endpoint) {
         endpoint = _endpoint;
     }
 
-    function remoteAdd() external returns (uint256) {
-        uint256 messageId = ToPangolinEndpoint(endpoint).remoteTransact(
-            28160, // latest spec version of pangolin
+    function remoteAdd(address callee) external payable returns (uint256) {
+        uint256 messageId = ToPangolinEndpoint(endpoint).remoteExecute(
+            28140, // latest spec version of pangolin
+            callee,
             hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002", // add(2)
             120000 // gas limit
         );

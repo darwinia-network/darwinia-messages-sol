@@ -4,19 +4,19 @@ pragma solidity ^0.8.9;
 
 import "../MessageEndpoint.sol";
 
-// On Pangoro, to Pangolin
-contract ToPangolinEndpoint is MessageEndpoint {
+// On Pangolin, to Pangoro
+contract ToPangoroEndpoint is MessageEndpoint {
     constructor() {
         outboundLaneId = 0x726f6c69;
         inboundLaneId = 0x726f6c69;
         storageAddress = address(1024);
         dispatchAddress = address(1025);
-        storageKeyForMarketFee = 0x30d35416864cf657db51d3bc8505602f2edb70953213f33a6ef6b8a5e3ffcab2;
-        storageKeyForLatestNonce = 0xd86d7f611f4d004e041fda08f633f10196c246acb9b55077390e3ca723a0ca1f;
-        storageKeyForLastDeliveredNonce = 0xd86d7f611f4d004e041fda08f633f101e5f83cf83f2127eb47afdc35d6e43fab;
-        sendMessageCallIndex = 0x1103;
-        remoteMessageTransactCallIndex = 0x2901;
-        remoteSmartChainId = 43;
+        storageKeyForMarketFee = 0x7621b367d09b75f6876b13089ee0ded52edb70953213f33a6ef6b8a5e3ffcab2;
+        storageKeyForLatestNonce = 0xc9b76e645ba80b6ca47619d64cb5e58d96c246acb9b55077390e3ca723a0ca1f;
+        storageKeyForLastDeliveredNonce = 0xc9b76e645ba80b6ca47619d64cb5e58de5f83cf83f2127eb47afdc35d6e43fab;
+        sendMessageCallIndex = 0x2b03;
+        remoteMessageTransactCallIndex = 0x1a01;
+        remoteSmartChainId = 45;
     }
 
     function _canBeExecuted(address, bytes calldata)
@@ -28,38 +28,38 @@ contract ToPangolinEndpoint is MessageEndpoint {
         return true;
     }
 
+    function setRemoteEndpoint(bytes4 _remoteChainId, address _remoteEndpoint)
+        external
+    {
+        _setRemoteEndpoint(_remoteChainId, _remoteEndpoint);
+    }
+
     function remoteDispatch(
-        uint32 pangolinSpecVersion,
-        bytes memory pangolinCallEncoded,
-        uint64 pangolinCallWeight
+        uint32 pangoroSpecVersion,
+        bytes memory pangoroCallEncoded,
+        uint64 pangoroCallWeight
     ) external payable returns (uint256) {
         return
             _remoteDispatch(
-                pangolinSpecVersion,
-                pangolinCallEncoded,
-                pangolinCallWeight
+                pangoroSpecVersion,
+                pangoroCallEncoded,
+                pangoroCallWeight
             );
     }
 
     function remoteExecute(
-        uint32 pangolinSpecVersion,
+        uint32 pangoroSpecVersion,
         address callReceiver,
         bytes calldata callPayload,
         uint256 gasLimit
     ) external payable returns (uint256) {
         return
             _remoteExecute(
-                pangolinSpecVersion,
+                pangoroSpecVersion,
                 callReceiver,
                 callPayload,
                 gasLimit
             );
-    }
-
-    function setRemoteEndpoint(bytes4 _remoteChainId, address _remoteEndpoint)
-        external
-    {
-        _setRemoteEndpoint(_remoteChainId, _remoteEndpoint);
     }
 
     function setOutboundLaneId(bytes4 _outboundLaneId) external {
