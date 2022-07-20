@@ -69,13 +69,13 @@ contract BLSTest is DSTest {
     }
 
     function test_expand_message_xmd() public {
-        bytes32 message = 0x3a896ca4b5db102b9dfd47528b06220a91bd12461dcc86793ce2d591f41ea4f8;
-        assertEq0(BLS.expand_message_xmd(message), hex'96b5f290540c141d2952c2b57c8c48b949c2b8aae625a3a5bab1e279455a3ffdeda87d153bcbe3a6badec0451f0cb18499291952bfe663b37c1ab5d07d72599a18bfd073699d6e75dee027d6607fa9712f944f1bee7faa631a820baf583c04b9fe9d7bc4f792cbcb1771ad9326c8e83222b78e7df6d7ac5be93734bf62182fe3b0da1c878cf716c890feb30d52b646abaad7f897f32a21cf26e3dd6a7cd16ae1a9addc303ad34d37d20f4662c0a51738d1052a55e451d65ef7710d954b29efec7ca24d1a527280adfce3cde1354f3a49b7e1d2dd821d22aff0ea91acf773d724e954e63f03ad942a07d503d7b6d2e9914176d77964f7dd4e3ab335d5608b61c3');
+        bytes32 m = 0x3a896ca4b5db102b9dfd47528b06220a91bd12461dcc86793ce2d591f41ea4f8;
+        assertEq0(BLS.expand_message_xmd(m), hex'96b5f290540c141d2952c2b57c8c48b949c2b8aae625a3a5bab1e279455a3ffdeda87d153bcbe3a6badec0451f0cb18499291952bfe663b37c1ab5d07d72599a18bfd073699d6e75dee027d6607fa9712f944f1bee7faa631a820baf583c04b9fe9d7bc4f792cbcb1771ad9326c8e83222b78e7df6d7ac5be93734bf62182fe3b0da1c878cf716c890feb30d52b646abaad7f897f32a21cf26e3dd6a7cd16ae1a9addc303ad34d37d20f4662c0a51738d1052a55e451d65ef7710d954b29efec7ca24d1a527280adfce3cde1354f3a49b7e1d2dd821d22aff0ea91acf773d724e954e63f03ad942a07d503d7b6d2e9914176d77964f7dd4e3ab335d5608b61c3');
     }
 
     function test_hash_to_field_fq2() public {
-        bytes32 message = 0x3a896ca4b5db102b9dfd47528b06220a91bd12461dcc86793ce2d591f41ea4f8;
-        B12.Fp2[2] memory expect = [
+        bytes32 m = 0x3a896ca4b5db102b9dfd47528b06220a91bd12461dcc86793ce2d591f41ea4f8;
+        B12.Fp2[2] memory e = [
             B12.Fp2({
                 a: B12.Fp({
                     a: 18775604437575152535554998505519730575,
@@ -97,8 +97,39 @@ contract BLSTest is DSTest {
                 })
             })
         ];
-        B12.Fp2[2] memory u = BLS.hash_to_field_fq2(message);
-        assertTrue(B12.Fp2Eq(u[0], expect[0]));
-        assertTrue(B12.Fp2Eq(u[1], expect[1]));
+        B12.Fp2[2] memory u = BLS.hash_to_field_fq2(m);
+        assertTrue(B12.Fp2Eq(u[0], e[0]));
+        assertTrue(B12.Fp2Eq(u[1], e[1]));
+    }
+
+    function test_hash_to_curve_g2() public {
+        bytes32 m = 0x3a896ca4b5db102b9dfd47528b06220a91bd12461dcc86793ce2d591f41ea4f8;
+
+        B12.G2Point memory e = B12.G2Point({
+            X: B12.Fp2({
+                a: B12.Fp({
+                    a: 440249405659325969529968607583110888,
+                    b: 8287011717308296271484778081523466175176315688302323040678920909110172052883
+                }),
+                b: B12.Fp({
+                    a: 24020475586686358824048391002731990219,
+                    b: 70759422662205377238812159328664300970743143867490115357570028073099023505250
+                })
+            }),
+            Y: B12.Fp2({
+                a: B12.Fp({
+                    a: 1386680577929784893551049599873021837,
+                    b: 27514265084368602307416113347133013730132425074985547665978961921775804054489
+                }),
+                b: B12.Fp({
+                    a: 29803136074860227348525644626316084686,
+                    b: 27012386664933262761093142209614962474294368617355502707705554906602519553290
+                })
+            })
+        });
+
+        B12.G2Point memory p = BLS.hash_to_curve_g2(m);
+
+        assertTrue(B12.g2Eq(p, e));
     }
 }
