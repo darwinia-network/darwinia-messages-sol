@@ -109,27 +109,25 @@ library BLS {
         return output;
     }
 
-    function convert_slice_to_fp(bytes memory data, uint start, uint end) private view returns (Fp memory) {
+    function convert_slice_to_fp(bytes memory data, uint start, uint end) internal view returns (Fp memory) {
         bytes memory f = reduce_modulo(data, start, end);
         uint a = slice_to_uint(f, 0, 16);
         uint b = slice_to_uint(f, 16, 48);
         return Fp(a, b);
     }
 
-    function slice_to_uint(bytes memory data, uint start, uint end) private pure returns (uint) {
-        uint length = end - start;
-        assert(length >= 0);
-        assert(length <= 32);
+    function slice_to_uint(bytes memory data, uint start, uint end) internal pure returns (uint r) {
+        uint len = end - start;
+        require(0 <= len && len <= 32, "!slice");
 
-        uint result;
-        for (uint i = 0; i < length; i++) {
-            byte b = data[start+i];
-            result = result + (uint8(b) * 2**(8*(length-i-1)));
+        assembly{
+            r := mload(add(add(data, 0x20), start))
         }
-        return result;
+
+        return r >> (256 - len * 8);
     }
 
-    function reduce_modulo(bytes memory data, uint start, uint end) private view returns (bytes memory) {
+    function reduce_modulo(bytes memory data, uint start, uint end) internal view returns (bytes memory) {
         uint length = end - start;
         assert (length >= 0);
         assert (length <= data.length);

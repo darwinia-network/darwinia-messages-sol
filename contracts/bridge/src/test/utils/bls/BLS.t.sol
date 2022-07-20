@@ -134,4 +134,12 @@ contract BLSTest is DSTest {
 
         assertTrue(p.eq(e));
     }
+
+    function test_slice_to_uint() public {
+        bytes memory f = hex'1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab';
+        uint pa = BLS.slice_to_uint(f, 0, 16);
+        assertEq(pa, 0x1a0111ea397fe69a4b1ba7b6434bacd7);
+        uint pb = BLS.slice_to_uint(f, 16, 48);
+        assertEq(pb, 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab);
+    }
 }
