@@ -2,7 +2,9 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import { B12_381Lib, B12 } from "./BLS12381.sol";
+import "./G1.sol";
+import "./G2.sol";
+import "./Paring.sol";
 
 library BLS {
 
