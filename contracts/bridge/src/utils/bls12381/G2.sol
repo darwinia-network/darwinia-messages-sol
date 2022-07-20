@@ -108,4 +108,6 @@ library G2 {
             )
         );
     }
+
+    function decode(bytes memory pubkey) internal view returns (G2Point memory) {}
 }

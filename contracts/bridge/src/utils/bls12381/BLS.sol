@@ -2,11 +2,11 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "./G1.sol";
-import "./G2.sol";
-import "./Paring.sol";
+import "./Pairing.sol";
 
 library BLS {
+    using G1 for G1Point;
+    using G2 for G2Point;
 
     // Domain Separation Tag for signatures on G2 with a single byte the length of the DST appended
     string constant DST_G2 = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_+";
@@ -21,27 +21,19 @@ library BLS {
         bytes32 message,
         bytes calldata signature
     ) internal view returns (bool) {
-        B12.G1Point memory agg_key = aggregate_pks(pubkeys);
-        B12.G2Point memory sign_point = B12.parseG2(signature, 0);
-        B12.G2Point memory msg_point = hash_to_curve_g2(message);
-        return bls_pairing_check(agg_key, msg_point, sign_point);
+        G1Point memory agg_key = aggregate_pks(pubkeys);
+        G2Point memory sign_point = G2.decode(signature);
+        G2Point memory msg_point = hash_to_curve_g2(message);
+        // Faster evaualtion checks e(PK, H) * e(-G1, S) == 1
+        return Pairing.paring(agg_key, msg_point, sign_point);
     }
 
-
-    // Faster evaualtion checks e(PK, H) * e(-G1, S) == 1
-    function bls_pairing_check(B12.G1Point memory publicKey, B12.G2Point memory messageOnCurve, B12.G2Point memory signature) internal view returns (bool) {
-        B12.PairingArg[] memory args = new B12.PairingArg[](2);
-        args[0] = B12.PairingArg(publicKey, messageOnCurve);
-        args[1] = B12.PairingArg(B12_381Lib.negativeP1(), signature);
-        return B12_381Lib.pairing(args);
-    }
-
-    function aggregate_pks(bytes[] calldata pubkeys) internal view returns (B12.G1Point memory) {
+    function aggregate_pks(bytes[] calldata pubkeys) internal view returns (G1Point memory) {
         uint len = pubkeys.length;
         require(len > 0, "!pubkeys");
-        B12.G1Point memory g1 = B12.parseG1(pubkeys[0], 0);
+        G1Point memory g1 = G1.decode(pubkeys[0]);
         for (uint i = 1; i < len; i++) {
-            g1 = B12_381Lib.g1Add(g1, B12.parseG1(pubkeys[i], 0));
+            g1 = g1.add(G1.decode(pubkeys[i]));
         }
         // TODO: Ensure AggregatePublicKey is not infinity
         return g1;
@@ -52,11 +44,11 @@ library BLS {
     // Takes a message as input and converts it to a Curve Point
     // https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-3
     // `MapToCurve` precompile includes `clear_cofactor`
-    function hash_to_curve_g2(bytes32 message) internal view returns (B12.G2Point memory) {
-        B12.Fp2[2] memory u = hash_to_field_fq2(message);
-        B12.G2Point memory q0 = B12_381Lib.mapToG2(u[0]);
-        B12.G2Point memory q1 = B12_381Lib.mapToG2(u[1]);
-        return B12_381Lib.g2Add(q0, q1);
+    function hash_to_curve_g2(bytes32 message) internal view returns (G2Point memory) {
+        Fp2[2] memory u = hash_to_field_fq2(message);
+        G2Point memory q0 = G2.map_to_curve(u[0]);
+        G2Point memory q1 = G2.map_to_curve(u[1]);
+        return q0.add(q1);
     }
 
 
@@ -64,13 +56,13 @@ library BLS {
     //
     // Take a message as bytes and convert it to a Field Point
     // https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-5.3
-    function hash_to_field_fq2(bytes32 message) internal view returns (B12.Fp2[2] memory result) {
+    function hash_to_field_fq2(bytes32 message) internal view returns (Fp2[2] memory result) {
         bytes memory uniform_bytes = expand_message_xmd(message);
-        result[0] = B12.Fp2(
+        result[0] = Fp2(
             convert_slice_to_fp(uniform_bytes, 0, 64),
             convert_slice_to_fp(uniform_bytes, 64, 128)
         );
-        result[1] = B12.Fp2(
+        result[1] = Fp2(
             convert_slice_to_fp(uniform_bytes, 128, 192),
             convert_slice_to_fp(uniform_bytes, 192, 256)
         );
@@ -111,11 +103,11 @@ library BLS {
         return output;
     }
 
-    function convert_slice_to_fp(bytes memory data, uint start, uint end) private view returns (B12.Fp memory) {
-        bytes memory fieldElement = reduce_modulo(data, start, end);
-        uint a = slice_to_uint(fieldElement, 0, 16);
-        uint b = slice_to_uint(fieldElement, 16, 48);
-        return B12.Fp(a, b);
+    function convert_slice_to_fp(bytes memory data, uint start, uint end) private view returns (Fp memory) {
+        bytes memory f = reduce_modulo(data, start, end);
+        uint a = slice_to_uint(f, 0, 16);
+        uint b = slice_to_uint(f, 16, 48);
+        return Fp(a, b);
     }
 
     function slice_to_uint(bytes memory data, uint start, uint end) private pure returns (uint) {
@@ -171,14 +163,7 @@ library BLS {
             let modulusAddr := add(p, add(0x60, add(0x10, length)))
             mstore(modulusAddr, or(mload(modulusAddr), 0x1a0111ea397fe69a4b1ba7b6434bacd7)) // pt 1
             mstore(add(p, add(0x90, length)), 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab) // pt 2
-            success := staticcall(
-                sub(gas(), 2000),
-                0x05,
-                p,
-                add(0xB0, length),
-                add(result, 0x20),
-                48)
-            // Use "invalid" to make gas estimation work
+            success := staticcall(sub(gas(), 2000), 0x05, p, add(0xB0, length), add(result, 0x20), 48)
             switch success case 0 { invalid() }
         }
         require(success, "call to modular exponentiation precompile failed");

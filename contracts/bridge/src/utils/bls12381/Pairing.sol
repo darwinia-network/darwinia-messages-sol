@@ -7,7 +7,6 @@ import "./G1.sol";
 import "./G2.sol";
 
 library Pairing {
-
     uint8 private constant PAIRING = 0x10;
 
     function negativeP1() internal pure returns (G1Point memory p) {
