@@ -16,11 +16,11 @@ library G1 {
     uint8 private constant G1_ADD = 0x0A;
     uint8 private constant G1_MUL = 0x0B;
     uint8 private constant MAP_FP_TO_G1 = 0x11;
-    uint8 private constant COMPRESION_FLAG = 128;
-    uint8 private constant INFINITY_FLAG = 64;
-    uint8 private constant Y_FLAG = 32;
+    bytes1 private constant COMPRESION_FLAG = bytes1(0x80);
+    bytes1 private constant INFINITY_FLAG = bytes1(0x40);
+    bytes1 private constant Y_FLAG = bytes1(0x20);
 
-    uint private constant G1_BYTES = 48;
+    uint private constant G1_BYTES = 96;
 
     function negativeP1() internal pure returns (G1Point memory p) {
         p.x.a = 31827880280837800241567138048534752271;
@@ -108,14 +108,14 @@ library G1 {
 
     // Take a 96 byte array and convert to a G1 point (x, y)
     function deserialize(bytes memory g1) internal pure returns (G1Point memory) {
-        require(g1.length == 96, "!g1");
-        uint8 byt = g1[0];
+        require(g1.length == G1_BYTES, "!g1");
+        bytes1 byt = g1[0];
         require(byt & COMPRESION_FLAG != 0, "compressed");
         require(byt & INFINITY_FLAG != 0, "infinity");
         require(byt & Y_FLAG != 0, "!y_flag");
 
         // Zero flags
-        g1[0] = byt & 31;
+        g1[0] = byt & 0x1f;
         Fp memory x = Fp(FP.slice_to_uint(g1, 0, 16), FP.slice_to_uint(g1, 16, 48));
         Fp memory y = Fp(FP.slice_to_uint(g1, 48, 64), FP.slice_to_uint(g1, 64, 96));
 
@@ -124,7 +124,7 @@ library G1 {
 
         // Convert to G1
         G1Point memory p = G1Point(x, y);
-        require(!p.is_infinity(), "infinity");
+        require(!is_infinity(p), "infinity");
         return p;
     }
 }

@@ -1,4 +1,4 @@
-/SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
@@ -65,12 +65,12 @@ library BLS {
     function hash_to_field_fq2(bytes32 message) internal view returns (Fp2[2] memory result) {
         bytes memory uniform_bytes = expand_message_xmd(message);
         result[0] = Fp2(
-            convert_slice_to_fp(uniform_bytes, 0, 64),
-            convert_slice_to_fp(uniform_bytes, 64, 128)
+            FP.from(uniform_bytes, 0, 64),
+            FP.from(uniform_bytes, 64, 128)
         );
         result[1] = Fp2(
-            convert_slice_to_fp(uniform_bytes, 128, 192),
-            convert_slice_to_fp(uniform_bytes, 192, 256)
+            FP.from(uniform_bytes, 128, 192),
+            FP.from(uniform_bytes, 192, 256)
         );
     }
 
