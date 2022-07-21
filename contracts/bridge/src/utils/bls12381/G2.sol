@@ -25,6 +25,14 @@ library G2 {
         return (p.x.eq(q.x) && p.y.eq(q.y));
     }
 
+    function is_zero(G2Point memory p) internal pure returns (bool) {
+        return p.x.is_zero() && p.y.is_zero();
+    }
+
+    function is_infinity(G1Point memory p) internal pure returns (bool) {
+        return is_zero(p);
+    }
+
     function add(G2Point memory p, G2Point memory q) internal view returns (G2Point memory) {
         uint[16] memory input;
         input[0]  = p.x.c0.a;
@@ -109,5 +117,35 @@ library G2 {
         );
     }
 
-    function decode(bytes memory pubkey) internal view returns (G2Point memory) {}
+    // Take a 192 byte array and convert to G2 point (x, y)
+    function deserialize(bytes memory g2) internal pure returns (G2Point memory) {
+        require(g1.length == 192, "!g2");
+        uint8 byt = g1[0];
+        require(byt & COMPRESION_FLAG != 0, "compressed");
+        require(byt & INFINITY_FLAG != 0, "infinity");
+        require(byt & Y_FLAG != 0, "!y_flag");
+
+        g1[0] = byt & 31;
+
+        // Convert from array to FP2
+        Fp memory x_imaginary = Fp(FP.slice_to_uint(g1, 0, 16), FP.slice_to_uint(g1, 16, 48));
+        Fp memory x_real = Fp(FP.slice_to_uint(g1, 48, 64), FP.slice_to_uint(g1, 64, 96));
+        Fp memory y_imaginary = Fp(FP.slice_to_uint(g1, 0, 16), FP.slice_to_uint(g1, 16, 48));
+        Fp memory y_real = Fp(FP.slice_to_uint(g1, 48, 64), FP.slice_to_uint(g1, 64, 96));
+
+        // Require elements less than field modulus
+        require(x_imaginary.is_valid() &&
+                x_real.is_valid() &&
+                y_imaginary.is_valid() &&
+                y_real.is_valid()
+                , "!pnt");
+
+        Fp2 memory x = Fp2(x_real, x_imaginary);
+        let memory y = Fp2(y_real, y_imaginary);
+
+        G2Point memory p = G2Point(x, y);
+        require(!p.is_infinity(), "infinity");
+        return p;
+
+    }
 }

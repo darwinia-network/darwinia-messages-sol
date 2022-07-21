@@ -11,7 +11,7 @@ struct Fp {
 library FP {
 
     // Base field modulus = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
-    function modulus() internal pure returns (Fp memory) {
+    function p() internal pure returns (Fp memory) {
         return Fp(0x1a0111ea397fe69a4b1ba7b6434bacd7, 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab);
     }
 
@@ -19,8 +19,20 @@ library FP {
         return Fp(0, 1);
     }
 
+    function three() internal pure returns (Fp memory) {
+        return Fp(0, 3);
+    }
+
+    function four() internal pure returns (Fp memory) {
+        return Fp(0, 4);
+    }
+
     function is_valid(Fp memory x) internal pure returns (bool) {
-        return gt(modulus(), x);
+        return gt(p(), x);
+    }
+
+    function is_zero(Fp memory x) internal pure returns (bool) {
+        return x.a == 0 && x.b == 0;
     }
 
     function eq(Fp memory x, Fp memory y) internal pure returns (bool) {
@@ -34,66 +46,17 @@ library FP {
     function add(Fp memory x, Fp memory y) internal pure returns (Fp memory z) {
         z.b = x.b + y.b;
         z.a = x.a + y.a + (z.b >= x.b && z.b >= y.b ? 0 : 1);
-        if (gt(z, modulus)) {
-            z = sub(z, modulus());
+        if (gt(z, p()) {
+            z = sub(z, p());
         }
     }
 
     function sub(Fp memory x, Fp memory y) internal pure returns (Fp memory z) {
         if (gt(y, x)) {
-            x = add(x, modulus());
+            x = add(x, p());
         }
         z.b = x.b - y.b;
         z.a = x.a - y.a - (z.b <= x.b ? 0 : 1);
-    }
-
-    function mul(Fp memory x, Fp memory y) internal view returns (Fp memory) {
-        uint256 a1 = uint128(x.b);
-        uint256 a2 = uint128(x.b >> 128);
-        uint256 a3 = uint128(x.a);
-        uint256 a4 = uint128(x.a >> 128);
-        uint256 b1 = uint128(y.b);
-        uint256 b2 = uint128(y.b >> 128);
-        uint256 b3 = uint128(y.a);
-        uint256 b4 = uint128(y.a >> 128);
-        Fp memory r = norm(Fp(0, a1*b1), 0);
-        r = add(r, norm(add(Fp(0, a1*b2), Fp(0, a2*b1)), 16);
-        r = add(r, norm(add(Fp(0, a1*b3), add(Fp(0, a2*b2), Fp(0, a3*b1))), 32);
-        r = add(r, norm(add(Fp(0, a1*b4), add(Fp(0,a2*b3), add(Fp(0, a3*b2), Fp(0, a4*b1)))), 48);
-        r = add(r, norm(add(Fp(0, a2*b4), add(Fp(0, a3*b3), Fp(0, a4*b2))), 64);
-        r = add(r, norm(add(Fp(0, a3*b4), Fp(0, a4*b3)), 96);
-        r = add(r, norm(Fp(0,a4*b4), 128));
-        return norm(res, 0);
-    }
-
-    function norm(Fp memory x, uint offset) internal view returns (Fp memory) {
-        return modexp(a, one(), modulus(), offset);
-    }
-
-    function modexp(Fp memory base, Fp memory exponent, Fp memory modulus, uint offset) internal view returns (Fp memory) {
-        bytes memory input = new bytes(3*32+62+64+32+offset);
-        uint[2] memory output;
-        assembly {
-            // length of base, exponent, modulus
-            mstore(add(input, 0x20), add(0x40,offset))
-            mstore(add(input, 0x40), 0x40)
-            mstore(add(input, 0x60), 0x40)
-
-            // assign base, exponent, modulus
-            mstore(add(input, 0x80), base.a)
-            mstore(add(input, 0xa0), base.b)
-            mstore(add(input, add(offset, 0xc0)), exponent.a)
-            mstore(add(input, add(offset, 0xe0)), exponent.b)
-            mstore(add(input, add(offset, 0x100)), modulus.a)
-            mstore(add(input, add(offset, 0x120)), modulus.b)
-
-            // call the precompiled contract BigModExp (0x05)
-            if iszero(staticcall(gas(), 0x05, add(input, 0x20), add(offset, 0x120), output, 0x40)) {
-                returndatacopy(0, 0, returndatasize())
-                revert(0, returndatasize())
-            }
-        }
-        return Fp(output[0], output[1]);
     }
 
     function from(bytes memory data, uint start, uint end) internal view returns (Fp memory) {

@@ -22,7 +22,7 @@ library BLS {
         bytes calldata uncompressed_signature
     ) internal view returns (bool) {
         G1Point memory agg_key = aggregate_pks(uncompressed_pubkeys);
-        G2Point memory sign_point = G2.decompress(uncompressed_signature);
+        G2Point memory sign_point = G2.deserialize(uncompressed_signature);
         G2Point memory msg_point = hash_to_curve_g2(message);
         // Faster evaualtion checks e(PK, H) * e(-G1, S) == 1
         return bls_pairing_check(agg_key, msg_point, sign_point);
@@ -37,9 +37,9 @@ library BLS {
     function aggregate_pks(bytes[] calldata pubkeys) internal view returns (G1Point memory) {
         uint len = pubkeys.length;
         require(len > 0, "!pubkeys");
-        G1Point memory g1 = G1.decompress(pubkeys[0]);
+        G1Point memory g1 = G1.deserialize(pubkeys[0]);
         for (uint i = 1; i < len; i++) {
-            g1 = g1.add(G1.decompress(pubkeys[i]));
+            g1 = g1.add(G1.deserialize(pubkeys[i]));
         }
         // TODO: Ensure AggregatePublicKey is not infinity
         return g1;

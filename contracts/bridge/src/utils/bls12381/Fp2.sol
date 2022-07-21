@@ -16,4 +16,8 @@ library FP2 {
     function eq(Fp2 memory x, Fp2 memory y) internal pure returns (bool) {
         return (x.c0.eq(y.c0) && x.c1.eq(y.c1));
     }
+
+    function is_zero(Fp memory x) internal pure returns (bool) {
+        return x.c0.a == 0 && x.c0.b == 0 && x.c1.a == 0 && x.c1.b == 0;
+    }
 }
