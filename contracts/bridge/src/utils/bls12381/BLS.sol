@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: MIT
+/SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
@@ -17,12 +17,12 @@ library BLS {
     // PublicKeys must all be verified via Proof of Possession before running this function.
     // https://tools.ietf.org/html/draft-irtf-cfrg-bls-signature-02#section-3.3.4
     function fast_aggregate_verify(
-        bytes[] calldata pubkeys,
+        bytes[] calldata uncompressed_pubkeys,
         bytes32 message,
-        bytes calldata signature
+        bytes calldata uncompressed_signature
     ) internal view returns (bool) {
-        G1Point memory agg_key = aggregate_pks(pubkeys);
-        G2Point memory sign_point = G2.decode(signature);
+        G1Point memory agg_key = aggregate_pks(uncompressed_pubkeys);
+        G2Point memory sign_point = G2.decompress(uncompressed_signature);
         G2Point memory msg_point = hash_to_curve_g2(message);
         // Faster evaualtion checks e(PK, H) * e(-G1, S) == 1
         return bls_pairing_check(agg_key, msg_point, sign_point);
@@ -37,9 +37,9 @@ library BLS {
     function aggregate_pks(bytes[] calldata pubkeys) internal view returns (G1Point memory) {
         uint len = pubkeys.length;
         require(len > 0, "!pubkeys");
-        G1Point memory g1 = G1.decode(pubkeys[0]);
+        G1Point memory g1 = G1.decompress(pubkeys[0]);
         for (uint i = 1; i < len; i++) {
-            g1 = g1.add(G1.decode(pubkeys[i]));
+            g1 = g1.add(G1.decompress(pubkeys[i]));
         }
         // TODO: Ensure AggregatePublicKey is not infinity
         return g1;
@@ -107,73 +107,5 @@ library BLS {
         }
 
         return output;
-    }
-
-    function convert_slice_to_fp(bytes memory data, uint start, uint end) internal view returns (Fp memory) {
-        bytes memory f = reduce_modulo(data, start, end);
-        uint a = slice_to_uint(f, 0, 16);
-        uint b = slice_to_uint(f, 16, 48);
-        return Fp(a, b);
-    }
-
-    function slice_to_uint(bytes memory data, uint start, uint end) internal pure returns (uint r) {
-        uint len = end - start;
-        require(0 <= len && len <= 32, "!slice");
-
-        assembly{
-            r := mload(add(add(data, 0x20), start))
-        }
-
-        return r >> (256 - len * 8);
-    }
-
-    function reduce_modulo(bytes memory data, uint start, uint end) internal view returns (bytes memory) {
-        uint length = end - start;
-        assert (length >= 0);
-        assert (length <= data.length);
-
-        bytes memory result = new bytes(48);
-
-        bool success;
-        assembly {
-            let p := mload(0x40)
-            // length of base
-            mstore(p, length)
-            // length of exponent
-            mstore(add(p, 0x20), 0x20)
-            // length of modulus
-            mstore(add(p, 0x40), 48)
-            // base
-            // first, copy slice by chunks of EVM words
-            let ctr := length
-            let src := add(add(data, 0x20), start)
-            let dst := add(p, 0x60)
-            for { }
-                or(gt(ctr, 0x20), eq(ctr, 0x20))
-                { ctr := sub(ctr, 0x20) }
-            {
-                mstore(dst, mload(src))
-                dst := add(dst, 0x20)
-                src := add(src, 0x20)
-            }
-            // next, copy remaining bytes in last partial word
-            let mask := sub(exp(256, sub(0x20, ctr)), 1)
-            let srcpart := and(mload(src), not(mask))
-            let destpart := and(mload(dst), mask)
-            mstore(dst, or(destpart, srcpart))
-            // exponent
-            mstore(add(p, add(0x60, length)), 1)
-            // modulus
-            let modulusAddr := add(p, add(0x60, add(0x10, length)))
-            // p.a
-            mstore(modulusAddr, or(mload(modulusAddr), 0x1a0111ea397fe69a4b1ba7b6434bacd7))
-            // p.b
-            mstore(add(p, add(0x90, length)), 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab)
-            if iszero(staticcall(gas(), 0x05, p, add(0xB0, length), add(result, 0x20), 48)) {
-                returndatacopy(0, 0, returndatasize())
-                revert(0, returndatasize())
-            }
-        }
-        return result;
     }
 }

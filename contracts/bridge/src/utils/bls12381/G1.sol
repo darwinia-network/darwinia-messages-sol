@@ -16,6 +16,11 @@ library G1 {
     uint8 private constant G1_ADD = 0x0A;
     uint8 private constant G1_MUL = 0x0B;
     uint8 private constant MAP_FP_TO_G1 = 0x11;
+    uint8 private constant COMPRESION_FLAG = 128;
+    uint8 private constant INFINITY_FLAG = 64;
+    uint8 private constant Y_FLAG = 32;
+
+    uint private constant G1_BYTES = 48;
 
     function negativeP1() internal pure returns (G1Point memory p) {
         p.x.a = 31827880280837800241567138048534752271;
@@ -93,5 +98,28 @@ library G1 {
         return G1Point(Fp(x[0], x[1]), Fp(x[2], x[3]));
     }
 
-    function decode(bytes memory pubkey) internal view returns (G1Point memory) {}
+    // Take a 384 bit array and convert to GroupG1 point (x, y)
+    // See https://github.com/zkcrypto/bls12_381/blob/main/src/notes/serialization.rs
+    function decompress(bytes memory pubkey) internal view returns (G1Point memory) {
+        // Ensure it is compressed
+        uint8 byt = pubkey[0];
+        require(pubkey.length == G1_BYTES, "!pk");
+        require(byt & COMPRESION_FLAG == 1, "!compressed");
+        require(byt & INFINITY_FLAG == 0, "!infinity");
+        bool y_flag = (byt & Y_FLAG) > 0;
+
+        // Zero flags
+        pubkey[0] = byt & 31;
+        Fp memory x = FP.from(pubkey);
+
+        // Require element less than field modulus
+        require(x.is_valid(), "!pnt");
+        // Try solving y coordinate from the equation Y^2 = X^3 + b
+        // using quadratic residue
+        // y = pow((x**3 + b.n) % q, (q + 1) // 4, q)
+        Fp memory b = Fp(0, 4);
+        // 1000602388805416848354447456433976039139220704984751971333014534031007912622709466110671907282253916009473568139947
+        Fp memory exp = Fp(0x680447a8e5ff9a692c6e9ed90d2eb35, 0xd91dd2e13ce144afd9cc34a83dac3d8907aaffffac54ffffee7fbfffffffeaab);
+        Fp memory y = x.modexp(3, FP.modulus()).add()
+    }
 }
