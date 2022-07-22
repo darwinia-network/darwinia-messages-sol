@@ -166,12 +166,11 @@ library G2 {
             // Record the leftmost bit of y_im to the a_flag1
             // If y_im happens to be zero, then use the bit of y_re
             // y_flag = (y_im * 2) // q if y_im > 0 else (y_re * 2) // q
-            bool y_flag = g1.y.add(g1.y).gt(FP.q());
             Fp memory q = FP.q();
-            Fp memory y_re = g2.c0;
-            Fp memory y_im = g2.c1;
+            Fp memory y_re = g2.y.c0;
+            Fp memory y_im = g2.y.c1;
 
-            bool y_flag = y_im.add(y_im).gt(q) ? !y_im.is_zero() : y_re.add(y_re).gt(q)
+            bool y_flag = y_im.add(y_im).gt(q) ? !y_im.is_zero() : y_re.add(y_re).gt(q);
             if (y_flag) {
                 r[0] = r[0] | Y_FLAG;
             }

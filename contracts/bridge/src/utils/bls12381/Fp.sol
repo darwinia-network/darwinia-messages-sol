@@ -11,12 +11,12 @@ struct Fp {
 library FP {
 
     // Base field modulus = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
-    function p() internal pure returns (Fp memory) {
+    function q() internal pure returns (Fp memory) {
         return Fp(0x1a0111ea397fe69a4b1ba7b6434bacd7, 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab);
     }
 
     function is_valid(Fp memory x) internal pure returns (bool) {
-        return gt(p(), x);
+        return gt(q(), x);
     }
 
     function is_zero(Fp memory x) internal pure returns (bool) {
@@ -34,6 +34,10 @@ library FP {
     function add(Fp memory x, Fp memory y) internal pure returns (Fp memory z) {
         z.b = x.b + y.b;
         z.a = x.a + y.a + (z.b >= x.b && x.b >= y.b ? 0 : 1);
+    }
+
+    function serialize(Fp memory x) internal pure returns (bytes memory) {
+        return abi.encodePacked(uint128(x.a), x.b);
     }
 
     function from(bytes memory data, uint start, uint end) internal view returns (Fp memory) {
@@ -61,7 +65,6 @@ library FP {
 
         bytes memory result = new bytes(48);
 
-        bool success;
         assembly {
             let freepoint := mload(0x40)
             // length of base
@@ -92,9 +95,9 @@ library FP {
             mstore(add(freepoint, add(0x60, length)), 1)
             // modulus
             let modulusAddr := add(freepoint, add(0x60, add(0x10, length)))
-            // p.a
+            // q.a
             mstore(modulusAddr, or(mload(modulusAddr), 0x1a0111ea397fe69a4b1ba7b6434bacd7))
-            // p.b
+            // q.b
             mstore(add(freepoint, add(0x90, length)), 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab)
             if iszero(staticcall(gas(), 0x05, freepoint, add(0xB0, length), add(result, 0x20), 48)) {
                 returndatacopy(0, 0, returndatasize())

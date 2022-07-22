@@ -15,7 +15,7 @@ library State {
         bytes32 code_hash;
     }
 
-    function toEVMAccount(bytes memory data) internal pure returns (EVMAccount memory account) {
+    function toEVMAccount(bytes memory data) internal pure returns (EVMAccount memory) {
         RLPDecode.RLPItem[] memory account = RLPDecode.readList(data);
 
         return

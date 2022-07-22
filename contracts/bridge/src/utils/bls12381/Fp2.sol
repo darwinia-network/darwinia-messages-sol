@@ -23,6 +23,6 @@ library FP2 {
 
     // Note: Zcash uses (x_im, x_re)
     function serialize(Fp2 memory x) internal pure returns (bytes memory) {
-        return abi.encodePacked( x.c1.serialize(), x.c0.serialize());
+        return abi.encodePacked(x.c1.serialize(), x.c0.serialize());
     }
 }
