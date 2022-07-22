@@ -15,12 +15,16 @@ library FP {
         return Fp(0x1a0111ea397fe69a4b1ba7b6434bacd7, 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab);
     }
 
+    function zero() internal pure returns (Fp memory) {
+        return Fp(0, 0);
+    }
+
     function is_valid(Fp memory x) internal pure returns (bool) {
         return gt(q(), x);
     }
 
     function is_zero(Fp memory x) internal pure returns (bool) {
-        return x.a == 0 && x.b == 0;
+        return eq(x, zero());
     }
 
     function eq(Fp memory x, Fp memory y) internal pure returns (bool) {
