@@ -22,8 +22,6 @@ library G2 {
     bytes1 private constant INFINITY_FLAG = bytes1(0x40);
     bytes1 private constant Y_FLAG = bytes1(0x20);
 
-    uint private constant G2_BYTES = 192;
-
     function eq(G2Point memory p, G2Point memory q)
         internal
         pure
@@ -126,7 +124,7 @@ library G2 {
 
     // Take a 192 byte array and convert to G2 point (x, y)
     function deserialize(bytes memory g2) internal pure returns (G2Point memory) {
-        require(g2.length == G2_BYTES, "!g2");
+        require(g2.length == 192, "!g2");
         bytes1 byt = g2[0];
         require(byt & COMPRESION_FLAG != 0, "compressed");
         require(byt & INFINITY_FLAG != 0, "infinity");
@@ -154,5 +152,15 @@ library G2 {
         require(!is_infinity(p), "infinity");
         return p;
 
+    }
+
+    // Take a G2 point (x, y) and compress it to a 96 byte array as the x-coordinate.
+    function serialize(G2Point memory g2) internal pure returns (bytes memory r) {
+        if (is_infinity(g2)) {
+            r = new bytes(96);
+            r[0] = bytes1(0xc0);
+        } else {
+            r = g2.x.serialize();
+        }
     }
 }

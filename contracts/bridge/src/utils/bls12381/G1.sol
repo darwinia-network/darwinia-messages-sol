@@ -20,8 +20,6 @@ library G1 {
     bytes1 private constant INFINITY_FLAG = bytes1(0x40);
     bytes1 private constant Y_FLAG = bytes1(0x20);
 
-    uint private constant G1_BYTES = 96;
-
     function negativeP1() internal pure returns (G1Point memory p) {
         p.x.a = 31827880280837800241567138048534752271;
         p.x.b = 88385725958748408079899006800036250932223001591707578097800747617502997169851;
@@ -108,7 +106,7 @@ library G1 {
 
     // Take a 96 byte array and convert to a G1 point (x, y)
     function deserialize(bytes memory g1) internal pure returns (G1Point memory) {
-        require(g1.length == G1_BYTES, "!g1");
+        require(g1.length == 96, "!g1");
         bytes1 byt = g1[0];
         require(byt & COMPRESION_FLAG != 0, "compressed");
         require(byt & INFINITY_FLAG != 0, "infinity");
@@ -126,5 +124,20 @@ library G1 {
         G1Point memory p = G1Point(x, y);
         require(!is_infinity(p), "infinity");
         return p;
+    }
+
+
+    // Take a G1 point (x, y) and compress it to a 48 byte array.
+    function serialize(G1Point memory g1) internal pure returns (bytes memory r) {
+        if (is_infinity(g1)) {
+            r = new bytes(48);
+            r[0] = bytes1(0xc0);
+        } else {
+            // Record y's leftmost bit to the a_flag
+            // y_flag = (g1.y.n * 2) // q
+            bool y_flag = g1.y.add(g1.y).gt(FP.q());
+            r = g1.x.serialize();
+            r[0] = r[0] | Y_FLAG | COMPRESION_FLAG;
+        }
     }
 }

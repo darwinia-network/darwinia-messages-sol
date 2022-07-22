@@ -31,6 +31,11 @@ library FP {
         return (x.a > y.a || (x.a == y.a && x.b > y.b));
     }
 
+    function add(Fp memory x, Fp memory y) internal pure returns (Fp memory z) {
+        z.b = x.b + y.b;
+        z.a = x.a + y.a + (z.b >= x.b && x.b >= y.b ? 0 : 1);
+    }
+
     function from(bytes memory data, uint start, uint end) internal view returns (Fp memory) {
         bytes memory f = reduce_modulo(data, start, end);
         uint a = slice_to_uint(f, 0, 16);
