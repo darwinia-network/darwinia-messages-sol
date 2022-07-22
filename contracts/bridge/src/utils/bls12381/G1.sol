@@ -137,7 +137,10 @@ library G1 {
             // y_flag = (g1.y.n * 2) // q
             bool y_flag = g1.y.add(g1.y).gt(FP.q());
             r = g1.x.serialize();
-            r[0] = r[0] | Y_FLAG | COMPRESION_FLAG;
+            if (y_flag) {
+                r[0] = r[0] | Y_FLAG;
+            }
+            r[0] = r[0] | COMPRESION_FLAG;
         }
     }
 }
