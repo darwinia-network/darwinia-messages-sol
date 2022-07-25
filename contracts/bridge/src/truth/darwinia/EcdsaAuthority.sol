@@ -7,15 +7,31 @@ import "../../utils/ECDSA.sol";
 
 /// @title Manages a set of relayers and a threshold to message commitment
 /// @dev Stores the relayers and a threshold
-contract RelayAuthorities {
+contract EcdsaAuthority {
     event AddedRelayer(address relayer);
     event RemovedRelayer(address relayer);
     event ChangedThreshold(uint256 threshold);
 
     // keccak256(
-    //     "RelayAuthorities()"
+    //     "EcdsaAuthority()"
     // );
-    bytes32 private constant DOMAIN_SEPARATOR_TYPEHASH = 0x5bc5177d952a43fbebee7e0da0540faefba2dec8fc94a6caeda2dba0fc92776d;
+    bytes32 private constant DOMAIN_SEPARATOR_TYPEHASH = 0x652c2edc657d7deaca18647c273cbe7f23820aa8d7faf388393f8560efc70f87;
+
+    // Method Id of `add_relayer_with_threshold`
+    // bytes4(keccak256("add_relayer_with_threshold(address,uint256)"))
+    bytes4 private constant ADD_RELAYER_SIG = bytes4(0xb28f631c);
+
+    // Method Id of `remove_relayer`
+    // bytes4(keccak256("remove_relayer(address,address,uint256)"))
+    bytes4 private constant REMOVE_RELAYER_SIG = bytes4(0x8621d1fa);
+
+    // Method Id of `swap_relayer`
+    // bytes4(keccak256("swap_relayer(address,address,address)"))
+    bytes4 private constant SWAP_RELAYER_SIG = bytes4(0xcb76085b);
+
+    // Method Id of `change_threshold`
+    // bytes4(keccak256("change_threshold(uint256)"))
+    bytes4 private constant CHANGE_THRESHOLD_SIG = bytes4(0x3c823333);
 
     // keccak256(
     //     "ChangeRelayer(bytes32 network,bytes4 sig,bytes params,uint256 nonce)"
@@ -90,7 +106,7 @@ contract RelayAuthorities {
         require(_relayer != address(0) && _relayer != SENTINEL && _relayer != address(this), "!replay");
         // No duplicate relayers allowed.
         require(relayers[_relayer] == address(0), "duplicate");
-        _verify_relayer_signatures(msg.sig, abi.encode(_relayer, _threshold), _signatures);
+        _verify_relayer_signatures(ADD_RELAYER_SIG, abi.encode(_relayer, _threshold), _signatures);
         relayers[_relayer] = relayers[SENTINEL];
         relayers[SENTINEL] = _relayer;
         count++;
@@ -117,7 +133,7 @@ contract RelayAuthorities {
         // Validate relayer address and check that it corresponds to relayer index.
         require(_relayer != address(0) && _relayer != SENTINEL, "!relayer");
         require(relayers[_prevRelayer] == _relayer, "!pair");
-        _verify_relayer_signatures(msg.sig, abi.encode(_prevRelayer, _relayer, _threshold), _signatures);
+        _verify_relayer_signatures(REMOVE_RELAYER_SIG, abi.encode(_prevRelayer, _relayer, _threshold), _signatures);
         relayers[_prevRelayer] = relayers[_relayer];
         relayers[_relayer] = address(0);
         count--;
@@ -146,7 +162,7 @@ contract RelayAuthorities {
         // Validate oldRelayer address and check that it corresponds to relayer index.
         require(_oldRelayer != address(0) && _oldRelayer != SENTINEL, "!oldRelayer");
         require(relayers[_prevRelayer] == _oldRelayer, "!pair");
-        _verify_relayer_signatures(msg.sig, abi.encode(_prevRelayer, _oldRelayer, _newRelayer), _signatures);
+        _verify_relayer_signatures(SWAP_RELAYER_SIG, abi.encode(_prevRelayer, _oldRelayer, _newRelayer), _signatures);
         relayers[_newRelayer] = relayers[_oldRelayer];
         relayers[_prevRelayer] = _newRelayer;
         relayers[_oldRelayer] = address(0);
@@ -160,7 +176,7 @@ contract RelayAuthorities {
     /// @param _threshold New threshold.
     /// @param _signatures The signatures of the guards which to update the `threshold` .
     function change_threshold(uint256 _threshold, bytes[] memory _signatures) public {
-        _verify_relayer_signatures(msg.sig, abi.encode(_threshold), _signatures);
+        _verify_relayer_signatures(CHANGE_THRESHOLD_SIG, abi.encode(_threshold), _signatures);
         _change_threshold(_threshold);
     }
 

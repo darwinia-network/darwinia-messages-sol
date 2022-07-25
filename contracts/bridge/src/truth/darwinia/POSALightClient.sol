@@ -3,11 +3,11 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "./RelayAuthorities.sol";
+import "./EcdsaAuthority.sol";
 import "../common/MessageVerifier.sol";
 import "../../spec/POSACommitmentScheme.sol";
 
-contract POSALightClient is POSACommitmentScheme, MessageVerifier, RelayAuthorities {
+contract POSALightClient is POSACommitmentScheme, MessageVerifier, EcdsaAuthority {
     event MessageRootImported(uint256 block_number, bytes32 message_root);
 
     // keccak256(
@@ -23,7 +23,7 @@ contract POSALightClient is POSACommitmentScheme, MessageVerifier, RelayAuthorit
         address[] memory _relayers,
         uint256 _threshold,
         uint256 _nonce
-    ) RelayAuthorities(_network, _relayers, _threshold, _nonce) {}
+    ) EcdsaAuthority(_network, _relayers, _threshold, _nonce) {}
 
     function message_root() public view override returns (bytes32) {
         return latest_messages_root;
