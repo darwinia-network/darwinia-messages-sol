@@ -59,7 +59,7 @@ library G2 {
         uint[8] memory output;
 
         assembly {
-            if iszero(staticcall(800, G2_ADD, input, 512, output, 256)) {
+            if iszero(staticcall(4500, G2_ADD, input, 512, output, 256)) {
                  returndatacopy(0, 0, returndatasize())
                  revert(0, returndatasize())
             }
@@ -82,7 +82,7 @@ library G2 {
         uint[8] memory output;
 
         assembly {
-            if iszero(staticcall(45000, G2_MUL, input, 288, output, 256)) {
+            if iszero(staticcall(55000, G2_MUL, input, 288, output, 256)) {
                 returndatacopy(0, 0, returndatasize())
                 revert(0, returndatasize())
             }
@@ -100,7 +100,7 @@ library G2 {
         uint[8] memory output;
 
         assembly {
-            if iszero(staticcall(75000, MAP_FP2_TO_G2, input, 128, output, 256)) {
+            if iszero(staticcall(110000, MAP_FP2_TO_G2, input, 128, output, 256)) {
                 returndatacopy(0, 0, returndatasize())
                 revert(0, returndatasize())
             }

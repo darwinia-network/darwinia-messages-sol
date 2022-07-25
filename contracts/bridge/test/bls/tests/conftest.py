@@ -19,7 +19,7 @@ def _get_json(filename):
         return json.load(f)
 
 def get_bls_contract_json():
-    filename = os.path.join(DIR, "../../../artifacts/src/utils/bls12381/BLS.sol/BLS.json")
+    filename = os.path.join(DIR, "../../../artifacts/src/test/mock/WrappedBLS.sol/WrappedBLS.json")
     return _get_json(filename)
 
 @pytest.fixture
@@ -47,8 +47,8 @@ def _deploy_contract(contract_json, w3, *args):
     return contract_deployed
 
 @pytest.fixture
-def deposit_contract(w3):
-    return _deploy_contract(get_deposit_contract_json(), w3)
+def bls_contract(w3):
+    return _deploy_contract(get_bls_contract_json(), w3)
 
 @pytest.fixture
 def assert_tx_failed(tester):

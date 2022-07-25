@@ -56,7 +56,7 @@ library G1 {
         uint[4] memory output;
 
         assembly {
-            if iszero(staticcall(500, G1_ADD, input, 256, output, 128)) {
+            if iszero(staticcall(600, G1_ADD, input, 256, output, 128)) {
                  returndatacopy(0, 0, returndatasize())
                  revert(0, returndatasize())
             }
