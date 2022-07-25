@@ -295,7 +295,8 @@ contract SimpleFeeMarket is IFeeMarket {
                 break;
             } else {
                 prune(prev, cur);
-                cur = relayers[prev];
+                prev = cur;
+                cur = relayers[cur];
             }
         }
     }
