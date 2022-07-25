@@ -108,9 +108,9 @@ library G1 {
     function deserialize(bytes memory g1) internal pure returns (G1Point memory) {
         require(g1.length == 96, "!g1");
         bytes1 byt = g1[0];
-        require(byt & COMPRESION_FLAG != 0, "compressed");
-        require(byt & INFINITY_FLAG != 0, "infinity");
-        require(byt & Y_FLAG != 0, "!y_flag");
+        require(byt & COMPRESION_FLAG == 0, "compressed");
+        require(byt & INFINITY_FLAG == 0, "infinity");
+        require(byt & Y_FLAG == 0, "y_flag");
 
         // Zero flags
         g1[0] = byt & 0x1f;

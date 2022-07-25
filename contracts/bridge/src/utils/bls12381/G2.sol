@@ -126,17 +126,17 @@ library G2 {
     function deserialize(bytes memory g2) internal pure returns (G2Point memory) {
         require(g2.length == 192, "!g2");
         bytes1 byt = g2[0];
-        require(byt & COMPRESION_FLAG != 0, "compressed");
-        require(byt & INFINITY_FLAG != 0, "infinity");
-        require(byt & Y_FLAG != 0, "!y_flag");
+        require(byt & COMPRESION_FLAG == 0, "compressed");
+        require(byt & INFINITY_FLAG == 0, "infinity");
+        require(byt & Y_FLAG == 0, "y_flag");
 
         g2[0] = byt & 0x1f;
 
         // Convert from array to FP2
         Fp memory x_imaginary = Fp(FP.slice_to_uint(g2, 0, 16), FP.slice_to_uint(g2, 16, 48));
         Fp memory x_real = Fp(FP.slice_to_uint(g2, 48, 64), FP.slice_to_uint(g2, 64, 96));
-        Fp memory y_imaginary = Fp(FP.slice_to_uint(g2, 0, 16), FP.slice_to_uint(g2, 16, 48));
-        Fp memory y_real = Fp(FP.slice_to_uint(g2, 48, 64), FP.slice_to_uint(g2, 64, 96));
+        Fp memory y_imaginary = Fp(FP.slice_to_uint(g2, 96, 112), FP.slice_to_uint(g2, 112, 144));
+        Fp memory y_real = Fp(FP.slice_to_uint(g2, 144, 160), FP.slice_to_uint(g2, 160, 192));
 
         // Require elements less than field modulus
         require(x_imaginary.is_valid() &&

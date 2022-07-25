@@ -25,4 +25,20 @@ contract WrappedBLS {
     function bls_pairing_check(G1Point memory pk, G2Point memory h, G2Point memory s) public view returns (bool) {
         return BLS.bls_pairing_check(pk, h, s);
     }
+
+    function deserialize_g1(bytes memory g1) public pure returns (G1Point memory) {
+        return G1.deserialize(g1);
+    }
+
+    function serialize_g1(G1Point memory g1) public pure returns (bytes memory) {
+        return G1.serialize(g1);
+    }
+
+    function deserialize_g2(bytes memory g2) public pure returns (G2Point memory) {
+        return G2.deserialize(g2);
+    }
+
+    function serialize_g2(G2Point memory g2) public pure returns (bytes memory) {
+        return G2.serialize(g2);
+    }
 }
