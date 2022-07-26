@@ -170,7 +170,7 @@ library G2 {
             Fp memory y_re = g2.y.c0;
             Fp memory y_im = g2.y.c1;
 
-            bool y_flag = y_im.add(y_im).gt(q) ? !y_im.is_zero() : y_re.add(y_re).gt(q);
+            bool y_flag = y_im.is_zero() ? y_re.add(y_re).gt(q) : y_im.add(y_im).gt(q);
             if (y_flag) {
                 r[0] = r[0] | Y_FLAG;
             }

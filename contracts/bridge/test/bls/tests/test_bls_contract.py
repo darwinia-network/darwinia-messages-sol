@@ -37,6 +37,19 @@ def _serialize_uncompressed_g1(g1):
     y = int(g1[1]).to_bytes(48, byteorder="big")
     return x + y
 
+
+def _serialize_uncompressed_g2(g2):
+    x = g2[0]
+    y = g2[1]
+
+    x_re = int(x.coeffs[0]).to_bytes(48, byteorder="big")
+    x_im = int(x.coeffs[1]).to_bytes(48, byteorder="big")
+
+    y_re = int(y.coeffs[0]).to_bytes(48, byteorder="big")
+    y_im = int(y.coeffs[1]).to_bytes(48, byteorder="big")
+    return x_im + x_re + y_im + y_re
+
+
 @to_tuple
 def _convert_int_to_fp2_repr(field_element):
     for coeff in field_element.coeffs:
@@ -171,3 +184,28 @@ def test_aggregate_pks(bls_contract):
     assert s_agg_pk == e_pk
 
 
+def test_fast_aggregate_verify(bls_contract):
+    pubkeys = [
+        bytes.fromhex('a491d1b0ecd9bb917989f0e74f0dea0422eac4a873e5e2644f368dffb9a6e20fd6e10c1b77654d067c0618f6e5a7f79a'),
+        bytes.fromhex('b301803f8b5ac4a1133581fc676dfedc60d891dd5fa99028805e5ea5b08d3491af75d0707adab3b70c6a6a580217bf81'),
+        bytes.fromhex('b53d21a4cfd562c469cc81514d4ce5a6b577d8403d32a394dc265dd190b47fa9f829fdd7963afdf972e5e77854051f6f')
+    ]
+    message = bytes.fromhex('abababababababababababababababababababababababababababababababab')
+    signature = bytes.fromhex('9712c3edd73a209c742b8250759db12549b3eaf43b5ca61376d9f30e2747dbcf842d8b2ac0901d2a093713e20284a7670fcf6954e9ab93de991bb9b313e664785a075fc285806fa5224c82bde146561b446ccfc706a64b8579513cfc4ff1d930')
+
+    uncompressed_pubkeys = [normalize(pubkey_to_G1(pk)) for pk in pubkeys]
+    serialized_pks = [ _serialize_uncompressed_g1(pk) for pk in uncompressed_pubkeys ]
+
+    uncompressed_sign = normalize(signature_to_G2(signature))
+    serialized_sign = _serialize_uncompressed_g2(uncompressed_sign)
+
+    d = bls_contract.functions.deserialize_g2(serialized_sign).call()
+    s = bls_contract.functions.serialize_g2(d).call()
+
+    assert s == signature
+
+    assert bls_contract.functions.fast_aggregate_verify(
+                serialized_pks,
+                message,
+                serialized_sign
+            )

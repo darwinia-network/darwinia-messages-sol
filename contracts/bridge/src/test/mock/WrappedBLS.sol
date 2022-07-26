@@ -45,4 +45,12 @@ contract WrappedBLS {
     function aggregate_pks(bytes[] calldata pubkeys) public view returns (G1Point memory) {
         return BLS.aggregate_pks(pubkeys);
     }
+
+    function fast_aggregate_verify(
+        bytes[] calldata uncompressed_pubkeys,
+        bytes32 message,
+        bytes calldata uncompressed_signature
+    ) public view returns (bool) {
+        return BLS.fast_aggregate_verify(uncompressed_pubkeys, message, uncompressed_signature);
+    }
 }
