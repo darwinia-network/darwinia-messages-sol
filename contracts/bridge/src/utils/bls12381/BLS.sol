@@ -44,7 +44,7 @@ library BLS {
         for (uint i = 1; i < len; i++) {
             g1 = g1.add(G1.deserialize(pubkeys[i]));
         }
-        // TODO: Ensure AggregatePublicKey is not infinity
+        require(!g1.is_infinity(), "infinity");
         return g1;
     }
 
