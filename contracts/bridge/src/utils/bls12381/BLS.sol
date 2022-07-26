@@ -86,8 +86,8 @@ library BLS {
     // https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-5.4
     function expand_message_xmd(bytes32 message) internal pure returns (bytes memory) {
         bytes memory b0Input = new bytes(143);
-        for (uint i = 0; i < 32; i++) {
-            b0Input[i+64] = message[i];
+        assembly {
+            mstore(add(add(b0Input, 0x20), 0x40), message)
         }
         b0Input[96] = 0x01;
         for (uint i = 0; i < 44; i++) {
