@@ -4,6 +4,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "./Fp2.sol";
+import "../Bytes.sol";
 
 struct G2Point {
     Fp2 x;

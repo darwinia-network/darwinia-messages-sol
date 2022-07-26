@@ -2,14 +2,17 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "../Bytes.sol";
 import "./Pairing.sol";
 
 library BLS {
+    using FP for Fp;
     using G1 for G1Point;
     using G2 for G2Point;
+    using Bytes for bytes;
 
     // Domain Separation Tag for signatures on G2 with a single byte the length of the DST appended
-    string constant DST_G2 = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_+";
+    string private constant DST_G2 = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_+";
 
     // FastAggregateVerify
     //
@@ -68,12 +71,12 @@ library BLS {
     function hash_to_field_fq2(bytes32 message) internal view returns (Fp2[2] memory result) {
         bytes memory uniform_bytes = expand_message_xmd(message);
         result[0] = Fp2(
-            FP.from(uniform_bytes, 0, 64),
-            FP.from(uniform_bytes, 64, 128)
+            reduce_modulo(uniform_bytes.substr(0, 64)),
+            reduce_modulo(uniform_bytes.substr(64, 64))
         );
         result[1] = Fp2(
-            FP.from(uniform_bytes, 128, 192),
-            FP.from(uniform_bytes, 192, 256)
+            reduce_modulo(uniform_bytes.substr(128, 64)),
+            reduce_modulo(uniform_bytes.substr(192, 64))
         );
     }
 
@@ -110,5 +113,14 @@ library BLS {
         }
 
         return output;
+    }
+
+    function reduce_modulo(bytes memory base) internal view returns (Fp memory) {
+        require(base.length == 64, "!slice");
+        Fp memory b = Fp(
+            base.slice_to_uint(0, 32),
+            base.slice_to_uint(32, 64)
+        );
+        return b.norm();
     }
 }
