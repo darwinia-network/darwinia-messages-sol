@@ -13,6 +13,7 @@ struct G2Point {
 library G2 {
     using FP for Fp;
     using FP2 for Fp2;
+    using Bytes for bytes;
 
     uint8 private constant G2_ADD = 0x0D;
     uint8 private constant G2_MUL = 0x0E;
@@ -133,10 +134,10 @@ library G2 {
         g2[0] = byt & 0x1f;
 
         // Convert from array to FP2
-        Fp memory x_imaginary = Fp(FP.slice_to_uint(g2, 0, 16), FP.slice_to_uint(g2, 16, 48));
-        Fp memory x_real = Fp(FP.slice_to_uint(g2, 48, 64), FP.slice_to_uint(g2, 64, 96));
-        Fp memory y_imaginary = Fp(FP.slice_to_uint(g2, 96, 112), FP.slice_to_uint(g2, 112, 144));
-        Fp memory y_real = Fp(FP.slice_to_uint(g2, 144, 160), FP.slice_to_uint(g2, 160, 192));
+        Fp memory x_imaginary = Fp(g2.slice_to_uint(0, 16), g2.slice_to_uint(16, 48));
+        Fp memory x_real = Fp(g2.slice_to_uint(48, 64), g2.slice_to_uint(64, 96));
+        Fp memory y_imaginary = Fp(g2.slice_to_uint(96, 112), g2.slice_to_uint(112, 144));
+        Fp memory y_real = Fp(g2.slice_to_uint(144, 160), g2.slice_to_uint(160, 192));
 
         // Require elements less than field modulus
         require(x_imaginary.is_valid() &&

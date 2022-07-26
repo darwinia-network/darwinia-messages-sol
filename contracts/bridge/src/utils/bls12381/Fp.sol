@@ -3,12 +3,15 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "../Bytes.sol";
+
 struct Fp {
     uint a;
     uint b;
 }
 
 library FP {
+    using Bytes for bytes;
 
     // Base field modulus = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
     function q() internal pure returns (Fp memory) {
@@ -46,20 +49,9 @@ library FP {
 
     function from(bytes memory data, uint start, uint end) internal view returns (Fp memory) {
         bytes memory f = reduce_modulo(data, start, end);
-        uint a = slice_to_uint(f, 0, 16);
-        uint b = slice_to_uint(f, 16, 48);
+        uint a = f.slice_to_uint(0, 16);
+        uint b = f.slice_to_uint(16, 48);
         return Fp(a, b);
-    }
-
-    function slice_to_uint(bytes memory data, uint start, uint end) internal pure returns (uint r) {
-        uint len = end - start;
-        require(0 <= len && len <= 32, "!slice");
-
-        assembly{
-            r := mload(add(add(data, 0x20), start))
-        }
-
-        return r >> (256 - len * 8);
     }
 
     function reduce_modulo(bytes memory data, uint start, uint end) internal view returns (bytes memory) {

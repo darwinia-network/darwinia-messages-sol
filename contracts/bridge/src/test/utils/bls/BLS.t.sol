@@ -8,6 +8,7 @@ import "../../../utils/bls12381/BLS.sol";
 contract BLSTest is DSTest {
     using FP2 for Fp2;
     using G2 for G2Point;
+    using Bytes for bytes;
 
     // Waiting for EIP-2537, using pytest first
     function testFail_bls_pairing_check() public {
@@ -139,9 +140,9 @@ contract BLSTest is DSTest {
 
     function test_slice_to_uint() public {
         bytes memory f = hex'1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab';
-        uint pa = FP.slice_to_uint(f, 0, 16);
+        uint pa = f.slice_to_uint(0, 16);
         assertEq(pa, 0x1a0111ea397fe69a4b1ba7b6434bacd7);
-        uint pb = FP.slice_to_uint(f, 16, 48);
+        uint pb = f.slice_to_uint(16, 48);
         assertEq(pb, 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab);
     }
 }
