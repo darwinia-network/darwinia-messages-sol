@@ -13,7 +13,7 @@ contract POSALightClient is POSACommitmentScheme, MessageVerifier, EcdsaAuthorit
     // keccak256(
     //     "SignCommitment(bytes32 network,bytes32 commitment,uint256 nonce)"
     // );
-    bytes32 private constant COMMIT_TYPEHASH = 0x0324ca0ca4d529e0eefcc6d123bd17ec982498cf2e732160cc47d2504825e4b2;
+    bytes32 private constant COMMIT_TYPEHASH = 0x094035cedc3e46ef54781099828371ea30ebdff1ad90e2ffc4d03d4c5057fbe6;
 
     uint256 public latest_block_number;
     bytes32 public latest_messages_root;
