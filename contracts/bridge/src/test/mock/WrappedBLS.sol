@@ -41,4 +41,8 @@ contract WrappedBLS {
     function serialize_g2(G2Point memory g2) public pure returns (bytes memory) {
         return G2.serialize(g2);
     }
+
+    function aggregate_pks(bytes[] calldata pubkeys) public view returns (G1Point memory) {
+        return BLS.aggregate_pks(pubkeys);
+    }
 }

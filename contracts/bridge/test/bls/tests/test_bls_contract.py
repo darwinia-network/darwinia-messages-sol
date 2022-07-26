@@ -29,6 +29,11 @@ def _convert_int_to_fp_repr(field_element):
         int.from_bytes(b_bytes, byteorder="big"),
     )
 
+def _serialize_uncompressed_g1(g1):
+    x = int(g1[0]).to_bytes(48, byteorder="big")
+    y = int(g1[1]).to_bytes(48, byteorder="big")
+    return x + y
+
 @to_tuple
 def _convert_int_to_fp2_repr(field_element):
     for coeff in field_element.coeffs:
@@ -138,3 +143,17 @@ def test_deserialize_g2(bls_contract):
     compressed_p = bytes.fromhex('816d4c6b8cd9345709d083ea4c4188c8b91800a3a1caafc06ce2f906c1f76b60cb34dbeb7bb502507bb4075b61a965a60c26952837b1f30e3725cffadd55033ec62f9360659c68188b7192f4e641f39bc15a8b8847e942c5218f7eae57ed215e')
 
     assert s == compressed_p
+
+def test_aggregate_pks(bls_contract):
+    pks = [
+bytes.fromhex('a572cbea904d67468808c8eb50a9450c9721db309128012543902d0ac358a62ae28f75bb8f1c7c42c39a8c5529bf0f4e'),
+bytes.fromhex('89ece308f9d1f0131765212deca99697b112d61f9be9a5f1f3780a51335b3ff981747a0b2ca2179b96d2c0c9024e5224')
+            ]
+    uncompressed_pubkeys = [normalize(pubkey_to_G1(pk)) for pk in pks]
+    serialized_pks = [ _serialize_uncompressed_g1(pk) for pk in uncompressed_pubkeys ]
+
+    agg_pk = bls_contract.functions.aggregate_pks(serialized_pks).call();
+    print(agg_pk)
+
+    e_pk = bytes.fromhex('b0e7791fb972fe014159aa33a98622da3cdc98ff707965e536d8636b5fcc5ac7a91a8c46e59a00dca575af0f18fb13dc')
+

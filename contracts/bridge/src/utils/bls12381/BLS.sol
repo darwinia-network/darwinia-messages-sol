@@ -34,6 +34,9 @@ library BLS {
         return Pairing.pairing(pk, h, ng1, s);
     }
 
+    // Aggregate
+    //
+    // https://tools.ietf.org/html/draft-irtf-cfrg-bls-signature-04#section-2.8
     function aggregate_pks(bytes[] calldata pubkeys) internal view returns (G1Point memory) {
         uint len = pubkeys.length;
         require(len > 0, "!pubkeys");
