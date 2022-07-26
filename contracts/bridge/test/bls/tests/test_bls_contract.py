@@ -153,7 +153,9 @@ bytes.fromhex('89ece308f9d1f0131765212deca99697b112d61f9be9a5f1f3780a51335b3ff98
     serialized_pks = [ _serialize_uncompressed_g1(pk) for pk in uncompressed_pubkeys ]
 
     agg_pk = bls_contract.functions.aggregate_pks(serialized_pks).call();
-    print(agg_pk)
+    s_agg_pk = bls_contract.functions.serialize_g1(agg_pk).call();
 
     e_pk = bytes.fromhex('b0e7791fb972fe014159aa33a98622da3cdc98ff707965e536d8636b5fcc5ac7a91a8c46e59a00dca575af0f18fb13dc')
+
+    assert s_agg_pk == e_pk
 
