@@ -14,26 +14,32 @@ from web3.providers.eth_tester import EthereumTesterProvider
 
 DIR = os.path.dirname(__file__)
 
+
 def _get_json(filename):
     with open(filename) as f:
         return json.load(f)
+
 
 def get_bls_contract_json():
     filename = os.path.join(DIR, "../../../artifacts/src/test/mock/WrappedBLS.sol/WrappedBLS.json")
     return _get_json(filename)
 
+
 @pytest.fixture
 def berlin_vm_configuration():
     return ((0, BerlinVM),)
+
 
 @pytest.fixture
 def tester(berlin_vm_configuration):
     return EthereumTester(PyEVMBackend(vm_configuration=berlin_vm_configuration))
 
+
 @pytest.fixture
 def w3(tester):
     web3 = Web3(EthereumTesterProvider(tester))
     return web3
+
 
 def _deploy_contract(contract_json, w3, *args):
     contract_bytecode = contract_json["bytecode"]
@@ -46,9 +52,11 @@ def _deploy_contract(contract_json, w3, *args):
     )
     return contract_deployed
 
+
 @pytest.fixture
 def bls_contract(w3):
     return _deploy_contract(get_bls_contract_json(), w3)
+
 
 @pytest.fixture
 def assert_tx_failed(tester):
@@ -62,21 +70,26 @@ def assert_tx_failed(tester):
 
     return assert_tx_failed
 
+
 @pytest.fixture
 def seed():
     return "some-secret".encode()
+
 
 @pytest.fixture
 def bls_private_key(seed):
     return G2ProofOfPossession.KeyGen(seed)
 
+
 @pytest.fixture
 def bls_public_key(bls_private_key):
     return G2ProofOfPossession.SkToPk(bls_private_key)
 
+
 @pytest.fixture
 def signing_root():
     return bytes.fromhex('3a896ca4b5db102b9dfd47528b06220a91bd12461dcc86793ce2d591f41ea4f8')
+
 
 @pytest.fixture
 def signature(bls_private_key, signing_root):
@@ -100,6 +113,8 @@ def signature_witness(signature):
     print(normalized_group_element)
     return normalized_group_element[1]
 
+
 @pytest.fixture
 def dst():
     return G2ProofOfPossession.DST
+
