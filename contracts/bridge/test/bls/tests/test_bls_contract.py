@@ -208,4 +208,4 @@ def test_fast_aggregate_verify(bls_contract):
                 serialized_pks,
                 message,
                 serialized_sign
-            )
+            ).call()

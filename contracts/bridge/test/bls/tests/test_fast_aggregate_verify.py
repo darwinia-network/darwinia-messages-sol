@@ -1,5 +1,13 @@
+import os
+import json
+import pytest
+
 from py_ecc.bls.g2_primatives import pubkey_to_G1, signature_to_G2
-from py_ecc.optimized_bls12_381 import normalize
+from py_ecc.optimized_bls12_381 import normalize, Z2
+from pathlib import Path
+from ruamel.yaml import YAML
+
+DIR = os.path.dirname(__file__)
 
 
 def _serialize_uncompressed_g1(g1):
@@ -553,4 +561,218 @@ def test_fast_aggregate_verify(bls_contract):
                 serialized_pks,
                 message,
                 serialized_sign
-            )
+            ).call({'gas': 20000000})
+
+
+def _load_yaml(testcase_name):
+    filename = f"../general/phase0/bls/fast_aggregate_verify/small/{testcase_name}/data.yaml"
+    filepath = os.path.join(DIR, filename)
+    path = Path(filepath)
+    yaml = YAML(typ='base')
+    return yaml.load(path)
+
+
+@pytest.mark.parametrize(
+    'testcase_name',
+    [
+        'fast_aggregate_verify_extra_pubkey_4f079f946446fabf',
+        'fast_aggregate_verify_extra_pubkey_5a38e6b4017fe4dd',
+        'fast_aggregate_verify_extra_pubkey_a698ea45b109f303',
+        'fast_aggregate_verify_valid_3d7576f3c0e3570a',
+        'fast_aggregate_verify_valid_5e745ad0c6199a6c',
+        'fast_aggregate_verify_valid_652ce62f09290811'
+    ]
+)
+def test_fast_aggregate_verify_match_spec(bls_contract, testcase_name):
+    data = _load_yaml(testcase_name)
+    if data is None:
+        assert False
+    pubkeys = data['input']['pubkeys']
+    message = data['input']['message']
+    signature = data['input']['signature']
+    pks = [bytes.fromhex(pk[2:]) for pk in pubkeys]
+    msg = bytes.fromhex(message[2:])
+    sign = bytes.fromhex(signature[2:])
+
+    pk_pnts = [normalize(pubkey_to_G1(pk)) for pk in pks]
+    uncompressed_pks = [ _serialize_uncompressed_g1(pnt) for pnt in pk_pnts ]
+
+    sign_pnt = normalize(signature_to_G2(sign))
+    uncompressed_sign = _serialize_uncompressed_g2(sign_pnt)
+
+    d = bls_contract.functions.deserialize_g2(uncompressed_sign).call()
+    s = bls_contract.functions.serialize_g2(d).call()
+
+    assert s == sign
+
+    output = json.loads(data['output'].lower())
+
+    assert bls_contract.functions.fast_aggregate_verify(
+                uncompressed_pks,
+                msg,
+                uncompressed_sign
+            ).call() == output
+
+@pytest.mark.parametrize(
+    'testcase_name',
+    [
+        'fast_aggregate_verify_infinity_pubkey',
+    ]
+)
+def test_fast_aggregate_verify_fails_with_infinity_pubkey(bls_contract, testcase_name, assert_call_fail):
+    data = _load_yaml(testcase_name)
+    if data is None:
+        assert False
+    pubkeys = data['input']['pubkeys']
+    message = data['input']['message']
+    signature = data['input']['signature']
+    pks = [bytes.fromhex(pk[2:]) for pk in pubkeys]
+    msg = bytes.fromhex(message[2:])
+    sign = bytes.fromhex(signature[2:])
+
+    pk_pnts = [normalize(pubkey_to_G1(pk)) for pk in pks]
+    uncompressed_pks = [ _serialize_uncompressed_g1(pnt) for pnt in pk_pnts ]
+
+    sign_pnt = normalize(signature_to_G2(sign))
+    uncompressed_sign = _serialize_uncompressed_g2(sign_pnt)
+
+    d = bls_contract.functions.deserialize_g2(uncompressed_sign).call()
+    s = bls_contract.functions.serialize_g2(d).call()
+
+    assert s == sign
+
+    output = json.loads(data['output'].lower())
+
+    assert_call_fail(
+            lambda: bls_contract.functions.fast_aggregate_verify(
+                uncompressed_pks,
+                msg,
+                uncompressed_sign
+            ).call(),
+            'infinity'
+        )
+
+
+@pytest.mark.parametrize(
+    'testcase_name',
+    [
+        'fast_aggregate_verify_na_pubkeys_and_infinity_signature',
+    ]
+)
+def test_fast_aggregate_verify_fails_with_na_pubkeys_and_infinity_signature(bls_contract, testcase_name, assert_call_fail):
+    data = _load_yaml(testcase_name)
+    if data is None:
+        assert False
+    pubkeys = data['input']['pubkeys']
+    message = data['input']['message']
+    signature = data['input']['signature']
+    pks = [bytes.fromhex(pk[2:]) for pk in pubkeys]
+    msg = bytes.fromhex(message[2:])
+    sign = bytes.fromhex(signature[2:])
+
+    pk_pnts = [normalize(pubkey_to_G1(pk)) for pk in pks]
+    uncompressed_pks = [ _serialize_uncompressed_g1(pnt) for pnt in pk_pnts ]
+
+    sign_pnt = normalize(signature_to_G2(sign))
+    uncompressed_sign = _serialize_uncompressed_g2(sign_pnt)
+
+    assert_call_fail(
+            lambda: bls_contract.functions.deserialize_g2(uncompressed_sign).call(),
+            'infinity'
+        )
+
+    d = (((0, 0), (0, 0)), ((0, 0), (0, 0)))
+    s = bls_contract.functions.serialize_g2(d).call()
+
+    assert s == sign
+
+    output = json.loads(data['output'].lower())
+
+    assert_call_fail(
+            lambda: bls_contract.functions.fast_aggregate_verify(
+                uncompressed_pks,
+                msg,
+                uncompressed_sign
+            ).call(),
+            '!pubkeys'
+        )
+
+
+@pytest.mark.parametrize(
+    'testcase_name',
+    [
+        'fast_aggregate_verify_na_pubkeys_and_zero_signature',
+    ]
+)
+def test_fast_aggregate_verify_fails_with_na_pubkeys_and_zero_signature(bls_contract, testcase_name, assert_call_fail):
+    data = _load_yaml(testcase_name)
+    if data is None:
+        assert False
+    pubkeys = data['input']['pubkeys']
+    message = data['input']['message']
+    signature = data['input']['signature']
+    pks = [bytes.fromhex(pk[2:]) for pk in pubkeys]
+    msg = bytes.fromhex(message[2:])
+    sign = bytes.fromhex(signature[2:])
+
+    pk_pnts = [normalize(pubkey_to_G1(pk)) for pk in pks]
+    uncompressed_pks = [ _serialize_uncompressed_g1(pnt) for pnt in pk_pnts ]
+
+    uncompressed_sign = bytes.fromhex('000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
+
+    assert_call_fail(
+            lambda: bls_contract.functions.deserialize_g2(uncompressed_sign).call(),
+            'infinity'
+        )
+
+    output = json.loads(data['output'].lower())
+
+    assert_call_fail(
+            lambda: bls_contract.functions.fast_aggregate_verify(
+                uncompressed_pks,
+                msg,
+                uncompressed_sign
+            ).call(),
+            '!pubkeys'
+        )
+
+
+@pytest.mark.parametrize(
+    'testcase_name',
+    [
+        'fast_aggregate_verify_tampered_signature_3d7576f3c0e3570a',
+        # 'fast_aggregate_verify_tampered_signature_5e745ad0c6199a6c',
+        # 'fast_aggregate_verify_tampered_signature_652ce62f09290811',
+    ]
+)
+def test_fast_aggregate_verify_fails_with_tampered_signature(bls_contract, testcase_name, assert_call_fail):
+    data = _load_yaml(testcase_name)
+    if data is None:
+        assert False
+    pubkeys = data['input']['pubkeys']
+    message = data['input']['message']
+    signature = data['input']['signature']
+    pks = [bytes.fromhex(pk[2:]) for pk in pubkeys]
+    msg = bytes.fromhex(message[2:])
+    sign = bytes.fromhex(signature[2:])
+
+    pk_pnts = [normalize(pubkey_to_G1(pk)) for pk in pks]
+    uncompressed_pks = [ _serialize_uncompressed_g1(pnt) for pnt in pk_pnts ]
+
+    uncompressed_sign = bytes.fromhex('1712c3edd73a209c742b8250759db12549b3eaf43b5ca61376d9f30e2747dbcf842d8b2ac0901d2a093713e20284a7670fcf6954e9ab93de991bb9b313e664785a075fc285806fa5224c82bde146561b446ccfc706a64b8579513cfcffffffff05a551c4a6e65721d154c99c3beaba35157d7190a7196aea81bd8e938dc2d168dea810b0afcc616efca2ce597af95b8002b4a55393b3b606c07dab7258b8e03bc972cbda67753b3b5288bf8f4e69e672e593747b86188972a718359684b5dd4d')
+
+    d = bls_contract.functions.deserialize_g2(uncompressed_sign).call()
+    s = bls_contract.functions.serialize_g2(d).call()
+
+    assert s == sign
+
+    output = json.loads(data['output'].lower())
+
+    assert_call_fail(
+            lambda: bls_contract.functions.fast_aggregate_verify(
+                uncompressed_pks,
+                msg,
+                uncompressed_sign
+            ).call(),
+            ''
+        )

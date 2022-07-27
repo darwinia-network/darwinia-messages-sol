@@ -72,6 +72,14 @@ def assert_tx_failed(tester):
 
 
 @pytest.fixture
+def assert_call_fail():
+    def assert_call_fail(func, msg, exception=eth_tester.exceptions.TransactionFailed):
+        with pytest.raises(exception, match=msg):
+            func()
+    return assert_call_fail
+
+
+@pytest.fixture
 def seed():
     return "some-secret".encode()
 
@@ -105,12 +113,8 @@ def public_key_witness(bls_public_key):
 
 @pytest.fixture
 def signature_witness(signature):
-    print("---------------------------------------------------------------")
-    print(signature.hex())
     group_element = signature_to_G2(signature)
-    print(group_element)
     normalized_group_element = normalize(group_element)
-    print(normalized_group_element)
     return normalized_group_element[1]
 
 
