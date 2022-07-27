@@ -1,9 +1,9 @@
 import hashlib
 import json
 import os
-
 import eth_tester
 import pytest
+
 from eth.vm.forks.berlin import BerlinVM
 from eth_tester import EthereumTester, PyEVMBackend
 from py_ecc.bls.ciphersuites import G2ProofOfPossession

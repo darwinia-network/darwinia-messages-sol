@@ -169,7 +169,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
     await bridge.relay_bsc_header()
   })
 
-  it("2.3", async function () {
+  it.skip("2.3", async function () {
     const nonce = await bscClient.outbound.outboundLaneNonce()
     const begin = nonce.latest_received_nonce.add(1)
     const end = nonce.latest_generated_nonce
