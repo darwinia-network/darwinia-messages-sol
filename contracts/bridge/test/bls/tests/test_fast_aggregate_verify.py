@@ -3,7 +3,7 @@ import json
 import pytest
 
 from py_ecc.bls.g2_primatives import pubkey_to_G1, signature_to_G2
-from py_ecc.optimized_bls12_381 import normalize, Z2
+from py_ecc.optimized_bls12_381 import normalize
 from pathlib import Path
 from ruamel.yaml import YAML
 

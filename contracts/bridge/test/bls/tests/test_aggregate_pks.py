@@ -1,5 +1,13 @@
+import os
+import json
+import pytest
+
 from py_ecc.bls.g2_primatives import pubkey_to_G1
 from py_ecc.optimized_bls12_381 import normalize
+from pathlib import Path
+from ruamel.yaml import YAML
+
+DIR = os.path.dirname(__file__)
 
 
 def _serialize_uncompressed_g1(g1):
@@ -534,3 +542,115 @@ def test_sync_committee_aggregate_pks(bls_contract):
     e_pk = bytes.fromhex('9057fee428dbde6d021bb87be052c267ca60e5a12139df564aff59c05275900d175f14efc4f36c86b2221c083192db98')
 
     assert s_agg_pk == e_pk
+
+
+def _load_yaml(testcase_name):
+    filename = f"../general/altair/bls/eth_aggregate_pubkeys/small/{testcase_name}/data.yaml"
+    filepath = os.path.join(DIR, filename)
+    path = Path(filepath)
+    yaml = YAML(typ='base')
+    return yaml.load(path)
+
+
+@pytest.mark.parametrize(
+    'testcase_name',
+    [
+        'eth_aggregate_pubkeys_valid_e235e92e3a313f43',
+        'eth_aggregate_pubkeys_valid_ea0e3cc74e1de899',
+        'eth_aggregate_pubkeys_valid_f15974ec693571cf',
+        'eth_aggregate_pubkeys_valid_pubkeys',
+    ]
+)
+def test_aggregate_pks(bls_contract, testcase_name):
+    data = _load_yaml(testcase_name)
+    if data is None:
+        assert False
+    pubkeys = data['input']
+    output = data['output']
+
+    pks = [bytes.fromhex(pubkey[2:]) for pubkey in pubkeys]
+
+    uncompressed_pubkeys = [normalize(pubkey_to_G1(pk)) for pk in pks]
+    serialized_pks = [ _serialize_uncompressed_g1(pk) for pk in uncompressed_pubkeys ]
+
+    agg_pk = bls_contract.functions.aggregate_pks(serialized_pks).call()
+    s_agg_pk = bls_contract.functions.serialize_g1(agg_pk).call()
+
+    e_pk = bytes.fromhex(output[2:])
+
+    assert s_agg_pk == e_pk
+
+
+@pytest.mark.parametrize(
+    'testcase_name',
+    [
+        'eth_aggregate_pubkeys_empty_list',
+    ]
+)
+def test_aggregate_pks_fails_with_empty_list(bls_contract, testcase_name, assert_call_fail):
+    data = _load_yaml(testcase_name)
+    if data is None:
+        assert False
+    pubkeys = data['input']
+    output = data['output']
+
+    pks = [bytes.fromhex(pubkey[2:]) for pubkey in pubkeys]
+
+    uncompressed_pubkeys = [normalize(pubkey_to_G1(pk)) for pk in pks]
+    serialized_pks = [ _serialize_uncompressed_g1(pk) for pk in uncompressed_pubkeys ]
+
+    assert_call_fail(
+            lambda: bls_contract.functions.aggregate_pks(serialized_pks).call(),
+            "!pubkey"
+        )
+
+
+@pytest.mark.parametrize(
+    'testcase_name',
+    [
+        'eth_aggregate_pubkeys_infinity_pubkey',
+        'eth_aggregate_pubkeys_x40_pubkey',
+        'eth_aggregate_pubkeys_zero_pubkey'
+    ]
+)
+def test_aggregate_pks_fails_with_infinity_pubkey(bls_contract, testcase_name, assert_call_fail):
+    data = _load_yaml(testcase_name)
+    if data is None:
+        assert False
+    pubkeys = data['input']
+    output = data['output']
+
+    pks = [bytes.fromhex(pubkey[2:]) for pubkey in pubkeys]
+
+    uncompressed_pubkeys = [normalize(pubkey_to_G1(pk)) for pk in pks]
+    serialized_pks = [ _serialize_uncompressed_g1(pk) for pk in uncompressed_pubkeys ]
+
+    assert_call_fail(
+            lambda: bls_contract.functions.aggregate_pks(serialized_pks).call(),
+            "infinity"
+        )
+
+
+@pytest.mark.parametrize(
+    'testcase_name',
+    [
+        'eth_aggregate_pubkeys_zero_pubkey'
+    ]
+)
+def test_aggregate_pks_fails_with_zero_pubkey(bls_contract, testcase_name, assert_call_fail):
+    data = _load_yaml(testcase_name)
+    if data is None:
+        assert False
+    pubkeys = data['input']
+    output = data['output']
+
+    # pks = [bytes.fromhex(pubkey[2:]) for pubkey in pubkeys]
+
+    # uncompressed_pubkeys = [normalize(pubkey_to_G1(pk)) for pk in pks]
+    uncompressed_pubkeys = [ bytes.fromhex('000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000') ]
+    serialized_pks = [ _serialize_uncompressed_g1(pk) for pk in uncompressed_pubkeys ]
+
+    assert_call_fail(
+            lambda: bls_contract.functions.aggregate_pks(serialized_pks).call(),
+            "infinity"
+        )
