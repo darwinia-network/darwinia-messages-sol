@@ -12,6 +12,7 @@ eth-tester = "==0.5.0b1"
 py-evm = {editable = true,git = "https://github.com/hujw77/py-evm.git",ref = "christoph/feat/berlin-stub"}
 eth2spec = "==0.12.1"
 pytest-xdist = "*"
+"ruamel.yaml" = "*"
 
 [requires]
 python_version = "3.8"
