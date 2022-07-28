@@ -13,13 +13,13 @@ contract EcdsaAuthority {
     event ChangedThreshold(uint256 threshold);
 
     // keccak256(
-    //     "EcdsaAuthority()"
+    //     "chain_id | spec_name | :: | pallet_name"
     // );
-    bytes32 private constant DOMAIN_SEPARATOR_TYPEHASH = 0x652c2edc657d7deaca18647c273cbe7f23820aa8d7faf388393f8560efc70f87;
+    bytes32 private immutable DOMAIN_SEPARATOR;
 
-    // Method Id of `add_relayer_with_threshold`
-    // bytes4(keccak256("add_relayer_with_threshold(address,uint256)"))
-    bytes4 private constant ADD_RELAYER_SIG = bytes4(0xb28f631c);
+    // Method Id of `add_relayer`
+    // bytes4(keccak256("add_relayer(address,uint256)"))
+    bytes4 private constant ADD_RELAYER_SIG = bytes4(0xb7aafe32);
 
     // Method Id of `remove_relayer`
     // bytes4(keccak256("remove_relayer(address,address,uint256)"))
@@ -34,14 +34,11 @@ contract EcdsaAuthority {
     bytes4 private constant CHANGE_THRESHOLD_SIG = bytes4(0x3c823333);
 
     // keccak256(
-    //     "ChangeRelayer(bytes32 network,bytes4 sig,bytes params,uint256 nonce)"
+    //     "ChangeRelayer(bytes4 sig,bytes params,uint256 nonce)"
     // );
-    bytes32 private constant RELAY_TYPEHASH = 0x0324ca0ca4d529e0eefcc6d123bd17ec982498cf2e732160cc47d2504825e4b2;
+    bytes32 private constant RELAY_TYPEHASH = 0x30a82982a8d5050d1c83bbea574aea301a4d317840a8c4734a308ffaa6a63bc8;
 
     address private constant SENTINEL = address(0x1);
-
-    /// @dev NETWORK Source chain network identifier ('Crab', 'Darwinia', 'Pangolin')
-    bytes32 public immutable NETWORK;
 
     /// @dev Nonce to prevent replay of update operations
     uint256 public nonce;
@@ -60,7 +57,7 @@ contract EcdsaAuthority {
     /// @param _relayers List of relayers.
     /// @param _threshold Number of required confirmations for check commitment or change relayers.
     constructor(
-        bytes32 _network,
+        bytes32 _domain_separator,
         address[] memory _relayers,
         uint256 _threshold,
         uint256 _nonce
@@ -87,7 +84,7 @@ contract EcdsaAuthority {
         relayers[current] = SENTINEL;
         count = _relayers.length;
         threshold = _threshold;
-        NETWORK = _network;
+        DOMAIN_SEPARATOR = _domain_separator;
         nonce = _nonce;
     }
 
@@ -271,7 +268,7 @@ contract EcdsaAuthority {
     }
 
     function domain_separator() public view returns (bytes32) {
-        return DOMAIN_SEPARATOR_TYPEHASH;
+        return DOMAIN_SEPARATOR;
     }
 
     function encode_data_hash(bytes32 structHash) internal view returns (bytes32) {
