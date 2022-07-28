@@ -16,9 +16,31 @@ def test_g1_add(bls_contract):
         print(name)
         i = testcase['Input']
         e = testcase['Expected']
-        print(i)
-        print(e)
         o = bls_contract.functions.add_g1(i).call()
-        print(o.hex())
         assert e == o.hex()
+
+
+def test_g2_add(bls_contract):
+    testcases = _load_json('blsG2Add')
+    for testcase in testcases:
+        name = testcase['Name']
+        print(name)
+        i = testcase['Input']
+        e = testcase['Expected']
+        o = bls_contract.functions.add_g2(i).call()
+        assert e == o.hex()
+
+
+# def test_map_g1(bls_contract):
+#     testcases = _load_json('blsMapG1')
+#     for testcase in testcases:
+#         name = testcase['Name']
+#         print(name)
+#         i = testcase['Input']
+#         e = testcase['Expected']
+#         print(i)
+#         print(e)
+#         o = bls_contract.functions.add_g1(i).call()
+#         print(o.hex())
+#         assert e == o.hex()
 

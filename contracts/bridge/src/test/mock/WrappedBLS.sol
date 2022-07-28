@@ -81,6 +81,45 @@ contract WrappedBLS is DSTest {
         return encode_g1(q);
     }
 
+    function map_to_curve_g1(bytes memory input) public view returns (bytes memory) {
+        Fp memory f = Fp(input.slice_to_uint(0, 32), input.slice_to_uint(32, 64));
+        G1Point memory p = G1.map_to_curve(f);
+        return encode_g1(p);
+    }
+
+    function encode_g2(G2Point memory p) public pure returns (bytes memory) {
+        return abi.encodePacked(
+            p.x.c0.a,
+            p.x.c0.b,
+            p.x.c1.a,
+            p.x.c1.b,
+            p.y.c0.a,
+            p.y.c0.b,
+            p.y.c1.a,
+            p.y.c1.b
+        );
+    }
+
+    function decode_g2(bytes memory x) public pure returns (G2Point memory) {
+        return G2Point(
+            Fp2(
+                Fp(x.slice_to_uint(0, 32),  x.slice_to_uint(32, 64)),
+                Fp(x.slice_to_uint(64, 96), x.slice_to_uint(96, 128))
+            ),
+            Fp2(
+                Fp(x.slice_to_uint(128, 160),  x.slice_to_uint(160, 192)),
+                Fp(x.slice_to_uint(192, 224), x.slice_to_uint(224, 256))
+            )
+        );
+    }
+
+    function add_g2(bytes memory input) public view returns (bytes memory) {
+        G2Point memory p0 = decode_g2(input.substr(0, 256));
+        G2Point memory p1 = decode_g2(input.substr(256, 256));
+        G2Point memory q = G2.add(p0, p1);
+        return encode_g2(q);
+    }
+
     function test_add_g1() public {
         bytes memory x = hex'0000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
         assertEq0(add_g1(x), hex'0000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1');
