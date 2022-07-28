@@ -120,6 +120,22 @@ contract WrappedBLS is DSTest {
         return encode_g2(q);
     }
 
+    function mul_g2(bytes memory input) public view returns (bytes memory) {
+        G2Point memory p0 = decode_g2(input.substr(0, 256));
+        uint scalar = input.slice_to_uint(256, 288);
+        G2Point memory q = G2.mul(p0, scalar);
+        return encode_g2(q);
+    }
+
+    function map_to_curve_g2(bytes memory input) public view returns (bytes memory) {
+        Fp2 memory f = Fp2(
+            Fp(input.slice_to_uint(0, 32), input.slice_to_uint(32, 64)),
+            Fp(input.slice_to_uint(64, 96), input.slice_to_uint(96, 128))
+        );
+        G2Point memory p = G2.map_to_curve(f);
+        return encode_g2(p);
+    }
+
     function test_add_g1() public {
         bytes memory x = hex'0000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
         assertEq0(add_g1(x), hex'0000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1');
