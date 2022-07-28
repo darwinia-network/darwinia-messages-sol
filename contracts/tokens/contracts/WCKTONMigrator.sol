@@ -16,8 +16,8 @@ contract WCKTONMigrator {
      }
 
      function migrate() external {
-         uint balance = IERC20(old_wckton).balanceOf(msg.sender);
-         IERC20(old_wckton).transferFrom(msg.sender, address(this), balance);
-         IERC20(new_wckton).transferFrom(address(this), msg.sender, balance);
+         uint balance = old_wckton.balanceOf(msg.sender);
+         old_wckton.transferFrom(msg.sender, address(this), balance);
+         new_wckton.transferFrom(address(this), msg.sender, balance);
      }
 }
