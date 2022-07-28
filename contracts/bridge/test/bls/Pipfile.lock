@@ -725,7 +725,7 @@
         "py-evm": {
             "editable": true,
             "git": "https://github.com/hujw77/py-evm.git",
-            "ref": "7cf94eba12b5a132d77142f929facc11e0589251"
+            "ref": "752e55ac7b1a171799f618c0076df125700c953b"
         },
         "pycryptodome": {
             "hashes": [

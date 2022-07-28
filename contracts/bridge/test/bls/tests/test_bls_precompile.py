@@ -53,6 +53,17 @@ def test_map_g2(bls_contract):
         assert e == o.hex()
 
 
+def test_pairing(bls_contract):
+    testcases = _load_json('blsPairing')
+    for testcase in testcases:
+        name = testcase['Name']
+        print(name)
+        i = testcase['Input']
+        e = testcase['Expected']
+        o = bls_contract.functions.pairing(i).call()
+        assert e == o.hex()
+
+
 # def test_map_g1(bls_contract):
 #     testcases = _load_json('blsMapG1')
 #     for testcase in testcases:
