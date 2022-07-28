@@ -53,7 +53,7 @@ contract EcdsaAuthority {
     uint256 internal threshold;
 
     /// @dev Sets initial storage of contract.
-    /// @param _network source chain network name
+    /// @param _domain_separator source chain domain_separator
     /// @param _relayers List of relayers.
     /// @param _threshold Number of required confirmations for check commitment or change relayers.
     constructor(
@@ -219,7 +219,6 @@ contract EcdsaAuthority {
             keccak256(
                 abi.encode(
                     RELAY_TYPEHASH,
-                    NETWORK,
                     methodID,
                     params,
                     nonce

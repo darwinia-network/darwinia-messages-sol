@@ -51,7 +51,6 @@ contract POSALightClient is POSACommitmentScheme, MessageVerifier, EcdsaAuthorit
             keccak256(
                 abi.encode(
                     COMMIT_TYPEHASH,
-                    NETWORK,
                     commitment_hash,
                     nonce
                 )
