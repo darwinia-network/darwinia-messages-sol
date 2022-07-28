@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
 interface IERC20 {
@@ -9,9 +10,9 @@ contract WCKTONMigrator {
      IERC20 public immutable old_wckton;
      IERC20 public immutable new_wckton;
 
-     constructor(address _old, address _new) public {
-        old_wckton = IERC20(_old);
-        new_wckton = IERC20(_new);
+     constructor(address _old, address _new) {
+         old_wckton = IERC20(_old);
+         new_wckton = IERC20(_new);
      }
 
      receive() external payable {}
