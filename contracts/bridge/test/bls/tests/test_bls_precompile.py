@@ -11,4 +11,14 @@ def _load_json(filename):
 
 def test_g1_add(bls_contract):
     testcases = _load_json('blsG1Add')
-    print(testcases)
+    for testcase in testcases:
+        name = testcase['Name']
+        print(name)
+        i = testcase['Input']
+        e = testcase['Expected']
+        print(i)
+        print(e)
+        o = bls_contract.functions.add_g1(i).call()
+        print(o.hex())
+        assert e == o.hex()
+

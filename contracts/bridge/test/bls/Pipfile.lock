@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "163278eca0aa69bb39eb7128e926730b8033c278ed5050aff2a046cc0d745111"
+            "sha256": "98519f5225a351b1294a6e06b09be9e26d0e5acb07cc8933e92e69a1c193c8b2"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -725,7 +725,7 @@
         "py-evm": {
             "editable": true,
             "git": "https://github.com/hujw77/py-evm.git",
-            "ref": "ae6aeab78cc70d2b680a060e8b4ef5e769a2c388"
+            "ref": "5d7bebd7b9adcd5c8e9139caf8cbd6f37f12c857"
         },
         "pycryptodome": {
             "hashes": [
