@@ -10,11 +10,6 @@ import "../../spec/POSACommitmentScheme.sol";
 contract POSALightClient is POSACommitmentScheme, MessageVerifier, EcdsaAuthority {
     event MessageRootImported(uint256 block_number, bytes32 message_root);
 
-    // keccak256(
-    //     "SignCommitment(bytes32 commitment,uint256 nonce)"
-    // );
-    bytes32 private constant COMMIT_TYPEHASH = 0x2ea67489b4c8762e92cdf00de12ced5672416d28fa4265cd7fb78ddd61dd3f32;
-
     uint256 internal latest_block_number;
     bytes32 internal latest_message_root;
 
@@ -42,23 +37,11 @@ contract POSALightClient is POSACommitmentScheme, MessageVerifier, EcdsaAuthorit
     ) external payable {
         // Encode and hash the commitment
         bytes32 commitment_hash = hash(commitment);
-        _verify_commitment(commitment_hash, signatures);
+        _check_relayer_signatures(commitment_hash, signatures);
 
         require(commitment.block_number > latest_block_number, "!new");
         latest_block_number = commitment.block_number;
         latest_message_root = commitment.message_root;
         emit MessageRootImported(commitment.block_number, commitment.message_root);
-    }
-
-    function _verify_commitment(bytes32 commitment_hash, bytes[] memory signatures) internal view {
-        bytes32 struct_hash =
-            keccak256(
-                abi.encode(
-                    COMMIT_TYPEHASH,
-                    commitment_hash,
-                    nonce
-                )
-            );
-        _check_relayer_signatures(struct_hash, signatures);
     }
 }

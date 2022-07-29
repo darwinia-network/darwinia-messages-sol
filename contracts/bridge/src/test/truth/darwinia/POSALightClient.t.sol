@@ -35,14 +35,12 @@ contract POSALightClientTest is POSACommitmentScheme, DSTest {
     }
 
     function test_import_message_commitment() public {
-        Commitment memory commitment = Commitment(1, 0x63308ee345ce0d61223b6c1c85bb4ff3618274d3aef3bd74aa4e30d871f05d6d);
-        bytes32 struct_hash = keccak256(
-            abi.encode(
-                COMMIT_TYPEHASH,
-                hash(commitment),
-                lightclient.nonce()
-            )
+        Commitment memory commitment = Commitment(
+            1,
+            0x63308ee345ce0d61223b6c1c85bb4ff3618274d3aef3bd74aa4e30d871f05d6d,
+            lightclient.nonce()
         );
+        bytes32 struct_hash = hash(commitment);
         bytes32 digest = ECDSA.toTypedDataHash(DOMAIN_SEPARATOR, struct_hash);
         (uint8 v, bytes32 r, bytes32 s) = hevm.sign(sk, digest);
         bytes[] memory signs = new bytes[](1);
