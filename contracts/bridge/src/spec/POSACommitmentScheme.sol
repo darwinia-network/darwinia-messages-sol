@@ -19,7 +19,7 @@ contract POSACommitmentScheme {
         uint256 nonce;
     }
 
-    function hash(Commitment memory commitment)
+    function hash(Commitment memory c)
         public
         pure
         returns (bytes32)
@@ -28,9 +28,9 @@ contract POSACommitmentScheme {
         return keccak256(
             abi.encode(
                 COMMIT_TYPEHASH,
-                commitment.block_number,
-                commitment.message_root,
-                commitment.nonce
+                c.block_number,
+                c.message_root,
+                c.nonce
             )
         );
     }
