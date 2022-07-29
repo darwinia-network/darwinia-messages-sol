@@ -204,6 +204,7 @@ def test_fast_aggregate_verify(bls_contract):
 
     assert s == signature
 
+    # gas used: 480902
     assert bls_contract.functions.fast_aggregate_verify(
                 serialized_pks,
                 message,

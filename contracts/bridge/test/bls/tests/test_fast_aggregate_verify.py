@@ -557,6 +557,7 @@ def test_fast_aggregate_verify(bls_contract):
 
     assert s == signature
 
+    # gas used: 5576744
     assert bls_contract.functions.fast_aggregate_verify(
                 serialized_pks,
                 message,
@@ -580,7 +581,8 @@ def _load_yaml(testcase_name):
         'fast_aggregate_verify_extra_pubkey_a698ea45b109f303',
         'fast_aggregate_verify_valid_3d7576f3c0e3570a',
         'fast_aggregate_verify_valid_5e745ad0c6199a6c',
-        'fast_aggregate_verify_valid_652ce62f09290811'
+        'fast_aggregate_verify_valid_652ce62f09290811',
+        'fast_aggregate_verify_valid_85006a07737897ca', # gas used: 1213677
     ]
 )
 def test_fast_aggregate_verify_match_spec(bls_contract, testcase_name):
@@ -607,6 +609,9 @@ def test_fast_aggregate_verify_match_spec(bls_contract, testcase_name):
 
     output = json.loads(data['output'].lower())
 
+    [print('0x' + p.hex()) for p in uncompressed_pks]
+    print('0x' + msg.hex())
+    print('0x' + uncompressed_sign.hex())
     assert bls_contract.functions.fast_aggregate_verify(
                 uncompressed_pks,
                 msg,
