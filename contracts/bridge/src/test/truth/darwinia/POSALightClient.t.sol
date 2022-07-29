@@ -51,6 +51,6 @@ contract POSALightClientTest is POSACommitmentScheme, DSTest {
         lightclient.import_message_commitment(commitment, signs);
 
         assertEq(lightclient.message_root(), commitment.message_root);
-        assertEq(lightclient.latest_block_number(), commitment.message_root);
+        assertEq(lightclient.block_number(), commitment.block_number);
     }
 }
