@@ -94,7 +94,7 @@ contract EcdsaAuthority {
     /// @param _relayer New relayer address.
     /// @param _threshold New threshold.
     /// @param _signatures The signatures of the relayers which to add new relayer and update the `threshold` .
-    function add_relayer_with_threshold(
+    function add_relayer(
         address _relayer,
         uint256 _threshold,
         bytes[] memory _signatures
