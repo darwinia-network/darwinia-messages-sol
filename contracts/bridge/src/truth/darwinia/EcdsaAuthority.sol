@@ -100,7 +100,7 @@ contract EcdsaAuthority {
         bytes[] memory _signatures
     ) public {
         // Relayer address cannot be null, the sentinel or the registry itself.
-        require(_relayer != address(0) && _relayer != SENTINEL && _relayer != address(this), "!replay");
+        require(_relayer != address(0) && _relayer != SENTINEL && _relayer != address(this), "!relayer");
         // No duplicate relayers allowed.
         require(relayers[_relayer] == address(0), "duplicate");
         _verify_relayer_signatures(ADD_RELAYER_SIG, abi.encode(_relayer, _threshold), _signatures);

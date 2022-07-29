@@ -16,6 +16,9 @@ contract EcdsaAuthorityTest is DSTest {
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     address private constant SENTINEL = address(0x1);
     bytes4 private constant ADD_RELAYER_SIG = bytes4(0xb7aafe32);
+    bytes4 private constant REMOVE_RELAYER_SIG = bytes4(0x8621d1fa);
+    bytes4 private constant SWAP_RELAYER_SIG = bytes4(0xcb76085b);
+    bytes4 private constant CHANGE_THRESHOLD_SIG = bytes4(0x3c823333);
     bytes32 private constant RELAY_TYPEHASH = 0x30a82982a8d5050d1c83bbea574aea301a4d317840a8c4734a308ffaa6a63bc8;
 
     EcdsaAuthority authority;
@@ -44,6 +47,52 @@ contract EcdsaAuthorityTest is DSTest {
         assertEq(authority.get_threshold(), threshold);
     }
 
+    function test_remove_relayer() public {
+        address bob = address(0xbbbb);
+        uint threshold = 1;
+        perform_add_relayer(bob, threshold);
+
+        bytes32 struct_hash = keccak256(
+            abi.encode(
+                RELAY_TYPEHASH,
+                REMOVE_RELAYER_SIG,
+                abi.encode(SENTINEL, bob, threshold),
+                authority.nonce()
+            )
+        );
+        bytes32 digest = ECDSA.toTypedDataHash(domain_separator(), struct_hash);
+        (uint8 v, bytes32 r, bytes32 s) = hevm.sign(sk, digest);
+        bytes[] memory signs = new bytes[](1);
+        signs[0] = abi.encodePacked(r, s, v);
+        authority.remove_relayer(SENTINEL, bob, threshold, signs);
+
+        address[] memory e = authority.get_relayers();
+        assertEq(e.length, 1);
+        assertEq(alice, e[0]);
+        assertEq(authority.get_threshold(), threshold);
+    }
+
+    function test_swap_relayer() public {
+        address bob = address(0xbbbb);
+        bytes32 struct_hash = keccak256(
+            abi.encode(
+                RELAY_TYPEHASH,
+                SWAP_RELAYER_SIG,
+                abi.encode(SENTINEL, alice, bob),
+                authority.nonce()
+            )
+        );
+        bytes32 digest = ECDSA.toTypedDataHash(domain_separator(), struct_hash);
+        (uint8 v, bytes32 r, bytes32 s) = hevm.sign(sk, digest);
+        bytes[] memory signs = new bytes[](1);
+        signs[0] = abi.encodePacked(r, s, v);
+        authority.swap_relayer(SENTINEL, alice, bob, signs);
+
+        address[] memory e = authority.get_relayers();
+        assertEq(e.length, 1);
+        assertEq(bob, e[0]);
+    }
+
     function test_add_relayer_with_threshold() public {
         address cici = address(0xc);
         uint threshold = 2;
@@ -55,18 +104,16 @@ contract EcdsaAuthorityTest is DSTest {
         assertEq(authority.get_threshold(), threshold);
     }
 
+    function testFail_add_relayer_with_sentinel() public {
+        perform_add_relayer(SENTINEL, 1);
+    }
+
     function testFail_add_relayer_with_zero_threshold() public {
-        address cici = address(0xcc);
-        uint threshold = 0;
-        perform_add_relayer(cici, threshold);
-        address[] memory e = authority.get_relayers();
+        perform_add_relayer(address(0xcc), 0);
     }
 
     function testFail_add_relayer_with_wrong_threshold() public {
-        address cici = address(0xccc);
-        uint threshold = 3;
-        perform_add_relayer(cici, threshold);
-        address[] memory e = authority.get_relayers();
+        perform_add_relayer(address(0xccc), 3);
     }
 
     function perform_add_relayer(address x, uint threshold) public {
@@ -82,7 +129,6 @@ contract EcdsaAuthorityTest is DSTest {
         (uint8 v, bytes32 r, bytes32 s) = hevm.sign(sk, digest);
         bytes[] memory signs = new bytes[](1);
         signs[0] = abi.encodePacked(r, s, v);
-
         authority.add_relayer(x, threshold, signs);
     }
 
