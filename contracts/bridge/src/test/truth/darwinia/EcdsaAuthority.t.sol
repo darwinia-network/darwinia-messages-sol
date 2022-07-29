@@ -14,12 +14,12 @@ interface Hevm {
 contract EcdsaAuthorityTest is DSTest {
     uint constant sk = 1;
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
-    address private constant SENTINEL = address(0x1);
-    bytes4 private constant ADD_RELAYER_SIG = bytes4(0xb7aafe32);
-    bytes4 private constant REMOVE_RELAYER_SIG = bytes4(0x8621d1fa);
-    bytes4 private constant SWAP_RELAYER_SIG = bytes4(0xcb76085b);
-    bytes4 private constant CHANGE_THRESHOLD_SIG = bytes4(0x3c823333);
-    bytes32 private constant RELAY_TYPEHASH = 0x30a82982a8d5050d1c83bbea574aea301a4d317840a8c4734a308ffaa6a63bc8;
+    address private constant SENTINEL             = address(0x1);
+    bytes4  private constant ADD_RELAYER_SIG      = bytes4(0xb7aafe32);
+    bytes4  private constant REMOVE_RELAYER_SIG   = bytes4(0x8621d1fa);
+    bytes4  private constant SWAP_RELAYER_SIG     = bytes4(0xcb76085b);
+    bytes4  private constant CHANGE_THRESHOLD_SIG = bytes4(0x3c823333);
+    bytes32 private constant RELAY_TYPEHASH       = 0x30a82982a8d5050d1c83bbea574aea301a4d317840a8c4734a308ffaa6a63bc8;
 
     EcdsaAuthority authority;
     address alice;

@@ -35,10 +35,11 @@ contract POSALightClient is POSACommitmentScheme, MessageVerifier, EcdsaAuthorit
         Commitment calldata commitment,
         bytes[] calldata signatures
     ) external payable {
-        // Encode and hash the commitment
+        // Hash the commitment
         bytes32 commitment_hash = hash(commitment);
+        // Verify commitment signed by ecdsa-authority
         _check_relayer_signatures(commitment_hash, signatures);
-
+        // Only import new block
         require(commitment.block_number > latest_block_number, "!new");
         latest_block_number = commitment.block_number;
         latest_message_root = commitment.message_root;
