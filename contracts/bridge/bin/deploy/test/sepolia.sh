@@ -74,4 +74,5 @@ InboundLane=$(deploy InboundLane \
 seth send -F $ETH_FROM $SimpleFeeMarket "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
 
 ExecutionLayer=$(jq -r ".[\"$NETWORK_NAME\"].ExecutionLayer" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
-(set -x; seth send -F $ETH_FROM $ExecutionLayer "registry(uint32,uint32,address,uint32,address)" $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url https://pangoro-rpc.darwinia.network)
+(set -x; seth send -F $ETH_FROM $ExecutionLayer "registry(uint32,uint32,address,uint32,address)" \
+  $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url https://pangoro-rpc.darwinia.network)

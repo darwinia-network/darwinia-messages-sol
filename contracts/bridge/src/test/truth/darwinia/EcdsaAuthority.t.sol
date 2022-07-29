@@ -2,8 +2,33 @@
 pragma solidity 0.7.6;
 
 import "../../test.sol";
+import "../../../truth/darwinia/EcdsaAuthority.sol";
 
 contract EcdsaAuthorityTest is DSTest {
+    EcdsaAuthority authority;
+
+    function setUp() public {
+        address[] memory relayers = new address[](1);
+        relayers[0] = 0x68898dB1012808808C903F390909C52D9F706749;
+        authority = new EcdsaAuthority(
+            domain_separator(),
+            relayers,
+            1,
+            0
+        );
+    }
+
+    function domain_separator() public pure returns (bytes32 s) {
+        s = keccak256(
+                abi.encodePacked(
+                    "45",
+                    "Pangoro",
+                    "::"
+                    "ecdsa-authority"
+                )
+            );
+    }
+
     // keccak256(
     //     "chain_id | spec_name | :: | pallet_name"
     // );
