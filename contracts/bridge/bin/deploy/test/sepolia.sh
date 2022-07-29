@@ -31,22 +31,33 @@ PRICE_RATIO=100
 
 SimpleFeeMarket=$(deploy SimpleFeeMarket $COLLATERAL_PERORDER $SLASH_TIME $RELAY_TIME $PRICE_RATIO)
 
-# darwinia beefy light client config
-# Pangoro
-NETWORK=0x50616e676f726f00000000000000000000000000000000000000000000000000
-BEEFY_SLASH_VALUT=$ETH_FROM
-BEEFY_VALIDATOR_SET_ID=0
-BEEFY_VALIDATOR_SET_LEN=4
-BEEFY_VALIDATOR_SET_ROOT=0xde562c60e8a03c61ef0ab761968c14b50b02846dd35ab9faa9dea09d00247600
-DarwiniaLightClient=$(deploy DarwiniaLightClient \
-  $NETWORK \
-  $BEEFY_SLASH_VALUT \
-  $BEEFY_VALIDATOR_SET_ID \
-  $BEEFY_VALIDATOR_SET_LEN \
-  $BEEFY_VALIDATOR_SET_ROOT)
+# # darwinia beefy light client config
+# # Pangoro
+# NETWORK=0x50616e676f726f00000000000000000000000000000000000000000000000000
+# BEEFY_SLASH_VALUT=$ETH_FROM
+# BEEFY_VALIDATOR_SET_ID=0
+# BEEFY_VALIDATOR_SET_LEN=4
+# BEEFY_VALIDATOR_SET_ROOT=0xde562c60e8a03c61ef0ab761968c14b50b02846dd35ab9faa9dea09d00247600
+# DarwiniaLightClient=$(deploy DarwiniaLightClient \
+#   $NETWORK \
+#   $BEEFY_SLASH_VALUT \
+#   $BEEFY_VALIDATOR_SET_ID \
+#   $BEEFY_VALIDATOR_SET_LEN \
+#   $BEEFY_VALIDATOR_SET_ROOT)
+
+# seth keccak "45Pangoro::ecdsa-authority"
+DOMAIN_SEPARATOR=0x38a6d9f96ef6e79768010f6caabfe09abc43e49792d5c787ef0d4fc802855947
+relayers=[0x68898db1012808808c903f390909c52d9f706749]
+threshold=1
+nonce=0
+POSALightClient=$(deploy POSALightClient \
+  $DOMAIN_SEPARATOR \
+  $relayers \
+  $threshold \
+  $nonce)
 
 OutboundLane=$(deploy OutboundLane \
-  $DarwiniaLightClient \
+  $POSALightClient \
   $SimpleFeeMarket \
   $this_chain_pos \
   $this_out_lane_pos \
@@ -54,7 +65,7 @@ OutboundLane=$(deploy OutboundLane \
   $bridged_in_lane_pos 1 0 0)
 
 InboundLane=$(deploy InboundLane \
-  $DarwiniaLightClient \
+  $POSALightClient \
   $this_chain_pos \
   $this_in_lane_pos \
   $bridged_chain_pos \

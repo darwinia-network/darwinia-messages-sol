@@ -19,11 +19,11 @@ contract POSALightClient is POSACommitmentScheme, MessageVerifier, EcdsaAuthorit
     bytes32 public latest_messages_root;
 
     constructor(
-        bytes32 _network,
+        bytes32 _domain_separator,
         address[] memory _relayers,
         uint256 _threshold,
         uint256 _nonce
-    ) EcdsaAuthority(_network, _relayers, _threshold, _nonce) {}
+    ) EcdsaAuthority(_domain_separator, _relayers, _threshold, _nonce) {}
 
     function message_root() public view override returns (bytes32) {
         return latest_messages_root;
