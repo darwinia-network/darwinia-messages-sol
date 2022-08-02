@@ -175,7 +175,15 @@ contract FeeMarket is IFeeMarket {
     // fetch the order fee by the encoded message key
     function getOrderFee(uint256 key) public view returns (uint256 fee) {
         uint32 number = orderOf[key].assignedRelayersNumber;
-        fee =  assignedRelayers[key][number - 1].makerFee;
+        fee = assignedRelayers[key][number - 1].makerFee;
+    }
+
+    function getAssignedRelayer(uint256 key, uint256 slot) public view returns (address) {
+        return assignedRelayers[key][slot].assignedRelayer;
+    }
+
+    function getSlotFee(uint256 key, uint256 slot) public view returns (uint256) {
+        return assignedRelayers[key][slot].makerFee;
     }
 
     function getOrder(uint256 key) external view returns (Order memory, OrderExt[] memory) {
@@ -352,27 +360,27 @@ contract FeeMarket is IFeeMarket {
             DeliveredRelayer memory entry = delivery_relayers[i];
             uint256 every_delivery_reward = 0;
             for (uint256 key = entry.begin; key <= entry.end; key++) {
-                require(orderOf[key].assignedTime > 0, "!exist");
-                // diff_time = settle_time - assign_time
-                uint256 diff_time = block.timestamp - orderOf[key].assignedTime;
+                (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) = _settle_order(key, entry.relayer, confirm_relayer);
+                every_delivery_reward += delivery_reward;
+                total_confirm_reward += confirm_reward;
+                total_vault_reward += vault_reward;
                 // on time
                 // [0, slot * n)
-                uint32 number = orderOf[key].assignedRelayersNumber;
-                if (diff_time < number * relayTime) {
+                // if (diff_time < number * relayTime) {
                     // reward and unlock each assign_relayer
-                    (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) = _reward_and_unlock_ontime(key, diff_time,  entry.relayer, confirm_relayer);
-                    every_delivery_reward += delivery_reward;
-                    total_confirm_reward += confirm_reward;
-                    total_vault_reward += vault_reward;
+                    // (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) = _reward_and_unlock_ontime(key, diff_time,  entry.relayer, confirm_relayer);
+                    // every_delivery_reward += delivery_reward;
+                    // total_confirm_reward += confirm_reward;
+                    // total_vault_reward += vault_reward;
                 // too late
                 // [slot * n, +∞)
-                } else {
+                // } else {
                     // slash and unlock each assign_relayer
-                    uint256 late_time = diff_time - number * relayTime;
-                    (uint256 delivery_reward, uint256 confirm_reward) = _slash_and_unlock_late(key, late_time);
-                    every_delivery_reward += delivery_reward;
-                    total_confirm_reward += confirm_reward;
-                }
+                    // uint256 late_time = diff_time - number * relayTime;
+                    // (uint256 delivery_reward, uint256 confirm_reward) = _slash_and_unlock_late(key, late_time);
+                    // every_delivery_reward += delivery_reward;
+                    // total_confirm_reward += confirm_reward;
+                // }
                 delete orderOf[key];
                 emit Settled(key, block.timestamp);
             }
@@ -385,70 +393,118 @@ contract FeeMarket is IFeeMarket {
         _reward(VAULT, total_vault_reward);
     }
 
-    function _reward_and_unlock_ontime(
+    function _settle_order(
         uint256 key,
-        uint256 diff_time,
         address delivery_relayer,
         address confirm_relayer
-    ) private returns (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) {
+    ) private returns (
+        uint256 delivery_reward,
+        uint256 confirm_reward,
+        uint256 vault_reward
+    ) {
+        Order memory order = orderOf[key];
+        require(order.assignedTime > 0, "!exist");
+        // diff_time = settle_time - assign_time
+        uint256 diff_time = block.timestamp - order.assignedTime;
+        uint32 number = order.assignedRelayersNumber;
+        bool is_ontime = diff_time < number * relayTime;
         // get the message fee from the last top N relayers
         uint256 message_fee = getOrderFee(key);
-        Order memory order = orderOf[key];
-        for (uint slot = 0; slot < order.assignedRelayersNumber; slot++) {
-            address assign_relayer = assignedRelayers[key][slot].assignedRelayer;
-            // the message delivery in the `slot` assign_relayer
-            // [slot, slot+1)
-            if (slot * relayTime <= diff_time && diff_time < (slot + 1 ) * relayTime) {
-                uint256 base_fee = assignedRelayers[key][slot].makerFee;
-                (delivery_reward, confirm_reward, vault_reward) = _distribute_ontime(message_fee, base_fee, assign_relayer, delivery_relayer, confirm_relayer);
+        // get slot index and slot price
+        (uint256 slot, uint256 slot_price) = _get_slot_price(is_ontime, key, diff_time, number, message_fee);
+        // Message surplus = Message Fee - Slot price
+        uint256 message_surplus = message_fee - slot_price;
+        // A. Slot Offensive Slash
+        uint256 slot_offensive_slash = _do_slot_offensive_slash(is_ontime, key, slot, number, order.collateral, diff_time);
+        // Message Reward = Slot price + Slot Offensive Slash
+        uint256 message_reward = slot_price + slot_offensive_slash;
+        // B. Slot Duty Reward
+        uint256 slot_duty_reward = _do_slot_duty_reward(is_ontime, key, slot, number, message_surplus);
+        // Message Reward -> (delivery_relayer, confirm_relayer)
+        (delivery_reward, confirm_reward) = _distribute_fee(message_reward);
+        // Message surplus -= Slot Duty Reward
+        vault_reward = message_surplus - slot_duty_reward;
+    }
+
+    function _get_slot_price(
+        bool is_ontime,
+        uint256 key,
+        uint256 diff_time,
+        uint256 number,
+        uint256 message_fee
+    ) private view returns (uint256, uint256) {
+        if (is_ontime) {
+            for (uint slot = 0; slot < number; slot++) {
+                // The message confirmed in the `slot` assign_relayer
+                // [slot, slot+1)
+                if (slot * relayTime <= diff_time && diff_time < (slot + 1) * relayTime) {
+                    uint256 slot_price = getSlotFee(key, slot);
+                    return (slot, slot_price);
+                }
             }
-            _unlock(assign_relayer, order.collateral);
-            delete assignedRelayers[key][slot];
+            assert(false);
+        } else {
+            return (number, message_fee);
         }
     }
 
-    function _slash_and_unlock_late(uint256 key, uint256 late_time) private returns (uint256 delivery_reward, uint256 confirm_reward) {
-        uint256 message_fee = getOrderFee(key);
-        // slash fee is linear incremental, and the slop is `late_time / SlashTime`
-        Order memory order = orderOf[key];
-        uint256 collateral = order.collateral;
-        uint256 slash_fee = late_time >= slashTime ? collateral : (collateral * late_time / slashTime);
-        for (uint slot = 0; slot < order.assignedRelayersNumber; slot++) {
-            address assign_relayer = assignedRelayers[key][slot].assignedRelayer;
-            _slash(assign_relayer, slash_fee);
-            _unlock(assign_relayer, (collateral - slash_fee));
-            delete assignedRelayers[key][slot];
-        }
-        // reward_fee = message_fee + slash_fee * AssignedRelayersNumber
-        (delivery_reward, confirm_reward) = _distribute_fee(message_fee + slash_fee * order.assignedRelayersNumber);
-    }
-
-    function _distribute_ontime(
-        uint256 message_fee,
-        uint256 base_fee,
-        address assign_relayer,
-        address delivery_relayer,
-        address confirm_relayer
-    ) private returns (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) {
-        if (base_fee > 0) {
-            // 60% * base fee => assigned_relayers_rewards
-            uint256 assign_reward = base_fee * 60 / 100;
-            // 40% * base fee => other relayer
-            uint256 other_reward = base_fee - assign_reward;
-            (delivery_reward, confirm_reward) = _distribute_fee(other_reward);
-            // if assign_relayer == delivery_relayer, we give the reward to delivery_relayer
-            if (assign_relayer == delivery_relayer) {
-                delivery_reward += assign_reward;
-            // if assign_relayer == confirm_relayer, we give the reward to confirm_relayer
-            } else if (assign_relayer == confirm_relayer) {
-                confirm_reward += assign_reward;
-            // both not, we reward the assign_relayer directlly
-            } else {
-                _reward(assign_relayer, assign_reward);
+    function _do_slot_offensive_slash(
+        bool is_ontime,
+        uint256 key,
+        uint256 slot,
+        uint256 number,
+        uint256 collateral,
+        uint256 diff_time
+    ) private returns (uint256 slot_offensive_slash) {
+        if (is_ontime) {
+            for (uint _slot = 0; _slot < number; _slot++) {
+                if (_slot < slot) {
+                    uint256 slash_fee = collateral * 2 / 10;
+                    address assign_relayer = getAssignedRelayer(key, slot);
+                    _slash(assign_relayer, slash_fee);
+                    _unlock(assign_relayer, (collateral - slash_fee));
+                    delete assignedRelayers[key][slot];
+                    slot_offensive_slash += slash_fee;
+                }
+            }
+        } else {
+            uint256 slash_fee = collateral * 2 / 10;
+            uint256 remaining = collateral - slash_fee;
+            uint256 late_time = diff_time - number * relayTime;
+            slash_fee += late_time >= slashTime ? remaining : (remaining * late_time / slashTime);
+            for (uint _slot = 0; _slot < number; _slot++) {
+                address assign_relayer = getAssignedRelayer(key, slot);
+                _slash(assign_relayer, slash_fee);
+                _unlock(assign_relayer, (collateral - slash_fee));
+                delete assignedRelayers[key][slot];
+                slot_offensive_slash += slash_fee;
             }
         }
-        // message fee - base fee => treasury
-        vault_reward = message_fee - base_fee;
+    }
+
+    function _do_slot_duty_reward(
+        bool is_ontime,
+        uint256 key,
+        uint256 slot,
+        uint256 number,
+        uint256 message_surplus
+    ) private returns (uint256 slot_duty_reward) {
+        uint _total_reward = message_surplus * 2 / 10;
+        if (is_ontime) {
+            uint _per_reward = _total_reward / (number - slot);
+            if (number == slot) {
+                return 0;
+            }
+            for (uint _slot = 0; _slot < number; _slot++) {
+                if (_slot >= slot) {
+                    address assign_relayer = getAssignedRelayer(key, slot);
+                    _reward(assign_relayer, _per_reward);
+                    slot_duty_reward += _per_reward;
+                }
+            }
+        } else {
+            return 0;
+        }
     }
 
     function _distribute_fee(uint256 fee) private view returns (uint256 delivery_reward, uint256 confirm_reward) {
