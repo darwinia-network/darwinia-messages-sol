@@ -7,17 +7,17 @@ interface IERC20 {
 }
 
 contract WCKTONMigrator {
-     IERC20 public immutable old_wckton;
-     IERC20 public immutable new_wckton;
+    IERC20 public immutable old_wckton;
+    IERC20 public immutable new_wckton;
 
-     constructor(address _old, address _new) {
-         old_wckton = IERC20(_old);
-         new_wckton = IERC20(_new);
-     }
+    constructor(address _old, address _new) {
+        old_wckton = IERC20(_old);
+        new_wckton = IERC20(_new);
+    }
 
-     function migrate() external {
-         uint balance = old_wckton.balanceOf(msg.sender);
-         old_wckton.transferFrom(msg.sender, address(this), balance);
-         new_wckton.transferFrom(address(this), msg.sender, balance);
-     }
+    function migrate() external {
+        uint balance = old_wckton.balanceOf(msg.sender);
+        old_wckton.transferFrom(msg.sender, address(this), balance);
+        new_wckton.transferFrom(address(this), msg.sender, balance);
+    }
 }
