@@ -403,36 +403,46 @@ contract FeeMarket is IFeeMarket {
         uint256 vault_reward
     ) {
         Order memory order = orderOf[key];
-        require(order.assignedTime > 0, "!exist");
-        // diff_time = settle_time - assign_time
-        uint256 diff_time = block.timestamp - order.assignedTime;
-        uint32 number = order.assignedRelayersNumber;
-        bool is_ontime = diff_time < number * relayTime;
-        // get the message fee from the last top N relayers
+        require(orderOf[key].assignedTime > 0, "!exist");
+        // Get the message fee from the last top N relayers
         uint256 message_fee = getOrderFee(key);
-        // get slot index and slot price
-        (uint256 slot, uint256 slot_price) = _get_slot_price(is_ontime, key, diff_time, number, message_fee);
+        // Get slot index and slot price
+        (uint256 slot, uint256 slot_price) = _get_slot_price(key, message_fee);
         // Message surplus = Message Fee - Slot price
         uint256 message_surplus = message_fee - slot_price;
         // A. Slot Offensive Slash
-        uint256 slot_offensive_slash = _do_slot_offensive_slash(is_ontime, key, slot, number, order.collateral, diff_time);
+        uint256 slot_offensive_slash = _do_slot_offensive_slash(key, slot);
         // Message Reward = Slot price + Slot Offensive Slash
         uint256 message_reward = slot_price + slot_offensive_slash;
         // B. Slot Duty Reward
-        uint256 slot_duty_reward = _do_slot_duty_reward(is_ontime, key, slot, number, message_surplus);
+        uint256 slot_duty_reward = _do_slot_duty_reward(key, slot, message_surplus);
         // Message Reward -> (delivery_relayer, confirm_relayer)
         (delivery_reward, confirm_reward) = _distribute_fee(message_reward);
         // Message surplus -= Slot Duty Reward
         vault_reward = message_surplus - slot_duty_reward;
     }
 
-    function _get_slot_price(
+    function _get_order_status(
+        uint key
+    ) private view returns (
         bool is_ontime,
-        uint256 key,
         uint256 diff_time,
         uint256 number,
+        uint256 collateral
+    ) {
+        Order memory order = orderOf[key];
+        number = order.assignedRelayersNumber;
+        collateral = order.collateral;
+        // Diff_time = settle_time - assign_time
+        diff_time = block.timestamp - order.assignedTime;
+        is_ontime = diff_time < order.assignedRelayersNumber * relayTime;
+    }
+
+    function _get_slot_price(
+        uint256 key,
         uint256 message_fee
     ) private view returns (uint256, uint256) {
+        (bool is_ontime, uint diff_time, uint number,) = _get_order_status(key);
         if (is_ontime) {
             for (uint slot = 0; slot < number; slot++) {
                 // The message confirmed in the `slot` assign_relayer
@@ -449,13 +459,10 @@ contract FeeMarket is IFeeMarket {
     }
 
     function _do_slot_offensive_slash(
-        bool is_ontime,
         uint256 key,
-        uint256 slot,
-        uint256 number,
-        uint256 collateral,
-        uint256 diff_time
+        uint256 slot
     ) private returns (uint256 slot_offensive_slash) {
+        (bool is_ontime, uint diff_time, uint number, uint collateral) = _get_order_status(key);
         if (is_ontime) {
             for (uint _slot = 0; _slot < number; _slot++) {
                 if (_slot < slot) {
@@ -483,12 +490,11 @@ contract FeeMarket is IFeeMarket {
     }
 
     function _do_slot_duty_reward(
-        bool is_ontime,
         uint256 key,
         uint256 slot,
-        uint256 number,
         uint256 message_surplus
     ) private returns (uint256 slot_duty_reward) {
+        (bool is_ontime, , uint number,) = _get_order_status(key);
         uint _total_reward = message_surplus * 2 / 10;
         if (is_ontime) {
             uint _per_reward = _total_reward / (number - slot);
