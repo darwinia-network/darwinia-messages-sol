@@ -91,22 +91,6 @@ const receive_messages_delivery_proof = async (begin, end) => {
         .to.emit(feeMarket, "Settled")
         .withArgs(await outbound.encodeMessageKey(i), block.timestamp)
     }
-    let n = end - begin + 1;
-    let messageFee = ethers.utils.parseEther("30").mul(n)
-    let baseFee = ethers.utils.parseEther("10").mul(n)
-    let assign_reward = baseFee.mul(60).div(100)
-    let other_reward = baseFee.sub(assign_reward)
-    let delivery_reward = other_reward.mul(80).div(100)
-    let confirm_reward = other_reward.sub(delivery_reward)
-    await expect(tx)
-      .to.emit(feeMarket, "Reward")
-      .withArgs(one.address, delivery_reward.add(assign_reward))
-    await expect(tx)
-      .to.emit(feeMarket, "Reward")
-      .withArgs(four.address, confirm_reward)
-    await expect(tx)
-      .to.emit(feeMarket, "Reward")
-      .withArgs("0x0000000000000000000000000000000000000000", messageFee.sub(baseFee))
     await logNonce()
 }
 
