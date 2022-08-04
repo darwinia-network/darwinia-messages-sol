@@ -19,6 +19,7 @@ library ScaleCodec {
         pure
         returns (uint256 v, uint8 m)
     {
+        require(data.length > 0, "Compact data cannot be empty");
         uint8 b = readByteAtIndex(data, 0); // read the first byte
         uint8 mode = b & 3; // bitwise operation
 
