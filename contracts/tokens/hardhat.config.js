@@ -48,7 +48,32 @@ module.exports = {
             }
           }
         }
-      }
+      },
+      {
+        version: "0.8.11",
+        settings: {
+          evmVersion: "istanbul",
+          optimizer: {
+            enabled: true,
+            runs: 999999
+          },
+          outputSelection: {
+            "*": {
+              "*": [
+                "abi",
+                "devdoc",
+                "metadata",
+                "evm.bytecode.object",
+                "evm.bytecode.sourceMap",
+                "evm.deployedBytecode.object",
+                "evm.deployedBytecode.sourceMap",
+                "evm.methodIdentifiers"
+              ],
+              "": ["ast"]
+            }
+          }
+        }
+      },
     ]
   },
   paths: {

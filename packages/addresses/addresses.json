@@ -14,6 +14,7 @@
     "43": {
         "WCRAB": "0xc52287b259b2431ba0f61BC7EBD0eD793B0b7044",
         "WCKTON": "0x8809f9b3ACEF1dA309f49b5Ab97A4C0faA64E6Ae",
+        "WCKTONMigrator": "0xE3F90f6Fe7c70b1F8cBEbc3477048d4F32E61f07",
         "WormholeDaoTimeLock": "0xED1d1d219f85Bc634f250db5e77E0330Cddc9b2a",
         "WormholeDaoMultisig": "0xc8C1680B18D432732D07c044669915726fAF67D0"
     },
