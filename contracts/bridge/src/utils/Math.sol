@@ -11,4 +11,8 @@ contract Math {
         else if (x == 2) return 2;
         else return 2 * get_power_of_two_ceil((x + 1) >> 1);
     }
+
+    function max(uint x, uint y) internal pure returns (uint z) {
+        return x >= y ? x : y;
+    }
 }

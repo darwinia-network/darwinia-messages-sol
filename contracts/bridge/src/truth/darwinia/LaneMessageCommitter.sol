@@ -20,7 +20,7 @@ contract LaneMessageCommitter is Math {
     uint256 public immutable bridgedChainPosition;
     /// @dev Count of all lanes in committer
     uint256 public count;
-    /// @dev lane positon => lane address
+    /// @dev Lane positon => lane address
     mapping(uint256 => address) public laneOf;
     /// @dev Governance role to set lanes config
     address public setter;
@@ -96,7 +96,7 @@ contract LaneMessageCommitter is Math {
     }
 
     /// @dev Get the commitment of all lanes in this committer
-    /// @notice Return bytes(0) if there is no lane in committer
+    /// @notice Return bytes(0) if there is no lane
     /// @return Commitment of this committer
     function commitment() public view returns (bytes32) {
         bytes32[] memory hashes = new bytes32[](get_power_of_two_ceil(count));
