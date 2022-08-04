@@ -117,7 +117,7 @@ library G1 {
         return from(output);
     }
 
-    function from(uint[4] memory x) internal view returns (G1Point memory) {
+    function from(uint[4] memory x) internal pure returns (G1Point memory) {
         return G1Point(Fp(x[0], x[1]), Fp(x[2], x[3]));
     }
 

@@ -7,7 +7,7 @@
             "ignoreConstructors": true
         }
     ],
-    "compiler-version": ["error","^0.8.0"],
+    "compiler-version": ["error","0.7.6"],
     "var-name-mixedcase": "off",
     "func-name-mixedcase": "off",
     "func-param-name-mixedcase": "off",

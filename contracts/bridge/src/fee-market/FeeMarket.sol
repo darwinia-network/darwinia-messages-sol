@@ -375,7 +375,7 @@ contract FeeMarket is IFeeMarket {
             DeliveredRelayer memory entry = delivery_relayers[i];
             uint256 every_delivery_reward = 0;
             for (uint256 key = entry.begin; key <= entry.end; key++) {
-                (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) = _settle_order(key, entry.relayer, confirm_relayer);
+                (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) = _settle_order(key);
                 every_delivery_reward += delivery_reward;
                 total_confirm_reward += confirm_reward;
                 total_vault_reward += vault_reward;
@@ -392,16 +392,11 @@ contract FeeMarket is IFeeMarket {
         _reward(VAULT, total_vault_reward);
     }
 
-    function _settle_order(
-        uint256 key,
-        address delivery_relayer,
-        address confirm_relayer
-    ) private returns (
+    function _settle_order( uint256 key) private returns (
         uint256 delivery_reward,
         uint256 confirm_reward,
         uint256 vault_reward
     ) {
-        Order memory order = orderOf[key];
         require(orderOf[key].assignedTime > 0, "!exist");
         // Get the message fee from the top N relayers
         uint256 message_fee = getOrderFee(key);
