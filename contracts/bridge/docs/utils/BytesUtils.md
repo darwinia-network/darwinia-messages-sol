@@ -1,4 +1,4 @@
-# Bytes
+# BytesUtils
 
 
 
@@ -8,50 +8,29 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [Globals](#globals)
 - [Functions](#functions)
-  - [equals](#equals)
-  - [substr](#substr)
-  - [substr](#substr-1)
-  - [concat](#concat)
-  - [slice_to_uint](#slice_to_uint)
+  - [slice](#slice)
+  - [slice](#slice-1)
+  - [toBytes32](#tobytes32)
+  - [toUint256](#touint256)
+  - [toNibbles](#tonibbles)
+  - [fromNibbles](#fromnibbles)
+  - [equal](#equal)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## Globals
-
-> Note this contains internal vars as well due to a bug in the docgen procedure
-
-| Var | Type |
-| --- | --- |
-| BYTES_HEADER_SIZE | uint256 |
 
 
 
 ## Functions
 
-### equals
+### slice
 No description
 
 
 #### Declaration
 ```solidity
-  function equals(
-  ) internal returns (bool equal)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### substr
-No description
-
-
-#### Declaration
-```solidity
-  function substr(
+  function slice(
   ) internal returns (bytes)
 ```
 
@@ -60,13 +39,13 @@ No modifiers
 
 
 
-### substr
+### slice
 No description
 
 
 #### Declaration
 ```solidity
-  function substr(
+  function slice(
   ) internal returns (bytes)
 ```
 
@@ -75,13 +54,43 @@ No modifiers
 
 
 
-### concat
+### toBytes32
 No description
 
 
 #### Declaration
 ```solidity
-  function concat(
+  function toBytes32(
+  ) internal returns (bytes32)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### toUint256
+No description
+
+
+#### Declaration
+```solidity
+  function toUint256(
+  ) internal returns (uint256)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### toNibbles
+No description
+
+
+#### Declaration
+```solidity
+  function toNibbles(
   ) internal returns (bytes)
 ```
 
@@ -90,14 +99,29 @@ No modifiers
 
 
 
-### slice_to_uint
+### fromNibbles
 No description
 
 
 #### Declaration
 ```solidity
-  function slice_to_uint(
-  ) internal returns (uint256 r)
+  function fromNibbles(
+  ) internal returns (bytes)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### equal
+No description
+
+
+#### Declaration
+```solidity
+  function equal(
+  ) internal returns (bool)
 ```
 
 #### Modifiers:

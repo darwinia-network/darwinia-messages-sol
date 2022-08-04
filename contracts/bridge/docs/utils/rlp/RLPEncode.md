@@ -2,7 +2,6 @@
 
 
 
-> A simple RLP encoding library.
 
 
 ## Contents
@@ -10,7 +9,7 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [Functions](#functions)
-  - [encodeBytes](#encodebytes)
+  - [writeBytes](#writebytes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -19,15 +18,15 @@
 
 ## Functions
 
-### encodeBytes
-No description
-> RLP encodes a byte string.
+### writeBytes
+RLP encodes a byte string.
+
 
 
 #### Declaration
 ```solidity
-  function encodeBytes(
-    bytes self
+  function writeBytes(
+    bytes _in
   ) internal returns (bytes)
 ```
 
@@ -37,21 +36,21 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`self` | bytes | The byte string to encode.
+|`_in` | bytes | The byte string to encode.
 
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`The` | RLP encoded string in bytes.
-### encodeList
-No description
-> RLP encodes a list of RLP encoded byte byte strings.
+### writeList
+RLP encodes a list of RLP encoded byte byte strings.
+
 
 
 #### Declaration
 ```solidity
-  function encodeList(
-    bytes[] self
+  function writeList(
+    bytes[] _in
   ) internal returns (bytes)
 ```
 
@@ -61,21 +60,21 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`self` | bytes[] | The list of RLP encoded byte strings.
+|`_in` | bytes[] | The list of RLP encoded byte strings.
 
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`The` | RLP encoded list of items in bytes.
-### encodeString
-No description
-> RLP encodes a string.
+### writeString
+RLP encodes a string.
+
 
 
 #### Declaration
 ```solidity
-  function encodeString(
-    string self
+  function writeString(
+    string _in
   ) internal returns (bytes)
 ```
 
@@ -85,21 +84,21 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`self` | string | The string to encode.
+|`_in` | string | The string to encode.
 
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`The` | RLP encoded string in bytes.
-### encodeAddress
-No description
-> RLP encodes an address.
+### writeAddress
+RLP encodes an address.
+
 
 
 #### Declaration
 ```solidity
-  function encodeAddress(
-    address self
+  function writeAddress(
+    address _in
   ) internal returns (bytes)
 ```
 
@@ -109,21 +108,21 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`self` | address | The address to encode.
+|`_in` | address | The address to encode.
 
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`The` | RLP encoded address in bytes.
-### encodeUint
-No description
-> RLP encodes a uint.
+### writeUint
+RLP encodes a uint.
+
 
 
 #### Declaration
 ```solidity
-  function encodeUint(
-    uint256 self
+  function writeUint(
+    uint256 _in
   ) internal returns (bytes)
 ```
 
@@ -133,21 +132,21 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`self` | uint256 | The uint to encode.
+|`_in` | uint256 | The uint256 to encode.
 
 #### Returns:
 | Type | Description |
 | --- | --- |
-|`The` | RLP encoded uint in bytes.
-### encodeInt
-No description
-> RLP encodes an int.
+|`The` | RLP encoded uint256 in bytes.
+### writeBool
+RLP encodes a bool.
+
 
 
 #### Declaration
 ```solidity
-  function encodeInt(
-    int256 self
+  function writeBool(
+    bool _in
   ) internal returns (bytes)
 ```
 
@@ -157,31 +156,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`self` | int256 | The int to encode.
-
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`The` | RLP encoded int in bytes.
-### encodeBool
-No description
-> RLP encodes a bool.
-
-
-#### Declaration
-```solidity
-  function encodeBool(
-    bool self
-  ) internal returns (bytes)
-```
-
-#### Modifiers:
-No modifiers
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`self` | bool | The bool to encode.
+|`_in` | bool | The bool to encode.
 
 #### Returns:
 | Type | Description |

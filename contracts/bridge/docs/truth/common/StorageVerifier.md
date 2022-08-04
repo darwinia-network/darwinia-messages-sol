@@ -35,7 +35,6 @@
 
 | Var | Type |
 | --- | --- |
-| MPT_PRECOMPILE | address |
 | THIS_CHAIN_POSITION | uint256 |
 | LANE_IDENTIFY_SLOT | uint256 |
 | LANE_NONCE_SLOT | uint256 |

@@ -24,6 +24,8 @@
   - [getOrderBook](#getorderbook)
   - [getTopRelayers](#gettoprelayers)
   - [getOrderFee](#getorderfee)
+  - [getAssignedRelayer](#getassignedrelayer)
+  - [getSlotFee](#getslotfee)
   - [getOrder](#getorder)
   - [isRelayer](#isrelayer)
   - [deposit](#deposit)
@@ -261,6 +263,36 @@ No description
 ```solidity
   function getOrderFee(
   ) public returns (uint256 fee)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### getAssignedRelayer
+No description
+
+
+#### Declaration
+```solidity
+  function getAssignedRelayer(
+  ) public returns (address)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### getSlotFee
+No description
+
+
+#### Declaration
+```solidity
+  function getSlotFee(
+  ) public returns (uint256)
 ```
 
 #### Modifiers:

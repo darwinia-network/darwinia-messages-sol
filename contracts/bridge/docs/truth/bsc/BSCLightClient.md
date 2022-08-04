@@ -25,7 +25,9 @@
   - [extract_sign](#extract_sign)
   - [_extract_authorities](#_extract_authorities)
 - [Layout of extra_data:](#layout-of-extra_data)
-- [Signature: 65 bytes](#signature-65-bytes)
+- [VANITY: 32 bytes
+Signers: N * 32 bytes as hex encoded (20 characters)
+Signature: 65 bytes](#vanity-32-bytes%0Asigners-n--32-bytes-as-hex-encoded-20-characters%0Asignature-65-bytes)
   - [bytesToAddress](#bytestoaddress)
   - [add](#add)
   - [sub](#sub)

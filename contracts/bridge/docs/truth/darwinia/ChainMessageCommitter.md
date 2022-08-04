@@ -1,8 +1,9 @@
 # ChainMessageCommitter
 
 
+Chain message committer commit messages from all lane committers
 
-
+> Chain message use sparse merkle tree to commit all messages
 
 ## Contents
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -16,9 +17,6 @@
   - [changeSetter](#changesetter)
   - [registry](#registry)
   - [commitment](#commitment)
-  - [commitment](#commitment-1)
-  - [max](#max)
-  - [roundUpToPow2](#rounduptopow2)
 - [Events](#events)
   - [Registry](#registry)
 
@@ -32,7 +30,7 @@
 | --- | --- |
 | thisChainPosition | uint256 |
 | maxChainPosition | uint256 |
-| chains | mapping(uint256 => address) |
+| chainOf | mapping(uint256 => address) |
 | setter | address |
 
 
@@ -53,26 +51,34 @@ No description
 
 ### constructor
 No description
+> Constructor params
 
 
 #### Declaration
 ```solidity
   function constructor(
+    uint256 _thisChainPosition
   ) public
 ```
 
 #### Modifiers:
 No modifiers
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_thisChainPosition` | uint256 | This chain positon
 
 ### changeSetter
-No description
+Only could be called by setter
+
+> Change the setter
 
 
 #### Declaration
 ```solidity
   function changeSetter(
+    address _setter
   ) external onlySetter
 ```
 
@@ -81,15 +87,21 @@ No description
 | --- |
 | onlySetter |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_setter` | address | The new setter
 
 ### registry
-No description
+Only could be called by setter
+
+> Registry a lane committer
 
 
 #### Declaration
 ```solidity
   function registry(
+    address committer
   ) external onlySetter
 ```
 
@@ -98,10 +110,40 @@ No description
 | --- |
 | onlySetter |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`committer` | address | Address of lane committer
 
 ### commitment
-No description
+Return bytes(0) if the lane committer address is address(0)
+
+> Get the commitment of a lane committer
+
+
+#### Declaration
+```solidity
+  function commitment(
+    uint256 chainPos
+  ) public returns (bytes32)
+```
+
+#### Modifiers:
+No modifiers
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`chainPos` | uint256 | Bridged chian positon of the lane committer
+
+#### Returns:
+| Type | Description |
+| --- | --- |
+|`Commitment` | of the lane committer
+### commitment
+Return bytes(0) if there is no lane committer
+
+> Get the commitment of all lane committers
 
 
 #### Declaration
@@ -114,52 +156,10 @@ No description
 No modifiers
 
 
-
-### commitment
-No description
-
-
-#### Declaration
-```solidity
-  function commitment(
-  ) public returns (bytes32)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### max
-No description
-
-
-#### Declaration
-```solidity
-  function max(
-  ) internal returns (uint256 z)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### roundUpToPow2
-No description
-
-
-#### Declaration
-```solidity
-  function roundUpToPow2(
-  ) internal returns (uint256)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
+#### Returns:
+| Type | Description |
+| --- | --- |
+|`Commitment` | of this chian committer
 
 
 ## Events
