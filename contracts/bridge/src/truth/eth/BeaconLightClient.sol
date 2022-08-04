@@ -56,11 +56,11 @@ import "../../utils/Bitfield.sol";
 import "../../spec/BeaconChain.sol";
 
 interface IBLS {
-        function fast_aggregate_verify(
-            bytes[] calldata pubkeys,
-            bytes calldata message,
-            bytes calldata signature
-        ) external pure returns (bool);
+    function fast_aggregate_verify(
+        bytes[] calldata pubkeys,
+        bytes calldata message,
+        bytes calldata signature
+    ) external pure returns (bool);
 }
 
 contract BeaconLightClient is BeaconChain, Bitfield {

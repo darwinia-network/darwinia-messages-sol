@@ -45,7 +45,7 @@ library StorageProof {
         bytes[] memory storage_proofs
     ) internal view returns (bytes[] memory values) {
         uint key_size = storage_keys.length;
-        require(key_size == storage_proofs.length);
+        require(key_size == storage_proofs.length, "!storage_proof_len");
         values = new bytes[](key_size);
         for (uint i = 0; i < key_size; i++) {
             values[i] = verify_single_storage_proof(

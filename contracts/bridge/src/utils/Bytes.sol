@@ -81,4 +81,15 @@ library Bytes {
         Memory.copy(src2, dest2, src2Len);
         return ret;
     }
+
+    function slice_to_uint(bytes memory self, uint start, uint end) internal pure returns (uint r) {
+        uint len = end - start;
+        require(0 <= len && len <= 32, "!slice");
+
+        assembly{
+            r := mload(add(add(self, 0x20), start))
+        }
+
+        return r >> (256 - len * 8);
+    }
 }

@@ -37,7 +37,7 @@ FeeMarket=$(deploy FeeMarket \
   $PRICE_RATIO)
 
 # bsc light client config
-block_number=20960000
+block_number=21357400
 block_header=$(seth block $block_number --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545
 )
 parant_hash=$(echo "$block_header" | seth --field parentHash)

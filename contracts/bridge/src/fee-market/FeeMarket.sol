@@ -299,12 +299,11 @@ contract FeeMarket is IFeeMarket {
             if (balanceOf[cur] >= collateralPerOrder) {
                 array[index] = cur;
                 index++;
-                prev = cur;
-                cur = relayers[prev];
             } else {
                 prune(prev, cur);
-                cur = relayers[prev];
             }
+            prev = cur;
+            cur = relayers[cur];
         }
         require(index == assignedRelayersNumber, "!assigned");
         return array;
