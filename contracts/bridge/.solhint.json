@@ -10,17 +10,17 @@
     "compiler-version": ["error","0.7.6"],
     "var-name-mixedcase": "off",
     "func-name-mixedcase": "off",
+    "event-name-camelcase": "off",
     "func-param-name-mixedcase": "off",
     "private-vars-leading-underscore": "off",
     "not-rely-on-time": "off",
     "avoid-low-level-calls": "off",
     "no-inline-assembly": "off",
     "reason-string": "off",
+    "modifier-name-mixedcase": "warn",
     "no-unused-vars": "error",
     "const-name-snakecase": "error",
     "contract-name-camelcase": "error",
-    "event-name-camelcase": "error",
-    "modifier-name-mixedcase": "error",
     "imports-on-top": "error"
   }
 }

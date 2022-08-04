@@ -38,15 +38,15 @@ contract RLPEncodeTest is DSTest {
 
     function test_encode_string() public {
         assertEq0(
-            RLPEncode.writeString(''),
+            RLPEncode.writeString(""),
             hex'80'
         );
         assertEq0(
-            RLPEncode.writeString('dog'),
+            RLPEncode.writeString("dog"),
             hex'83646f67'
         );
         assertEq0(
-            RLPEncode.writeString('Lorem ipsum dolor sit amet, consectetur adipisicing elit'),
+            RLPEncode.writeString("Lorem ipsum dolor sit amet, consectetur adipisicing elit"),
             hex'b8384c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465747572206164697069736963696e6720656c6974'
         );
     }

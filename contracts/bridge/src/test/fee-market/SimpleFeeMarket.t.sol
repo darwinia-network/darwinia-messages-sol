@@ -528,9 +528,9 @@ contract Guy {
         market = _market;
     }
 
-    receive() payable external {}
+    receive() external payable {}
 
-    function join() payable public {
+    function join() public payable {
         market.deposit{value: msg.value}();
     }
 
@@ -538,7 +538,7 @@ contract Guy {
         market.withdraw(wad);
     }
 
-    function enroll(address prev, uint fee) payable public {
+    function enroll(address prev, uint fee) public payable {
         market.enroll{value: msg.value}(prev, fee);
     }
 
