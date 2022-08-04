@@ -4,6 +4,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../../utils/ECDSA.sol";
+import "../../utils/Math.sol";
 import "../../utils/Bitfield.sol";
 import "../../utils/SparseMerkleProof.sol";
 import "../../spec/BEEFYCommitmentScheme.sol";
@@ -13,7 +14,7 @@ import "../../interfaces/ILightClient.sol";
 /// @author echo
 /// @notice The light client is the trust layer of the bridge
 /// @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
-contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme {
+contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, Math {
 
     /* Events */
 
@@ -382,12 +383,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme {
             commitmentHash,
             len
         );
-    }
-
-    function get_power_of_two_ceil(uint256 x) internal pure returns (uint256) {
-        if (x <= 1) return 1;
-        else if (x == 2) return 2;
-        else return 2 * get_power_of_two_ceil((x + 1) >> 1);
     }
 
     function verifyValidatorProofSignatures(

@@ -4,8 +4,9 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "./MerkleProof.sol";
+import "../utils/Math.sol";
 
-contract BeaconChain is MerkleProof {
+contract BeaconChain is Math, MerkleProof {
     uint64 constant internal SYNC_COMMITTEE_SIZE = 512;
     uint64 constant internal BLSPUBLICKEY_LENGTH = 48;
     uint64 constant internal BLSSIGNATURE_LENGTH = 96;
@@ -105,13 +106,6 @@ contract BeaconChain is MerkleProof {
             o[i] = hash_node(o[i * 2], o[i * 2 + 1]);
         }
         return o[1];
-    }
-
-    //  Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.
-    function get_power_of_two_ceil(uint256 x) internal pure returns (uint256) {
-        if (x <= 1) return 1;
-        else if (x == 2) return 2;
-        else return 2 * get_power_of_two_ceil((x + 1) >> 1);
     }
 
     function to_little_endian_64(uint64 value) internal pure returns (bytes8 r) {
