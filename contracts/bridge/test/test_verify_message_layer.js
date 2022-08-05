@@ -25,32 +25,20 @@ const encoded_hash = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad804
 
 // let getAndVerify = new GetAndVerify("http://127.0.0.1:8545 ")
 
-const build_proof = async () => {
-    const c0 = await darwiniaChainCommitter['commitment(uint256)'](sourceChainPos)
-    const c1 = await darwiniaChainCommitter['commitment(uint256)'](targetChainPos)
-    const c = await darwiniaChainCommitter['commitment()']()
-    const inb = await darwiniaLaneCommitter0['commitment(uint256)'](sourceInLanePos)
-    const chainProof = {
-      root: c,
-      proof: [c0]
-    }
-    const laneProof = {
-      root: c1,
-      proof: [inb]
-    }
-    return { chainProof, laneProof }
+const build_proof = async (targetChainPos, sourceLanePos) => {
+    return await darwiniaChainCommitter.prove(targetChainPos, sourceLanePos)
 }
 
 const generate_darwinia_proof = async () => {
-  const proof = await build_proof()
-  return ethers.utils.defaultAbiCoder.encode([
-    "tuple(tuple(bytes32,bytes32[]),tuple(bytes32,bytes32[]))"
-    ], [
-      [
-        [proof.chainProof.root, proof.chainProof.proof],
-        [proof.laneProof.root, proof.laneProof.proof]
-      ]
-    ])
+  return await build_proof(targetChainPos, sourceOutLanePos)
+  // return ethers.utils.defaultAbiCoder.encode([
+  //   "tuple(tuple(bytes32,bytes32[]),tuple(bytes32,bytes32[]))"
+  //   ], [
+  //     [
+  //       [proof.chainProof.root, proof.chainProof.proof],
+  //       [proof.laneProof.root, proof.laneProof.proof]
+  //     ]
+  //   ])
 }
 
 const send_message = async (outbound, nonce) => {

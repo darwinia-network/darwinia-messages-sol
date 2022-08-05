@@ -52,7 +52,7 @@ contract ChainMessageCommitter is MessageCommitter {
     }
 
     function count() public view override returns (uint256) {
-        return maxChainPosition;
+        return maxChainPosition + 1;
     }
 
     function leaveOf(uint256 pos) public view override returns (address) {
@@ -81,12 +81,11 @@ contract ChainMessageCommitter is MessageCommitter {
     /// @dev Get message proof for lane
     /// @param chainPos Bridged chain position of lane
     /// @param lanePos This lane positon of lane
-    function proof(uint256 chainPos, uint256 lanePos) external view returns (MessageProof memory) {
+    function prove(uint256 chainPos, uint256 lanePos) external view returns (bytes memory) {
         address committer = leaveOf(chainPos);
-        // TODO: abi.encode(proof)
-        return MessageProof({
+        return abi.encode(MessageProof({
             chainProof: proof(chainPos),
             laneProof: IMessageCommitter(committer).proof(lanePos)
-        });
+        }));
     }
 }
