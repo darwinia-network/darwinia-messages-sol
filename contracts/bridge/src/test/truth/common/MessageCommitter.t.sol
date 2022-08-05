@@ -32,8 +32,8 @@ contract MesageCommitterTest is DSTest {
         assertEq(committer.commitment(), bytes32(0));
     }
 
-    function testFail_prove_empty() public {
-        MessageSingleProof memory proof = committer.proof(0);
+    function testFail_prove_empty() public view {
+        committer.proof(0);
     }
 
     function test_prove_one_leave() public {
@@ -41,7 +41,6 @@ contract MesageCommitterTest is DSTest {
         MessageSingleProof memory proof = committer.proof(0);
         assertEq(proof.root, bytes32(uint(1)));
         assertEq(proof.proof.length, 0);
-
         assertEq(committer.commitment(), proof.root);
     }
 
@@ -82,6 +81,11 @@ contract MesageCommitterTest is DSTest {
         assertEq(proof.proof[0], bytes32(uint(0)));
         assertEq(proof.proof[1], 0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0);
         assertEq(committer.commitment(), proof.root);
+    }
+
+    function testFail_prove_three_leaves_with_wrong_pos() public {
+        committer.mock_three_leaves();
+        committer.proof(3);
     }
 }
 
