@@ -18,7 +18,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "./MessageCommitter.sol";
+import "../common/MessageCommitter.sol";
 import "../../interfaces/IMessageCommitment.sol";
 
 /// @title LaneMessageCommitter

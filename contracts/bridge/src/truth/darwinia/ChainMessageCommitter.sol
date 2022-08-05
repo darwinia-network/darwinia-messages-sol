@@ -18,8 +18,9 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "./MessageCommitter.sol";
+import "../common/MessageCommitter.sol";
 import "../../interfaces/IMessageCommitment.sol";
+import "../../interfaces/IMessageCommitter.sol";
 
 /// @title ChainMessageCommitter
 /// @author echo
@@ -75,5 +76,14 @@ contract ChainMessageCommitter is MessageCommitter {
         chainOf[pos] = committer;
         maxChainPosition = max(maxChainPosition, pos);
         emit Registry(pos, committer);
+    }
+
+    function proof(uint256 chainPos, uint256 lanePos) external view returns (MessageProof memory) {
+        address committer = leaveOf(chainPos);
+        // TODO: abi.encode(proof)
+        return MessageProof({
+            chainProof: proof(chainPos),
+            laneProof: IMessageCommitter(committer).proof(lanePos)
+        });
     }
 }

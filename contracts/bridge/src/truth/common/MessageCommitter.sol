@@ -19,6 +19,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../../utils/Math.sol";
+import "../../spec/MessageProof.sol";
 import "../../interfaces/IMessageCommitment.sol";
 
 abstract contract MessageCommitter is Math {
@@ -57,11 +58,19 @@ abstract contract MessageCommitter is Math {
         }
     }
     /// @dev Construct a Merkle Proof for leave given by position.
-    function proof(uint256 pos) external view returns (bytes32[] memory) {
+    function proof(uint256 pos) public view returns (MessageSingleProof memory) {
         bytes32[] memory tree = merkle_tree();
         uint depth = log_2(get_power_of_two_ceil(count()));
         require(pos < count(), "!pos");
-        return get_proof(tree, depth, pos);
+        return MessageSingleProof({
+            root: root(tree),
+            proof: get_proof(tree, depth, pos)
+        });
+    }
+
+    function root(bytes32[] memory tree) public pure returns (bytes32) {
+        require(tree.length > 1, "!tree");
+        return tree[1];
     }
 
     function merkle_tree() public view returns (bytes32[] memory) {
