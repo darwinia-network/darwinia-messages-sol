@@ -27,6 +27,14 @@ contract Math {
         else return 2 * get_power_of_two_ceil((x + 1) >> 1);
     }
 
+    function log_2(uint256 x) internal pure returns (uint256 pow) {
+        uint256 a = 1;
+        while (a < x) {
+            a <<= 1;
+            pow++;
+        }
+    }
+
     function max(uint x, uint y) internal pure returns (uint z) {
         return x >= y ? x : y;
     }

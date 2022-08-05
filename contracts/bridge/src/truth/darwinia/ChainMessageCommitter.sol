@@ -18,14 +18,14 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../../utils/Math.sol";
+import "./MessageCommitter.sol";
 import "../../interfaces/IMessageCommitment.sol";
 
 /// @title ChainMessageCommitter
 /// @author echo
 /// @notice Chain message committer commit messages from all lane committers
 /// @dev Chain message use sparse merkle tree to commit all messages
-contract ChainMessageCommitter is Math {
+contract ChainMessageCommitter is MessageCommitter {
     event Registry(uint256 pos, address committer);
 
     /// @dev This chain position
@@ -50,6 +50,14 @@ contract ChainMessageCommitter is Math {
         setter = msg.sender;
     }
 
+    function count() public view override returns (uint256) {
+        return maxChainPosition;
+    }
+
+    function leaveOf(uint256 pos) public view override returns (address) {
+        return chainOf[pos];
+    }
+
     /// @dev Change the setter
     /// @notice Only could be called by setter
     /// @param _setter The new setter
@@ -67,38 +75,5 @@ contract ChainMessageCommitter is Math {
         chainOf[pos] = committer;
         maxChainPosition = max(maxChainPosition, pos);
         emit Registry(pos, committer);
-    }
-
-    /// @dev Get the commitment of a lane committer
-    /// @notice Return bytes(0) if the lane committer address is address(0)
-    /// @param chainPos Bridged chian positon of the lane committer
-    /// @return Commitment of the lane committer
-    function commitment(uint256 chainPos) public view returns (bytes32) {
-        address committer = chainOf[chainPos];
-        if (committer == address(0)) {
-            return bytes32(0);
-        } else {
-            return IMessageCommitment(committer).commitment();
-        }
-    }
-
-    /// @dev Get the commitment of all lane committers
-    /// @notice Return bytes(0) if there is no lane committer
-    /// @return Commitment of this chian committer
-    function commitment() public view returns (bytes32) {
-        uint256 chainCount = maxChainPosition + 1;
-        bytes32[] memory hashes = new bytes32[](get_power_of_two_ceil(chainCount));
-        for (uint256 pos = 0; pos < chainCount; pos++) {
-            hashes[pos] = commitment(pos);
-        }
-        uint256 hashLength = hashes.length;
-        for (uint256 j = 0; hashLength > 1; j = 0) {
-            for (uint256 i = 0; i < hashLength; i = i + 2) {
-                hashes[j] = keccak256(abi.encodePacked(hashes[i], hashes[i + 1]));
-                j = j + 1;
-            }
-            hashLength = hashLength - j;
-        }
-        return hashes[0];
     }
 }
