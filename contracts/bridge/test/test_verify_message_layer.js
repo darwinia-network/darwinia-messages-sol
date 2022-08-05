@@ -30,15 +30,15 @@ const build_proof = async (targetChainPos, sourceLanePos) => {
 }
 
 const generate_darwinia_proof = async () => {
-  return await build_proof(targetChainPos, sourceOutLanePos)
-  // return ethers.utils.defaultAbiCoder.encode([
-  //   "tuple(tuple(bytes32,bytes32[]),tuple(bytes32,bytes32[]))"
-  //   ], [
-  //     [
-  //       [proof.chainProof.root, proof.chainProof.proof],
-  //       [proof.laneProof.root, proof.laneProof.proof]
-  //     ]
-  //   ])
+  const proof = await build_proof(targetChainPos, sourceOutLanePos)
+  return ethers.utils.defaultAbiCoder.encode([
+    "tuple(tuple(bytes32,bytes32[]),tuple(bytes32,bytes32[]))"
+    ], [
+      [
+        [proof.chainProof.root, proof.chainProof.proof],
+        [proof.laneProof.root, proof.laneProof.proof]
+      ]
+    ])
 }
 
 const send_message = async (outbound, nonce) => {

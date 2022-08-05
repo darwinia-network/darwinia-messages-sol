@@ -81,11 +81,11 @@ contract ChainMessageCommitter is MessageCommitter {
     /// @dev Get message proof for lane
     /// @param chainPos Bridged chain position of lane
     /// @param lanePos This lane positon of lane
-    function prove(uint256 chainPos, uint256 lanePos) external view returns (bytes memory) {
+    function prove(uint256 chainPos, uint256 lanePos) external view returns (MessageProof memory) {
         address committer = leaveOf(chainPos);
-        return abi.encode(MessageProof({
+        return MessageProof({
             chainProof: proof(chainPos),
             laneProof: IMessageCommitter(committer).proof(lanePos)
-        }));
+        });
     }
 }
