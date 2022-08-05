@@ -78,6 +78,9 @@ contract ChainMessageCommitter is MessageCommitter {
         emit Registry(pos, committer);
     }
 
+    /// @dev Get message proof for lane
+    /// @param chainPos Bridged chain position of lane
+    /// @param lanePos This lane positon of lane
     function proof(uint256 chainPos, uint256 lanePos) external view returns (MessageProof memory) {
         address committer = leaveOf(chainPos);
         // TODO: abi.encode(proof)
