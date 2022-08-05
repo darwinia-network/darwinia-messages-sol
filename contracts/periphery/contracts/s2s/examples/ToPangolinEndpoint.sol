@@ -101,7 +101,7 @@ contract ToPangolinEndpoint is MessageEndpoint {
     }
 
     function setInboundLaneId(bytes4 _inboundLaneId) external {
-        _setInboundLaneId(inboundLaneId);
+        _setInboundLaneId(_inboundLaneId);
     }
 
     function setRemoteSmartChainId(uint64 _remoteSmartChainId) external {
