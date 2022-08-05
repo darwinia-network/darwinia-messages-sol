@@ -22,6 +22,7 @@ pragma solidity 0.7.6;
 /// These functions can be used to verify that a message was signed by the holder
 /// of the private keys of a given address.
 library ECDSA {
+
     /// @dev Returns the address that signed a hashed message (`hash`) with
     /// `signature`. This address can then be used for verification purposes.
     ///
@@ -34,12 +35,40 @@ library ECDSA {
     /// recover to arbitrary addresses for non-hashed data. A safe way to ensure
     /// this is by receiving a hash of the original message (which may otherwise
     /// be too long), and then calling {toEthSignedMessageHash} on it.
+    function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
+        // Check the signature length
+        if (signature.length != 65) {
+            revert("ECDSA: invalid signature length");
+        }
+
+        // Divide the signature in r, s and v variables
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+
+        // ecrecover takes the signature parameters, and the only way to get them
+        // currently is to use assembly.
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            r := mload(add(signature, 0x20))
+            s := mload(add(signature, 0x40))
+            v := byte(0, mload(add(signature, 0x60)))
+        }
+
+        return recover(hash, v, r, s);
+    }
+    /// @dev Returns the address that signed a hashed message (`hash`) with
+    /// `signature`. This address can then be used for verification purposes.
     function recover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address) {
         // Check the signature length
         // - case 64: r,vs signature (cf https://eips.ethereum.org/EIPS/eip-2098)
         bytes32 s = vs & bytes32(0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
         uint8 v = uint8((uint256(vs) >> 255) + 27);
 
+        return recover(hash, v, r, s);
+    }
+
+    function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
         // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
         // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
         // the valid range for s in (281): 0 < s < secp256k1n ÷ 2 + 1, and for v in (282): v ∈ {27, 28}. Most
@@ -63,11 +92,18 @@ library ECDSA {
     /// replicates the behavior of the
     /// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign[`eth_sign`]
     /// JSON-RPC method.
-    ///
-    /// See {recover}.
     function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32) {
         // 32 is the length in bytes of hash,
         // enforced by the type signature above
         return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+    }
+
+    /// @dev Returns an Ethereum Signed Typed Data, created from a
+    /// `domainSeparator` and a `structHash`. This produces hash corresponding
+    /// to the one signed with the
+    /// https://eips.ethereum.org/EIPS/eip-712[`eth_signTypedData`]
+    /// JSON-RPC method as part of EIP-712.
+    function toTypedDataHash(bytes32 domainSeparator, bytes32 structHash) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
     }
 }
