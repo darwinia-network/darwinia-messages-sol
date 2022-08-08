@@ -30,6 +30,7 @@
     "doctoc": "^2.0.1",
     "dotenv": "^10.0.0",
     "ethereum-waffle": "^3.0.0",
+    "ethereumjs-abi": "^0.6.8",
     "ethereumjs-util": "^7.0.10",
     "ethers": "^5.0.0",
     "hardhat": "^2.3.0",

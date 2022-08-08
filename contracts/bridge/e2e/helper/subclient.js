@@ -1,6 +1,7 @@
 let { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
 const { EvmClient } = require('./evmclient')
 const { encodeNextAuthoritySet } = require('./encode')
+const { signHash } = require('./eip712')
 
 /**
  * The Substrate client for Bridge interaction
@@ -99,6 +100,16 @@ class SubClient {
     return this.api.query.beefy.authorities.at(hash)
   }
 
+  async ecdsa_authority_nonce() {
+    return await this.api.rpc.query.ecdsaAuthority.nonce().at(block_number)
+  }
+
+  async sign_message_commitment(block_number) {
+    // bridger could get the hash from `edcsa-authority` pallet's events.
+    const hash = signHash(message)
+    const sig = ethUtil.ecsign(hash);
+    return [sig]
+  }
 }
 
 module.exports.SubClient = SubClient

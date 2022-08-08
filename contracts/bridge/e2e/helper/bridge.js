@@ -83,41 +83,9 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
     ], [ proof ])
 }
 
-const get_message_proof = async (subClient, type) => {
-  const thisChainPos = await subClient.inbound.thisChainPosition()
-  const bridgedChainPos = await subClient.inbound.bridgedChainPosition()
-  const c0 = await subClient.chainMessageCommitter['commitment(uint256)'](thisChainPos)
-  const c1 = await subClient.chainMessageCommitter['commitment(uint256)'](bridgedChainPos)
-  const c = await subClient.chainMessageCommitter['commitment()']()
-  const thisInLanePos = await subClient.inbound.thisLanePosition()
-  const inb = await subClient.laneMessageCommitter['commitment(uint256)'](thisInLanePos)
-
-  const thisOutLanePos = await subClient.outbound.thisLanePosition()
-  const outb = await subClient.laneMessageCommitter['commitment(uint256)'](thisOutLanePos)
-
-  let b
-  if (type == 'receive') {
-    b = inb
-  } else if (type == 'delivery') {
-    b = outb
-  } else {
-    return new Error(`Invalid type: ${type}`);
-  }
-  const chainProof = {
-    root: c,
-    count: 2,
-    proof: [c0]
-  }
-  const laneProof = {
-    root: c1,
-    count: 2,
-    proof: [b]
-  }
-  return {chainProof, laneProof}
-}
-
-const generate_message_proof = async (subClient, type) => {
-  const proof = await get_message_proof(subClient, type)
+const generate_message_proof = async (chain_committer, lane_committer, lane_pos) => {
+  const bridgedChainPos = await lane_committer.bridgedChainPosition()
+  const proof = await chain_committer.prove(bridgedChainPos, lane_pos)
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(tuple(bytes32,uint256,bytes32[]),tuple(bytes32,uint256,bytes32[]))"
     ], [
@@ -139,8 +107,8 @@ class Bridge {
   }
 
   async enroll_relayer() {
-    await this.ethClient.enroll_relayer()
-    await this.bscClient.enroll_relayer()
+    // await this.ethClient.enroll_relayer()
+    // await this.bscClient.enroll_relayer()
     await this.subClient.enroll_relayer()
   }
 
@@ -230,7 +198,16 @@ class Bridge {
   async relay_sub_header() {
     const header = await this.subClient.block_header()
     const message_root = await this.subClient.chainMessageCommitter['commitment()']()
-    return await this.ethClient.relay_header(message_root, header.number.toString())
+    const message = {
+      block_number: header.number.toNumber(),
+      message_root: message_root,
+      nonce: nonce
+    }
+    console.log('message', message)
+    const signs = await this.subClient.sign_message_commitment(message)
+    await this.ethClient.ecdsa_relay_header(message, signs)
+    await this.bscClient.ecdsa_relay_header(message, signs)
+    // return await this.ethClient.relay_header(message_root, header.number.toString())
   }
 
   async relay_eth_messages(data) {
@@ -247,20 +224,40 @@ class Bridge {
     await confirm_sub_messages()
   }
 
-  async dispatch_sub_messages(data, signer) {
-    const o = await this.subClient.outbound.data()
-    const proof = await generate_message_proof(this.subClient, 'receive')
+  async dispatch_sub_messages_to_eth(data, signer) {
+    const o = await this.subClient.eth.outbound.data()
+    const info = await this.subClient.eth.outbound.getLaneInfo()
+    const proof = await generate_message_proof(this.subClient.chainMessageCommitter, this.subClient.ethLaneMessageCommitter, info.thisLanePosition)
     if (signer) {
       this.ethClient.inbound = this.ethClient.inbound.connect(signer)
     }
     return await this.ethClient.inbound.receive_messages_proof(o, data, proof)
   }
 
+  async dispatch_sub_messages_to_bsc(data, signer) {
+    const o = await this.subClient.bsc.outbound.data()
+    const info = await this.subClient.bsc.outbound.getLaneInfo()
+    const proof = await generate_message_proof(this.subClient.chainMessageCommitter, this.subClient.ethLaneMessageCommitter, info.thisLanePosition)
+    if (signer) {
+      this.bscClient.inbound = this.bscClient.inbound.connect(signer)
+    }
+    return await this.bscClient.inbound.receive_messages_proof(o, data, proof)
+  }
+
   async confirm_eth_messages() {
-    const i = await this.subClient.inbound.data()
+    const i = await this.subClient.eth.inbound.data()
+    const info = await this.subClient.eth.inbound.getLaneInfo()
     const o = await this.ethClient.outbound.outboundLaneNonce()
-    const proof = await generate_message_proof(this.subClient, 'delivery')
+    const proof = await generate_message_proof(this.subClient.chainMessageCommitter, this.subClient.ethLaneMessageCommitter, info.thisLanePosition)
     return await this.ethClient.outbound.receive_messages_delivery_proof(i, proof)
+  }
+
+  async confirm_bsc_messages() {
+    const i = await this.subClient.bsc.inbound.data()
+    const info = await this.subClient.bsc.inbound.getLaneInfo()
+    const o = await this.bscClient.outbound.outboundLaneNonce()
+    const proof = await generate_message_proof(this.subClient.chainMessageCommitter, this.subClient.bscLaneMessageCommitter, info.thisLanePosition)
+    return await this.bscClient.outbound.receive_messages_delivery_proof(i, proof)
   }
 
   async dispatch_eth_messages(data) {
