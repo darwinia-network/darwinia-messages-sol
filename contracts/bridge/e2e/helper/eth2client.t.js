@@ -6,14 +6,15 @@ const eth2Client = new Eth2Client(beacon_endpoint);
 const log = console.log;
 
 (async () => {
-  // const sync_change = await eth2Client.get_sync_committee_period_update(11, 1)
+  // const sync_change = await eth2Client.get_sync_committee_period_update(42, 1)
   // log(sync_change)
   const finality_update = await eth2Client.get_finality_update()
   log(finality_update)
   // const optimistic_update = await eth2Client.get_optimistic_update()
   // log(optimistic_update)
-  // let finalized_header = await eth2Client.get_header(finality_update.finalized_header.slot)
-  // const bootstrap = await eth2Client.get_bootstrap(finalized_header.root)
+  let finalized_header = await eth2Client.get_header(finality_update.finalized_header.slot)
+  const bootstrap = await eth2Client.get_bootstrap(finalized_header.root)
+  log(JSON.stringify(bootstrap, null, 2))
   // const bootstrap = await eth2Client.get_bootstrap('0xe1ae844281cb49a64ccc6ed6bc3d87e17f9ec401b83361d780f052ecff2baefb')
   // log(JSON.stringify(bootstrap, null, 2))
   // log(await eth2Client.get_finality_branch(105728))
