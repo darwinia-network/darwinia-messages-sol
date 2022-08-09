@@ -34,7 +34,8 @@ if (target == 'local') {
 
   // evm_eth_endpoint = "https://rpc.sepolia.org"
   evm_eth_endpoint = "http://127.0.0.1:8545"
-  evm_bsc_endpoint = `https://speedy-nodes-nyc.moralis.io/${MORALIS_KEY}/bsc/testnet/archive`
+  // evm_bsc_endpoint = `https://speedy-nodes-nyc.moralis.io/${MORALIS_KEY}/bsc/testnet/archive`
+  evm_bsc_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
   dvm_endpoint = "https://pangoro-rpc.darwinia.network"
   sub_endpoint = "wss://pangoro-rpc.darwinia.network"
   // beacon_endpoint = "https://lodestar-kiln.chainsafe.io"
