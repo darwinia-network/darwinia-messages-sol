@@ -21,6 +21,9 @@ pragma abicoder v2;
 import "../interfaces/ILightClient.sol";
 
 contract InboundLaneVerifier {
+    /// indentify slot
+    Slot0 public slot0;
+
     /// @dev The contract address of on-chain light client
     ILightClient public immutable lightClient;
 
@@ -34,13 +37,6 @@ contract InboundLaneVerifier {
         // This chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
         uint32 thisChainPosition;
     }
-
-    /* State */
-
-    // indentify slot
-    // slot 0 ------------------------------------------------------------
-    Slot0 public slot0;
-    // ------------------------------------------------------------------
 
     constructor(
         address _lightClient,
@@ -56,9 +52,7 @@ contract InboundLaneVerifier {
         slot0.bridgedLanePosition = _bridgedLanePosition;
     }
 
-    /* Private Functions */
-
-    function verify_messages_proof(
+    function _verify_messages_proof(
         bytes32 outlane_data_hash,
         bytes memory encoded_proof
     ) internal view {
@@ -83,15 +77,15 @@ contract InboundLaneVerifier {
        );
     }
 
-    // 32 bytes to identify an unique message from source chain
-    // MessageKey encoding:
-    // BridgedChainPosition | BridgedLanePosition | ThisChainPosition | ThisLanePosition | Nonce
-    // [0..8)   bytes ---- Reserved
-    // [8..12)  bytes ---- BridgedChainPosition
-    // [16..20) bytes ---- BridgedLanePosition
-    // [12..16) bytes ---- ThisChainPosition
-    // [20..24) bytes ---- ThisLanePosition
-    // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
+    /// 32 bytes to identify an unique message from source chain
+    /// MessageKey encoding:
+    /// BridgedChainPosition | BridgedLanePosition | ThisChainPosition | ThisLanePosition | Nonce
+    /// [0..8)   bytes ---- Reserved
+    /// [8..12)  bytes ---- BridgedChainPosition
+    /// [16..20) bytes ---- BridgedLanePosition
+    /// [12..16) bytes ---- ThisChainPosition
+    /// [20..24) bytes ---- ThisLanePosition
+    /// [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
     function encodeMessageKey(uint64 nonce) public view returns (uint256) {
         Slot0 memory _slot0 = slot0;
         return (uint256(_slot0.bridgedChainPosition) << 160) +
