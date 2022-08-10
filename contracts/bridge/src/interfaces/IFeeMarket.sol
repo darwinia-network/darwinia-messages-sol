@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.6;
+pragma solidity 0.7.6;
 pragma abicoder v2;
 
 /// @title A interface for user to enroll to be a relayer.

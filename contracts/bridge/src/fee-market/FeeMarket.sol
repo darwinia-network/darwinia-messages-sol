@@ -169,7 +169,16 @@ contract FeeMarket is IFeeMarket {
     // Fetch the `count` of order book in fee-market
     // If flag set true, will ignore their balance
     // If flag set false, will ensure their balance is sufficient for lock `CollateralPerOrder`
-    function getOrderBook(uint count, bool flag) external view returns (uint256, address[] memory, uint256[] memory, uint256 [] memory) {
+    function getOrderBook(uint count, bool flag)
+        external
+        view
+        returns (
+            uint256,
+            address[] memory,
+            uint256[] memory,
+            uint256 [] memory
+        )
+    {
         require(count <= relayerCount, "!count");
         address[] memory array1 = new address[](count);
         uint256[] memory array2 = new uint256[](count);
@@ -240,7 +249,7 @@ contract FeeMarket is IFeeMarket {
     }
 
     // Deposit native token and enroll to be a relayer at fee-market
-    function enroll(address prev, uint fee) public payable {
+    function enroll(address prev, uint fee) external payable {
         deposit();
         enrol(prev, fee);
     }
@@ -285,13 +294,13 @@ contract FeeMarket is IFeeMarket {
     }
 
     // Move your position in the fee-market orderbook
-    function move(address old_prev, address new_prev, uint new_fee) public {
+    function move(address old_prev, address new_prev, uint new_fee) external {
         delist(old_prev);
         enrol(new_prev, new_fee);
     }
 
     // Assign new message encoded key to top N relayers in fee-market
-    function assign(uint256 key) public override payable onlyOutBound returns (bool) {
+    function assign(uint256 key) external override payable onlyOutBound returns (bool) {
         // Select top N relayers
         address[] memory top_relayers = _get_and_prune_top_relayers();
         address last = top_relayers[top_relayers.length - 1];
