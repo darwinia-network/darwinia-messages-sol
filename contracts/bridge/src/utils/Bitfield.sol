@@ -24,24 +24,24 @@ contract Bitfield {
 
     /// @dev Constants used to efficiently calculate the hamming weight of a bitfield. See
     /// https://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation for an explanation of those constants.
-    uint256 internal constant M1 =
+    uint256 private constant M1 =
         0x5555555555555555555555555555555555555555555555555555555555555555;
-    uint256 internal constant M2 =
+    uint256 private constant M2 =
         0x3333333333333333333333333333333333333333333333333333333333333333;
-    uint256 internal constant M4 =
+    uint256 private constant M4 =
         0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f;
-    uint256 internal constant M8 =
+    uint256 private constant M8 =
         0x00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff;
-    uint256 internal constant M16 =
+    uint256 private constant M16 =
         0x0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff;
-    uint256 internal constant M32 =
+    uint256 private constant M32 =
         0x00000000ffffffff00000000ffffffff00000000ffffffff00000000ffffffff;
-    uint256 internal constant M64 =
+    uint256 private constant M64 =
         0x0000000000000000ffffffffffffffff0000000000000000ffffffffffffffff;
-    uint256 internal constant M128 =
+    uint256 private constant M128 =
         0x00000000000000000000000000000000ffffffffffffffffffffffffffffffff;
 
-    uint256[20] internal BIG_PRIME = [
+    uint256[20] private BIG_PRIME = [
         1000003,1000033,1000037,1000039,1000081,1000099,1000117,1000121,1000133,1000151,
         1000159,1000171,1000183,1000187,1000193,1000199,1000211,1000213,1000231,1000249
     ];

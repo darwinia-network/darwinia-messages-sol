@@ -68,7 +68,7 @@ contract EcdsaAuthority {
         address[] memory _relayers,
         uint256 _threshold,
         uint256 _nonce
-    ) public {
+    ) {
         // Threshold can only be 0 at initialization.
         // Check ensures that setup function can only be called once.
         require(threshold == 0, "setup");
