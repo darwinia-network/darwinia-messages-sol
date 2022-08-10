@@ -27,16 +27,17 @@ import "../../interfaces/IMessageCommitter.sol";
 /// @notice Chain message committer commit messages from all lane committers
 /// @dev Chain message use sparse merkle tree to commit all messages
 contract ChainMessageCommitter is MessageCommitter {
-    event Registry(uint256 pos, address committer);
-
-    /// @dev This chain position
-    uint256 public immutable thisChainPosition;
     /// @dev Max of all chain position
     uint256 public maxChainPosition;
     /// @dev Bridged chain position => lane committer
     mapping(uint256 => address) public chainOf;
     /// @dev Governance role to set chains config
     address public setter;
+
+    /// @dev This chain position
+    uint256 public immutable thisChainPosition;
+
+    event Registry(uint256 pos, address committer);
 
     modifier onlySetter {
         require(msg.sender == setter, "forbidden");

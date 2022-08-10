@@ -26,19 +26,20 @@ import "../../interfaces/IMessageCommitment.sol";
 /// @notice Lane message committer commit all messages from this chain to bridged chain
 /// @dev Lane message use sparse merkle tree to commit all messages
 contract LaneMessageCommitter is MessageCommitter {
-    event Registry(uint256 outLanePos, address outboundLane, uint256 inLanePos, address inboundLane);
-    event ChangeLane(uint256 pos, address lane);
+    /// @dev Governance role to set lanes config
+    address public setter;
+    /// @dev Count of all lanes in committer
+    uint256 public laneCount;
+    /// @dev Lane positon => lane address
+    mapping(uint256 => address) public laneOf;
 
     /// @dev This chain position
     uint256 public immutable thisChainPosition;
     /// @dev Bridged chain position
     uint256 public immutable bridgedChainPosition;
-    /// @dev Count of all lanes in committer
-    uint256 public laneCount;
-    /// @dev Lane positon => lane address
-    mapping(uint256 => address) public laneOf;
-    /// @dev Governance role to set lanes config
-    address public setter;
+
+    event Registry(uint256 outLanePos, address outboundLane, uint256 inLanePos, address inboundLane);
+    event ChangeLane(uint256 pos, address lane);
 
     modifier onlySetter {
         require(msg.sender == setter, "forbidden");

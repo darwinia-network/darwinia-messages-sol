@@ -27,16 +27,14 @@ interface IConsensusLayer {
 }
 
 contract ExecutionLayer is MerkleProof, StorageVerifier {
-    event LatestExecutionPayloadStateRootImported(bytes32 state_root);
+    bytes32 private latest_execution_payload_state_root;
 
     address public immutable CONSENSUS_LAYER;
 
     uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX = 898;
     uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH = 9;
 
-    constructor(address consensus_layer) StorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
-        CONSENSUS_LAYER = consensus_layer;
-    }
+    event LatestExecutionPayloadStateRootImported(bytes32 state_root);
 
     struct ExecutionPayloadStateRootUpdate {
         // Execution payload state root in beacon state [New in Bellatrix]
@@ -45,7 +43,9 @@ contract ExecutionLayer is MerkleProof, StorageVerifier {
         bytes32[] latest_execution_payload_state_root_branch;
     }
 
-    bytes32 private latest_execution_payload_state_root;
+    constructor(address consensus_layer) StorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
+        CONSENSUS_LAYER = consensus_layer;
+    }
 
     function state_root() public view override returns (bytes32) {
         return latest_execution_payload_state_root;

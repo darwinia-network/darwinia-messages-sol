@@ -31,8 +31,22 @@ import "../../interfaces/ILightClient.sol";
 /// @notice The light client is the trust layer of the bridge
 /// @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
 contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, Math, MessageVerifier {
+    Slot0 public slot0;
+    bytes32 public authoritySetRoot;
+    bytes32 public latestChainMessagesRoot;
+    mapping(uint32 => ValidationData) public validationData;
 
-    /* Events */
+    /// @dev A vault to store expired commitment or malicious commitment slashed asset
+    address public immutable SLASH_VAULT;
+    ///@dev NETWORK Source chain network identify ('Crab', 'Darwinia', 'Pangolin')
+    bytes32 public immutable NETWORK;
+
+    uint256 public constant MAX_COUNT = 2**32 - 1;
+    /// @dev Block wait period after `newSignatureCommitment` to pick the random block hash
+    uint256 public constant BLOCK_WAIT_PERIOD = 12;
+    /// @dev Block wait period after `newSignatureCommitment` to pick the random block hash
+    /// 120000000/2^25 = 3.57 ether is recommended for Ethereum
+    uint256 public constant MIN_SUPPORT = 4 ether;
 
     event BEEFYAuthoritySetUpdated(uint64 id, uint32 len, bytes32 root);
 
@@ -49,7 +63,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, M
         uint256 blockNumber,
         uint256 id
     );
-
     /// @notice Notifies an observer that the complete verification process has
     ///  finished successfuly and the new commitmentHash will be accepted
     /// @param prover The address of the successful prover
@@ -59,12 +72,8 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, M
         uint256 id,
         bool isNew
     );
-
     event CleanExpiredCommitment(uint256 id);
-
     event NewMessageRoot(bytes32 messageRoot, uint32 blockNumber);
-
-    /* Types */
 
     struct Signature {
         bytes32 r;
@@ -118,24 +127,6 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, M
         uint32 latestBlockNumber;
     }
 
-    Slot0 public slot0;
-    bytes32 public authoritySetRoot;
-    bytes32 public latestChainMessagesRoot;
-    mapping(uint32 => ValidationData) public validationData;
-
-    /* Constants */
-
-    uint256 public constant MAX_COUNT = 2**32 - 1;
-
-    /// @dev Block wait period after `newSignatureCommitment` to pick the random block hash
-    uint256 public constant BLOCK_WAIT_PERIOD = 12;
-    /// @dev Block wait period after `newSignatureCommitment` to pick the random block hash
-    /// 120000000/2^25 = 3.57 ether is recommended for Ethereum
-    uint256 public constant MIN_SUPPORT = 4 ether;
-    /// @dev A vault to store expired commitment or malicious commitment slashed asset
-    address public immutable SLASH_VAULT;
-    ///@dev NETWORK Source chain network identify ('Crab', 'Darwinia', 'Pangolin')
-    bytes32 public immutable NETWORK;
 
     /// @notice Deploys the LightClientBridge contract
     /// @param network source chain network name
