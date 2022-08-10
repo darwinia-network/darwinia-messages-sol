@@ -234,7 +234,7 @@ class Bridge {
   async dispatch_messages_from_sub(to, data) {
     const c = this[to]
     const info = await this.sub[to].outbound.getLaneInfo()
-    const finality_block_number = c.lightclient.latest_block_number()
+    const finality_block_number = await c.lightClient.block_number()
     const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[to].LaneMessageCommitter, info[1])
     return await c.inbound.receive_messages_proof(data, proof)
   }
@@ -243,11 +243,11 @@ class Bridge {
     const c = this[to]
     const i = await c.inbound.data()
     const nonce = await c.inbound.inboundLaneNonce()
-    const finality_block_number = this.finality_block_number(to)
+    const finality_block_number = await this.finality_block_number(to)
     const front = nonce.relayer_range_front.toHexString()
     const end = nonce.relayer_range_back.toHexString()
     const proof = await generate_storage_delivery_proof(c, front, end, finality_block_number)
-    return await this.sub[to]outbound.receive_messages_delivery_proof(i, proof, { gasLimit: 6000000 })
+    return await this.sub[to].outbound.receive_messages_delivery_proof(i, proof, { gasLimit: 6000000 })
   }
 
   async dispatch_messages_to_sub(from, data) {
@@ -265,20 +265,20 @@ class Bridge {
     const i = await this.sub[from].inbound.data()
     const info = await this.sub[from].inbound.getLaneInfo()
     const o = await c.outbound.outboundLaneNonce()
-    const finality_block_number = c.lightclient.latest_block_number()
-    const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub.[from].LaneMessageCommitter, info[1])
+    const finality_block_number = c.lightClient.block_number()
+    const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[from].LaneMessageCommitter, info[1])
     return await c.outbound.receive_messages_delivery_proof(i, proof)
   }
 
   async finality_block_number(from) {
     if (from == 'eth') {
-      const finalized_header = await this.subClient.beaconLightClient.finalized_header()
+      const finalized_header = await this.sub.beaconLightClient.finalized_header()
       const finality_block = await this.eth2Client.get_beacon_block(finalized_header.slot)
       return finality_block.message.body.execution_payload.block_number
-    } else (from == 'bsc') {
+    } else if (from == 'bsc') {
       const finalized_header = await this.subClient.bscLightClient.finalized_checkpoint()
       return finalized_header.number
-    }
+    } else { throw new Error("invalid from") }
   }
 }
 

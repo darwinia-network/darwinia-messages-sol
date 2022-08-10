@@ -97,7 +97,7 @@ describe("bridge e2e test: beacon light client", () => {
       next_sync_committee_branch: next_sync_committee_branch.witnesses
     }
 
-    const tx = await subClient.beaconLightClient.import_next_sync_committee(sync_committee_period_update)
+    const tx = await subClient.beaconLightClient.import_next_sync_committee(sync_committee_period_update, { gasLimit: 6000000 })
     const next_period = ~~old_period + 1
     const next_period_sync_committee_root = await subClient.beaconLightClient.sync_committee_roots(next_period)
     log(next_period_sync_committee_root)

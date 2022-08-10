@@ -10,9 +10,9 @@ const log = console.log
 const LANE_IDENTIFY_SLOT="0x0000000000000000000000000000000000000000000000000000000000000000"
 const LANE_NONCE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000001"
 const LANE_MESSAGE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000002"
-const overrides = { value: ethers.utils.parseEther("0.0001"), gasPrice: 1000000000 }
-const sub_overrides = { value: ethers.utils.parseEther("30"), gasPrice: 1000000000 }
+const eth_overrides = { value: ethers.utils.parseEther("0.0001"), gasPrice: 1000000000 }
 const bsc_overrides = { value: ethers.utils.parseEther("0.01"), gasPrice: 10000000000 }
+const sub_overrides = { value: ethers.utils.parseEther("30"), gasPrice: 1000000000 }
 let ethClient, subClient, bridge
 let eth_signer, bsc_signer, source
 const target = "0x0000000000000000000000000000000000000000"
@@ -68,12 +68,12 @@ describe("bridge e2e test: verify message/storage proof", () => {
     await bridge.deposit()
   })
 
-  it.skip("0.1", async function () {
+  it.skip("0.1", async () => {
     const nonce = await ethClient.outbound.outboundLaneNonce()
     const tx = await ethClient.outbound.send_message(
       target,
       encoded,
-      overrides
+      eth_overrides
     )
     await expect(tx)
       .to.emit(ethClient.outbound, "MessageAccepted")
@@ -194,7 +194,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
     const tx = await subClient.bsc.outbound.send_message(
       target,
       encoded,
-      overrides
+      eth_overrides
     )
 
     await expect(tx)
@@ -251,7 +251,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
     await bridge.relay_eth_execution_payload()
   })
 
-  it("9", async function () {
+  it.skip("9", async function () {
     const i = await ethClient.inbound.data()
     const o = await subClient.eth.outbound.outboundLaneNonce()
     const tx = await bridge.confirm_messages_from_sub('eth')
