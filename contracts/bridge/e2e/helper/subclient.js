@@ -45,11 +45,13 @@ class SubClient {
 
     const BSCLightClient = await artifacts.readArtifact("BSCLightClient")
     const bscLightClient = new ethers.Contract(addresses[ns_bsc].BSCLightClient, BSCLightClient.abi, this.provider)
-
     this.signer = wallets[0].connect(this.provider)
     this.beaconLightClient = beaconLightClient.connect(this.signer)
     this.bscLightClient = bscLightClient.connect(this.signer)
     this.executionLayer = executionLayer.connect(this.signer)
+    this.eth.lightclient = this.executionLayer
+    this.bsc.lightclient = this.bscLightClient
+
   }
 
   chill() {

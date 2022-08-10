@@ -81,10 +81,11 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
     ], [ proof ])
 }
 
-const generate_message_proof = async (chain_committer, lane_committer, lane_pos) => {
+const generate_message_proof = async (chain_committer, lane_committer, lane_pos, block_number) => {
   const bridgedChainPos = await lane_committer.bridgedChainPosition()
-  // TODO: at message root block number
-  const proof = await chain_committer.prove(bridgedChainPos, lane_pos)
+  const proof = await chain_committer.prove(bridgedChainPos, lane_pos, {
+    blockNumber: block_number
+  })
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(tuple(bytes32,bytes32[]),tuple(bytes32,bytes32[]))"
     ], [
@@ -233,6 +234,7 @@ class Bridge {
   async dispatch_messages_from_sub(to, data) {
     const c = this[to]
     const info = await this.sub[to].outbound.getLaneInfo()
+    const finality_block_number = c.lightclient.latest_block_number()
     const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[to].LaneMessageCommitter, info[1])
     return await c.inbound.receive_messages_proof(data, proof)
   }
@@ -263,6 +265,7 @@ class Bridge {
     const i = await this.sub[from].inbound.data()
     const info = await this.sub[from].inbound.getLaneInfo()
     const o = await c.outbound.outboundLaneNonce()
+    const finality_block_number = c.lightclient.latest_block_number()
     const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub.[from].LaneMessageCommitter, info[1])
     return await c.outbound.receive_messages_delivery_proof(i, proof)
   }
