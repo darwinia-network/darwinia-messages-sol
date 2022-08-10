@@ -33,7 +33,9 @@ class SubClient {
 
     const LaneMessageCommitter = await artifacts.readArtifact("LaneMessageCommitter");
     this.ethLaneMessageCommitter = new ethers.Contract(addresses[ns_eth].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
+    this.eth.LaneMessageCommitter = this.ethLaneMessageCommitter
     this.bscLaneMessageCommitter = new ethers.Contract(addresses[ns_bsc].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
+    this.bsc.LaneMessageCommitter = this.bscLaneMessageCommitter
 
     const BeaconLightClient = await artifacts.readArtifact("BeaconLightClient")
     const beaconLightClient = new ethers.Contract(addresses[ns_eth].BeaconLightClient, BeaconLightClient.abi, this.provider)
@@ -115,6 +117,7 @@ class SubClient {
     const pubkey = ethUtil.ecrecover(hash, sig.v, sig.r, sig.s)
     return [ethUtil.toRpcSig(sig.v, sig.r, sig.s)]
   }
+
 }
 
 module.exports.SubClient = SubClient

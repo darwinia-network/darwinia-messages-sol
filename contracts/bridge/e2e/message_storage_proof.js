@@ -60,30 +60,8 @@ describe("bridge e2e test: verify message/storage proof", () => {
     source = eth_signer.address
   })
 
-  it.skip("eth enroll", async () => {
-    await ethClient.feeMarket.connect(eth_signer).enroll(
-      "0x0000000000000000000000000000000000000001",
-      ethers.utils.parseEther("0.0001"),
-      {
-        value: ethers.utils.parseEther("0.0001"),
-        gasPrice: 1000000000,
-        gasLimit: 300000
-      }
-    )
-    await subClient.eth.enroll_relayer()
-  })
-
-  it.skip("bsc enroll", async () => {
-    await bscClient.feeMarket.connect(bsc_signer).enroll(
-      "0x0000000000000000000000000000000000000001",
-      ethers.utils.parseEther("0.01"),
-      {
-        value: ethers.utils.parseEther("0.01"),
-        gasPrice: 10000000000,
-        gasLimit: 300000
-      }
-    )
-    await subClient.bsc.enroll_relayer()
+  it.skip("enroll", async () => {
+    await bridge.enroll_relayer()
   })
 
   it.skip("deposit", async () => {
@@ -121,7 +99,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
     const end = nonce.latest_generated_nonce
     const o = await ethClient.outbound.data()
     let data = build_land_data(o)
-    const tx = await bridge.dispatch_eth_messages(data)
+    const tx = await bridge.dispatch_messages_to_sub('eth', data)
     for (let i=begin; i<=end; i++) {
       await expect(tx)
         .to.emit(subClient.eth.inbound, "MessageDispatched")
@@ -159,7 +137,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
     const end = nonce.latest_generated_nonce
     const o = await bscClient.outbound.data()
     let data = build_land_data(o)
-    const tx = await bridge.dispatch_bsc_messages(data)
+    const tx = await bridge.dispatch_messages_to_sub('bsc', data)
     log(tx)
     for (let i=begin; i<=end; i++) {
       await expect(tx)
@@ -178,7 +156,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
   it.skip("4.1", async function () {
     const i = await subClient.eth.inbound.data()
     const o = await ethClient.outbound.outboundLaneNonce()
-    const tx = await bridge.confirm_eth_messages()
+    const tx = await bridge.confirm_messages_to_sub('eth')
     await expect(tx)
       .to.emit(ethClient.outbound, "MessagesDelivered")
       .withArgs(o.latest_received_nonce.add(1), i.last_delivered_nonce, 0)
@@ -187,7 +165,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
   it.skip("4.2", async function () {
     const i = await subClient.bsc.inbound.data()
     const o = await bscClient.outbound.outboundLaneNonce()
-    const tx = await bridge.confirm_bsc_messages()
+    const tx = await bridge.confirm_messages_to_sub('bsc')
     await expect(tx)
       .to.emit(ethClient.outbound, "MessagesDelivered")
       .withArgs(o.latest_received_nonce.add(1), i.last_delivered_nonce, 0)
@@ -236,8 +214,8 @@ describe("bridge e2e test: verify message/storage proof", () => {
   it.skip("7.1", async function () {
     const o = await subClient.eth.outbound.data()
     const begin = (await subClient.eth.inbound.inboundLaneNonce()).last_delivered_nonce.add(1)
-    const data = Array(o.messages.length).fill('0x')
-    const tx = await bridge.dispatch_sub_messages_to_eth(source, target, encoded)
+    let data = build_land_data(o)
+    const tx = await bridge.dispatch_messages_from_sub('eth', data)
     const end = (await subClient.eth.inbound.inboundLaneNonce()).last_delivered_nonce
     for (let i=begin; i<=end; i++) {
       await expect(tx)
@@ -252,8 +230,8 @@ describe("bridge e2e test: verify message/storage proof", () => {
   it.skip("7.2", async function () {
     const o = await subClient.bsc.outbound.data()
     const begin = (await subClient.bsc.inbound.inboundLaneNonce()).last_delivered_nonce.add(1)
-    const data = Array(o.messages.length).fill('0x')
-    const tx = await bridge.dispatch_sub_messages_to_bsc(source, target, encoded)
+    let data = build_land_data(o)
+    const tx = await bridge.dispatch_messages_from_sub('bsc', data)
     const end = (await subClient.bsc.inbound.inboundLaneNonce()).last_delivered_nonce
     for (let i=begin; i<=end; i++) {
       await expect(tx)
@@ -276,7 +254,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
   it("9", async function () {
     const i = await ethClient.inbound.data()
     const o = await subClient.eth.outbound.outboundLaneNonce()
-    const tx = await bridge.confirm_sub_to_eth_messages()
+    const tx = await bridge.confirm_messages_from_sub('eth')
     await expect(tx)
       .to.emit(subClient.eth.outbound, "MessagesDelivered")
       .withArgs(o.latest_received_nonce.add(1), i.last_delivered_nonce, 0)
