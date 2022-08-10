@@ -18,7 +18,6 @@
 pragma solidity 0.7.6;
 
 import "../utils/rlp/RLPDecode.sol";
-import "../utils/rlp/RLPEncode.sol";
 
 library State {
     using RLPDecode for RLPDecode.RLPItem;

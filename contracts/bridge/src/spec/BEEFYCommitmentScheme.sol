@@ -62,7 +62,7 @@ contract BEEFYCommitmentScheme {
     bytes4 internal constant PAYLOAD_SCALE_ENCOD_PREFIX = 0x04646280;
 
     function hash(Commitment memory commitment)
-        public
+        internal
         pure
         returns (bytes32)
     {

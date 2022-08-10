@@ -89,7 +89,10 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
     using Bytes for bytes;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    event FinalizedHeaderImported(StoredBlockHeader finalized_header, address[] signers);
+    // Finalized BSC checkpoint
+    StoredBlockHeader public finalized_checkpoint;
+    // Finalized BSC authorities
+    EnumerableSet.AddressSet private _finalized_authorities;
 
     // Chaind ID
     uint64 public immutable CHAIN_ID;
@@ -100,7 +103,6 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
     uint64 constant private MIN_GAS_LIMIT = 5000;
     // Maximum gas limit
     uint64 constant private MAX_GAS_LIMIT = 0x7fffffffffffffff;
-
     // Epoch length
     uint256 constant private EPOCH = 200;
     // Difficulty for NOTURN block
@@ -116,6 +118,8 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
     // Keccak of RLP encoding of empty list
     bytes32 constant private KECCAK_EMPTY_LIST_RLP = 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347;
 
+    event FinalizedHeaderImported(StoredBlockHeader finalized_header, address[] signers);
+
     struct StoredBlockHeader {
         bytes32 parent_hash;
         bytes32 state_root;
@@ -126,12 +130,16 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
         bytes32 hash;
     }
 
-    // Finalized BSC checkpoint
-    StoredBlockHeader public finalized_checkpoint;
-    // Finalized BSC authorities
-    EnumerableSet.AddressSet private _finalized_authorities;
-
-    constructor(uint64 chain_id, uint64 period, BSCHeader memory header) StorageVerifier(uint32(ChainMessagePosition.BSC), 0, 1, 2) {
+    constructor(
+        uint64 chain_id,
+        uint64 period,
+        BSCHeader memory header
+    ) StorageVerifier(
+        uint32(ChainMessagePosition.BSC),
+        0,
+        1,
+        2
+    ) {
         address[] memory authorities = _extract_authorities(header.extra_data);
         _finalize_authority_set(authorities);
         bytes32 block_hash = hash(header);

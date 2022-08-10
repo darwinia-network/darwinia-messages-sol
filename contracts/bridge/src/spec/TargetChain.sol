@@ -19,7 +19,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 contract TargetChain {
-    // Delivered messages with their dispatch result.
+    /// Delivered messages with their dispatch result.
     struct DeliveredMessages {
         // Nonce of the first message that has been delivered (inclusive).
         uint64 begin;
@@ -31,10 +31,10 @@ contract TargetChain {
         uint256 dispatch_results;
     }
 
-    // Unrewarded relayer entry stored in the inbound lane data.
-    //
-    // This struct represents a continuous range of messages that have been delivered by the same
-    // relayer and whose confirmations are still pending.
+    /// Unrewarded relayer entry stored in the inbound lane data.
+    ///
+    /// This struct represents a continuous range of messages that have been delivered by the same
+    /// relayer and whose confirmations are still pending.
     struct UnrewardedRelayer {
         // Address of the relayer.
         address relayer;
@@ -42,7 +42,7 @@ contract TargetChain {
         DeliveredMessages messages;
     }
 
-    // Inbound lane data
+    /// Inbound lane data
     struct InboundLaneData {
         // Identifiers of relayers and messages that they have delivered to this lane (ordered by
         // message nonce).
@@ -70,28 +70,28 @@ contract TargetChain {
         uint64 last_delivered_nonce;
     }
 
-    // Hash of the InboundLaneData Schema
-    // keccak256(abi.encodePacked(
-    //     "InboundLaneData(UnrewardedRelayer[] relayers,uint64 last_confirmed_nonce,uint64 last_delivered_nonce)",
-    //     "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
-    //     "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
-    //     )
-    // )
+    /// @dev Hash of the InboundLaneData Schema
+    /// keccak256(abi.encodePacked(
+    ///     "InboundLaneData(UnrewardedRelayer[] relayers,uint64 last_confirmed_nonce,uint64 last_delivered_nonce)",
+    ///     "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
+    ///     "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
+    ///     )
+    /// )
     bytes32 internal constant INBOUNDLANEDATA_TYPEHASH = 0x921cbc4091014b23df7eb9bbd83d71accebac7afad7c1344d8b581e63b929a86;
 
-    // Hash of the UnrewardedRelayer Schema
-    // keccak256(abi.encodePacked(
-    //     "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
-    //     "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
-    //     )
-    // )
+    /// @dev Hash of the UnrewardedRelayer Schema
+    /// keccak256(abi.encodePacked(
+    ///     "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
+    ///     "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
+    ///     )
+    /// )
     bytes32 internal constant UNREWARDEDRELAYER_TYPETASH = 0x78c43929b93dc90ddd24834bf3ea98320a8f647352353642293fd0d230004016;
 
-    // Hash of the DeliveredMessages Schema
-    // keccak256(abi.encodePacked(
-    //     "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
-    //     )
-    // )
+    /// @dev Hash of the DeliveredMessages Schema
+    /// keccak256(abi.encodePacked(
+    ///     "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
+    ///     )
+    /// )
     bytes32 internal constant DELIVEREDMESSAGES_TYPETASH = 0xaa6637cd9a4d6b5008a62cb1bef3d0ade9f8d8284cc2d4bf4eb1e15260726513;
 
     function hash(InboundLaneData memory inboundLaneData)

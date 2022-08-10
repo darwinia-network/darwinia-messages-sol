@@ -19,7 +19,6 @@ pragma solidity 0.7.6;
 
 import "./State.sol";
 import "../utils/rlp/RLPDecode.sol";
-import "../utils/rlp/RLPEncode.sol";
 import "../utils/trie/SecureMerkleTrie.sol";
 
 library StorageProof {
