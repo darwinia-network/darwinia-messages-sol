@@ -65,6 +65,7 @@ contract FeeMarketTest is DSTest {
         assertEq(market.slashTime(), uint(SLASH_TIME));
         assertEq(market.relayTime(), uint(RELAY_TIME));
         assertEq(market.priceRatio(), uint(PRICE_RATIO));
+        assertEq(market.relayerCount(), 0);
     }
 
     function test_set_setter() public {

@@ -21,23 +21,6 @@ pragma abicoder v2;
 import "../interfaces/IFeeMarket.sol";
 
 contract FeeMarket is IFeeMarket {
-    event SetOutbound(address indexed out, uint256 flag);
-    event Slash(address indexed src, uint wad);
-    event Reward(address indexed dst, uint wad);
-    event Deposit(address indexed dst, uint wad);
-    event Withdrawal(address indexed src, uint wad);
-    event Locked(address indexed src, uint wad);
-    event UnLocked(address indexed src, uint wad);
-    event Enrol(address indexed prev, address indexed cur, uint fee);
-    event Delist(address indexed prev, address indexed cur);
-    event Assgigned(uint256 indexed key, uint256 timestamp, uint32 assigned_relayers_number, uint256 collateral);
-    event Settled(uint256 indexed key, uint timestamp);
-
-    address private constant SENTINEL_HEAD = address(0x1);
-    address private constant SENTINEL_TAIL = address(0x2);
-    // System treasury
-    address public immutable VAULT;
-
     // SlashAmount = CollateralPerOrder * LateTime / SlashTime
     uint32 public slashTime;
     // Time assigned relayer to relay messages
@@ -50,6 +33,8 @@ contract FeeMarket is IFeeMarket {
     uint256 public collateralPerOrder;
     // Governance role to decide which outbounds message to relay
     address public setter;
+    // relayer count
+    uint256 public relayerCount;
     // Outbounds which message will be relayed by relayers
     mapping(address => uint256) public outbounds;
     // Balance of the relayer including deposit and eared fee
@@ -58,29 +43,46 @@ contract FeeMarket is IFeeMarket {
     mapping(address => uint256) public lockedOf;
     // All relayers in fee-market, they are linked one by one and sorted by the relayer fee asc
     mapping(address => address) public relayers;
-    // relayer count
-    uint256 public relayerCount;
     // Maker fee of the relayer
     mapping(address => uint256) public feeOf;
+    // message_encoded_key => Order
+    mapping(uint256 => Order) public orderOf;
+    // message_encoded_key => assigned_slot => assigned_relayer
+    mapping(uint256 => mapping(uint256 => OrderExt)) public assignedRelayers;
+
+    // System treasury
+    address public immutable VAULT;
+
+    address private constant SENTINEL_HEAD = address(0x1);
+    address private constant SENTINEL_TAIL = address(0x2);
+
+    event SetOutbound(address indexed out, uint256 flag);
+    event Slash(address indexed src, uint wad);
+    event Reward(address indexed dst, uint wad);
+    event Deposit(address indexed dst, uint wad);
+    event Withdrawal(address indexed src, uint wad);
+    event Locked(address indexed src, uint wad);
+    event UnLocked(address indexed src, uint wad);
+    event Enrol(address indexed prev, address indexed cur, uint fee);
+    event Delist(address indexed prev, address indexed cur);
+    event Assgigned(uint256 indexed key, uint256 timestamp, uint32 assigned_relayers_number, uint256 collateral);
+    event Settled(uint256 indexed key, uint timestamp);
 
     struct Order {
         // Assigned time of the order
-        uint32 assignedTime;
+        uint32 time;
         // Assigned number of relayers
-        uint32 assignedRelayersNumber;
+        uint32 number;
         // Assigned collateral of each relayer
         uint256 collateral;
     }
-    // message_encoded_key => Order
-    mapping(uint256 => Order) public orderOf;
+
     struct OrderExt {
         // assigned_relayer
         address assignedRelayer;
         // assigned_relayer_maker_fee
         uint256 makerFee;
     }
-    // message_encoded_key => assigned_slot => assigned_relayer
-    mapping(uint256 => mapping(uint256 => OrderExt)) public assignedRelayers;
 
     modifier onlySetter {
         require(msg.sender == setter, "!auth");
@@ -110,9 +112,9 @@ contract FeeMarket is IFeeMarket {
         setter = msg.sender;
         VAULT = _vault;
         collateralPerOrder = _collateral_perorder;
-        assignedRelayersNumber = _assigned_relayers_number;
         slashTime = _slash_time;
         relayTime = _relay_time;
+        assignedRelayersNumber = _assigned_relayers_number;
         priceRatio = _price_rario;
         relayers[SENTINEL_HEAD] = SENTINEL_TAIL;
         feeOf[SENTINEL_TAIL] = type(uint256).max;
@@ -144,8 +146,24 @@ contract FeeMarket is IFeeMarket {
         collateralPerOrder = collateral_perorder;
     }
 
-    function totalSupply() public view returns (uint) {
+    // fetch the real time market fee
+    function market_fee() external view override returns (uint fee) {
+        address[] memory top_relayers = getTopRelayers();
+        address last = top_relayers[top_relayers.length - 1];
+        return feeOf[last];
+    }
+
+    function totalSupply() external view returns (uint) {
         return address(this).balance;
+    }
+
+    function getOrder(uint256 key) external view returns (Order memory, OrderExt[] memory) {
+        Order memory order = orderOf[key];
+        OrderExt[] memory assigned_relayers = new OrderExt[](order.number);
+        for (uint slot = 0; slot < order.number; slot++) {
+            assigned_relayers[slot] = assignedRelayers[key][slot];
+        }
+        return (order, assigned_relayers);
     }
 
     // fetch the `count` of order book in fee-market
@@ -189,7 +207,7 @@ contract FeeMarket is IFeeMarket {
 
     // fetch the order fee by the encoded message key
     function getOrderFee(uint256 key) public view returns (uint256 fee) {
-        uint32 number = orderOf[key].assignedRelayersNumber;
+        uint32 number = orderOf[key].number;
         fee = assignedRelayers[key][number - 1].makerFee;
     }
 
@@ -199,15 +217,6 @@ contract FeeMarket is IFeeMarket {
 
     function getSlotFee(uint256 key, uint256 slot) public view returns (uint256) {
         return assignedRelayers[key][slot].makerFee;
-    }
-
-    function getOrder(uint256 key) external view returns (Order memory, OrderExt[] memory) {
-        Order memory order = orderOf[key];
-        OrderExt[] memory assigned_relayers = new OrderExt[](order.assignedRelayersNumber);
-        for (uint slot = 0; slot < order.assignedRelayersNumber; slot++) {
-            assigned_relayers[slot] = assignedRelayers[key][slot];
-        }
-        return (order, assigned_relayers);
     }
 
     function isRelayer(address addr) public view returns (bool) {
@@ -228,13 +237,6 @@ contract FeeMarket is IFeeMarket {
         balanceOf[msg.sender] -= wad;
         payable(msg.sender).transfer(wad);
         emit Withdrawal(msg.sender, wad);
-    }
-
-    // fetch the real time market fee
-    function market_fee() external view override returns (uint fee) {
-        address[] memory top_relayers = getTopRelayers();
-        address last = top_relayers[top_relayers.length - 1];
-        return feeOf[last];
     }
 
     // deposit native token and enroll to be a relayer at fee-market
@@ -368,7 +370,10 @@ contract FeeMarket is IFeeMarket {
     }
 
     /// Pay rewards to given relayers, optionally rewarding confirmation relayer.
-    function _pay_relayers_rewards(DeliveredRelayer[] memory delivery_relayers, address confirm_relayer) private {
+    function _pay_relayers_rewards(
+        DeliveredRelayer[] memory delivery_relayers,
+        address confirm_relayer
+    ) private {
         uint256 total_confirm_reward = 0;
         uint256 total_vault_reward = 0;
         for (uint256 i = 0; i < delivery_relayers.length; i++) {
@@ -392,12 +397,12 @@ contract FeeMarket is IFeeMarket {
         _reward(VAULT, total_vault_reward);
     }
 
-    function _settle_order( uint256 key) private returns (
+    function _settle_order(uint256 key) private returns (
         uint256 delivery_reward,
         uint256 confirm_reward,
         uint256 vault_reward
     ) {
-        require(orderOf[key].assignedTime > 0, "!exist");
+        require(orderOf[key].time > 0, "!exist");
         // Get the message fee from the top N relayers
         uint256 message_fee = getOrderFee(key);
         // Get slot index and slot price
@@ -417,20 +422,18 @@ contract FeeMarket is IFeeMarket {
         vault_reward = message_surplus - slot_duty_reward;
     }
 
-    function _get_order_status(
-        uint key
-    ) private view returns (
+    function _get_order_status(uint key) private view returns (
         bool is_ontime,
         uint256 diff_time,
         uint256 number,
         uint256 collateral
     ) {
         Order memory order = orderOf[key];
-        number = order.assignedRelayersNumber;
+        number = order.number;
         collateral = order.collateral;
         // Diff_time = settle_time - assign_time
-        diff_time = block.timestamp - order.assignedTime;
-        is_ontime = diff_time < order.assignedRelayersNumber * relayTime;
+        diff_time = block.timestamp - order.time;
+        is_ontime = diff_time < order.number * relayTime;
     }
 
     function _get_slot_price(
@@ -514,7 +517,10 @@ contract FeeMarket is IFeeMarket {
         delete orderOf[key];
     }
 
-    function _distribute_fee(uint256 fee) private view returns (uint256 delivery_reward, uint256 confirm_reward) {
+    function _distribute_fee(uint256 fee) private view returns (
+        uint256 delivery_reward,
+        uint256 confirm_reward
+    ) {
         // fee * priceRatio / 1_000_000 => delivery relayer
         delivery_reward = fee * priceRatio / 1_000_000;
         // remaining fee => confirm relayer
