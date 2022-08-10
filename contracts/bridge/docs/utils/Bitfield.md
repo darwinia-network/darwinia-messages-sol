@@ -8,7 +8,6 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [Globals](#globals)
 - [Functions](#functions)
   - [randomNBitsWithPriorCheck](#randomnbitswithpriorcheck)
   - [createBitfield](#createbitfield)
@@ -19,21 +18,6 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## Globals
-
-> Note this contains internal vars as well due to a bug in the docgen procedure
-
-| Var | Type |
-| --- | --- |
-| M1 | uint256 |
-| M2 | uint256 |
-| M4 | uint256 |
-| M8 | uint256 |
-| M16 | uint256 |
-| M32 | uint256 |
-| M64 | uint256 |
-| M128 | uint256 |
-| BIG_PRIME | uint256[20] |
 
 
 

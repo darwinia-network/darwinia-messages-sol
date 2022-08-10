@@ -14,10 +14,11 @@ Lane message committer commit all messages from this chain to bridged chain
   - [onlySetter](#onlysetter)
 - [Functions](#functions)
   - [constructor](#constructor)
+  - [count](#count)
+  - [leaveOf](#leaveof)
   - [changeSetter](#changesetter)
   - [changeLane](#changelane)
   - [registry](#registry)
-  - [commitment](#commitment)
 - [Events](#events)
   - [Registry](#registry)
   - [ChangeLane](#changelane)
@@ -30,11 +31,11 @@ Lane message committer commit all messages from this chain to bridged chain
 
 | Var | Type |
 | --- | --- |
+| setter | address |
+| laneCount | uint256 |
+| laneOf | mapping(uint256 => address) |
 | thisChainPosition | uint256 |
 | bridgedChainPosition | uint256 |
-| count | uint256 |
-| laneOf | mapping(uint256 => address) |
-| setter | address |
 
 
 ## Modifiers
@@ -73,6 +74,36 @@ No modifiers
 | --- | --- | --- |
 |`_thisChainPosition` | uint256 | This chain positon
 |`_bridgedChainPosition` | uint256 | Bridged chain positon
+
+### count
+No description
+
+
+#### Declaration
+```solidity
+  function count(
+  ) public returns (uint256)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### leaveOf
+No description
+
+
+#### Declaration
+```solidity
+  function leaveOf(
+  ) public returns (address)
+```
+
+#### Modifiers:
+No modifiers
+
+
 
 ### changeSetter
 Only could be called by setter
@@ -147,51 +178,6 @@ Only could be called by setter
 |`outboundLane` | address | Address of outbound lane
 |`inboundLane` | address | Address of inbound lane
 
-### commitment
-Return bytes(0) if the lane address is address(0)
-
-> Get the commitment of a lane
-
-
-#### Declaration
-```solidity
-  function commitment(
-    uint256 lanePos
-  ) public returns (bytes32)
-```
-
-#### Modifiers:
-No modifiers
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`lanePos` | uint256 | Positon of the lane
-
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`Commitment` | of the lane
-### commitment
-Return bytes(0) if there is no lane
-
-> Get the commitment of all lanes in this committer
-
-
-#### Declaration
-```solidity
-  function commitment(
-  ) public returns (bytes32)
-```
-
-#### Modifiers:
-No modifiers
-
-
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`Commitment` | of this committer
 
 
 ## Events

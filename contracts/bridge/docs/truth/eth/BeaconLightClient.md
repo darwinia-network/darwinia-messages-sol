@@ -33,10 +33,10 @@
 
 | Var | Type |
 | --- | --- |
-| GENESIS_VALIDATORS_ROOT | bytes32 |
 | finalized_header | struct BeaconChain.BeaconBlockHeader |
 | latest_execution_payload_state_root | bytes32 |
 | sync_committee_roots | mapping(uint64 => bytes32) |
+| GENESIS_VALIDATORS_ROOT | bytes32 |
 
 
 

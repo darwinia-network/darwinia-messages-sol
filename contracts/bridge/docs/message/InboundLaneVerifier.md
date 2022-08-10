@@ -11,7 +11,7 @@
 - [Globals](#globals)
 - [Functions](#functions)
   - [constructor](#constructor)
-  - [verify_messages_proof](#verify_messages_proof)
+  - [_verify_messages_proof](#_verify_messages_proof)
   - [getLaneInfo](#getlaneinfo)
   - [encodeMessageKey](#encodemessagekey)
 
@@ -23,8 +23,8 @@
 
 | Var | Type |
 | --- | --- |
-| lightClient | contract ILightClient |
 | slot0 | struct InboundLaneVerifier.Slot0 |
+| lightClient | contract ILightClient |
 
 
 
@@ -45,13 +45,13 @@ No modifiers
 
 
 
-### verify_messages_proof
+### _verify_messages_proof
 No description
 
 
 #### Declaration
 ```solidity
-  function verify_messages_proof(
+  function _verify_messages_proof(
   ) internal
 ```
 
@@ -76,7 +76,15 @@ No modifiers
 
 
 ### encodeMessageKey
-No description
+32 bytes to identify an unique message from source chain
+MessageKey encoding:
+BridgedChainPosition | BridgedLanePosition | ThisChainPosition | ThisLanePosition | Nonce
+[0..8)   bytes ---- Reserved
+[8..12)  bytes ---- BridgedChainPosition
+[16..20) bytes ---- BridgedLanePosition
+[12..16) bytes ---- ThisChainPosition
+[20..24) bytes ---- ThisLanePosition
+[24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
 
 
 #### Declaration

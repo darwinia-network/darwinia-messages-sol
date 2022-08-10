@@ -12,6 +12,7 @@ The light client is the trust layer of the bridge
 - [Globals](#globals)
 - [Functions](#functions)
   - [constructor](#constructor)
+  - [message_root](#message_root)
   - [getFinalizedChainMessagesRoot](#getfinalizedchainmessagesroot)
   - [getFinalizedBlockNumber](#getfinalizedblocknumber)
   - [getCurrentId](#getcurrentid)
@@ -20,10 +21,6 @@ The light client is the trust layer of the bridge
   - [createRandomBitfield](#createrandombitfield)
   - [_createRandomBitfield](#_createrandombitfield)
   - [createInitialBitfield](#createinitialbitfield)
-  - [verify_messages_proof](#verify_messages_proof)
-  - [verify_messages_delivery_proof](#verify_messages_delivery_proof)
-  - [validate_lane_data_match_root](#validate_lane_data_match_root)
-  - [validateLaneDataMatchRoot](#validatelanedatamatchroot)
   - [newSignatureCommitment](#newsignaturecommitment)
   - [completeSignatureCommitment](#completesignaturecommitment)
   - [cleanExpiredCommitment](#cleanexpiredcommitment)
@@ -45,11 +42,11 @@ The light client is the trust layer of the bridge
 | authoritySetRoot | bytes32 |
 | latestChainMessagesRoot | bytes32 |
 | validationData | mapping(uint32 => struct DarwiniaLightClient.ValidationData) |
+| SLASH_VAULT | address |
+| NETWORK | bytes32 |
 | MAX_COUNT | uint256 |
 | BLOCK_WAIT_PERIOD | uint256 |
 | MIN_SUPPORT | uint256 |
-| SLASH_VAULT | address |
-| NETWORK | bytes32 |
 
 
 
@@ -82,6 +79,21 @@ No modifiers
 |`currentAuthoritySetId` | uint64 | The id of the current authority set
 |`currentAuthoritySetLen` | uint32 | The length of the current authority set
 |`currentAuthoritySetRoot` | bytes32 | The merkle tree of the current authority set
+
+### message_root
+No description
+
+
+#### Declaration
+```solidity
+  function message_root(
+  ) public returns (bytes32)
+```
+
+#### Modifiers:
+No modifiers
+
+
 
 ### getFinalizedChainMessagesRoot
 No description
@@ -196,66 +208,6 @@ No description
 ```solidity
   function createInitialBitfield(
   ) external returns (uint256)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### verify_messages_proof
-No description
-
-
-#### Declaration
-```solidity
-  function verify_messages_proof(
-  ) external returns (bool)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### verify_messages_delivery_proof
-No description
-
-
-#### Declaration
-```solidity
-  function verify_messages_delivery_proof(
-  ) external returns (bool)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### validate_lane_data_match_root
-No description
-
-
-#### Declaration
-```solidity
-  function validate_lane_data_match_root(
-  ) internal returns (bool)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### validateLaneDataMatchRoot
-No description
-
-
-#### Declaration
-```solidity
-  function validateLaneDataMatchRoot(
-  ) internal returns (bool)
 ```
 
 #### Modifiers:

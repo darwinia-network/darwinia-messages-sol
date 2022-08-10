@@ -14,9 +14,11 @@ Chain message committer commit messages from all lane committers
   - [onlySetter](#onlysetter)
 - [Functions](#functions)
   - [constructor](#constructor)
+  - [count](#count)
+  - [leaveOf](#leaveof)
   - [changeSetter](#changesetter)
   - [registry](#registry)
-  - [commitment](#commitment)
+  - [prove](#prove)
 - [Events](#events)
   - [Registry](#registry)
 
@@ -28,10 +30,10 @@ Chain message committer commit messages from all lane committers
 
 | Var | Type |
 | --- | --- |
-| thisChainPosition | uint256 |
 | maxChainPosition | uint256 |
 | chainOf | mapping(uint256 => address) |
 | setter | address |
+| thisChainPosition | uint256 |
 
 
 ## Modifiers
@@ -68,6 +70,36 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_thisChainPosition` | uint256 | This chain positon
+
+### count
+No description
+
+
+#### Declaration
+```solidity
+  function count(
+  ) public returns (uint256)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### leaveOf
+No description
+
+
+#### Declaration
+```solidity
+  function leaveOf(
+  ) public returns (address)
+```
+
+#### Modifiers:
+No modifiers
+
+
 
 ### changeSetter
 Only could be called by setter
@@ -115,17 +147,17 @@ Only could be called by setter
 | --- | --- | --- |
 |`committer` | address | Address of lane committer
 
-### commitment
-Return bytes(0) if the lane committer address is address(0)
-
-> Get the commitment of a lane committer
+### prove
+No description
+> Get message proof for lane
 
 
 #### Declaration
 ```solidity
-  function commitment(
-    uint256 chainPos
-  ) public returns (bytes32)
+  function prove(
+    uint256 chainPos,
+    uint256 lanePos
+  ) external returns (struct MessageProof)
 ```
 
 #### Modifiers:
@@ -134,32 +166,9 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`chainPos` | uint256 | Bridged chian positon of the lane committer
+|`chainPos` | uint256 | Bridged chain position of lane
+|`lanePos` | uint256 | This lane positon of lane
 
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`Commitment` | of the lane committer
-### commitment
-Return bytes(0) if there is no lane committer
-
-> Get the commitment of all lane committers
-
-
-#### Declaration
-```solidity
-  function commitment(
-  ) public returns (bytes32)
-```
-
-#### Modifiers:
-No modifiers
-
-
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`Commitment` | of this chian committer
 
 
 ## Events

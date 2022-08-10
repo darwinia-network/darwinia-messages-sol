@@ -11,7 +11,7 @@
 - [Globals](#globals)
 - [Functions](#functions)
   - [constructor](#constructor)
-  - [verify_messages_delivery_proof](#verify_messages_delivery_proof)
+  - [_verify_messages_delivery_proof](#_verify_messages_delivery_proof)
   - [getLaneInfo](#getlaneinfo)
   - [encodeMessageKey](#encodemessagekey)
 
@@ -23,8 +23,8 @@
 
 | Var | Type |
 | --- | --- |
-| lightClient | contract ILightClient |
 | slot0 | struct OutboundLaneVerifier.Slot0 |
+| lightClient | contract ILightClient |
 
 
 
@@ -45,13 +45,13 @@ No modifiers
 
 
 
-### verify_messages_delivery_proof
+### _verify_messages_delivery_proof
 No description
 
 
 #### Declaration
 ```solidity
-  function verify_messages_delivery_proof(
+  function _verify_messages_delivery_proof(
   ) internal
 ```
 
