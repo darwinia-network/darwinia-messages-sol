@@ -78,23 +78,25 @@ library CommonTypes {
         pure
         returns (Relayer memory)
     {
-        (uint256 length, uint8 mode) = ScaleCodec.decodeUintCompact(_data);
-        uint8 compactLength = uint8(2**mode);
+        // Option::None
+        require(_data.length > 0, "No relayers");
 
+        // Option::Some(Reayler[])
+        // _data checking
+        (uint256 relayersCount, uint8 mode) = ScaleCodec.decodeUintCompact(_data);
+        require(relayersCount > 0, "No relayers");
         require(mode < 3, "Wrong compact mode"); // Now, mode 3 is not supported yet
+        uint8 lengthOfPrefixBytes = uint8(2**mode);
         require(
-            _data.length >= compactLength + length * 64,
-            "The data is not enough to decode the Relayer vector"
+            _data.length >= lengthOfPrefixBytes + relayersCount * 64,
+            "No enough data"
         );
 
-        if (length == 0) {
-            revert("No relayers are working");
-        } else {
-            Relayer memory relayer = decodeRelayer(
-                Bytes.substr(_data, compactLength + 64 * (length - 1))
-            );
-            return relayer;
-        }
+        // get the bytes of the last Relayer, then decode
+        Relayer memory relayer = decodeRelayer(
+            Bytes.substr(_data, lengthOfPrefixBytes + 64 * (relayersCount - 1))
+        );
+        return relayer;
     }
 
     ////////////////////////////////////
