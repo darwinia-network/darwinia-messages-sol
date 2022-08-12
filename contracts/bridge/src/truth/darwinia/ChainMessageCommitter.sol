@@ -18,6 +18,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "../../utils/Math.sol";
 import "../common/MessageCommitter.sol";
 import "../../interfaces/IMessageCommitment.sol";
 import "../../interfaces/IMessageCommitter.sol";
@@ -26,7 +27,7 @@ import "../../interfaces/IMessageCommitter.sol";
 /// @author echo
 /// @notice Chain message committer commit messages from all lane committers
 /// @dev Chain message use sparse merkle tree to commit all messages
-contract ChainMessageCommitter is MessageCommitter {
+contract ChainMessageCommitter is Math, MessageCommitter {
     event Registry(uint256 pos, address committer);
 
     /// @dev This chain position

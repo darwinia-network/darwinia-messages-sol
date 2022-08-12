@@ -18,6 +18,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "../../utils/Math.sol";
 import "../common/MessageCommitter.sol";
 import "../../interfaces/IMessageCommitment.sol";
 
@@ -25,7 +26,7 @@ import "../../interfaces/IMessageCommitment.sol";
 /// @author echo
 /// @notice Lane message committer commit all messages from this chain to bridged chain
 /// @dev Lane message use sparse merkle tree to commit all messages
-contract LaneMessageCommitter is MessageCommitter {
+contract LaneMessageCommitter is Math, MessageCommitter {
     event Registry(uint256 outLanePos, address outboundLane, uint256 inLanePos, address inboundLane);
     event ChangeLane(uint256 pos, address lane);
 
