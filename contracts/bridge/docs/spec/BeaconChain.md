@@ -18,7 +18,6 @@
   - [hash_tree_root](#hash_tree_root-2)
   - [hash_tree_root](#hash_tree_root-3)
   - [merkle_root](#merkle_root)
-  - [get_power_of_two_ceil](#get_power_of_two_ceil)
   - [to_little_endian_64](#to_little_endian_64)
   - [reverse64](#reverse64)
 
@@ -151,21 +150,6 @@ No description
 ```solidity
   function merkle_root(
   ) internal returns (bytes32)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### get_power_of_two_ceil
-No description
-
-
-#### Declaration
-```solidity
-  function get_power_of_two_ceil(
-  ) internal returns (uint256)
 ```
 
 #### Modifiers:

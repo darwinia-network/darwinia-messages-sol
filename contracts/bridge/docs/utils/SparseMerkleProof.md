@@ -13,7 +13,6 @@ Sparse Merkle Tree is constructed from 2^n-length leaves, where n is the tree de
 - [Functions](#functions)
   - [hash_node](#hash_node)
   - [singleVerify](#singleverify)
-  - [multiVerify](#multiverify)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 

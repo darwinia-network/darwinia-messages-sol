@@ -14,6 +14,7 @@
   - [substr](#substr)
   - [substr](#substr-1)
   - [concat](#concat)
+  - [slice_to_uint](#slice_to_uint)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -82,6 +83,21 @@ No description
 ```solidity
   function concat(
   ) internal returns (bytes)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### slice_to_uint
+No description
+
+
+#### Declaration
+```solidity
+  function slice_to_uint(
+  ) internal returns (uint256 r)
 ```
 
 #### Modifiers:

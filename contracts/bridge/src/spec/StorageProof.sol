@@ -1,4 +1,19 @@
-// SPDX-License-Identifier: MIT
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.7.6;
 
@@ -18,7 +33,7 @@ library StorageProof {
         bytes memory account_proof,
         bytes32 storage_key,
         bytes memory storage_proof
-    ) internal view returns (bytes memory value) {
+    ) internal pure returns (bytes memory value) {
         bytes memory account_hash = abi.encodePacked(account);
         (bool exists, bytes memory data) = SecureMerkleTrie.get(
             account_hash,

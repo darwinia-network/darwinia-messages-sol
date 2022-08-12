@@ -1,4 +1,19 @@
-// SPDX-License-Identifier: MIT
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.7.6;
 pragma abicoder v2;
@@ -360,7 +375,7 @@ contract FeeMarket is IFeeMarket {
             DeliveredRelayer memory entry = delivery_relayers[i];
             uint256 every_delivery_reward = 0;
             for (uint256 key = entry.begin; key <= entry.end; key++) {
-                (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) = _settle_order(key, entry.relayer, confirm_relayer);
+                (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) = _settle_order(key);
                 every_delivery_reward += delivery_reward;
                 total_confirm_reward += confirm_reward;
                 total_vault_reward += vault_reward;
@@ -377,16 +392,11 @@ contract FeeMarket is IFeeMarket {
         _reward(VAULT, total_vault_reward);
     }
 
-    function _settle_order(
-        uint256 key,
-        address delivery_relayer,
-        address confirm_relayer
-    ) private returns (
+    function _settle_order( uint256 key) private returns (
         uint256 delivery_reward,
         uint256 confirm_reward,
         uint256 vault_reward
     ) {
-        Order memory order = orderOf[key];
         require(orderOf[key].assignedTime > 0, "!exist");
         // Get the message fee from the top N relayers
         uint256 message_fee = getOrderFee(key);

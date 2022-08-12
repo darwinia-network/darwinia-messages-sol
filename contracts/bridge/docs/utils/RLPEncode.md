@@ -11,12 +11,6 @@
 
 - [Functions](#functions)
   - [encodeBytes](#encodebytes)
-  - [encodeList](#encodelist)
-  - [encodeString](#encodestring)
-  - [encodeAddress](#encodeaddress)
-  - [encodeUint](#encodeuint)
-  - [encodeInt](#encodeint)
-  - [encodeBool](#encodebool)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
