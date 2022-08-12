@@ -34,7 +34,8 @@ if (target == 'local') {
 
   // evm_eth_endpoint = "https://rpc.sepolia.org"
   evm_eth_endpoint = "http://127.0.0.1:8545"
-  evm_bsc_endpoint = `https://speedy-nodes-nyc.moralis.io/${MORALIS_KEY}/bsc/testnet/archive`
+  // evm_bsc_endpoint = `https://speedy-nodes-nyc.moralis.io/${MORALIS_KEY}/bsc/testnet/archive`
+  evm_bsc_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
   dvm_endpoint = "https://pangoro-rpc.darwinia.network"
   sub_endpoint = "wss://pangoro-rpc.darwinia.network"
   // beacon_endpoint = "https://lodestar-kiln.chainsafe.io"
@@ -59,10 +60,22 @@ const wallets = [
   new ethers.Wallet(priv3),
 ]
 
-const fees = [
+const sub_fees = [
   ethers.utils.parseEther("10"),
   ethers.utils.parseEther("20"),
   ethers.utils.parseEther("30")
+]
+
+const eth_fees = [
+  ethers.utils.parseEther("0.0001"),
+  ethers.utils.parseEther("0.0002"),
+  ethers.utils.parseEther("0.0003")
+]
+
+const bsc_fees = [
+  ethers.utils.parseEther("0.01"),
+  ethers.utils.parseEther("0.02"),
+  ethers.utils.parseEther("0.03")
 ]
 
 async function bootstrap() {
@@ -71,9 +84,9 @@ async function bootstrap() {
   const subClient = new SubClient(dvm_endpoint, sub_endpoint)
   const eth2Client = new Eth2Client(beacon_endpoint)
   const bridge = new Bridge(ethClient, bscClient, eth2Client, subClient)
-  await ethClient.init(wallets, fees, evm_eth_addresses, ns_dvm)
-  await bscClient.init(wallets, fees, evm_bsc_addresses, ns_dvm)
-  await subClient.init(wallets, fees, dvm_addresses, ns_eth, ns_bsc)
+  await ethClient.init(wallets, eth_fees, evm_eth_addresses, ns_dvm)
+  await bscClient.init(wallets, bsc_fees, evm_bsc_addresses, ns_dvm)
+  await subClient.init(wallets, bsc_fees, dvm_addresses, ns_eth, ns_bsc)
   return {
     ethClient,
     bscClient,

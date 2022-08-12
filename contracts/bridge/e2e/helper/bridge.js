@@ -48,12 +48,12 @@ const build_relayer_keys = (front, end) => {
   return keys
 }
 
-const generate_storage_delivery_proof = async (client, front, end) => {
+const generate_storage_delivery_proof = async (client, front, end, block_number) => {
   const addr = client.inbound.address
-  const laneIDProof = await get_storage_proof(client, addr, [LANE_IDENTIFY_SLOT])
-  const laneNonceProof = await get_storage_proof(client, addr, [LANE_NONCE_SLOT])
+  const laneIDProof = await get_storage_proof(client, addr, [LANE_IDENTIFY_SLOT], block_number)
+  const laneNonceProof = await get_storage_proof(client, addr, [LANE_NONCE_SLOT], block_number)
   const keys = build_relayer_keys(front, end)
-  const laneRelayersProof = await get_storage_proof(client, addr, keys)
+  const laneRelayersProof = await get_storage_proof(client, addr, keys, block_number)
   const proof = {
     "accountProof": toHexString(rlp.encode(laneIDProof.accountProof)),
     "laneNonceProof": toHexString(rlp.encode(laneNonceProof.storageProof[0].proof)),
@@ -76,57 +76,26 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
     "laneNonceProof": toHexString(rlp.encode(laneNonceProof.storageProof[0].proof)),
     "laneMessagesProof": laneMessageProof.storageProof.map((p) => toHexString(rlp.encode(p.proof))),
   }
-  console.log(laneIdProof)
-  console.log(proof)
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(bytes accountProof, bytes laneIDProof, bytes laneNonceProof, bytes[] laneMessagesProof)"
     ], [ proof ])
 }
 
-const get_message_proof = async (subClient, type) => {
-  const thisChainPos = await subClient.inbound.thisChainPosition()
-  const bridgedChainPos = await subClient.inbound.bridgedChainPosition()
-  const c0 = await subClient.chainMessageCommitter['commitment(uint256)'](thisChainPos)
-  const c1 = await subClient.chainMessageCommitter['commitment(uint256)'](bridgedChainPos)
-  const c = await subClient.chainMessageCommitter['commitment()']()
-  const thisInLanePos = await subClient.inbound.thisLanePosition()
-  const inb = await subClient.laneMessageCommitter['commitment(uint256)'](thisInLanePos)
-
-  const thisOutLanePos = await subClient.outbound.thisLanePosition()
-  const outb = await subClient.laneMessageCommitter['commitment(uint256)'](thisOutLanePos)
-
-  let b
-  if (type == 'receive') {
-    b = inb
-  } else if (type == 'delivery') {
-    b = outb
-  } else {
-    return new Error(`Invalid type: ${type}`);
-  }
-  const chainProof = {
-    root: c,
-    count: 2,
-    proof: [c0]
-  }
-  const laneProof = {
-    root: c1,
-    count: 2,
-    proof: [b]
-  }
-  return {chainProof, laneProof}
-}
-
-const generate_message_proof = async (subClient, type) => {
-  const proof = await get_message_proof(subClient, type)
+const generate_message_proof = async (chain_committer, lane_committer, lane_pos, block_number) => {
+  const bridgedChainPos = await lane_committer.bridgedChainPosition()
+  const proof = await chain_committer.prove(bridgedChainPos, lane_pos, {
+    blockNumber: block_number
+  })
   return ethers.utils.defaultAbiCoder.encode([
-    "tuple(tuple(bytes32,uint256,bytes32[]),tuple(bytes32,uint256,bytes32[]))"
+    "tuple(tuple(bytes32,bytes32[]),tuple(bytes32,bytes32[]))"
     ], [
       [
-        [proof.chainProof.root, proof.chainProof.count, proof.chainProof.proof],
-        [proof.laneProof.root, proof.laneProof.count, proof.laneProof.proof]
+        [proof.chainProof.root, proof.chainProof.proof],
+        [proof.laneProof.root, proof.laneProof.proof]
       ]
     ])
 }
+
 /**
  * The Mock Bridge for testing
  */
@@ -136,17 +105,23 @@ class Bridge {
     this.bscClient = bscClient
     this.eth2Client = eth2Client
     this.subClient = subClient
+    this.eth = ethClient
+    this.bsc = bscClient
+    this.sub = subClient
   }
 
   async enroll_relayer() {
-    await this.ethClient.enroll_relayer()
-    await this.bscClient.enroll_relayer()
-    await this.subClient.enroll_relayer()
+    await this.eth.enroll_relayer()
+    await this.bsc.enroll_relayer()
+    await this.sub.eth.enroll_relayer()
+    await this.sub.bsc.enroll_relayer()
   }
 
   async deposit() {
-    await this.ethClient.deposit()
-    await this.subClient.deposit()
+    await this.eth.deposit()
+    await this.sub.deposit()
+    await this.sub.eth.deposit()
+    await this.sub.bsc.deposit()
   }
 
   async relay_eth_header() {
@@ -163,7 +138,7 @@ class Bridge {
     let sync_aggregate_header = await this.eth2Client.get_header(sync_aggregate_slot)
     while (!sync_aggregate_header) {
       sync_aggregate_slot = Number(sync_aggregate_slot) + 1
-      sync_aggregate_header = await eth2Client.get_header(sync_aggregate_slot)
+      sync_aggregate_header = await this.eth2Client.get_header(sync_aggregate_slot)
     }
 
     const fork_version = await this.eth2Client.get_fork_version(sync_aggregate_slot)
@@ -190,8 +165,7 @@ class Bridge {
         gasLimit: 5000000
       })
 
-    const new_finalized_header = await this.subClient.beaconLightClient.finalized_header()
-    console.log(new_finalized_header)
+    // const new_finalized_header = await this.subClient.beaconLightClient.finalized_header()
   }
 
   async relay_eth_execution_payload() {
@@ -228,69 +202,83 @@ class Bridge {
   }
 
   async relay_sub_header() {
-    const header = await this.subClient.block_header()
-    const message_root = await this.subClient.chainMessageCommitter['commitment()']()
-    return await this.ethClient.relay_header(message_root, header.number.toString())
+    const header = await this.sub.block_header()
+    const message_root = await this.sub.chainMessageCommitter['commitment()']()
+    const nonce = await this.sub.ecdsa_authority_nonce(header.hash)
+    const block_number = header.number.toNumber()
+    const message = {
+      block_number,
+      message_root,
+      nonce: nonce.toNumber()
+    }
+    const signs = await this.sub.sign_message_commitment(message)
+    await this.eth.ecdsa_relay_header(message, signs)
+    await this.bsc.ecdsa_relay_header(message, signs)
+    // return await this.ethClient.relay_header(message_root, header.number.toString())
   }
 
   async relay_eth_messages(data) {
     await relay_eth_header()
-    await dispatch_eth_messages(data)
+    await dispatch_messages_to_sub('eth', data)
     await relay_sub_header()
-    await confirm_eth_messages()
+    await confirm_messages_to_sub('eth')
   }
 
-  async relay_sub_messages(data) {
+  async relay_sub_messages_to_eth(data) {
     await relay_sub_header()
-    await dispatch_sub_messages(data)
+    await dispatch_messages_from_sub('eth', data)
     await relay_eth_header()
-    await confirm_sub_messages()
+    await confirm_messages_from_sub('eth')
   }
 
-  async dispatch_sub_messages(data, signer) {
-    const o = await this.subClient.outbound.data()
-    const proof = await generate_message_proof(this.subClient, 'receive')
-    if (signer) {
-      this.ethClient.inbound = this.ethClient.inbound.connect(signer)
-    }
-    return await this.ethClient.inbound.receive_messages_proof(o, data, proof)
+  async dispatch_messages_from_sub(to, data) {
+    const c = this[to]
+    const info = await this.sub[to].outbound.getLaneInfo()
+    const finality_block_number = await c.lightClient.block_number()
+    const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[to].LaneMessageCommitter, info[1])
+    return await c.inbound.receive_messages_proof(data, proof)
   }
 
-  async confirm_eth_messages() {
-    const i = await this.subClient.inbound.data()
-    const o = await this.ethClient.outbound.outboundLaneNonce()
-    const proof = await generate_message_proof(this.subClient, 'delivery')
-    return await this.ethClient.outbound.receive_messages_delivery_proof(i, proof)
+  async confirm_messages_from_sub(to) {
+    const c = this[to]
+    const i = await c.inbound.data()
+    const nonce = await c.inbound.inboundLaneNonce()
+    const finality_block_number = await this.finality_block_number(to)
+    const front = nonce.relayer_range_front.toHexString()
+    const end = nonce.relayer_range_back.toHexString()
+    const proof = await generate_storage_delivery_proof(c, front, end, finality_block_number)
+    return await this.sub[to].outbound.receive_messages_delivery_proof(i, proof, { gasLimit: 6000000 })
   }
 
-  async dispatch_eth_messages(data) {
-    const o = await this.ethClient.outbound.data()
-    const nonce = await this.ethClient.outbound.outboundLaneNonce()
-    const begin = nonce.latest_received_nonce.add(1)
-    const end = nonce.latest_generated_nonce
-    const finalized_header = await this.subClient.beaconLightClient.finalized_header()
-    const finality_block = await this.eth2Client.get_beacon_block(finalized_header.slot)
-    const execution_layer_block_number = finality_block.message.body.execution_payload.block_number
-    const proof = await generate_storage_proof(this.ethClient, begin.toHexString(), end.toHexString(), execution_layer_block_number)
-    return await this.subClient.eth.inbound.receive_messages_proof(data, proof, { gasLimit: 6000000 })
+  async dispatch_messages_to_sub(from, data) {
+    const c = this[from]
+    const nonce = await c.outbound.outboundLaneNonce()
+    const begin = nonce.latest_received_nonce.add(1).toHexString()
+    const end = nonce.latest_generated_nonce.toHexString()
+    const finality_block_number = await this.finality_block_number(from)
+    const proof = await generate_storage_proof(c, begin, end, finality_block_number)
+    return this.sub[from].inbound.receive_messages_proof(data, proof, { gasLimit: 6000000 })
   }
 
-  async dispatch_bsc_messages(data) {
-    const o = await this.bscClient.outbound.data()
-    const nonce = await this.bscClient.outbound.outboundLaneNonce()
-    const begin = nonce.latest_received_nonce.add(1)
-    const end = nonce.latest_generated_nonce
-    const finalized_header = await this.subClient.bscLightClient.finalized_checkpoint()
-    const block_number = finalized_header.number
-    const proof = await generate_storage_proof(this.bscClient, begin.toHexString(), end.toHexString(), block_number)
-    return await this.subClient.bsc.inbound.receive_messages_proof(data, proof, { gasLimit: 6000000 })
+  async confirm_messages_to_sub(from) {
+    const c = this[from]
+    const i = await this.sub[from].inbound.data()
+    const info = await this.sub[from].inbound.getLaneInfo()
+    const o = await c.outbound.outboundLaneNonce()
+    const finality_block_number = c.lightClient.block_number()
+    const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[from].LaneMessageCommitter, info[1])
+    return await c.outbound.receive_messages_delivery_proof(i, proof)
   }
 
-  async confirm_sub_messages() {
-    const i = await this.ethClient.inbound.data()
-    const nonce = await this.ethClient.inbound.inboundLaneNonce()
-    const proof = await generate_storage_delivery_proof(this.ethClient, nonce.relayer_range_front.toHexString(), nonce.relayer_range_back.toHexString())
-    return await this.subClient.outbound.receive_messages_delivery_proof(i, proof, { gasLimit: 6000000 })
+  async finality_block_number(from) {
+    if (from == 'eth') {
+      const finalized_header = await this.sub.beaconLightClient.finalized_header()
+      const finality_block = await this.eth2Client.get_beacon_block(finalized_header.slot)
+      return finality_block.message.body.execution_payload.block_number
+    } else if (from == 'bsc') {
+      const finalized_header = await this.subClient.bscLightClient.finalized_checkpoint()
+      return finalized_header.number
+    } else { throw new Error("invalid from") }
   }
 }
 

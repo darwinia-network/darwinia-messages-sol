@@ -48,8 +48,9 @@ library StorageProof {
             storage_proof,
             acc.storage_root
         );
-        require(exists == true, "!storage_proof");
-        value = value.toRLPItem().readBytes();
+        if (exists) {
+            value = value.toRLPItem().readBytes();
+        }
     }
 
     function verify_multi_storage_proof(

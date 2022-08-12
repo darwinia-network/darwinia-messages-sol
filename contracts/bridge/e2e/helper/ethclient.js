@@ -34,8 +34,10 @@ class EthClient extends EvmClient {
   async init(wallets, fees, addresses, ns) {
     await super.init(wallets, fees, addresses, ns)
 
-    const DarwiniaLightClient = await artifacts.readArtifact("DarwiniaLightClient")
-    const lightClient = new ethers.Contract(addresses[ns].DarwiniaLightClient, DarwiniaLightClient.abi, this.provider)
+    // const DarwiniaLightClient = await artifacts.readArtifact("DarwiniaLightClient")
+    // const lightClient = new ethers.Contract(addresses[ns].DarwiniaLightClient, DarwiniaLightClient.abi, this.provider)
+    const POSALightClient = await artifacts.readArtifact("POSALightClient")
+    const lightClient = new ethers.Contract(addresses[ns].POSALightClient, POSALightClient.abi, this.provider)
 
     this.lightClient = lightClient.connect(this.signer)
   }
@@ -104,6 +106,10 @@ class EthClient extends EvmClient {
       completeValidatorProofs
     )
     console.log("Phase-2: ", completeSigTx.hash)
+  }
+
+  async ecdsa_relay_header(commitment, signs) {
+    return await this.lightClient.import_message_commitment(commitment, signs)
   }
 
   async relay_header(message_root, block_number) {

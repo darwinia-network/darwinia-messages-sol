@@ -1,6 +1,8 @@
-let { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
+const { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
 const { EvmClient } = require('./evmclient')
 const { encodeNextAuthoritySet } = require('./encode')
+const { signHash } = require('./eip712')
+const ethUtil = require('ethereumjs-util');
 
 /**
  * The Substrate client for Bridge interaction
@@ -31,7 +33,9 @@ class SubClient {
 
     const LaneMessageCommitter = await artifacts.readArtifact("LaneMessageCommitter");
     this.ethLaneMessageCommitter = new ethers.Contract(addresses[ns_eth].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
+    this.eth.LaneMessageCommitter = this.ethLaneMessageCommitter
     this.bscLaneMessageCommitter = new ethers.Contract(addresses[ns_bsc].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
+    this.bsc.LaneMessageCommitter = this.bscLaneMessageCommitter
 
     const BeaconLightClient = await artifacts.readArtifact("BeaconLightClient")
     const beaconLightClient = new ethers.Contract(addresses[ns_eth].BeaconLightClient, BeaconLightClient.abi, this.provider)
@@ -41,11 +45,13 @@ class SubClient {
 
     const BSCLightClient = await artifacts.readArtifact("BSCLightClient")
     const bscLightClient = new ethers.Contract(addresses[ns_bsc].BSCLightClient, BSCLightClient.abi, this.provider)
-
     this.signer = wallets[0].connect(this.provider)
     this.beaconLightClient = beaconLightClient.connect(this.signer)
     this.bscLightClient = bscLightClient.connect(this.signer)
     this.executionLayer = executionLayer.connect(this.signer)
+    this.eth.lightclient = this.executionLayer
+    this.bsc.lightclient = this.bscLightClient
+
   }
 
   chill() {
@@ -97,6 +103,21 @@ class SubClient {
 
   async beefy_authorities(hash) {
     return this.api.query.beefy.authorities.at(hash)
+  }
+
+  async ecdsa_authority_nonce(block_number) {
+    return await this.api.query.ecdsaAuthority.nonce.at(block_number)
+  }
+
+  async sign_message_commitment(message) {
+    // bridger could get the hash from `edcsa-authority` pallet's events.
+    const hash = signHash(message)
+    const PRIVATE_KEY = process.env.PRIVATE_KEY
+    const privateKey = Buffer.from(PRIVATE_KEY.substr(2), 'hex')
+    const sig = ethUtil.ecsign(hash, privateKey);
+
+    const pubkey = ethUtil.ecrecover(hash, sig.v, sig.r, sig.s)
+    return [ethUtil.toRpcSig(sig.v, sig.r, sig.s)]
   }
 
 }

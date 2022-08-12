@@ -40,7 +40,7 @@ class EvmClient {
       let fee = this.fees[i]
       let signer = this.wallets[i]
       const tx = await this.feeMarket.connect(signer.connect(this.provider)).enroll(prev, fee, {
-        value: ethers.utils.parseEther("100"),
+        value: this.fees[0],
         gasLimit: 300000
       })
       prev = signer.address
@@ -51,7 +51,7 @@ class EvmClient {
     for(let i=0; i<this.wallets.length; i++) {
       let signer = this.wallets[i]
       await this.feeMarket.connect(signer.connect(this.provider)).deposit({
-        value: ethers.utils.parseEther("100"),
+        value: ethers.utils.parseEther("10"),
         gasLimit: 300000
       })
     }
