@@ -96,13 +96,13 @@ contract BeaconLightClient is BeaconChain, Bitfield {
     // | ----------------------------------- | ------ | ----- |
     // | next_sync_committee                 | 55     | 5     |
     // | finalized_checkpoint_root           | 105    | 6     |
-    uint64 constant private NEXT_SYNC_COMMITTEE_INDEX = 55;
-    uint64 constant private NEXT_SYNC_COMMITTEE_DEPTH = 5;
-    uint64 constant private FINALIZED_CHECKPOINT_ROOT_INDEX = 105;
-    uint64 constant private FINALIZED_CHECKPOINT_ROOT_DEPTH = 6;
-    uint64 constant private SLOTS_PER_EPOCH = 32;
+    uint64 constant private NEXT_SYNC_COMMITTEE_INDEX        = 55;
+    uint64 constant private NEXT_SYNC_COMMITTEE_DEPTH        = 5;
+    uint64 constant private FINALIZED_CHECKPOINT_ROOT_INDEX  = 105;
+    uint64 constant private FINALIZED_CHECKPOINT_ROOT_DEPTH  = 6;
+    uint64 constant private SLOTS_PER_EPOCH                  = 32;
     uint64 constant private EPOCHS_PER_SYNC_COMMITTEE_PERIOD = 256;
-    bytes4 constant private DOMAIN_SYNC_COMMITTEE = 0x07000000;
+    bytes4 constant private DOMAIN_SYNC_COMMITTEE            = 0x07000000;
 
     event FinalizedHeaderImported(BeaconBlockHeader finalized_header);
     event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed next_sync_committee_root);

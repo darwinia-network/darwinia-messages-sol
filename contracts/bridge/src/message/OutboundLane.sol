@@ -41,17 +41,16 @@ import "../spec/TargetChain.sol";
 contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, SourceChain {
     /// slot 1
     OutboundLaneNonce public outboundLaneNonce;
-
     /// slot 2
     /// nonce => hash(MessagePayload)
     mapping(uint64 => bytes32) public messages;
 
     address public immutable FEE_MARKET;
 
-    uint256 private constant MAX_GAS_PER_MESSAGE = 100000;
-    uint256 private constant MAX_CALLDATA_LENGTH = 2048;
-    uint64 private constant MAX_PENDING_MESSAGES = 30;
-    uint64 private constant MAX_PRUNE_MESSAGES_ATONCE = 5;
+    uint256 private constant MAX_GAS_PER_MESSAGE       = 100000;
+    uint256 private constant MAX_CALLDATA_LENGTH       = 2048;
+    uint64  private constant MAX_PENDING_MESSAGES      = 30;
+    uint64  private constant MAX_PRUNE_MESSAGES_ATONCE = 5;
 
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
     event MessagesDelivered(uint64 indexed begin, uint64 indexed end, uint256 results);

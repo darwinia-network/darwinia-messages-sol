@@ -43,7 +43,6 @@ import "../spec/TargetChain.sol";
 contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// slot 1
     InboundLaneNonce public inboundLaneNonce;
-
     /// slot 2
     /// index => UnrewardedRelayer
     /// indexes to relayers and messages that they have delivered to this lane (ordered by
@@ -59,7 +58,6 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// When relayer sends messages in a batch, the first arg is the lowest nonce, second arg the
     /// highest nonce. Multiple dispatches from the same relayer are allowed.
     mapping(uint64 => UnrewardedRelayer) public relayers;
-
     uint256 internal locked;
 
     /// @dev Gas used per message needs to be less than 100000 wei
