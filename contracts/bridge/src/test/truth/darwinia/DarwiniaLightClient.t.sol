@@ -263,8 +263,4 @@ contract DarwiniaLightClientTest is DSTest, Math {
             proof
         );
     }
-
-    function test_get_power_of_two_ceil() public {
-        assertEq(get_power_of_two_ceil(100), 128);
-    }
 }

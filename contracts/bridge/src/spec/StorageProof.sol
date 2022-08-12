@@ -58,7 +58,7 @@ library StorageProof {
         bytes memory account_proof,
         bytes32[] memory storage_keys,
         bytes[] memory storage_proofs
-    ) internal view returns (bytes[] memory values) {
+    ) internal pure returns (bytes[] memory values) {
         uint key_size = storage_keys.length;
         require(key_size == storage_proofs.length, "!storage_proof_len");
         values = new bytes[](key_size);
