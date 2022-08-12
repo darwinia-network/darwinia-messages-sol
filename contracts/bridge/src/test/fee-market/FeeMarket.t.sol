@@ -285,10 +285,14 @@ contract FeeMarketTest is DSTest {
 
         assert_market_order_clean(key);
 
-        assert_vault_balance(0.1 ether);
-        assert_market_balance(a, 2 ether);
-        assert_market_balance(b, 1 ether);
-        assert_market_balance(c, 1 ether);
+        // reward: 0.1 * 0.8
+        assert_vault_balance(80000000000000002);
+        // reward: 1 + 0.1 * 0.2 / 3
+        assert_market_balance(a, 2006666666666666666);
+        // reward: 0.1 * 0.2 / 3
+        assert_market_balance(b, 1006666666666666666);
+        // reward: 0.1 * 0.2 / 3
+        assert_market_balance(c, 1006666666666666666);
         assert_market_balances();
         assert_market_supply(4.1 ether);
     }
@@ -303,10 +307,14 @@ contract FeeMarketTest is DSTest {
 
         assert_market_order_clean(key);
 
-        assert_vault_balance(0.1 ether);
-        assert_market_balance(a, 1.92 ether);
-        assert_market_balance(b, 1.08 ether);
-        assert_market_balance(c, 1 ether);
+        // reward: 0.1 * 0.8
+        assert_vault_balance(80000000000000002);
+        // reward: 1 * 0.8 + 0.1 * 0.2 / 3
+        assert_market_balance(a, 1806666666666666666);
+        // reward: 1 * 0.2 + 0.1 * 0.2 / 3
+        assert_market_balance(b, 1206666666666666666);
+        // reward: 0.1 * 0.2 / 3
+        assert_market_balance(c, 1006666666666666666);
         assert_market_balances();
         assert_market_supply(4.1 ether);
     }
@@ -321,10 +329,14 @@ contract FeeMarketTest is DSTest {
 
         assert_market_order_clean(key);
 
-        assert_vault_balance(0.1 ether);
-        assert_market_balance(a, 1.6 ether);
-        assert_market_balance(b, 1.32 ether);
-        assert_market_balance(c, 1.08 ether);
+        // reward: 0.1 * 0.8
+        assert_vault_balance(80000000000000002);
+        // reward: 0.1 * 0.2 / 3
+        assert_market_balance(a, 1006666666666666666);
+        // reward: 1 * 0.8 + 0.1 * 0.2 / 3
+        assert_market_balance(b, 1806666666666666666);
+        // reward: 1 * 0.2 + 0.1 * 0.2 / 3
+        assert_market_balance(c, 1206666666666666666);
         assert_market_balances();
         assert_market_supply(4.1 ether);
     }
@@ -340,10 +352,15 @@ contract FeeMarketTest is DSTest {
 
         assert_market_order_clean(key);
 
-        assert_vault_balance(0.1 ether);
-        assert_market_balance(a, 1.4 ether);
-        assert_market_balance(b, 1.6 ether);
-        assert_market_balance(c, 1 ether);
+        // reward: 0.1 * 0.8
+        assert_vault_balance(0.08 ether);
+        // slash:  1 * 0.2
+        // reward: 1.2
+        assert_market_balance(a, 2 ether);
+        // reward: 0.1 * 0.2 / 2
+        assert_market_balance(b, 1.01 ether);
+        // reward: 0.1 * 0.2 / 2
+        assert_market_balance(c, 1.01 ether);
         assert_market_balances();
         assert_market_supply(4.1 ether);
     }
@@ -359,10 +376,14 @@ contract FeeMarketTest is DSTest {
 
         assert_market_order_clean(key);
 
-        assert_vault_balance(0.1 ether);
-        assert_market_balance(a, 1 ether);
-        assert_market_balance(b, 2 ether);
-        assert_market_balance(c, 1 ether);
+        // reward: 0.1 * 0.8
+        assert_vault_balance(0.08 ether);
+        // slash:  1 * 0.2
+        assert_market_balance(a, 0.8 ether);
+        // reward: 1.2 + 0.1 * 0.2 / 2
+        assert_market_balance(b, 2.21 ether);
+        // reward: 0.1 * 0.2 / 2
+        assert_market_balance(c, 1.01 ether);
         assert_market_balances();
         assert_market_supply(4.1 ether);
     }
@@ -379,9 +400,13 @@ contract FeeMarketTest is DSTest {
         assert_market_order_clean(key);
 
         assert_vault_balance(0 ether);
-        assert_market_balance(a, 1.352 ether);
-        assert_market_balance(b, 1.088 ether);
-        assert_market_balance(c, 1.66 ether);
+        // slash:  1 * 0.2
+        // reward: (1.1 + 0.2 + 0.2) * 0.8
+        assert_market_balance(a, 2 ether);
+        // slash:  1 * 0.2
+        // reward: (1.1 + 0.2 + 0.2) * 0.2
+        assert_market_balance(b, 1.1 ether);
+        assert_market_balance(c, 1 ether);
         assert_market_balances();
         assert_market_supply(4.1 ether);
     }
@@ -398,9 +423,14 @@ contract FeeMarketTest is DSTest {
         assert_market_order_clean(key);
 
         assert_vault_balance(0 ether);
-        assert_market_balance(a, 1.88 ether);
-        assert_market_balance(b, 1.22 ether);
-        assert_market_balance(c, 1 ether);
+        // slash:  1 * 0.2
+        // reward: (1.1 + 0.2 + 0.2 + 0.2) * 0.8
+        assert_market_balance(a, 2.16 ether);
+        // slash:  1 * 0.2
+        // reward: (1.1 + 0.2 + 0.2 + 0.2) * 0.2
+        assert_market_balance(b, 1.14 ether);
+        // slash:  1 * 0.2
+        assert_market_balance(c, 0.8 ether);
         assert_market_balances();
         assert_market_supply(4.1 ether);
     }
@@ -417,9 +447,14 @@ contract FeeMarketTest is DSTest {
         assert_market_order_clean(key);
 
         assert_vault_balance(0 ether);
-        assert_market_balance(a, 2.58 ether);
-        assert_market_balance(b, 1.02 ether);
-        assert_market_balance(c, 0.5 ether);
+        // slash:  1 * 0.2 + 0.8 * 0.5
+        // reward: (1.1 + 0.6 + 0.6 + 0.6) * 0.8
+        assert_market_balance(a, 2.72 ether);
+        // slash:  1 * 0.2 + 0.8 * 0.5
+        // reward: (1.1 + 0.6 + 0.6 + 0.6) * 0.2
+        assert_market_balance(b, 0.98 ether);
+        // slash:  1 * 0.2 + 0.8 * 0.5
+        assert_market_balance(c, 0.4 ether);
         assert_market_balances();
         assert_market_supply(4.1 ether);
     }
@@ -436,6 +471,8 @@ contract FeeMarketTest is DSTest {
         assert_market_order_clean(key);
 
         assert_vault_balance(0 ether);
+        // slash:  1
+        // reward: (1.1 + 1 + 1 + 1) * 0.8
         assert_market_balance(a, 3.28 ether);
         assert_market_balance(b, 0.82 ether);
         assert_market_balance(c, 0 ether);
