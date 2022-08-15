@@ -21,8 +21,8 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 library Bits {
-    uint256 internal constant ONE = uint256(1);
-    uint256 internal constant ONES = type(uint256).max;
+    uint256 private constant ONE = uint256(1);
+    uint256 private constant ONES = type(uint256).max;
 
     // Sets the bit at the given 'index' in 'self' to '1'.
     // Returns the modified value.

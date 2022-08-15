@@ -20,7 +20,7 @@ pragma solidity 0.7.6;
 import {Memory} from "./Memory.sol";
 
 library Bytes {
-    uint256 internal constant BYTES_HEADER_SIZE = 32;
+    uint256 private constant BYTES_HEADER_SIZE = 32;
 
     // Checks if two `bytes memory` variables are equal. This is done using hashing,
     // which is much more gas efficient then comparing each byte individually.

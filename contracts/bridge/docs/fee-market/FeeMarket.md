@@ -20,17 +20,17 @@
   - [setOutbound](#setoutbound)
   - [setParaTime](#setparatime)
   - [setParaRelay](#setpararelay)
+  - [market_fee](#market_fee)
   - [totalSupply](#totalsupply)
+  - [getOrder](#getorder)
   - [getOrderBook](#getorderbook)
   - [getTopRelayers](#gettoprelayers)
   - [getOrderFee](#getorderfee)
   - [getAssignedRelayer](#getassignedrelayer)
   - [getSlotFee](#getslotfee)
-  - [getOrder](#getorder)
   - [isRelayer](#isrelayer)
   - [deposit](#deposit)
   - [withdraw](#withdraw)
-  - [market_fee](#market_fee)
   - [enroll](#enroll)
   - [leave](#leave)
   - [enrol](#enrol)
@@ -40,17 +40,17 @@
   - [assign](#assign)
   - [settle](#settle)
 - [Events](#events)
-  - [SetOutbound](#setoutbound)
-  - [Slash](#slash)
-  - [Reward](#reward)
-  - [Deposit](#deposit)
-  - [Withdrawal](#withdrawal)
-  - [Locked](#locked)
-  - [UnLocked](#unlocked)
-  - [Enrol](#enrol)
-  - [Delist](#delist)
   - [Assgigned](#assgigned)
+  - [Delist](#delist)
+  - [Deposit](#deposit)
+  - [Enrol](#enrol)
+  - [Locked](#locked)
+  - [Reward](#reward)
+  - [SetOutbound](#setoutbound)
   - [Settled](#settled)
+  - [Slash](#slash)
+  - [UnLocked](#unlocked)
+  - [Withdrawal](#withdrawal)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -60,21 +60,21 @@
 
 | Var | Type |
 | --- | --- |
-| VAULT | address |
 | slashTime | uint32 |
 | relayTime | uint32 |
 | assignedRelayersNumber | uint32 |
 | priceRatio | uint32 |
 | collateralPerOrder | uint256 |
+| relayerCount | uint256 |
 | setter | address |
 | outbounds | mapping(address => uint256) |
 | balanceOf | mapping(address => uint256) |
 | lockedOf | mapping(address => uint256) |
 | relayers | mapping(address => address) |
-| relayerCount | uint256 |
 | feeOf | mapping(address => uint256) |
 | orderOf | mapping(uint256 => struct FeeMarket.Order) |
 | assignedRelayers | mapping(uint256 => mapping(uint256 => struct FeeMarket.OrderExt)) |
+| VAULT | address |
 
 
 ## Modifiers
@@ -210,6 +210,21 @@ No description
 
 
 
+### market_fee
+No description
+
+
+#### Declaration
+```solidity
+  function market_fee(
+  ) external returns (uint256 fee)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
 ### totalSupply
 No description
 
@@ -217,7 +232,22 @@ No description
 #### Declaration
 ```solidity
   function totalSupply(
-  ) public returns (uint256)
+  ) external returns (uint256)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### getOrder
+No description
+
+
+#### Declaration
+```solidity
+  function getOrder(
+  ) external returns (struct FeeMarket.Order, struct FeeMarket.OrderExt[])
 ```
 
 #### Modifiers:
@@ -300,21 +330,6 @@ No modifiers
 
 
 
-### getOrder
-No description
-
-
-#### Declaration
-```solidity
-  function getOrder(
-  ) external returns (struct FeeMarket.Order, struct FeeMarket.OrderExt[])
-```
-
-#### Modifiers:
-No modifiers
-
-
-
 ### isRelayer
 No description
 
@@ -360,21 +375,6 @@ No modifiers
 
 
 
-### market_fee
-No description
-
-
-#### Declaration
-```solidity
-  function market_fee(
-  ) external returns (uint256 fee)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
 ### enroll
 No description
 
@@ -382,7 +382,7 @@ No description
 #### Declaration
 ```solidity
   function enroll(
-  ) public
+  ) external
 ```
 
 #### Modifiers:
@@ -459,7 +459,7 @@ No description
 #### Declaration
 ```solidity
   function move(
-  ) public
+  ) external
 ```
 
 #### Modifiers:
@@ -474,7 +474,7 @@ No description
 #### Declaration
 ```solidity
   function assign(
-  ) public onlyOutBound returns (bool)
+  ) external onlyOutBound returns (bool)
 ```
 
 #### Modifiers:
@@ -505,49 +505,7 @@ No description
 
 ## Events
 
-### SetOutbound
-No description
-
-  
-
-
-### Slash
-No description
-
-  
-
-
-### Reward
-No description
-
-  
-
-
-### Deposit
-No description
-
-  
-
-
-### Withdrawal
-No description
-
-  
-
-
-### Locked
-No description
-
-  
-
-
-### UnLocked
-No description
-
-  
-
-
-### Enrol
+### Assgigned
 No description
 
   
@@ -559,13 +517,55 @@ No description
   
 
 
-### Assgigned
+### Deposit
+No description
+
+  
+
+
+### Enrol
+No description
+
+  
+
+
+### Locked
+No description
+
+  
+
+
+### Reward
+No description
+
+  
+
+
+### SetOutbound
 No description
 
   
 
 
 ### Settled
+No description
+
+  
+
+
+### Slash
+No description
+
+  
+
+
+### UnLocked
+No description
+
+  
+
+
+### Withdrawal
 No description
 
   

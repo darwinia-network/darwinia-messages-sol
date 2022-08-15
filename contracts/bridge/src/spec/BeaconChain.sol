@@ -22,9 +22,9 @@ import "./MerkleProof.sol";
 import "../utils/Math.sol";
 
 contract BeaconChain is Math, MerkleProof {
-    uint64 constant internal SYNC_COMMITTEE_SIZE = 512;
     uint64 constant internal BLSPUBLICKEY_LENGTH = 48;
     uint64 constant internal BLSSIGNATURE_LENGTH = 96;
+    uint64 constant internal SYNC_COMMITTEE_SIZE = 512;
 
     struct ForkData {
         bytes4 current_version;

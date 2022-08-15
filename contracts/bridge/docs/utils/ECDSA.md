@@ -13,7 +13,10 @@ of the private keys of a given address.
 
 - [Functions](#functions)
   - [recover](#recover)
+  - [recover](#recover-1)
+  - [recover](#recover-2)
   - [toEthSignedMessageHash](#toethsignedmessagehash)
+  - [toTypedDataHash](#totypeddatahash)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -48,6 +51,37 @@ No modifiers
 
 
 
+### recover
+No description
+> Returns the address that signed a hashed message (`hash`) with
+`signature`. This address can then be used for verification purposes.
+
+#### Declaration
+```solidity
+  function recover(
+  ) internal returns (address)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### recover
+No description
+
+
+#### Declaration
+```solidity
+  function recover(
+  ) internal returns (address)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
 ### toEthSignedMessageHash
 No description
 > Returns an Ethereum Signed Message, created from a `hash`. This
@@ -55,11 +89,28 @@ replicates the behavior of the
 https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign[`eth_sign`]
 JSON-RPC method.
 
-See {recover}.
-
 #### Declaration
 ```solidity
   function toEthSignedMessageHash(
+  ) internal returns (bytes32)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### toTypedDataHash
+No description
+> Returns an Ethereum Signed Typed Data, created from a
+`domainSeparator` and a `structHash`. This produces hash corresponding
+to the one signed with the
+https://eips.ethereum.org/EIPS/eip-712[`eth_signTypedData`]
+JSON-RPC method as part of EIP-712.
+
+#### Declaration
+```solidity
+  function toTypedDataHash(
   ) internal returns (bytes32)
 ```
 

@@ -19,11 +19,11 @@
   - [setSetter](#setsetter)
   - [setOutbound](#setoutbound)
   - [setParameters](#setparameters)
+  - [market_fee](#market_fee)
   - [totalSupply](#totalsupply)
   - [getOrderBook](#getorderbook)
   - [getTopRelayer](#gettoprelayer)
   - [isRelayer](#isrelayer)
-  - [market_fee](#market_fee)
   - [deposit](#deposit)
   - [withdraw](#withdraw)
   - [enroll](#enroll)
@@ -35,17 +35,17 @@
   - [assign](#assign)
   - [settle](#settle)
 - [Events](#events)
-  - [SetOutbound](#setoutbound)
-  - [Slash](#slash)
-  - [Reward](#reward)
-  - [Deposit](#deposit)
-  - [Withdrawal](#withdrawal)
-  - [Locked](#locked)
-  - [UnLocked](#unlocked)
-  - [Enrol](#enrol)
-  - [Delist](#delist)
   - [Assgigned](#assgigned)
+  - [Delist](#delist)
+  - [Deposit](#deposit)
+  - [Enrol](#enrol)
+  - [Locked](#locked)
+  - [Reward](#reward)
   - [Settled](#settled)
+  - [Slash](#slash)
+  - [SetOutbound](#setoutbound)
+  - [UnLocked](#unlocked)
+  - [Withdrawal](#withdrawal)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -185,6 +185,21 @@ No description
 
 
 
+### market_fee
+No description
+
+
+#### Declaration
+```solidity
+  function market_fee(
+  ) external returns (uint256 fee)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
 ### totalSupply
 No description
 
@@ -192,7 +207,7 @@ No description
 #### Declaration
 ```solidity
   function totalSupply(
-  ) public returns (uint256)
+  ) external returns (uint256)
 ```
 
 #### Modifiers:
@@ -245,21 +260,6 @@ No modifiers
 
 
 
-### market_fee
-No description
-
-
-#### Declaration
-```solidity
-  function market_fee(
-  ) external returns (uint256 fee)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
 ### deposit
 No description
 
@@ -297,7 +297,7 @@ No description
 #### Declaration
 ```solidity
   function enroll(
-  ) public
+  ) external
 ```
 
 #### Modifiers:
@@ -312,7 +312,7 @@ No description
 #### Declaration
 ```solidity
   function leave(
-  ) public
+  ) external
 ```
 
 #### Modifiers:
@@ -374,7 +374,7 @@ No description
 #### Declaration
 ```solidity
   function move(
-  ) public
+  ) external
 ```
 
 #### Modifiers:
@@ -389,7 +389,7 @@ No description
 #### Declaration
 ```solidity
   function assign(
-  ) public onlyOutBound returns (bool)
+  ) external onlyOutBound returns (bool)
 ```
 
 #### Modifiers:
@@ -420,49 +420,7 @@ No description
 
 ## Events
 
-### SetOutbound
-No description
-
-  
-
-
-### Slash
-No description
-
-  
-
-
-### Reward
-No description
-
-  
-
-
-### Deposit
-No description
-
-  
-
-
-### Withdrawal
-No description
-
-  
-
-
-### Locked
-No description
-
-  
-
-
-### UnLocked
-No description
-
-  
-
-
-### Enrol
+### Assgigned
 No description
 
   
@@ -474,13 +432,55 @@ No description
   
 
 
-### Assgigned
+### Deposit
+No description
+
+  
+
+
+### Enrol
+No description
+
+  
+
+
+### Locked
+No description
+
+  
+
+
+### Reward
 No description
 
   
 
 
 ### Settled
+No description
+
+  
+
+
+### Slash
+No description
+
+  
+
+
+### SetOutbound
+No description
+
+  
+
+
+### UnLocked
+No description
+
+  
+
+
+### Withdrawal
 No description
 
   

@@ -29,9 +29,9 @@
 
 | Var | Type |
 | --- | --- |
-| SYNC_COMMITTEE_SIZE | uint64 |
 | BLSPUBLICKEY_LENGTH | uint64 |
 | BLSSIGNATURE_LENGTH | uint64 |
+| SYNC_COMMITTEE_SIZE | uint64 |
 
 
 

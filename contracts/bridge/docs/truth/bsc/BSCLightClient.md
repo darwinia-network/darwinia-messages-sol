@@ -17,20 +17,15 @@
   - [finalized_authorities_at](#finalized_authorities_at)
   - [finalized_authorities](#finalized_authorities)
   - [import_finalized_epoch_header](#import_finalized_epoch_header)
-  - [_clean_finalized_authority_set](#_clean_finalized_authority_set)
-  - [_finalize_authority_set](#_finalize_authority_set)
-  - [contextless_checks](#contextless_checks)
-  - [contextual_checks](#contextual_checks)
   - [_recover_creator](#_recover_creator)
-  - [extract_sign](#extract_sign)
   - [_extract_authorities](#_extract_authorities)
 - [Layout of extra_data:](#layout-of-extra_data)
 - [VANITY: 32 bytes
 Signers: N * 32 bytes as hex encoded (20 characters)
 Signature: 65 bytes](#vanity-32-bytes%0Asigners-n--32-bytes-as-hex-encoded-20-characters%0Asignature-65-bytes)
   - [bytesToAddress](#bytestoaddress)
-  - [add](#add)
-  - [sub](#sub)
+  - [_add](#_add)
+  - [_sub](#_sub)
 - [Events](#events)
   - [FinalizedHeaderImported](#finalizedheaderimported)
 
@@ -42,9 +37,9 @@ Signature: 65 bytes](#vanity-32-bytes%0Asigners-n--32-bytes-as-hex-encoded-20-ch
 
 | Var | Type |
 | --- | --- |
+| finalized_checkpoint | struct BSCLightClient.StoredBlockHeader |
 | CHAIN_ID | uint64 |
 | PERIOD | uint64 |
-| finalized_checkpoint | struct BSCLightClient.StoredBlockHeader |
 
 
 
@@ -89,7 +84,7 @@ No description
 #### Declaration
 ```solidity
   function finalized_authorities_contains(
-  ) public returns (bool)
+  ) external returns (bool)
 ```
 
 #### Modifiers:
@@ -104,7 +99,7 @@ No description
 #### Declaration
 ```solidity
   function length_of_finalized_authorities(
-  ) public returns (uint256)
+  ) external returns (uint256)
 ```
 
 #### Modifiers:
@@ -119,7 +114,7 @@ No description
 #### Declaration
 ```solidity
   function finalized_authorities_at(
-  ) public returns (address)
+  ) external returns (address)
 ```
 
 #### Modifiers:
@@ -134,7 +129,7 @@ No description
 #### Declaration
 ```solidity
   function finalized_authorities(
-  ) public returns (address[])
+  ) external returns (address[])
 ```
 
 #### Modifiers:
@@ -161,66 +156,6 @@ No modifiers
 
 
 
-### _clean_finalized_authority_set
-No description
-
-
-#### Declaration
-```solidity
-  function _clean_finalized_authority_set(
-  ) internal
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### _finalize_authority_set
-No description
-
-
-#### Declaration
-```solidity
-  function _finalize_authority_set(
-  ) internal
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### contextless_checks
-No description
-
-
-#### Declaration
-```solidity
-  function contextless_checks(
-  ) internal
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### contextual_checks
-No description
-
-
-#### Declaration
-```solidity
-  function contextual_checks(
-  ) internal
-```
-
-#### Modifiers:
-No modifiers
-
-
-
 ### _recover_creator
 No description
 
@@ -229,21 +164,6 @@ No description
 ```solidity
   function _recover_creator(
   ) internal returns (address)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### extract_sign
-No description
-
-
-#### Declaration
-```solidity
-  function extract_sign(
-  ) internal returns (bytes32, bytes32)
 ```
 
 #### Modifiers:
@@ -288,13 +208,13 @@ No modifiers
 
 
 
-### add
+### _add
 No description
 
 
 #### Declaration
 ```solidity
-  function add(
+  function _add(
   ) internal returns (uint256 z)
 ```
 
@@ -303,13 +223,13 @@ No modifiers
 
 
 
-### sub
+### _sub
 No description
 
 
 #### Declaration
 ```solidity
-  function sub(
+  function _sub(
   ) internal returns (uint256 z)
 ```
 

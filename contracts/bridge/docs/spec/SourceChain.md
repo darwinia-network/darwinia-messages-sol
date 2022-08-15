@@ -115,7 +115,7 @@ No description
 #### Declaration
 ```solidity
   function decodeMessageKey(
-  ) public returns (struct SourceChain.MessageKey key)
+  ) internal returns (struct SourceChain.MessageKey key)
 ```
 
 #### Modifiers:

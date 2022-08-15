@@ -39,18 +39,24 @@ import "../spec/TargetChain.sol";
 
 // Everything about outgoing messages sending.
 contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, SourceChain {
+    /// slot 1
+    OutboundLaneNonce public outboundLaneNonce;
+    /// slot 2
+    /// nonce => hash(MessagePayload)
+    mapping(uint64 => bytes32) public messages;
+
+    address public immutable FEE_MARKET;
+
+    uint256 private constant MAX_GAS_PER_MESSAGE       = 100000;
+    uint256 private constant MAX_CALLDATA_LENGTH       = 2048;
+    uint64  private constant MAX_PENDING_MESSAGES      = 30;
+    uint64  private constant MAX_PRUNE_MESSAGES_ATONCE = 5;
+
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
     event MessagesDelivered(uint64 indexed begin, uint64 indexed end, uint256 results);
     event MessagePruned(uint64 indexed oldest_unpruned_nonce);
 
-    uint256 internal constant MAX_GAS_PER_MESSAGE = 100000;
-    uint256 internal constant MAX_CALLDATA_LENGTH = 2048;
-    uint64 internal constant MAX_PENDING_MESSAGES = 30;
-    uint64 internal constant MAX_PRUNE_MESSAGES_ATONCE = 5;
-
-    address public immutable FEE_MARKET;
-
-    // Outbound lane nonce.
+    /// Outbound lane nonce.
     struct OutboundLaneNonce {
         // Nonce of the latest message, received by bridged chain.
         uint64 latest_received_nonce;
@@ -61,16 +67,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         uint64 oldest_unpruned_nonce;
     }
 
-    /* State */
-
-    // slot 1
-    OutboundLaneNonce public outboundLaneNonce;
-
-    // slot 2
-    // nonce => hash(MessagePayload)
-    mapping(uint64 => bytes32) public messages;
-
-    /// @notice Deploys the OutboundLane contract
+    /// @dev Deploys the OutboundLane contract
     /// @param _lightClientBridge The contract address of on-chain light client
     /// @param _thisChainPosition The thisChainPosition of outbound lane
     /// @param _thisLanePosition The lanePosition of this outbound lane
@@ -89,26 +86,36 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         uint64 _oldest_unpruned_nonce,
         uint64 _latest_received_nonce,
         uint64 _latest_generated_nonce
-    ) OutboundLaneVerifier(_lightClientBridge, _thisChainPosition, _thisLanePosition, _bridgedChainPosition, _bridgedLanePosition) {
-        outboundLaneNonce = OutboundLaneNonce(_latest_received_nonce, _latest_generated_nonce, _oldest_unpruned_nonce);
+    ) OutboundLaneVerifier(
+        _lightClientBridge,
+        _thisChainPosition,
+        _thisLanePosition,
+        _bridgedChainPosition,
+        _bridgedLanePosition
+    ) {
+        outboundLaneNonce = OutboundLaneNonce(
+            _latest_received_nonce,
+            _latest_generated_nonce,
+            _oldest_unpruned_nonce
+        );
         FEE_MARKET = _feeMarket;
     }
 
-    /// @notice Send message over lane.
+    /// @dev Send message over lane.
     /// Submitter could be a contract or just an EOA address.
     /// At the beginning of the launch, submmiter is permission, after the system is stable it will be permissionless.
     /// @param targetContract The target contract address which you would send cross chain message to
     /// @param encoded The calldata which encoded by ABI Encoding
     function send_message(address targetContract, bytes calldata encoded) external payable override returns (uint256) {
-        require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "Lane: TooManyPendingMessages");
-        require(outboundLaneNonce.latest_generated_nonce < type(uint64).max, "Lane: Overflow");
+        require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "TooManyPendingMessages");
+        require(outboundLaneNonce.latest_generated_nonce < type(uint64).max, "Overflow");
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
 
         // assign the message to top relayers
         uint256 encoded_key = encodeMessageKey(nonce);
-        require(IFeeMarket(FEE_MARKET).assign{value: msg.value}(encoded_key), "Lane: AssignRelayersFailed");
+        require(IFeeMarket(FEE_MARKET).assign{value: msg.value}(encoded_key), "AssignRelayersFailed");
 
-        require(encoded.length <= MAX_CALLDATA_LENGTH, "Lane: Calldata is too large");
+        require(encoded.length <= MAX_CALLDATA_LENGTH, "TooLargeCalldata");
         outboundLaneNonce.latest_generated_nonce = nonce;
         MessagePayload memory payload = MessagePayload({
             source: msg.sender,
@@ -117,7 +124,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         });
         messages[nonce] = hash(payload);
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
-        prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
+        _prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
         emit MessageAccepted(
             nonce,
             msg.sender,
@@ -126,22 +133,27 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         return encoded_key;
     }
 
-    // Receive messages delivery proof from bridged chain.
+    /// Receive messages delivery proof from bridged chain.
     function receive_messages_delivery_proof(
         InboundLaneData calldata inboundLaneData,
         bytes memory messagesProof
     ) external {
-        verify_messages_delivery_proof(hash(inboundLaneData), messagesProof);
-        DeliveredMessages memory confirmed_messages = confirm_delivery(inboundLaneData);
+        _verify_messages_delivery_proof(hash(inboundLaneData), messagesProof);
+        DeliveredMessages memory confirmed_messages = _confirm_delivery(inboundLaneData);
         // settle the confirmed_messages at fee market
         settle_messages(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
+    }
+
+    /// commit lane data to the `commitment` storage.
+    function commitment() external view returns (bytes32) {
+        return hash(data());
     }
 
     function message_size() public view returns (uint64 size) {
         size = outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce;
     }
 
-	// Get lane data from the storage.
+	/// Get lane data from the storage.
     function data() public view returns (OutboundLaneDataStorage memory lane_data) {
         uint64 size = message_size();
         if (size > 0) {
@@ -155,33 +167,35 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
     }
 
-    // commit lane data to the `commitment` storage.
-    function commitment() external view returns (bytes32) {
-        return hash(data());
-    }
-
-    /* Private Functions */
-
-    function extract_inbound_lane_info(InboundLaneData memory lane_data) internal pure returns (uint64 total_unrewarded_messages, uint64 last_delivered_nonce) {
+    function _extract_inbound_lane_info(
+        InboundLaneData memory lane_data
+    ) private pure returns (
+        uint64 total_unrewarded_messages,
+        uint64 last_delivered_nonce
+    ) {
         total_unrewarded_messages = lane_data.last_delivered_nonce - lane_data.last_confirmed_nonce;
         last_delivered_nonce = lane_data.last_delivered_nonce;
     }
 
-    // Confirm messages delivery.
-    function confirm_delivery(InboundLaneData memory inboundLaneData) internal returns (DeliveredMessages memory confirmed_messages) {
-        (uint64 total_messages, uint64 latest_delivered_nonce) = extract_inbound_lane_info(inboundLaneData);
-        require(total_messages < 256, "Lane: InvalidNumberOfMessages");
+    /// Confirm messages delivery.
+    function _confirm_delivery(
+        InboundLaneData memory inboundLaneData
+    ) private returns (
+        DeliveredMessages memory confirmed_messages
+    ) {
+        (uint64 total_messages, uint64 latest_delivered_nonce) = _extract_inbound_lane_info(inboundLaneData);
+        require(total_messages < 256, "InvalidNumberOfMessages");
 
         UnrewardedRelayer[] memory relayers = inboundLaneData.relayers;
         OutboundLaneNonce memory nonce = outboundLaneNonce;
-        require(latest_delivered_nonce > nonce.latest_received_nonce, "Lane: NoNewConfirmations");
-        require(latest_delivered_nonce <= nonce.latest_generated_nonce, "Lane: FailedToConfirmFutureMessages");
+        require(latest_delivered_nonce > nonce.latest_received_nonce, "NoNewConfirmations");
+        require(latest_delivered_nonce <= nonce.latest_generated_nonce, "FailedToConfirmFutureMessages");
         // that the relayer has declared correct number of messages that the proof contains (it
         // is checked outside of the function). But it may happen (but only if this/bridged
         // chain storage is corrupted, though) that the actual number of confirmed messages if
         // larger than declared.
-        require(latest_delivered_nonce - nonce.latest_received_nonce <= total_messages, "Lane: TryingToConfirmMoreMessagesThanExpected");
-        uint256 dispatch_results = extract_dispatch_results(nonce.latest_received_nonce, latest_delivered_nonce, relayers);
+        require(latest_delivered_nonce - nonce.latest_received_nonce <= total_messages, "TryingToConfirmMoreMessagesThanExpected");
+        uint256 dispatch_results = _extract_dispatch_results(nonce.latest_received_nonce, latest_delivered_nonce, relayers);
         uint64 prev_latest_received_nonce = nonce.latest_received_nonce;
         outboundLaneNonce.latest_received_nonce = latest_delivered_nonce;
         confirmed_messages = DeliveredMessages({
@@ -193,11 +207,15 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         emit MessagesDelivered(confirmed_messages.begin, confirmed_messages.end, confirmed_messages.dispatch_results);
     }
 
-    // Extract new dispatch results from the unrewarded relayers vec.
-    //
-    // Revert if unrewarded relayers vec contains invalid data, meaning that the bridged
-    // chain has invalid runtime storage.
-    function extract_dispatch_results(uint64 prev_latest_received_nonce, uint64 latest_received_nonce, UnrewardedRelayer[] memory relayers) internal pure returns(uint256 received_dispatch_result) {
+    /// Extract new dispatch results from the unrewarded relayers vec.
+    ///
+    /// Revert if unrewarded relayers vec contains invalid data, meaning that the bridged
+    /// chain has invalid runtime storage.
+    function _extract_dispatch_results(
+        uint64 prev_latest_received_nonce,
+        uint64 latest_received_nonce,
+        UnrewardedRelayer[] memory relayers
+    ) private pure returns(uint256 received_dispatch_result) {
         // the only caller of this functions checks that the
         // prev_latest_received_nonce..=latest_received_nonce is valid, so we're ready to accept
         // messages in this range => with_capacity call must succeed here or we'll be unable to receive
@@ -208,12 +226,12 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
             UnrewardedRelayer memory entry = relayers[i];
             // unrewarded relayer entry must have at least 1 unconfirmed message
             // (guaranteed by the `InboundLane::receive_message()`)
-            require(entry.messages.end >= entry.messages.begin, "Lane: EmptyUnrewardedRelayerEntry");
+            require(entry.messages.end >= entry.messages.begin, "EmptyUnrewardedRelayerEntry");
             if (last_entry_end > 0) {
                 uint64 expected_entry_begin = last_entry_end + 1;
                 // every entry must confirm range of messages that follows previous entry range
                 // (guaranteed by the `InboundLane::receive_message()`)
-                require(entry.messages.begin == expected_entry_begin, "Lane: NonConsecutiveUnrewardedRelayerEntries");
+                require(entry.messages.begin == expected_entry_begin, "NonConsecutiveUnrewardedRelayerEntries");
             }
             last_entry_end = entry.messages.end;
             // entry can't confirm messages larger than `inbound_lane_data.latest_received_nonce()`
@@ -221,11 +239,11 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
 			// technically this will be detected in the next loop iteration as
 			// `InvalidNumberOfDispatchResults` but to guarantee safety of loop operations below
 			// this is detected now
-            require(entry.messages.end <= latest_received_nonce, "Lane: FailedToConfirmFutureMessages");
+            require(entry.messages.end <= latest_received_nonce, "FailedToConfirmFutureMessages");
             // now we know that the entry is valid
             // => let's check if it brings new confirmations
-            uint64 new_messages_begin = max(entry.messages.begin, prev_latest_received_nonce + 1);
-            uint64 new_messages_end = min(entry.messages.end, latest_received_nonce);
+            uint64 new_messages_begin = _max(entry.messages.begin, prev_latest_received_nonce + 1);
+            uint64 new_messages_end = _min(entry.messages.end, latest_received_nonce);
             if (new_messages_end < new_messages_begin) {
                 continue;
             }
@@ -241,10 +259,10 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         }
     }
 
-    // Prune at most `max_messages_to_prune` already received messages.
-    //
-    // Returns number of pruned messages.
-    function prune_messages(uint64 max_messages_to_prune) internal returns (uint64 pruned_messages) {
+    /// Prune at most `max_messages_to_prune` already received messages.
+    ///
+    /// Returns number of pruned messages.
+    function _prune_messages(uint64 max_messages_to_prune) private returns (uint64 pruned_messages) {
         OutboundLaneNonce memory nonce = outboundLaneNonce;
         while (pruned_messages < max_messages_to_prune &&
             nonce.oldest_unpruned_nonce <= nonce.latest_received_nonce)
@@ -260,23 +278,27 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         return pruned_messages;
     }
 
-    function settle_messages(UnrewardedRelayer[] memory relayers, uint64 received_start, uint64 received_end) internal {
+    function settle_messages(
+        UnrewardedRelayer[] memory relayers,
+        uint64 received_start,
+        uint64 received_end
+    ) private {
         IFeeMarket.DeliveredRelayer[] memory delivery_relayers = new IFeeMarket.DeliveredRelayer[](relayers.length);
         for (uint256 i = 0; i < relayers.length; i++) {
             UnrewardedRelayer memory r = relayers[i];
-            uint64 nonce_begin = max(r.messages.begin, received_start);
-            uint64 nonce_end = min(r.messages.end, received_end);
+            uint64 nonce_begin = _max(r.messages.begin, received_start);
+            uint64 nonce_end = _min(r.messages.end, received_end);
             delivery_relayers[i] = IFeeMarket.DeliveredRelayer(r.relayer, encodeMessageKey(nonce_begin), encodeMessageKey(nonce_end));
         }
-        require(IFeeMarket(FEE_MARKET).settle(delivery_relayers, msg.sender), "Lane: SettleFailed");
+        require(IFeeMarket(FEE_MARKET).settle(delivery_relayers, msg.sender), "SettleFailed");
     }
 
     // --- Math ---
-    function min(uint64 x, uint64 y) internal pure returns (uint64 z) {
+    function _min(uint64 x, uint64 y) private pure returns (uint64 z) {
         return x <= y ? x : y;
     }
 
-    function max(uint64 x, uint64 y) internal pure returns (uint64 z) {
+    function _max(uint64 x, uint64 y) private pure returns (uint64 z) {
         return x >= y ? x : y;
     }
 }

@@ -31,7 +31,6 @@ interface Hevm {
 contract POSALightClientTest is POSACommitmentScheme, DSTest {
     uint constant sk = 1;
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
-    bytes32 private constant COMMIT_TYPEHASH  = 0x2ea67489b4c8762e92cdf00de12ced5672416d28fa4265cd7fb78ddd61dd3f32;
     bytes32 private constant DOMAIN_SEPARATOR = 0x38a6d9f96ef6e79768010f6caabfe09abc43e49792d5c787ef0d4fc802855947;
 
     address alice;

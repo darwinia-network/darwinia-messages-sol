@@ -80,29 +80,32 @@ interface IBLS {
 }
 
 contract BeaconLightClient is BeaconChain, Bitfield {
-    event FinalizedHeaderImported(BeaconBlockHeader finalized_header);
-    event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed next_sync_committee_root);
+    // Beacon block header that is finalized
+    BeaconBlockHeader public finalized_header;
+    // Execution payload state root of finalized header
+    bytes32 public latest_execution_payload_state_root;
+    // Sync committees corresponding to the header
+    // sync_committee_perid => sync_committee_root
+    mapping (uint64 => bytes32) public sync_committee_roots;
 
     // address(0x0800)
     address private immutable BLS_PRECOMPILE;
-
     bytes32 public immutable GENESIS_VALIDATORS_ROOT;
-
     // A bellatrix beacon state has 25 fields, with a depth of 5.
     // | field                               | gindex | depth |
     // | ----------------------------------- | ------ | ----- |
     // | next_sync_committee                 | 55     | 5     |
     // | finalized_checkpoint_root           | 105    | 6     |
-    uint64 constant private NEXT_SYNC_COMMITTEE_INDEX = 55;
-    uint64 constant private NEXT_SYNC_COMMITTEE_DEPTH = 5;
-
-    uint64 constant private FINALIZED_CHECKPOINT_ROOT_INDEX = 105;
-    uint64 constant private FINALIZED_CHECKPOINT_ROOT_DEPTH = 6;
-
+    uint64 constant private NEXT_SYNC_COMMITTEE_INDEX        = 55;
+    uint64 constant private NEXT_SYNC_COMMITTEE_DEPTH        = 5;
+    uint64 constant private FINALIZED_CHECKPOINT_ROOT_INDEX  = 105;
+    uint64 constant private FINALIZED_CHECKPOINT_ROOT_DEPTH  = 6;
+    uint64 constant private SLOTS_PER_EPOCH                  = 32;
     uint64 constant private EPOCHS_PER_SYNC_COMMITTEE_PERIOD = 256;
-    uint64 constant private SLOTS_PER_EPOCH = 32;
+    bytes4 constant private DOMAIN_SYNC_COMMITTEE            = 0x07000000;
 
-    bytes4 constant private DOMAIN_SYNC_COMMITTEE = 0x07000000;
+    event FinalizedHeaderImported(BeaconBlockHeader finalized_header);
+    event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed next_sync_committee_root);
 
     struct SyncAggregate {
         bytes32[2] sync_committee_bits;
@@ -135,16 +138,6 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         SyncCommittee next_sync_committee;
         bytes32[] next_sync_committee_branch;
     }
-
-    // Beacon block header that is finalized
-    BeaconBlockHeader public finalized_header;
-
-    // Execution payload state root of finalized header
-    bytes32 public latest_execution_payload_state_root;
-
-    // Sync committees corresponding to the header
-    // sync_committee_perid => sync_committee_root
-    mapping (uint64 => bytes32) public sync_committee_roots;
 
     constructor(
         address _bls,

@@ -21,6 +21,9 @@ pragma abicoder v2;
 import "../interfaces/ILightClient.sol";
 
 contract OutboundLaneVerifier {
+    // indentify slot
+    Slot0 public slot0;
+
     /// @dev The contract address of on-chain light client
     ILightClient public immutable lightClient;
 
@@ -34,13 +37,6 @@ contract OutboundLaneVerifier {
         // This chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
         uint32 thisChainPosition;
     }
-
-    /* State */
-
-    // indentify slot ------------------------------------------------------------
-    // slot 0
-    Slot0 public slot0;
-    // ------------------------------------------------------------------
 
     constructor(
         address _lightClient,
@@ -56,9 +52,7 @@ contract OutboundLaneVerifier {
         slot0.bridgedLanePosition = _bridgedLanePosition;
     }
 
-    /* Private Functions */
-
-    function verify_messages_delivery_proof(
+    function _verify_messages_delivery_proof(
         bytes32 inlane_data_hash,
         bytes memory encoded_proof
     ) internal view {

@@ -15,14 +15,10 @@ The inbound lane is the message layer of the bridge
 - [Functions](#functions)
   - [constructor](#constructor)
   - [receive_messages_proof](#receive_messages_proof)
+  - [commitment](#commitment)
   - [relayers_size](#relayers_size)
   - [relayers_back](#relayers_back)
   - [data](#data)
-  - [commitment](#commitment)
-  - [receive_state_update](#receive_state_update)
-  - [receive_message](#receive_message)
-  - [dispatch](#dispatch)
-  - [filter](#filter)
 - [Events](#events)
   - [MessageDispatched](#messagedispatched)
 
@@ -34,9 +30,6 @@ The inbound lane is the message layer of the bridge
 
 | Var | Type |
 | --- | --- |
-| MAX_GAS_PER_MESSAGE | uint256 |
-| GAS_BUFFER | uint256 |
-| MAX_UNCONFIRMED_MESSAGES | uint256 |
 | inboundLaneNonce | struct InboundLane.InboundLaneNonce |
 | relayers | mapping(uint64 => struct TargetChain.UnrewardedRelayer) |
 | locked | uint256 |
@@ -58,8 +51,8 @@ No description
 ## Functions
 
 ### constructor
-Deploys the InboundLane contract
-
+No description
+> Deploys the InboundLane contract
 
 
 #### Declaration
@@ -92,19 +85,38 @@ Deploys the InboundLane contract
 |`_last_delivered_nonce` | uint64 | The last_delivered_nonce of inbound lane
 
 ### receive_messages_proof
-No description
+Receive messages proof from bridged chain.
+
+The weight of the call assumes that the transaction always brings outbound lane
+state update. Because of that, the submitter (relayer) has no benefit of not including
+this data in the transaction, so reward confirmations lags should be minimal.
 
 
 #### Declaration
 ```solidity
   function receive_messages_proof(
-  ) public nonReentrant
+  ) external nonReentrant
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | nonReentrant |
+
+
+
+### commitment
+Commit lane data to the `commitment` storage.
+
+
+#### Declaration
+```solidity
+  function commitment(
+  ) external returns (bytes32)
+```
+
+#### Modifiers:
+No modifiers
 
 
 
@@ -139,7 +151,7 @@ No modifiers
 
 
 ### data
-No description
+Get lane data from the storage.
 
 
 #### Declaration
@@ -153,118 +165,13 @@ No modifiers
 
 
 
-### commitment
-No description
-
-
-#### Declaration
-```solidity
-  function commitment(
-  ) external returns (bytes32)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### receive_state_update
-No description
-
-
-#### Declaration
-```solidity
-  function receive_state_update(
-  ) internal returns (uint64)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### receive_message
-No description
-
-
-#### Declaration
-```solidity
-  function receive_message(
-  ) internal returns (uint256 dispatch_results)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### dispatch
-dispatch the cross chain message
-
-
-
-#### Declaration
-```solidity
-  function dispatch(
-    struct SourceChain.MessagePayload payload
-  ) internal returns (bool dispatch_result)
-```
-
-#### Modifiers:
-No modifiers
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`payload` | struct SourceChain.MessagePayload | payload of the dispatch message
-
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`dispatch_result` | the dispatch call result
-- Return True:
-  1. filter return True and dispatch call successfully with none 32-length return data
-  2. filter return True and dispatch call successfully with 32-length return data is True
-- Return False:
-  1. filter return False
-  2. filter return True and dispatch call failed
-  3. filter return True and dispatch call successfully with 32-length return data is False
-### filter
-filter the cross chain message
-
-> The app layer must implement the interface `ICrossChainFilter`
-to verify the source sender and payload of source chain messages.
-
-
-#### Declaration
-```solidity
-  function filter(
-    address target,
-    bytes encoded
-  ) internal returns (bool canCall)
-```
-
-#### Modifiers:
-No modifiers
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`target` | address | target of the dispatch message
-|`encoded` | bytes | encoded calldata of the dispatch message
-
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`canCall` | the filter static call result, Return True only when target contract
-implement the `ICrossChainFilter` interface with return data is True.
 
 
 ## Events
 
 ### MessageDispatched
-Notifies an observer that the message has dispatched
-
+No description
+> Notifies an observer that the message has dispatched
 
   
 

@@ -23,9 +23,14 @@ import "../../utils/ECDSA.sol";
 /// @title Manages a set of relayers and a threshold to message commitment
 /// @dev Stores the relayers and a threshold
 contract EcdsaAuthority {
-    event AddedRelayer(address relayer);
-    event RemovedRelayer(address relayer);
-    event ChangedThreshold(uint256 threshold);
+    /// @dev Nonce to prevent replay of update operations
+    uint256 public nonce;
+    /// @dev Count of all relayers
+    uint256 internal count;
+    /// @dev Number of required confirmations for update operations
+    uint256 internal threshold;
+    /// @dev Store all relayers in the linked list
+    mapping(address => address) internal relayers;
 
     // keccak256(
     //     "chain_id | spec_name | :: | pallet_name"
@@ -35,37 +40,24 @@ contract EcdsaAuthority {
     // Method Id of `add_relayer`
     // bytes4(keccak256("add_relayer(address,uint256)"))
     bytes4 private constant ADD_RELAYER_SIG = bytes4(0xb7aafe32);
-
     // Method Id of `remove_relayer`
     // bytes4(keccak256("remove_relayer(address,address,uint256)"))
     bytes4 private constant REMOVE_RELAYER_SIG = bytes4(0x8621d1fa);
-
     // Method Id of `swap_relayer`
     // bytes4(keccak256("swap_relayer(address,address,address)"))
     bytes4 private constant SWAP_RELAYER_SIG = bytes4(0xcb76085b);
-
     // Method Id of `change_threshold`
     // bytes4(keccak256("change_threshold(uint256)"))
     bytes4 private constant CHANGE_THRESHOLD_SIG = bytes4(0x3c823333);
-
     // keccak256(
     //     "ChangeRelayer(bytes4 sig,bytes params,uint256 nonce)"
     // );
     bytes32 private constant RELAY_TYPEHASH = 0x30a82982a8d5050d1c83bbea574aea301a4d317840a8c4734a308ffaa6a63bc8;
-
     address private constant SENTINEL = address(0x1);
 
-    /// @dev Nonce to prevent replay of update operations
-    uint256 public nonce;
-
-    /// @dev Store all relayers in the linked list
-    mapping(address => address) internal relayers;
-
-    /// @dev Count of all relayers
-    uint256 internal count;
-
-    /// @dev Number of required confirmations for update operations
-    uint256 internal threshold;
+    event AddedRelayer(address relayer);
+    event RemovedRelayer(address relayer);
+    event ChangedThreshold(uint256 threshold);
 
     /// @dev Sets initial storage of contract.
     /// @param _domain_separator source chain domain_separator
@@ -76,7 +68,7 @@ contract EcdsaAuthority {
         address[] memory _relayers,
         uint256 _threshold,
         uint256 _nonce
-    ) public {
+    ) {
         // Threshold can only be 0 at initialization.
         // Check ensures that setup function can only be called once.
         require(threshold == 0, "setup");
@@ -113,7 +105,7 @@ contract EcdsaAuthority {
         address _relayer,
         uint256 _threshold,
         bytes[] memory _signatures
-    ) public {
+    ) external {
         // Relayer address cannot be null, the sentinel or the registry itself.
         require(_relayer != address(0) && _relayer != SENTINEL && _relayer != address(this), "!relayer");
         // No duplicate relayers allowed.
@@ -139,7 +131,7 @@ contract EcdsaAuthority {
         address _relayer,
         uint256 _threshold,
         bytes[] memory _signatures
-    ) public {
+    ) external {
         // Only allow to remove a relayer, if threshold can still be reached.
         require(count - 1 >= _threshold, "!threshold");
         // Validate relayer address and check that it corresponds to relayer index.
@@ -166,7 +158,7 @@ contract EcdsaAuthority {
         address _oldRelayer,
         address _newRelayer,
         bytes[] memory _signatures
-    ) public {
+    ) external {
         // Relayer address cannot be null, the sentinel or the registry itself.
         require(_newRelayer != address(0) && _newRelayer != SENTINEL && _newRelayer != address(this), "!relayer");
         // No duplicate guards allowed.
@@ -187,12 +179,12 @@ contract EcdsaAuthority {
     /// @notice Changes the threshold of the registry to `_threshold`.
     /// @param _threshold New threshold.
     /// @param _signatures The signatures of the guards which to update the `threshold` .
-    function change_threshold(uint256 _threshold, bytes[] memory _signatures) public {
+    function change_threshold(uint256 _threshold, bytes[] memory _signatures) external {
         _verify_relayer_signatures(CHANGE_THRESHOLD_SIG, abi.encode(_threshold), _signatures);
         _change_threshold(_threshold);
     }
 
-    function _change_threshold(uint256 _threshold) internal {
+    function _change_threshold(uint256 _threshold) private {
         // Validate that threshold is smaller than number of owners.
         require(_threshold <= count, "!threshold");
         // There has to be at least one guard.
@@ -229,7 +221,7 @@ contract EcdsaAuthority {
         bytes4 methodID,
         bytes memory params,
         bytes[] memory signatures
-    ) internal {
+    ) private {
         bytes32 structHash =
             keccak256(
                 abi.encode(
@@ -268,7 +260,7 @@ contract EcdsaAuthority {
         bytes32 dataHash,
         bytes[] memory signatures,
         uint256 requiredSignatures
-    ) internal view {
+    ) private view {
         // Check that the provided signature data is not too short
         require(signatures.length >= requiredSignatures, "signatures");
         // There cannot be an owner with address 0.
@@ -285,7 +277,7 @@ contract EcdsaAuthority {
         return DOMAIN_SEPARATOR;
     }
 
-    function encode_data_hash(bytes32 structHash) internal view returns (bytes32) {
+    function encode_data_hash(bytes32 structHash) private view returns (bytes32) {
         return ECDSA.toTypedDataHash(domain_separator(), structHash);
     }
 }
