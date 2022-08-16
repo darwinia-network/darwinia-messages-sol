@@ -162,7 +162,7 @@ library CommonTypes {
     struct DeliveredMessages {
         uint64 begin;
         uint64 end;
-        bytes1 dispatch_results;
+        bytes dispatch_results;
     }
 
     function decodeDeliveredMessages(bytes memory _data)
@@ -174,7 +174,7 @@ library CommonTypes {
 
         uint64 begin = decodeUint64(Bytes.substr(_data, 0, 8));
         uint64 end = decodeUint64(Bytes.substr(_data, 8, 8));
-        bytes1 dispatch_results = _data[16];
+        bytes memory dispatch_results = decodeBitVecU8(Bytes.substr(_data, 16));
 
         return DeliveredMessages(begin, end, dispatch_results);
     }
