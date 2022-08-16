@@ -85,10 +85,7 @@ library CommonTypes {
         pure
         returns (Relayer memory)
     {
-        require(
-            _data.length >= 64,
-            "The data is not enough to decode Relayer"
-        );
+        require(_data.length >= 64, "The data is not enough to decode Relayer");
 
         bytes32 id = Bytes.toBytes32(Bytes.substr(_data, 0, 32));
 
@@ -109,7 +106,9 @@ library CommonTypes {
 
         // Option::Some(Reayler[])
         // _data checking
-        (uint256 relayersCount, uint8 mode) = ScaleCodec.decodeUintCompact(_data);
+        (uint256 relayersCount, uint8 mode) = ScaleCodec.decodeUintCompact(
+            _data
+        );
         require(relayersCount > 0, "No relayers");
         require(mode < 3, "Wrong compact mode"); // Now, mode 3 is not supported yet
         uint8 lengthOfPrefixBytes = uint8(2**mode);
@@ -223,7 +222,9 @@ library CommonTypes {
             "The data is not enough to decode InboundLaneData"
         );
 
-        uint64 lastConfirmedNonce = decodeUint64(Bytes.substr(_data, compactLength + 49 * length));
+        uint64 lastConfirmedNonce = decodeUint64(
+            Bytes.substr(_data, compactLength + 49 * length)
+        );
         if (length == 0) {
             return lastConfirmedNonce;
         } else {
@@ -231,7 +232,7 @@ library CommonTypes {
                 Bytes.substr(_data, compactLength + 49 * (length - 1))
             );
             return relayer.messages.end;
-        } 
+        }
     }
 
     ////////////////////////////////////

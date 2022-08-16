@@ -48,13 +48,13 @@ contract CommonTypesTest is DSTest {
         // }
         uint64 lastDeliveredNonce = CommonTypes
             .getLastDeliveredNonceFromInboundLaneData(data);
-        
+
         // TODO: decode relayer
         // assertTrue(relayer.messages.begin == 536);
         // assertTrue(relayer.messages.end == 536);
         // console.logBytes1(relayer.messages.dispatch_results); // Why 0x04?
         assertTrue(lastDeliveredNonce == 536);
-        
+
         // No relayer, last delivered nonce is from lastConfirmedNonce
         // {
         //     relayers: []
