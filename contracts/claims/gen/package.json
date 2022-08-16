@@ -1,0 +1,18 @@
+{
+  "name": "gen",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "gen": "ts-node index",
+    "verify": "ts-node verify",
+    "calldata": "ts-node calldata"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^9.0.13",
+    "ethers": "^5.5.4",
+    "fs-extra": "^10.0.1",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.2"
+  }
+}
