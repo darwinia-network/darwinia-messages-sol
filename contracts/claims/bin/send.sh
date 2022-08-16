@@ -13,14 +13,12 @@ to=0xA561c8F6AC9eCb31e0793fBe2CCEc136a7e4bE84
 token=0xB29DA7C1b1514AB342afbE6AB915252Ad3f87E4d
 ids=$(jq -r ".[].erc721[].ids[]" "$path")
 
-echo $ids
-
-# nonce=$(seth nonce $ETH_FROM)
-# echo "nonce: ${nonce}"
-# for id in $ids;do
-#   echo "sending token [$id] to [$to]"
-#   seth send -F "$ETH_FROM" -N "$nonce" $token "transferFrom(address,address,uint)" "${ETH_FROM?}" "${to?}" "${id?}" --chain "${SETH_CHAIN?}"
-#   nonce=$(( ${nonce} + 1 ))
-#   echo "sent token [$id] to [$to]"
-# done
-# echo "nonce: ${nonce}"
+nonce=$(seth nonce $ETH_FROM)
+echo "nonce: ${nonce}"
+for id in $ids;do
+  echo "sending token [$id] to [$to]"
+  seth send -F "$ETH_FROM" -N "$nonce" $token "transferFrom(address,address,uint)" "${ETH_FROM?}" "${to?}" "${id?}" --chain "${SETH_CHAIN?}"
+  nonce=$(( ${nonce} + 1 ))
+  echo "sent token [$id] to [$to]"
+done
+echo "nonce: ${nonce}"
