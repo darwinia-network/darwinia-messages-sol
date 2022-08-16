@@ -45,6 +45,32 @@ library CommonTypes {
     }
 
     ////////////////////////////////////
+    // BitVec<u8>
+    ////////////////////////////////////
+    function ceilDivide(uint a, uint b) internal pure returns (uint) {
+        if (a % b == 0) {
+            return uint(a) / b;
+        } else {
+            return uint(a) / b + 1;
+        }
+    }
+
+    function decodeBitVecU8(bytes memory _data)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        (uint256 bits, uint8 mode) = ScaleCodec.decodeUintCompact(_data);
+        uint prefixLength = uint8(2**mode);
+        uint bytesLength = ceilDivide(bits, 8);
+        require(
+            _data.length >= prefixLength + bytesLength,
+            "The data is not enough to decode BitVecU8"
+        );
+        return Bytes.substr(_data, prefixLength, bytesLength);
+    }
+
+    ////////////////////////////////////
     // Relayer
     ////////////////////////////////////
     struct Relayer {

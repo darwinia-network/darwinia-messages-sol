@@ -65,4 +65,70 @@ contract CommonTypesTest is DSTest {
             .getLastDeliveredNonceFromInboundLaneData(data2);
         assertTrue(lastDeliveredNonce2 == 535);
     }
+
+    // function assertBitVecU8Eq(uint256 v, bytes memory e) internal {
+    //     assertEq0(ScaleCodec.encodeUintCompact(v), e);
+    // }
+
+    function testBitVecU8() public {
+        assertEq0(
+            CommonTypes.decodeBitVecU8(hex"00"), // 00 => bv[]
+            hex""
+        );
+
+        assertEq0(
+            CommonTypes.decodeBitVecU8(hex"0400"), // 0400 => bv[0]
+            hex"00"
+        );
+
+        assertEq0(
+            CommonTypes.decodeBitVecU8(hex"0480"), // 0480 => bv[1]
+            hex"80"
+        );
+
+        assertEq0(
+            CommonTypes.decodeBitVecU8(hex"0800"), // 0800 => bv[0,0]
+            hex"00"
+        );
+
+        assertEq0(
+            CommonTypes.decodeBitVecU8(hex"0880"), // 0800 => bv[1,0]
+            hex"80"
+        );
+
+        //
+        assertEq0(
+            CommonTypes.decodeBitVecU8(hex"0ca0"), // 0ca0 => bv[1,0,1]
+            hex"a0"
+        );
+
+        assertEq0(
+            CommonTypes.decodeBitVecU8(hex"0ca01100"), // 0ca0 => bv[1,0,1]
+            hex"a0"
+        );
+
+        //
+        assertEq0(
+            CommonTypes.decodeBitVecU8(hex"1c56"), // 1c56 => bv[0, 1, 0, 1, 0, 1, 1]
+            hex"56"
+        );
+
+        //
+        assertEq0(
+            CommonTypes.decodeBitVecU8(hex"2056"), // 1c56 => bv[0, 1, 0, 1, 0, 1, 1, 0]
+            hex"56"
+        );
+
+        //
+        assertEq0(
+            CommonTypes.decodeBitVecU8(hex"24d680"), // 24d680 => bv[1, 1, 0, 1, 0, 1, 1, 0, 1]
+            hex"d680"
+        );
+
+        //
+        assertEq0(
+            CommonTypes.decodeBitVecU8(hex"44565600"), // 44565600 => bv[0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0]
+            hex"565600"
+        );
+    }
 }
