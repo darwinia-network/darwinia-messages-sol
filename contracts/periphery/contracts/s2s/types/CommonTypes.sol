@@ -58,6 +58,7 @@ library CommonTypes {
     struct BitVecU8 {
         uint bits;
         bytes result;
+        uint bytesLength;
     }
 
     function decodeBitVecU8(bytes memory _data)
@@ -72,7 +73,12 @@ library CommonTypes {
             _data.length >= prefixLength + bytesLength,
             "The data is not enough to decode BitVecU8"
         );
-        return BitVecU8(bits, Bytes.substr(_data, prefixLength, bytesLength));
+        return
+            BitVecU8(
+                bits,
+                Bytes.substr(_data, prefixLength, bytesLength),
+                prefixLength + bytesLength
+            );
     }
 
     ////////////////////////////////////
@@ -167,7 +173,7 @@ library CommonTypes {
     struct DeliveredMessages {
         uint64 begin;
         uint64 end;
-        BitVecU8 dispatch_results;
+        BitVecU8 dispatchResults;
     }
 
     function decodeDeliveredMessages(bytes memory _data)
@@ -177,15 +183,17 @@ library CommonTypes {
     {
         uint64 begin = decodeUint64(Bytes.substr(_data, 0, 8));
         uint64 end = decodeUint64(Bytes.substr(_data, 8, 8));
-        BitVecU8 memory dispatch_results = decodeBitVecU8(Bytes.substr(_data, 16));
+        BitVecU8 memory dispatchResults = decodeBitVecU8(
+            Bytes.substr(_data, 16)
+        );
 
-        return DeliveredMessages(begin, end, dispatch_results);
+        return DeliveredMessages(begin, end, dispatchResults);
     }
 
     function getBytesLengthOfDeliveredMessages(
         DeliveredMessages memory deliveredMessages
     ) internal pure returns (uint) {
-        return 16 + deliveredMessages.dispatch_results.result.length;
+        return 16 + deliveredMessages.dispatchResults.bytesLength;
     }
 
     ////////////////////////////////////

@@ -28,6 +28,10 @@ describe('S2STypesTest', function (accounts) {
         await typesTest.testDecodeInboundLaneData();
     })
 
+    it('testDecodeInboundLaneData2', async() => {
+        await typesTest.testDecodeInboundLaneData2();
+    })
+
     it('testGetLastUnrewardedRelayerFromInboundLaneData', async() => {
         await typesTest.testGetLastUnrewardedRelayerFromInboundLaneData();
     })
