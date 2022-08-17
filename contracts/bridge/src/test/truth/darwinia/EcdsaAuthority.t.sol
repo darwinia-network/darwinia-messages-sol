@@ -109,6 +109,21 @@ contract EcdsaAuthorityTest is DSTest {
         assertEq(bob, e[0]);
     }
 
+    function test_swap_relayer_hash() public {
+        address alice = 0x68898dB1012808808C903F390909C52D9F706749;
+        address bob = 0x4CDC1dbBD754Ea539f1fFaeA91f1B6c4B8dD14bD;
+        bytes32 struct_hash = keccak256(
+            abi.encode(
+                RELAY_TYPEHASH,
+                SWAP_RELAYER_SIG,
+                abi.encode(SENTINEL, alice, bob),
+                authority.nonce()
+            )
+        );
+        bytes32 digest = ECDSA.toTypedDataHash(domain_separator(), struct_hash);
+        emit log_bytes32(digest);
+    }
+
     function test_add_relayer_with_threshold() public {
         address cici = address(0xc);
         uint threshold = 2;
