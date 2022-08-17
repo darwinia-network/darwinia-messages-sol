@@ -1,7 +1,7 @@
 {
   "name": "Darwinia & Crab NFT",
   "timestamp": "2022-08-16T00:00:00.000Z",
-  "version": { "major": 0, "minor": 1, "patch": 1 },
+  "version": { "major": 0, "minor": 1, "patch": 2 },
   "logoURI": "https://pordria.evolution.land/logos/darwinia.png",
   "events": [
     {
