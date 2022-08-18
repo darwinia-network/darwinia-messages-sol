@@ -120,6 +120,14 @@ contract EcdsaAuthorityTest is DSTest {
                 authority.nonce()
             )
         );
+        emit log_bytes(
+            abi.encode(
+                RELAY_TYPEHASH,
+                SWAP_RELAYER_SIG,
+                abi.encode(SENTINEL, alice, bob),
+                authority.nonce()
+            )
+        );
         bytes32 digest = ECDSA.toTypedDataHash(domain_separator(), struct_hash);
         emit log_bytes32(digest);
     }

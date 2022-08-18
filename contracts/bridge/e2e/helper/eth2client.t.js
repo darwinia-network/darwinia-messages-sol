@@ -8,13 +8,13 @@ const log = console.log;
 (async () => {
   // const sync_change = await eth2Client.get_sync_committee_period_update(42, 1)
   // log(sync_change)
-  const finality_update = await eth2Client.get_finality_update()
-  log(finality_update)
   // const optimistic_update = await eth2Client.get_optimistic_update()
   // log(optimistic_update)
-  let finalized_header = await eth2Client.get_header(finality_update.finalized_header.slot)
-  const bootstrap = await eth2Client.get_bootstrap(finalized_header.root)
-  log(JSON.stringify(bootstrap, null, 2))
+  //* const finality_update = await eth2Client.get_finality_update()
+  //* log(finality_update)
+  //* let finalized_header = await eth2Client.get_header(finality_update.finalized_header.slot)
+  //* const bootstrap = await eth2Client.get_bootstrap(finalized_header.root)
+  //* log(JSON.stringify(bootstrap, null, 2))
   // const bootstrap = await eth2Client.get_bootstrap('0xe1ae844281cb49a64ccc6ed6bc3d87e17f9ec401b83361d780f052ecff2baefb')
   // log(JSON.stringify(bootstrap, null, 2))
   // log(await eth2Client.get_finality_branch(105728))
@@ -69,10 +69,12 @@ const log = console.log;
   // log(current_sync_committee.aggregate_pubkey)
 
   // await eth2Client.get_next_sync_committee_branch('105671')
-  // const paths = [
-  //         ["finalized_checkpoint", "root"],
-  //       ]
-  // await eth2Client.get_state_proof('594880', paths)
+  const state_id = '421257'
+  const paths = [
+          '["finalized_checkpoint", "root"]',
+        ]
+  await eth2Client.get_multi_proof(state_id, paths)
+  await eth2Client.get_finality_branch(state_id)
   // await eth2Client.get_state_proof('639970', paths)
   // await eth2Client.get_latest_finalized_update()
   // const block = await eth2Client.get_beacon_block(641441)
