@@ -69,7 +69,7 @@ const log = console.log;
   // log(current_sync_committee.aggregate_pubkey)
 
   // await eth2Client.get_next_sync_committee_branch('105671')
-  const state_id = '421257'
+  const state_id = 'head'
   const paths = [
           '["finalized_checkpoint", "root"]',
         ]

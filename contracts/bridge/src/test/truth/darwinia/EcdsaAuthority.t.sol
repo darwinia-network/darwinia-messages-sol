@@ -109,16 +109,52 @@ contract EcdsaAuthorityTest is DSTest {
         assertEq(bob, e[0]);
     }
 
+    function test_add_relayer_hash() public {
+        bytes memory data = abi.encode(
+                RELAY_TYPEHASH,
+                ADD_RELAYER_SIG,
+                abi.encode(address(0), 1),
+                0
+            );
+        bytes32 struct_hash = keccak256(data);
+        bytes32 digest = ECDSA.toTypedDataHash(domain_separator_darwinia(), struct_hash);
+        assertEq(digest, 0xa787153e9fec0acd8c2cbe3d3fa8091a58e69c1b2830e778fe60b8aec0991df6);
+    }
+
+    function test_rm_relayer_hash() public {
+        bytes memory data = abi.encode(
+                RELAY_TYPEHASH,
+                REMOVE_RELAYER_SIG,
+                abi.encode(SENTINEL, 0x0101010101010101010101010101010101010101, 1),
+                0
+            );
+        bytes32 struct_hash = keccak256(data);
+        bytes32 digest = ECDSA.toTypedDataHash(domain_separator_darwinia(), struct_hash);
+        assertEq(digest, 0x0b2ecc3333b4b346ac0158de3e1a15989180ca9046284ecf25b08e3cb685ce14);
+    }
+
     function test_swap_relayer_hash() public {
         bytes memory data = abi.encode(
                 RELAY_TYPEHASH,
                 SWAP_RELAYER_SIG,
                 abi.encode(SENTINEL, SENTINEL, SENTINEL),
-                authority.nonce()
+                0
             );
         bytes32 struct_hash = keccak256(data);
         bytes32 digest = ECDSA.toTypedDataHash(domain_separator(), struct_hash);
         assertEq(digest, 0xe0048b398f49e08acbe5d5acc8beceecf2734c2cd4e73ec683302822ecc8811e);
+    }
+
+    function test_swap_relayer_hash2() public {
+        bytes memory data = abi.encode(
+                RELAY_TYPEHASH,
+                SWAP_RELAYER_SIG,
+                abi.encode(SENTINEL, 0x0101010101010101010101010101010101010101, 0x0202020202020202020202020202020202020202),
+                0
+            );
+        bytes32 struct_hash = keccak256(data);
+        bytes32 digest = ECDSA.toTypedDataHash(domain_separator_darwinia(), struct_hash);
+        assertEq(digest, 0x7ce94dac9a010fa6459cd29e9cb1732fcdc86a752cf05ac653f81a8a250969cc);
     }
 
     function test_add_relayer_with_threshold() public {
@@ -165,6 +201,17 @@ contract EcdsaAuthorityTest is DSTest {
                 abi.encodePacked(
                     "45",
                     "Pangoro",
+                    "::"
+                    "ecdsa-authority"
+                )
+            );
+    }
+
+    function domain_separator_darwinia() public pure returns (bytes32 s) {
+        s = keccak256(
+                abi.encodePacked(
+                    "46",
+                    "Darwinia",
                     "::"
                     "ecdsa-authority"
                 )

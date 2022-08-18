@@ -4,7 +4,7 @@ const abi = require('ethereumjs-abi');
 const typedData = {
     types: {
         DOMAIN_SEPARATOR: '38a6d9f96ef6e79768010f6caabfe09abc43e49792d5c787ef0d4fc802855947',
-        COMMIT_TYPEHASH: '1927575a20e860281e614acf70aa85920a1187ed2fb847ee50d71702e80e2b8f',
+        COMMIT_TYPEHASH: '78094893060403532648017515506754197708665517209499283813842244044760214381091',
         Commitment: [
             { name: 'block_number', type: 'uint32' },
             { name: 'message_root', type: 'bytes32' },

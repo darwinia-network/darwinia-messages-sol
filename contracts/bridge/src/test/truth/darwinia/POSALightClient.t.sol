@@ -65,4 +65,39 @@ contract POSALightClientTest is POSACommitmentScheme, DSTest {
         assertEq(lightclient.message_root(), commitment.message_root);
         assertEq(lightclient.block_number(), commitment.block_number);
     }
+
+    function test_message_commitment_hash() public {
+        bytes memory data = abi.encode(
+                COMMIT_TYPEHASH,
+                3,
+                0x0000000000000000000000000000000000000000000000000000000000000000,
+                0
+            );
+        bytes32 struct_hash = keccak256(data);
+        bytes32 digest = ECDSA.toTypedDataHash(domain_separator_darwinia(), struct_hash);
+        assertEq(digest, 0x9ff72bb99d4a7ecd6c68fd49b0f69c9a61ced3fe1003bf0fab68973c2591d0e1);
+    }
+
+    function test_message_commitment_hash2() public {
+        bytes memory data = abi.encode(
+                COMMIT_TYPEHASH,
+                9,
+                0x0101010101010101010101010101010101010101010101010101010101010101,
+                0
+            );
+        bytes32 struct_hash = keccak256(data);
+        bytes32 digest = ECDSA.toTypedDataHash(domain_separator_darwinia(), struct_hash);
+        assertEq(digest, 0xab023a4b2e14eac7518885bec31cf79c691793ede728b47f8a8a159e1774b007);
+    }
+
+    function domain_separator_darwinia() public pure returns (bytes32 s) {
+        s = keccak256(
+                abi.encodePacked(
+                    "46",
+                    "Darwinia",
+                    "::"
+                    "ecdsa-authority"
+                )
+            );
+    }
 }
