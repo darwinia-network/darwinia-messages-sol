@@ -27,7 +27,7 @@ library SmartChainXLib {
         uint256 _deliveryAndDispatchFee,
         bytes memory _message
     ) internal {
-        // the fee precision in the contracts is 18, but on chain is 9, transform the fee value.
+        // the fee precision in the contracts is 18, but on chain is 9, transform the fee amount.
         uint256 feeOfPalletPrecision = _deliveryAndDispatchFee / (10**9);
 
         // encode send_message call
