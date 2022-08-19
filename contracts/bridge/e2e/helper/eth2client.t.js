@@ -10,11 +10,11 @@ const log = console.log;
   // log(sync_change)
   // const optimistic_update = await eth2Client.get_optimistic_update()
   // log(optimistic_update)
-  //* const finality_update = await eth2Client.get_finality_update()
-  //* log(finality_update)
-  //* let finalized_header = await eth2Client.get_header(finality_update.finalized_header.slot)
-  //* const bootstrap = await eth2Client.get_bootstrap(finalized_header.root)
-  //* log(JSON.stringify(bootstrap, null, 2))
+  const finality_update = await eth2Client.get_finality_update()
+  log(finality_update)
+  let finalized_header = await eth2Client.get_header(finality_update.finalized_header.slot)
+  const bootstrap = await eth2Client.get_bootstrap(finalized_header.root)
+  log(JSON.stringify(bootstrap, null, 2))
   // const bootstrap = await eth2Client.get_bootstrap('0xe1ae844281cb49a64ccc6ed6bc3d87e17f9ec401b83361d780f052ecff2baefb')
   // log(JSON.stringify(bootstrap, null, 2))
   // log(await eth2Client.get_finality_branch(105728))
@@ -69,14 +69,14 @@ const log = console.log;
   // log(current_sync_committee.aggregate_pubkey)
 
   // await eth2Client.get_next_sync_committee_branch('105671')
-  const state_id = 'head'
-  const paths = [
-          '["finalized_checkpoint", "root"]',
-          // '["next_sync_committee", "aggregate_pubkey"]'
-          // '["latest_execution_payload_header", "state_root"]',
-        ]
-  await eth2Client.get_multi_proof(state_id, paths)
-  await eth2Client.get_finality_branch(state_id)
+  // const state_id = 'head'
+  // const paths = [
+  //         '["finalized_checkpoint", "root"]',
+  //         // '["next_sync_committee", "aggregate_pubkey"]'
+  //         // '["latest_execution_payload_header", "state_root"]',
+  //       ]
+  // await eth2Client.get_multi_proof(state_id, paths)
+  // await eth2Client.get_finality_branch(state_id)
   // await eth2Client.get_latest_execution_payload_state_root_branch(state_id)
   // await eth2Client.get_state_proof('639970', paths)
   // await eth2Client.get_latest_finalized_update()
