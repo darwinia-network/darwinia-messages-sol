@@ -72,9 +72,12 @@ const log = console.log;
   const state_id = 'head'
   const paths = [
           '["finalized_checkpoint", "root"]',
+          // '["next_sync_committee", "aggregate_pubkey"]'
+          // '["latest_execution_payload_header", "state_root"]',
         ]
   await eth2Client.get_multi_proof(state_id, paths)
   await eth2Client.get_finality_branch(state_id)
+  // await eth2Client.get_latest_execution_payload_state_root_branch(state_id)
   // await eth2Client.get_state_proof('639970', paths)
   // await eth2Client.get_latest_finalized_update()
   // const block = await eth2Client.get_beacon_block(641441)

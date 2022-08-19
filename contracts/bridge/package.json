@@ -19,8 +19,8 @@
   "author": "Darwinia dev",
   "license": "MIT",
   "devDependencies": {
-    "@chainsafe/persistent-merkle-tree": "^0.4.2",
-    "@chainsafe/ssz": "^0.9.2",
+    "@chainsafe/persistent-merkle-tree": "git@github.com:hujw77/ssz.git#pmt/single_proof_serialize",
+    "@chainsafe/ssz": "git@github.com:hujw77/ssz.git#pmt/single_proof_serialize",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^2.1.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
