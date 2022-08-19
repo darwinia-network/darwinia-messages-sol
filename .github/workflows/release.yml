@@ -29,10 +29,10 @@ jobs:
           cd contracts/${{ matrix.contract }}
           npm i
 
-      - name: Check contract
-        run: |
-          cd contracts/${{ matrix.contract }}
-          npx hardhat test
+      # - name: Check contract
+      #   run: |
+      #     cd contracts/${{ matrix.contract }}
+      #     npx hardhat test
 
       - name: Publish contract
         uses: JS-DevTools/npm-publish@v1
