@@ -25,6 +25,7 @@ jobs:
 
       - name: Install deps
         run: |
+          mv .env.sample .env
           cd contracts/${{ matrix.contract }}
           npm i
 
