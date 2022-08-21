@@ -40,7 +40,7 @@ FeeMarket=$(deploy FeeMarket \
 block_number=21791400
 block_header=$(seth block $block_number --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545
 )
-parant_hash=$(echo "$block_header" | seth --field parentHash)
+parent_hash=$(echo "$block_header" | seth --field parentHash)
 uncle_hash=$(echo "$block_header" | seth --field sha3Uncles)
 coinbase=$(echo "$block_header" | seth --field miner)
 state_root=$(echo "$block_header" | seth --field stateRoot)
@@ -60,7 +60,7 @@ DATA=$(ethabi encode params \
   -v uint64 0000000000000000000000000000000000000000000000000000000000000061 \
   -v uint64 0000000000000000000000000000000000000000000000000000000000000003 \
   -v "(bytes32,bytes32,address,bytes32,bytes32,bytes32,bytes,uint256,uint256,uint64,uint64,uint64,bytes,bytes32,bytes8)" \
-  "(${parant_hash:2},${uncle_hash:2},${coinbase:2},${state_root:2},${transactions_root:2},${receipts_root:2},${log_bloom:2},${difficulty:2},${number:2},${gas_limit:2},${gas_used:2},${timestamp:2},${extra_data:2},${mix_digest:2},${nonce:2})")
+  "(${parent_hash:2},${uncle_hash:2},${coinbase:2},${state_root:2},${transactions_root:2},${receipts_root:2},${log_bloom:2},${difficulty:2},${number:2},${gas_limit:2},${gas_used:2},${timestamp:2},${extra_data:2},${mix_digest:2},${nonce:2})")
 
 BSCLightClient=$(deploy_v2 BSCLightClient $DATA)
 

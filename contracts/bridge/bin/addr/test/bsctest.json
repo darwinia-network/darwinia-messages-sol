@@ -1,1 +1,9 @@
-{}
+{
+  "DEPLOYER": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
+  "pangoro": {
+    "SimpleFeeMarket": "0x7304a5222C643893D2DC87114Fd3f5240e506c8b",
+    "POSALightClient": "0xDabe3E1Db0F6752021Ffe3317DdF03bE31D73D51",
+    "OutboundLane": "0xc999be3eaa505A3C91ED076f6A1523A781E8b3bd",
+    "InboundLane": "0xF09FE18d3f4b4345b47c098C8B8Fba7743418aA4"
+  }
+}

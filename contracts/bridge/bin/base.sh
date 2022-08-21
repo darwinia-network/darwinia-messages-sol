@@ -104,10 +104,10 @@ deploy_v2() {
   BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
 
   # estimate gas
-  GAS=$(seth estimate --create "$BYTECODE" "$FUNCSIG$ARGS" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
+  GAS=$(seth estimate --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" --rpc-url "$ETH_RPC_URL")
 
   # deploy
-  ADDRESS=$(seth send --create "$BYTECODE" "$FUNCSIG$ARGS" -- --gas "$GAS" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
+  ADDRESS=$(set -x; seth send --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" -- --gas "$GAS" --rpc-url "$ETH_RPC_URL")
 
   # save the addrs to the json
   # TODO: It'd be nice if we could evolve this into a minimal versioning system
