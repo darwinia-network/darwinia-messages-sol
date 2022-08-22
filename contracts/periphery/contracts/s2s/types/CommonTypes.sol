@@ -45,6 +45,43 @@ library CommonTypes {
     }
 
     ////////////////////////////////////
+    // BitVecU8
+    ////////////////////////////////////
+    function ceilDivide(uint a, uint b) internal pure returns (uint) {
+        if (a % b == 0) {
+            return uint(a) / b;
+        } else {
+            return uint(a) / b + 1;
+        }
+    }
+
+    struct BitVecU8 {
+        uint bits;
+        bytes result;
+        uint bytesLength;
+    }
+
+    function decodeBitVecU8(bytes memory _data)
+        internal
+        pure
+        returns (BitVecU8 memory)
+    {
+        (uint256 bits, uint8 mode) = ScaleCodec.decodeUintCompact(_data);
+        uint prefixLength = uint8(2**mode);
+        uint bytesLength = ceilDivide(bits, 8);
+        require(
+            _data.length >= prefixLength + bytesLength,
+            "The data is not enough to decode BitVecU8"
+        );
+        return
+            BitVecU8(
+                bits,
+                Bytes.substr(_data, prefixLength, bytesLength),
+                prefixLength + bytesLength
+            );
+    }
+
+    ////////////////////////////////////
     // Relayer
     ////////////////////////////////////
     struct Relayer {
@@ -59,10 +96,7 @@ library CommonTypes {
         pure
         returns (Relayer memory)
     {
-        require(
-            _data.length >= 64,
-            "The data is not enough to decode Relayer"
-        );
+        require(_data.length >= 64, "The data is not enough to decode Relayer");
 
         bytes32 id = Bytes.toBytes32(Bytes.substr(_data, 0, 32));
 
@@ -83,7 +117,9 @@ library CommonTypes {
 
         // Option::Some(Reayler[])
         // _data checking
-        (uint256 relayersCount, uint8 mode) = ScaleCodec.decodeUintCompact(_data);
+        (uint256 relayersCount, uint8 mode) = ScaleCodec.decodeUintCompact(
+            _data
+        );
         require(relayersCount > 0, "No relayers");
         require(mode < 3, "Wrong compact mode"); // Now, mode 3 is not supported yet
         uint8 lengthOfPrefixBytes = uint8(2**mode);
@@ -137,7 +173,7 @@ library CommonTypes {
     struct DeliveredMessages {
         uint64 begin;
         uint64 end;
-        bytes1 dispatch_results;
+        BitVecU8 dispatchResults;
     }
 
     function decodeDeliveredMessages(bytes memory _data)
@@ -145,13 +181,19 @@ library CommonTypes {
         pure
         returns (DeliveredMessages memory)
     {
-        require(_data.length >= 17, "The data is not enough");
-
         uint64 begin = decodeUint64(Bytes.substr(_data, 0, 8));
         uint64 end = decodeUint64(Bytes.substr(_data, 8, 8));
-        bytes1 dispatch_results = _data[16];
+        BitVecU8 memory dispatchResults = decodeBitVecU8(
+            Bytes.substr(_data, 16)
+        );
 
-        return DeliveredMessages(begin, end, dispatch_results);
+        return DeliveredMessages(begin, end, dispatchResults);
+    }
+
+    function getBytesLengthOfDeliveredMessages(
+        DeliveredMessages memory deliveredMessages
+    ) internal pure returns (uint) {
+        return 16 + deliveredMessages.dispatchResults.bytesLength;
     }
 
     ////////////////////////////////////
@@ -167,14 +209,21 @@ library CommonTypes {
         pure
         returns (UnrewardedRelayer memory)
     {
-        require(_data.length >= 49, "The data is not enough");
-
         bytes32 relayer = Bytes.toBytes32(Bytes.substr(_data, 0, 32));
         DeliveredMessages memory messages = decodeDeliveredMessages(
             Bytes.substr(_data, 32)
         );
 
         return UnrewardedRelayer(relayer, messages);
+    }
+
+    function getBytesLengthOfUnrewardedRelayer(
+        UnrewardedRelayer memory unrewardedRelayer
+    ) internal pure returns (uint) {
+        uint bytesLengthOfmessages = getBytesLengthOfDeliveredMessages(
+            unrewardedRelayer.messages
+        );
+        return 32 + bytesLengthOfmessages;
     }
 
     ////////////////////////////////////
@@ -184,28 +233,60 @@ library CommonTypes {
     //     VecDeque<UnrewardedRelayer> relayers;
     //     uint64 last_confirmed_nonce;
     // }
+    struct InboundLaneData {
+        UnrewardedRelayer[] relayers;
+        uint64 lastConfirmedNonce;
+    }
+
+    function decodeInboundLaneData(bytes memory _data)
+        internal
+        pure
+        returns (InboundLaneData memory)
+    {
+        (uint256 numberOfRelayers, uint8 mode) = ScaleCodec.decodeUintCompact(
+            _data
+        );
+        require(mode < 3, "Wrong compact mode"); // Now, mode 3 is not supported yet
+        uint consumedLength = uint8(2**mode);
+
+        InboundLaneData memory result = InboundLaneData(
+            new UnrewardedRelayer[](numberOfRelayers),
+            0
+        );
+
+        // decode relayers
+        for (uint i = 0; i < numberOfRelayers; i++) {
+            UnrewardedRelayer memory relayer = decodeUnrewardedRelayer(
+                Bytes.substr(_data, consumedLength)
+            );
+            result.relayers[i] = relayer;
+            consumedLength =
+                consumedLength +
+                getBytesLengthOfUnrewardedRelayer(relayer);
+        }
+
+        // decode lastConfirmedNonce
+        result.lastConfirmedNonce = decodeUint64(
+            Bytes.substr(_data, consumedLength)
+        );
+
+        return result;
+    }
+
     function getLastDeliveredNonceFromInboundLaneData(bytes memory _data)
         internal
         pure
         returns (uint64)
     {
-        (uint256 length, uint8 mode) = ScaleCodec.decodeUintCompact(_data);
-        require(mode < 3, "Wrong compact mode"); // Now, mode 3 is not supported yet
-        uint8 compactLength = uint8(2**mode);
-        require(
-            _data.length >= compactLength + length * 49 + 8,
-            "The data is not enough to decode InboundLaneData"
-        );
-
-        uint64 lastConfirmedNonce = decodeUint64(Bytes.substr(_data, compactLength + 49 * length));
-        if (length == 0) {
-            return lastConfirmedNonce;
+        InboundLaneData memory inboundLaneData = decodeInboundLaneData(_data);
+        if (inboundLaneData.relayers.length == 0) {
+            return inboundLaneData.lastConfirmedNonce;
         } else {
-            UnrewardedRelayer memory relayer = decodeUnrewardedRelayer(
-                Bytes.substr(_data, compactLength + 49 * (length - 1))
-            );
-            return relayer.messages.end;
-        } 
+            UnrewardedRelayer memory lastRelayer = inboundLaneData.relayers[
+                inboundLaneData.relayers.length - 1
+            ];
+            return lastRelayer.messages.end;
+        }
     }
 
     ////////////////////////////////////

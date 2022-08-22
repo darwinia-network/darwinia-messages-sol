@@ -24,7 +24,19 @@ describe('S2STypesTest', function (accounts) {
         await typesTest.testDecodeOutboundLaneData();
     })
 
+    it('testDecodeInboundLaneData', async() => {
+        await typesTest.testDecodeInboundLaneData();
+    })
+
+    it('testDecodeInboundLaneData2', async() => {
+        await typesTest.testDecodeInboundLaneData2();
+    })
+
     it('testGetLastUnrewardedRelayerFromInboundLaneData', async() => {
         await typesTest.testGetLastUnrewardedRelayerFromInboundLaneData();
+    })
+
+    it('testBitVecU8', async() => {
+        await typesTest.testBitVecU8();
     })
 });

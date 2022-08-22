@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+
+jobs:
+  publish-contracts:
+    name: Publish contracts
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:16.04
+    strategy:
+      matrix:
+        contract:
+          - periphery
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install deps
+        run: |
+          mv .env.sample .env
+          cd contracts/${{ matrix.contract }}
+          npm i
+
+      # - name: Check contract
+      #   run: |
+      #     cd contracts/${{ matrix.contract }}
+      #     npx hardhat test
+
+      - name: Publish contract
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          access: public
+          package: contracts/${{ matrix.contract }}/package.json
+          token: ${{ secrets.NPM_TOKEN }}

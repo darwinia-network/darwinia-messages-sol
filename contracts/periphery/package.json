@@ -1,6 +1,6 @@
 {
   "name": "@darwinia/contracts-periphery",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Peripheral smart contracts for interacting with message protocal.",
   "main": "index.js",
   "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
@@ -23,8 +23,6 @@
     "hardhat-abi-exporter": "^2.2.1",
     "hardhat-gas-reporter": "^1.0.6",
     "shx": "^0.3.3",
-    "@darwinia/contracts-utils": "^1.0.0",
-    "@openzeppelin/contracts": "3.3.0",
-    "@zeppelin-solidity-4.4.0/contracts": "npm:@openzeppelin/contracts@4.4.0-rc.0"
+    "@darwinia/contracts-utils": "^1.0.0"
   }
 }
