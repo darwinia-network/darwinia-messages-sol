@@ -22,6 +22,7 @@
         "Claims": "0xA561c8F6AC9eCb31e0793fBe2CCEc136a7e4bE84",
         "WCRAB": "0x2d2b97ea380b0185e9fdf8271d1afb5d2bf18329",
         "WCKTON": "0x159933C635570D5042723359fbD1619dFe83D3f3",
+        "WCKTONMigrator": "0xD5f4940704Eb4cE5e4b51877d49B58A3e93531b6",
         "S2sMappingTokenFactoryProxyAdmin": "0x9f5098Dc064F6ca8D7f7Eb9e722706256b35bb37",
         "S2sMappingTokenFactoryLogic": "0xA1Ea474716fBe0f5101BA1ACF442201A97768aa4",
         "S2sMappingTokenFactoryProxy": "0x3CC8913088F79831c8335f0307f4FC92d79C1ac7",
