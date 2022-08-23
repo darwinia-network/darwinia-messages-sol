@@ -97,6 +97,9 @@ const receive_messages_delivery_proof = async (outbound, tgtoutbound, tgtinbound
 describe("verify message relay tests", () => {
 
   before(async () => {
+    const [owner] = await ethers.getSigners();
+    source = owner.address
+
     const VAULT = "0x0000000000000000000000000000000000000000"
     const COLLATERAL_PERORDER = ethers.utils.parseEther("10")
     const ASSIGNED_RELAYERS_NUMBER = 3;
@@ -105,9 +108,8 @@ describe("verify message relay tests", () => {
     const PRICE_RATIO = 800_000
     const FeeMarket = await ethers.getContractFactory("FeeMarket")
     const feeMarket = await FeeMarket.deploy(VAULT, COLLATERAL_PERORDER, ASSIGNED_RELAYERS_NUMBER, SLASH_TIME, RELAY_TIME, PRICE_RATIO)
+    await feeMarket.initialize(source)
 
-    const [owner] = await ethers.getSigners();
-    source = owner.address
     const MockBSCLightClient = await ethers.getContractFactory("MockBSCLightClient")
     const MockDarwiniaLightClient = await ethers.getContractFactory("MockDarwiniaLightClient")
     const OutboundLane = await ethers.getContractFactory("OutboundLane")
@@ -121,6 +123,7 @@ describe("verify message relay tests", () => {
     darwiniaLaneCommitter0 = await LaneMessageCommitter.deploy(sourceChainPos, targetChainPos)
     await darwiniaLaneCommitter0.registry(sourceOutbound.address, sourceInbound.address)
     darwiniaChainCommitter = await ChainMessageCommitter.deploy(sourceChainPos)
+    await darwiniaChainCommitter.initialize(source)
     await darwiniaChainCommitter.registry(darwiniaLaneCommitter0.address)
 
     sourceLightClient = await MockDarwiniaLightClient.deploy()

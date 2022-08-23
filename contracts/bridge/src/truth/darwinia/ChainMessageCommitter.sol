@@ -55,9 +55,9 @@ contract ChainMessageCommitter is Initializable, MessageCommitter {
         __CMC_init__(setter);
     }
 
-    function __CMC_init__(address setter) internal onlyInitializing {
+    function __CMC_init__(address _setter) internal onlyInitializing {
         maxChainPosition = thisChainPosition;
-        setter = msg.sender;
+        setter = _setter;
     }
 
     function count() public view override returns (uint256) {
