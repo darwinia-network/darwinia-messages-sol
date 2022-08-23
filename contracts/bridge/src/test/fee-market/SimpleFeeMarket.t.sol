@@ -42,24 +42,25 @@ contract SimpleFeeMarketTest is DSTest {
 
 
    function setUp() public {
-       market = new SimpleFeeMarket(
-           COLLATERAL_PERORDER,
-           SLASH_TIME,
-           RELAY_TIME,
-           PRICE_RATIO
-       );
-       self = address(this);
-       a = new Guy(market);
-       b = new Guy(market);
-       c = new Guy(market);
+        market = new SimpleFeeMarket(
+            COLLATERAL_PERORDER,
+            SLASH_TIME,
+            RELAY_TIME,
+            PRICE_RATIO
+        );
+        self = address(this);
+        market.initialize(self);
+        a = new Guy(market);
+        b = new Guy(market);
+        c = new Guy(market);
    }
 
    function test_constructor_args() public {
-       assertEq(market.setter(), self);
-       assertEq(market.collateralPerOrder(), COLLATERAL_PERORDER);
-       assertEq(market.slashTime(), uint(SLASH_TIME));
-       assertEq(market.relayTime(), uint(RELAY_TIME));
-       assertEq(market.priceRatio(), uint(PRICE_RATIO));
+        assertEq(market.setter(), self);
+        assertEq(market.collateralPerOrder(), COLLATERAL_PERORDER);
+        assertEq(market.slashTime(), uint(SLASH_TIME));
+        assertEq(market.relayTime(), uint(RELAY_TIME));
+        assertEq(market.priceRatio(), uint(PRICE_RATIO));
    }
 
    function test_set_setter() public {
@@ -70,14 +71,6 @@ contract SimpleFeeMarketTest is DSTest {
    function test_set_outbound() public {
        market.setOutbound(self, 1);
        assertEq(market.outbounds(self), 1);
-   }
-
-   function test_set_paras() public {
-       market.setParameters(2 days, 3 days, 200_000, 1 wei);
-       assertEq(market.slashTime(), uint(2 days));
-       assertEq(market.relayTime(), uint(3 days));
-        assertEq(market.priceRatio(), uint(200_000));
-       assertEq(market.collateralPerOrder(), 1 wei);
    }
 
    function test_initial_state() public {

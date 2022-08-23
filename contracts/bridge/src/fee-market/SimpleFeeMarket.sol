@@ -19,16 +19,9 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../interfaces/IFeeMarket.sol";
+import "../proxy/Initializable.sol";
 
-contract SimpleFeeMarket is IFeeMarket {
-    // SlashAmount = CollateralPerOrder * LateTime / SlashTime
-    uint32 public slashTime;
-    // Time assigned relayer to relay messages
-    uint32 public relayTime;
-    // Ratio of two chain's native token price, denominator of ratio is 1_000_000
-    uint32 public priceRatio;
-    // The collateral relayer need to lock for each order.
-    uint256 public collateralPerOrder;
+contract SimpleFeeMarket is Initializable, IFeeMarket {
     // Governance role to decide which outbounds message to relay
     address public setter;
     // All outbounds that message will be relayed by relayers
@@ -45,6 +38,15 @@ contract SimpleFeeMarket is IFeeMarket {
     mapping(address => uint256) public feeOf;
     // Message encoded key => Order
     mapping(uint256 => Order) public orderOf;
+
+    // SlashAmount = CollateralPerOrder * LateTime / SlashTime
+    uint32 public immutable slashTime;
+    // Time assigned relayer to relay messages
+    uint32 public immutable relayTime;
+    // Ratio of two chain's native token price, denominator of ratio is 1_000_000
+    uint32 public immutable priceRatio;
+    // The collateral relayer need to lock for each order.
+    uint256 public immutable collateralPerOrder;
 
     address private constant SENTINEL_HEAD = address(0x1);
     address private constant SENTINEL_TAIL = address(0x2);
@@ -94,11 +96,18 @@ contract SimpleFeeMarket is IFeeMarket {
         uint32 _price_rario
     ) {
         require(_slash_time > 0 && _relay_time > 0, "!0");
-        setter = msg.sender;
         collateralPerOrder = _collateral_perorder;
         slashTime = _slash_time;
         relayTime = _relay_time;
         priceRatio = _price_rario;
+    }
+
+    function initialize(address setter) public initializer {
+        __FM_init__(setter);
+    }
+
+    function __FM_init__(address _setter) internal onlyInitializing {
+        setter = _setter;
         relayers[SENTINEL_HEAD] = SENTINEL_TAIL;
         feeOf[SENTINEL_TAIL] = type(uint256).max;
     }
@@ -114,19 +123,6 @@ contract SimpleFeeMarket is IFeeMarket {
     function setOutbound(address out, uint256 flag) external onlySetter {
         outbounds[out] = flag;
         emit SetOutbound(out, flag);
-    }
-
-    function setParameters(
-        uint32 slash_time,
-        uint32 relay_time,
-        uint32 price_ratio,
-        uint256 collateral_perorder
-    ) external onlySetter {
-        require(slash_time > 0 && relay_time > 0, "!0");
-        slashTime = slash_time;
-        relayTime = relay_time;
-        priceRatio = price_ratio;
-        collateralPerOrder = collateral_perorder;
     }
 
     // Fetch the real time maket maker fee
