@@ -21,12 +21,13 @@ pragma abicoder v2;
 import "../../spec/ChainMessagePosition.sol";
 import "../../spec/MerkleProof.sol";
 import "../common/StorageVerifier.sol";
+import "../../proxy/Initializable.sol";
 
 interface IConsensusLayer {
     function state_root() external view returns (bytes32);
 }
 
-contract ExecutionLayer is MerkleProof, StorageVerifier {
+contract ExecutionLayer is Initializable, MerkleProof, StorageVerifier {
     bytes32 private latest_execution_payload_state_root;
 
     address public immutable CONSENSUS_LAYER;
@@ -45,6 +46,10 @@ contract ExecutionLayer is MerkleProof, StorageVerifier {
 
     constructor(address consensus_layer) StorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
         CONSENSUS_LAYER = consensus_layer;
+    }
+
+    function initialize(address setter) public initializer {
+        __SV_init__(setter);
     }
 
     function state_root() public view override returns (bytes32) {

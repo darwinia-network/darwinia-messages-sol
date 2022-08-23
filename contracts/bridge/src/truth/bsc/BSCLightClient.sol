@@ -84,8 +84,9 @@ import "../../utils/ECDSA.sol";
 import "../../utils/EnumerableSet.sol";
 import "../../spec/BinanceSmartChain.sol";
 import "../../spec/ChainMessagePosition.sol";
+import "../../proxy/Initializable.sol";
 
-contract BSCLightClient is BinanceSmartChain, StorageVerifier {
+contract BSCLightClient is Initializable, BinanceSmartChain, StorageVerifier {
     using Bytes for bytes;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -132,14 +133,23 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
 
     constructor(
         uint64 chain_id,
-        uint64 period,
-        BSCHeader memory header
+        uint64 period
     ) StorageVerifier(
         uint32(ChainMessagePosition.BSC),
         0,
         1,
         2
     ) {
+        CHAIN_ID = chain_id;
+        PERIOD = period;
+    }
+
+    function initialize(BSCHeader memory header, address setter) public initializer {
+        __BSCLC_init__(header);
+        __SV_init__(setter);
+    }
+
+    function __BSCLC_init__(BSCHeader memory header) internal onlyInitializing {
         address[] memory authorities = _extract_authorities(header.extra_data);
         _finalize_authority_set(authorities);
         bytes32 block_hash = hash(header);
@@ -152,8 +162,6 @@ contract BSCLightClient is BinanceSmartChain, StorageVerifier {
             timestamp: header.timestamp,
             hash: block_hash
         });
-        CHAIN_ID = chain_id;
-        PERIOD = period;
     }
 
     function state_root() public view override returns (bytes32) {

@@ -46,7 +46,6 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
 
     // bridgedChainPosition => lanePosition => lanes
     mapping(uint32 => mapping(uint32 => address)) public lanes;
-
     address public setter;
 
     modifier onlySetter {
@@ -68,7 +67,10 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
         LANE_IDENTIFY_SLOT = lane_identify_slot;
         LANE_NONCE_SLOT = lane_nonce_slot;
         LANE_MESSAGE_SLOT = lane_message_slot;
-        setter = msg.sender;
+    }
+
+    function __SV_init__(address _setter) internal {
+        setter = _setter;
     }
 
     function registry(uint32 bridgedChainPosition, uint32 outboundPosition, address outbound, uint32 inboundPositon, address inbound) external onlySetter {
