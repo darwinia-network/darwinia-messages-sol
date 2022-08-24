@@ -24,5 +24,4 @@ data=$(seth calldata $sig $ETH_FROM)
 ChainMessageCommitterProxy=$(deploy ChainMessageCommitterProxy \
   $ChainMessageCommitter \
   $BridgeProxyAdmin \
-  $data
-
+  $data)

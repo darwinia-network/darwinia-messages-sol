@@ -41,7 +41,7 @@ data=$(seth calldata $sig $ETH_FROM)
 FeeMarketProxy=$(deploy FeeMarketProxy \
   $FeeMarket \
   $BridgeProxyAdmin \
-  $data
+  $data)
 
 # beacon light client config
 BLS_PRECOMPILE=0x0000000000000000000000000000000000000800
@@ -69,7 +69,7 @@ data=$(seth calldata $sig $ETH_FROM)
 EthereumExecutionLayerProxy=$(deploy EthereumExecutionLayerProxy \
   $ExecutionLayer \
   $BridgeProxyAdmin \
-  $data
+  $data)
 
 OutboundLane=$(deploy OutboundLane \
   $EthereumExecutionLayerProxy \

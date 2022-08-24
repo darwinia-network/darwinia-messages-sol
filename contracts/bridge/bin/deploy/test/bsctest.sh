@@ -39,7 +39,7 @@ data=$(seth calldata $sig $ETH_FROM)
 FeeMarketProxy=$(deploy FeeMarketProxy \
   $SimpleFeeMarket \
   $BridgeProxyAdmin \
-  $data
+  $data)
 
 # # darwinia beefy light client config
 # # Pangoro
@@ -60,22 +60,18 @@ DOMAIN_SEPARATOR=0x38a6d9f96ef6e79768010f6caabfe09abc43e49792d5c787ef0d4fc802855
 relayers=[0x68898db1012808808c903f390909c52d9f706749]
 threshold=1
 nonce=0
-POSALightClient=$(deploy POSALightClient \
-  $DOMAIN_SEPARATOR \
-  $relayers \
-  $threshold \
-  $nonce)
+
+POSALightClient=$(deploy POSALightClient $DOMAIN_SEPARATOR)
 
 sig="initialize(address[],uint256,uint256)"
-data=$(seth calldata $sig
+data=$(seth calldata $sig \
   $relayers \
   $threshold \
   $nonce)
-)
 DarwiniaLightClientProxy=$(deploy DarwiniaLightClientProxy \
   $POSALightClient \
   $BridgeProxyAdmin \
-  $data
+  $data)
 
 OutboundLane=$(deploy OutboundLane \
   $DarwiniaLightClientProxy \

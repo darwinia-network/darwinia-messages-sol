@@ -41,7 +41,7 @@ data=$(seth calldata $sig $ETH_FROM)
 FeeMarketProxy=$(deploy FeeMarketProxy \
   $FeeMarket \
   $BridgeProxyAdmin \
-  $data
+  $data)
 
 # bsc light client config
 block_number=21791400
@@ -63,7 +63,7 @@ extra_data=$(echo "$block_header" | seth --field extraData)
 mix_digest=$(echo "$block_header" | seth --field mixHash)
 nonce=$(seth --to-uint64 $(echo "$block_header" | seth --field nonce))
 
-DATA=$(ethabi encode params \
+DATA=$(set -x; ethabi encode params \
   -v "address" ${ETH_FROM:2} \
   -v "(bytes32,bytes32,address,bytes32,bytes32,bytes32,bytes,uint256,uint256,uint64,uint64,uint64,bytes,bytes32,bytes8)" \
   "(${parent_hash:2},${uncle_hash:2},${coinbase:2},${state_root:2},${transactions_root:2},${receipts_root:2},${log_bloom:2},${difficulty:2},${number:2},${gas_limit:2},${gas_used:2},${timestamp:2},${extra_data:2},${mix_digest:2},${nonce:2})")
@@ -71,7 +71,7 @@ DATA=$(ethabi encode params \
 chain_id=$(seth chain-id --chain $TARGET_CHAIN)
 period=3
 BSCLightClient=$(deploy BSCLightClient $chain_id $period)
-SIG=$(cast sig "initialize(address,(bytes32,bytes32,address,bytes32,bytes32,bytes32,bytes,uint256,uint256,uint64,uint64,uint64,bytes,bytes32,bytes8))")
+SIG=$(set -x; cast sig "initialize(address,(bytes32,bytes32,address,bytes32,bytes32,bytes32,bytes,uint256,uint256,uint64,uint64,uint64,bytes,bytes32,bytes8))")
 BSCLightClientProxy=$(deploy BSCLightClientProxy \
   $BSCLightClient \
   $BridgeProxyAdmin \
