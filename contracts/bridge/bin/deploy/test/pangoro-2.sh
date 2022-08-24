@@ -36,6 +36,13 @@ FeeMarket=$(deploy FeeMarket \
   $SLASH_TIME $RELAY_TIME \
   $PRICE_RATIO)
 
+sig="initialize(address)"
+data=$(seth calldata $sig $ETH_FROM)
+FeeMarketProxy=$(deploy FeeMarketProxy \
+  $FeeMarket \
+  $BridgeProxyAdmin \
+  $data
+
 # bsc light client config
 block_number=21791400
 block_header=$(seth block $block_number --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545
@@ -57,24 +64,30 @@ mix_digest=$(echo "$block_header" | seth --field mixHash)
 nonce=$(seth --to-uint64 $(echo "$block_header" | seth --field nonce))
 
 DATA=$(ethabi encode params \
-  -v uint64 0000000000000000000000000000000000000000000000000000000000000061 \
-  -v uint64 0000000000000000000000000000000000000000000000000000000000000003 \
+  -v "address" ${ETH_FROM:2} \
   -v "(bytes32,bytes32,address,bytes32,bytes32,bytes32,bytes,uint256,uint256,uint64,uint64,uint64,bytes,bytes32,bytes8)" \
   "(${parent_hash:2},${uncle_hash:2},${coinbase:2},${state_root:2},${transactions_root:2},${receipts_root:2},${log_bloom:2},${difficulty:2},${number:2},${gas_limit:2},${gas_used:2},${timestamp:2},${extra_data:2},${mix_digest:2},${nonce:2})")
 
-BSCLightClient=$(deploy_v2 BSCLightClient $DATA)
+chain_id=$(seth chain-id --chain $TARGET_CHAIN)
+period=3
+BSCLightClient=$(deploy BSCLightClient $chain_id $period)
+SIG=$(cast sig "initialize(address,(bytes32,bytes32,address,bytes32,bytes32,bytes32,bytes,uint256,uint256,uint64,uint64,uint64,bytes,bytes32,bytes8))")
+BSCLightClientProxy=$(deploy BSCLightClientProxy \
+  $BSCLightClient \
+  $BridgeProxyAdmin \
+  $SIG$DATA)
 
 
 OutboundLane=$(deploy OutboundLane \
-  $BSCLightClient \
-  $FeeMarket \
+  $BSCLightClientProxy \
+  $FeeMarketProxy \
   $this_chain_pos \
   $this_out_lane_pos \
   $bridged_chain_pos \
   $bridged_in_lane_pos 1 0 0)
 
 InboundLane=$(deploy InboundLane \
-  $BSCLightClient \
+  $BSCLightClientProxy \
   $this_chain_pos \
   $this_in_lane_pos \
   $bridged_chain_pos \
@@ -82,6 +95,6 @@ InboundLane=$(deploy InboundLane \
 
 LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
 seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
-seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
+seth send -F $ETH_FROM $ChainMessageCommitterProxy "registry(address)" $LaneMessageCommitter
 
-seth send -F $ETH_FROM $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
+seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1

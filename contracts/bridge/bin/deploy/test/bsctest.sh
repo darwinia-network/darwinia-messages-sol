@@ -6,13 +6,16 @@ unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
 export NETWORK_NAME=bsctest
-export TARGET_CHAIN=pangoro
 export ETH_RPC_URL=https://data-seed-prebsc-1-s1.binance.org:8545
 
 echo "ETH_FROM: ${ETH_FROM}"
 
 # import the deployment helpers
 . $(dirname $0)/common.sh
+
+BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
+
+export TARGET_CHAIN=pangoro
 
 # bsctest to pangoro bridge config
 this_chain_pos=2
@@ -30,6 +33,13 @@ RELAY_TIME=86400
 PRICE_RATIO=100
 
 SimpleFeeMarket=$(deploy SimpleFeeMarket $COLLATERAL_PERORDER $SLASH_TIME $RELAY_TIME $PRICE_RATIO)
+
+sig="initialize(address)"
+data=$(seth calldata $sig $ETH_FROM)
+FeeMarketProxy=$(deploy FeeMarketProxy \
+  $SimpleFeeMarket \
+  $BridgeProxyAdmin \
+  $data
 
 # # darwinia beefy light client config
 # # Pangoro
@@ -56,23 +66,34 @@ POSALightClient=$(deploy POSALightClient \
   $threshold \
   $nonce)
 
-OutboundLane=$(deploy OutboundLane \
+sig="initialize(address[],uint256,uint256)"
+data=$(seth calldata $sig
+  $relayers \
+  $threshold \
+  $nonce)
+)
+DarwiniaLightClientProxy=$(deploy DarwiniaLightClientProxy \
   $POSALightClient \
-  $SimpleFeeMarket \
+  $BridgeProxyAdmin \
+  $data
+
+OutboundLane=$(deploy OutboundLane \
+  $DarwiniaLightClientProxy \
+  $FeeMarketProxy \
   $this_chain_pos \
   $this_out_lane_pos \
   $bridged_chain_pos \
   $bridged_in_lane_pos 1 0 0)
 
 InboundLane=$(deploy InboundLane \
-  $POSALightClient \
+  $DarwiniaLightClientProxy \
   $this_chain_pos \
   $this_in_lane_pos \
   $bridged_chain_pos \
   $bridged_out_lane_pos 0 0)
 
-seth send -F $ETH_FROM $SimpleFeeMarket "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
+seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
 
-BSCLightClient=$(jq -r ".[\"$NETWORK_NAME\"].BSCLightClient" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
-(set -x; seth send -F $ETH_FROM $BSCLightClient "registry(uint32,uint32,address,uint32,address)" \
+BSCLightClientProxy=$(jq -r ".[\"$NETWORK_NAME\"].BSCLightClientProxy" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
+(set -x; seth send -F $ETH_FROM $BSCLightClientProxy "registry(uint32,uint32,address,uint32,address)" \
   $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url https://pangoro-rpc.darwinia.network)

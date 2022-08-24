@@ -144,9 +144,9 @@ contract BSCLightClient is Initializable, BinanceSmartChain, StorageVerifier {
         PERIOD = period;
     }
 
-    function initialize(BSCHeader memory header, address setter) public initializer {
-        __BSCLC_init__(header);
+    function initialize(address setter, BSCHeader memory header) public initializer {
         __SV_init__(setter);
+        __BSCLC_init__(header);
     }
 
     function __BSCLC_init__(BSCHeader memory header) internal onlyInitializing {

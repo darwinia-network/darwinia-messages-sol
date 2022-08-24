@@ -36,6 +36,13 @@ FeeMarket=$(deploy FeeMarket \
   $SLASH_TIME $RELAY_TIME \
   $PRICE_RATIO)
 
+sig="initialize(address)"
+data=$(seth calldata $sig $ETH_FROM)
+FeeMarketProxy=$(deploy FeeMarketProxy \
+  $FeeMarket \
+  $BridgeProxyAdmin \
+  $data
+
 # beacon light client config
 BLS_PRECOMPILE=0x0000000000000000000000000000000000000800
 SLOT=3698784
@@ -57,17 +64,23 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $GENESIS_VALIDATORS_ROOT)
 
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
+sig="initialize(address)"
+data=$(seth calldata $sig $ETH_FROM)
+EthereumExecutionLayerProxy=$(deploy EthereumExecutionLayerProxy \
+  $ExecutionLayer \
+  $BridgeProxyAdmin \
+  $data
 
 OutboundLane=$(deploy OutboundLane \
-  $ExecutionLayer \
-  $FeeMarket \
+  $EthereumExecutionLayerProxy \
+  $FeeMarketProxy \
   $this_chain_pos \
   $this_out_lane_pos \
   $bridged_chain_pos \
   $bridged_in_lane_pos 1 0 0)
 
 InboundLane=$(deploy InboundLane \
-  $ExecutionLayer \
+  $EthereumExecutionLayerProxy \
   $this_chain_pos \
   $this_in_lane_pos \
   $bridged_chain_pos \
@@ -75,6 +88,6 @@ InboundLane=$(deploy InboundLane \
 
 LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
 seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
-seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
+seth send -F $ETH_FROM $ChainMessageCommitterProxy "registry(address)" $LaneMessageCommitter
 
-seth send -F $ETH_FROM $FeeMarket "setOutbound(address,uint)" $OutboundLane 1
+seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1

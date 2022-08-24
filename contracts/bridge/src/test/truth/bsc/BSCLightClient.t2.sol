@@ -257,7 +257,7 @@ contract BSCLightClientTest2 is DSTest, BinanceSmartChain {
 
 contract ParliaWrapper is BSCLightClient {
     constructor(uint64 chain_id, uint64 period, BSCHeader memory header) BSCLightClient(chain_id, period) {
-        initialize(header, msg.sender);
+        initialize(msg.sender, header);
     }
 
     function recover_creator(BSCHeader memory header) public view returns (address) {
