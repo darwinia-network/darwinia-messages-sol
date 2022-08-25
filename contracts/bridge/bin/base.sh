@@ -2,49 +2,9 @@
 
 set -eo pipefail
 
-# All contracts are output to `bin/addr/{chain}/addresses.json` by default
-network_name=${NETWORK_NAME?}
-mode=${MODE?}
-root_dir=$(realpath .)
-ADDRESSES_FILE="${root_dir}/bin/addr/${mode}/${network_name}.json"
-CONFIG_FILE="${root_dir}/bin/conf/${network_name}.json"
-OUT_DIR=$root_dir/out
-
-ETH_RPC_URL=${ETH_RPC_URL:-http://localhost:8545}
-
-# green log helper
-GREEN='\033[0;32m'
-NC='\033[0m' # No Color
-log() {
-	printf '%b\n' "${GREEN}${*}${NC}" >&2
-	echo ""
-}
-
-# Coloured output helpers
-if command -v tput >/dev/null 2>&1; then
-	if [ $(($(tput colors 2>/dev/null))) -ge 8 ]; then
-		# Enable colors
-		TPUT_RESET="$(tput sgr 0)"
-		TPUT_YELLOW="$(tput setaf 3)"
-		TPUT_RED="$(tput setaf 1)"
-		TPUT_BLUE="$(tput setaf 4)"
-		TPUT_GREEN="$(tput setaf 2)"
-		TPUT_WHITE="$(tput setaf 7)"
-		TPUT_BOLD="$(tput bold)"
-	fi
-fi
-
-# ensure ETH_FROM is set and give a meaningful error message
-if [[ -z ${ETH_FROM} ]]; then
-	echo "ETH_FROM not found, please set it and re-run the last command."
-	exit 1
-fi
-
-# Make sure address is checksummed
-if [ "$ETH_FROM" != "$(seth --to-checksum-address "$ETH_FROM")" ]; then
-	echo "ETH_FROM not checksummed, please format it with 'seth --to-checksum-address <address>'"
-	exit 1
-fi
+. $(dirname $0)/env.sh
+. $(dirname $0)/color.sh
+. $(dirname $0)/load.sh
 
 # Call as `ETH_FROM=0x... ETH_RPC_URL=<url> deploy ContractName arg1 arg2 arg3`
 # (or omit the env vars if you have already set them)
@@ -194,31 +154,3 @@ contract_size() {
 	echo $(($length / 2))
 }
 
-load_conf() {
-  if [ -z "$1" ]
-    then
-      echo "conf: Invalid key"
-      exit 1
-  fi
-  local key; key=$1
-  jq -r "${key}" "$CONFIG_FILE"
-}
-
-load-addresses() {
-  path=${ADDRESSES_FILE:-$1}
-  if [[ ! -e "$path" ]]; then
-    echo "Addresses file not found: $path not found"
-    exit 1
-  fi
-  echo $path
-  local exports
-  [[ -z "${2}" ]] && {
-    exports=$(cat $path | jq -r " . | \
-      to_entries|map(\"\(.key)=\(.value|strings)\")|.[]")
-    for e in $exports; do export "$e"; done
-  } || {
-    exports=$(cat $path | jq -r " .[\"$2\"] | \
-      to_entries|map(\"\(.key)=\(.value|strings)\")|.[]")
-    for e in $exports; do export "$2-$e"; done
-  }
-}

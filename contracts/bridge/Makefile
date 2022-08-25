@@ -43,3 +43,6 @@ migrate-local :; @./bin/migrate-local.sh
 
 # verify on Etherscan
 verify:; ETH_RPC_URL=$(call network,$(network_name)) dapp verify-contract src/Greeter.sol:Greeter $(contract_address)
+
+# tools
+msg-sts :; @./bin/stats.sh
