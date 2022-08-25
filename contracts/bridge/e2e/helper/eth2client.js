@@ -129,6 +129,19 @@ class Eth2Client {
       return proof
     }
   }
+
+  async get_multi_proof(state_id, paths) {
+    const url = `${this.endopoint}/eth/v1/light_client/proof/${state_id}?paths=${paths}`
+    const headers = {'Content-Type': 'application/octet-stream'}
+    const response = await fetch(url)
+
+    for await (const chunk of response.body) {
+      console.log(toHexString(chunk))
+      const proof = multiProof(deserializeProof(chunk))
+      console.log(proof)
+      return proof
+    }
+  }
 }
 
 function hexProof(proof) {
@@ -137,6 +150,15 @@ function hexProof(proof) {
     gindex: Number(proof.gindex),
     leaf: toHexString(proof.leaf),
     witnesses: proof.witnesses.map(toHexString),
+  }
+  return hexJson
+}
+
+function multiProof(proof) {
+  const hexJson = {
+    type: proof.type,
+    offsets: proof.offsets,
+    leaves: proof.leaves.map(toHexString)
   }
   return hexJson
 }

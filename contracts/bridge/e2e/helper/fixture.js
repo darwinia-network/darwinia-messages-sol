@@ -28,12 +28,12 @@ if (target == 'local') {
   ns_bsc = 'evm-bsc'
   ns_dvm = 'dvm'
 } else if (target == 'test') {
-  evm_eth_addresses = require("../../bin/addr/test/sepolia.json")
+  evm_eth_addresses = require("../../bin/addr/test/goerli.json")
   evm_bsc_addresses = require("../../bin/addr/test/bsctest.json")
   dvm_addresses = require("../../bin/addr/test/pangoro.json")
 
-  // evm_eth_endpoint = "https://rpc.sepolia.org"
-  evm_eth_endpoint = "http://127.0.0.1:8545"
+  evm_eth_endpoint = "https://rpc.ankr.com/eth_goerli"
+  // evm_eth_endpoint = "http://127.0.0.1:8545"
   // evm_bsc_endpoint = `https://speedy-nodes-nyc.moralis.io/${MORALIS_KEY}/bsc/testnet/archive`
   evm_bsc_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
   dvm_endpoint = "https://pangoro-rpc.darwinia.network"
