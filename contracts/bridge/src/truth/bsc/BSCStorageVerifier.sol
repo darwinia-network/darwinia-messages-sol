@@ -30,6 +30,6 @@ contract BSCStorageVerifier is StorageVerifier {
     }
 
     function state_root() public view override returns (bytes32) {
-        return LIGHT_CLIENT.root();
+        return LIGHT_CLIENT.merkle_root();
     }
 }

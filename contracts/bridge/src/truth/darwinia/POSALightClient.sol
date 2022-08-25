@@ -43,7 +43,7 @@ contract POSALightClient is Initializable, POSACommitmentScheme, EcdsaAuthority,
         return latest_block_number;
     }
 
-    function root() public view override returns (bytes32) {
+    function merkle_root() public view override returns (bytes32) {
         return latest_message_root;
     }
 

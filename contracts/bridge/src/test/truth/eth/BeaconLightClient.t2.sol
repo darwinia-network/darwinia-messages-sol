@@ -77,7 +77,7 @@ contract BeaconLightClientTest2 is DSTest, Bitfield, SyncCommitteePreset {
             latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch
         });
         executionlayer.import_latest_execution_payload_state_root(update);
-        assertEq(executionlayer.root(), LATEST_EXECUTION_PAYLOAD_STATE_ROOT);
+        assertEq(executionlayer.merkle_root(), LATEST_EXECUTION_PAYLOAD_STATE_ROOT);
     }
 
     function test_import_finalized_header() public {

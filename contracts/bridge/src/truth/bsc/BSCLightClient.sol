@@ -155,7 +155,7 @@ contract BSCLightClient is Initializable, BinanceSmartChain, ILightClient {
         });
     }
 
-    function root() public view override returns (bytes32) {
+    function merkle_root() public view override returns (bytes32) {
         return finalized_checkpoint.state_root;
     }
 

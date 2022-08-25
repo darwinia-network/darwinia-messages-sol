@@ -29,6 +29,6 @@ contract DarwiniaMessageVerifier is MessageVerifier {
     }
 
     function message_root() public view override returns (bytes32) {
-        return LIGHT_CLIENT.root();
+        return LIGHT_CLIENT.merkle_root();
     }
 }

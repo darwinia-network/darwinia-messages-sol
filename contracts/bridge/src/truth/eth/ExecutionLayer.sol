@@ -50,7 +50,7 @@ contract ExecutionLayer is Initializable, MerkleProof, ILightClient {
 
     function initialize() public initializer {}
 
-    function root() public view override returns (bytes32) {
+    function merkle_root() public view override returns (bytes32) {
         return latest_execution_payload_state_root;
     }
 

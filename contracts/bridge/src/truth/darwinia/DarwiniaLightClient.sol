@@ -147,7 +147,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, M
 
     /* Public Functions */
 
-    function root() public view override returns (bytes32) {
+    function merkle_root() public view override returns (bytes32) {
         return latestChainMessagesRoot;
     }
 

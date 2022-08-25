@@ -18,5 +18,5 @@
 pragma solidity 0.7.6;
 
 interface ILightClient {
-    function root() external view returns (bytes32);
+    function merkle_root() external view returns (bytes32);
 }
