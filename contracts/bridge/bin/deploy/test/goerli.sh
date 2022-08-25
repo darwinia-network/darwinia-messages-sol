@@ -6,10 +6,6 @@ unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
 export NETWORK_NAME=goerli
-<<<<<<< HEAD
-=======
-export TARGET_CHAIN=pangoro
->>>>>>> master
 export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
 
 echo "ETH_FROM: ${ETH_FROM}"
