@@ -64,15 +64,16 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $GENESIS_VALIDATORS_ROOT)
 
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
-sig="initialize(address)"
-data=$(seth calldata $sig $ETH_FROM)
+sig=$(seth sig "initialize()")
 EthereumExecutionLayerProxy=$(deploy EthereumExecutionLayerProxy \
   $ExecutionLayer \
   $BridgeProxyAdmin \
-  $data)
+  $sig)
+
+EthereumStorageVerifier=$(deploy EthereumStorageVerifier $EthereumExecutionLayerProxy)
 
 OutboundLane=$(deploy OutboundLane \
-  $EthereumExecutionLayerProxy \
+  $EthereumStorageVerifier \
   $FeeMarketProxy \
   $this_chain_pos \
   $this_out_lane_pos \
@@ -80,7 +81,7 @@ OutboundLane=$(deploy OutboundLane \
   $bridged_in_lane_pos 1 0 0)
 
 InboundLane=$(deploy InboundLane \
-  $EthereumExecutionLayerProxy \
+  $EthereumStorageVerifier \
   $this_chain_pos \
   $this_in_lane_pos \
   $bridged_chain_pos \
