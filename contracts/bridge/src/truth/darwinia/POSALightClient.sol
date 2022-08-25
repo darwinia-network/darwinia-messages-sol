@@ -19,11 +19,11 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "./EcdsaAuthority.sol";
-import "../common/MessageVerifier.sol";
 import "../../spec/POSACommitmentScheme.sol";
 import "../../proxy/Initializable.sol";
+import "../../interfaces/ILightClient.sol";
 
-contract POSALightClient is Initializable, POSACommitmentScheme, MessageVerifier, EcdsaAuthority {
+contract POSALightClient is Initializable, POSACommitmentScheme, EcdsaAuthority, ILightClient {
     event MessageRootImported(uint256 block_number, bytes32 message_root);
 
     uint256 internal latest_block_number;
@@ -43,7 +43,7 @@ contract POSALightClient is Initializable, POSACommitmentScheme, MessageVerifier
         return latest_block_number;
     }
 
-    function message_root() public view override returns (bytes32) {
+    function root() public view override returns (bytes32) {
         return latest_message_root;
     }
 

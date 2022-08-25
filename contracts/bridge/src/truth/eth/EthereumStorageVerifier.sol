@@ -16,7 +16,20 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.7.6;
+pragma abicoder v2;
 
-interface ILightClient {
-    function root() external view returns (bytes32);
+import "../common/StorageVerifier.sol";
+import "../../spec/ChainMessagePosition.sol";
+import "../../interfaces/ILightClient.sol";
+
+contract EthereumStorageVerifier is StorageVerifier {
+    ILightClient public immutable LIGHT_CLIENT;
+
+    constructor(address lightclient) StorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
+        LIGHT_CLIENT = ILightClient(lightclient);
+    }
+
+    function state_root() public view override returns (bytes32) {
+        return LIGHT_CLIENT.root();
+    }
 }
