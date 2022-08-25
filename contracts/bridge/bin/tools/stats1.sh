@@ -12,7 +12,8 @@ root_dir=$(realpath .)
 echo "############# ChainMessageCommitter ###############"
 ADDRESSES_FILE="${root_dir}/bin/addr/${mode}/${s}.json"
 cmt=$(cat $ADDRESSES_FILE | jq -r ".ChainMessageCommitterProxy")
-p2 "block_number" "$(seth block-number --chain $s)"
+origin_block_number=$(seth block-number --chain $s)
+p2 "block_number" "$origin_block_number"
 origin_message_root=$(seth call $cmt "commitment()" --chain $s)
 p2 "message_root" "$origin_message_root"
 
@@ -21,10 +22,10 @@ lc=$(cat $ADDRESSES_FILE | jq -r ".pangoro.DarwiniaLightClientProxy")
 
 echo "############# DarwiniaLightClient ###############"
 block_number=$(seth call $lc "block_number()(uint)" --chain $t)
-p2 "block_number" "$block_number"
+# p2 "block_number" "$block_number"
 
 message_root=$(seth call $lc "message_root()(bytes32)" --chain $t)
-p2 "message_root" "$message_root"
+# p2 "message_root" "$message_root"
 
 if [ "$message_root" != "$origin_message_root" ]; then
   echo "syncing"
