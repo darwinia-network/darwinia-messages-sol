@@ -7,6 +7,52 @@ import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "./Utils.sol";
 
 library PalletMessageRouter {
+    ///////////////////////
+    // Calls
+    ///////////////////////
+    struct ForwardToMoonbeamCall {
+        bytes2 callIndex;
+        VersionedXcmV2WithTransacts message;
+    }
+
+    function encodeForwardToMoonbeamCall(ForwardToMoonbeamCall memory _call)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return
+            abi.encodePacked(
+                _call.callIndex,
+                encodeVersionedXcmV2WithTransacts(_call.message)
+            );
+    }
+
+    ///////////////////////
+    // Types
+    ///////////////////////
+    struct VersionedXcmV2WithTransacts {
+        Transact[] transacts;
+    }
+
+    // pub enum VersionedXcm<Call> {
+    //     ...
+    //     V2(v2::Xcm<Call>),
+    // }
+    function encodeVersionedXcmV2WithTransacts(VersionedXcmV2WithTransacts memory _obj)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        bytes memory data = ScaleCodec.encodeUintCompact(_obj.transacts.length);
+        for (uint i = 0; i < _obj.transacts.length; i++) {
+            data = abi.encodePacked(
+                data,
+                encodeInstructionTransact(_obj.transacts[i])
+            );
+        }
+        return Utils.encodeEnumItem(2, data);
+    }
+
     struct Transact {
         uint8 originType;
         uint64 requireWeightAtMost;
@@ -27,24 +73,5 @@ library PalletMessageRouter {
             _transact.call
         );
         return Utils.encodeEnumItem(6, data);
-    }
-
-    // pub enum VersionedXcm<Call> {
-    //     ...
-    //     V2(v2::Xcm<Call>),
-    // }
-    function encodeVersionedXcmV2WithTransacts(Transact[] memory _transacts)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        bytes memory data = ScaleCodec.encodeUintCompact(_transacts.length);
-        for (uint i = 0; i < _transacts.length; i++) {
-            data = abi.encodePacked(
-                data,
-                encodeInstructionTransact(_transacts[i])
-            );
-        }
-        return Utils.encodeEnumItem(2, data);
     }
 }
