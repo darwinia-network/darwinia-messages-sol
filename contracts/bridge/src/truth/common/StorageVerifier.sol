@@ -18,12 +18,12 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../../interfaces/ILightClient.sol";
+import "../../interfaces/IVerifier.sol";
 import "../../spec/SourceChain.sol";
 import "../../spec/TargetChain.sol";
 import "../../spec/StorageProof.sol";
 
-abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
+abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
     event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
 
     struct ReceiveProof {
@@ -67,10 +67,7 @@ abstract contract StorageVerifier is ILightClient, SourceChain, TargetChain {
         LANE_IDENTIFY_SLOT = lane_identify_slot;
         LANE_NONCE_SLOT = lane_nonce_slot;
         LANE_MESSAGE_SLOT = lane_message_slot;
-    }
-
-    function __SV_init__(address _setter) internal {
-        setter = _setter;
+        setter = msg.sender;
     }
 
     function registry(uint32 bridgedChainPosition, uint32 outboundPosition, address outbound, uint32 inboundPositon, address inbound) external onlySetter {

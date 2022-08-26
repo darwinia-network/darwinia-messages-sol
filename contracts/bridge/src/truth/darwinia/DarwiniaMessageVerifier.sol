@@ -16,7 +16,19 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.7.6;
+pragma abicoder v2;
 
-interface ILightClient {
-    function merkle_root() external view returns (bytes32);
+import "../common/MessageVerifier.sol";
+import "../../interfaces/ILightClient.sol";
+
+contract DarwiniaMessageVerifier is MessageVerifier {
+    ILightClient public immutable LIGHT_CLIENT;
+
+    constructor(address lightclient) {
+        LIGHT_CLIENT = ILightClient(lightclient);
+    }
+
+    function message_root() public view override returns (bytes32) {
+        return LIGHT_CLIENT.merkle_root();
+    }
 }

@@ -21,7 +21,6 @@ pragma abicoder v2;
 import "../../utils/ECDSA.sol";
 import "../../utils/Math.sol";
 import "../../utils/Bitfield.sol";
-import "../common/MessageVerifier.sol";
 import "../../utils/SparseMerkleProof.sol";
 import "../../spec/BEEFYCommitmentScheme.sol";
 import "../../interfaces/ILightClient.sol";
@@ -30,7 +29,7 @@ import "../../interfaces/ILightClient.sol";
 /// @author echo
 /// @notice The light client is the trust layer of the bridge
 /// @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
-contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, Math, MessageVerifier {
+contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, Math {
     Slot0 public slot0;
     bytes32 public authoritySetRoot;
     bytes32 public latestChainMessagesRoot;
@@ -148,7 +147,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, M
 
     /* Public Functions */
 
-    function message_root() public view override returns (bytes32) {
+    function merkle_root() public view override returns (bytes32) {
         return latestChainMessagesRoot;
     }
 

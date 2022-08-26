@@ -73,8 +73,10 @@ DarwiniaLightClientProxy=$(deploy DarwiniaLightClientProxy \
   $BridgeProxyAdmin \
   $data)
 
+DarwiniaMessageVerifier=$(deploy DarwiniaMessageVerifier $DarwiniaLightClientProxy)
+
 OutboundLane=$(deploy OutboundLane \
-  $DarwiniaLightClientProxy \
+  $DarwiniaMessageVerifier \
   $FeeMarketProxy \
   $this_chain_pos \
   $this_out_lane_pos \
@@ -82,7 +84,7 @@ OutboundLane=$(deploy OutboundLane \
   $bridged_in_lane_pos 1 0 0)
 
 InboundLane=$(deploy InboundLane \
-  $DarwiniaLightClientProxy \
+  $DarwiniaMessageVerifier \
   $this_chain_pos \
   $this_in_lane_pos \
   $bridged_chain_pos \
@@ -90,6 +92,6 @@ InboundLane=$(deploy InboundLane \
 
 seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
 
-BSCLightClientProxy=$(jq -r ".[\"$NETWORK_NAME\"].BSCLightClientProxy" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
-(set -x; seth send -F $ETH_FROM $BSCLightClientProxy "registry(uint32,uint32,address,uint32,address)" \
+BSCStorageVerifier=$(jq -r ".[\"$NETWORK_NAME\"].BSCStorageVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
+(set -x; seth send -F $ETH_FROM $BSCStorageVerifier "registry(uint32,uint32,address,uint32,address)" \
   $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url https://pangoro-rpc.darwinia.network)

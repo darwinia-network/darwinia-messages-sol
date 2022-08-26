@@ -78,15 +78,15 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../common/StorageVerifier.sol";
 import "../../utils/Bytes.sol";
 import "../../utils/ECDSA.sol";
 import "../../utils/EnumerableSet.sol";
 import "../../spec/BinanceSmartChain.sol";
 import "../../spec/ChainMessagePosition.sol";
 import "../../proxy/Initializable.sol";
+import "../../interfaces/ILightClient.sol";
 
-contract BSCLightClient is Initializable, BinanceSmartChain, StorageVerifier {
+contract BSCLightClient is Initializable, BinanceSmartChain, ILightClient {
     using Bytes for bytes;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -131,21 +131,12 @@ contract BSCLightClient is Initializable, BinanceSmartChain, StorageVerifier {
         bytes32 hash;
     }
 
-    constructor(
-        uint64 chain_id,
-        uint64 period
-    ) StorageVerifier(
-        uint32(ChainMessagePosition.BSC),
-        0,
-        1,
-        2
-    ) {
+    constructor(uint64 chain_id, uint64 period) {
         CHAIN_ID = chain_id;
         PERIOD = period;
     }
 
-    function initialize(address setter, BSCHeader memory header) public initializer {
-        __SV_init__(setter);
+    function initialize(BSCHeader memory header) public initializer {
         __BSCLC_init__(header);
     }
 
@@ -164,7 +155,7 @@ contract BSCLightClient is Initializable, BinanceSmartChain, StorageVerifier {
         });
     }
 
-    function state_root() public view override returns (bytes32) {
+    function merkle_root() public view override returns (bytes32) {
         return finalized_checkpoint.state_root;
     }
 

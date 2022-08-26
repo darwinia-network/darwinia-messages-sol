@@ -18,14 +18,14 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../interfaces/ILightClient.sol";
+import "../interfaces/IVerifier.sol";
 
 contract InboundLaneVerifier {
     /// indentify slot
     Slot0 public slot0;
 
-    /// @dev The contract address of on-chain light client
-    ILightClient public immutable lightClient;
+    /// @dev The contract address of on-chain verifier
+    IVerifier public immutable VERIFIER;
 
     struct Slot0 {
         // Bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
@@ -39,13 +39,13 @@ contract InboundLaneVerifier {
     }
 
     constructor(
-        address _lightClient,
+        address _verifier,
         uint32 _thisChainPosition,
         uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,
         uint32 _bridgedLanePosition
     ) {
-        lightClient = ILightClient(_lightClient);
+        VERIFIER = IVerifier(_verifier);
         slot0.thisChainPosition = _thisChainPosition;
         slot0.thisLanePosition = _thisLanePosition;
         slot0.bridgedChainPosition = _bridgedChainPosition;
@@ -58,7 +58,7 @@ contract InboundLaneVerifier {
     ) internal view {
         Slot0 memory _slot0 = slot0;
         require(
-            lightClient.verify_messages_proof(
+            VERIFIER.verify_messages_proof(
                 outlane_data_hash,
                 _slot0.thisChainPosition,
                 _slot0.bridgedLanePosition,
