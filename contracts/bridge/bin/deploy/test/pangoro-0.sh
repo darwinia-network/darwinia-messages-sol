@@ -14,7 +14,14 @@ echo "ETH_FROM: ${ETH_FROM}"
 # import the deployment helpers
 . $(dirname $0)/common.sh
 
+BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
+
 # pangoro chain id
 this_chain_pos=0
-
 ChainMessageCommitter=$(deploy ChainMessageCommitter $this_chain_pos)
+sig="initialize(address)"
+data=$(seth calldata $sig $ETH_FROM)
+ChainMessageCommitterProxy=$(deploy ChainMessageCommitterProxy \
+  $ChainMessageCommitter \
+  $BridgeProxyAdmin \
+  $data)

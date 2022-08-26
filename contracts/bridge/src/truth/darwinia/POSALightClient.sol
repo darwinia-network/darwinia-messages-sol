@@ -19,27 +19,31 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "./EcdsaAuthority.sol";
-import "../common/MessageVerifier.sol";
 import "../../spec/POSACommitmentScheme.sol";
+import "../../proxy/Initializable.sol";
+import "../../interfaces/ILightClient.sol";
 
-contract POSALightClient is POSACommitmentScheme, MessageVerifier, EcdsaAuthority {
+contract POSALightClient is Initializable, POSACommitmentScheme, EcdsaAuthority, ILightClient {
     event MessageRootImported(uint256 block_number, bytes32 message_root);
 
     uint256 internal latest_block_number;
     bytes32 internal latest_message_root;
 
-    constructor(
-        bytes32 _domain_separator,
+    constructor(bytes32 _domain_separator) EcdsaAuthority(_domain_separator) {}
+
+    function initialize(
         address[] memory _relayers,
         uint256 _threshold,
         uint256 _nonce
-    ) EcdsaAuthority(_domain_separator, _relayers, _threshold, _nonce) {}
+    ) public initializer {
+        __ECDSA_init__(_relayers, _threshold, _nonce);
+    }
 
     function block_number() public view returns (uint256) {
         return latest_block_number;
     }
 
-    function message_root() public view override returns (bytes32) {
+    function merkle_root() public view override returns (bytes32) {
         return latest_message_root;
     }
 

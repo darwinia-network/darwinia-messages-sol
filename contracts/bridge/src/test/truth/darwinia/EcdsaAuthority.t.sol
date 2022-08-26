@@ -37,14 +37,14 @@ contract EcdsaAuthorityTest is DSTest {
     bytes4  private constant CHANGE_THRESHOLD_SIG = bytes4(0x3c823333);
     bytes32 private constant RELAY_TYPEHASH       = 0x30a82982a8d5050d1c83bbea574aea301a4d317840a8c4734a308ffaa6a63bc8;
 
-    EcdsaAuthority authority;
+    EcdsaAuthorityWrapper authority;
     address alice;
 
     function setUp() public {
         address[] memory relayers = new address[](1);
         alice = hevm.addr(sk);
         relayers[0] = alice;
-        authority = new EcdsaAuthority(
+        authority = new EcdsaAuthorityWrapper(
             domain_separator(),
             relayers,
             1,
@@ -236,5 +236,16 @@ contract EcdsaAuthorityTest is DSTest {
         assertEq(s, 0xf8a76f5ceeff36d74ff99c4efc0077bcc334721f17d1d5f17cfca78455967e1e);
         bytes32 h = keccak256(abi.encodePacked("\x19\x01", s, bytes32(0)));
         assertEq(h, 0x1cb3a6858ee5a0568c75b8cee35137943c35e0f81228edb64028fd086efd801b);
+    }
+}
+
+contract EcdsaAuthorityWrapper is EcdsaAuthority {
+    constructor(
+        bytes32 _domain_separator,
+        address[] memory _relayers,
+        uint256 _threshold,
+        uint256 _nonce
+    ) EcdsaAuthority(_domain_separator) {
+        __ECDSA_init__(_relayers, _threshold, _nonce);
     }
 }

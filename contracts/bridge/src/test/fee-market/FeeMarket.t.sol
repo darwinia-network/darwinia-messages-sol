@@ -52,6 +52,7 @@ contract FeeMarketTest is DSTest {
             PRICE_RATIO
         );
         self = address(this);
+        market.initialize(self);
         a = new Guy(market);
         b = new Guy(market);
         c = new Guy(market);
@@ -76,19 +77,6 @@ contract FeeMarketTest is DSTest {
     function test_set_outbound() public {
         market.setOutbound(self, 1);
         assertEq(market.outbounds(self), 1);
-    }
-
-    function test_set_para_time() public {
-        market.setParaTime(2 days, 3 days, 200_000);
-        assertEq(market.slashTime(), uint(2 days));
-        assertEq(market.relayTime(), uint(3 days));
-        assertEq(market.priceRatio(), uint(200_000));
-    }
-
-    function test_set_para_relay() public {
-        market.setParaRelay(5, 1 wei);
-        assertEq(market.assignedRelayersNumber(), uint(5));
-        assertEq(market.collateralPerOrder(), 1 wei);
     }
 
     function test_initial_state() public {

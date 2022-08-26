@@ -17,6 +17,12 @@
 
 pragma solidity 0.7.6;
 
-interface ILightClient {
-    function merkle_root() external view returns (bytes32);
+import "../TransparentUpgradeableProxy.sol";
+
+contract FeeMarketProxy is TransparentUpgradeableProxy {
+    constructor(
+        address _logic,
+        address _admin,
+        bytes memory _data
+    ) payable TransparentUpgradeableProxy(_logic, _admin, _data) {}
 }

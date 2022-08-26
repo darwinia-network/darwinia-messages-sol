@@ -8,6 +8,7 @@ const Fixure = async () => {
   const [one, two, three] = await ethers.getSigners();
   const FeeMarket = await ethers.getContractFactory("FeeMarket")
   const feeMarket = await FeeMarket.deploy(VAULT, COLLATERAL_PERORDER, ASSIGNED_RELAYERS_NUMBER, SLASH_TIME, RELAY_TIME, PRICE_RATIO)
+  await feeMarket.initialize(one.address)
   let overrides = {
       value: ethers.utils.parseEther("100")
   }

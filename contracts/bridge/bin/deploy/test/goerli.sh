@@ -6,10 +6,13 @@ unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
 export NETWORK_NAME=goerli
-export TARGET_CHAIN=pangoro
 export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
 
 echo "ETH_FROM: ${ETH_FROM}"
+
+BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
+
+export TARGET_CHAIN=pangoro
 
 # import the deployment helpers
 . $(dirname $0)/common.sh
@@ -31,6 +34,13 @@ PRICE_RATIO=100
 
 SimpleFeeMarket=$(deploy SimpleFeeMarket $COLLATERAL_PERORDER $SLASH_TIME $RELAY_TIME $PRICE_RATIO)
 
+sig="initialize(address)"
+data=$(seth calldata $sig $ETH_FROM)
+FeeMarketProxy=$(deploy FeeMarketProxy \
+  $SimpleFeeMarket \
+  $BridgeProxyAdmin \
+  $data)
+
 # # darwinia beefy light client config
 # # Pangoro
 # NETWORK=0x50616e676f726f00000000000000000000000000000000000000000000000000
@@ -50,29 +60,38 @@ DOMAIN_SEPARATOR=0x38a6d9f96ef6e79768010f6caabfe09abc43e49792d5c787ef0d4fc802855
 relayers=[0x68898db1012808808c903f390909c52d9f706749]
 threshold=1
 nonce=0
-POSALightClient=$(deploy POSALightClient \
-  $DOMAIN_SEPARATOR \
+
+POSALightClient=$(deploy POSALightClient $DOMAIN_SEPARATOR)
+
+sig="initialize(address[],uint256,uint256)"
+data=$(seth calldata $sig \
   $relayers \
   $threshold \
   $nonce)
+DarwiniaLightClientProxy=$(deploy DarwiniaLightClientProxy \
+  $POSALightClient \
+  $BridgeProxyAdmin \
+  $data)
+
+DarwiniaMessageVerifier=$(deploy DarwiniaMessageVerifier $DarwiniaLightClientProxy)
 
 OutboundLane=$(deploy OutboundLane \
-  $POSALightClient \
-  $SimpleFeeMarket \
+  $DarwiniaMessageVerifier \
+  $FeeMarketProxy \
   $this_chain_pos \
   $this_out_lane_pos \
   $bridged_chain_pos \
   $bridged_in_lane_pos 1 0 0)
 
 InboundLane=$(deploy InboundLane \
-  $POSALightClient \
+  $DarwiniaMessageVerifier \
   $this_chain_pos \
   $this_in_lane_pos \
   $bridged_chain_pos \
   $bridged_out_lane_pos 0 0)
 
-seth send -F $ETH_FROM $SimpleFeeMarket "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
+seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
 
-ExecutionLayer=$(jq -r ".[\"$NETWORK_NAME\"].ExecutionLayer" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
-(set -x; seth send -F $ETH_FROM $ExecutionLayer "registry(uint32,uint32,address,uint32,address)" \
+EthereumStorageVerifier=$(jq -r ".[\"$NETWORK_NAME\"].EthereumStorageVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
+(set -x; seth send -F $ETH_FROM $EthereumStorageVerifier "registry(uint32,uint32,address,uint32,address)" \
   $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url https://pangoro-rpc.darwinia.network)

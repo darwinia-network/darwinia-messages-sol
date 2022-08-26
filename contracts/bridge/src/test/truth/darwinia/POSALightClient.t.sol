@@ -40,12 +40,8 @@ contract POSALightClientTest is POSACommitmentScheme, DSTest {
         address[] memory relayers = new address[](1);
         alice = hevm.addr(sk);
         relayers[0] = alice;
-        lightclient = new POSALightClient(
-            DOMAIN_SEPARATOR,
-            relayers,
-            1,
-            0
-        );
+        lightclient = new POSALightClient(DOMAIN_SEPARATOR);
+        lightclient.initialize(relayers, 1, 0);
     }
 
     function test_import_message_commitment() public {
@@ -62,7 +58,7 @@ contract POSALightClientTest is POSACommitmentScheme, DSTest {
 
         lightclient.import_message_commitment(commitment, signs);
 
-        assertEq(lightclient.message_root(), commitment.message_root);
+        assertEq(lightclient.merkle_root(), commitment.message_root);
         assertEq(lightclient.block_number(), commitment.block_number);
     }
 

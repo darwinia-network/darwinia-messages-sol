@@ -59,16 +59,21 @@ contract EcdsaAuthority {
     event RemovedRelayer(address relayer);
     event ChangedThreshold(uint256 threshold);
 
-    /// @dev Sets initial storage of contract.
+    /// @dev Sets initial immutable variable of contract.
     /// @param _domain_separator source chain domain_separator
+    constructor(bytes32 _domain_separator) {
+        DOMAIN_SEPARATOR = _domain_separator;
+    }
+
+    /// @dev initial storage of the proxy contract.
     /// @param _relayers List of relayers.
     /// @param _threshold Number of required confirmations for check commitment or change relayers.
-    constructor(
-        bytes32 _domain_separator,
+    /// @param _nonce Nonce of initial state.
+    function __ECDSA_init__(
         address[] memory _relayers,
         uint256 _threshold,
         uint256 _nonce
-    ) {
+    ) internal {
         // Threshold can only be 0 at initialization.
         // Check ensures that setup function can only be called once.
         require(threshold == 0, "setup");
@@ -91,7 +96,6 @@ contract EcdsaAuthority {
         relayers[current] = SENTINEL;
         count = _relayers.length;
         threshold = _threshold;
-        DOMAIN_SEPARATOR = _domain_separator;
         nonce = _nonce;
     }
 

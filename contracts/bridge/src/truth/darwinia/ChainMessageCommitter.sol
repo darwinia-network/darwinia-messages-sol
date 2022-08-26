@@ -21,12 +21,13 @@ pragma abicoder v2;
 import "../common/MessageCommitter.sol";
 import "../../interfaces/IMessageCommitment.sol";
 import "../../interfaces/IMessageCommitter.sol";
+import "../../proxy/Initializable.sol";
 
 /// @title ChainMessageCommitter
 /// @author echo
 /// @notice Chain message committer commit messages from all lane committers
 /// @dev Chain message use sparse merkle tree to commit all messages
-contract ChainMessageCommitter is MessageCommitter {
+contract ChainMessageCommitter is Initializable, MessageCommitter {
     /// @dev Max of all chain position
     uint256 public maxChainPosition;
     /// @dev Bridged chain position => lane committer
@@ -48,8 +49,15 @@ contract ChainMessageCommitter is MessageCommitter {
     /// @param _thisChainPosition This chain positon
     constructor(uint256 _thisChainPosition) {
         thisChainPosition = _thisChainPosition;
-        maxChainPosition = _thisChainPosition;
-        setter = msg.sender;
+    }
+
+    function initialize(address setter) public initializer {
+        __CMC_init__(setter);
+    }
+
+    function __CMC_init__(address _setter) internal onlyInitializing {
+        maxChainPosition = thisChainPosition;
+        setter = _setter;
     }
 
     function count() public view override returns (uint256) {
