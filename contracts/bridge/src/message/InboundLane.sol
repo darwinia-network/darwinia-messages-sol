@@ -216,7 +216,6 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
                     // Secondly, update the next record with lower nonce equal to new confirmed nonce if needed.
                     // Note: There will be max. 1 record to update as we don't allow messages from relayers to
                     // overlap.
-                    entry.messages.dispatch_results >>= (new_confirmed_nonce + 1 - entry.messages.begin);
                     entry.messages.begin = new_confirmed_nonce + 1;
                 }
             }
@@ -226,7 +225,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     }
 
     /// Receive new message.
-    function _receive_message(Message[] memory messages) private returns (uint256 dispatch_results) {
+    function _receive_message(Message[] memory messages) private {
         address relayer = msg.sender;
         uint64 begin = inboundLaneNonce.last_delivered_nonce + 1;
         uint64 next = begin;
@@ -258,7 +257,6 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             bool dispatch_result = _dispatch(message_payload);
 
             emit MessageDispatched(key.nonce, dispatch_result);
-            dispatch_results |= (dispatch_result ? uint256(1) << (next - begin) : uint256(0));
 
             next += 1;
         }
@@ -268,11 +266,10 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             address pre_relayer = relayers_back();
             if (pre_relayer == relayer) {
                 UnrewardedRelayer storage r = relayers[inboundLaneNonce.relayer_range_back];
-                r.messages.dispatch_results |= dispatch_results << (r.messages.end - r.messages.begin + 1);
                 r.messages.end = end;
             } else {
                 inboundLaneNonce.relayer_range_back += 1;
-                relayers[inboundLaneNonce.relayer_range_back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end, dispatch_results));
+                relayers[inboundLaneNonce.relayer_range_back] = UnrewardedRelayer(relayer, DeliveredMessages(begin, end));
             }
         }
     }

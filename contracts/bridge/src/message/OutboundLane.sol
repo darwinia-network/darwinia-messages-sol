@@ -53,7 +53,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     uint64  private constant MAX_PRUNE_MESSAGES_ATONCE = 5;
 
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
-    event MessagesDelivered(uint64 indexed begin, uint64 indexed end, uint256 results);
+    event MessagesDelivered(uint64 indexed begin, uint64 indexed end);
     event MessagePruned(uint64 indexed oldest_unpruned_nonce);
 
     /// Outbound lane nonce.
@@ -184,9 +184,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         DeliveredMessages memory confirmed_messages
     ) {
         (uint64 total_messages, uint64 latest_delivered_nonce) = _extract_inbound_lane_info(inboundLaneData);
-        require(total_messages < 256, "InvalidNumberOfMessages");
 
-        UnrewardedRelayer[] memory relayers = inboundLaneData.relayers;
         OutboundLaneNonce memory nonce = outboundLaneNonce;
         require(latest_delivered_nonce > nonce.latest_received_nonce, "NoNewConfirmations");
         require(latest_delivered_nonce <= nonce.latest_generated_nonce, "FailedToConfirmFutureMessages");
@@ -195,68 +193,14 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         // chain storage is corrupted, though) that the actual number of confirmed messages if
         // larger than declared.
         require(latest_delivered_nonce - nonce.latest_received_nonce <= total_messages, "TryingToConfirmMoreMessagesThanExpected");
-        uint256 dispatch_results = _extract_dispatch_results(nonce.latest_received_nonce, latest_delivered_nonce, relayers);
         uint64 prev_latest_received_nonce = nonce.latest_received_nonce;
         outboundLaneNonce.latest_received_nonce = latest_delivered_nonce;
         confirmed_messages = DeliveredMessages({
             begin: prev_latest_received_nonce + 1,
-            end: latest_delivered_nonce,
-            dispatch_results: dispatch_results
+            end: latest_delivered_nonce
         });
         // emit 'MessagesDelivered' event
-        emit MessagesDelivered(confirmed_messages.begin, confirmed_messages.end, confirmed_messages.dispatch_results);
-    }
-
-    /// Extract new dispatch results from the unrewarded relayers vec.
-    ///
-    /// Revert if unrewarded relayers vec contains invalid data, meaning that the bridged
-    /// chain has invalid runtime storage.
-    function _extract_dispatch_results(
-        uint64 prev_latest_received_nonce,
-        uint64 latest_received_nonce,
-        UnrewardedRelayer[] memory relayers
-    ) private pure returns(uint256 received_dispatch_result) {
-        // the only caller of this functions checks that the
-        // prev_latest_received_nonce..=latest_received_nonce is valid, so we're ready to accept
-        // messages in this range => with_capacity call must succeed here or we'll be unable to receive
-        // confirmations at all
-        uint64 last_entry_end = 0;
-        uint64 padding = 0;
-        for (uint64 i = 0; i < relayers.length; i++) {
-            UnrewardedRelayer memory entry = relayers[i];
-            // unrewarded relayer entry must have at least 1 unconfirmed message
-            // (guaranteed by the `InboundLane::receive_message()`)
-            require(entry.messages.end >= entry.messages.begin, "EmptyUnrewardedRelayerEntry");
-            if (last_entry_end > 0) {
-                uint64 expected_entry_begin = last_entry_end + 1;
-                // every entry must confirm range of messages that follows previous entry range
-                // (guaranteed by the `InboundLane::receive_message()`)
-                require(entry.messages.begin == expected_entry_begin, "NonConsecutiveUnrewardedRelayerEntries");
-            }
-            last_entry_end = entry.messages.end;
-            // entry can't confirm messages larger than `inbound_lane_data.latest_received_nonce()`
-            // (guaranteed by the `InboundLane::receive_message()`)
-			// technically this will be detected in the next loop iteration as
-			// `InvalidNumberOfDispatchResults` but to guarantee safety of loop operations below
-			// this is detected now
-            require(entry.messages.end <= latest_received_nonce, "FailedToConfirmFutureMessages");
-            // now we know that the entry is valid
-            // => let's check if it brings new confirmations
-            uint64 new_messages_begin = _max(entry.messages.begin, prev_latest_received_nonce + 1);
-            uint64 new_messages_end = _min(entry.messages.end, latest_received_nonce);
-            if (new_messages_end < new_messages_begin) {
-                continue;
-            }
-            uint64 extend_begin = new_messages_begin - entry.messages.begin;
-            uint256 hight_bits_opp = 255 - (new_messages_end - entry.messages.begin);
-            // entry must have single dispatch result for every message
-            // (guaranteed by the `InboundLane::receive_message()`)
-            uint256 dispatch_results = (entry.messages.dispatch_results << hight_bits_opp) >> hight_bits_opp;
-            // now we know that entry brings new confirmations
-            // => let's extract dispatch results
-            received_dispatch_result |= ((dispatch_results >> extend_begin) << padding);
-            padding += (new_messages_end - new_messages_begin + 1 - extend_begin);
-        }
+        emit MessagesDelivered(confirmed_messages.begin, confirmed_messages.end);
     }
 
     /// Prune at most `max_messages_to_prune` already received messages.

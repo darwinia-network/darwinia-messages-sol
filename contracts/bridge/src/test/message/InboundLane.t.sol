@@ -87,7 +87,6 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
         assertEq(relayer.relayer, self);
         assertEq(relayer.messages.begin, uint(1));
         assertEq(relayer.messages.end, uint(1));
-        assertEq(relayer.messages.dispatch_results, 1);
 
         assertEq(inlane.relayers_back(), self);
     }
@@ -140,7 +139,6 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
         assertEq(relayer.relayer, self);
         assertEq(relayer.messages.begin, uint(1));
         assertEq(relayer.messages.end, uint(3));
-        assertEq(relayer.messages.dispatch_results, 7);
 
         assertEq(inlane.relayers_back(), self);
     }
@@ -163,7 +161,6 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
         assertEq(relayer.relayer, self);
         assertEq(relayer.messages.begin, uint(1));
         assertEq(relayer.messages.end, uint(3));
-        assertEq(relayer.messages.dispatch_results, 7);
 
         assertEq(inlane.relayers_back(), self);
     }

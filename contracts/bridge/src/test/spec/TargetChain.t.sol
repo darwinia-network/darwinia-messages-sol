@@ -28,7 +28,7 @@ contract TargetChainTest is DSTest, TargetChain {
             keccak256(abi.encodePacked(
                 "InboundLaneData(UnrewardedRelayer[] relayers,uint64 last_confirmed_nonce,uint64 last_delivered_nonce)",
                 "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
-                "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
+                "DeliveredMessages(uint64 begin,uint64 end)"
                 )
             ),
             INBOUNDLANEDATA_TYPEHASH
@@ -37,7 +37,7 @@ contract TargetChainTest is DSTest, TargetChain {
         assertEq(
             keccak256(abi.encodePacked(
                 "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
-                "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
+                "DeliveredMessages(uint64 begin,uint64 end)"
                 )
             ),
             UNREWARDEDRELAYER_TYPETASH
@@ -45,7 +45,7 @@ contract TargetChainTest is DSTest, TargetChain {
 
         assertEq(
             keccak256(abi.encodePacked(
-                "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
+                "DeliveredMessages(uint64 begin,uint64 end)"
                 )
             ),
             DELIVEREDMESSAGES_TYPETASH
@@ -53,7 +53,7 @@ contract TargetChainTest is DSTest, TargetChain {
     }
 
     function test_default_hash() public {
-        DeliveredMessages memory messages = DeliveredMessages(0, 0, 0);
+        DeliveredMessages memory messages = DeliveredMessages(0, 0);
         assertEq(hash(messages), hex"e214f0b3ce178f693b18c52919edc29ffe935343c76b17704b410d8c882e74da");
         UnrewardedRelayer[] memory relayers = new UnrewardedRelayer[](0);
         assertEq(hash(relayers), hex"290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563");
@@ -63,7 +63,7 @@ contract TargetChainTest is DSTest, TargetChain {
     }
 
     function test_hash() public {
-        DeliveredMessages memory messages = DeliveredMessages(1, 1, 1);
+        DeliveredMessages memory messages = DeliveredMessages(1, 1);
         assertEq(hash(messages), hex"8c4376658fb7931861c44cd7fd187ebfe2ac3c956963cedf369ef4de343799dc");
         UnrewardedRelayer[] memory relayers = new UnrewardedRelayer[](1);
         relayers[0] = UnrewardedRelayer(address(1), messages);

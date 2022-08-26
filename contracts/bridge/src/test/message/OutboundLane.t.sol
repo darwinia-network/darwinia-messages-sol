@@ -277,7 +277,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
     }
 
     function perform_receive_messages_delivery_proof(uint64 begin, uint64 end, uint64 last_confirmed_nonce, uint64 last_delivered_nonce) public {
-        DeliveredMessages memory messages = DeliveredMessages(begin, end, 0);
+        DeliveredMessages memory messages = DeliveredMessages(begin, end);
         UnrewardedRelayer[] memory relayers = new UnrewardedRelayer[](1);
         relayers[0] = UnrewardedRelayer(self, messages);
         InboundLaneData memory data = InboundLaneData(relayers, last_confirmed_nonce, last_delivered_nonce);

@@ -49,7 +49,7 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
     address public setter;
 
     modifier onlySetter {
-        require(msg.sender == setter, "BSCLightClient: forbidden");
+        require(msg.sender == setter, "forbidden");
         _;
     }
 
@@ -71,7 +71,7 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
     }
 
     function registry(uint32 bridgedChainPosition, uint32 outboundPosition, address outbound, uint32 inboundPositon, address inbound) external onlySetter {
-        require(bridgedChainPosition != THIS_CHAIN_POSITION, "BSCLightClient: invalid");
+        require(bridgedChainPosition != THIS_CHAIN_POSITION, "invalid_chain_pos");
         lanes[bridgedChainPosition][outboundPosition] = outbound;
         lanes[bridgedChainPosition][inboundPositon] = inbound;
         emit Registry(bridgedChainPosition, outboundPosition, outbound);
@@ -87,7 +87,7 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
         bytes calldata encoded_proof
     ) external view override returns (bool) {
         address lane = lanes[chain_pos][lane_pos];
-        require(lane != address(0), "BSCLightClient: missing outlane addr");
+        require(lane != address(0), "!outlane");
         ReceiveProof memory proof = abi.decode(encoded_proof, (ReceiveProof));
 
         // extract identify storage value from proof
@@ -130,7 +130,7 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
                 proof.laneMessagesProof
             );
 
-            require(size == values.length, "BSCLightClient: invalid values length");
+            require(size == values.length, "!values_len");
             MessageStorage[] memory messages = new MessageStorage[](size);
             for (uint64 i=0; i < size; i++) {
                bytes32 payload = toBytes32(values[i]);
@@ -158,7 +158,7 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
         bytes calldata encoded_proof
     ) external view override returns (bool) {
         address lane = lanes[chain_pos][lane_pos];
-        require(lane != address(0), "BSCLightClient: missing outlane addr");
+        require(lane != address(0), "!outlane");
         DeliveryProof memory proof = abi.decode(encoded_proof, (DeliveryProof));
 
         // extract nonce storage value from proof
@@ -191,14 +191,13 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
     ) internal view returns (InboundLaneData memory lane_data) {
         // restruct the in lane data
         if (size > 0) {
-            uint64 len = 3 * size;
+            uint64 len = 2 * size;
             // find all messages storage keys
             bytes32[] memory storage_keys = new bytes32[](len);
             for (uint64 index=0; index < len;) {
-                uint256 relayersLocation = mapLocation(LANE_MESSAGE_SLOT, front + index/3);
+                uint256 relayersLocation = mapLocation(LANE_MESSAGE_SLOT, front + index/2);
                 storage_keys[index++] = bytes32(relayersLocation);
                 storage_keys[index++] = bytes32(relayersLocation + 1);
-                storage_keys[index++] = bytes32(relayersLocation + 2);
             }
 
             // extract messages storage value from proof
@@ -210,16 +209,15 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
                 proof.laneRelayersProof
             );
 
-            require(len == values.length, "BSCLightClient: invalid values length");
+            require(len == values.length, "!values_len");
             UnrewardedRelayer[] memory unrewarded_relayers = new UnrewardedRelayer[](size);
             for (uint64 i=0; i < size; i++) {
-               uint slot2 = toUint(values[3*i+1]);
+               uint slot2 = toUint(values[2*i+1]);
                unrewarded_relayers[i] = UnrewardedRelayer(
-                   address(uint160(toUint(values[3*i]))),
+                   address(uint160(toUint(values[2*i]))),
                    DeliveredMessages(
                        uint64(slot2),
-                       uint64(slot2 >> 64),
-                       toUint(values[3*i+2])
+                       uint64(slot2 >> 64)
                    )
                );
             }
