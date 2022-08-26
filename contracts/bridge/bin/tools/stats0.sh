@@ -22,7 +22,7 @@ p "$keys" "$clheader"
 slot=$(echo $clheader | cut -d' ' -f "1")
 
 echo "############# EthereumExecutionLayer ###############"
-state_root=$(seth call $el "state_root()(bytes32)" --chain $t)
+state_root=$(seth call $el "merkle_root()(bytes32)" --chain $t)
 # p2 "state_root" "$state_root"
 elheader=$(curl -fsSX GET $beacon_endpoint/eth/v2/beacon/blocks/$slot -H  "accept: application/json" | jq ".data.message.body.execution_payload")
 block_number=$(echo "$elheader" | jq -r ".block_number")

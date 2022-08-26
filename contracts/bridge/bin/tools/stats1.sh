@@ -24,7 +24,7 @@ echo "############# DarwiniaLightClient ###############"
 block_number=$(seth call $lc "block_number()(uint)" --chain $t)
 # p2 "block_number" "$block_number"
 
-message_root=$(seth call $lc "message_root()(bytes32)" --chain $t)
+message_root=$(seth call $lc "merkle_root()(bytes32)" --chain $t)
 # p2 "message_root" "$message_root"
 
 if [ "$message_root" != "$origin_message_root" ]; then
