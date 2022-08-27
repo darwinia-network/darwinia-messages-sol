@@ -71,7 +71,7 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
         assertEq(data.relayers.length, 0);
         assertEq(data.last_confirmed_nonce, uint(0));
         assertEq(data.last_delivered_nonce, uint(0));
-        assertEq(inlane.commitment(), hex"66b5278e1f7507462f2157f72f3ce409601f7ca3fa7092dc8aaa869467b38413");
+        assertEq(inlane.commitment(), hex"ce1698f159eec0d8beb0e54dee44065d5e890d23fc233bdbab1c8c9b1ec31d21");
         assertEq(hevm.load(address(inlane), bytes32(uint(4))), bytes32(0));
     }
 
