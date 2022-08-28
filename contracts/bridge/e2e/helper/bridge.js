@@ -205,7 +205,6 @@ class Bridge {
     const header = await this.sub.block_header()
     const message_root = await this.sub.chainMessageCommitter['commitment()']()
     const nonce = await this.sub.ecdsa_authority_nonce(header.hash)
-    console.log(nonce)
     const block_number = header.number.toNumber()
     const message = {
       block_number,
@@ -215,7 +214,7 @@ class Bridge {
     const signs = await this.sub.sign_message_commitment(message)
     await this.eth.ecdsa_relay_header(message, signs)
     await this.bsc.ecdsa_relay_header(message, signs)
-    // return await this.ethClient.relay_header(message_root, header.number.toString())
+    return await this.ethClient.relay_header(message_root, header.number.toString())
   }
 
   async relay_eth_messages(data) {
