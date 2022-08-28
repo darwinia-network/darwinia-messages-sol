@@ -89,7 +89,7 @@ const receive_messages_delivery_proof = async (begin, end) => {
     const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
-      .withArgs(begin, end, 1)
+      .withArgs(begin, end)
     await logNonce()
 }
 
@@ -107,7 +107,7 @@ describe("normal app send single message tests", () => {
 
     const SimpleFeeMarket = await ethers.getContractFactory("SimpleFeeMarket")
     feeMarket = await SimpleFeeMarket.deploy(ethers.utils.parseEther("10"), 100, 100, 800_000)
-    await feeMarket.initialize(source)
+    await feeMarket.initialize()
 
     let overrides = { value: ethers.utils.parseEther("3000") }
     await feeMarket.connect(owner).enroll("0x0000000000000000000000000000000000000001", fee, overrides)

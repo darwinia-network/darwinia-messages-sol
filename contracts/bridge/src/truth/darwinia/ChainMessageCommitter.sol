@@ -51,8 +51,8 @@ contract ChainMessageCommitter is Initializable, MessageCommitter {
         thisChainPosition = _thisChainPosition;
     }
 
-    function initialize(address setter) public initializer {
-        __CMC_init__(setter);
+    function initialize() public initializer {
+        __CMC_init__(msg.sender);
     }
 
     function __CMC_init__(address _setter) internal onlyInitializing {

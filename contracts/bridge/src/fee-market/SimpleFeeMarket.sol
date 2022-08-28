@@ -102,8 +102,8 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
         priceRatio = _price_rario;
     }
 
-    function initialize(address setter) public initializer {
-        __FM_init__(setter);
+    function initialize() public initializer {
+        __FM_init__(msg.sender);
     }
 
     function __FM_init__(address _setter) internal onlyInitializing {

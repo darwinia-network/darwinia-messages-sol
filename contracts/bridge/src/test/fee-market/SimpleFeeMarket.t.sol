@@ -49,7 +49,7 @@ contract SimpleFeeMarketTest is DSTest {
             PRICE_RATIO
         );
         self = address(this);
-        market.initialize(self);
+        market.initialize();
         a = new Guy(market);
         b = new Guy(market);
         c = new Guy(market);
