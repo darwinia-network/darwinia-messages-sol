@@ -40,10 +40,8 @@ const build_relayer_keys = (front, end) => {
     ])
     const key0 = ethers.utils.keccak256(newKey)
     const key1 = BigNumber.from(key0).add(1).toHexString()
-    const key2 = BigNumber.from(key0).add(2).toHexString()
     keys.push(key0)
     keys.push(key1)
-    keys.push(key2)
   }
   return keys
 }
