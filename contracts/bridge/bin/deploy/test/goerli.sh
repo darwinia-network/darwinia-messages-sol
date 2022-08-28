@@ -34,8 +34,8 @@ PRICE_RATIO=100
 
 SimpleFeeMarket=$(deploy SimpleFeeMarket $COLLATERAL_PERORDER $SLASH_TIME $RELAY_TIME $PRICE_RATIO)
 
-sig="initialize(address)"
-data=$(seth calldata $sig $ETH_FROM)
+sig="initialize()"
+data=$(seth calldata $sig)
 FeeMarketProxy=$(deploy FeeMarketProxy \
   $SimpleFeeMarket \
   $BridgeProxyAdmin \

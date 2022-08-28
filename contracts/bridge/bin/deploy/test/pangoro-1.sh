@@ -36,8 +36,8 @@ FeeMarket=$(deploy FeeMarket \
   $SLASH_TIME $RELAY_TIME \
   $PRICE_RATIO)
 
-sig="initialize(address)"
-data=$(seth calldata $sig $ETH_FROM)
+sig="initialize()"
+data=$(seth calldata $sig)
 FeeMarketProxy=$(deploy FeeMarketProxy \
   $FeeMarket \
   $BridgeProxyAdmin \
@@ -65,10 +65,11 @@ BeaconLightClient=$(deploy BeaconLightClient \
 
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
 sig=$(seth sig "initialize()")
+data=$(seth calldata $sig)
 EthereumExecutionLayerProxy=$(deploy EthereumExecutionLayerProxy \
   $ExecutionLayer \
   $BridgeProxyAdmin \
-  $sig)
+  $data)
 
 EthereumStorageVerifier=$(deploy EthereumStorageVerifier $EthereumExecutionLayerProxy)
 
