@@ -2,4 +2,5 @@
 
 set -eo pipefail
 
-. $(dirname $0)/migrate/local-dvm.sh
+export MODE=local
+. $(dirname $0)/migrate/local/dvm.sh

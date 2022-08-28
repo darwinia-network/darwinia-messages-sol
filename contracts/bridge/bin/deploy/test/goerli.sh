@@ -10,12 +10,13 @@ export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
 
 echo "ETH_FROM: ${ETH_FROM}"
 
+# import the deployment helpers
+. $(dirname $0)/common.sh
+
 BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
 
 export TARGET_CHAIN=pangoro
 
-# import the deployment helpers
-. $(dirname $0)/common.sh
 
 # bsctest to pangoro bridge config
 this_chain_pos=1

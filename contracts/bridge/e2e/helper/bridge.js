@@ -181,7 +181,7 @@ class Bridge {
     }
 
     const tx = await this.subClient.executionLayer.import_latest_execution_payload_state_root(execution_payload_state_root_update)
-    const state_root = await this.subClient.executionLayer.state_root()
+    const state_root = await this.subClient.executionLayer.merkle_root()
     console.log(state_root)
   }
 
@@ -205,6 +205,7 @@ class Bridge {
     const header = await this.sub.block_header()
     const message_root = await this.sub.chainMessageCommitter['commitment()']()
     const nonce = await this.sub.ecdsa_authority_nonce(header.hash)
+    console.log(nonce)
     const block_number = header.number.toNumber()
     const message = {
       block_number,

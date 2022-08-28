@@ -159,7 +159,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
     const tx = await bridge.confirm_messages_to_sub('eth')
     await expect(tx)
       .to.emit(ethClient.outbound, "MessagesDelivered")
-      .withArgs(o.latest_received_nonce.add(1), i.last_delivered_nonce, 0)
+      .withArgs(o.latest_received_nonce.add(1), i.last_delivered_nonce)
   })
 
   it.skip("4.2", async function () {
