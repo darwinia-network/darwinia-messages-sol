@@ -74,7 +74,7 @@ const receive_messages_delivery_proof = async (addr, begin, end) => {
     const d = await tx.wait();
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
-      .withArgs(begin, end, 0)
+      .withArgs(begin, end)
 }
 
 describe("multi message relay tests", () => {

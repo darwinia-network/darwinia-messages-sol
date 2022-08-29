@@ -25,10 +25,6 @@ contract TargetChain {
         uint64 begin;
         // Nonce of the last message that has been delivered (inclusive).
         uint64 end;
-        // Dispatch result (`false`/`true`), returned by the message dispatcher for every
-        // message in the `[end; begin]` range.
-        // The `MAX_UNCONFIRMED_MESSAGES` parameter must lesser than 256 for gas saving
-        uint256 dispatch_results;
     }
 
     /// Unrewarded relayer entry stored in the inbound lane data.
@@ -74,25 +70,25 @@ contract TargetChain {
     /// keccak256(abi.encodePacked(
     ///     "InboundLaneData(UnrewardedRelayer[] relayers,uint64 last_confirmed_nonce,uint64 last_delivered_nonce)",
     ///     "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
-    ///     "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
+    ///     "DeliveredMessages(uint64 begin,uint64 end)"
     ///     )
     /// )
-    bytes32 internal constant INBOUNDLANEDATA_TYPEHASH = 0x921cbc4091014b23df7eb9bbd83d71accebac7afad7c1344d8b581e63b929a86;
+    bytes32 internal constant INBOUNDLANEDATA_TYPEHASH = 0xcf4a39e72acc9d64da0fc507104c55de6ee7e6e1a477d8700014bcb981f85106;
 
     /// @dev Hash of the UnrewardedRelayer Schema
     /// keccak256(abi.encodePacked(
     ///     "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
-    ///     "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
+    ///     "DeliveredMessages(uint64 begin,uint64 end)"
     ///     )
     /// )
-    bytes32 internal constant UNREWARDEDRELAYER_TYPETASH = 0x78c43929b93dc90ddd24834bf3ea98320a8f647352353642293fd0d230004016;
+    bytes32 internal constant UNREWARDEDRELAYER_TYPETASH = 0x6d8ba9a028be62615788b0b9200c2e575678c124d2db04ca91582405eba190a1;
 
     /// @dev Hash of the DeliveredMessages Schema
     /// keccak256(abi.encodePacked(
-    ///     "DeliveredMessages(uint64 begin,uint64 end,uint256 dispatch_results)"
+    ///     "DeliveredMessages(uint64 begin,uint64 end)"
     ///     )
     /// )
-    bytes32 internal constant DELIVEREDMESSAGES_TYPETASH = 0xaa6637cd9a4d6b5008a62cb1bef3d0ade9f8d8284cc2d4bf4eb1e15260726513;
+    bytes32 internal constant DELIVEREDMESSAGES_TYPETASH = 0x1984c1907b379883ef1736e0351d28f5b4b82026a854e28971d89eb48f32fbe2;
 
     function hash(InboundLaneData memory inboundLaneData)
         internal
@@ -139,8 +135,7 @@ contract TargetChain {
             abi.encode(
                 DELIVEREDMESSAGES_TYPETASH,
                 messages.begin,
-                messages.end,
-                messages.dispatch_results
+                messages.end
             )
         );
     }

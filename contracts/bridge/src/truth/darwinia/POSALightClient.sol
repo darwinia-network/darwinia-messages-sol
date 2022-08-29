@@ -56,6 +56,8 @@ contract POSALightClient is Initializable, POSACommitmentScheme, EcdsaAuthority,
     ) external payable {
         // Hash the commitment
         bytes32 commitment_hash = hash(commitment);
+        // Commitment match the nonce of ecdsa-authority
+        require(commitment.nonce == nonce, "!nonce");
         // Verify commitment signed by ecdsa-authority
         _check_relayer_signatures(commitment_hash, signatures);
         // Only import new block

@@ -17,6 +17,11 @@ export TARGET_CHAIN=pangoro
 # import the deployment helpers
 . $(dirname $0)/common.sh
 
+BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
+
+export TARGET_CHAIN=pangoro
+
+
 # bsctest to pangoro bridge config
 this_chain_pos=1
 this_out_lane_pos=0
@@ -34,8 +39,8 @@ PRICE_RATIO=100
 
 SimpleFeeMarket=$(deploy SimpleFeeMarket $COLLATERAL_PERORDER $SLASH_TIME $RELAY_TIME $PRICE_RATIO)
 
-sig="initialize(address)"
-data=$(seth calldata $sig $ETH_FROM)
+sig="initialize()"
+data=$(seth calldata $sig)
 FeeMarketProxy=$(deploy FeeMarketProxy \
   $SimpleFeeMarket \
   $BridgeProxyAdmin \

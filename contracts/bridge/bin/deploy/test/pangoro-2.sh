@@ -36,15 +36,15 @@ FeeMarket=$(deploy FeeMarket \
   $SLASH_TIME $RELAY_TIME \
   $PRICE_RATIO)
 
-sig="initialize(address)"
-data=$(seth calldata $sig $ETH_FROM)
+sig="initialize()"
+data=$(seth calldata $sig)
 FeeMarketProxy=$(deploy FeeMarketProxy \
   $FeeMarket \
   $BridgeProxyAdmin \
   $data)
 
 # bsc light client config
-block_number=21791400
+block_number=22333200
 block_header=$(seth block $block_number --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545
 )
 parent_hash=$(echo "$block_header" | seth --field parentHash)

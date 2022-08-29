@@ -83,7 +83,7 @@ const receive_messages_delivery_proof = async (begin, end) => {
     const tx = await outbound.connect(four).receive_messages_delivery_proof(laneData, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
-      .withArgs(begin, end, 0)
+      .withArgs(begin, end)
     for (let i = begin; i<=end; i++) {
 
       let block = await ethers.provider.getBlock(tx.blockNumber)

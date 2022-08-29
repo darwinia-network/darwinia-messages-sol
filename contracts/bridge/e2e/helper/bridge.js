@@ -40,10 +40,8 @@ const build_relayer_keys = (front, end) => {
     ])
     const key0 = ethers.utils.keccak256(newKey)
     const key1 = BigNumber.from(key0).add(1).toHexString()
-    const key2 = BigNumber.from(key0).add(2).toHexString()
     keys.push(key0)
     keys.push(key1)
-    keys.push(key2)
   }
   return keys
 }
@@ -181,7 +179,7 @@ class Bridge {
     }
 
     const tx = await this.subClient.executionLayer.import_latest_execution_payload_state_root(execution_payload_state_root_update)
-    const state_root = await this.subClient.executionLayer.state_root()
+    const state_root = await this.subClient.executionLayer.merkle_root()
     console.log(state_root)
   }
 
@@ -214,7 +212,7 @@ class Bridge {
     const signs = await this.sub.sign_message_commitment(message)
     await this.eth.ecdsa_relay_header(message, signs)
     await this.bsc.ecdsa_relay_header(message, signs)
-    // return await this.ethClient.relay_header(message_root, header.number.toString())
+    return await this.ethClient.relay_header(message_root, header.number.toString())
   }
 
   async relay_eth_messages(data) {
