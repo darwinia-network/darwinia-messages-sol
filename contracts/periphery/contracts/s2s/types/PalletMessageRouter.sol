@@ -12,7 +12,7 @@ library PalletMessageRouter {
     ///////////////////////
     struct ForwardToMoonbeamCall {
         bytes2 callIndex;
-        VersionedXcmV2WithTransacts message;
+        EnumItem_VersionedXcm_V2 message;
     }
 
     function encodeForwardToMoonbeamCall(ForwardToMoonbeamCall memory _call)
@@ -23,76 +23,169 @@ library PalletMessageRouter {
         return
             abi.encodePacked(
                 _call.callIndex,
-                encodeVersionedXcmV2WithTransacts(_call.message)
+                encodeEnumItem_VersionedXcm_V2(_call.message)
             );
     }
 
-    // TODO: multi calls
-    function buildForwardToMoonbeamCall(bytes2 _callIndex, bytes memory _callOnMoonbeam)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function buildForwardToMoonbeamCall(
+        bytes2 _callIndex,
+        bytes memory _networkId,
+        address _origin,
+        bytes memory _callOnMoonbeam
+    ) internal pure returns (bytes memory) {
         // XCM to be sent to moonbeam
-        PalletMessageRouter.Transact[]
-            memory transacts = new PalletMessageRouter.Transact[](1);
-        transacts[0] = PalletMessageRouter.Transact(
-            1, // originType: SovereignAccount
-            12, // requireWeightAtMost
+        EnumItem_VersionedXcm_V2 memory xcm = buildEnumItem_VersionedXcm_V2(
+            _networkId,
+            _origin,
             _callOnMoonbeam
         );
-        PalletMessageRouter.VersionedXcmV2WithTransacts
-            memory message = PalletMessageRouter.VersionedXcmV2WithTransacts(
-                transacts
-            );
 
         // ForwardToMoonbeamCall
         PalletMessageRouter.ForwardToMoonbeamCall
             memory call = PalletMessageRouter.ForwardToMoonbeamCall(
-                _callIndex, // 
-                message
+                _callIndex,
+                xcm
             );
 
         return PalletMessageRouter.encodeForwardToMoonbeamCall(call);
+    }
+    
+    // TODO: multi calls
+    function buildEnumItem_VersionedXcm_V2(
+        bytes memory _networkId,
+        address _origin,
+        bytes memory _callOnMoonbeam
+    ) internal pure returns (EnumItem_VersionedXcm_V2 memory) {
+        // XCM to be sent to moonbeam
+        return
+            EnumItem_VersionedXcm_V2(
+                Xcm(
+                    // 1st instruction
+                    EnumItem_Instruction_DescendOrigin(
+                        EnumItem_Junctions_X1(
+                            EnumItem_Junction_AccountKey20(
+                                EnumItem_NetworkId_Named(_networkId),
+                                _origin
+                            )
+                        )
+                    ),
+                    // 2nd instruction
+                    EnumItem_Instruction_Transact(
+                        1, // originType: SovereignAccount
+                        5000000000, // requireWeightAtMost
+                        _callOnMoonbeam
+                    )
+                )
+            );
     }
 
     ///////////////////////
     // Types
     ///////////////////////
-    struct VersionedXcmV2WithTransacts {
-        Transact[] transacts;
+    struct EnumItem_VersionedXcm_V2 {
+        Xcm xcm;
     }
 
-    // pub enum VersionedXcm<Call> {
-    //     ...
-    //     V2(v2::Xcm<Call>),
-    // }
-    function encodeVersionedXcmV2WithTransacts(VersionedXcmV2WithTransacts memory _obj)
+    function encodeEnumItem_VersionedXcm_V2(
+        EnumItem_VersionedXcm_V2 memory _obj
+    ) internal pure returns (bytes memory) {
+        return Utils.encodeEnumItem(2, encodeXcm(_obj.xcm));
+    }
+
+    struct Xcm {
+        EnumItem_Instruction_DescendOrigin descendOrigin;
+        EnumItem_Instruction_Transact transact;
+    }
+
+    function encodeXcm(Xcm memory _obj) internal pure returns (bytes memory) {
+        bytes memory data = ScaleCodec.encodeUintCompact(2); // 2 instructions
+        return
+            abi.encodePacked(
+                data,
+                encodeEnumItem_Instruction_DescendOrigin(_obj.descendOrigin),
+                encodeEnumItem_Instruction_Transact(_obj.transact)
+            );
+    }
+
+    // *** Instruction::DescendOrigin ***
+    struct EnumItem_Instruction_DescendOrigin {
+        EnumItem_Junctions_X1 location;
+    }
+
+    function encodeEnumItem_Instruction_DescendOrigin(
+        EnumItem_Instruction_DescendOrigin memory _obj
+    ) internal pure returns (bytes memory) {
+        return
+            Utils.encodeEnumItem(
+                11,
+                encodeEnumItem_Junctions_X1(_obj.location)
+            );
+    }
+
+    //
+    struct EnumItem_Junctions_X1 {
+        EnumItem_Junction_AccountKey20 junction;
+    }
+
+    function encodeEnumItem_Junctions_X1(EnumItem_Junctions_X1 memory _obj)
         internal
         pure
         returns (bytes memory)
     {
-        bytes memory data = ScaleCodec.encodeUintCompact(_obj.transacts.length);
-        for (uint i = 0; i < _obj.transacts.length; i++) {
-            data = abi.encodePacked(
-                data,
-                encodeInstructionTransact(_obj.transacts[i])
+        return
+            Utils.encodeEnumItem(
+                1,
+                encodeEnumItem_Junction_AccountKey20(_obj.junction)
             );
-        }
-        return Utils.encodeEnumItem(2, data);
     }
 
-    struct Transact {
+    //
+    struct EnumItem_Junction_AccountKey20 {
+        EnumItem_NetworkId_Named network;
+        address key;
+    }
+
+    function encodeEnumItem_Junction_AccountKey20(
+        EnumItem_Junction_AccountKey20 memory _obj
+    ) internal pure returns (bytes memory) {
+        return
+            Utils.encodeEnumItem(
+                3,
+                abi.encodePacked(
+                    encodeEnumItem_NetworkId_Named(_obj.network),
+                    _obj.key
+                )
+            );
+    }
+
+    //
+    struct EnumItem_NetworkId_Named {
+        bytes named;
+    }
+
+    function encodeEnumItem_NetworkId_Named(
+        EnumItem_NetworkId_Named memory _obj
+    ) internal pure returns (bytes memory) {
+        return
+            Utils.encodeEnumItem(
+                1,
+                abi.encodePacked(
+                    ScaleCodec.encodeUintCompact(_obj.named.length),
+                    _obj.named
+                )
+            );
+    }
+
+    // *** Instruction::Transact ***
+    struct EnumItem_Instruction_Transact {
         uint8 originType;
         uint64 requireWeightAtMost;
         bytes call; // without length prefix
     }
 
-    function encodeInstructionTransact(Transact memory _transact)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function encodeEnumItem_Instruction_Transact(
+        EnumItem_Instruction_Transact memory _transact
+    ) internal pure returns (bytes memory) {
         require(_transact.call.length > 0, "Empty call");
         require(_transact.originType <= 3, "Illegal originType");
         bytes memory data = abi.encodePacked(

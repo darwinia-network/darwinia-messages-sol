@@ -46,6 +46,8 @@ library SmartChainXLib {
     ) external returns (uint64) {
         bytes memory routerCallEncoded = PalletMessageRouter.buildForwardToMoonbeamCall(
             _routerForwardToMoonbeamCallIndex,
+            hex"43726162536d617274436861696e",
+            msg.sender,
             PalletEthereumXcm.buildTransactCall(
                 _tgtTransactParams.transactCallIndex,
                 _tgtTransactParams.gasLimit,
@@ -55,7 +57,7 @@ library SmartChainXLib {
             )
         );
 
-        uint64 routerCallWeight = 0;
+        uint64 routerCallWeight = 0; // TODO: waiting for guantong
 
         return
             remoteDispatch(
