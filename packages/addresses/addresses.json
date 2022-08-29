@@ -28,11 +28,15 @@
         "S2sMappingTokenFactoryProxy": "0x3CC8913088F79831c8335f0307f4FC92d79C1ac7",
         "dar/dvmp": "0x6d6f646c6461722f64766d700000000000000000",
         "xRING": "0x7399Ea6C9d35124d893B8d9808930e9d3F211501",
-        "WormholeDaoMultisig": "0x0050F880c35c31c13BFd9cBb7D28AafaEcA3abd2",
-        "WormholeDaoTimeLock": "0x2401224012bAE7C2f217392665CA7abC16dCDE1e",
+        "HelixDaoMultisig": "0x0050F880c35c31c13BFd9cBb7D28AafaEcA3abd2",
+        "HelixDaoTimeLock": "0x2401224012bAE7C2f217392665CA7abC16dCDE1e",
         "SubswapRouter": "0xd6fc3e187da47e33774b25c3d0adc619032bf686",
         "SubswapPair/Crab-xRing": "0x998b736aA535e2333CE2462A49681B69c4d44aAc",
         "SnowswapRouter": "0xaf5caa87a7d3718622604268c43ff6ce9d2cec3c",
         "SnowswapPair/Crab-xRing": "0xF157c9393255Db1728bC6483c3545Ca8a1655a0F"
+    },
+    "46": {
+        "HelixDaoMultisig": "0xBd1a110ec476b4775c43905000288881367B1a88",
+        "HelixDaoTimeLock": "0xA546F42BeB3DEa617b0F3Ca6995C7Df5dfCaD29D"
     }
 }
