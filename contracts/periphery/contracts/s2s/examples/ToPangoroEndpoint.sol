@@ -34,19 +34,6 @@ contract ToPangoroEndpoint is MessageEndpoint {
         _setRemoteEndpoint(_remoteChainId, _remoteEndpoint);
     }
 
-    function remoteDispatch(
-        uint32 pangoroSpecVersion,
-        bytes memory pangoroCallEncoded,
-        uint64 pangoroCallWeight
-    ) external payable returns (uint256) {
-        return
-            _remoteDispatch(
-                pangoroSpecVersion,
-                pangoroCallEncoded,
-                pangoroCallWeight
-            );
-    }
-
     function remoteExecute(
         uint32 pangoroSpecVersion,
         address callReceiver,
