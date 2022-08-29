@@ -27,6 +27,35 @@ library PalletMessageRouter {
             );
     }
 
+    // TODO: multi calls
+    function buildForwardToMoonbeamCall(bytes2 _callIndex, bytes memory _callOnMoonbeam)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        // XCM to be sent to moonbeam
+        PalletMessageRouter.Transact[]
+            memory transacts = new PalletMessageRouter.Transact[](1);
+        transacts[0] = PalletMessageRouter.Transact(
+            1, // originType: SovereignAccount
+            12, // requireWeightAtMost
+            _callOnMoonbeam
+        );
+        PalletMessageRouter.VersionedXcmV2WithTransacts
+            memory message = PalletMessageRouter.VersionedXcmV2WithTransacts(
+                transacts
+            );
+
+        // ForwardToMoonbeamCall
+        PalletMessageRouter.ForwardToMoonbeamCall
+            memory call = PalletMessageRouter.ForwardToMoonbeamCall(
+                _callIndex, // 
+                message
+            );
+
+        return PalletMessageRouter.encodeForwardToMoonbeamCall(call);
+    }
+
     ///////////////////////
     // Types
     ///////////////////////

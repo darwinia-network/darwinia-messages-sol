@@ -10,4 +10,6 @@ library Utils {
     {
         return abi.encodePacked(_enumItemIndex, _enumItemData);
     }
+
+    // function encodeVec(uint16 length, bytes)
 }
