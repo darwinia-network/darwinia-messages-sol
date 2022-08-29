@@ -26,16 +26,18 @@ contract PangolinToPangolinParachainEndpoint is MessageEndpoint {
         return true;
     }
 
-    function remoteDispatch(
-        uint32 specVersion,
-        bytes memory callEncoded,
-        uint64 callWeight
-    ) external payable returns (uint256) {
+    function remoteExecuteOnMoonbeam(
+        uint32 routerSpecVersion,
+        address callReceiver,
+        bytes calldata callPayload,
+        uint256 gasLimit
+    ) external returns (uint256) {
         return
-            _remoteDispatch(
-                specVersion,
-                callEncoded,
-                callWeight
+            _remoteExecuteOnMoonbeam(
+                routerSpecVersion,
+                callReceiver,
+                callPayload,
+                gasLimit
             );
     }
 
