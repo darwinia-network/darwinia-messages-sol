@@ -40,6 +40,7 @@ local-testnet :; @./bin/start-services.sh
 
 # Migration
 migrate-local :; @./bin/migrate-local.sh
+migrate-test  :; @./bin/migrate-test.sh
 
 # verify on Etherscan
 verify:; ETH_RPC_URL=$(call network,$(network_name)) dapp verify-contract src/Greeter.sol:Greeter $(contract_address)

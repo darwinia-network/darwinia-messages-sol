@@ -73,7 +73,7 @@ const receive_messages_delivery_proof = async (begin, end) => {
     const tx = await outbound.connect(addr1).receive_messages_delivery_proof(laneData, "0x")
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
-      .withArgs(begin, end, 0)
+      .withArgs(begin, end)
     await logNonce()
 }
 

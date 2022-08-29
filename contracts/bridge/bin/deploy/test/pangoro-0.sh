@@ -19,8 +19,8 @@ BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
 # pangoro chain id
 this_chain_pos=0
 ChainMessageCommitter=$(deploy ChainMessageCommitter $this_chain_pos)
-sig="initialize(address)"
-data=$(seth calldata $sig $ETH_FROM)
+sig="initialize()"
+data=$(seth calldata $sig)
 ChainMessageCommitterProxy=$(deploy ChainMessageCommitterProxy \
   $ChainMessageCommitter \
   $BridgeProxyAdmin \

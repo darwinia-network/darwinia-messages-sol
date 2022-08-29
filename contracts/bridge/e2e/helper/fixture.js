@@ -41,7 +41,7 @@ if (target == 'local') {
   // beacon_endpoint = "https://lodestar-kiln.chainsafe.io"
   beacon_endpoint = "http://127.0.0.1:5052"
 
-  ns_eth = 'sepolia'
+  ns_eth = 'goerli'
   ns_bsc = 'bsctest'
   ns_dvm = 'pangoro'
 }
@@ -86,7 +86,7 @@ async function bootstrap() {
   const bridge = new Bridge(ethClient, bscClient, eth2Client, subClient)
   await ethClient.init(wallets, eth_fees, evm_eth_addresses, ns_dvm)
   await bscClient.init(wallets, bsc_fees, evm_bsc_addresses, ns_dvm)
-  await subClient.init(wallets, bsc_fees, dvm_addresses, ns_eth, ns_bsc)
+  await subClient.init(wallets, sub_fees, dvm_addresses, ns_eth, ns_bsc)
   return {
     ethClient,
     bscClient,

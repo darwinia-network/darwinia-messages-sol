@@ -29,7 +29,7 @@ class SubClient {
     this.bob = this.keyring.addFromUri('//Bob', { name: 'Bob' });
 
     const ChainMessageCommitter = await artifacts.readArtifact("ChainMessageCommitter");
-    this.chainMessageCommitter = new ethers.Contract(addresses.ChainMessageCommitter, ChainMessageCommitter.abi, this.provider)
+    this.chainMessageCommitter = new ethers.Contract(addresses.ChainMessageCommitterProxy, ChainMessageCommitter.abi, this.provider)
 
     const LaneMessageCommitter = await artifacts.readArtifact("LaneMessageCommitter");
     this.ethLaneMessageCommitter = new ethers.Contract(addresses[ns_eth].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
@@ -41,10 +41,10 @@ class SubClient {
     const beaconLightClient = new ethers.Contract(addresses[ns_eth].BeaconLightClient, BeaconLightClient.abi, this.provider)
 
     const ExecutionLayer = await artifacts.readArtifact("ExecutionLayer")
-    const executionLayer = new ethers.Contract(addresses[ns_eth].ExecutionLayer, ExecutionLayer.abi, this.provider)
+    const executionLayer = new ethers.Contract(addresses[ns_eth].EthereumExecutionLayerProxy, ExecutionLayer.abi, this.provider)
 
     const BSCLightClient = await artifacts.readArtifact("BSCLightClient")
-    const bscLightClient = new ethers.Contract(addresses[ns_bsc].BSCLightClient, BSCLightClient.abi, this.provider)
+    const bscLightClient = new ethers.Contract(addresses[ns_bsc].BSCLightClientProxy, BSCLightClient.abi, this.provider)
     this.signer = wallets[0].connect(this.provider)
     this.beaconLightClient = beaconLightClient.connect(this.signer)
     this.bscLightClient = bscLightClient.connect(this.signer)

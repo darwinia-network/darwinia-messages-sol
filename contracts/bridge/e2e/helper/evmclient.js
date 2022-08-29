@@ -9,13 +9,8 @@ class EvmClient {
 
   async init(wallets, fees, addresses, ns) {
     this.wallets = wallets
-    if (addresses[ns].FeeMarket) {
-      const FeeMarket = await artifacts.readArtifact("FeeMarket");
-      this.feeMarket = new ethers.Contract(addresses[ns].FeeMarket, FeeMarket.abi, this.provider)
-    } else {
-      const SimpleFeeMarket = await artifacts.readArtifact("SimpleFeeMarket");
-      this.feeMarket = new ethers.Contract(addresses[ns].SimpleFeeMarket, SimpleFeeMarket.abi, this.provider)
-    }
+    const FeeMarket = await artifacts.readArtifact("FeeMarket");
+    this.feeMarket = new ethers.Contract(addresses[ns].FeeMarketProxy, FeeMarket.abi, this.provider)
 
     const OutboundLane = await artifacts.readArtifact("OutboundLane")
     const outbound = new ethers.Contract(addresses[ns].OutboundLane, OutboundLane.abi,  this.provider)
@@ -41,7 +36,7 @@ class EvmClient {
       let signer = this.wallets[i]
       const tx = await this.feeMarket.connect(signer.connect(this.provider)).enroll(prev, fee, {
         value: this.fees[0],
-        gasLimit: 300000
+        gasLimit: 300000,
       })
       prev = signer.address
     }

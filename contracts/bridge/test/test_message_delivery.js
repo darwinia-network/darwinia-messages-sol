@@ -79,7 +79,7 @@ const receive_messages_delivery_proof = async (laneData, begin, end) => {
     }
     await expect(tx)
       .to.emit(outbound, "MessagesDelivered")
-      .withArgs(begin, end, result)
+      .withArgs(begin, end)
     await logNonce()
 }
 
