@@ -28,19 +28,6 @@ contract ToPangolinEndpoint is MessageEndpoint {
         return true;
     }
 
-    function remoteDispatch(
-        uint32 pangolinSpecVersion,
-        bytes memory pangolinCallEncoded,
-        uint64 pangolinCallWeight
-    ) external payable returns (uint256) {
-        return
-            _remoteDispatch(
-                pangolinSpecVersion,
-                pangolinCallEncoded,
-                pangolinCallWeight
-            );
-    }
-
     function remoteExecute(
         uint32 pangolinSpecVersion,
         address callReceiver,

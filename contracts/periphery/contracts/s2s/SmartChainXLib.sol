@@ -11,12 +11,140 @@ import "./interfaces/IStateStorage.sol";
 import "./types/CommonTypes.sol";
 import "./types/PalletBridgeMessages.sol";
 import "./types/PalletEthereum.sol";
+import "./types/PalletMessageRouter.sol";
+import "./types/PalletEthereumXcm.sol";
 
 library SmartChainXLib {
+    struct LocalParams {
+        address dispatchPrecompileAddress;
+        bytes2 sendMessageCallIndex;
+        bytes4 outboundLaneId;
+        address storagePrecompileAddress;
+        bytes32 storageKeyForLatestNonce;
+    }
+
+    struct RemoteTransactParams {
+        bytes2 transactCallIndex;
+        address endpoint;
+        bytes input;
+        uint256 gasLimit;
+    }
+
     bytes public constant account_derivation_prefix =
         "pallet-bridge/account-derivation/account";
 
     event DispatchResult(bool success, bytes result);
+
+    function remoteTransactOnMoonbeam(
+        // target params
+        RemoteTransactParams memory _tgtTransactParams, 
+        // router params
+        uint32 _routerSpecVersion,
+        bytes2 _routerForwardToMoonbeamCallIndex,
+        // local params
+        LocalParams memory _localParams
+    ) external returns (uint64) {
+        bytes memory routerCallEncoded = PalletMessageRouter.buildForwardToMoonbeamCall(
+            _routerForwardToMoonbeamCallIndex,
+            PalletEthereumXcm.buildTransactCall(
+                _tgtTransactParams.transactCallIndex,
+                _tgtTransactParams.gasLimit,
+                _tgtTransactParams.endpoint,
+                0,
+                _tgtTransactParams.input
+            )
+        );
+
+        uint64 routerCallWeight = 0;
+
+        return
+            remoteDispatch(
+                _routerSpecVersion,
+                routerCallEncoded,
+                routerCallWeight,
+                _localParams.dispatchPrecompileAddress,
+                _localParams.sendMessageCallIndex,
+                _localParams.outboundLaneId,
+                _localParams.storagePrecompileAddress,
+                _localParams.storageKeyForLatestNonce
+            );
+    }
+
+    function remoteTransact(
+        // target params
+        uint32 _tgtSpecVersion,
+        RemoteTransactParams memory _tgtTransactParams,
+        uint64 _tgtSmartChainId,
+        uint64 _tgtWeightPerGas,
+        // local params
+        LocalParams memory _localParams
+    ) internal returns (uint64) {
+        PalletEthereum.MessageTransactCall memory tgtCall = PalletEthereum
+            .MessageTransactCall(
+                // the call index of message_transact
+                _tgtTransactParams.transactCallIndex,
+                // the evm transaction to transact
+                PalletEthereum.buildTransactionV2ForMessageTransact(
+                    _tgtTransactParams.gasLimit,
+                    _tgtTransactParams.endpoint,
+                    _tgtSmartChainId,
+                    _tgtTransactParams.input
+                )
+            );
+        bytes memory tgtCallEncoded = PalletEthereum.encodeMessageTransactCall(
+            tgtCall
+        );
+        uint64 tgtCallWeight = uint64(_tgtTransactParams.gasLimit * _tgtWeightPerGas);
+
+        return
+            remoteDispatch(
+                _tgtSpecVersion,
+                tgtCallEncoded,
+                tgtCallWeight,
+                _localParams.dispatchPrecompileAddress,
+                _localParams.sendMessageCallIndex,
+                _localParams.outboundLaneId,
+                _localParams.storagePrecompileAddress,
+                _localParams.storageKeyForLatestNonce
+            );
+    }
+
+    function remoteDispatch(
+        uint32 _tgtSpecVersion,
+        bytes memory _tgtCallEncoded,
+        uint64 _tgtCallWeight,
+        //
+        address _dispatchPrecompileAddress,
+        bytes2 _sendMessageCallIndex,
+        bytes4 _outboundLaneId,
+        address _storagePrecompileAddress,
+        bytes32 _storageKeyForLatestNonce
+    ) internal returns (uint64) {
+        // Build the encoded message to be sent
+        bytes memory message = buildMessage(
+            _tgtSpecVersion,
+            _tgtCallWeight,
+            _tgtCallEncoded
+        );
+
+        // Send the message
+        sendMessage(
+            _dispatchPrecompileAddress,
+            _sendMessageCallIndex,
+            _outboundLaneId,
+            msg.value,
+            message
+        );
+
+        // Get nonce from storage
+        uint64 nonce = latestNonce(
+            _storagePrecompileAddress,
+            _storageKeyForLatestNonce,
+            _outboundLaneId
+        );
+
+        return nonce;
+    }
 
     // Send message over lane by calling the `send_message` dispatch call on
     // the source chain which is identified by the `callIndex` param.

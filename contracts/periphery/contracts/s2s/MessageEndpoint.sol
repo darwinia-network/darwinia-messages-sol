@@ -26,6 +26,8 @@ abstract contract MessageEndpoint {
     address public derivedMessageSender;
     // 1 gas ~= 40_000 weight
     uint64 public remoteWeightPerGas = 40_000;
+    // router params
+    bytes2 public routerForwardToMoonbeamCallIndex;
 
     ///////////////////////////////
     // Outbound
@@ -46,63 +48,59 @@ abstract contract MessageEndpoint {
             callPayload
         );
 
-        return _remoteTransact(tgtSpecVersion, input, gasLimit);
+        uint64 messageNonce = SmartChainXLib.remoteTransact(
+            tgtSpecVersion,
+            SmartChainXLib.RemoteTransactParams(
+                remoteMessageTransactCallIndex,
+                remoteEndpoint,
+                input,
+                gasLimit
+            ),
+            remoteSmartChainId,
+            remoteWeightPerGas,
+            SmartChainXLib.LocalParams(
+                dispatchAddress,
+                sendMessageCallIndex,
+                outboundLaneId,
+                storageAddress,
+                storageKeyForLatestNonce
+            )
+        );
+
+        return encodeMessageId(outboundLaneId, messageNonce);
     }
 
-    function _remoteTransact(
-        uint32 tgtSpecVersion,
-        bytes memory input,
+    function _remoteExecuteOnMoonbeam(
+        uint32 routerSpecVersion,
+        address callReceiver,
+        bytes calldata callPayload,
         uint256 gasLimit
     ) internal returns (uint256) {
-        PalletEthereum.MessageTransactCall memory call = PalletEthereum
-            .MessageTransactCall(
-                // the call index of message_transact
+        bytes memory input = abi.encodeWithSelector(
+            this.execute.selector,
+            callReceiver,
+            callPayload
+        );
+
+        uint64 messageNonce = SmartChainXLib.remoteTransactOnMoonbeam(
+            SmartChainXLib.RemoteTransactParams(
                 remoteMessageTransactCallIndex,
-                // the evm transaction to transact
-                PalletEthereum.buildTransactionV2ForMessageTransact(
-                    gasLimit,
-                    remoteEndpoint,
-                    remoteSmartChainId,
-                    input
-                )
-            );
-        bytes memory callEncoded = PalletEthereum.encodeMessageTransactCall(
-            call
-        );
-        uint64 weight = uint64(gasLimit * remoteWeightPerGas);
-
-        return _remoteDispatch(tgtSpecVersion, callEncoded, weight);
-    }
-
-    function _remoteDispatch(
-        uint32 tgtSpecVersion,
-        bytes memory tgtCallEncoded,
-        uint64 tgtCallWeight
-    ) internal returns (uint256) {
-        // Build the encoded message to be sent
-        bytes memory message = SmartChainXLib.buildMessage(
-            tgtSpecVersion,
-            tgtCallWeight,
-            tgtCallEncoded
+                remoteEndpoint,
+                input,
+                gasLimit
+            ),
+            routerSpecVersion,
+            routerForwardToMoonbeamCallIndex,
+            SmartChainXLib.LocalParams(
+                dispatchAddress,
+                sendMessageCallIndex,
+                outboundLaneId,
+                storageAddress,
+                storageKeyForLatestNonce
+            )
         );
 
-        // Send the message
-        SmartChainXLib.sendMessage(
-            dispatchAddress,
-            sendMessageCallIndex,
-            outboundLaneId,
-            msg.value,
-            message
-        );
-
-        // Get nonce from storage
-        uint64 nonce = SmartChainXLib.latestNonce(
-            storageAddress,
-            storageKeyForLatestNonce,
-            outboundLaneId
-        );
-
-        return encodeMessageId(outboundLaneId, nonce);
+        return encodeMessageId(outboundLaneId, messageNonce);
     }
 
     ///////////////////////////////
@@ -126,7 +124,6 @@ abstract contract MessageEndpoint {
         } else {
             revert("MessageEndpoint: Unapproved call");
         }
-        
     }
 
     // Check if the call can be executed
