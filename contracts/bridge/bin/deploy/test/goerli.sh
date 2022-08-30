@@ -95,7 +95,7 @@ InboundLane=$(deploy InboundLane \
   $bridged_chain_pos \
   $bridged_out_lane_pos 0 0)
 
-seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
+seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1 --chain goerli
 
 EthereumStorageVerifier=$(jq -r ".[\"$NETWORK_NAME\"].EthereumStorageVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
 (set -x; seth send -F $ETH_FROM $EthereumStorageVerifier "registry(uint32,uint32,address,uint32,address)" \
