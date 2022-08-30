@@ -14,6 +14,9 @@ import "./types/PalletEthereum.sol";
 import "./types/PalletMessageRouter.sol";
 import "./types/PalletEthereumXcm.sol";
 
+import "./Utils.sol";
+import "./precompiles/moonbeam/XcmUtils.sol";
+
 library SmartChainXLib {
     struct LocalParams {
         address dispatchPrecompileAddress;
@@ -240,22 +243,7 @@ library SmartChainXLib {
         return Hash.blake2bHash(data);
     }
 
-    function revertIfFailed(
-        bool _success,
-        bytes memory _resultData,
-        string memory _revertMsg
-    ) internal pure {
-        if (!_success) {
-            if (_resultData.length > 0) {
-                assembly {
-                    let resultDataSize := mload(_resultData)
-                    revert(add(32, _resultData), resultDataSize)
-                }
-            } else {
-                revert(_revertMsg);
-            }
-        }
-    }
+    
 
     // dispatch pallet dispatch-call
     function dispatch(
@@ -267,7 +255,7 @@ library SmartChainXLib {
         (bool success, bytes memory data) = _srcDispatchPrecompileAddress.call(
             _callEncoded
         );
-        revertIfFailed(success, data, _errMsg);
+        Utils.revertIfFailed(success, data, _errMsg);
     }
 
     // derive an address from remote sender address (sender on the source chain).
@@ -301,6 +289,30 @@ library SmartChainXLib {
         address result = AccountId.deriveEthereumAddress(derivedAccountId);
 
         return result;
+    }
+
+    function deriveSenderFromSmartChainOnMoonbeam(
+        bytes4 _srcChainId,
+        bytes memory _parachainId,
+        address _srcMessageSender
+    ) internal view returns (address) {
+        // H160(sender on the sourc chain) > AccountId32
+        bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
+            _srcMessageSender
+        );
+
+        // AccountId32 > derived AccountId32
+        bytes32 derivedAccountId = deriveAccountId(
+            _srcChainId,
+            derivedSubstrateAddress
+        );
+
+        // derived AccountId32 > Moonbeam H160
+        return
+            XcmUtils.deriveMoonbeamAddressFromAccountId(
+                _parachainId,
+                derivedAccountId
+            );
     }
 
     // Get the last delivered nonce from the state storage of the target chain's inbound lane
@@ -344,7 +356,7 @@ library SmartChainXLib {
             );
 
         // TODO: Use try/catch instead for error
-        revertIfFailed(success, data, _failedMsg);
+        Utils.revertIfFailed(success, data, _failedMsg);
 
         return abi.decode(data, (bytes));
     }
