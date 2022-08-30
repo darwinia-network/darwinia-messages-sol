@@ -33,29 +33,28 @@ library PalletEthereumXcm {
         address _to,
         uint256 _value,
         bytes memory _input
-    ) internal pure returns (bytes memory) {
-        PalletEthereumXcm.AccessListType memory accessList;
+    ) internal pure returns (TransactCall memory) {
+        AccessListType memory accessList;
         accessList.some = false;
 
-        PalletEthereumXcm.TransactCall memory transactCall = PalletEthereumXcm
-            .TransactCall(
-                _callIndex,
-                PalletEthereumXcm.EthereumXcmTransaction(
-                    1, // V2
-                    PalletEthereumXcm.EthereumXcmTransactionV2(
-                        _gasLimit,
-                        PalletEthereumXcm.TransactionAction(
-                            0, // 0: Call, 1: Create
-                            _to
-                        ),
-                        _value,
-                        _input,
-                        accessList
-                    )
+        TransactCall memory transactCall = TransactCall(
+            _callIndex,
+            EthereumXcmTransaction(
+                1, // V2
+                EthereumXcmTransactionV2(
+                    _gasLimit,
+                    TransactionAction(
+                        0, // 0: Call, 1: Create
+                        _to
+                    ),
+                    _value,
+                    _input,
+                    accessList
                 )
-            );
+            )
+        );
 
-        return PalletEthereumXcm.encodeTransactCall(transactCall);
+        return transactCall;
     }
 
     ///////////////////////
@@ -135,11 +134,17 @@ library PalletEthereumXcm {
     {
         if (_accessList.some) {
             bytes memory data = hex"01";
-            data = abi.encodePacked(data, ScaleCodec.encodeUintCompact(_accessList.arr.length));
+            data = abi.encodePacked(
+                data,
+                ScaleCodec.encodeUintCompact(_accessList.arr.length)
+            );
             for (uint i = 0; i < _accessList.arr.length; i++) {
                 TupleOfH160AndVecOfH256 memory tuple = _accessList.arr[i];
                 data = abi.encodePacked(data, tuple.h160);
-                data = abi.encodePacked(data, ScaleCodec.encodeUintCompact(tuple.vecOfH256.length));
+                data = abi.encodePacked(
+                    data,
+                    ScaleCodec.encodeUintCompact(tuple.vecOfH256.length)
+                );
                 for (uint j = 0; j < tuple.vecOfH256.length; j++) {
                     data = abi.encodePacked(data, tuple.vecOfH256[j]);
                 }

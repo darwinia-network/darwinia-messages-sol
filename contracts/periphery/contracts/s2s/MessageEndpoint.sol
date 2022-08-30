@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 
 import "./SmartChainXLib.sol";
 import "./types/PalletEthereum.sol";
+import "./types/PalletEthereumXcm.sol";
 
 abstract contract MessageEndpoint {
     address public remoteEndpoint;
@@ -28,6 +29,7 @@ abstract contract MessageEndpoint {
     uint64 public remoteWeightPerGas = 40_000;
     // router params
     bytes2 public routerForwardToMoonbeamCallIndex;
+    uint64 public routerForwardToMoonbeamCallWeight;
 
     ///////////////////////////////
     // Outbound
@@ -48,16 +50,25 @@ abstract contract MessageEndpoint {
             callPayload
         );
 
+        PalletEthereum.MessageTransactCall memory tgtTransactCall = PalletEthereum
+            .MessageTransactCall(
+                // the call index of message_transact
+                remoteMessageTransactCallIndex,
+                // the evm transaction to transact
+                PalletEthereum.buildTransactionV2ForMessageTransact(
+                    gasLimit,
+                    remoteEndpoint,
+                    remoteSmartChainId,
+                    input
+                )
+            );
+        
+        uint64 tgtTransactCallWeight = uint64(gasLimit * remoteWeightPerGas);
+
         uint64 messageNonce = SmartChainXLib.remoteTransact(
             tgtSpecVersion,
-            SmartChainXLib.RemoteTransactParams(
-                remoteMessageTransactCallIndex,
-                remoteEndpoint,
-                input,
-                gasLimit
-            ),
-            remoteSmartChainId,
-            remoteWeightPerGas,
+            tgtTransactCall,
+            tgtTransactCallWeight,
             SmartChainXLib.LocalParams(
                 dispatchAddress,
                 sendMessageCallIndex,
@@ -82,15 +93,20 @@ abstract contract MessageEndpoint {
             callPayload
         );
 
-        uint64 messageNonce = SmartChainXLib.remoteTransactOnMoonbeam(
-            SmartChainXLib.RemoteTransactParams(
+        PalletEthereumXcm.TransactCall
+            memory tgtTransactCall = PalletEthereumXcm.buildTransactCall(
                 remoteMessageTransactCallIndex,
+                gasLimit,
                 remoteEndpoint,
-                input,
-                gasLimit
-            ),
+                0,
+                input
+            );
+
+        uint64 messageNonce = SmartChainXLib.remoteTransactOnMoonbeam(
+            tgtTransactCall,
             routerSpecVersion,
             routerForwardToMoonbeamCallIndex,
+            routerForwardToMoonbeamCallWeight,
             SmartChainXLib.LocalParams(
                 dispatchAddress,
                 sendMessageCallIndex,
