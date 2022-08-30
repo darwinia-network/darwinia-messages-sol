@@ -4,7 +4,7 @@ pragma solidity >=0.6.0;
 
 import "@darwinia/contracts-utils/contracts/Bytes.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
-import "./Utils.sol";
+import "./TypeUtils.sol";
 
 library PalletMessageRouter {
     ///////////////////////
@@ -62,7 +62,7 @@ library PalletMessageRouter {
     function encodeEnumItem_VersionedXcm_V2(
         EnumItem_VersionedXcm_V2 memory _obj
     ) internal pure returns (bytes memory) {
-        return Utils.encodeEnumItem(2, encodeXcm(_obj.xcm));
+        return TypeUtils.encodeEnumItem(2, encodeXcm(_obj.xcm));
     }
 
     struct Xcm {
@@ -87,7 +87,7 @@ library PalletMessageRouter {
         EnumItem_Instruction_DescendOrigin memory _obj
     ) internal pure returns (bytes memory) {
         return
-            Utils.encodeEnumItem(
+            TypeUtils.encodeEnumItem(
                 11,
                 encodeEnumItem_Junctions_X1(_obj.location)
             );
@@ -104,7 +104,7 @@ library PalletMessageRouter {
         returns (bytes memory)
     {
         return
-            Utils.encodeEnumItem(
+            TypeUtils.encodeEnumItem(
                 1,
                 encodeEnumItem_Junction_AccountKey20(_obj.junction)
             );
@@ -120,7 +120,7 @@ library PalletMessageRouter {
         EnumItem_Junction_AccountKey20 memory _obj
     ) internal pure returns (bytes memory) {
         return
-            Utils.encodeEnumItem(
+            TypeUtils.encodeEnumItem(
                 3,
                 abi.encodePacked(
                     encodeEnumItem_NetworkId_Named(_obj.network),
@@ -138,7 +138,7 @@ library PalletMessageRouter {
         EnumItem_NetworkId_Named memory _obj
     ) internal pure returns (bytes memory) {
         return
-            Utils.encodeEnumItem(
+            TypeUtils.encodeEnumItem(
                 1,
                 abi.encodePacked(
                     ScaleCodec.encodeUintCompact(_obj.named.length),
@@ -165,6 +165,6 @@ library PalletMessageRouter {
             ScaleCodec.encodeUintCompact(_transact.call.length),
             _transact.call
         );
-        return Utils.encodeEnumItem(6, data);
+        return TypeUtils.encodeEnumItem(6, data);
     }
 }
