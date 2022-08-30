@@ -32,7 +32,7 @@ bridged_chain_pos=2
 bridged_in_lane_pos=1
 bridged_out_lane_pos=0
 
-BSCLightClientProxy=$(load_saddr ".BSCLightClientProxy")
+BSCLightClientProxy=$(load_saddr "BSCLightClientProxy")
 BSCStorageVerifier=$(deploy BSCStorageVerifier $BSCLightClientProxy)
 
 OutboundLane=$(deploy OutboundLane \
