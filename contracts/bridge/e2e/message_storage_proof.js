@@ -149,7 +149,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
     }
   })
 
-  it("3", async function () {
+  it.skip("3", async function () {
     await bridge.relay_sub_header()
   })
 
