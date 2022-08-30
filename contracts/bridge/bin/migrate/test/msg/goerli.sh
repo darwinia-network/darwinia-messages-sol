@@ -6,6 +6,7 @@ unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
 export NETWORK_NAME=goerli
+export TARGET_CHAIN=pangoro
 export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
 
 . $(dirname $0)/base.sh

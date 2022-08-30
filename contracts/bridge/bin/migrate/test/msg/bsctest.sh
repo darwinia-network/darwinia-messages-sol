@@ -6,6 +6,7 @@ unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
 export NETWORK_NAME=bsctest
+export TARGET_CHAIN=pangoro
 export ETH_RPC_URL=https://data-seed-prebsc-1-s1.binance.org:8545
 
 . $(dirname $0)/base.sh

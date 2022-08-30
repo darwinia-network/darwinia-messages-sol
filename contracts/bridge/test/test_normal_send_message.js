@@ -14,7 +14,7 @@ let feeMarket, outbound, inbound, normalApp
 let outboundData, inboundData
 let overrides = { value: ethers.utils.parseEther("30") }
 let target
-const batch = 30
+const batch = 20
 const encoded = "0x"
 const encoded_hash = "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
 
