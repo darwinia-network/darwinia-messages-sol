@@ -29,15 +29,17 @@ library PalletMessageRouter {
 
     function buildForwardToMoonbeamCall(
         bytes2 _callIndex,
-        bytes memory _networkId,
-        address _origin,
         bytes memory _callOnMoonbeam
     ) internal pure returns (bytes memory) {
         // XCM to be sent to moonbeam
-        EnumItem_VersionedXcm_V2 memory xcm = buildEnumItem_VersionedXcm_V2(
-            _networkId,
-            _origin,
-            _callOnMoonbeam
+        EnumItem_VersionedXcm_V2 memory xcm = EnumItem_VersionedXcm_V2(
+            Xcm(
+                EnumItem_Instruction_Transact(
+                    1, // originType: SovereignAccount
+                    5000000000, // requireWeightAtMost
+                    _callOnMoonbeam
+                )
+            )
         );
 
         // ForwardToMoonbeamCall
@@ -48,35 +50,6 @@ library PalletMessageRouter {
             );
 
         return PalletMessageRouter.encodeForwardToMoonbeamCall(call);
-    }
-    
-    // TODO: multi calls
-    function buildEnumItem_VersionedXcm_V2(
-        bytes memory _networkId,
-        address _origin,
-        bytes memory _callOnMoonbeam
-    ) internal pure returns (EnumItem_VersionedXcm_V2 memory) {
-        // XCM to be sent to moonbeam
-        return
-            EnumItem_VersionedXcm_V2(
-                Xcm(
-                    // 1st instruction
-                    EnumItem_Instruction_DescendOrigin(
-                        EnumItem_Junctions_X1(
-                            EnumItem_Junction_AccountKey20(
-                                EnumItem_NetworkId_Named(_networkId),
-                                _origin
-                            )
-                        )
-                    ),
-                    // 2nd instruction
-                    EnumItem_Instruction_Transact(
-                        1, // originType: SovereignAccount
-                        5000000000, // requireWeightAtMost
-                        _callOnMoonbeam
-                    )
-                )
-            );
     }
 
     ///////////////////////
@@ -93,16 +66,14 @@ library PalletMessageRouter {
     }
 
     struct Xcm {
-        EnumItem_Instruction_DescendOrigin descendOrigin;
         EnumItem_Instruction_Transact transact;
     }
 
     function encodeXcm(Xcm memory _obj) internal pure returns (bytes memory) {
-        bytes memory data = ScaleCodec.encodeUintCompact(2); // 2 instructions
+        bytes memory data = ScaleCodec.encodeUintCompact(1); // 1 instructions
         return
             abi.encodePacked(
                 data,
-                encodeEnumItem_Instruction_DescendOrigin(_obj.descendOrigin),
                 encodeEnumItem_Instruction_Transact(_obj.transact)
             );
     }

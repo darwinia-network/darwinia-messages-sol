@@ -29,7 +29,7 @@ library SmartChainXLib {
     event DispatchResult(bool success, bytes result);
 
     function remoteTransactOnMoonbeam(
-        // target params
+        // target PalletEthereumXcm.TransactCall
         PalletEthereumXcm.TransactCall memory _tgtTransactCall,
         // router params
         uint32 _routerSpecVersion,
@@ -41,8 +41,6 @@ library SmartChainXLib {
         bytes memory routerCallEncoded = PalletMessageRouter
             .buildForwardToMoonbeamCall(
                 _routerForwardToMoonbeamCallIndex,
-                hex"43726162536d617274436861696e", // CrabSmartChain
-                msg.sender,
                 PalletEthereumXcm.encodeTransactCall(_tgtTransactCall)
             );
 
