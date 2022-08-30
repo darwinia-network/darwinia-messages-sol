@@ -23,13 +23,6 @@ library SmartChainXLib {
         bytes32 storageKeyForLatestNonce;
     }
 
-    struct RemoteTransactParams {
-        bytes2 transactCallIndex;
-        address endpoint;
-        bytes input;
-        uint256 gasLimit;
-    }
-
     bytes public constant account_derivation_prefix =
         "pallet-bridge/account-derivation/account";
 
@@ -37,33 +30,27 @@ library SmartChainXLib {
 
     function remoteTransactOnMoonbeam(
         // target params
-        RemoteTransactParams memory _tgtTransactParams, 
+        PalletEthereumXcm.TransactCall memory _tgtTransactCall,
         // router params
         uint32 _routerSpecVersion,
         bytes2 _routerForwardToMoonbeamCallIndex,
+        uint64 _routerForwardToMoonbeamCallWeight,
         // local params
         LocalParams memory _localParams
     ) external returns (uint64) {
-        bytes memory routerCallEncoded = PalletMessageRouter.buildForwardToMoonbeamCall(
-            _routerForwardToMoonbeamCallIndex,
-            hex"43726162536d617274436861696e",
-            msg.sender,
-            PalletEthereumXcm.buildTransactCall(
-                _tgtTransactParams.transactCallIndex,
-                _tgtTransactParams.gasLimit,
-                _tgtTransactParams.endpoint,
-                0,
-                _tgtTransactParams.input
-            )
-        );
-
-        uint64 routerCallWeight = 0; // TODO: waiting for guantong
+        bytes memory routerCallEncoded = PalletMessageRouter
+            .buildForwardToMoonbeamCall(
+                _routerForwardToMoonbeamCallIndex,
+                hex"43726162536d617274436861696e", // CrabSmartChain
+                msg.sender,
+                PalletEthereumXcm.encodeTransactCall(_tgtTransactCall)
+            );
 
         return
             remoteDispatch(
                 _routerSpecVersion,
                 routerCallEncoded,
-                routerCallWeight,
+                _routerForwardToMoonbeamCallWeight,
                 _localParams.dispatchPrecompileAddress,
                 _localParams.sendMessageCallIndex,
                 _localParams.outboundLaneId,
@@ -75,34 +62,19 @@ library SmartChainXLib {
     function remoteTransact(
         // target params
         uint32 _tgtSpecVersion,
-        RemoteTransactParams memory _tgtTransactParams,
-        uint64 _tgtSmartChainId,
-        uint64 _tgtWeightPerGas,
+        PalletEthereum.MessageTransactCall memory _tgtTransactCall,
+        uint64 _tgtTransactCallWeight,
         // local params
         LocalParams memory _localParams
     ) internal returns (uint64) {
-        PalletEthereum.MessageTransactCall memory tgtCall = PalletEthereum
-            .MessageTransactCall(
-                // the call index of message_transact
-                _tgtTransactParams.transactCallIndex,
-                // the evm transaction to transact
-                PalletEthereum.buildTransactionV2ForMessageTransact(
-                    _tgtTransactParams.gasLimit,
-                    _tgtTransactParams.endpoint,
-                    _tgtSmartChainId,
-                    _tgtTransactParams.input
-                )
-            );
-        bytes memory tgtCallEncoded = PalletEthereum.encodeMessageTransactCall(
-            tgtCall
-        );
-        uint64 tgtCallWeight = uint64(_tgtTransactParams.gasLimit * _tgtWeightPerGas);
+        bytes memory transactCallEncoded = PalletEthereum
+            .encodeMessageTransactCall(_tgtTransactCall);
 
         return
             remoteDispatch(
                 _tgtSpecVersion,
-                tgtCallEncoded,
-                tgtCallWeight,
+                transactCallEncoded,
+                _tgtTransactCallWeight,
                 _localParams.dispatchPrecompileAddress,
                 _localParams.sendMessageCallIndex,
                 _localParams.outboundLaneId,
@@ -301,7 +273,7 @@ library SmartChainXLib {
     }
 
     // derive an address from remote sender address (sender on the source chain).
-    //   
+    //
     // H160          =>          AccountId32        =>        derived AccountId32       =>       H160
     //   |------ e2s addr mapping ----||---- crosschain derive -------||---- s2e addr mapping -----|
     //   |-------- on source ---------||------------------------ on target ------------------------|
