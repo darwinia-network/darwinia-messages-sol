@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0;
 
-library Utils {
+library TypeUtils {
     function encodeEnumItem(uint8 _enumItemIndex, bytes memory _enumItemData)
         internal
         pure
@@ -10,6 +10,4 @@ library Utils {
     {
         return abi.encodePacked(_enumItemIndex, _enumItemData);
     }
-
-    // function encodeVec(uint16 length, bytes)
 }
