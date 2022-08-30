@@ -29,7 +29,7 @@ abstract contract MessageEndpoint {
     uint64 public remoteWeightPerGas = 40_000;
     // router params
     bytes2 public routerForwardToMoonbeamCallIndex;
-    uint64 public routerForwardToMoonbeamCallWeight;
+    uint64 public routerForwardToMoonbeamCallWeight = 337_239_000;
 
     ///////////////////////////////
     // Outbound
