@@ -10,10 +10,6 @@ export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
 
 echo "ETH_FROM: ${ETH_FROM}"
 
-BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
-
-export TARGET_CHAIN=pangoro
-
 # import the deployment helpers
 . $(dirname $0)/common.sh
 
@@ -95,7 +91,7 @@ InboundLane=$(deploy InboundLane \
   $bridged_chain_pos \
   $bridged_out_lane_pos 0 0)
 
-seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
+seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1 --chain goerli
 
 EthereumStorageVerifier=$(jq -r ".[\"$NETWORK_NAME\"].EthereumStorageVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
 (set -x; seth send -F $ETH_FROM $EthereumStorageVerifier "registry(uint32,uint32,address,uint32,address)" \

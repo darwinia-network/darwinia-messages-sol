@@ -2,6 +2,9 @@
 
 set -e
 
+unset TARGET_CHAIN
+unset NETWORK_NAME
+unset ETH_RPC_URL
 export NETWORK_NAME=pangoro
 export TARGET_CHAIN=goerli
 # export ETH_RPC_URL=https://pangoro-rpc.darwinia.network

@@ -5,6 +5,7 @@ const Eth2Client = require('./eth2client').Eth2Client
 
 const target  = process.env.TARGET || 'local'
 const INFURA_KEY = process.env.INFURA_KEY
+const ALCHEMY_KEY = process.env.ALCHEMY_KEY
 const MORALIS_KEY = process.env.MORALIS_KEY
 
 let evm_eth_addresses, evm_bsc_addresses, dvm_addresses, evm_endpoint, dvm_endpoint, sub_endpoint
@@ -32,7 +33,7 @@ if (target == 'local') {
   evm_bsc_addresses = require("../../bin/addr/test/bsctest.json")
   dvm_addresses = require("../../bin/addr/test/pangoro.json")
 
-  evm_eth_endpoint = "https://rpc.ankr.com/eth_goerli"
+  evm_eth_endpoint = `https://eth-goerli.g.alchemy.com/v2/${ALCHEMY_KEY}`
   // evm_eth_endpoint = "http://127.0.0.1:8545"
   // evm_bsc_endpoint = `https://speedy-nodes-nyc.moralis.io/${MORALIS_KEY}/bsc/testnet/archive`
   evm_bsc_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"

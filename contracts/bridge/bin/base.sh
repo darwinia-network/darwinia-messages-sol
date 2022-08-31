@@ -219,6 +219,6 @@ load-addresses() {
   } || {
     exports=$(cat $path | jq -r " .[\"$2\"] | \
       to_entries|map(\"\(.key)=\(.value|strings)\")|.[]")
-    for e in $exports; do export "$2-$e"; done
+    for e in $exports; do export "$2_$e"; done
   }
 }
