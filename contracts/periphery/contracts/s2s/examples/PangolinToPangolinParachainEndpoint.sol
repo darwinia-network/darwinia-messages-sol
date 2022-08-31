@@ -33,7 +33,7 @@ contract PangolinToPangolinParachainEndpoint is MessageEndpoint {
         uint256 gasLimit
     ) external returns (uint256) {
         return
-            _remoteExecuteOnMoonbeam(
+            _remoteExecute(
                 routerSpecVersion,
                 callReceiver,
                 callPayload,

@@ -33,7 +33,7 @@ library PalletEthereumXcm {
         address _to,
         uint256 _value,
         bytes memory _input
-    ) internal pure returns (TransactCall memory) {
+    ) internal pure returns (bytes memory) {
         AccessListType memory accessList;
         accessList.some = false;
 
@@ -54,7 +54,7 @@ library PalletEthereumXcm {
             )
         );
 
-        return transactCall;
+        return PalletEthereumXcm.encodeTransactCall(transactCall);
     }
 
     ///////////////////////
