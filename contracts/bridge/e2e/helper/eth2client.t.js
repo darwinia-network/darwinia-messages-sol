@@ -17,7 +17,7 @@ const log = console.log;
   log(JSON.stringify(bootstrap, null, 2))
   // const bootstrap = await eth2Client.get_bootstrap('0xe1ae844281cb49a64ccc6ed6bc3d87e17f9ec401b83361d780f052ecff2baefb')
   // log(JSON.stringify(bootstrap, null, 2))
-  // log(await eth2Client.get_finality_branch(105728))
+  // log(await eth2Client.get_finality_branch(3783954))
   // log(JSON.stringify(sync_change, null, 2))
   // log(await eth2Client.get_next_sync_committee_branch(651296))
   // const sync_change = await eth2Client.get_sync_committee_period_update(79, 79)

@@ -74,7 +74,7 @@ class Eth2Client {
   }
 
   async get_sync_committee_period_update(start_period, count) {
-    const url = `${this.endopoint}/eth/v1/light_client/updates?start_period=${start_period}&count=${count}`
+    const url = `${this.endopoint}/eth/v1/beacon/beacon/light_client/updates?start_period=${start_period}&count=${count}`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
@@ -82,15 +82,16 @@ class Eth2Client {
   }
 
   async get_finality_update() {
-    const url = `${this.endopoint}/eth/v1/light_client/finality_update/`
+    const url = `${this.endopoint}/eth/v1/beacon/light_client/finality_update/`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
+    console.log(data)
     return data.data
   }
 
   async get_optimistic_update() {
-    const url = `${this.endopoint}/eth/v1/light_client/optimistic_update/`
+    const url = `${this.endopoint}/eth/v1/beacon/light_client/optimistic_update/`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
@@ -98,7 +99,7 @@ class Eth2Client {
   }
 
   async get_bootstrap(block_root) {
-    const url = `${this.endopoint}/eth/v1/light_client/bootstrap/${block_root}`
+    const url = `${this.endopoint}/eth/v1/beacon/light_client/bootstrap/${block_root}`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
@@ -118,7 +119,7 @@ class Eth2Client {
   }
 
   async get_state_proof(state_id, gindex) {
-    const url = `${this.endopoint}/eth/v1/light_client/single_proof/${state_id}?gindex=${gindex}`
+    const url = `${this.endopoint}/eth/v1/beacon/light_client/single_proof/${state_id}?gindex=${gindex}`
     const headers = {'Content-Type': 'application/octet-stream'}
     const response = await fetch(url)
 
@@ -131,7 +132,7 @@ class Eth2Client {
   }
 
   async get_multi_proof(state_id, paths) {
-    const url = `${this.endopoint}/eth/v1/light_client/proof/${state_id}?paths=${paths}`
+    const url = `${this.endopoint}/eth/v1/beacon/light_client/proof/${state_id}?paths=${paths}`
     const headers = {'Content-Type': 'application/octet-stream'}
     const response = await fetch(url)
 
