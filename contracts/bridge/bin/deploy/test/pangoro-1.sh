@@ -13,7 +13,7 @@ export ETH_RPC_URL=http://35.247.165.91:9933
 echo "ETH_FROM: ${ETH_FROM}"
 
 . $(dirname $0)/base.sh
-load-addresses
+load_addresses
 
 # darwinia to eth2.0 bridge config
 this_chain_pos=0

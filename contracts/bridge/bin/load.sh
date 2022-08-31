@@ -20,7 +20,7 @@ load_conf() {
   jq -r "${key}" "$CONFIG_FILE"
 }
 
-load-addresses() {
+load_addresses() {
   path=${ADDRESSES_FILE:-$1}
   if [[ ! -e "$path" ]]; then
     echo "Addresses file not found: $path not found"
@@ -41,6 +41,10 @@ load-addresses() {
 
 load_saddr() {
   jq -r ".[\"$TARGET_CHAIN\"].\"$1\"" "$PWD/bin/addr/$MODE/$NETWORK_NAME.json"
+}
+
+load_staddr() {
+  jq -r ".\"$1\"" "$PWD/bin/addr/$MODE/$NETWORK_NAME.json"
 }
 
 load_taddr() {

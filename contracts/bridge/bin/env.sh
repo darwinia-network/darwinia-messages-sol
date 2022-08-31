@@ -7,6 +7,7 @@ network_name=${NETWORK_NAME?}
 mode=${MODE?}
 root_dir=$(realpath .)
 ADDRESSES_FILE="${root_dir}/bin/addr/${mode}/${network_name}.json"
+CONFIG_FILE="${root_dir}/bin/conf/${mode}/${network_name}.json"
 OUT_DIR=$root_dir/out
 
 ETH_RPC_URL=${ETH_RPC_URL:-http://localhost:8545}
