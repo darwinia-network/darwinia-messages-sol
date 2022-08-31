@@ -74,7 +74,7 @@ class Eth2Client {
   }
 
   async get_sync_committee_period_update(start_period, count) {
-    const url = `${this.endopoint}/eth/v1/beacon/beacon/light_client/updates?start_period=${start_period}&count=${count}`
+    const url = `${this.endopoint}/eth/v1/beacon/light_client/updates?start_period=${start_period}&count=${count}`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
