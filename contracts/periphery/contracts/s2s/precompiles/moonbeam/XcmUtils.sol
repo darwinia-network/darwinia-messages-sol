@@ -22,7 +22,7 @@ library XcmUtils {
 
         Utils.revertIfFailed(success, data, "Multilocation to address failed");
 
-        return bytesToAddress(data);
+        return Utils.bytesToAddress(data);
     }
 
     function deriveMoonbeamAddressFromAccountId(
@@ -39,15 +39,5 @@ library XcmUtils {
         );
 
         return multilocationToAddress(multilocation);
-    }
-
-    function bytesToAddress(bytes memory bys)
-        private
-        pure
-        returns (address addr)
-    {
-        assembly {
-            addr := mload(add(bys, 20))
-        }
     }
 }

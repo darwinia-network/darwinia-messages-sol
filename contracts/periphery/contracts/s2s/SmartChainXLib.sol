@@ -18,72 +18,12 @@ import "./Utils.sol";
 import "./precompiles/moonbeam/XcmUtils.sol";
 
 library SmartChainXLib {
-    struct LocalParams {
-        address dispatchPrecompileAddress;
-        bytes2 sendMessageCallIndex;
-        bytes4 outboundLaneId;
-        address storagePrecompileAddress;
-        bytes32 storageKeyForLatestNonce;
-    }
-
     bytes public constant account_derivation_prefix =
         "pallet-bridge/account-derivation/account";
 
     event DispatchResult(bool success, bytes result);
 
-    function remoteTransactOnMoonbeam(
-        // target PalletEthereumXcm.TransactCall
-        PalletEthereumXcm.TransactCall memory _tgtTransactCall,
-        // router params
-        uint32 _routerSpecVersion,
-        bytes2 _routerForwardToMoonbeamCallIndex,
-        uint64 _routerForwardToMoonbeamCallWeight,
-        // local params
-        LocalParams memory _localParams
-    ) external returns (uint64) {
-        bytes memory routerCallEncoded = PalletMessageRouter
-            .buildForwardToMoonbeamCall(
-                _routerForwardToMoonbeamCallIndex,
-                PalletEthereumXcm.encodeTransactCall(_tgtTransactCall)
-            );
-
-        return
-            remoteDispatch(
-                _routerSpecVersion,
-                routerCallEncoded,
-                _routerForwardToMoonbeamCallWeight,
-                _localParams.dispatchPrecompileAddress,
-                _localParams.sendMessageCallIndex,
-                _localParams.outboundLaneId,
-                _localParams.storagePrecompileAddress,
-                _localParams.storageKeyForLatestNonce
-            );
-    }
-
-    function remoteTransact(
-        // target params
-        uint32 _tgtSpecVersion,
-        PalletEthereum.MessageTransactCall memory _tgtTransactCall,
-        uint64 _tgtTransactCallWeight,
-        // local params
-        LocalParams memory _localParams
-    ) internal returns (uint64) {
-        bytes memory transactCallEncoded = PalletEthereum
-            .encodeMessageTransactCall(_tgtTransactCall);
-
-        return
-            remoteDispatch(
-                _tgtSpecVersion,
-                transactCallEncoded,
-                _tgtTransactCallWeight,
-                _localParams.dispatchPrecompileAddress,
-                _localParams.sendMessageCallIndex,
-                _localParams.outboundLaneId,
-                _localParams.storagePrecompileAddress,
-                _localParams.storageKeyForLatestNonce
-            );
-    }
-
+    // Dispatch a call on the remote blockchain
     function remoteDispatch(
         uint32 _tgtSpecVersion,
         bytes memory _tgtCallEncoded,
@@ -293,8 +233,8 @@ library SmartChainXLib {
 
     function deriveSenderFromSmartChainOnMoonbeam(
         bytes4 _srcChainId,
-        bytes memory _parachainId,
-        address _srcMessageSender
+        address _srcMessageSender,
+        bytes memory _parachainId
     ) internal view returns (address) {
         // H160(sender on the sourc chain) > AccountId32
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
