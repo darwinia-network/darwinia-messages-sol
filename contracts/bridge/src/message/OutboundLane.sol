@@ -47,9 +47,8 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
 
     address public immutable FEE_MARKET;
 
-    uint256 private constant MAX_GAS_PER_MESSAGE       = 100000;
     uint256 private constant MAX_CALLDATA_LENGTH       = 2048;
-    uint64  private constant MAX_PENDING_MESSAGES      = 30;
+    uint64  private constant MAX_PENDING_MESSAGES      = 20;
     uint64  private constant MAX_PRUNE_MESSAGES_ATONCE = 5;
 
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);

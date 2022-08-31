@@ -38,3 +38,12 @@ load-addresses() {
     for e in $exports; do export "$2"_"$e"; done
   }
 }
+
+load_saddr() {
+  jq -r ".[\"$TARGET_CHAIN\"].\"$1\"" "$PWD/bin/addr/$MODE/$NETWORK_NAME.json"
+}
+
+load_taddr() {
+  jq -r ".[\"$NETWORK_NAME\"].\"$1\"" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json"
+}
+
