@@ -38,8 +38,7 @@ contract PalletEthereumXcmTest is DSTest {
     }
 
     function testEncodeTransactCall2() public {
-        PalletEthereumXcm.TransactCall
-            memory transactCall = PalletEthereumXcm.buildTransactCall(
+        bytes memory data = PalletEthereumXcm.buildTransactCall(
             hex"2600",
             600000,
             0x0000000000000000000000000000000000000000,
@@ -47,7 +46,6 @@ contract PalletEthereumXcmTest is DSTest {
             hex"1234"
         );
 
-        bytes memory data = PalletEthereumXcm.encodeTransactCall(transactCall);
         assertEq0(data, hex"260001c027090000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008123400");
     }
 
