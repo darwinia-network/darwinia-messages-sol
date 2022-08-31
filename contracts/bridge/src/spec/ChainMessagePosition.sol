@@ -16,7 +16,6 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.7.6;
-pragma abicoder v2;
 
 enum ChainMessagePosition {
     Darwinia,

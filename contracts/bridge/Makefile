@@ -23,6 +23,7 @@ solc:; nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA
 
 # Build & test
 build    :; dapp build
+flat     :; dapp flat
 test     :; dapp test # --ffi # enable if you need the `ffi` cheat code on HEVM
 clean    :; dapp clean
 lint     :; yarn run lint
