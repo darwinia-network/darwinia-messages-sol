@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.9;
 
-import "./SmartChainXLib.sol";
-import "./types/PalletEthereum.sol";
-import "./precompiles/moonbeam/IXcmTransactorV1.sol";
-import "./precompiles/moonbeam/XcmTransactorV1.sol";
-import "./types/PalletBridgeMessages.sol";
+import "../SmartChainXLib.sol";
+import "../types/PalletEthereum.sol";
+import "../precompiles/moonbeam/IXcmTransactorV1.sol";
+import "../precompiles/moonbeam/XcmTransactorV1.sol";
+import "../types/PalletBridgeMessages.sol";
 
 abstract contract MoonbeamEndpoint {
     // Remote params
