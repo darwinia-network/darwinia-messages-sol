@@ -95,7 +95,7 @@ library Balances {
 library BridgeMessages {
     struct SendMessageCall {
         bytes2 callIndex;
-        bytes4 lineId;
+        bytes4 laneId;
         bytes message;
         uint128 deliveryAndDispatchFee;
     }
@@ -103,7 +103,7 @@ library BridgeMessages {
     function encodeSendMessageCall(SendMessageCall memory call) internal pure returns (bytes memory) {
         return abi.encodePacked(
             call.callIndex, 
-            call.lineId, 
+            call.laneId, 
             call.message,
             ScaleCodec.encode128(call.deliveryAndDispatchFee)
         );
