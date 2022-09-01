@@ -19,7 +19,6 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../common/MessageCommitter.sol";
-import "../../interfaces/IMessageCommitment.sol";
 import "../../interfaces/IMessageCommitter.sol";
 import "../../proxy/Initializable.sol";
 
@@ -79,9 +78,9 @@ contract ChainMessageCommitter is Initializable, MessageCommitter {
     /// @notice Only could be called by setter
     /// @param committer Address of lane committer
     function registry(address committer) external onlySetter {
-        uint256 pos = IMessageCommitment(committer).bridgedChainPosition();
+        uint256 pos = IMessageCommitter(committer).bridgedChainPosition();
         require(thisChainPosition != pos, "!bridgedChainPosition");
-        require(thisChainPosition == IMessageCommitment(committer).thisChainPosition(), "!thisChainPosition");
+        require(thisChainPosition == IMessageCommitter(committer).thisChainPosition(), "!thisChainPosition");
         chainOf[pos] = committer;
         maxChainPosition = max(maxChainPosition, pos);
         emit Registry(pos, committer);

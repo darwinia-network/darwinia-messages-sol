@@ -24,4 +24,8 @@ interface IMessageCommitter {
     function count() external view returns (uint256);
     function leaveOf(uint256 pos) external view returns (address);
     function proof(uint256 pos) external view returns (MessageSingleProof memory);
+    function commitment() external view returns (bytes32);
+
+    function thisChainPosition() external view returns (uint32);
+    function bridgedChainPosition() external view returns (uint32);
 }

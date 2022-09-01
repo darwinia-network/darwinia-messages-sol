@@ -19,7 +19,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../common/MessageCommitter.sol";
-import "../../interfaces/IMessageCommitment.sol";
+import "../../interfaces/ILane.sol";
 
 /// @title LaneMessageCommitter
 /// @author echo
@@ -77,7 +77,7 @@ contract LaneMessageCommitter is MessageCommitter {
     /// @param lane New lane address of the given positon
     function changeLane(uint256 pos, address lane) external onlySetter {
         require(laneOf[pos] != address(0), "!exist");
-        (uint32 _thisChainPosition, uint32 _thisLanePosition, uint32 _bridgedChainPosition, ) = IMessageCommitment(lane).getLaneInfo();
+        (uint32 _thisChainPosition, uint32 _thisLanePosition, uint32 _bridgedChainPosition, ) = ILane(lane).getLaneInfo();
         require(thisChainPosition == _thisChainPosition, "!thisChainPosition");
         require(bridgedChainPosition == _bridgedChainPosition, "!bridgedChainPosition");
         require(pos == _thisLanePosition, "!thisLanePosition");
@@ -90,8 +90,8 @@ contract LaneMessageCommitter is MessageCommitter {
     /// @param outboundLane Address of outbound lane
     /// @param inboundLane Address of inbound lane
     function registry(address outboundLane, address inboundLane) external onlySetter {
-        (uint32 _thisChainPositionOut, uint32 _thisLanePositionOut, uint32 _bridgedChainPositionOut, ) = IMessageCommitment(outboundLane).getLaneInfo();
-        (uint32 _thisChainPositionIn, uint32 _thisLanePositionIn, uint32 _bridgedChainPositionIn, ) = IMessageCommitment(inboundLane).getLaneInfo();
+        (uint32 _thisChainPositionOut, uint32 _thisLanePositionOut, uint32 _bridgedChainPositionOut, ) = ILane(outboundLane).getLaneInfo();
+        (uint32 _thisChainPositionIn, uint32 _thisLanePositionIn, uint32 _bridgedChainPositionIn, ) = ILane(inboundLane).getLaneInfo();
         require(thisChainPosition == _thisChainPositionOut, "!thisChainPosition");
         require(thisChainPosition == _thisChainPositionIn, "!thisChainPosition");
         require(bridgedChainPosition == _bridgedChainPositionOut, "!bridgedChainPosition");
