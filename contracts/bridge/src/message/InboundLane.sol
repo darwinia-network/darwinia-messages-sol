@@ -292,8 +292,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             payload.source,
             payload.encoded
         );
-        bool canCall = _filter(payload.target, filterCallData);
-        if (canCall) {
+        if (_filter(payload.target, filterCallData)) {
             // Deliver the message to the target
             (dispatch_result, _) = payload.target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
         }
