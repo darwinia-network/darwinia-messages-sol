@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.9;
 
-import "./SmartChainXLib.sol";
-import "./types/PalletMessageRouter.sol";
-import "./types/PalletEthereumXcm.sol";
+import "../SmartChainXLib.sol";
+import "../types/PalletMessageRouter.sol";
+import "../types/PalletEthereumXcm.sol";
 
 abstract contract DarwiniaEndpoint {
     // Remote params
