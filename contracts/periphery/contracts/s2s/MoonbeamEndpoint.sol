@@ -4,80 +4,86 @@ pragma solidity ^0.8.9;
 
 import "./SmartChainXLib.sol";
 import "./types/PalletEthereum.sol";
-import "./types/PalletMessageRouter.sol";
-import "./types/PalletEthereumXcm.sol";
+import "./precompiles/moonbeam/IXcmTransactorV1.sol";
+import "./precompiles/moonbeam/XcmTransactorV1.sol";
+import "./types/PalletBridgeMessages.sol";
 
 abstract contract MoonbeamEndpoint {
     // Remote params
     address public remoteEndpoint;
+    uint64 public remoteSmartChainId;
     bytes2 public remoteMessageTransactCallIndex;
+    uint64 public remoteWeightPerGas = 40_000; // 1 gas ~= 40_000 weight
 
     // router params
-    bytes2 public routerForwardToMoonbeamCallIndex;
-    uint64 public routerForwardToMoonbeamCallWeight = 337_239_000;
+    bytes2 public routerSendMessageCallIndex;
+    uint64 public routerSendMessageCallWeight;
+    bytes4 public routerOutboundLaneId;
 
     // Local params
-    address public dispatchAddress;
-    bytes2 public sendMessageCallIndex;
-    address public storageAddress;
-    bytes32 public storageKeyForLatestNonce;
-    bytes32 public storageKeyForLastDeliveredNonce;
-    bytes32 public storageKeyForMarketFee;
-    bytes4 public outboundLaneId;
-    bytes4 public inboundLaneId;
-
-    // message sender derived from remoteEndpoint
-    address public derivedMessageSender;
+    address public feeLocationAddress;
+    address public derivedMessageSender; // message sender derived from remoteEndpoint
 
     ///////////////////////////////
     // Outbound
     ///////////////////////////////
-    function fee() public view returns (uint256) {
-        return SmartChainXLib.marketFee(storageAddress, storageKeyForMarketFee);
-    }
-
     function _remoteExecute(
-        uint32 routerSpecVersion,
-        address callReceiver,
-        bytes calldata callPayload,
-        uint256 gasLimit
-    ) internal returns (uint256) {
-        bytes memory input = abi.encodeWithSelector(
+        uint32 _tgtSpecVersion,
+        address _callReceiver,
+        bytes calldata _callPayload,
+        uint256 _gasLimit,
+        //
+        uint128 _deliveryAndDispatchFee,
+        bytes memory _parachainId
+    ) internal view {
+        // solidity call that will be executed on crab smart chain
+        bytes memory tgtInput = abi.encodeWithSelector(
             this.execute.selector,
-            callReceiver,
-            callPayload
+            _callReceiver,
+            _callPayload
         );
 
-        // build the TransactCall
-        bytes memory tgtTransactCallEncoded = PalletEthereumXcm
-            .buildTransactCall(
-                remoteMessageTransactCallIndex,
-                gasLimit,
-                remoteEndpoint,
-                0,
-                input
+        // transact dispatch call that will be executed on crab chain
+        bytes memory tgtTransactCallEncoded = PalletEthereum
+            .encodeMessageTransactCall(
+                PalletEthereum.MessageTransactCall(
+                    remoteMessageTransactCallIndex,
+                    PalletEthereum.buildTransactionV2ForMessageTransact(
+                        _gasLimit,
+                        remoteEndpoint,
+                        remoteSmartChainId,
+                        tgtInput
+                    )
+                )
+            );
+        uint64 tgtTransactCallWeight = uint64(_gasLimit * remoteWeightPerGas);
+
+        // send_message dispatch call that will be executed on crab parachain
+        bytes memory routerSendMessageCallEncoded = PalletBridgeMessages
+            .encodeSendMessageCall(
+                PalletBridgeMessages.SendMessageCall(
+                    routerSendMessageCallIndex,
+                    routerOutboundLaneId,
+                    SmartChainXLib.buildMessage(
+                        _tgtSpecVersion,
+                        tgtTransactCallWeight,
+                        tgtTransactCallEncoded
+                    ),
+                    _deliveryAndDispatchFee
+                )
             );
 
-        // build the ForwardToMoonbeamCall
-        bytes memory routerForwardToMoonbeamCallEncoded = PalletMessageRouter
-            .buildForwardToMoonbeamCall(
-                routerForwardToMoonbeamCallIndex,
-                tgtTransactCallEncoded
-            );
-
-        // dispatch the ForwardToMoonbeamCall
-        uint64 messageNonce = SmartChainXLib.remoteDispatch(
-            routerSpecVersion,
-            routerForwardToMoonbeamCallEncoded,
-            routerForwardToMoonbeamCallWeight,
-            dispatchAddress,
-            sendMessageCallIndex,
-            outboundLaneId,
-            storageAddress,
-            storageKeyForLatestNonce
+        // remote call send_message from moonbeam
+        bytes[] memory interior = new bytes[](1);
+        interior[0] = _parachainId;
+        IXcmTransactorV1.Multilocation memory dest = IXcmTransactorV1
+            .Multilocation(1, interior);
+        XcmTransactorV1.transactThroughSigned(
+            dest,
+            feeLocationAddress,
+            routerSendMessageCallWeight, // ?
+            routerSendMessageCallEncoded
         );
-
-        return encodeMessageId(outboundLaneId, messageNonce);
     }
 
     ///////////////////////////////
@@ -95,7 +101,7 @@ abstract contract MoonbeamEndpoint {
         external
         onlyMessageSender
     {
-        if (_allowed(callReceiver, callPayload)) {
+        if (_executable(callReceiver, callPayload)) {
             (bool success, ) = callReceiver.call(callPayload);
             require(success, "MessageEndpoint: Call execution failed");
         } else {
@@ -104,59 +110,16 @@ abstract contract MoonbeamEndpoint {
     }
 
     // Check if the call can be executed
-    function _allowed(address callReceiver, bytes calldata callPayload)
+    function _executable(address callReceiver, bytes calldata callPayload)
         internal
         view
         virtual
         returns (bool);
 
-    // Get the last delivered inbound message id
-    function lastDeliveredMessageId() public view returns (uint256) {
-        uint64 nonce = SmartChainXLib.lastDeliveredNonce(
-            storageAddress,
-            storageKeyForLastDeliveredNonce,
-            inboundLaneId
-        );
-        return encodeMessageId(inboundLaneId, nonce);
-    }
-
-    // Check if an inbound message has been delivered
-    function isMessageDelivered(uint256 messageId) public view returns (bool) {
-        (bytes4 laneId, uint64 nonce) = decodeMessageId(messageId);
-        uint64 lastNonce = SmartChainXLib.lastDeliveredNonce(
-            storageAddress,
-            storageKeyForLastDeliveredNonce,
-            laneId
-        );
-        return nonce <= lastNonce;
-    }
-
-    ///////////////////////////////
-    // Common functions
-    ///////////////////////////////
-    function decodeMessageId(uint256 messageId)
-        public
-        pure
-        returns (bytes4, uint64)
-    {
-        return (
-            bytes4(uint32(messageId >> 64)),
-            uint64(messageId & 0xffffffffffffffff)
-        );
-    }
-
-    function encodeMessageId(bytes4 laneId, uint64 nonce)
-        public
-        pure
-        returns (uint256)
-    {
-        return (uint256(uint32(laneId)) << 64) + uint256(nonce);
-    }
-
     ///////////////////////////////
     // Setters
     ///////////////////////////////
-    function _setRemoteEndpointOnMoonbeam(
+    function _setRemoteEndpoint(
         bytes4 _remoteChainId,
         bytes memory _parachainId,
         address _remoteEndpoint
@@ -170,47 +133,37 @@ abstract contract MoonbeamEndpoint {
             );
     }
 
-    function _setOutboundLaneId(bytes4 _outboundLaneId) internal {
-        outboundLaneId = _outboundLaneId;
-    }
-
     function _setRemoteMessageTransactCallIndex(
         bytes2 _remoteMessageTransactCallIndex
     ) internal {
         remoteMessageTransactCallIndex = _remoteMessageTransactCallIndex;
     }
 
-    function _setStorageAddress(address _storageAddress) internal {
-        storageAddress = _storageAddress;
+    function _setRemoteSmartChainId(uint64 _remoteSmartChainId) internal {
+        remoteSmartChainId = _remoteSmartChainId;
     }
 
-    function _setDispatchAddress(address _dispatchAddress) internal {
-        dispatchAddress = _dispatchAddress;
+    function _setRemoteWeightPerGas(uint64 _remoteWeightPerGas) internal {
+        remoteWeightPerGas = _remoteWeightPerGas;
     }
 
-    function _setSendMessageCallIndex(bytes2 _sendMessageCallIndex) internal {
-        sendMessageCallIndex = _sendMessageCallIndex;
-    }
-
-    function _setStorageKeyForMarketFee(bytes32 _storageKeyForMarketFee)
+    function _setRouterSendMessageCallIndex(bytes2 _routerSendMessageCallIndex)
         internal
     {
-        storageKeyForMarketFee = _storageKeyForMarketFee;
+        routerSendMessageCallIndex = _routerSendMessageCallIndex;
     }
 
-    function _setStorageKeyForLatestNonce(bytes32 _storageKeyForLatestNonce)
-        internal
-    {
-        storageKeyForLatestNonce = _storageKeyForLatestNonce;
-    }
-
-    function _setInboundLaneId(bytes4 _inboundLaneId) internal {
-        inboundLaneId = _inboundLaneId;
-    }
-
-    function _setStorageKeyForLastDeliveredNonce(
-        bytes32 _storageKeyForLastDeliveredNonce
+    function _setRouterSendMessageCallWeight(
+        uint64 _routerSendMessageCallWeight
     ) internal {
-        storageKeyForLastDeliveredNonce = _storageKeyForLastDeliveredNonce;
+        routerSendMessageCallWeight = _routerSendMessageCallWeight;
+    }
+
+    function _setRouterOutboundLaneId(bytes4 _routerOutboundLaneId) internal {
+        routerOutboundLaneId = _routerOutboundLaneId;
+    }
+
+    function _setFeeLocationAddress(address _feeLocationAddress) internal {
+        feeLocationAddress = _feeLocationAddress;
     }
 }
