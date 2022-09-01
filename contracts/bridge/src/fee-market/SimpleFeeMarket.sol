@@ -43,8 +43,8 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
     uint32 public immutable SLASH_TIME;
     // Time assigned relayer to relay messages
     uint32 public immutable RELAY_TIME;
-    // Ratio of two chain's native token price, denominator of ratio is 1_000_000
-    uint32 public immutable PRICE_RATIO;
+    // RATIO_NUMERATOR of two chain's native token price, denominator of ratio is 1_000_000
+    uint32 public immutable PRICE_RATIO_NUMERATOR;
     // The collateral relayer need to lock for each order.
     uint256 public immutable COLLATERAL_PER_ORDER;
 
@@ -93,13 +93,13 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
         uint256 _collateral_perorder,
         uint32 _slash_time,
         uint32 _relay_time,
-        uint32 _price_rario
+        uint32 _price_rario_numerator
     ) {
         require(_slash_time > 0 && _relay_time > 0, "!0");
         COLLATERAL_PER_ORDER = _collateral_perorder;
         SLASH_TIME = _slash_time;
         RELAY_TIME = _relay_time;
-        PRICE_RATIO = _price_rario;
+        PRICE_RATIO_NUMERATOR = _price_rario_numerator;
     }
 
     function initialize() public initializer {
@@ -424,8 +424,8 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
     }
 
     function _distribute_fee(uint256 fee) private view returns (uint256 delivery_reward, uint256 confirm_reward) {
-        // fee * PRICE_RATIO / 1_000_000 => delivery relayer
-        delivery_reward = fee * PRICE_RATIO / 1_000_000;
+        // fee * PRICE_RATIO_NUMERATOR / 1_000_000 => delivery relayer
+        delivery_reward = fee * PRICE_RATIO_NUMERATOR / 1_000_000;
         // remaining fee => confirm relayer
         confirm_reward = fee - delivery_reward;
     }
