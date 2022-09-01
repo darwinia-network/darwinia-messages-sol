@@ -8,7 +8,7 @@ import "./CommonTypes.sol";
 library PalletBridgeMessages {
     struct SendMessageCall {
         bytes2 callIndex;
-        bytes4 lineId;
+        bytes4 laneId;
         bytes message;
         uint128 deliveryAndDispatchFee;
     }
@@ -21,7 +21,7 @@ library PalletBridgeMessages {
         return
             abi.encodePacked(
                 _call.callIndex,
-                _call.lineId,
+                _call.laneId,
                 _call.message,
                 ScaleCodec.encode128(_call.deliveryAndDispatchFee)
             );
