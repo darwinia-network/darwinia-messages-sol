@@ -183,8 +183,6 @@ library SmartChainXLib {
         return Hash.blake2bHash(data);
     }
 
-    
-
     // dispatch pallet dispatch-call
     function dispatch(
         address _srcDispatchPrecompileAddress,
@@ -200,21 +198,25 @@ library SmartChainXLib {
 
     // derive an address from remote sender address (sender on the source chain).
     //
-    // H160          =>          AccountId32        =>        derived AccountId32       =>       H160
-    //   |------ e2s addr mapping ----||---- crosschain derive -------||---- s2e addr mapping -----|
-    //   |-------- on source ---------||------------------------ on target ------------------------|
+    // * `Darwinia Smart Chain` to `Darwinia Smart Chain`
+    //   H160          =>          AccountId32        =>        derived AccountId32       =>       H160
+    //     |------ e2s addr mapping ----||---- crosschain derive -------||---- s2e addr mapping -----|
+    //     |-------- on source ---------||------------------------ on target ------------------------|
     //
-    // e2s addr mapping: `EVM H160 address` mapping to `Substrate AccountId32 address`.
-    // s2e addr mapping: `Substrate AccountId32 address` mapping to `EVM H160 address`.
+    // * `Moonbeam` to `Darwinia Parachain` to `Darwinia Smart Chain`
+    //   H160          =>          AccountId32        =>        derived AccountId32       =>       H160
+    //     |------ e2s addr mapping ----||---- crosschain derive -------||---- s2e addr mapping -----|
+    //     |-------- on darwinia PC ----||------------------------ on target ------------------------|
+    //
+    // e2s addr mapping, s2e addr mapping
     // https://github.com/darwinia-network/darwinia/wiki/Darwinia-Address-Format-Overview
     //
-    // crosschain derive: generate the address on the target chain based on the address of the source chain.
+    // crosschain derive
     // https://github.com/darwinia-network/darwinia-messages-substrate/blob/c3f10155a2650850ffa8998e5f98617e1aded55a/primitives/runtime/src/lib.rs#L107
     function deriveSenderFromRemote(
         bytes4 _srcChainId,
         address _srcMessageSender
     ) internal view returns (address) {
-        // H160(sender on the sourc chain) > AccountId32
         // H160(sender on the source chain) > AccountId32
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
             _srcMessageSender
