@@ -85,8 +85,12 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
     }
 
     modifier enoughBalance() {
-        require(balanceOf[msg.sender] >= COLLATERAL_PER_ORDER, "!balance");
+        require(_enough_balance(msg.sender), "!balance");
         _;
+    }
+
+    function _enough_balance(address src) private view returns (bool)  {
+        return balanceOf[src] >= COLLATERAL_PER_ORDER;
     }
 
     constructor(
@@ -152,7 +156,7 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
         uint index = 0;
         address cur = relayers[SENTINEL_HEAD];
         while (cur != SENTINEL_TAIL && index < count) {
-            if (flag || balanceOf[cur] >= COLLATERAL_PER_ORDER) {
+            if (flag || _enough_balance(cur)) {
                 array1[index] = cur;
                 array2[index] = feeOf[cur];
                 array3[index] = balanceOf[cur];
@@ -167,7 +171,7 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
     function getTopRelayer() public view returns (address top) {
         address cur = relayers[SENTINEL_HEAD];
         while (cur != SENTINEL_TAIL) {
-            if (balanceOf[cur] >= COLLATERAL_PER_ORDER) {
+            if (_enough_balance(cur)) {
                 top = cur;
                 break;
             }
@@ -297,7 +301,7 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
         address prev = SENTINEL_HEAD;
         address cur = relayers[SENTINEL_HEAD];
         while (cur != SENTINEL_TAIL) {
-            if (balanceOf[cur] >= COLLATERAL_PER_ORDER) {
+            if (_enough_balance(cur)) {
                 top = cur;
                 break;
             } else {

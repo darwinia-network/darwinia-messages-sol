@@ -43,16 +43,16 @@ contract FeeMarket is Initializable, IFeeMarket {
 
     // System treasury
     address public immutable VAULT;
-    // SlashAmount = CollateralPerOrder * LateTime / SlashTime
-    uint32 public immutable slashTime;
+    // SlashAmount = COLLATERAL_PER_ORDER * LateTime / SLASH_TIME
+    uint32 public immutable SLASH_TIME;
     // Time assigned relayer to relay messages
-    uint32 public immutable relayTime;
+    uint32 public immutable RELAY_TIME;
     // Fee market assigned relayers numbers
-    uint32 public immutable assignedRelayersNumber;
-    // Ratio of two chain's native token price, denominator of ratio is 1_000_000
-    uint32 public immutable priceRatio;
+    uint32 public immutable ASSIGNED_RELAYERS_NUMBER;
+    // RATIO_NUMERATOR of two chain's native token price, denominator of ratio is 1_000_000
+    uint32 public immutable PRICE_RATIO_NUMERATOR;
     // The collateral relayer need to lock for each order.
-    uint256 public immutable collateralPerOrder;
+    uint256 public immutable COLLATERAL_PER_ORDER;
 
     address private constant SENTINEL_HEAD = address(0x1);
     address private constant SENTINEL_TAIL = address(0x2);
@@ -96,8 +96,12 @@ contract FeeMarket is Initializable, IFeeMarket {
     }
 
     modifier enoughBalance() {
-        require(balanceOf[msg.sender] >= collateralPerOrder, "!balance");
+        require(_enough_balance(msg.sender), "!balance");
         _;
+    }
+
+    function _enough_balance(address src) private view returns (bool)  {
+        return balanceOf[src] >= COLLATERAL_PER_ORDER;
     }
 
     constructor(
@@ -106,16 +110,16 @@ contract FeeMarket is Initializable, IFeeMarket {
         uint32 _assigned_relayers_number,
         uint32 _slash_time,
         uint32 _relay_time,
-        uint32 _price_rario
+        uint32 _price_ratio_numerator
     ) {
         require(_assigned_relayers_number > 0, "!0");
         require(_slash_time > 0 && _relay_time > 0, "!0");
         VAULT = _vault;
-        collateralPerOrder = _collateral_perorder;
-        slashTime = _slash_time;
-        relayTime = _relay_time;
-        assignedRelayersNumber = _assigned_relayers_number;
-        priceRatio = _price_rario;
+        COLLATERAL_PER_ORDER = _collateral_perorder;
+        SLASH_TIME = _slash_time;
+        RELAY_TIME = _relay_time;
+        ASSIGNED_RELAYERS_NUMBER = _assigned_relayers_number;
+        PRICE_RATIO_NUMERATOR = _price_ratio_numerator;
     }
 
     function initialize() public initializer {
@@ -163,7 +167,7 @@ contract FeeMarket is Initializable, IFeeMarket {
 
     // Fetch the `count` of order book in fee-market
     // If flag set true, will ignore their balance
-    // If flag set false, will ensure their balance is sufficient for lock `CollateralPerOrder`
+    // If flag set false, will ensure their balance is sufficient for lock `COLLATERAL_PER_ORDER`
     function getOrderBook(uint count, bool flag)
         external
         view
@@ -181,7 +185,7 @@ contract FeeMarket is Initializable, IFeeMarket {
         uint index = 0;
         address cur = relayers[SENTINEL_HEAD];
         while (cur != SENTINEL_TAIL && index < count) {
-            if (flag || balanceOf[cur] >= collateralPerOrder) {
+            if (flag || _enough_balance(cur)) {
                 array1[index] = cur;
                 array2[index] = feeOf[cur];
                 array3[index] = balanceOf[cur];
@@ -194,18 +198,18 @@ contract FeeMarket is Initializable, IFeeMarket {
 
     // Find top lowest maker fee relayers
     function getTopRelayers() public view returns (address[] memory) {
-        require(assignedRelayersNumber <= relayerCount, "!count");
-        address[] memory array = new address[](assignedRelayersNumber);
+        require(ASSIGNED_RELAYERS_NUMBER <= relayerCount, "!count");
+        address[] memory array = new address[](ASSIGNED_RELAYERS_NUMBER);
         uint index = 0;
         address cur = relayers[SENTINEL_HEAD];
-        while (cur != SENTINEL_TAIL && index < assignedRelayersNumber) {
-            if (balanceOf[cur] >= collateralPerOrder) {
+        while (cur != SENTINEL_TAIL && index < ASSIGNED_RELAYERS_NUMBER) {
+            if (_enough_balance(cur)) {
                 array[index] = cur;
                 index++;
             }
             cur = relayers[cur];
         }
-        require(index == assignedRelayersNumber, "!assigned");
+        require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
         return array;
     }
 
@@ -283,7 +287,7 @@ contract FeeMarket is Initializable, IFeeMarket {
 
     // Prune relayers which have not enough collateral
     function prune(address prev, address cur) public {
-        if (lockedOf[cur] == 0 && balanceOf[cur] < collateralPerOrder) {
+        if (lockedOf[cur] == 0 && balanceOf[cur] < COLLATERAL_PER_ORDER) {
             _delist(prev, cur);
         }
     }
@@ -303,12 +307,12 @@ contract FeeMarket is Initializable, IFeeMarket {
         for (uint slot = 0; slot < top_relayers.length; slot++) {
             address r = top_relayers[slot];
             require(isRelayer(r), "!relayer");
-            _lock(r, collateralPerOrder);
+            _lock(r, COLLATERAL_PER_ORDER);
             assignedRelayers[key][slot] = OrderExt(r, feeOf[r]);
         }
         // Record the assigned time
-        orderOf[key] = Order(uint32(block.timestamp), assignedRelayersNumber, collateralPerOrder);
-        emit Assgigned(key, block.timestamp, assignedRelayersNumber, collateralPerOrder);
+        orderOf[key] = Order(uint32(block.timestamp), ASSIGNED_RELAYERS_NUMBER, COLLATERAL_PER_ORDER);
+        emit Assgigned(key, block.timestamp, ASSIGNED_RELAYERS_NUMBER, COLLATERAL_PER_ORDER);
         return true;
     }
 
@@ -319,13 +323,13 @@ contract FeeMarket is Initializable, IFeeMarket {
     }
 
     function _get_and_prune_top_relayers() private returns (address[] memory) {
-        require(assignedRelayersNumber <= relayerCount, "!count");
-        address[] memory array = new address[](assignedRelayersNumber);
+        require(ASSIGNED_RELAYERS_NUMBER <= relayerCount, "!count");
+        address[] memory array = new address[](ASSIGNED_RELAYERS_NUMBER);
         uint index = 0;
         address prev = SENTINEL_HEAD;
         address cur = relayers[SENTINEL_HEAD];
-        while (cur != SENTINEL_TAIL && index < assignedRelayersNumber) {
-            if (balanceOf[cur] >= collateralPerOrder) {
+        while (cur != SENTINEL_TAIL && index < ASSIGNED_RELAYERS_NUMBER) {
+            if (_enough_balance(cur)) {
                 array[index] = cur;
                 index++;
             } else {
@@ -334,7 +338,7 @@ contract FeeMarket is Initializable, IFeeMarket {
             prev = cur;
             cur = relayers[cur];
         }
-        require(index == assignedRelayersNumber, "!assigned");
+        require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
         return array;
     }
 
@@ -437,7 +441,7 @@ contract FeeMarket is Initializable, IFeeMarket {
         collateral = order.collateral;
         // Diff_time = settle_time - assign_time
         diff_time = block.timestamp - order.time;
-        is_ontime = diff_time < order.number * relayTime;
+        is_ontime = diff_time < order.number * RELAY_TIME;
     }
 
     function _get_slot_price(
@@ -449,7 +453,7 @@ contract FeeMarket is Initializable, IFeeMarket {
             for (uint slot = 0; slot < number; slot++) {
                 // The message confirmed in the `slot` assign_relayer
                 // [slot, slot+1)
-                if (slot * relayTime <= diff_time && diff_time < (slot + 1) * relayTime) {
+                if (slot * RELAY_TIME <= diff_time && diff_time < (slot + 1) * RELAY_TIME) {
                     uint256 slot_price = getSlotFee(key, slot);
                     return (slot, slot_price);
                 }
@@ -480,8 +484,8 @@ contract FeeMarket is Initializable, IFeeMarket {
         } else {
             uint256 slash_fee = collateral * 2 / 10;
             uint256 remaining = collateral - slash_fee;
-            uint256 late_time = diff_time - number * relayTime;
-            slash_fee += late_time >= slashTime ? remaining : (remaining * late_time / slashTime);
+            uint256 late_time = diff_time - number * RELAY_TIME;
+            slash_fee += late_time >= SLASH_TIME ? remaining : (remaining * late_time / SLASH_TIME);
             for (uint _slot = 0; _slot < number; _slot++) {
                 address assign_relayer = getAssignedRelayer(key, _slot);
                 _slash(assign_relayer, slash_fee);
@@ -525,8 +529,8 @@ contract FeeMarket is Initializable, IFeeMarket {
         uint256 delivery_reward,
         uint256 confirm_reward
     ) {
-        // fee * priceRatio / 1_000_000 => delivery relayer
-        delivery_reward = fee * priceRatio / 1_000_000;
+        // fee * PRICE_RATIO_NUMERATOR / 1_000_000 => delivery relayer
+        delivery_reward = fee * PRICE_RATIO_NUMERATOR / 1_000_000;
         // remaining fee => confirm relayer
         confirm_reward = fee - delivery_reward;
     }
