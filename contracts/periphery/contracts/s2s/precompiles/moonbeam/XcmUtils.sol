@@ -2,10 +2,13 @@
 
 pragma solidity >=0.6.0;
 
-import "../../interfaces/IXcmUtils.sol";
+import "./IXcmUtils.sol";
 import "../../Utils.sol";
 
 library XcmUtils {
+    address public constant precompileAddress = 
+        0x000000000000000000000000000000000000080C;
+
     function multilocationToAddress(
         IXcmUtils.Multilocation memory multilocation
     ) internal view returns (address) {
@@ -13,7 +16,7 @@ library XcmUtils {
         (
             bool success,
             bytes memory data
-        ) = 0x000000000000000000000000000000000000080C.staticcall(
+        ) = precompileAddress.staticcall(
                 abi.encodeWithSelector(
                     IXcmUtils.multilocationToAddress.selector,
                     multilocation
