@@ -215,6 +215,7 @@ library SmartChainXLib {
         address _srcMessageSender
     ) internal view returns (address) {
         // H160(sender on the sourc chain) > AccountId32
+        // H160(sender on the source chain) > AccountId32
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
             _srcMessageSender
         );
