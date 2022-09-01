@@ -167,22 +167,9 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         return hash(data());
     }
 
-    function relayers_size() public view returns (uint64 size) {
-        if (inboundLaneNonce.relayer_range_back >= inboundLaneNonce.relayer_range_front) {
-            size = inboundLaneNonce.relayer_range_back - inboundLaneNonce.relayer_range_front + 1;
-        }
-    }
-
-    function relayers_back() public view returns (address pre_relayer) {
-        if (relayers_size() > 0) {
-            uint64 back = inboundLaneNonce.relayer_range_back;
-            pre_relayer = relayers[back].relayer;
-        }
-    }
-
 	/// Get lane data from the storage.
     function data() public view returns (InboundLaneData memory lane_data) {
-        uint64 size = relayers_size();
+        uint64 size = _relayers_size();
         if (size > 0) {
             lane_data.relayers = new UnrewardedRelayer[](size);
             uint64 front = inboundLaneNonce.relayer_range_front;
@@ -192,6 +179,20 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         }
         lane_data.last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
         lane_data.last_delivered_nonce = inboundLaneNonce.last_delivered_nonce;
+    }
+
+    function _relayers_size() private view returns (uint64 size) {
+        if (inboundLaneNonce.relayer_range_back >= inboundLaneNonce.relayer_range_front) {
+            size = inboundLaneNonce.relayer_range_back - inboundLaneNonce.relayer_range_front + 1;
+        }
+    }
+
+
+    function _relayers_back() private view returns (address pre_relayer) {
+        if (_relayers_size() > 0) {
+            uint64 back = inboundLaneNonce.relayer_range_back;
+            pre_relayer = relayers[back].relayer;
+        }
     }
 
     /// Receive state of the corresponding outbound lane.
@@ -263,7 +264,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         if (inboundLaneNonce.last_delivered_nonce >= begin) {
             uint64 end = inboundLaneNonce.last_delivered_nonce;
             // now let's update inbound lane storage
-            address pre_relayer = relayers_back();
+            address pre_relayer = _relayers_back();
             if (pre_relayer == relayer) {
                 UnrewardedRelayer storage r = relayers[inboundLaneNonce.relayer_range_back];
                 r.messages.end = end;
@@ -278,12 +279,10 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// @param payload payload of the dispatch message
     /// @return dispatch_result the dispatch call result
     /// - Return True:
-    ///   1. filter return True and dispatch call successfully with none 32-length return data
-    ///   2. filter return True and dispatch call successfully with 32-length return data is True
+    ///   1. filter return True and dispatch call successfully
     /// - Return False:
     ///   1. filter return False
     ///   2. filter return True and dispatch call failed
-    ///   3. filter return True and dispatch call successfully with 32-length return data is False
     function _dispatch(MessagePayload memory payload) private returns (bool dispatch_result) {
         Slot0 memory _slot0 = slot0;
         bytes memory filterCallData = abi.encodeWithSelector(
@@ -296,13 +295,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         bool canCall = _filter(payload.target, filterCallData);
         if (canCall) {
             // Deliver the message to the target
-            bytes memory result_data;
-            (dispatch_result, result_data) = payload.target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
-            if (dispatch_result) {
-                if (result_data.length == 32) {
-                    dispatch_result = abi.decode(result_data, (bool));
-                }
-            }
+            (dispatch_result, _) = payload.target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
         }
     }
 
