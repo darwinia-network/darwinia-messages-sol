@@ -82,7 +82,7 @@ contract ChainMessageCommitter is Initializable, MessageCommitter {
         require(thisChainPosition != pos, "!bridgedChainPosition");
         require(thisChainPosition == IMessageCommitter(committer).thisChainPosition(), "!thisChainPosition");
         chainOf[pos] = committer;
-        maxChainPosition = max(maxChainPosition, pos);
+        maxChainPosition = _max(maxChainPosition, pos);
         emit Registry(pos, committer);
     }
 

@@ -21,8 +21,8 @@ pragma abicoder v2;
 import "../interfaces/IVerifier.sol";
 
 contract InboundLaneVerifier {
-    /// indentify slot
-    Slot0 private slot0;
+    /// @dev Indentify slot
+    Slot0 internal slot0;
 
     /// @dev The contract address of on-chain verifier
     IVerifier public immutable VERIFIER;
