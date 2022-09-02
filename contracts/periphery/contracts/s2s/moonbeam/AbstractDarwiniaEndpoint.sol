@@ -6,7 +6,7 @@ import "../SmartChainXLib.sol";
 import "../types/PalletMessageRouter.sol";
 import "../types/PalletEthereumXcm.sol";
 
-abstract contract DarwiniaEndpoint {
+abstract contract AbstractDarwiniaEndpoint {
     // Remote params
     address public remoteEndpoint;
     bytes2 public remoteMessageTransactCallIndex;
@@ -34,22 +34,22 @@ abstract contract DarwiniaEndpoint {
     }
 
     function _remoteExecute(
-        uint32 routerSpecVersion,
-        address callReceiver,
-        bytes calldata callPayload,
-        uint256 gasLimit
+        uint32 _routerSpecVersion,
+        address _callReceiver,
+        bytes calldata _callPayload,
+        uint256 _gasLimit
     ) internal returns (uint256) {
         bytes memory input = abi.encodeWithSelector(
             this.execute.selector,
-            callReceiver,
-            callPayload
+            _callReceiver,
+            _callPayload
         );
 
         // build the TransactCall
         bytes memory tgtTransactCallEncoded = PalletEthereumXcm
             .buildTransactCall(
                 remoteMessageTransactCallIndex,
-                gasLimit,
+                _gasLimit,
                 remoteEndpoint,
                 0,
                 input
@@ -64,7 +64,7 @@ abstract contract DarwiniaEndpoint {
 
         // dispatch the ForwardToMoonbeamCall
         uint64 messageNonce = SmartChainXLib.remoteDispatch(
-            routerSpecVersion,
+            _routerSpecVersion,
             routerForwardToMoonbeamCallEncoded,
             routerForwardToMoonbeamCallWeight,
             dispatchAddress,
