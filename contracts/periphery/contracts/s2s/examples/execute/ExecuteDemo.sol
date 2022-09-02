@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import "../ToPangolinEndpoint.sol";
+import "./ToPangolinEndpoint.sol";
 
 // Call Pangolin.callee.add(2) on Pangoro
 contract ExecuteDemo {

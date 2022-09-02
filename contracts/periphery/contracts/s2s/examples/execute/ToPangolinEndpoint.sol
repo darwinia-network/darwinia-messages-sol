@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import "../MessageEndpoint.sol";
+import "../../MessageEndpoint.sol";
 
 // On Pangoro, to Pangolin
 contract ToPangolinEndpoint is MessageEndpoint {
