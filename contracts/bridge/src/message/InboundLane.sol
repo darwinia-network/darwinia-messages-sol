@@ -162,7 +162,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         _receive_message(outboundLaneData.messages);
     }
 
-    /// Commit lane data to the `commitment` storage.
+    /// Return the commitment of lane data.
     function commitment() external view returns (bytes32) {
         return hash(data());
     }
