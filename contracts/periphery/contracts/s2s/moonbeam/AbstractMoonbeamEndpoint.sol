@@ -8,7 +8,7 @@ import "../precompiles/moonbeam/IXcmTransactorV1.sol";
 import "../precompiles/moonbeam/XcmTransactorV1.sol";
 import "../types/PalletBridgeMessages.sol";
 
-abstract contract MoonbeamEndpoint {
+abstract contract AbstractMoonbeamEndpoint {
     // Remote params
     address public remoteEndpoint;
     uint64 public remoteSmartChainId;
@@ -17,8 +17,8 @@ abstract contract MoonbeamEndpoint {
 
     // router params
     bytes2 public routerSendMessageCallIndex;
-    uint64 public routerSendMessageCallWeight;
     bytes4 public routerOutboundLaneId;
+    bytes public routerParachainId;
 
     // Local params
     address public feeLocationAddress;
@@ -33,8 +33,7 @@ abstract contract MoonbeamEndpoint {
         bytes calldata _callPayload,
         uint256 _gasLimit,
         //
-        uint128 _deliveryAndDispatchFee,
-        bytes memory _parachainId
+        uint128 _deliveryAndDispatchFee
     ) internal view {
         // solidity call that will be executed on crab smart chain
         bytes memory tgtInput = abi.encodeWithSelector(
@@ -73,15 +72,19 @@ abstract contract MoonbeamEndpoint {
                 )
             );
 
+        uint64 routerSendMessageCallWeight = uint64(
+            1495248832 + 1351 * routerSendMessageCallEncoded.length
+        ); // 1492481100 + (1 + message_size / 1024 + 1) * 1383866;
+
         // remote call send_message from moonbeam
         bytes[] memory interior = new bytes[](1);
-        interior[0] = _parachainId;
+        interior[0] = routerParachainId;
         IXcmTransactorV1.Multilocation memory dest = IXcmTransactorV1
             .Multilocation(1, interior);
         XcmTransactorV1.transactThroughSigned(
             dest,
             feeLocationAddress,
-            routerSendMessageCallWeight, // ?
+            routerSendMessageCallWeight,
             routerSendMessageCallEncoded
         );
     }
@@ -151,12 +154,6 @@ abstract contract MoonbeamEndpoint {
         internal
     {
         routerSendMessageCallIndex = _routerSendMessageCallIndex;
-    }
-
-    function _setRouterSendMessageCallWeight(
-        uint64 _routerSendMessageCallWeight
-    ) internal {
-        routerSendMessageCallWeight = _routerSendMessageCallWeight;
     }
 
     function _setRouterOutboundLaneId(bytes4 _routerOutboundLaneId) internal {
