@@ -47,7 +47,7 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
   $data)
 
 # bsc light client config
-block_number=22333200
+block_number=22570200
 block_header=$(seth block $block_number --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545
 )
 parent_hash=$(echo "$block_header" | seth --field parentHash)
