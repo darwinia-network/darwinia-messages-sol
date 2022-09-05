@@ -63,7 +63,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
 
     function test_constructor_args() public {
         assertEq(outlane.FEE_MARKET(), address(market));
-        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.nonce();
+        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.outboundLaneNonce();
         assertEq(latest_received_nonce, uint(0));
         assertEq(latest_generated_nonce, uint(0));
         assertEq(oldest_unpruned_nonce, uint(1));
@@ -85,7 +85,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         address target = address(1);
         bytes memory encoded = abi.encodeWithSignature("foo()");
         uint256 message_id = perform_send_message(target, encoded);
-        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.nonce();
+        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.outboundLaneNonce();
         assertEq(latest_received_nonce, uint(0));
         assertEq(latest_generated_nonce, uint(1));
         assertEq(oldest_unpruned_nonce, uint(1));
@@ -192,7 +192,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         perform_send_message(target, encoded);
         perform_send_message(target, encoded);
 
-        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.nonce();
+        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.outboundLaneNonce();
         assertEq(latest_received_nonce, uint(0));
         assertEq(latest_generated_nonce, uint(3));
         assertEq(oldest_unpruned_nonce, uint(1));
@@ -285,7 +285,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
     }
 
     function assert_data(uint64 _latest_received_nonce, uint64 _latest_generated_nonce, uint64 _message_size) public {
-        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.nonce();
+        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.outboundLaneNonce();
         assertEq(latest_received_nonce, uint(_latest_received_nonce));
         assertEq(latest_generated_nonce, uint(_latest_generated_nonce));
         assertEq(oldest_unpruned_nonce, uint(1));
@@ -296,7 +296,7 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
     }
 
     function assert_empty_data(uint64 _latest_received_nonce, uint64 _latest_generated_nonce) public {
-        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.nonce();
+        (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.outboundLaneNonce();
         assertEq(latest_received_nonce, uint(_latest_received_nonce));
         assertEq(latest_generated_nonce, uint(_latest_generated_nonce));
         assertEq(oldest_unpruned_nonce, uint(1));

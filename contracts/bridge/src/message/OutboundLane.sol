@@ -39,8 +39,8 @@ import "../spec/TargetChain.sol";
 
 // Everything about outgoing messages sending.
 contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, SourceChain {
-    /// @dev slot 1
-    OutboundLaneNonce private outboundLaneNonce;
+    /// slot 1
+    OutboundLaneNonce public outboundLaneNonce;
     /// slot 2
     /// nonce => hash(MessagePayload)
     mapping(uint64 => bytes32) public messages;
@@ -105,33 +105,32 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     /// At the beginning of the launch, submmiter is permission, after the system is stable it will be permissionless.
     /// @param targetContract The target contract address which you would send cross chain message to
     /// @param encoded The calldata which encoded by ABI Encoding
-    /// @return Encoded message key
-    function send_message(address targetContract, bytes calldata encoded) external payable override returns (uint256) {
+    function send_message(address targetContract, bytes calldata encoded) external payable override returns (uint64) {
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "TooManyPendingMessages");
         require(outboundLaneNonce.latest_generated_nonce < type(uint64).max, "Overflow");
         require(encoded.length <= MAX_CALLDATA_LENGTH, "TooLargeCalldata");
 
-        uint64 n = outboundLaneNonce.latest_generated_nonce + 1;
+        uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
 
         // assign the message to top relayers
-        uint256 encoded_key = encodeMessageKey(n);
+        uint256 encoded_key = encodeMessageKey(nonce);
         require(IFeeMarket(FEE_MARKET).assign{value: msg.value}(encoded_key), "AssignRelayersFailed");
 
-        outboundLaneNonce.latest_generated_nonce = n;
+        outboundLaneNonce.latest_generated_nonce = nonce;
         MessagePayload memory payload = MessagePayload({
             source: msg.sender,
             target: targetContract,
             encoded: encoded
         });
-        messages[n] = hash(payload);
+        messages[nonce] = hash(payload);
         // message sender prune at most `MAX_PRUNE_MESSAGES_ATONCE` messages
         _prune_messages(MAX_PRUNE_MESSAGES_ATONCE);
         emit MessageAccepted(
-            n,
+            nonce,
             msg.sender,
             targetContract,
             encoded);
-        return encoded_key;
+        return nonce;
     }
 
     /// Receive messages delivery proof from bridged chain.
@@ -143,18 +142,6 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         DeliveredMessages memory confirmed_messages = _confirm_delivery(inboundLaneData);
         // settle the confirmed_messages at fee market
         settle_messages(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
-    }
-
-    function nonce() external view returns (
-        uint64 latest_received_nonce,
-        uint64 latest_generated_nonce,
-        uint64 oldest_unpruned_nonce
-    ) {
-        return (
-            outboundLaneNonce.latest_received_nonce,
-            outboundLaneNonce.latest_generated_nonce,
-            outboundLaneNonce.oldest_unpruned_nonce
-        );
     }
 
     /// Return the commitment of lane data.
@@ -173,8 +160,8 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
             lane_data.messages = new MessageStorage[](size);
             uint64 begin = outboundLaneNonce.latest_received_nonce + 1;
             for (uint64 index = 0; index < size; index++) {
-                uint64 n = index + begin;
-                lane_data.messages[index] = MessageStorage(encodeMessageKey(n), messages[n]);
+                uint64 nonce = index + begin;
+                lane_data.messages[index] = MessageStorage(encodeMessageKey(nonce), messages[nonce]);
             }
         }
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
@@ -198,16 +185,16 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     ) {
         (uint64 total_messages, uint64 latest_delivered_nonce) = _extract_inbound_lane_info(inboundLaneData);
 
-        OutboundLaneNonce memory nonce_ = outboundLaneNonce;
-        require(latest_delivered_nonce > nonce_.latest_received_nonce, "NoNewConfirmations");
-        require(latest_delivered_nonce <= nonce_.latest_generated_nonce, "FailedToConfirmFutureMessages");
+        OutboundLaneNonce memory nonce = outboundLaneNonce;
+        require(latest_delivered_nonce > nonce.latest_received_nonce, "NoNewConfirmations");
+        require(latest_delivered_nonce <= nonce.latest_generated_nonce, "FailedToConfirmFutureMessages");
         // that the relayer has declared correct number of messages that the proof contains (it
         // is checked outside of the function). But it may happen (but only if this/bridged
         // chain storage is corrupted, though) that the actual number of confirmed messages if
         // larger than declared.
-        require(latest_delivered_nonce - nonce_.latest_received_nonce <= total_messages, "TryingToConfirmMoreMessagesThanExpected");
+        require(latest_delivered_nonce - nonce.latest_received_nonce <= total_messages, "TryingToConfirmMoreMessagesThanExpected");
         _check_relayers(latest_delivered_nonce, inboundLaneData.relayers);
-        uint64 prev_latest_received_nonce = nonce_.latest_received_nonce;
+        uint64 prev_latest_received_nonce = nonce.latest_received_nonce;
         outboundLaneNonce.latest_received_nonce = latest_delivered_nonce;
         confirmed_messages = DeliveredMessages({
             begin: prev_latest_received_nonce + 1,
@@ -252,16 +239,16 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     ///
     /// Returns number of pruned messages.
     function _prune_messages(uint64 max_messages_to_prune) private returns (uint64 pruned_messages) {
-        OutboundLaneNonce memory nonce_ = outboundLaneNonce;
+        OutboundLaneNonce memory nonce = outboundLaneNonce;
         while (pruned_messages < max_messages_to_prune &&
-            nonce_.oldest_unpruned_nonce <= nonce_.latest_received_nonce)
+            nonce.oldest_unpruned_nonce <= nonce.latest_received_nonce)
         {
-            delete messages[nonce_.oldest_unpruned_nonce];
+            delete messages[nonce.oldest_unpruned_nonce];
             pruned_messages += 1;
-            nonce_.oldest_unpruned_nonce += 1;
+            nonce.oldest_unpruned_nonce += 1;
         }
         if (pruned_messages > 0) {
-            outboundLaneNonce.oldest_unpruned_nonce = nonce_.oldest_unpruned_nonce;
+            outboundLaneNonce.oldest_unpruned_nonce = nonce.oldest_unpruned_nonce;
             emit MessagePruned(outboundLaneNonce.oldest_unpruned_nonce);
         }
         return pruned_messages;

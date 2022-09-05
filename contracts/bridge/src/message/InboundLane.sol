@@ -41,8 +41,8 @@ import "../spec/TargetChain.sol";
 /// @notice The inbound lane is the message layer of the bridge
 /// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
 contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
-    /// @dev slot 1
-    InboundLaneNonce private inboundLaneNonce;
+    /// slot 1
+    InboundLaneNonce public inboundLaneNonce;
     /// slot 2
     /// index => UnrewardedRelayer
     /// indexes to relayers and messages that they have delivered to this lane (ordered by
@@ -160,20 +160,6 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         );
         _receive_state_update(outboundLaneData.latest_received_nonce);
         _receive_message(outboundLaneData.messages);
-    }
-
-    function nonce() external view returns (
-        uint64 last_confirmed_nonce,
-        uint64 last_delivered_nonce,
-        uint64 relayer_range_front,
-        uint64 relayer_range_back
-    ) {
-        return (
-            inboundLaneNonce.last_confirmed_nonce,
-            inboundLaneNonce.last_delivered_nonce,
-            inboundLaneNonce.relayer_range_front,
-            inboundLaneNonce.relayer_range_back
-       );
     }
 
     /// Return the commitment of lane data.
