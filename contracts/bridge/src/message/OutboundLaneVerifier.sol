@@ -29,13 +29,13 @@ contract OutboundLaneVerifier {
 
     struct Slot0 {
         // Bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
-        uint32 bridgedLanePosition;
+        uint32 bridged_lane_pos;
         // Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-        uint32 bridgedChainPosition;
+        uint32 bridged_chain_pos;
         // This lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
-        uint32 thisLanePosition;
+        uint32 this_lane_pos;
         // This chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-        uint32 thisChainPosition;
+        uint32 this_chain_pos;
     }
 
     constructor(
@@ -46,10 +46,10 @@ contract OutboundLaneVerifier {
         uint32 _bridgedLanePosition
     ) {
         VERIFIER = IVerifier(_verifier);
-        slot0.thisChainPosition = _thisChainPosition;
-        slot0.thisLanePosition = _thisLanePosition;
-        slot0.bridgedChainPosition = _bridgedChainPosition;
-        slot0.bridgedLanePosition = _bridgedLanePosition;
+        slot0.this_chain_pos = _thisChainPosition;
+        slot0.this_lane_pos = _thisLanePosition;
+        slot0.bridged_chain_pos = _bridgedChainPosition;
+        slot0.bridged_lane_pos = _bridgedLanePosition;
     }
 
     function _verify_messages_delivery_proof(
@@ -58,14 +58,23 @@ contract OutboundLaneVerifier {
     ) internal view {
         Slot0 memory _slot0 = slot0;
         require(
-            VERIFIER.verify_messages_delivery_proof(inlane_data_hash, _slot0.thisChainPosition, _slot0.bridgedLanePosition, encoded_proof),
-            "Verifer: InvalidProof"
+            VERIFIER.verify_messages_delivery_proof(
+                inlane_data_hash,
+                _slot0.this_chain_pos,
+                _slot0.bridged_lane_pos,
+                encoded_proof
+            ), "!proof"
         );
     }
 
     function getLaneInfo() external view returns (uint32,uint32,uint32,uint32) {
         Slot0 memory _slot0 = slot0;
-        return (_slot0.thisChainPosition, _slot0.thisLanePosition, _slot0.bridgedChainPosition, _slot0.bridgedLanePosition);
+        return (
+            _slot0.this_chain_pos,
+            _slot0.this_lane_pos,
+            _slot0.bridged_chain_pos,
+            _slot0.bridged_lane_pos
+        );
     }
 
     // 32 bytes to identify an unique message from source chain
@@ -79,7 +88,10 @@ contract OutboundLaneVerifier {
     // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
     function encodeMessageKey(uint64 nonce) public view returns (uint256) {
         Slot0 memory _slot0 = slot0;
-        return (uint256(_slot0.thisChainPosition) << 160) + (uint256(_slot0.thisLanePosition) << 128) + (uint256(_slot0.bridgedChainPosition) << 96) + (uint256(_slot0.bridgedLanePosition) << 64) + uint256(nonce);
+        return (uint256(_slot0.this_chain_pos) << 160) +
+                (uint256(_slot0.this_lane_pos) << 128) +
+                (uint256(_slot0.bridged_chain_pos) << 96) +
+                (uint256(_slot0.bridged_lane_pos) << 64) +
+                uint256(nonce);
     }
 }
-

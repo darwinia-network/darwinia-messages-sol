@@ -32,13 +32,13 @@ contract SourceChain {
     /// Message key (unique message identifier) as it is stored in the storage.
     struct MessageKey {
         // This chain position
-        uint32 this_chain_id;
+        uint32 this_chain_pos;
         // Position of the message this lane.
-        uint32 this_lane_id;
+        uint32 this_lane_pos;
         // Bridged chain position
-        uint32 bridged_chain_id;
+        uint32 bridged_chain_pos;
         // Position of the message bridged lane.
-        uint32 bridged_lane_id;
+        uint32 bridged_lane_pos;
         // Nonce of the message.
         uint64 nonce;
     }
@@ -180,10 +180,10 @@ contract SourceChain {
     }
 
     function decodeMessageKey(uint256 encoded) internal pure returns (MessageKey memory key) {
-        key.this_chain_id = uint32(encoded >> 160);
-        key.this_lane_id = uint32(encoded >> 128);
-        key.bridged_chain_id = uint32(encoded >> 96);
-        key.bridged_lane_id = uint32(encoded >> 64);
+        key.this_chain_pos = uint32(encoded >> 160);
+        key.this_lane_pos = uint32(encoded >> 128);
+        key.bridged_chain_pos = uint32(encoded >> 96);
+        key.bridged_lane_pos = uint32(encoded >> 64);
         key.nonce = uint64(encoded);
     }
 }

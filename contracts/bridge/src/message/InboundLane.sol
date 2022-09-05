@@ -241,13 +241,13 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             // check message nonce is correct and increment nonce for replay protection
             require(key.nonce == next, "InvalidNonce");
             // check message is from the correct source chain position
-            require(key.this_chain_id == _slot0.bridgedChainPosition, "InvalidSourceChainId");
+            require(key.this_chain_pos == _slot0.bridged_chain_pos, "InvalidSourceChainId");
             // check message is from the correct source lane position
-            require(key.this_lane_id == _slot0.bridgedLanePosition, "InvalidSourceLaneId");
+            require(key.this_lane_pos == _slot0.bridged_lane_pos, "InvalidSourceLaneId");
             // check message delivery to the correct target chain position
-            require(key.bridged_chain_id == _slot0.thisChainPosition, "InvalidTargetChainId");
+            require(key.bridged_chain_pos == _slot0.this_chain_pos, "InvalidTargetChainId");
             // check message delivery to the correct target lane position
-            require(key.bridged_lane_id == _slot0.thisLanePosition, "InvalidTargetLaneId");
+            require(key.bridged_lane_pos == _slot0.this_lane_pos, "InvalidTargetLaneId");
             // if there are more unconfirmed messages than we may accept, reject this message
             require(next - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "TooManyUnconfirmedMessages");
 
@@ -287,8 +287,8 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         Slot0 memory _slot0 = slot0;
         bytes memory filterCallData = abi.encodeWithSelector(
             ICrossChainFilter.cross_chain_filter.selector,
-            _slot0.bridgedChainPosition,
-            _slot0.bridgedLanePosition,
+            _slot0.bridged_chain_pos,
+            _slot0.bridged_lane_pos,
             payload.source,
             payload.encoded
         );
