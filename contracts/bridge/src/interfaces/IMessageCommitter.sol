@@ -26,6 +26,6 @@ interface IMessageCommitter {
     function proof(uint256 pos) external view returns (MessageSingleProof memory);
     function commitment() external view returns (bytes32);
 
-    function thisChainPosition() external view returns (uint32);
-    function bridgedChainPosition() external view returns (uint32);
+    function THIS_CHAIN_POSITION() external view returns (uint32);
+    function BRIDGED_CHAIN_POSITION() external view returns (uint32);
 }

@@ -35,7 +35,7 @@ contract ChainMessageCommitter is Initializable, MessageCommitter {
     address public setter;
 
     /// @dev This chain position
-    uint256 public immutable thisChainPosition;
+    uint256 public immutable THIS_CHAIN_POSITION;
 
     event Registry(uint256 pos, address committer);
 
@@ -47,7 +47,7 @@ contract ChainMessageCommitter is Initializable, MessageCommitter {
     /// @dev Constructor params
     /// @param _thisChainPosition This chain positon
     constructor(uint256 _thisChainPosition) {
-        thisChainPosition = _thisChainPosition;
+        THIS_CHAIN_POSITION = _thisChainPosition;
     }
 
     function initialize() public initializer {
@@ -55,7 +55,7 @@ contract ChainMessageCommitter is Initializable, MessageCommitter {
     }
 
     function __CMC_init__(address _setter) internal onlyInitializing {
-        maxChainPosition = thisChainPosition;
+        maxChainPosition = THIS_CHAIN_POSITION;
         setter = _setter;
     }
 
@@ -78,9 +78,9 @@ contract ChainMessageCommitter is Initializable, MessageCommitter {
     /// @notice Only could be called by setter
     /// @param committer Address of lane committer
     function registry(address committer) external onlySetter {
-        uint256 pos = IMessageCommitter(committer).bridgedChainPosition();
-        require(thisChainPosition != pos, "!bridgedChainPosition");
-        require(thisChainPosition == IMessageCommitter(committer).thisChainPosition(), "!thisChainPosition");
+        uint256 pos = IMessageCommitter(committer).BRIDGED_CHAIN_POSITION();
+        require(THIS_CHAIN_POSITION != pos, "!bridgedChainPosition");
+        require(THIS_CHAIN_POSITION == IMessageCommitter(committer).THIS_CHAIN_POSITION(), "!thisChainPosition");
         chainOf[pos] = committer;
         maxChainPosition = _max(maxChainPosition, pos);
         emit Registry(pos, committer);

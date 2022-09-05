@@ -34,9 +34,9 @@ contract LaneMessageCommitter is MessageCommitter {
     mapping(uint256 => address) public laneOf;
 
     /// @dev This chain position
-    uint256 public immutable thisChainPosition;
+    uint256 public immutable THIS_CHAIN_POSITION;
     /// @dev Bridged chain position
-    uint256 public immutable bridgedChainPosition;
+    uint256 public immutable BRIDGED_CHAIN_POSITION;
 
     event Registry(uint256 outLanePos, address outboundLane, uint256 inLanePos, address inboundLane);
     event ChangeLane(uint256 pos, address lane);
@@ -51,8 +51,8 @@ contract LaneMessageCommitter is MessageCommitter {
     /// @param _bridgedChainPosition Bridged chain positon
     constructor(uint256 _thisChainPosition, uint256 _bridgedChainPosition) {
         require(_thisChainPosition != _bridgedChainPosition, "!pos");
-        thisChainPosition = _thisChainPosition;
-        bridgedChainPosition = _bridgedChainPosition;
+        THIS_CHAIN_POSITION = _thisChainPosition;
+        BRIDGED_CHAIN_POSITION = _bridgedChainPosition;
         setter = msg.sender;
     }
 
@@ -78,8 +78,8 @@ contract LaneMessageCommitter is MessageCommitter {
     function changeLane(uint256 pos, address lane) external onlySetter {
         require(laneOf[pos] != address(0), "!exist");
         (uint32 _thisChainPosition, uint32 _thisLanePosition, uint32 _bridgedChainPosition, ) = ILane(lane).getLaneInfo();
-        require(thisChainPosition == _thisChainPosition, "!thisChainPosition");
-        require(bridgedChainPosition == _bridgedChainPosition, "!bridgedChainPosition");
+        require(THIS_CHAIN_POSITION == _thisChainPosition, "!thisChainPosition");
+        require(BRIDGED_CHAIN_POSITION == _bridgedChainPosition, "!bridgedChainPosition");
         require(pos == _thisLanePosition, "!thisLanePosition");
         laneOf[pos] = lane;
         emit ChangeLane(pos, lane);
@@ -92,10 +92,10 @@ contract LaneMessageCommitter is MessageCommitter {
     function registry(address outboundLane, address inboundLane) external onlySetter {
         (uint32 _thisChainPositionOut, uint32 _thisLanePositionOut, uint32 _bridgedChainPositionOut, ) = ILane(outboundLane).getLaneInfo();
         (uint32 _thisChainPositionIn, uint32 _thisLanePositionIn, uint32 _bridgedChainPositionIn, ) = ILane(inboundLane).getLaneInfo();
-        require(thisChainPosition == _thisChainPositionOut, "!thisChainPosition");
-        require(thisChainPosition == _thisChainPositionIn, "!thisChainPosition");
-        require(bridgedChainPosition == _bridgedChainPositionOut, "!bridgedChainPosition");
-        require(bridgedChainPosition == _bridgedChainPositionIn, "!bridgedChainPosition");
+        require(THIS_CHAIN_POSITION == _thisChainPositionOut, "!thisChainPosition");
+        require(THIS_CHAIN_POSITION == _thisChainPositionIn, "!thisChainPosition");
+        require(BRIDGED_CHAIN_POSITION == _bridgedChainPositionOut, "!bridgedChainPosition");
+        require(BRIDGED_CHAIN_POSITION == _bridgedChainPositionIn, "!bridgedChainPosition");
         uint256 outLanePos = laneCount;
         uint256 inLanePos = laneCount + 1;
         require(outLanePos == _thisLanePositionOut, "!thisLanePosition");
