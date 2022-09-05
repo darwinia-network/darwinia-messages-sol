@@ -60,7 +60,7 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
     }
 
     function test_constructor_args() public {
-        (uint64 last_confirmed_nonce, uint64 last_delivered_nonce, uint64 relayer_range_front, uint64 relayer_range_back) = inlane.inboundLaneNonce();
+        (uint64 last_confirmed_nonce, uint64 last_delivered_nonce, uint64 relayer_range_front, uint64 relayer_range_back) = inlane.nonce();
         assertEq(last_confirmed_nonce, uint(0));
         assertEq(last_delivered_nonce, uint(0));
         assertEq(relayer_range_front, uint(1));
