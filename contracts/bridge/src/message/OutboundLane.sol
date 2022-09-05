@@ -103,9 +103,10 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     /// @dev Send message over lane.
     /// Submitter could be a contract or just an EOA address.
     /// At the beginning of the launch, submmiter is permission, after the system is stable it will be permissionless.
-    /// @param targetContract The target contract address which you would send cross chain message to
+    /// @param target The target contract address which you would send cross chain message to
     /// @param encoded The calldata which encoded by ABI Encoding
-    function send_message(address targetContract, bytes calldata encoded) external payable override returns (uint64) {
+    /// @return encoded_key encoded message key
+    function send_message(address target, bytes calldata encoded) external payable override returns (uint256 encoded_key) {
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "TooManyPendingMessages");
         require(outboundLaneNonce.latest_generated_nonce < type(uint64).max, "Overflow");
         require(encoded.length <= MAX_CALLDATA_LENGTH, "TooLargeCalldata");
@@ -113,13 +114,13 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
 
         // assign the message to top relayers
-        uint256 encoded_key = encodeMessageKey(nonce);
+        encoded_key = encodeMessageKey(nonce);
         require(IFeeMarket(FEE_MARKET).assign{value: msg.value}(encoded_key), "AssignRelayersFailed");
 
         outboundLaneNonce.latest_generated_nonce = nonce;
         MessagePayload memory payload = MessagePayload({
             source: msg.sender,
-            target: targetContract,
+            target: target,
             encoded: encoded
         });
         messages[nonce] = hash(payload);
@@ -128,9 +129,8 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         emit MessageAccepted(
             nonce,
             msg.sender,
-            targetContract,
+            target,
             encoded);
-        return nonce;
     }
 
     /// Receive messages delivery proof from bridged chain.

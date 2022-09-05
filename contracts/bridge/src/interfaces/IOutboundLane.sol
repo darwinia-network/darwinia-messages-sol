@@ -24,7 +24,8 @@ interface IOutboundLane {
     /// @notice Send message over lane.
     /// Submitter could be a contract or just an EOA address.
     /// At the beginning of the launch, submmiter is permission, after the system is stable it will be permissionless.
-    /// @param targetContract The target contract address which you would send cross chain message to
+    /// @param target The target contract address which you would send cross chain message to
     /// @param encoded The calldata which encoded by ABI Encoding `abi.encodePacked(SELECTOR, PARAMS)`
-    function send_message(address targetContract, bytes calldata encoded) external payable returns (uint64);
+    /// @return encoded_key encoded message key
+    function send_message(address target, bytes calldata encoded) external payable returns (uint256 encoded_key);
 }
