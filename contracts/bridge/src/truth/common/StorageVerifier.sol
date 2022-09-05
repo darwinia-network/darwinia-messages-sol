@@ -158,7 +158,7 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
         bytes calldata encoded_proof
     ) external view override returns (bool) {
         address lane = lanes[chain_pos][lane_pos];
-        require(lane != address(0), "!outlane");
+        require(lane != address(0), "!inlane");
         DeliveryProof memory proof = abi.decode(encoded_proof, (DeliveryProof));
 
         // extract nonce storage value from proof
@@ -232,6 +232,7 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
         if (len == 0) {
             return 0;
         }
+        require(len <= 32, "!len");
         assembly {
             data := div(mload(add(bts, 32)), exp(256, sub(32, len)))
         }

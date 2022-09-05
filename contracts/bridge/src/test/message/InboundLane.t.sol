@@ -65,8 +65,6 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
         assertEq(last_delivered_nonce, uint(0));
         assertEq(relayer_range_front, uint(1));
         assertEq(relayer_range_back, uint(0));
-        assertEq(inlane.relayers_size(), uint(0));
-        assertEq(inlane.relayers_back(), address(0));
         InboundLaneData memory data = inlane.data();
         assertEq(data.relayers.length, 0);
         assertEq(data.last_confirmed_nonce, uint(0));
@@ -87,8 +85,6 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
         assertEq(relayer.relayer, self);
         assertEq(relayer.messages.begin, uint(1));
         assertEq(relayer.messages.end, uint(1));
-
-        assertEq(inlane.relayers_back(), self);
     }
 
     function testFail_receive_messages_proof0() public {
@@ -139,8 +135,6 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
         assertEq(relayer.relayer, self);
         assertEq(relayer.messages.begin, uint(1));
         assertEq(relayer.messages.end, uint(3));
-
-        assertEq(inlane.relayers_back(), self);
     }
 
     function test_receive_messages_proof_multi1() public {
@@ -161,8 +155,6 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
         assertEq(relayer.relayer, self);
         assertEq(relayer.messages.begin, uint(1));
         assertEq(relayer.messages.end, uint(3));
-
-        assertEq(inlane.relayers_back(), self);
     }
 
     function _out_lane_data(uint64 nonce) internal view returns (OutboundLaneData memory) {

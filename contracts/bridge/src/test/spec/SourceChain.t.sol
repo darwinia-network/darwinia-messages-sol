@@ -104,10 +104,10 @@ contract SourceChainTest is DSTest, SourceChain {
     function test_decode_message_key() public {
         uint256 encoded_key = uint256(0x0000000000000000000000000000000000000001000000010000000000000001);
         MessageKey memory key = decodeMessageKey(encoded_key);
-        assertEq(key.this_chain_id, uint(0));
-        assertEq(key.this_lane_id, uint(0));
-        assertEq(key.bridged_chain_id, uint(1));
-        assertEq(key.bridged_lane_id, uint(1));
+        assertEq(key.this_chain_pos, uint(0));
+        assertEq(key.this_lane_pos, uint(0));
+        assertEq(key.bridged_chain_pos, uint(1));
+        assertEq(key.bridged_lane_pos, uint(1));
         assertEq(key.nonce, uint(1));
     }
 }

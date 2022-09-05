@@ -17,6 +17,6 @@
 
 pragma solidity 0.7.6;
 
-interface ISubStateStorage {
-    function state_storage(bytes calldata key) external view returns (bytes memory);
+interface ILane {
+    function getLaneInfo() external view returns (uint32,uint32,uint32,uint32);
 }
