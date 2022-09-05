@@ -153,7 +153,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         size = outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce;
     }
 
-	/// Get lane data from the storage.
+    /// Get lane data from the storage.
     function data() public view returns (OutboundLaneDataStorage memory lane_data) {
         uint64 size = message_size();
         if (size > 0) {

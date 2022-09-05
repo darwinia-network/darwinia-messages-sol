@@ -167,7 +167,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         return hash(data());
     }
 
-	/// Get lane data from the storage.
+    /// Get lane data from the storage.
     function data() public view returns (InboundLaneData memory lane_data) {
         uint64 size = _relayers_size();
         if (size > 0) {
@@ -186,7 +186,6 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             size = inboundLaneNonce.relayer_range_back - inboundLaneNonce.relayer_range_front + 1;
         }
     }
-
 
     function _relayers_back() private view returns (address pre_relayer) {
         if (_relayers_size() > 0) {
