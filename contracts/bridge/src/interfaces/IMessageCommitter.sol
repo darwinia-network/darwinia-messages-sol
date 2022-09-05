@@ -22,8 +22,8 @@ import "../spec/MessageProof.sol";
 
 interface IMessageCommitter {
     function count() external view returns (uint256);
-    function leaveOf(uint256 pos) external view returns (address);
     function proof(uint256 pos) external view returns (MessageSingleProof memory);
+    function leaveOf(uint256 pos) external view returns (address);
     function commitment() external view returns (bytes32);
 
     function THIS_CHAIN_POSITION() external view returns (uint32);
