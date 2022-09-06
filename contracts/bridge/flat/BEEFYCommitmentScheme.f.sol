@@ -1,0 +1,300 @@
+// hevm: flattened sources of src/spec/BEEFYCommitmentScheme.sol
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity =0.7.6;
+pragma abicoder v2;
+
+////// src/utils/ScaleCodec.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.7.6; */
+
+library ScaleCodec {
+    // Decodes a SCALE encoded uint256 by converting bytes (bid endian) to little endian format
+    function decodeUint256(bytes memory data) internal pure returns (uint256) {
+        uint256 number;
+        for (uint256 i = data.length; i > 0; i--) {
+            number = number + uint256(uint8(data[i - 1])) * (2**(8 * (i - 1)));
+        }
+        return number;
+    }
+
+    // Decodes a SCALE encoded compact unsigned integer
+    function decodeUintCompact(bytes memory data)
+        internal
+        pure
+        returns (uint256 v)
+    {
+        uint8 b = readByteAtIndex(data, 0); // read the first byte
+        uint8 mode = b & 3; // bitwise operation
+
+        if (mode == 0) {
+            // [0, 63]
+            return b >> 2; // right shift to remove mode bits
+        } else if (mode == 1) {
+            // [64, 16383]
+            uint8 bb = readByteAtIndex(data, 1); // read the second byte
+            uint64 r = bb; // convert to uint64
+            r <<= 6; // multiply by * 2^6
+            r += b >> 2; // right shift to remove mode bits
+            return r;
+        } else if (mode == 2) {
+            // [16384, 1073741823]
+            uint8 b2 = readByteAtIndex(data, 1); // read the next 3 bytes
+            uint8 b3 = readByteAtIndex(data, 2);
+            uint8 b4 = readByteAtIndex(data, 3);
+
+            uint32 x1 = uint32(b) | (uint32(b2) << 8); // convert to little endian
+            uint32 x2 = x1 | (uint32(b3) << 16);
+            uint32 x3 = x2 | (uint32(b4) << 24);
+
+            x3 >>= 2; // remove the last 2 mode bits
+            return uint256(x3);
+        } else if (mode == 3) {
+            // [1073741824, 4503599627370496]
+            // solhint-disable-next-line
+            uint8 l = b >> 2; // remove mode bits
+            require(
+                l > 32,
+                "Not supported: number cannot be greater than 32 bytes"
+            );
+        } else {
+            revert("Code should be unreachable");
+        }
+    }
+
+    // Read a byte at a specific index and return it as type uint8
+    function readByteAtIndex(bytes memory data, uint8 index)
+        internal
+        pure
+        returns (uint8)
+    {
+        return uint8(data[index]);
+    }
+
+    // Sources:
+    //   * https://ethereum.stackexchange.com/questions/15350/how-to-convert-an-bytes-to-address-in-solidity/50528
+    //   * https://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel
+
+    function reverse256(uint256 input) internal pure returns (uint256 v) {
+        v = input;
+
+        // swap bytes
+        v = ((v & 0xFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00) >> 8) |
+            ((v & 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF) << 8);
+
+        // swap 2-byte long pairs
+        v = ((v & 0xFFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000) >> 16) |
+            ((v & 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF) << 16);
+
+        // swap 4-byte long pairs
+        v = ((v & 0xFFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000) >> 32) |
+            ((v & 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF) << 32);
+
+        // swap 8-byte long pairs
+        v = ((v & 0xFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF0000000000000000) >> 64) |
+            ((v & 0x0000000000000000FFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF) << 64);
+
+        // swap 16-byte long pairs
+        v = (v >> 128) | (v << 128);
+    }
+
+    function reverse128(uint128 input) internal pure returns (uint128 v) {
+        v = input;
+
+        // swap bytes
+        v = ((v & 0xFF00FF00FF00FF00FF00FF00FF00FF00) >> 8) |
+            ((v & 0x00FF00FF00FF00FF00FF00FF00FF00FF) << 8);
+
+        // swap 2-byte long pairs
+        v = ((v & 0xFFFF0000FFFF0000FFFF0000FFFF0000) >> 16) |
+            ((v & 0x0000FFFF0000FFFF0000FFFF0000FFFF) << 16);
+
+        // swap 4-byte long pairs
+        v = ((v & 0xFFFFFFFF00000000FFFFFFFF00000000) >> 32) |
+            ((v & 0x00000000FFFFFFFF00000000FFFFFFFF) << 32);
+
+        // swap 8-byte long pairs
+        v = (v >> 64) | (v << 64);
+    }
+
+    function reverse64(uint64 input) internal pure returns (uint64 v) {
+        v = input;
+
+        // swap bytes
+        v = ((v & 0xFF00FF00FF00FF00) >> 8) |
+            ((v & 0x00FF00FF00FF00FF) << 8);
+
+        // swap 2-byte long pairs
+        v = ((v & 0xFFFF0000FFFF0000) >> 16) |
+            ((v & 0x0000FFFF0000FFFF) << 16);
+
+        // swap 4-byte long pairs
+        v = (v >> 32) | (v << 32);
+    }
+
+    function reverse32(uint32 input) internal pure returns (uint32 v) {
+        v = input;
+
+        // swap bytes
+        v = ((v & 0xFF00FF00) >> 8) |
+            ((v & 0x00FF00FF) << 8);
+
+        // swap 2-byte long pairs
+        v = (v >> 16) | (v << 16);
+    }
+
+    function reverse16(uint16 input) internal pure returns (uint16 v) {
+        v = input;
+
+        // swap bytes
+        v = (v >> 8) | (v << 8);
+    }
+
+    function encode256(uint256 input) internal pure returns (bytes32) {
+        return bytes32(reverse256(input));
+    }
+
+    function encode128(uint128 input) internal pure returns (bytes16) {
+        return bytes16(reverse128(input));
+    }
+
+    function encode64(uint64 input) internal pure returns (bytes8) {
+        return bytes8(reverse64(input));
+    }
+
+    function encode32(uint32 input) internal pure returns (bytes4) {
+        return bytes4(reverse32(input));
+    }
+
+    function encode16(uint16 input) internal pure returns (bytes2) {
+        return bytes2(reverse16(input));
+    }
+
+    function encode8(uint8 input) internal pure returns (bytes1) {
+        return bytes1(input);
+    }
+}
+
+////// src/spec/BEEFYCommitmentScheme.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.7.6; */
+/* pragma abicoder v2; */
+
+/* import "../utils/ScaleCodec.sol"; */
+
+contract BEEFYCommitmentScheme {
+    using ScaleCodec for uint32;
+    using ScaleCodec for uint64;
+
+    /// Next BEEFY authority set
+    /// @param id ID of the next set
+    /// @param len Number of validators in the set
+    /// @param root Merkle Root Hash build from BEEFY AuthorityIds
+    struct NextValidatorSet {
+        uint64 id;
+        uint32 len;
+        bytes32 root;
+    }
+
+    /// The payload being signed
+    /// @param network Source chain network identifier
+    /// @param mmr MMR root hash
+    /// @param messageRoot Darwnia message root commitment hash
+    /// @param nextValidatorSet Next BEEFY authority set
+    struct Payload {
+        bytes32 network;
+        bytes32 mmr;
+        bytes32 messageRoot;
+        NextValidatorSet nextValidatorSet;
+    }
+
+    /// The Commitment, with its payload, is the core thing we are trying to verify with this contract.
+    /// It contains a next validator set or not and a MMR root that commits to the darwinia history,
+    /// including past blocks and can be used to verify darwinia blocks.
+    /// @param payload the payload of the new commitment in beefy justifications (in
+    ///  our case, this is a next validator set and a new MMR root for all past darwinia blocks)
+    /// @param blockNumber block number for the given commitment
+    /// @param validatorSetId validator set id that signed the given commitment
+    struct Commitment {
+        Payload payload;
+        uint32 blockNumber;
+        uint64 validatorSetId;
+    }
+
+    bytes4 internal constant PAYLOAD_SCALE_ENCOD_PREFIX = 0x04646280;
+
+    function hash(Commitment memory commitment)
+        public
+        pure
+        returns (bytes32)
+    {
+        // Encode and hash the Commitment
+        return keccak256(
+            abi.encodePacked(
+                PAYLOAD_SCALE_ENCOD_PREFIX,
+                hash(commitment.payload),
+                commitment.blockNumber.encode32(),
+                commitment.validatorSetId.encode64()
+            )
+        );
+    }
+
+    function hash(Payload memory payload)
+        internal
+        pure
+        returns (bytes32)
+    {
+        // Encode and hash the Payload
+        return keccak256(
+            abi.encodePacked(
+                payload.network,
+                payload.mmr,
+                payload.messageRoot,
+                encode(payload.nextValidatorSet)
+            )
+        );
+    }
+
+    function encode(NextValidatorSet memory nextValidatorSet)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        // Encode the NextValidatorSet
+        return abi.encodePacked(
+                nextValidatorSet.id.encode64(),
+                nextValidatorSet.len.encode32(),
+                nextValidatorSet.root
+            );
+    }
+}
+
