@@ -1624,9 +1624,8 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
             require(size == values.length, "!values_len");
             MessageStorage[] memory messages = new MessageStorage[](size);
             for (uint64 i=0; i < size; i++) {
-               bytes32 payload = toBytes32(values[i]);
                uint256 key = (identify_storage << 64) + latest_received_nonce + 1 + i;
-               messages[i] = MessageStorage(key, payload);
+               messages[i] = MessageStorage(key, toBytes32(values[i]));
             }
             lane_data.messages = messages;
         }

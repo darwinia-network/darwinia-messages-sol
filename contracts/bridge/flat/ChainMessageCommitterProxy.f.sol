@@ -1,118 +1,15 @@
 // hevm: flattened sources of src/proxy/truth/ChainMessageCommitterProxy.sol
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT AND GPL-3.0
 pragma solidity =0.7.6;
 
-////// src/proxy/TransparentUpgradeableProxy.sol
-// This file is part of Darwinia.
-// Copyright (C) 2018-2022 Darwinia Network
-//
-// Darwinia is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Darwinia is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+////// src/proxy/transparent/Address.sol
 
 /* pragma solidity 0.7.6; */
-
-////// lib/zeppelin-solidity/contracts/proxy/Proxy.sol
-
-/* pragma solidity ^0.7.0; */
-
-/**
- * @dev This abstract contract provides a fallback function that delegates all calls to another contract using the EVM
- * instruction `delegatecall`. We refer to the second contract as the _implementation_ behind the proxy, and it has to
- * be specified by overriding the virtual {_implementation} function.
- *
- * Additionally, delegation to the implementation can be triggered manually through the {_fallback} function, or to a
- * different contract through the {_delegate} function.
- *
- * The success and return data of the delegated call will be returned back to the caller of the proxy.
- */
-abstract contract Proxy_2 {
-    /**
-     * @dev Delegates the current call to `implementation`.
-     *
-     * This function does not return to its internall call site, it will return directly to the external caller.
-     */
-    function _delegate(address implementation) internal virtual {
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            // Copy msg.data. We take full control of memory in this inline assembly
-            // block because it will not return to Solidity code. We overwrite the
-            // Solidity scratch pad at memory position 0.
-            calldatacopy(0, 0, calldatasize())
-
-            // Call the implementation.
-            // out and outsize are 0 because we don't know the size yet.
-            let result := delegatecall(gas(), implementation, 0, calldatasize(), 0, 0)
-
-            // Copy the returned data.
-            returndatacopy(0, 0, returndatasize())
-
-            switch result
-            // delegatecall returns 0 on error.
-            case 0 { revert(0, returndatasize()) }
-            default { return(0, returndatasize()) }
-        }
-    }
-
-    /**
-     * @dev This is a virtual function that should be overriden so it returns the address to which the fallback function
-     * and {_fallback} should delegate.
-     */
-    function _implementation() internal view virtual returns (address);
-
-    /**
-     * @dev Delegates the current call to the address returned by `_implementation()`.
-     *
-     * This function does not return to its internall call site, it will return directly to the external caller.
-     */
-    function _fallback() internal virtual {
-        _beforeFallback();
-        _delegate(_implementation());
-    }
-
-    /**
-     * @dev Fallback function that delegates calls to the address returned by `_implementation()`. Will run if no other
-     * function in the contract matches the call data.
-     */
-    fallback () external payable virtual {
-        _fallback();
-    }
-
-    /**
-     * @dev Fallback function that delegates calls to the address returned by `_implementation()`. Will run if call data
-     * is empty.
-     */
-    receive () external payable virtual {
-        _fallback();
-    }
-
-    /**
-     * @dev Hook that is called before falling back to the implementation. Can happen as part of a manual `_fallback`
-     * call, or as part of the Solidity `fallback` or `receive` functions.
-     *
-     * If overriden should call `super._beforeFallback()`.
-     */
-    function _beforeFallback() internal virtual {
-    }
-}
-
-////// lib/zeppelin-solidity/contracts/utils/Address.sol
-
-/* pragma solidity ^0.7.0; */
 
 /**
  * @dev Collection of functions related to the address type
  */
-library Address_3 {
+library Address {
     /**
      * @dev Returns true if `account` is a contract.
      *
@@ -295,12 +192,96 @@ library Address_3 {
     }
 }
 
-////// lib/zeppelin-solidity/contracts/proxy/UpgradeableProxy.sol
+////// src/proxy/transparent/Proxy.sol
 
-/* pragma solidity ^0.7.0; */
+/* pragma solidity 0.7.6; */
+
+/**
+ * @dev This abstract contract provides a fallback function that delegates all calls to another contract using the EVM
+ * instruction `delegatecall`. We refer to the second contract as the _implementation_ behind the proxy, and it has to
+ * be specified by overriding the virtual {_implementation} function.
+ *
+ * Additionally, delegation to the implementation can be triggered manually through the {_fallback} function, or to a
+ * different contract through the {_delegate} function.
+ *
+ * The success and return data of the delegated call will be returned back to the caller of the proxy.
+ */
+abstract contract Proxy {
+    /**
+     * @dev Delegates the current call to `implementation`.
+     *
+     * This function does not return to its internall call site, it will return directly to the external caller.
+     */
+    function _delegate(address implementation) internal virtual {
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            // Copy msg.data. We take full control of memory in this inline assembly
+            // block because it will not return to Solidity code. We overwrite the
+            // Solidity scratch pad at memory position 0.
+            calldatacopy(0, 0, calldatasize())
+
+            // Call the implementation.
+            // out and outsize are 0 because we don't know the size yet.
+            let result := delegatecall(gas(), implementation, 0, calldatasize(), 0, 0)
+
+            // Copy the returned data.
+            returndatacopy(0, 0, returndatasize())
+
+            switch result
+            // delegatecall returns 0 on error.
+            case 0 { revert(0, returndatasize()) }
+            default { return(0, returndatasize()) }
+        }
+    }
+
+    /**
+     * @dev This is a virtual function that should be overriden so it returns the address to which the fallback function
+     * and {_fallback} should delegate.
+     */
+    function _implementation() internal view virtual returns (address);
+
+    /**
+     * @dev Delegates the current call to the address returned by `_implementation()`.
+     *
+     * This function does not return to its internall call site, it will return directly to the external caller.
+     */
+    function _fallback() internal virtual {
+        _beforeFallback();
+        _delegate(_implementation());
+    }
+
+    /**
+     * @dev Fallback function that delegates calls to the address returned by `_implementation()`. Will run if no other
+     * function in the contract matches the call data.
+     */
+    fallback () external payable virtual {
+        _fallback();
+    }
+
+    /**
+     * @dev Fallback function that delegates calls to the address returned by `_implementation()`. Will run if call data
+     * is empty.
+     */
+    receive () external payable virtual {
+        _fallback();
+    }
+
+    /**
+     * @dev Hook that is called before falling back to the implementation. Can happen as part of a manual `_fallback`
+     * call, or as part of the Solidity `fallback` or `receive` functions.
+     *
+     * If overriden should call `super._beforeFallback()`.
+     */
+    function _beforeFallback() internal virtual {
+    }
+}
+
+////// src/proxy/transparent/UpgradeableProxy.sol
+
+/* pragma solidity 0.7.6; */
 
 /* import "./Proxy.sol"; */
-/* import "../utils/Address.sol"; */
+/* import "./Address.sol"; */
 
 /**
  * @dev This contract implements an upgradeable proxy. It is upgradeable because calls are delegated to an
@@ -311,7 +292,7 @@ library Address_3 {
  * Upgradeability is only provided internally through {_upgradeTo}. For an externally upgradeable proxy see
  * {TransparentUpgradeableProxy}.
  */
-contract UpgradeableProxy_2 is Proxy_2 {
+contract UpgradeableProxy is Proxy {
     /**
      * @dev Initializes the upgradeable proxy with an initial implementation specified by `_logic`.
      *
@@ -322,7 +303,7 @@ contract UpgradeableProxy_2 is Proxy_2 {
         assert(_IMPLEMENTATION_SLOT == bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1));
         _setImplementation(_logic);
         if(_data.length > 0) {
-            Address_3.functionDelegateCall(_logic, _data);
+            Address.functionDelegateCall(_logic, _data);
         }
     }
 
@@ -363,7 +344,7 @@ contract UpgradeableProxy_2 is Proxy_2 {
      * @dev Stores a new address in the EIP1967 implementation slot.
      */
     function _setImplementation(address newImplementation) private {
-        require(Address_3.isContract(newImplementation), "UpgradeableProxy: new implementation is not a contract");
+        require(Address.isContract(newImplementation), "UpgradeableProxy: new implementation is not a contract");
 
         bytes32 slot = _IMPLEMENTATION_SLOT;
 
@@ -374,9 +355,9 @@ contract UpgradeableProxy_2 is Proxy_2 {
     }
 }
 
-////// lib/zeppelin-solidity/contracts/proxy/TransparentUpgradeableProxy.sol
+////// src/proxy/transparent/TransparentUpgradeableProxy.sol
 
-/* pragma solidity ^0.7.0; */
+/* pragma solidity 0.7.6; */
 
 /* import "./UpgradeableProxy.sol"; */
 
@@ -401,12 +382,12 @@ contract UpgradeableProxy_2 is Proxy_2 {
  * Our recommendation is for the dedicated account to be an instance of the {ProxyAdmin} contract. If set up this way,
  * you should think of the `ProxyAdmin` instance as the real administrative interface of your proxy.
  */
-contract TransparentUpgradeableProxy_2 is UpgradeableProxy_2 {
+contract TransparentUpgradeableProxy is UpgradeableProxy {
     /**
      * @dev Initializes an upgradeable proxy managed by `_admin`, backed by the implementation at `_logic`, and
      * optionally initialized with `_data` as explained in {UpgradeableProxy-constructor}.
      */
-    constructor(address _logic, address admin_, bytes memory _data) payable UpgradeableProxy_2(_logic, _data) {
+    constructor(address _logic, address admin_, bytes memory _data) payable UpgradeableProxy(_logic, _data) {
         assert(_ADMIN_SLOT == bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1));
         _setAdmin(admin_);
     }
@@ -491,7 +472,7 @@ contract TransparentUpgradeableProxy_2 is UpgradeableProxy_2 {
      */
     function upgradeToAndCall(address newImplementation, bytes calldata data) external payable virtual ifAdmin {
         _upgradeTo(newImplementation);
-        Address_3.functionDelegateCall(newImplementation, data);
+        Address.functionDelegateCall(newImplementation, data);
     }
 
     /**
@@ -545,13 +526,13 @@ contract TransparentUpgradeableProxy_2 is UpgradeableProxy_2 {
 
 /* pragma solidity 0.7.6; */
 
-/* import "../TransparentUpgradeableProxy.sol"; */
+/* import "../transparent/TransparentUpgradeableProxy.sol"; */
 
-contract ChainMessageCommitterProxy is TransparentUpgradeableProxy_2 {
+contract ChainMessageCommitterProxy is TransparentUpgradeableProxy {
     constructor(
         address _logic,
         address _admin,
         bytes memory _data
-    ) payable TransparentUpgradeableProxy_2(_logic, _admin, _data) {}
+    ) payable TransparentUpgradeableProxy(_logic, _admin, _data) {}
 }
 
