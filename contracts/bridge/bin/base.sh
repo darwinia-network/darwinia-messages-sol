@@ -9,37 +9,52 @@ set -eo pipefail
 # Call as `ETH_FROM=0x... ETH_RPC_URL=<url> deploy ContractName arg1 arg2 arg3`
 # (or omit the env vars if you have already set them)
 deploy() {
-	NAME=$1
-	ARGS=${@:2}
+  NAME=$1
+  ARGS=${@:2}
+
+  # find file path
+  CONTRACT_PATH=$(find ./$SRC_DIT -name $NAME.f.sol)
+  CONTRACT_PATH=${CONTRACT_PATH:2}
+
+  # select the filename and the contract in it
+  PATTERN=".contracts[\"$CONTRACT_PATH\"].$NAME"
+
+  # get the constructor's signature
+  ABI=$(jq -r "$PATTERN.abi" $OUT_DIR/dapp.sol.json)
+  SIG=$(echo "$ABI" | seth --abi-constructor)
+
+  # get the bytecode from the compiled file
+  BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
+
+  # estimate gas
+  GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
+
+  # deploy
+  ADDRESS=$(dapp create "$NAME" $ARGS -- --gas "$GAS" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
+
+  # save the addrs to the json
+  # TODO: It'd be nice if we could evolve this into a minimal versioning system
+  # e.g. via commit / chainid etc.
+  save_contract "$NAME" "$ADDRESS"
+
+  log "$NAME deployed at" $ADDRESS
+
+  echo "$ADDRESS"
+}
+
+verify() {
+  NAME=$1
+  ADDR=$2
+  ARGS=${@:3}
 
 	# find file path
 	CONTRACT_PATH=$(find ./$SRC_DIT -name $NAME.f.sol)
 	CONTRACT_PATH=${CONTRACT_PATH:2}
+	CONTRACT_PATH=$CONTRACT_PATH:$NAME
 
-	# select the filename and the contract in it
-	PATTERN=".contracts[\"$CONTRACT_PATH\"].$NAME"
+  cmd="dapp --use solc:$DAPP_SOLC_VERSION verify-contract"
 
-	# get the constructor's signature
-	ABI=$(jq -r "$PATTERN.abi" $OUT_DIR/dapp.sol.json)
-	SIG=$(echo "$ABI" | seth --abi-constructor)
-
-	# get the bytecode from the compiled file
-	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
-
-	# estimate gas
-	GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
-
-	# deploy
-	ADDRESS=$(dapp create "$NAME" $ARGS -- --gas "$GAS" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
-
-	# save the addrs to the json
-	# TODO: It'd be nice if we could evolve this into a minimal versioning system
-	# e.g. via commit / chainid etc.
-	save_contract "$NAME" "$ADDRESS"
-
-  log "$NAME deployed at" $ADDRESS
-
-	echo "$ADDRESS"
+  (set -x; $cmd $CONTRACT_PATH $ADDR $ARGS)
 }
 
 deploy_v2() {
