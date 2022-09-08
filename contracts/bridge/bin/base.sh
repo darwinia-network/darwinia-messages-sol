@@ -13,7 +13,7 @@ deploy() {
 	ARGS=${@:2}
 
 	# find file path
-	CONTRACT_PATH=$(find ./src -name $NAME.sol)
+	CONTRACT_PATH=$(find ./$SRC_DIT -name $NAME.f.sol)
 	CONTRACT_PATH=${CONTRACT_PATH:2}
 
 	# select the filename and the contract in it
@@ -47,7 +47,7 @@ deploy_v2() {
   ARGS=${@:2}
 
   # find file path
-  CONTRACT_PATH=$(find ./src -name $NAME.sol)
+  CONTRACT_PATH=$(find ./$SRC_DIT -name $NAME.sol)
   CONTRACT_PATH=${CONTRACT_PATH:2}
 
   # select the filename and the contract in it
@@ -98,7 +98,7 @@ estimate_gas() {
 	NAME=$1
 	ARGS=${@:2}
 	# select the filename and the contract in it
-	PATTERN=".contracts[\"src/$NAME.sol\"].$NAME"
+	PATTERN=".contracts[\"$SRC_DIT/$NAME.sol\"].$NAME"
 
 	# get the constructor's signature
 	ABI=$(jq -r "$PATTERN.abi" $OUT_DIR/dapp.sol.json)
@@ -146,7 +146,7 @@ contract_size() {
 	NAME=$1
 	ARGS=${@:2}
 	# select the filename and the contract in it
-	PATTERN=".contracts[\"src/$NAME.sol\"].$NAME"
+	PATTERN=".contracts[\"$SRC_DIT/$NAME.sol\"].$NAME"
 
 	# get the bytecode from the compiled file
 	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)

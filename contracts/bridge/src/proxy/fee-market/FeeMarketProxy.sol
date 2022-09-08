@@ -17,7 +17,7 @@
 
 pragma solidity 0.7.6;
 
-import "../TransparentUpgradeableProxy.sol";
+import "../transparent/TransparentUpgradeableProxy.sol";
 
 contract FeeMarketProxy is TransparentUpgradeableProxy {
     constructor(

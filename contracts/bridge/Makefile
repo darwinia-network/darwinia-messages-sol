@@ -28,6 +28,7 @@ test     :; dapp test # --ffi # enable if you need the `ffi` cheat code on HEVM
 clean    :; dapp clean
 lint     :; yarn run lint
 doc      :; yarn run docs
+flatten  :; @./bin/flatten.sh
 estimate :; @./bin/estimate-gas.sh ${contract}
 size     :; @./bin/contract-size.sh ${contract}
 
@@ -35,6 +36,7 @@ size     :; @./bin/contract-size.sh ${contract}
 deploy       :; @./bin/deploy.sh $(network_name)
 deploy-local :; @./bin/deploy-local.sh
 deploy-test  :; @./bin/deploy-test.sh
+deploy-prod  :; @./bin/deploy-prod.sh
 
 # Local testnet starter
 local-testnet :; @./bin/start-services.sh
