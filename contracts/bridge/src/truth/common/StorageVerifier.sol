@@ -133,9 +133,8 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
             require(size == values.length, "!values_len");
             MessageStorage[] memory messages = new MessageStorage[](size);
             for (uint64 i=0; i < size; i++) {
-               bytes32 payload = toBytes32(values[i]);
                uint256 key = (identify_storage << 64) + latest_received_nonce + 1 + i;
-               messages[i] = MessageStorage(key, payload);
+               messages[i] = MessageStorage(key, toBytes32(values[i]));
             }
             lane_data.messages = messages;
         }
@@ -158,7 +157,7 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
         bytes calldata encoded_proof
     ) external view override returns (bool) {
         address lane = lanes[chain_pos][lane_pos];
-        require(lane != address(0), "!outlane");
+        require(lane != address(0), "!inlane");
         DeliveryProof memory proof = abi.decode(encoded_proof, (DeliveryProof));
 
         // extract nonce storage value from proof
@@ -232,6 +231,7 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
         if (len == 0) {
             return 0;
         }
+        require(len <= 32, "!len");
         assembly {
             data := div(mload(add(bts, 32)), exp(256, sub(32, len)))
         }

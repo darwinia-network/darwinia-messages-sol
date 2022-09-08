@@ -105,5 +105,4 @@ contract BEEFYCommitmentScheme {
                 nextValidatorSet.root
             );
     }
-
 }

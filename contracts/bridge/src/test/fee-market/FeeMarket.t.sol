@@ -61,11 +61,11 @@ contract FeeMarketTest is DSTest {
     function test_constructor_args() public {
         assertEq(market.setter(), self);
         assertEq(market.VAULT(), vault);
-        assertEq(market.collateralPerOrder(), COLLATERAL_PERORDER);
-        assertEq(market.assignedRelayersNumber(), uint(ASSIGNED_RELAYERS_NUMBER));
-        assertEq(market.slashTime(), uint(SLASH_TIME));
-        assertEq(market.relayTime(), uint(RELAY_TIME));
-        assertEq(market.priceRatio(), uint(PRICE_RATIO));
+        assertEq(market.COLLATERAL_PER_ORDER(), COLLATERAL_PERORDER);
+        assertEq(market.ASSIGNED_RELAYERS_NUMBER(), uint(ASSIGNED_RELAYERS_NUMBER));
+        assertEq(market.SLASH_TIME(), uint(SLASH_TIME));
+        assertEq(market.RELAY_TIME(), uint(RELAY_TIME));
+        assertEq(market.PRICE_RATIO_NUMERATOR(), uint(PRICE_RATIO));
         assertEq(market.relayerCount(), 0);
     }
 

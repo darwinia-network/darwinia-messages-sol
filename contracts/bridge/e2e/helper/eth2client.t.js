@@ -1,5 +1,6 @@
 const Eth2Client = require('./eth2client').Eth2Client
-const beacon_endpoint = "http://127.0.0.1:5052"
+// const beacon_endpoint = "http://127.0.0.1:5052"
+const beacon_endpoint = "https://lodestar-mainnet-rpc.darwinia.network/"
 
 const eth2Client = new Eth2Client(beacon_endpoint);
 

@@ -103,22 +103,24 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     /// @dev Send message over lane.
     /// Submitter could be a contract or just an EOA address.
     /// At the beginning of the launch, submmiter is permission, after the system is stable it will be permissionless.
-    /// @param targetContract The target contract address which you would send cross chain message to
+    /// @param target The target contract address which you would send cross chain message to
     /// @param encoded The calldata which encoded by ABI Encoding
-    function send_message(address targetContract, bytes calldata encoded) external payable override returns (uint256) {
+    /// @return encoded_key Encoded message key
+    function send_message(address target, bytes calldata encoded) external payable override returns (uint256 encoded_key) {
         require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "TooManyPendingMessages");
         require(outboundLaneNonce.latest_generated_nonce < type(uint64).max, "Overflow");
+        require(encoded.length <= MAX_CALLDATA_LENGTH, "TooLargeCalldata");
+
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
 
         // assign the message to top relayers
-        uint256 encoded_key = encodeMessageKey(nonce);
+        encoded_key = encodeMessageKey(nonce);
         require(IFeeMarket(FEE_MARKET).assign{value: msg.value}(encoded_key), "AssignRelayersFailed");
 
-        require(encoded.length <= MAX_CALLDATA_LENGTH, "TooLargeCalldata");
         outboundLaneNonce.latest_generated_nonce = nonce;
         MessagePayload memory payload = MessagePayload({
             source: msg.sender,
-            target: targetContract,
+            target: target,
             encoded: encoded
         });
         messages[nonce] = hash(payload);
@@ -127,9 +129,8 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         emit MessageAccepted(
             nonce,
             msg.sender,
-            targetContract,
+            target,
             encoded);
-        return encoded_key;
     }
 
     /// Receive messages delivery proof from bridged chain.
@@ -143,7 +144,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         settle_messages(inboundLaneData.relayers, confirmed_messages.begin, confirmed_messages.end);
     }
 
-    /// commit lane data to the `commitment` storage.
+    /// Return the commitment of lane data.
     function commitment() external view returns (bytes32) {
         return hash(data());
     }
@@ -152,7 +153,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         size = outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce;
     }
 
-	/// Get lane data from the storage.
+    /// Get lane data from the storage.
     function data() public view returns (OutboundLaneDataStorage memory lane_data) {
         uint64 size = message_size();
         if (size > 0) {
@@ -192,7 +193,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         // chain storage is corrupted, though) that the actual number of confirmed messages if
         // larger than declared.
         require(latest_delivered_nonce - nonce.latest_received_nonce <= total_messages, "TryingToConfirmMoreMessagesThanExpected");
-        _check_relayers(nonce.latest_received_nonce, latest_delivered_nonce, inboundLaneData.relayers);
+        _check_relayers(latest_delivered_nonce, inboundLaneData.relayers);
         uint64 prev_latest_received_nonce = nonce.latest_received_nonce;
         outboundLaneNonce.latest_received_nonce = latest_delivered_nonce;
         confirmed_messages = DeliveredMessages({
@@ -207,11 +208,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     ///
     /// Revert if unrewarded relayers vec contains invalid data, meaning that the bridged
     /// chain has invalid runtime storage.
-    function _check_relayers(
-        uint64 prev_latest_received_nonce,
-        uint64 latest_received_nonce,
-        UnrewardedRelayer[] memory relayers
-    ) private pure {
+    function _check_relayers(uint64 latest_received_nonce, UnrewardedRelayer[] memory relayers) private pure {
         // the only caller of this functions checks that the
         // prev_latest_received_nonce..=latest_received_nonce is valid, so we're ready to accept
         // messages in this range => with_capacity call must succeed here or we'll be unable to receive
@@ -235,13 +232,6 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
 			// `InvalidNumberOfDispatchResults` but to guarantee safety of loop operations below
 			// this is detected now
             require(entry.messages.end <= latest_received_nonce, "FailedToConfirmFutureMessages");
-            // now we know that the entry is valid
-            // => let's check if it brings new confirmations
-            uint64 new_messages_begin = _max(entry.messages.begin, prev_latest_received_nonce + 1);
-            uint64 new_messages_end = _min(entry.messages.end, latest_received_nonce);
-            if (new_messages_end < new_messages_begin) {
-                continue;
-            }
         }
     }
 

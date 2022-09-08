@@ -20,7 +20,7 @@ pragma abicoder v2;
 
 import "../../utils/Math.sol";
 import "../../spec/MessageProof.sol";
-import "../../interfaces/IMessageCommitment.sol";
+import "../../interfaces/IMessageCommitter.sol";
 
 abstract contract MessageCommitter is Math {
     function count() public view virtual returns (uint256);
@@ -54,7 +54,7 @@ abstract contract MessageCommitter is Math {
         if (leaf == address(0)) {
             return bytes32(0);
         } else {
-            return IMessageCommitment(leaf).commitment();
+            return IMessageCommitter(leaf).commitment();
         }
     }
     /// @dev Construct a Merkle Proof for leave given by position.

@@ -393,4 +393,3 @@ contract BSCLightClient is Initializable, BinanceSmartChain, ILightClient {
         require((z = x - y) <= x);
     }
 }
-
