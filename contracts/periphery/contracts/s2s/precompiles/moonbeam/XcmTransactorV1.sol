@@ -10,21 +10,21 @@ library XcmTransactorV1 {
         0x0000000000000000000000000000000000000806;
 
     function transactThroughSigned(
-        IXcmTransactorV1.Multilocation memory dest,
-        address feeLocationAddress,
-        uint64 weight,
-        bytes memory call
-    ) external view {
-        (bool success, bytes memory data) = precompileAddress.staticcall(
-            abi.encodeWithSelector(
-                IXcmTransactorV1.transactThroughSigned.selector,
-                dest,
-                feeLocationAddress,
-                weight,
-                call
-            )
+        bytes4 _tgtParachainId,
+        address _feeLocationAddress,
+        uint64 _tgtCallWeight,
+        bytes memory _tgtCallEncoded
+    ) internal {
+        bytes[] memory interior = new bytes[](1);
+        interior[0] = abi.encodePacked(hex"00", _tgtParachainId);
+        IXcmTransactorV1.Multilocation memory dest = IXcmTransactorV1
+            .Multilocation(1, interior);
+        
+        IXcmTransactorV1(precompileAddress).transactThroughSigned(
+            dest,
+            _feeLocationAddress,
+            _tgtCallWeight,
+            _tgtCallEncoded
         );
-
-        Utils.revertIfFailed(success, data, "Multilocation to address failed");
     }
 }

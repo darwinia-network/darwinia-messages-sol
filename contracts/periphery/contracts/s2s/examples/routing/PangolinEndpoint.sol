@@ -41,4 +41,10 @@ contract PangolinEndpoint is AbstractDarwiniaEndpoint {
                 _gasLimit
             );
     }
+
+    function setRemoteEndpoint(bytes4 routerChainId, address remoteEndpoint)
+        external
+    {
+        _setRemoteEndpoint(routerChainId, remoteEndpoint);
+    }
 }

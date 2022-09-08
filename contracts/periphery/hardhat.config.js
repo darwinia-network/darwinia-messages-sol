@@ -9,7 +9,11 @@ const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL || process.env.ALCHEMY_MAINN
 const RINKEBY_RPC_URL = process.env.RINKEBY_RPC_URL 
 const ROPSTEN_RPC_URL = process.env.ROPSTEN_RPC_URL
 const KOVAN_RPC_URL = process.env.KOVAN_RPC_URL 
-const PRIVATE_KEY = process.env.PRIVATE_KEY 
+const PRIVATE_KEY = process.env.PRIVATE_KEY
+const CRAB_PRIVATE_KEY = process.env.CRAB_PRIVATE_KEY
+const PANGORO_PRIVATE_KEY = process.env.PANGORO_PRIVATE_KEY
+const PANGOLIN_PRIVATE_KEY = process.env.PANGOLIN_PRIVATE_KEY
+const MOONBASE_PRIVATE_KEY = process.env.MOONBASE_PRIVATE_KEY
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY 
 
 // You need to export an object to set up your config
@@ -83,21 +87,28 @@ module.exports = {
     pangoro: {
       url: 'https://pangoro-rpc.darwinia.network',
       network_id: "45",
-      accounts: [PRIVATE_KEY],
+      accounts: [PANGORO_PRIVATE_KEY],
       gas: 3_000_000,
       gasPrice: 53100000000
     },
     pangolin: {
       url: 'https://pangolin-rpc.darwinia.network',
       network_id: "43",
-      accounts: [PRIVATE_KEY],
+      accounts: [PANGOLIN_PRIVATE_KEY],
+      gas: 3_000_000,
+      gasPrice: 53100000000
+    },
+    moonbase: {
+      url: 'http://g2.dev.darwinia.network:8888',
+      network_id: "1280",
+      accounts: [MOONBASE_PRIVATE_KEY],
       gas: 3_000_000,
       gasPrice: 53100000000
     },
     crab: {
       url: 'https://crab-rpc.darwinia.network',
       network_id: "44",
-      accounts: [PRIVATE_KEY],
+      accounts: [CRAB_PRIVATE_KEY],
       gas: 3_000_000,
       gasPrice: 53100000000
     },

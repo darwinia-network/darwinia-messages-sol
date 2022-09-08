@@ -10,8 +10,8 @@ contract MoonbaseEndpoint is AbstractMoonbeamEndpoint {
         remoteMessageTransactCallIndex = 0x2901;
         routerSendMessageCallIndex = 0x1503;
         routerOutboundLaneId = 0x70616c69; // pali
-        routerParachainId = hex"0839";
-        feeLocationAddress = address(1024);
+        routerParachainId = 0x00000839;
+        feeLocationAddress = 0xFFFffFfF8283448b3cB519Ca4732F2ddDC6A6165;
     }
 
     function _executable(address, bytes calldata)
@@ -37,5 +37,14 @@ contract MoonbaseEndpoint is AbstractMoonbeamEndpoint {
             _gasLimit,
             _deliveryAndDispatchFee
         );
+    }
+
+    function setRemoteEndpoint(
+        bytes4 _remoteChainId,
+        bytes4 _parachainId,
+        address _remoteEndpoint
+    ) external
+    {
+        _setRemoteEndpoint(_remoteChainId, _parachainId, _remoteEndpoint);
     }
 }
