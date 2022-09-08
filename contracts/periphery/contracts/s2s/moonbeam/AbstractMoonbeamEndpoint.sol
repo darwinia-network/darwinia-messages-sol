@@ -4,9 +4,9 @@ pragma solidity ^0.8.9;
 
 import "../SmartChainXLib.sol";
 import "../types/PalletEthereum.sol";
-import "../precompiles/moonbeam/IXcmTransactorV1.sol";
-import "../precompiles/moonbeam/XcmTransactorV1.sol";
 import "../types/PalletBridgeMessages.sol";
+import "../precompiles/moonbeam/XcmTransactorV1.sol";
+
 
 abstract contract AbstractMoonbeamEndpoint {
     // Remote params
@@ -18,7 +18,7 @@ abstract contract AbstractMoonbeamEndpoint {
     // router params
     bytes2 public routerSendMessageCallIndex;
     bytes4 public routerOutboundLaneId;
-    bytes public routerParachainId;
+    bytes4 public routerParachainId;
 
     // Local params
     address public feeLocationAddress;
@@ -34,7 +34,7 @@ abstract contract AbstractMoonbeamEndpoint {
         uint256 _gasLimit,
         //
         uint128 _deliveryAndDispatchFee
-    ) internal view {
+    ) internal {
         // solidity call that will be executed on crab smart chain
         bytes memory tgtInput = abi.encodeWithSelector(
             this.execute.selector,
@@ -77,12 +77,8 @@ abstract contract AbstractMoonbeamEndpoint {
         ); // 1492481100 + (1 + message_size / 1024 + 1) * 1383866;
 
         // remote call send_message from moonbeam
-        bytes[] memory interior = new bytes[](1);
-        interior[0] = routerParachainId;
-        IXcmTransactorV1.Multilocation memory dest = IXcmTransactorV1
-            .Multilocation(1, interior);
         XcmTransactorV1.transactThroughSigned(
-            dest,
+            routerParachainId,
             feeLocationAddress,
             routerSendMessageCallWeight,
             routerSendMessageCallEncoded
@@ -124,7 +120,7 @@ abstract contract AbstractMoonbeamEndpoint {
     ///////////////////////////////
     function _setRemoteEndpoint(
         bytes4 _remoteChainId,
-        bytes memory _parachainId,
+        bytes4 _parachainId,
         address _remoteEndpoint
     ) internal {
         remoteEndpoint = _remoteEndpoint;
