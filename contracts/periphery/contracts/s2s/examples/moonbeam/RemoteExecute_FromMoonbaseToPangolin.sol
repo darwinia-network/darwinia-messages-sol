@@ -7,16 +7,12 @@ import "./MoonbaseEndpoint.sol";
 // moonbase > pangolin-parachain > pangolin
 contract RemoteExecute_FromMoonbaseToPangolin {
     address public endpoint;
-    //event Hello();
 
     constructor(address _endpoint) {
         endpoint = _endpoint;
     }
 
-    function remoteAdd(address callee)
-        external payable
-    {
-        // revert("fuckkkkk2");
+    function remoteAdd(address callee) external payable {
         MoonbaseEndpoint(endpoint).remoteExecute{value: msg.value}(
             29040, // pangolin spec version
             callee,
