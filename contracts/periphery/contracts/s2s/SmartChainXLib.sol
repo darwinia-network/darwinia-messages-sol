@@ -16,12 +16,32 @@ import "./types/PalletEthereumXcm.sol";
 
 import "./Utils.sol";
 import "./precompiles/moonbeam/XcmUtils.sol";
+// import "./precompiles/moonbeam/IXcmTransactorV1.sol";
+import "./precompiles/moonbeam/XcmTransactorV1.sol";
 
 library SmartChainXLib {
     bytes public constant account_derivation_prefix =
         "pallet-bridge/account-derivation/account";
 
     event DispatchResult(bool success, bytes result);
+
+    // function remoteDispatchFromMoonbeam(
+    //     bytes4 _tgtParachainId,
+    //     address _feeLocationAddress,
+    //     uint64 _tgtCallWeight,
+    //     bytes memory _tgtCallEncoded
+    // ) internal {
+    //     bytes[] memory interior = new bytes[](1);
+    //     interior[0] = abi.encodePacked(hex"00", _tgtParachainId);
+    //     IXcmTransactorV1.Multilocation memory dest = IXcmTransactorV1
+    //         .Multilocation(1, interior);
+    //     XcmTransactorV1.transactThroughSigned(
+    //         dest,
+    //         _feeLocationAddress, // ?
+    //         _tgtCallWeight,
+    //         _tgtCallEncoded
+    //     );
+    // }
 
     // Dispatch a call on the remote blockchain
     function remoteDispatch(
@@ -237,7 +257,7 @@ library SmartChainXLib {
     function deriveSenderFromSmartChainOnMoonbeam(
         bytes4 _srcChainId,
         address _srcMessageSender,
-        bytes memory _parachainId
+        bytes4 _parachainId
     ) internal view returns (address) {
         // H160(sender on the sourc chain) > AccountId32
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
@@ -253,7 +273,7 @@ library SmartChainXLib {
         // derived AccountId32 > Moonbeam H160
         return
             XcmUtils.deriveMoonbeamAddressFromAccountId(
-                _parachainId,
+                abi.encodePacked(_parachainId),
                 derivedAccountId
             );
     }

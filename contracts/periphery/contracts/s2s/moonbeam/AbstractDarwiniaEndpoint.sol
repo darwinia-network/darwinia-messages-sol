@@ -153,13 +153,13 @@ abstract contract AbstractDarwiniaEndpoint {
     ///////////////////////////////
     // Setters
     ///////////////////////////////
-    function _setRemoteEndpointOnMoonbeam(
-        bytes4 _remoteChainId,
+    function _setRemoteEndpoint(
+        bytes4 _routerChainId,
         address _remoteEndpoint
     ) internal {
         remoteEndpoint = _remoteEndpoint;
         derivedMessageSender = SmartChainXLib.deriveSenderFromRemote(
-            _remoteChainId,
+            _routerChainId,
             _remoteEndpoint
         );
     }

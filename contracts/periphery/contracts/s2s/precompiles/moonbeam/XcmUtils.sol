@@ -34,7 +34,7 @@ library XcmUtils {
     ) internal view returns (address) {
         // build multilocation
         bytes[] memory interior = new bytes[](2);
-        interior[0] = _parachainId;
+        interior[0] = abi.encodePacked(hex"00", _parachainId);
         interior[1] = abi.encodePacked(bytes1(0x01), _accountId, bytes1(0x00));
         IXcmUtils.Multilocation memory multilocation = IXcmUtils.Multilocation(
             1,
