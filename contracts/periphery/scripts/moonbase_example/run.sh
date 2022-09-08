@@ -20,9 +20,3 @@ echo "caller deployed on moonbase: $caller"
 # on moonbase, remote call add(2)
 local txhash="$(node ./scripts/moonbase_example/remote_add.js $caller $callee)"
 echo "call from moonbase to pangolin: $txhash"
-
-
-# # link endpoints
-# node ./scripts/moonbase_example/set_remote_endpoint_on_moonbase.js 0xBCe643BC2C9295FE0Abdff51D0CcB733faa3Edf6 0xE8120C7Ad7315EE46d4219EbD811Ee867b5650c2
-# # node ./scripts/moonbase_example/set_remote_endpoint_on_pangolin.js $pangolin_endpoint $moonbase_endpoint
-# echo "endpoints linked"
