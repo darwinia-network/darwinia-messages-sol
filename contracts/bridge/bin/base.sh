@@ -9,7 +9,7 @@ root_dir=$(realpath .)
 ADDRESSES_FILE="${root_dir}/bin/addr/${mode}/${network_name}.json"
 CONFIG_FILE="${root_dir}/bin/conf/${network_name}.json"
 OUT_DIR=$root_dir/out
-SRC_DIT=${DAPP_SRC-src}
+SRC_DIT=${DAPP_SRC-flat}
 
 ETH_RPC_URL=${ETH_RPC_URL:-http://localhost:8545}
 
@@ -54,7 +54,7 @@ deploy() {
 	ARGS=${@:2}
 
 	# find file path
-	CONTRACT_PATH=$(find ./$SRC_DIT -name $NAME.sol)
+	CONTRACT_PATH=$(find ./$SRC_DIT -name $NAME.f.sol)
 	CONTRACT_PATH=${CONTRACT_PATH:2}
 
 	# select the filename and the contract in it

@@ -35,6 +35,7 @@ size     :; @./bin/contract-size.sh ${contract}
 deploy       :; @./bin/deploy.sh $(network_name)
 deploy-local :; @./bin/deploy-local.sh
 deploy-test  :; @./bin/deploy-test.sh
+deploy-prod  :; @./bin/deploy-prod.sh
 
 # Local testnet starter
 local-testnet :; @./bin/start-services.sh
