@@ -12,9 +12,9 @@ deploy() {
   NAME=$1
   ARGS=${@:2}
 
-  # find file path
-  CONTRACT_PATH=$(find ./$SRC_DIT -name $NAME.f.sol)
-  CONTRACT_PATH=${CONTRACT_PATH:2}
+	# find file path
+	CONTRACT_PATH=$(find ./$SRC_DIT -name $NAME.f.sol)
+	CONTRACT_PATH=${CONTRACT_PATH:2}
 
   # select the filename and the contract in it
   PATTERN=".contracts[\"$CONTRACT_PATH\"].$NAME"
