@@ -34,9 +34,9 @@ bridged_chain_pos=1
 bridged_in_lane_pos=1
 bridged_out_lane_pos=0
 
-# TODO: fee market config
-Multisig=
-FEEMARKET_VAULT=$Multisig
+# fee market config
+HelixDaoMultisig=0xBd1a110ec476b4775c43905000288881367B1a88
+FEEMARKET_VAULT=$HelixDaoMultisig
 # https://etherscan.io/chart/gasprice
 # 300000 wei * 10 * 20 gwei = 0.06 ether or 12000 RING
 # 12000 / 3 = 4000 RING
