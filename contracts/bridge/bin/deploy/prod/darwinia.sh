@@ -35,14 +35,18 @@ bridged_in_lane_pos=1
 bridged_out_lane_pos=0
 
 # TODO: fee market config
-HelixDaoMultisig=0xBd1a110ec476b4775c43905000288881367B1a88
-FEEMARKET_VAULT=$HelixDaoMultisig
-COLLATERAL_PERORDER=$(seth --to-wei 10 ether)
+Multisig=
+FEEMARKET_VAULT=$Multisig
+# https://etherscan.io/chart/gasprice
+# 300000 wei * 10 * 20 gwei = 0.06 ether or 12000 RING
+# 12000 / 3 = 4000 RING
+COLLATERAL_PERORDER=$(seth --to-wei 5000 ether)
 ASSIGNED_RELAYERS_NUMBER=3
-SLASH_TIME=86400
-RELAY_TIME=86400
-# 0.01 : 2000
-PRICE_RATIO=999990
+SLASH_TIME=3600
+RELAY_TIME=10800
+# price 0.01 : 2000
+# 300 : 999700
+PRICE_RATIO=999700
 
 FeeMarket=$(deploy FeeMarket \
   $FEEMARKET_VAULT \
