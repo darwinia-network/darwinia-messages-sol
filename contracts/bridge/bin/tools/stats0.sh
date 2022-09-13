@@ -6,7 +6,7 @@ set -e
 
 s=goerli
 t=pangoro
-beacon_endpoint="http://127.0.0.1:5052"
+beacon_endpoint="http://g1.dev.darwinia.network:9596"
 
 root_dir=$(realpath .)
 ADDRESSES_FILE="${root_dir}/bin/addr/${mode}/${t}.json"
