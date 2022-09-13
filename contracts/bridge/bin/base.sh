@@ -83,6 +83,17 @@ deploy() {
 	echo "$ADDRESS"
 }
 
+upgrade() {
+  local admin; admin=$1
+  local newImp; newImp=$2
+  local proxy; proxy=$3
+  seth send "$admin" "upgrade(address,address)" "$proxy" "$newImp" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM"
+  if test $(seth call "$admin" "getProxyImplementation(address)(address)" "$proxy" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM") != "$newImp"; then
+    (log "check migration failed."; exit 1;)
+  fi
+  log "migration finished."
+}
+
 deploy_v2() {
   NAME=$1
   ARGS=${@:2}
