@@ -612,8 +612,6 @@ interface IBLS {
 contract BeaconLightClient is BeaconChain, Bitfield {
     // Beacon block header that is finalized
     BeaconBlockHeader public finalized_header;
-    // Execution payload state root of finalized header
-    bytes32 public latest_execution_payload_state_root;
     // Sync committees corresponding to the header
     // sync_committee_perid => sync_committee_root
     mapping (uint64 => bytes32) public sync_committee_roots;

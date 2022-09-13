@@ -798,7 +798,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         );
         if (_filter(payload.target, filterCallData)) {
             // Deliver the message to the target
-            (dispatch_result,) = payload.target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
+            (dispatch_result,) = payload.target.call{gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
         }
     }
 
