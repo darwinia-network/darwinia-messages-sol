@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
-
-set -x
+rm -rf flat/
+mkdir -p flat
 
 hevm flatten --source-file src/fee-market/FeeMarket.sol                    --json-file out/dapp.sol.json > flat/FeeMarket.f.sol
 hevm flatten --source-file src/fee-market/SimpleFeeMarket.sol              --json-file out/dapp.sol.json > flat/SimpleFeeMarket.f.sol

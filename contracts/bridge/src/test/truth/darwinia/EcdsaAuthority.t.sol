@@ -28,6 +28,7 @@ interface Hevm {
 }
 
 contract EcdsaAuthorityTest is DSTest {
+    // solhint-disable-next-line const-name-snakecase
     uint constant sk = 1;
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     address private constant SENTINEL             = address(0x1);

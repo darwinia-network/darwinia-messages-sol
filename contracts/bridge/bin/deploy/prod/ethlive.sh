@@ -25,12 +25,15 @@ bridged_chain_pos=0
 bridged_in_lane_pos=1
 bridged_out_lane_pos=0
 
-# TODO: fee market config
-COLLATERAL_PERORDER=$(seth --to-wei 0.0001 ether)
-SLASH_TIME=86400
-RELAY_TIME=86400
-# 300 : 0.01
-PRICE_RATIO=100
+# fee market config
+# https://etherscan.io/chart/gasprice
+# 300000 wei * 10 * 20 gwei = 0.06 ether or 12000 RING
+COLLATERAL_PERORDER=$(seth --to-wei 0.06 ether)
+RELAY_TIME=10800
+SLASH_TIME=10800
+# price 2000 : 0.01
+# 1000 : 999000
+PRICE_RATIO=1000
 
 SimpleFeeMarket=$(deploy SimpleFeeMarket $COLLATERAL_PERORDER $SLASH_TIME $RELAY_TIME $PRICE_RATIO)
 
@@ -41,11 +44,11 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
   $BridgeProxyAdmin \
   $data)
 
-# TODO: darwinia beefy light client config
+# darwinia ecdsa-authority light client config
 # seth keccak "46Darwinia::ecdsa-authority"
 DOMAIN_SEPARATOR=0xf8a76f5ceeff36d74ff99c4efc0077bcc334721f17d1d5f17cfca78455967e1e
-relayers=[]
-threshold=
+relayers=[0x953d65e6054b7eb1629f996238c0aa9b4e2dbfe9,0x7c9b3d4cfc78c681b7460acde2801452aef073a9,0x717c38fd5fdecb1b105a470f861b33a6b0f9f7b8,0x3e25247cff03f99a7d83b28f207112234fee73a6]
+threshold=3
 nonce=0
 
 POSALightClient=$(deploy POSALightClient $DOMAIN_SEPARATOR)

@@ -448,6 +448,7 @@ contract FeeMarket is Initializable, IFeeMarket {
     address private constant SENTINEL_TAIL = address(0x2);
 
     event Assgigned(uint256 indexed key, uint256 timestamp, uint32 assigned_relayers_number, uint256 collateral);
+    event AssgignedExt(uint256 indexed key, uint256 slot, address assigned_relayer);
     event Delist(address indexed prev, address indexed cur);
     event Deposit(address indexed dst, uint wad);
     event Enrol(address indexed prev, address indexed cur, uint fee);
@@ -699,6 +700,7 @@ contract FeeMarket is Initializable, IFeeMarket {
             require(isRelayer(r), "!relayer");
             _lock(r, COLLATERAL_PER_ORDER);
             assignedRelayers[key][slot] = OrderExt(r, feeOf[r]);
+            emit AssgignedExt(key, slot, r);
         }
         // Record the assigned time
         orderOf[key] = Order(uint32(block.timestamp), ASSIGNED_RELAYERS_NUMBER, COLLATERAL_PER_ORDER);

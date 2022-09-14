@@ -1311,7 +1311,7 @@ library StorageProof {
             account_proof,
             root
         );
-        require(exists == true, "!account_proof");
+        require(exists, "!account_proof");
         State.EVMAccount memory acc = data.toEVMAccount();
         bytes memory storage_key_hash = abi.encodePacked(storage_key);
         (exists, value) = SecureMerkleTrie.get(

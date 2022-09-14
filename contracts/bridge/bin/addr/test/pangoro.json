@@ -4,7 +4,7 @@
   "ChainMessageCommitter": "0xe9e0e23fB22865b20599Ad4f2552D7F0824212d8",
   "ChainMessageCommitterProxy": "0xbA6c0608f68fA12600382Cd4D964DF9f090AA5B5",
   "goerli": {
-    "FeeMarket": "0x3Af4364015Bbb02d0061E819C4a8989550356EAF",
+    "FeeMarket": "0x377F8d7649E89ed5E75013afB317E90F52542Df5",
     "FeeMarketProxy": "0x6eDcF984eF28C29aa48242B92685244bcD6D7203",
     "BeaconLightClient": "0x957972BD5F7f385e366e1ce607D6E8058b532c3d",
     "ExecutionLayer": "0x0542bFECbdab27A03A447C9fF6e34dA319849D91",
@@ -15,7 +15,7 @@
     "LaneMessageCommitter": "0xeB9e7B56Dc3B45a0FdE1bAF63d6A74586D41aee3"
   },
   "bsctest": {
-    "FeeMarket": "0x9bc429528981C7864796dAC5d51781412324258F",
+    "FeeMarket": "0x20F35D3f622b537dff77E99b0aD15f4a24926051",
     "FeeMarketProxy": "0x4ca59Ec46543E10De53C97332B8fe656e7a22878",
     "BSCLightClient": "0xd3686C9a2Ff3Fa3dc24E2ab157f58B2d567A295e",
     "BSCLightClientProxy": "0x6c74a72444048A8588dEBeb749Ee60DB842aD90f",
