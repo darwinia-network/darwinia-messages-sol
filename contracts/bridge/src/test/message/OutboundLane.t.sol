@@ -81,6 +81,14 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         assertEq(hash(payload), 0xf68a7103167104b132a65ee29f46cb238d61f3ca1813cc87155928bab0af5ac1);
     }
 
+    function testFail_too_many_pending_messages() public {
+        address target = address(1);
+        bytes memory encoded = abi.encodeWithSignature("foo()");
+        for (uint i=0; i<21; i++) {
+            perform_send_message(target, encoded);
+        }
+    }
+
     function test_send_message() public {
         address target = address(1);
         bytes memory encoded = abi.encodeWithSignature("foo()");
