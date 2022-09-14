@@ -653,7 +653,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     /// @param encoded The calldata which encoded by ABI Encoding
     /// @return encoded_key Encoded message key
     function send_message(address target, bytes calldata encoded) external payable override returns (uint256 encoded_key) {
-        require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "TooManyPendingMessages");
+        require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce < MAX_PENDING_MESSAGES, "TooManyPendingMessages");
         require(outboundLaneNonce.latest_generated_nonce < type(uint64).max, "Overflow");
         require(encoded.length <= MAX_CALLDATA_LENGTH, "TooLargeCalldata");
 

@@ -9,19 +9,19 @@
     "BeaconLightClient": "0x957972BD5F7f385e366e1ce607D6E8058b532c3d",
     "ExecutionLayer": "0x0542bFECbdab27A03A447C9fF6e34dA319849D91",
     "EthereumExecutionLayerProxy": "0x3F58e8Cf0DE243f978834e11e0CC419670FCe6d8",
-    "EthereumStorageVerifier": "0x815596fF53c02A0c782ADbE158c07a1A6878B8f5",
-    "OutboundLane": "0x90302800b3509e56f4F611c69D2d144a43a5cfE7",
-    "InboundLane": "0x39539c494dA9b97dD716e167f9cBF25438fe72d0",
-    "LaneMessageCommitter": "0xeB9e7B56Dc3B45a0FdE1bAF63d6A74586D41aee3"
+    "EthereumStorageVerifier": "0x3217F36AE34aCA2CE60d218af8F47d29101204a8",
+    "OutboundLane": "0x654FE7E51eCA910800Df4E1fA8F2CD8Fb1aFEc4A",
+    "InboundLane": "0x20c3b4a6Cb3319d14ffB0C2d4C7b035f16C4B7D3",
+    "LaneMessageCommitter": "0x1559Bf123D300f244ABdA95aefDA14F54C37B9B6"
   },
   "bsctest": {
     "FeeMarket": "0x20F35D3f622b537dff77E99b0aD15f4a24926051",
     "FeeMarketProxy": "0x4ca59Ec46543E10De53C97332B8fe656e7a22878",
     "BSCLightClient": "0xd3686C9a2Ff3Fa3dc24E2ab157f58B2d567A295e",
     "BSCLightClientProxy": "0x6c74a72444048A8588dEBeb749Ee60DB842aD90f",
-    "BSCStorageVerifier": "0xC14031cF5cA3876f32B8Dc8f0F3Bfc0EC0DCb3c4",
-    "OutboundLane": "0x257B832F80E70b34349e38ad50167C60B15676e5",
-    "InboundLane": "0x005CaCd7608302d9F64199Bd79b85d112617fE0A",
-    "LaneMessageCommitter": "0x71d18878F49d3a40f605baBbD81c24045fcB524a"
+    "BSCStorageVerifier": "0x23c2e12caaE858f1cc7a4B3d1499C6881C86839b",
+    "OutboundLane": "0x445A92e8dB20095a1755f4BE32E21E529E942E62",
+    "InboundLane": "0x062f87ae9eCAd31398C0cF5Ef269feb9050b9DF6",
+    "LaneMessageCommitter": "0x75774D78306a847F5CFc7630F37Bd4ed649784B3"
   }
 }
