@@ -234,7 +234,7 @@ class Bridge {
     const info = await this.sub[to].outbound.getLaneInfo()
     const finality_block_number = await c.lightClient.block_number()
     const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[to].LaneMessageCommitter, info[1])
-    return await c.inbound.receive_messages_proof(data, proof)
+    return await c.inbound.receive_messages_proof(data, proof, data.messages.length)
   }
 
   async confirm_messages_from_sub(to) {
@@ -255,7 +255,7 @@ class Bridge {
     const end = nonce.latest_generated_nonce.toHexString()
     const finality_block_number = await this.finality_block_number(from)
     const proof = await generate_storage_proof(c, begin, end, finality_block_number)
-    return this.sub[from].inbound.receive_messages_proof(data, proof, { gasLimit: 6000000 })
+    return this.sub[from].inbound.receive_messages_proof(data, proof, data.messages.length, { gasLimit: 6000000 })
   }
 
   async confirm_messages_to_sub(from) {

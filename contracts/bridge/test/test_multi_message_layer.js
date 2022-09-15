@@ -59,7 +59,7 @@ const receive_messages_proof = async (addr, nonce) => {
     let data = build_land_data(laneData)
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
-    const tx = await inbound.connect(addr).receive_messages_proof(data, "0x")
+    const tx = await inbound.connect(addr).receive_messages_proof(data, "0x", data.messages.length)
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
