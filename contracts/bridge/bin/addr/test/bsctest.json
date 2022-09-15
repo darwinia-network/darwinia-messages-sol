@@ -6,8 +6,8 @@
     "FeeMarketProxy": "0x86F9206Ce70372A85C0a43c8F11ade4eCCD5E4D0",
     "POSALightClient": "0xA7343a00a6aDA616F9035fF41D552331c1c60F6b",
     "DarwiniaLightClientProxy": "0x03FC3E2D3eF934432Ee796699295a10D6dB5F1dE",
-    "DarwiniaMessageVerifier": "0x051f4B222a5f99031A25cd7334bdc3bAdB9A0B60",
-    "OutboundLane": "0x5F0dA02f792C9f4Cb862Dc07309B89CF7eEF9c26",
-    "InboundLane": "0xEFacaafbfbEa2f681E890Ca9AF24650128536B67"
+    "DarwiniaMessageVerifier": "0xa4eab474dAE78F80c00036e4d8419BF86bF7dde0",
+    "OutboundLane": "0x4BF20A329E9B41fc04CDcf69aF2bd453b6c2B292",
+    "InboundLane": "0x554d044e3f1934EE2CCb573ED403496E28e6D715"
   }
 }

@@ -67,7 +67,7 @@ const receive_messages_proof = async (nonce) => {
         value: ethers.utils.parseEther("1.0")
     })
     relayer = relayer.connect(ethers.provider)
-    const tx = await inbound.connect(relayer).receive_messages_proof(data, "0x", {
+    const tx = await inbound.connect(relayer).receive_messages_proof(data, "0x", data.messages.length, {
       gasLimit: 10000000
     })
     for (let i = 0; i<size; i++) {

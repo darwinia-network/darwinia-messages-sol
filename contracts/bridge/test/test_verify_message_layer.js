@@ -77,7 +77,7 @@ const receive_messages_proof = async (inbound, srcoutbound, srcinbound, nonce) =
     const proof = await generate_darwinia_proof()
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
-    const tx = await inbound.receive_messages_proof(data, proof)
+    const tx = await inbound.receive_messages_proof(data, proof, data.messages.length)
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
