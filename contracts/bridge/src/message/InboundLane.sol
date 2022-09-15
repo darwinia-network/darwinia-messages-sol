@@ -150,7 +150,8 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// this data in the transaction, so reward confirmations lags should be minimal.
     function receive_messages_proof(
         OutboundLaneData memory outboundLaneData,
-        bytes memory messagesProof
+        bytes memory messagesProof,
+        uint delivery_size
     ) external nonReentrant {
         _verify_messages_proof(hash(outboundLaneData), messagesProof);
         // Require there is enough gas to play all messages
@@ -159,7 +160,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             "!gas"
         );
         _receive_state_update(outboundLaneData.latest_received_nonce);
-        _receive_message(outboundLaneData.messages);
+        _receive_message(outboundLaneData.messages, delivery_size);
     }
 
     /// Return the commitment of lane data.
@@ -225,11 +226,12 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     }
 
     /// Receive new message.
-    function _receive_message(Message[] memory messages) private {
+    function _receive_message(Message[] memory messages, uint delivery_size) private {
+        require(delivery_size <= messages.length, "!size");
         address relayer = msg.sender;
         uint64 begin = inboundLaneNonce.last_delivered_nonce + 1;
         uint64 next = begin;
-        for (uint256 i = 0; i < messages.length; i++) {
+        for (uint256 i = 0; i < delivery_size; i++) {
             Message memory message = messages[i];
             MessageKey memory key = decodeMessageKey(message.encoded_key);
             MessagePayload memory message_payload = message.payload;
