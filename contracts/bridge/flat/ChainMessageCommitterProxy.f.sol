@@ -383,19 +383,25 @@ contract UpgradeableProxy is Proxy {
  * you should think of the `ProxyAdmin` instance as the real administrative interface of your proxy.
  */
 contract TransparentUpgradeableProxy is UpgradeableProxy {
+    address internal immutable _ADMIN;
+
     /**
      * @dev Initializes an upgradeable proxy managed by `_admin`, backed by the implementation at `_logic`, and
      * optionally initialized with `_data` as explained in {UpgradeableProxy-constructor}.
      */
     constructor(address _logic, address admin_, bytes memory _data) payable UpgradeableProxy(_logic, _data) {
         assert(_ADMIN_SLOT == bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1));
-        _setAdmin(admin_);
-    }
 
-    /**
-     * @dev Emitted when the admin account has changed.
-     */
-    event AdminChanged(address previousAdmin, address newAdmin);
+        _ADMIN = admin_;
+
+        bytes32 slot = _ADMIN_SLOT;
+
+        // still store it to work with EIP-1967
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            sstore(slot, admin_)
+        }
+    }
 
     /**
      * @dev Storage slot with the admin of the contract.
@@ -442,19 +448,6 @@ contract TransparentUpgradeableProxy is UpgradeableProxy {
     }
 
     /**
-     * @dev Changes the admin of the proxy.
-     *
-     * Emits an {AdminChanged} event.
-     *
-     * NOTE: Only the admin can call this function. See {ProxyAdmin-changeProxyAdmin}.
-     */
-    function changeAdmin(address newAdmin) external virtual ifAdmin {
-        require(newAdmin != address(0), "TransparentUpgradeableProxy: new admin is the zero address");
-        emit AdminChanged(_admin(), newAdmin);
-        _setAdmin(newAdmin);
-    }
-
-    /**
      * @dev Upgrade the implementation of the proxy.
      *
      * NOTE: Only the admin can call this function. See {ProxyAdmin-upgrade}.
@@ -479,23 +472,7 @@ contract TransparentUpgradeableProxy is UpgradeableProxy {
      * @dev Returns the current admin.
      */
     function _admin() internal view virtual returns (address adm) {
-        bytes32 slot = _ADMIN_SLOT;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            adm := sload(slot)
-        }
-    }
-
-    /**
-     * @dev Stores a new address in the EIP1967 admin slot.
-     */
-    function _setAdmin(address newAdmin) private {
-        bytes32 slot = _ADMIN_SLOT;
-
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            sstore(slot, newAdmin)
-        }
+        return _ADMIN;
     }
 
     /**

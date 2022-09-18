@@ -83,10 +83,9 @@ import "../../utils/ECDSA.sol";
 import "../../utils/EnumerableSet.sol";
 import "../../spec/BinanceSmartChain.sol";
 import "../../spec/ChainMessagePosition.sol";
-import "../../proxy/Initializable.sol";
 import "../../interfaces/ILightClient.sol";
 
-contract BSCLightClient is Initializable, BinanceSmartChain, ILightClient {
+contract BSCLightClient is BinanceSmartChain, ILightClient {
     using Bytes for bytes;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -131,16 +130,9 @@ contract BSCLightClient is Initializable, BinanceSmartChain, ILightClient {
         bytes32 hash;
     }
 
-    constructor(uint64 chain_id, uint64 period) {
+    constructor(uint64 chain_id, uint64 period, BSCHeader memory header) {
         CHAIN_ID = chain_id;
         PERIOD = period;
-    }
-
-    function initialize(BSCHeader memory header) public initializer {
-        __BSCLC_init__(header);
-    }
-
-    function __BSCLC_init__(BSCHeader memory header) internal onlyInitializing {
         address[] memory authorities = _extract_authorities(header.extra_data);
         _finalize_authority_set(authorities);
         bytes32 block_hash = hash(header);
