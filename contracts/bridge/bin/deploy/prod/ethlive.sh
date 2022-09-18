@@ -51,19 +51,12 @@ relayers=[0x953d65e6054b7eb1629f996238c0aa9b4e2dbfe9,0x7c9b3d4cfc78c681b7460acde
 threshold=3
 nonce=0
 
-POSALightClient=$(deploy POSALightClient $DOMAIN_SEPARATOR)
-
-sig="initialize(address[],uint256,uint256)"
-data=$(seth calldata $sig \
+POSALightClient=$(deploy POSALightClient $DOMAIN_SEPARATOR
   $relayers \
   $threshold \
   $nonce)
-DarwiniaLightClientProxy=$(deploy DarwiniaLightClientProxy \
-  $POSALightClient \
-  $BridgeProxyAdmin \
-  $data)
 
-DarwiniaMessageVerifier=$(deploy DarwiniaMessageVerifier $DarwiniaLightClientProxy)
+DarwiniaMessageVerifier=$(deploy DarwiniaMessageVerifier $POSALightClient)
 
 OutboundLane=$(deploy OutboundLane \
   $DarwiniaMessageVerifier \
