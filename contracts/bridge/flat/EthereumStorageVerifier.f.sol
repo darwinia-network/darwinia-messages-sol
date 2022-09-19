@@ -1762,14 +1762,23 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
 /* import "../../interfaces/ILightClient.sol"; */
 
 contract EthereumStorageVerifier is StorageVerifier {
-    ILightClient public immutable LIGHT_CLIENT;
+    ILightClient private light_client;
 
     constructor(address lightclient) StorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
-        LIGHT_CLIENT = ILightClient(lightclient);
+        light_client = ILightClient(lightclient);
     }
 
     function state_root() public view override returns (bytes32) {
-        return LIGHT_CLIENT.merkle_root();
+        return light_client.merkle_root();
     }
+
+    function LIGHT_CLIENT() external view returns (address) {
+        return address(light_client);
+    }
+
+    function changeLightClient(address lightclient) external onlySetter {
+        light_client = ILightClient(lightclient);
+    }
+
 }
 
