@@ -38,7 +38,7 @@ bridged_out_lane_pos=0
 HelixDaoMultisig=0xBd1a110ec476b4775c43905000288881367B1a88
 FEEMARKET_VAULT=$HelixDaoMultisig
 # https://etherscan.io/chart/gasprice
-# 300000 wei * 10 * 10 gwei = 0.03 ether or 6000 RING
+# 300000 wei * 100 gwei = 0.03 ether or 6000 RING
 COLLATERAL_PERORDER=$(seth --to-wei 6000 ether)
 ASSIGNED_RELAYERS_NUMBER=1
 RELAY_TIME=10800

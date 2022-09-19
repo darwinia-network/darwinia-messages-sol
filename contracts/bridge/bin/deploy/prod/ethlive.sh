@@ -27,7 +27,7 @@ bridged_out_lane_pos=0
 
 # fee market config
 # https://etherscan.io/chart/gasprice
-# 300000 wei * 10 * 10 gwei = 0.03 ether or 6000 RING
+# 300000 wei * 100 gwei = 0.03 ether or 6000 RING
 COLLATERAL_PERORDER=$(seth --to-wei 0.03 ether)
 RELAY_TIME=10800
 SLASH_TIME=10800
