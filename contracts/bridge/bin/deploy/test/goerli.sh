@@ -62,7 +62,7 @@ relayers=[0x68898db1012808808c903f390909c52d9f706749]
 threshold=1
 nonce=0
 
-POSALightClient=$(deploy POSALightClient $DOMAIN_SEPARATOR
+POSALightClient=$(deploy POSALightClient $DOMAIN_SEPARATOR \
   $relayers \
   $threshold \
   $nonce)

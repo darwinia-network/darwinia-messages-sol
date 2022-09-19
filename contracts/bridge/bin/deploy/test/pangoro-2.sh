@@ -66,7 +66,7 @@ extra_data=$(echo "$block_header" | seth --field extraData)
 mix_digest=$(echo "$block_header" | seth --field mixHash)
 nonce=$(seth --to-uint64 $(echo "$block_header" | seth --field nonce))
 
-chain_id=$(seth chain-id --chain $TARGET_CHAIN)
+chain_id=$(seth --to-uint256 97)
 period=$(seth --to-uint256 3)
 DATA=$(set -x; ethabi encode params \
   -v uint64 ${chain_id:2} \
@@ -76,7 +76,7 @@ DATA=$(set -x; ethabi encode params \
 
 BSCLightClient=$(deploy_v2 BSCLightClient $DATA)
 
-BSCStorageVerifier=$(deploy BSCStorageVerifier $BSCLightClientProxy)
+BSCStorageVerifier=$(deploy BSCStorageVerifier $BSCLightClient)
 
 OutboundLane=$(deploy OutboundLane \
   $BSCStorageVerifier \
