@@ -48,12 +48,12 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
 
 # beacon light client config
 BLS_PRECOMPILE=0x0000000000000000000000000000000000000800
-SLOT=3821536
-PROPOSER_INDEX=53416
-PARENT_ROOT=0xff50c9fd3c2a821b0215979518ea66ef258b081991d5b0d84dc0a3d9664def86
-STATE_ROOT=0xb08bffddf28b209091016dbc89e9d958be09abff243f195f01c52d42c9f2d5b5
-BODY_ROOT=0xa855718d6de37ad093025a500dfa982ff6b2f3c3d57c372a433c4a4677d57548
-CURRENT_SYNC_COMMITTEE_HASH=0xc71884d50e3525867047a4ab812c65430201a1930313ac42de0ccf1f2c4b5572
+SLOT=3920608
+PROPOSER_INDEX=3000
+PARENT_ROOT=0x9ee28cd422cea448946a79d1dacd2ffcdd7b8170b932baf541c6d14a904477b6
+STATE_ROOT=0x467168bd7ad1bfa51821af7aabeabdc2403388adcd1b835f6f5aa7760e08cadb
+BODY_ROOT=0xcacec3003756ee10cb7aa346f7f575d1ef21653add967cf798b401258cf9745e
+CURRENT_SYNC_COMMITTEE_HASH=0x1eb40046542f46b890d4fab007451feb5665ef3f47ae37d1fc742f44b780d4ef
 GENESIS_VALIDATORS_ROOT=0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb
 
 BeaconLightClient=$(deploy BeaconLightClient \
@@ -67,14 +67,8 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $GENESIS_VALIDATORS_ROOT)
 
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
-sig=$(seth sig "initialize()")
-data=$(seth calldata $sig)
-EthereumExecutionLayerProxy=$(deploy EthereumExecutionLayerProxy \
-  $ExecutionLayer \
-  $BridgeProxyAdmin \
-  $data)
 
-EthereumStorageVerifier=$(deploy EthereumStorageVerifier $EthereumExecutionLayerProxy)
+EthereumStorageVerifier=$(deploy EthereumStorageVerifier $ExecutionLayer)
 
 OutboundLane=$(deploy OutboundLane \
   $EthereumStorageVerifier \

@@ -42,17 +42,6 @@ contract ProxyAdmin is Ownable {
     }
 
     /**
-     * @dev Changes the admin of `proxy` to `newAdmin`.
-     *
-     * Requirements:
-     *
-     * - This contract must be the current admin of `proxy`.
-     */
-    function changeProxyAdmin(TransparentUpgradeableProxy proxy, address newAdmin) public virtual onlyOwner {
-        proxy.changeAdmin(newAdmin);
-    }
-
-    /**
      * @dev Upgrades `proxy` to `implementation`. See {TransparentUpgradeableProxy-upgradeTo}.
      *
      * Requirements:
