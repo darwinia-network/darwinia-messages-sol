@@ -28,6 +28,8 @@ interface IConsensusLayer {
 
 contract ExecutionLayer is MerkleProof, ILightClient {
     bytes32 private latest_execution_payload_state_root;
+    /// @dev Governance role to set chains config
+    address public setter;
 
     address public immutable CONSENSUS_LAYER;
 
@@ -45,10 +47,16 @@ contract ExecutionLayer is MerkleProof, ILightClient {
 
     constructor(address consensus_layer) {
         CONSENSUS_LAYER = consensus_layer;
+        setter = msg.sender;
     }
 
     function merkle_root() public view override returns (bytes32) {
         return latest_execution_payload_state_root;
+    }
+
+    function changeSetter(address _setter) external {
+        require(msg.sender == setter, "forbidden");
+        setter = _setter;
     }
 
     function import_latest_execution_payload_state_root(ExecutionPayloadStateRootUpdate calldata update) external payable {
