@@ -19,35 +19,33 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "./BeaconLightClient.sol";
-import "./ExecutionLayer.sol";
 
 contract BeaconLCMandatoryReward {
     uint256 public reward;
     address public setter;
     address public consensusLayer;
-    address public executionLayer;
 
     modifier onlySetter {
         require(msg.sender == setter, "forbidden");
         _;
     }
 
-    constructor(address consensusLayer_, address executionLayer_, uint256 reward_) {
+    constructor(address consensusLayer_, uint256 reward_) {
         reward = reward_;
+        setter = msg.sender;
         consensusLayer = consensusLayer_;
-        executionLayer = executionLayer_;
     }
 
     receive() external payable {}
 
-    function import_mandatory_header(
-        BeaconLightClient.FinalizedHeaderUpdate calldata beaconHeaderUpdate,
-        BeaconLightClient.SyncCommitteePeriodUpdate calldata beaconSCUpdate,
-        ExecutionLayer.ExecutionPayloadStateRootUpdate calldata executionUpdate
+    function is_imported(uint64 next_period) external view returns (bool) {
+        return BeaconLightClient(consensusLayer).sync_committee_roots(next_period) != bytes32(0);
+    }
+
+    function import_mandatory_next_sync_committee_for_reward(
+        BeaconLightClient.SyncCommitteePeriodUpdate calldata update
     ) external {
-        BeaconLightClient(consensusLayer).import_finalized_header(beaconHeaderUpdate);
-        BeaconLightClient(consensusLayer).import_next_sync_committee(beaconSCUpdate);
-        ExecutionLayer(executionLayer).import_latest_execution_payload_state_root(executionUpdate);
+        BeaconLightClient(consensusLayer).import_next_sync_committee(update);
 
         payable(msg.sender).transfer(reward);
     }
@@ -56,9 +54,8 @@ contract BeaconLCMandatoryReward {
         reward = reward_;
     }
 
-    function changeLightClient(address consensusLayer_, address executionLayer_) external onlySetter {
+    function changeConsensusLayer(address consensusLayer_) external onlySetter {
         consensusLayer = consensusLayer_;
-        executionLayer = executionLayer_;
     }
 
     function withdraw(uint wad) public onlySetter {

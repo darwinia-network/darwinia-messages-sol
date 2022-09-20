@@ -84,6 +84,10 @@ BeaconLightClient=$(deploy BeaconLightClient \
 
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
 
+# import mandatory block reward
+reward=$(seth --to-wei 1 ether)
+BeaconLCMandatoryReward=$(deploy BeaconLCMandatoryReward $BeaconLightClient $reward)
+
 EthereumStorageVerifier=$(deploy EthereumStorageVerifier $ExecutionLayer)
 
 OutboundLane=$(deploy OutboundLane \
