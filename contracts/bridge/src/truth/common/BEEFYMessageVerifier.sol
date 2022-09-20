@@ -22,7 +22,7 @@ import "../../spec/MessageProof.sol";
 import "../../interfaces/IVerifier.sol";
 import "../../utils/SparseMerkleProof.sol";
 
-abstract contract MessageVerifier is IVerifier {
+abstract contract BEEFYMessageVerifier is IVerifier {
 
     function message_root() public view virtual returns (bytes32);
 
