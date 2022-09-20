@@ -44,7 +44,7 @@ contract BeaconLCMandatoryReward {
         BeaconLightClient.FinalizedHeaderUpdate calldata beaconHeaderUpdate,
         BeaconLightClient.SyncCommitteePeriodUpdate calldata beaconSCUpdate,
         ExecutionLayer.ExecutionPayloadStateRootUpdate calldata executionUpdate
-    ) external payable {
+    ) external {
         BeaconLightClient(consensusLayer).import_finalized_header(beaconHeaderUpdate);
         BeaconLightClient(consensusLayer).import_next_sync_committee(beaconSCUpdate);
         ExecutionLayer(executionLayer).import_latest_execution_payload_state_root(executionUpdate);

@@ -51,7 +51,7 @@ contract POSALightClient is POSACommitmentScheme, EcdsaAuthority, ILightClient {
     function import_message_commitment(
         Commitment calldata commitment,
         bytes[] calldata signatures
-    ) external payable {
+    ) external {
         // Hash the commitment
         bytes32 commitment_hash = hash(commitment);
         // Commitment match the nonce of ecdsa-authority

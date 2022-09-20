@@ -736,7 +736,7 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         return finalized_header.state_root;
     }
 
-    function import_next_sync_committee(SyncCommitteePeriodUpdate calldata update) external payable {
+    function import_next_sync_committee(SyncCommitteePeriodUpdate calldata update) external {
         require(verify_next_sync_committee(
                 update.next_sync_committee,
                 update.next_sync_committee_branch,
@@ -752,7 +752,7 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         emit NextSyncCommitteeImported(next_period, next_sync_committee_root);
     }
 
-    function import_finalized_header(FinalizedHeaderUpdate calldata update) external payable {
+    function import_finalized_header(FinalizedHeaderUpdate calldata update) external {
         require(is_supermajority(update.sync_aggregate.sync_committee_bits), "!supermajor");
         require(verify_finalized_header(
                 update.finalized_header,
@@ -932,7 +932,7 @@ contract ExecutionLayer is MerkleProof, ILightClient {
         return latest_execution_payload_state_root;
     }
 
-    function import_latest_execution_payload_state_root(ExecutionPayloadStateRootUpdate calldata update) external payable {
+    function import_latest_execution_payload_state_root(ExecutionPayloadStateRootUpdate calldata update) external {
         require(latest_execution_payload_state_root != update.latest_execution_payload_state_root, "same");
         require(verify_latest_execution_payload_state_root(
             update.latest_execution_payload_state_root,
@@ -1004,7 +1004,7 @@ contract BeaconLCMandatoryReward {
         BeaconLightClient.FinalizedHeaderUpdate calldata beaconHeaderUpdate,
         BeaconLightClient.SyncCommitteePeriodUpdate calldata beaconSCUpdate,
         ExecutionLayer.ExecutionPayloadStateRootUpdate calldata executionUpdate
-    ) external payable {
+    ) external {
         BeaconLightClient(consensusLayer).import_finalized_header(beaconHeaderUpdate);
         BeaconLightClient(consensusLayer).import_next_sync_committee(beaconSCUpdate);
         ExecutionLayer(executionLayer).import_latest_execution_payload_state_root(executionUpdate);
