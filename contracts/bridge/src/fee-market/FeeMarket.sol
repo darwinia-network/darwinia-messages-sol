@@ -57,8 +57,8 @@ contract FeeMarket is Initializable, IFeeMarket {
     address private constant SENTINEL_HEAD = address(0x1);
     address private constant SENTINEL_TAIL = address(0x2);
 
-    event Assgigned(uint256 indexed key, uint256 timestamp, uint32 assigned_relayers_number, uint256 collateral);
-    event AssgignedExt(uint256 indexed key, uint256 slot, address assigned_relayer);
+    event Assigned(uint256 indexed key, uint256 timestamp, uint32 assigned_relayers_number, uint256 collateral);
+    event AssignedExt(uint256 indexed key, uint256 slot, address assigned_relayer);
     event Delist(address indexed prev, address indexed cur);
     event Deposit(address indexed dst, uint wad);
     event Enrol(address indexed prev, address indexed cur, uint fee);

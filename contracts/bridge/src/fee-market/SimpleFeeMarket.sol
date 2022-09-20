@@ -51,7 +51,7 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
     address private constant SENTINEL_HEAD = address(0x1);
     address private constant SENTINEL_TAIL = address(0x2);
 
-    event Assgigned(uint256 indexed key, uint256 timestamp, address relayer, uint256 collateral, uint256 fee);
+    event Assigned(uint256 indexed key, uint256 timestamp, address relayer, uint256 collateral, uint256 fee);
     event Delist(address indexed prev, address indexed cur);
     event Deposit(address indexed dst, uint wad);
     event Enrol(address indexed prev, address indexed cur, uint fee);
