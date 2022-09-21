@@ -23,6 +23,8 @@ abstract contract AbstractMoonbeamEndpoint {
     address public feeLocationAddress;
     address public derivedMessageSender; // message sender derived from remoteEndpoint
 
+    event TargetInputGenerated(bytes);
+    event TargetTransactCallGenerated(bytes);
     event LcmpMessngeGenerated(bytes);
 
     ///////////////////////////////
@@ -43,6 +45,8 @@ abstract contract AbstractMoonbeamEndpoint {
             _callPayload
         );
 
+        emit TargetInputGenerated(tgtInput);
+
         // transact dispatch call that will be executed on crab chain
         bytes memory tgtTransactCallEncoded = PalletEthereum
             .encodeMessageTransactCall(
@@ -56,6 +60,9 @@ abstract contract AbstractMoonbeamEndpoint {
                     )
                 )
             );
+
+        emit TargetTransactCallGenerated(tgtTransactCallEncoded);
+
         uint64 tgtTransactCallWeight = uint64(_gasLimit * remoteWeightPerGas);
 
         // send_message dispatch call that will be executed on crab parachain
