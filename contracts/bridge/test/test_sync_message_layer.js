@@ -89,7 +89,7 @@ const receive_messages_delivery_proof = async (begin, end) => {
       let block = await ethers.provider.getBlock(tx.blockNumber)
       await expect(tx)
         .to.emit(feeMarket, "Settled")
-        .withArgs(await outbound.encodeMessageKey(i), block.timestamp, one, four)
+        .withArgs(await outbound.encodeMessageKey(i), block.timestamp, one.address, four.address)
     }
     await logNonce()
 }
