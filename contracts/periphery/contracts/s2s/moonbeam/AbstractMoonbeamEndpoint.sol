@@ -74,8 +74,8 @@ abstract contract AbstractMoonbeamEndpoint {
             );
 
         uint64 routerSendMessageCallWeight = uint64(
-            1495248832 + 1351 * routerSendMessageCallEncoded.length
-        ); // 1492481100 + (1 + message_size / 1024 + 1) * 1383866;
+            1617480000 + (1383867 * (1024 + message.length)) / 1024
+        );
 
         // remote call send_message from moonbeam
         XcmTransactorV1.transactThroughSigned(
