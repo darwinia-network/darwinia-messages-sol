@@ -58,16 +58,17 @@ abstract contract AbstractMoonbeamEndpoint {
         uint64 tgtTransactCallWeight = uint64(_gasLimit * remoteWeightPerGas);
 
         // send_message dispatch call that will be executed on crab parachain
+        bytes memory message = SmartChainXLib.buildMessage(
+            _tgtSpecVersion,
+            tgtTransactCallWeight,
+            tgtTransactCallEncoded
+        );
         bytes memory routerSendMessageCallEncoded = PalletBridgeMessages
             .encodeSendMessageCall(
                 PalletBridgeMessages.SendMessageCall(
                     routerSendMessageCallIndex,
                     routerOutboundLaneId,
-                    SmartChainXLib.buildMessage(
-                        _tgtSpecVersion,
-                        tgtTransactCallWeight,
-                        tgtTransactCallEncoded
-                    ),
+                    message,
                     _deliveryAndDispatchFee
                 )
             );
