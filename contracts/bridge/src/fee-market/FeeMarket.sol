@@ -58,14 +58,14 @@ contract FeeMarket is Initializable, IFeeMarket {
     address private constant SENTINEL_TAIL = address(0x2);
 
     event Assigned(uint256 indexed key, uint256 timestamp, uint32 assigned_relayers_number, uint256 collateral);
-    event AssignedExt(uint256 indexed key, uint256 slot, address assigned_relayer);
+    event AssignedExt(uint256 indexed key, uint256 slot, address assigned_relayer, uint fee);
     event Delist(address indexed prev, address indexed cur);
     event Deposit(address indexed dst, uint wad);
     event Enrol(address indexed prev, address indexed cur, uint fee);
     event Locked(address indexed src, uint wad);
     event Reward(address indexed dst, uint wad);
     event SetOutbound(address indexed out, uint256 flag);
-    event Settled(uint256 indexed key, uint timestamp);
+    event Settled(uint256 indexed key, uint timestamp, address delivery, address confirm);
     event Slash(address indexed src, uint wad);
     event UnLocked(address indexed src, uint wad);
     event Withdrawal(address indexed src, uint wad);
@@ -176,13 +176,15 @@ contract FeeMarket is Initializable, IFeeMarket {
             uint256,
             address[] memory,
             uint256[] memory,
-            uint256 [] memory
+            uint256[] memory,
+            uint256[] memory
         )
     {
         require(count <= relayerCount, "!count");
         address[] memory array1 = new address[](count);
         uint256[] memory array2 = new uint256[](count);
         uint256[] memory array3 = new uint256[](count);
+        uint256[] memory array4 = new uint256[](count);
         uint index = 0;
         address cur = relayers[SENTINEL_HEAD];
         while (cur != SENTINEL_TAIL && index < count) {
@@ -190,11 +192,12 @@ contract FeeMarket is Initializable, IFeeMarket {
                 array1[index] = cur;
                 array2[index] = feeOf[cur];
                 array3[index] = balanceOf[cur];
+                array4[index] = lockedOf[cur];
                 index++;
             }
             cur = relayers[cur];
         }
-        return (index, array1, array2, array3);
+        return (index, array1, array2, array3, array4);
     }
 
     // Find top lowest maker fee relayers
@@ -310,7 +313,7 @@ contract FeeMarket is Initializable, IFeeMarket {
             require(isRelayer(r), "!relayer");
             _lock(r, COLLATERAL_PER_ORDER);
             assignedRelayers[key][slot] = OrderExt(r, feeOf[r]);
-            emit AssignedExt(key, slot, r);
+            emit AssignedExt(key, slot, r, feeOf[r]);
         }
         // Record the assigned time
         orderOf[key] = Order(uint32(block.timestamp), ASSIGNED_RELAYERS_NUMBER, COLLATERAL_PER_ORDER);
@@ -396,7 +399,7 @@ contract FeeMarket is Initializable, IFeeMarket {
                 total_vault_reward += vault_reward;
                 // Clean order
                 _clean_order(key);
-                emit Settled(key, block.timestamp);
+                emit Settled(key, block.timestamp, entry.relayer, confirm_relayer);
             }
             // Reward every delivery relayer
             _reward(entry.relayer, every_delivery_reward);

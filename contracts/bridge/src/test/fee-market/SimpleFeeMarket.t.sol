@@ -229,7 +229,13 @@ contract SimpleFeeMarketTest is DSTest {
        address top = market.getTopRelayer();
        assertEq(top, address(a));
 
-       (uint index, address[] memory relayers, uint[] memory fees, uint[] memory balances) = market.getOrderBook(3, true);
+       (
+           uint index,
+           address[] memory relayers,
+           uint[] memory fees,
+           uint[] memory balances,
+           uint[] memory locks
+       ) = market.getOrderBook(3, true);
        assertEq(index, 3);
        assertEq(relayers[0], address(a));
        assertEq(relayers[1], address(b));
@@ -240,16 +246,26 @@ contract SimpleFeeMarketTest is DSTest {
        assertEq(balances[0], 1 ether);
        assertEq(balances[1], 1 ether);
        assertEq(balances[2], 1 ether);
+       assertEq(locks[0], 0 ether);
+       assertEq(locks[1], 0 ether);
+       assertEq(locks[2], 0 ether);
    }
 
    function test_assign() public {
        uint key = 1;
        init(key);
-       (uint index, address[] memory relayers, uint[] memory fees, uint[] memory balances) = market.getOrderBook(1, false);
+       (
+           uint index,
+           address[] memory relayers,
+           uint[] memory fees,
+           uint[] memory balances,
+           uint[] memory locks
+       ) = market.getOrderBook(1, false);
        assertEq(index, 1);
        assertEq(relayers[0], address(b));
        assertEq(fees[0], market.feeOf(address(b)));
        assertEq(balances[0], 1 ether);
+       assertEq(locks[0], 0 ether);
 
        assert_market_locked(a, 1 ether);
        assert_market_locked(b, 0 ether);
