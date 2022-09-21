@@ -47,4 +47,10 @@ contract MoonbaseEndpoint is AbstractMoonbeamEndpoint {
     {
         _setRemoteEndpoint(_remoteChainId, _parachainId, _remoteEndpoint);
     }
+
+    function getMessageOrigin32() external view returns (bytes32) {
+        return AccountId.deriveSubstrateAddress(
+           address(this)
+        );
+    }
 }
