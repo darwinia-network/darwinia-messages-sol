@@ -310,11 +310,11 @@ contract FeeMarket is Initializable, IFeeMarket {
             require(isRelayer(r), "!relayer");
             _lock(r, COLLATERAL_PER_ORDER);
             assignedRelayers[key][slot] = OrderExt(r, feeOf[r]);
-            emit AssgignedExt(key, slot, r);
+            emit AssignedExt(key, slot, r);
         }
         // Record the assigned time
         orderOf[key] = Order(uint32(block.timestamp), ASSIGNED_RELAYERS_NUMBER, COLLATERAL_PER_ORDER);
-        emit Assgigned(key, block.timestamp, ASSIGNED_RELAYERS_NUMBER, COLLATERAL_PER_ORDER);
+        emit Assigned(key, block.timestamp, ASSIGNED_RELAYERS_NUMBER, COLLATERAL_PER_ORDER);
         return true;
     }
 

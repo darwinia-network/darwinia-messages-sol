@@ -284,7 +284,7 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
         // record the assigned time
         uint32 assign_time = uint32(block.timestamp);
         orderOf[key] = Order(assign_time, top_relayer, _collateral, fee);
-        emit Assgigned(key, assign_time, top_relayer, _collateral, fee);
+        emit Assigned(key, assign_time, top_relayer, _collateral, fee);
         return true;
     }
 
