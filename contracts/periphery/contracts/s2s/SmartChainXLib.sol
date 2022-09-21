@@ -23,6 +23,7 @@ library SmartChainXLib {
     bytes public constant account_derivation_prefix =
         "pallet-bridge/account-derivation/account";
 
+    event LcmpMessngeGenerated(bytes);
     event DispatchResult(bool success, bytes result);
     event DerivedAddresses(bytes32, bytes32, address);
 
@@ -44,6 +45,8 @@ library SmartChainXLib {
             _tgtCallWeight,
             _tgtCallEncoded
         );
+
+        emit LcmpMessngeGenerated(message);
 
         // Send the message
         sendMessage(

@@ -7,7 +7,6 @@ import "../types/PalletEthereum.sol";
 import "../types/PalletBridgeMessages.sol";
 import "../precompiles/moonbeam/XcmTransactorV1.sol";
 
-
 abstract contract AbstractMoonbeamEndpoint {
     // Remote params
     address public remoteEndpoint;
@@ -23,6 +22,8 @@ abstract contract AbstractMoonbeamEndpoint {
     // Local params
     address public feeLocationAddress;
     address public derivedMessageSender; // message sender derived from remoteEndpoint
+
+    event LcmpMessngeGenerated(bytes);
 
     ///////////////////////////////
     // Outbound
@@ -63,6 +64,9 @@ abstract contract AbstractMoonbeamEndpoint {
             tgtTransactCallWeight,
             tgtTransactCallEncoded
         );
+
+        emit LcmpMessngeGenerated(message);
+
         bytes memory routerSendMessageCallEncoded = PalletBridgeMessages
             .encodeSendMessageCall(
                 PalletBridgeMessages.SendMessageCall(
@@ -72,6 +76,7 @@ abstract contract AbstractMoonbeamEndpoint {
                     _deliveryAndDispatchFee
                 )
             );
+
 
         uint64 routerSendMessageCallWeight = uint64(
             1617480000 + (1383867 * (1024 + message.length)) / 1024
