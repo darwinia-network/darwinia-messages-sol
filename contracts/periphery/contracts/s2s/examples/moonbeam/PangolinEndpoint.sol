@@ -47,4 +47,19 @@ contract PangolinEndpoint is AbstractDarwiniaEndpoint {
     {
         _setRemoteEndpoint(routerChainId, remoteEndpoint);
     }
+
+    function getMessageOrigins() external view returns (bytes32, bytes32) {
+        // H160(sender on the sourc chain) > AccountId32
+        bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
+            address(this)
+        );
+
+        // AccountId32 > derived AccountId32
+        bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
+            0x7061676c, // pangolin chain id
+            derivedSubstrateAddress
+        );
+
+        return (derivedSubstrateAddress, derivedAccountId);
+    }
 }
