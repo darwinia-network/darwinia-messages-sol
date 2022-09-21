@@ -1,16 +1,24 @@
 {
   "name": "Darwinia & Crab NFT",
   "timestamp": "2022-08-16T00:00:00.000Z",
-  "version": { "major": 0, "minor": 1, "patch": 2 },
+  "version": { "major": 0, "minor": 2, "patch": 0 },
   "logoURI": "https://pordria.evolution.land/logos/darwinia.png",
   "events": [
     {
       "chainId": 44,
       "address": "0xA561c8F6AC9eCb31e0793fBe2CCEc136a7e4bE84",
-      "name": "3rd Wave",
+      "name": "August PLO Rewards",
       "detail":"-",
       "logoURI": "https://pordria.evolution.land/logos/darwinia.png",
       "proofURI": "https://raw.githubusercontent.com/darwinia-network/darwinia-messages-sol/master/contracts/claims/data/crab/proof/aug_23.json"
+    },
+    {
+      "chainId": 44,
+      "address": "0xA561c8F6AC9eCb31e0793fBe2CCEc136a7e4bE84",
+      "name": "September PLO Rewards",
+      "detail":"-",
+      "logoURI": "https://pordria.evolution.land/logos/darwinia.png",
+      "proofURI": "https://raw.githubusercontent.com/darwinia-network/darwinia-messages-sol/master/contracts/claims/data/crab/proof/sep_26.json"
     }
   ]
 }
