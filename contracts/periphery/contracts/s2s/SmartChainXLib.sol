@@ -24,24 +24,7 @@ library SmartChainXLib {
         "pallet-bridge/account-derivation/account";
 
     event DispatchResult(bool success, bytes result);
-
-    // function remoteDispatchFromMoonbeam(
-    //     bytes4 _tgtParachainId,
-    //     address _feeLocationAddress,
-    //     uint64 _tgtCallWeight,
-    //     bytes memory _tgtCallEncoded
-    // ) internal {
-    //     bytes[] memory interior = new bytes[](1);
-    //     interior[0] = abi.encodePacked(hex"00", _tgtParachainId);
-    //     IXcmTransactorV1.Multilocation memory dest = IXcmTransactorV1
-    //         .Multilocation(1, interior);
-    //     XcmTransactorV1.transactThroughSigned(
-    //         dest,
-    //         _feeLocationAddress, // ?
-    //         _tgtCallWeight,
-    //         _tgtCallEncoded
-    //     );
-    // }
+    event DerivedAddresses(bytes32, bytes32, address);
 
     // Dispatch a call on the remote blockchain
     function remoteDispatch(
@@ -240,7 +223,7 @@ library SmartChainXLib {
     function deriveSenderFromRemote(
         bytes4 _srcChainId,
         address _srcMessageSender
-    ) internal view returns (address) {
+    ) internal returns (address) {
         // H160(sender on the source chain) > AccountId32
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
             _srcMessageSender
@@ -255,6 +238,12 @@ library SmartChainXLib {
         // derived AccountId32 > H160
         address result = AccountId.deriveEthereumAddress(derivedAccountId);
 
+        emit DerivedAddresses(
+            derivedSubstrateAddress,
+            derivedAccountId,
+            result
+        );
+
         return result;
     }
 
@@ -262,7 +251,7 @@ library SmartChainXLib {
         bytes4 _srcChainId,
         address _srcMessageSender,
         bytes4 _parachainId
-    ) internal view returns (address) {
+    ) internal returns (address) {
         // H160(sender on the sourc chain) > AccountId32
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
             _srcMessageSender
@@ -275,11 +264,18 @@ library SmartChainXLib {
         );
 
         // derived AccountId32 > Moonbeam H160
-        return
-            XcmUtils.deriveMoonbeamAddressFromAccountId(
-                abi.encodePacked(_parachainId),
-                derivedAccountId
-            );
+        address result = XcmUtils.deriveMoonbeamAddressFromAccountId(
+            abi.encodePacked(_parachainId),
+            derivedAccountId
+        );
+
+        emit DerivedAddresses(
+            derivedSubstrateAddress,
+            derivedAccountId,
+            result
+        );
+
+        return result;
     }
 
     // Get the last delivered nonce from the state storage of the target chain's inbound lane
