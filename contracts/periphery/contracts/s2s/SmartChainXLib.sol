@@ -181,9 +181,13 @@ library SmartChainXLib {
         );
 
         // 2. Decode `OutboundLaneData` and return the latest nonce
-        CommonTypes.OutboundLaneData memory outboundLaneData = CommonTypes
-            .decodeOutboundLaneData(data);
-        return outboundLaneData.latestGeneratedNonce;
+        if (data.length == 0) {
+            return 0;
+        } else {
+            CommonTypes.OutboundLaneData memory outboundLaneData = CommonTypes
+                .decodeOutboundLaneData(data);
+            return outboundLaneData.latestGeneratedNonce;
+        }
     }
 
     function deriveAccountId(bytes4 _srcChainId, bytes32 _accountId)
