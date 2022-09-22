@@ -92,8 +92,9 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
     function test_send_message() public {
         address target = address(1);
         bytes memory encoded = abi.encodeWithSignature("foo()");
-        uint256 message_id = perform_send_message(target, encoded);
+        uint256 nonce = perform_send_message(target, encoded);
         (uint64 latest_received_nonce, uint64 latest_generated_nonce, uint64 oldest_unpruned_nonce) = outlane.outboundLaneNonce();
+        assertEq(latest_generated_nonce, nonce);
         assertEq(latest_received_nonce, uint(0));
         assertEq(latest_generated_nonce, uint(1));
         assertEq(oldest_unpruned_nonce, uint(1));
@@ -103,7 +104,6 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
         assertEq(data.latest_received_nonce, uint(0));
         MessagePayload memory payload = MessagePayload(address(app), target, encoded);
         MessageStorage memory message_storage = data.messages[0];
-        assertEq(message_storage.encoded_key, message_id);
         assertEq(message_storage.payload_hash, hash(payload));
     }
 
