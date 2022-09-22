@@ -252,13 +252,12 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             // if there are more unconfirmed messages than we may accept, reject this message
             require(next - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "TooManyUnconfirmedMessages");
 
-            // update inbound lane nonce storage
-            inboundLaneNonce.last_delivered_nonce = next;
-
             // then, dispatch message
             bool dispatch_result = _dispatch(message_payload);
-
             emit MessageDispatched(key.nonce, dispatch_result);
+
+            // update inbound lane nonce storage
+            inboundLaneNonce.last_delivered_nonce = next;
 
             next += 1;
         }
