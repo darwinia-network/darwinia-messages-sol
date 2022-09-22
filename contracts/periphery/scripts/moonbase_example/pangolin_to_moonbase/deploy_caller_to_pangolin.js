@@ -1,10 +1,10 @@
-process.env.HARDHAT_NETWORK = "moonbase"
+process.env.HARDHAT_NETWORK = "pangolin"
 const hre = require("hardhat");
 
 async function main() {
-    const moonbase_endpoint = process.argv[2]
-    const Caller = await hre.ethers.getContractFactory("RemoteExecute_FromMoonbaseToPangolin");
-    const caller = await Caller.deploy(moonbase_endpoint);
+    const pangolin_endpoint = process.argv[2]
+    const Caller = await hre.ethers.getContractFactory("RemoteExecute_FromPangolinToMoonbase");
+    const caller = await Caller.deploy(pangolin_endpoint);
 
     await caller.deployed();
 

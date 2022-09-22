@@ -2,12 +2,14 @@ process.env.HARDHAT_NETWORK = "moonbase"
 const hre = require("hardhat");
 
 async function main() {
-    const MoonbaseEndpoint = await hre.ethers.getContractFactory("MoonbaseEndpoint");
-    const endpoint = await MoonbaseEndpoint.deploy();
-    await endpoint.deployed();
+    const moonbase_endpoint = process.argv[2]
+    const Caller = await hre.ethers.getContractFactory("RemoteExecute_FromMoonbaseToPangolin");
+    const caller = await Caller.deploy(moonbase_endpoint);
 
+    await caller.deployed();
+    
     console.log(
-        `${endpoint.address}`
+        `${caller.address}`
     );
 }
 
