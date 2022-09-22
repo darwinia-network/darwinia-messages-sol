@@ -28,9 +28,10 @@ interface Hevm {
 
 contract SimpleFeeMarketTest is DSTest {
     uint256 constant internal COLLATERAL_PERORDER = 1 ether;
-    uint32  constant internal SLASH_TIME = 1 days;
-    uint32  constant internal RELAY_TIME = 1 days;
-    uint32  constant internal PRICE_RATIO = 800_000;
+    uint256 constant internal SLASH_TIME = 1 days;
+    uint256 constant internal RELAY_TIME = 1 days;
+    uint256 constant internal PRICE_RATIO = 800_000;
+    uint256 constant internal DUTY_RATIO = 60;
 
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     address public self;
@@ -46,7 +47,8 @@ contract SimpleFeeMarketTest is DSTest {
             COLLATERAL_PERORDER,
             SLASH_TIME,
             RELAY_TIME,
-            PRICE_RATIO
+            PRICE_RATIO,
+            DUTY_RATIO
         );
         self = address(this);
         market.initialize();

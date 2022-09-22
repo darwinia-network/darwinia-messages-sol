@@ -44,15 +44,17 @@ contract FeeMarket is Initializable, IFeeMarket {
     // System treasury
     address public immutable VAULT;
     // SlashAmount = COLLATERAL_PER_ORDER * LateTime / SLASH_TIME
-    uint32 public immutable SLASH_TIME;
+    uint256 public immutable SLASH_TIME;
     // Time assigned relayer to relay messages
-    uint32 public immutable RELAY_TIME;
+    uint256 public immutable RELAY_TIME;
     // Fee market assigned relayers numbers
-    uint32 public immutable ASSIGNED_RELAYERS_NUMBER;
+    uint256 public immutable ASSIGNED_RELAYERS_NUMBER;
     // RATIO_NUMERATOR of two chain's native token price, denominator of ratio is 1_000_000
-    uint32 public immutable PRICE_RATIO_NUMERATOR;
+    uint256 public immutable PRICE_RATIO_NUMERATOR;
     // The collateral relayer need to lock for each order.
     uint256 public immutable COLLATERAL_PER_ORDER;
+    // Duty reward ratio
+    uint256 public immutable DUTY_REWARD_RATIO;
 
     address private constant SENTINEL_HEAD = address(0x1);
     address private constant SENTINEL_TAIL = address(0x2);
@@ -111,7 +113,8 @@ contract FeeMarket is Initializable, IFeeMarket {
         uint32 _assigned_relayers_number,
         uint32 _slash_time,
         uint32 _relay_time,
-        uint32 _price_ratio_numerator
+        uint32 _price_ratio_numerator,
+        uint256 _duty_reward_ratio
     ) {
         require(_assigned_relayers_number > 0, "!0");
         require(_slash_time > 0 && _relay_time > 0, "!0");
@@ -121,6 +124,7 @@ contract FeeMarket is Initializable, IFeeMarket {
         RELAY_TIME = _relay_time;
         ASSIGNED_RELAYERS_NUMBER = _assigned_relayers_number;
         PRICE_RATIO_NUMERATOR = _price_ratio_numerator;
+        DUTY_REWARD_RATIO = _duty_reward_ratio;
     }
 
     function initialize() public initializer {
@@ -316,8 +320,8 @@ contract FeeMarket is Initializable, IFeeMarket {
             emit AssignedExt(key, slot, r, feeOf[r]);
         }
         // Record the assigned time
-        orderOf[key] = Order(uint32(block.timestamp), ASSIGNED_RELAYERS_NUMBER, COLLATERAL_PER_ORDER);
-        emit Assigned(key, block.timestamp, ASSIGNED_RELAYERS_NUMBER, COLLATERAL_PER_ORDER);
+        orderOf[key] = Order(uint32(block.timestamp), uint32(ASSIGNED_RELAYERS_NUMBER), COLLATERAL_PER_ORDER);
+        emit Assigned(key, block.timestamp, uint32(ASSIGNED_RELAYERS_NUMBER), COLLATERAL_PER_ORDER);
         return true;
     }
 
@@ -506,7 +510,7 @@ contract FeeMarket is Initializable, IFeeMarket {
         uint256 message_surplus
     ) private returns (uint256 slot_duty_reward) {
         (bool is_ontime, , uint number,) = _get_order_status(key);
-        uint _total_reward = message_surplus * 2 / 10;
+        uint _total_reward = message_surplus * DUTY_REWARD_RATIO / 100;
         if (is_ontime && _total_reward > 0) {
             require(number > slot, "!slot");
             uint _per_reward = _total_reward / (number - slot);

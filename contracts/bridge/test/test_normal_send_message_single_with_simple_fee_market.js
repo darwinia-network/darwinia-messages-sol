@@ -106,7 +106,7 @@ describe("normal app send single message tests", () => {
     source = owner.address
 
     const SimpleFeeMarket = await ethers.getContractFactory("SimpleFeeMarket")
-    feeMarket = await SimpleFeeMarket.deploy(ethers.utils.parseEther("10"), 100, 100, 800_000)
+    feeMarket = await SimpleFeeMarket.deploy(ethers.utils.parseEther("10"), 100, 100, 800_000, 60)
     await feeMarket.initialize()
 
     let overrides = { value: ethers.utils.parseEther("3000") }

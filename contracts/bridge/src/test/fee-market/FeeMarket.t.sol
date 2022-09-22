@@ -32,6 +32,7 @@ contract FeeMarketTest is DSTest {
     uint32  constant internal SLASH_TIME = 1 days;
     uint32  constant internal RELAY_TIME = 1 days;
     uint32  constant internal PRICE_RATIO = 800_000;
+    uint256 constant internal DUTY_RATIO = 20;
 
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     address public vault = address(111);
@@ -49,7 +50,8 @@ contract FeeMarketTest is DSTest {
             ASSIGNED_RELAYERS_NUMBER,
             SLASH_TIME,
             RELAY_TIME,
-            PRICE_RATIO
+            PRICE_RATIO,
+            DUTY_RATIO
         );
         self = address(this);
         market.initialize();
