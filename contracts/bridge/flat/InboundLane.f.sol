@@ -566,7 +566,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     uint256 internal locked;
 
     /// @dev Gas used per message needs to be less than `MAX_GAS_PER_MESSAGE` wei
-    uint256 private constant MAX_GAS_PER_MESSAGE = 200000;
+    uint256 private constant MAX_GAS_PER_MESSAGE = 240000;
     /// @dev Gas buffer for executing `send_message` tx
     uint256 private constant GAS_BUFFER = 10000;
     /// @dev This parameter must lesser than 256
