@@ -2,12 +2,13 @@ process.env.HARDHAT_NETWORK = "moonbase"
 const hre = require("hardhat");
 
 async function main() {
-    const MoonbaseEndpoint = await hre.ethers.getContractFactory("MoonbaseEndpoint");
-    const endpoint = await MoonbaseEndpoint.deploy();
-    await endpoint.deployed();
+    const Callee = await hre.ethers.getContractFactory("Callee");
+    const callee = await Callee.deploy();
+
+    await callee.deployed();
 
     console.log(
-        `${endpoint.address}`
+        `${callee.address}`
     );
 }
 

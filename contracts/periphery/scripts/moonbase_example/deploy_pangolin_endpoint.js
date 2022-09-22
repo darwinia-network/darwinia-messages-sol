@@ -4,7 +4,6 @@ const hre = require("hardhat");
 async function main() {
     const PangolinEndpoint = await hre.ethers.getContractFactory("PangolinEndpoint");
     const endpoint = await PangolinEndpoint.deploy();
-
     await endpoint.deployed();
 
     console.log(

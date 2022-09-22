@@ -10,6 +10,11 @@ async function main() {
     const endpoint = await MoonbaseEndpoint.attach(endpoint_address);
     
     await endpoint.setRemoteEndpoint("0x7061676c", "0x00000839", remote_endpoint_address); // PANGOLIN_CHAIN_ID
+
+    const messageOrigin32 = await endpoint.getMessageOrigin32();
+    console.log(
+        `moonbase_endpoint 32: ${messageOrigin32}`
+    );
 }
 
 // We recommend this pattern to be able to use async/await everywhere
