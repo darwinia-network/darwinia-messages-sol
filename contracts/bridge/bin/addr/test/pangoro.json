@@ -1,25 +1,17 @@
 {
   "DEPLOYER": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
-  "BridgeProxyAdmin": "0x8F2B7839bD62b07Aa352A1974E80508f18278069",
-  "ChainMessageCommitter": "0x9933B84D08eAD3020F589861442dBc4BDA91b16C",
-  "ChainMessageCommitterProxy": "0xdE64c6d8b24eeB16D864841d2873aB7a379c45b6",
+  "BridgeProxyAdmin": "0x52E6E215346edefF52d710Fd72a138d207a23529",
+  "ChainMessageCommitter": "0xbbE9068eD672A886E546b47091a525d553EbA1F0",
+  "ChainMessageCommitterProxy": "0x96A326193c18f467AC9be9E7CB3422fa78F8f9f7",
   "goerli": {
-    "FeeMarket": "0x02E89FF9C712CA19E52cC738F872668f14fDb19d",
-    "FeeMarketProxy": "0xa0f04a1782Bd051171348c6eC59815845fdA888a",
-    "BeaconLightClient": "0x6fF654d0590E2203A3b9CdfeD769727CA9ED5c90",
-    "ExecutionLayer": "0xA1154877Cc4760D94BACCa150C6e19589c7B0421",
-    "EthereumStorageVerifier": "0xa6Ad80B70e2A2C9702444ef268eb60cCfacfB735",
-    "OutboundLane": "0x15c221C81A1ae36f6cAA23ea57c9806Ae1fb72fd",
-    "InboundLane": "0x3BEb2Cf5C2C050bc575350671AA5F06E589386e8",
-    "LaneMessageCommitter": "0x764b50Fc5d6E3FE71e2b18c40cBf62262f2D92b8"
-  },
-  "bsctest": {
-    "FeeMarket": "0xcC43d7e20D4dC29Ca65f3327C9257e1E354f9E08",
-    "FeeMarketProxy": "0x527560d6a509ddE7828D598BF31Fc67DA50c8093",
-    "BSCLightClient": "0x9bcf89b951b9880ac1ec9ce6b82b2764ca7a532f",
-    "BSCStorageVerifier": "0x5c6119f4476f030946f197E65704a5BaC5eA0A6B",
-    "OutboundLane": "0x12225Fa4a20b13ccA0773E1D5f08BbC91f16f927",
-    "InboundLane": "0xC5EaBb00ff90a251B5C639440Ab37a8A3ef8cbAB",
-    "LaneMessageCommitter": "0xffeF1ec6B69DBb5a38Ef660C6d17Ed2778eBFd5f"
+    "FeeMarket": "0xe89f20625FD226e5f046315f52181960F5641417",
+    "FeeMarketProxy": "0x25ee4212CfA2DC29E6a5e4A857b9656E439259c9",
+    "BeaconLightClient": "0xe5EFb53465AF71C363a9DF8CD920068537988752",
+    "ExecutionLayer": "0xE69C61AF1D1c9DD48bde7e4e671EC6B5F76CCD8E",
+    "BeaconLCMandatoryReward": "0xFd2083e78591AfA0e280a8b59262a75CaCE34691",
+    "EthereumStorageVerifier": "0x0631D83Dfd95559f13Ca4426fb052f6DD6a25e8f",
+    "OutboundLane": "0x2f6aE7fDbB7c0c613F7923Ddce3E5b71aFE71f78",
+    "InboundLane": "0x8F02B779EaD342Bb431A2f6cCc7866EB1928AE88",
+    "LaneMessageCommitter": "0x286979170bB820801EB6148a00d2D15De63E780F"
   }
 }

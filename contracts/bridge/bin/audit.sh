@@ -9,9 +9,7 @@ slither flat/BeaconLightClient.f.sol $FIXED_PARAMS           > audit/BeaconLight
 slither flat/BridgeProxyAdmin.f.sol $FIXED_PARAMS            > audit/BridgeProxyAdmin.md
 slither flat/ChainMessageCommitter.f.sol $FIXED_PARAMS       > audit/ChainMessageCommitter.md
 slither flat/ChainMessageCommitterProxy.f.sol $FIXED_PARAMS  > audit/ChainMessageCommitterProxy.md
-slither flat/DarwiniaLightClientProxy.f.sol $FIXED_PARAMS    > audit/DarwiniaLightClientProxy.md
 slither flat/DarwiniaMessageVerifier.f.sol $FIXED_PARAMS     > audit/DarwiniaMessageVerifier.md
-slither flat/EthereumExecutionLayerProxy.f.sol $FIXED_PARAMS > audit/EthereumExecutionLayerProxy.md
 slither flat/EthereumStorageVerifier.f.sol $FIXED_PARAMS     > audit/EthereumStorageVerifier.md
 slither flat/ExecutionLayer.f.sol $FIXED_PARAMS              > audit/ExecutionLayer.md
 slither flat/FeeMarket.f.sol $FIXED_PARAMS                   > audit/FeeMarket.md

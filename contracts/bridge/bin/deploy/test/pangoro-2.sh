@@ -31,13 +31,14 @@ SLASH_TIME=86400
 RELAY_TIME=86400
 # 0.01 : 300
 PRICE_RATIO=999900
+DUTY_RATIO=20
 
 FeeMarket=$(deploy FeeMarket \
   $FEEMARKET_VAULT \
   $COLLATERAL_PERORDER \
   $ASSIGNED_RELAYERS_NUMBER \
   $SLASH_TIME $RELAY_TIME \
-  $PRICE_RATIO)
+  $PRICE_RATIO $DUTY_RATIO)
 
 sig="initialize()"
 data=$(seth calldata $sig)
@@ -47,9 +48,8 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
   $data)
 
 # bsc light client config
-block_number=22570200
-block_header=$(seth block $block_number --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545
-)
+block_number=23019000
+block_header=$(seth block $block_number --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545)
 parent_hash=$(echo "$block_header" | seth --field parentHash)
 uncle_hash=$(echo "$block_header" | seth --field sha3Uncles)
 coinbase=$(echo "$block_header" | seth --field miner)

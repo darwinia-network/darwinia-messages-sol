@@ -1275,7 +1275,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
     /// the first group headers that relayer submitted should exactly follow the initial
     /// checkpoint eg. the initial header number is x, the first call of this extrinsic
     /// should submit headers with numbers [x + epoch_length, x + epoch_length + 1, ... , x + epoch_length + N/2]
-    function import_finalized_epoch_header(BSCHeader[] calldata headers) external payable {
+    function import_finalized_epoch_header(BSCHeader[] calldata headers) external {
         // ensure valid length
         // we should submit `N/2 + 1` headers
         require(_finalized_authorities.length() / 2 + 1 == headers.length, "!headers_size");

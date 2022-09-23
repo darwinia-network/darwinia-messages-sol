@@ -106,8 +106,9 @@ describe("verify message relay tests", () => {
     const SLASH_TIME = 100
     const RELAY_TIME = 100
     const PRICE_RATIO = 800_000
+    const DUTY_RATIO = 20
     const FeeMarket = await ethers.getContractFactory("FeeMarket")
-    const feeMarket = await FeeMarket.deploy(VAULT, COLLATERAL_PERORDER, ASSIGNED_RELAYERS_NUMBER, SLASH_TIME, RELAY_TIME, PRICE_RATIO)
+    const feeMarket = await FeeMarket.deploy(VAULT, COLLATERAL_PERORDER, ASSIGNED_RELAYERS_NUMBER, SLASH_TIME, RELAY_TIME, PRICE_RATIO, DUTY_RATIO)
     await feeMarket.initialize()
 
     const MockBSCLightClient = await ethers.getContractFactory("MockBSCLightClient")

@@ -51,7 +51,7 @@ contract ExecutionLayer is MerkleProof, ILightClient {
         return latest_execution_payload_state_root;
     }
 
-    function import_latest_execution_payload_state_root(ExecutionPayloadStateRootUpdate calldata update) external payable {
+    function import_latest_execution_payload_state_root(ExecutionPayloadStateRootUpdate calldata update) external {
         require(latest_execution_payload_state_root != update.latest_execution_payload_state_root, "same");
         require(verify_latest_execution_payload_state_root(
             update.latest_execution_payload_state_root,

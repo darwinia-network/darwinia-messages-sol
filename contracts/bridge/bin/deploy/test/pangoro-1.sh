@@ -31,13 +31,14 @@ SLASH_TIME=86400
 RELAY_TIME=86400
 # 0.01 : 2000
 PRICE_RATIO=999990
+DUTY_RATIO=20
 
 FeeMarket=$(deploy FeeMarket \
   $FEEMARKET_VAULT \
   $COLLATERAL_PERORDER \
   $ASSIGNED_RELAYERS_NUMBER \
   $SLASH_TIME $RELAY_TIME \
-  $PRICE_RATIO)
+  $PRICE_RATIO $DUTY_RATIO)
 
 sig="initialize()"
 data=$(seth calldata $sig)
@@ -48,12 +49,12 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
 
 # beacon light client config
 BLS_PRECOMPILE=0x0000000000000000000000000000000000000800
-SLOT=3920608
-PROPOSER_INDEX=3000
-PARENT_ROOT=0x9ee28cd422cea448946a79d1dacd2ffcdd7b8170b932baf541c6d14a904477b6
-STATE_ROOT=0x467168bd7ad1bfa51821af7aabeabdc2403388adcd1b835f6f5aa7760e08cadb
-BODY_ROOT=0xcacec3003756ee10cb7aa346f7f575d1ef21653add967cf798b401258cf9745e
-CURRENT_SYNC_COMMITTEE_HASH=0x1eb40046542f46b890d4fab007451feb5665ef3f47ae37d1fc742f44b780d4ef
+SLOT=3942240
+PROPOSER_INDEX=356685
+PARENT_ROOT=0xdf20a479d6de846d0c67cffa374f6b88422b261bc57a20cbffcd06c307bec4fb
+STATE_ROOT=0x257df51b5de6198ed9d2e3154267fab2801f56a11ccaa1ed272c7caf828d05f9
+BODY_ROOT=0x01c55f220468ed96a842b3989a19e2c6e9be370bfd8b4ce504b05e06e4d2bf34
+CURRENT_SYNC_COMMITTEE_HASH=0xeae5867c8c4bcd09c69ccbbbc1f89eb91ab2578c6205b961ef894076d6375b4c
 GENESIS_VALIDATORS_ROOT=0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb
 
 BeaconLightClient=$(deploy BeaconLightClient \
@@ -67,6 +68,10 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $GENESIS_VALIDATORS_ROOT)
 
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
+
+# import mandatory block reward
+reward=$(seth --to-wei 1 ether)
+BeaconLCMandatoryReward=$(deploy BeaconLCMandatoryReward $BeaconLightClient $reward)
 
 EthereumStorageVerifier=$(deploy EthereumStorageVerifier $ExecutionLayer)
 

@@ -38,8 +38,8 @@ bridged_out_lane_pos=0
 HelixDaoMultisig=0xBd1a110ec476b4775c43905000288881367B1a88
 FEEMARKET_VAULT=$HelixDaoMultisig
 # https://etherscan.io/chart/gasprice
-# 300000 wei * 10 * 20 gwei = 0.06 ether or 12000 RING
-COLLATERAL_PERORDER=$(seth --to-wei 12000 ether)
+# 300000 wei * 100 gwei = 0.03 ether or 6000 RING
+COLLATERAL_PERORDER=$(seth --to-wei 6000 ether)
 ASSIGNED_RELAYERS_NUMBER=1
 RELAY_TIME=10800
 SLASH_TIME=10800
@@ -83,6 +83,10 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $GENESIS_VALIDATORS_ROOT)
 
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
+
+# import mandatory block reward
+reward=$(seth --to-wei 1 ether)
+BeaconLCMandatoryReward=$(deploy BeaconLCMandatoryReward $BeaconLightClient $reward)
 
 EthereumStorageVerifier=$(deploy EthereumStorageVerifier $ExecutionLayer)
 

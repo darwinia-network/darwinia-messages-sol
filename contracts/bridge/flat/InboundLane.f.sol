@@ -566,7 +566,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     uint256 internal locked;
 
     /// @dev Gas used per message needs to be less than `MAX_GAS_PER_MESSAGE` wei
-    uint256 private constant MAX_GAS_PER_MESSAGE = 200000;
+    uint256 private constant MAX_GAS_PER_MESSAGE = 240000;
     /// @dev Gas buffer for executing `send_message` tx
     uint256 private constant GAS_BUFFER = 10000;
     /// @dev This parameter must lesser than 256
@@ -757,13 +757,12 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             // if there are more unconfirmed messages than we may accept, reject this message
             require(next - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "TooManyUnconfirmedMessages");
 
-            // update inbound lane nonce storage
-            inboundLaneNonce.last_delivered_nonce = next;
-
             // then, dispatch message
             bool dispatch_result = _dispatch(message_payload);
-
             emit MessageDispatched(key.nonce, dispatch_result);
+
+            // update inbound lane nonce storage
+            inboundLaneNonce.last_delivered_nonce = next;
 
             next += 1;
         }
