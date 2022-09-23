@@ -46,13 +46,14 @@ SLASH_TIME=10800
 # price 0.01 : 2000
 # 1000 : 999000
 PRICE_RATIO=999000
+DUTY_RATIO=20
 
 FeeMarket=$(deploy FeeMarket \
   $FEEMARKET_VAULT \
   $COLLATERAL_PERORDER \
   $ASSIGNED_RELAYERS_NUMBER \
   $SLASH_TIME $RELAY_TIME \
-  $PRICE_RATIO)
+  $PRICE_RATIO $DUTY_RATIO)
 
 sig="initialize()"
 data=$(seth calldata $sig)
