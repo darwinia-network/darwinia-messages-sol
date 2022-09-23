@@ -34,8 +34,12 @@ SLASH_TIME=10800
 # price 2000 : 0.01
 # 1000 : 999000
 PRICE_RATIO=1000
+DUTY_RATIO=30
 
-SimpleFeeMarket=$(deploy SimpleFeeMarket $COLLATERAL_PERORDER $SLASH_TIME $RELAY_TIME $PRICE_RATIO)
+SimpleFeeMarket=$(deploy SimpleFeeMarket \
+  $COLLATERAL_PERORDER \
+  $SLASH_TIME $RELAY_TIME \
+  $PRICE_RATIO $DUTY_RATIO)
 
 sig="initialize()"
 data=$(seth calldata $sig)
