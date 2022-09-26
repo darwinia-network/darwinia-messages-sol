@@ -14,7 +14,7 @@ contract RemoteExecute_FromMoonbaseToPangolin {
 
     function remoteAdd(address callee) external payable {
         MoonbaseEndpoint(endpoint).remoteExecute{value: msg.value}(
-            29030, // pangolin spec version
+            29040, // pangolin spec version
             callee,
             hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002", // add(2),
             600000, // gas limit
