@@ -35,8 +35,6 @@
     "@chainsafe/as-sha256" "^0.3.1"
 
 "@chainsafe/ssz@git@github.com:hujw77/ssz.git#pmt/single_proof_serialize":
-  "integrity" "sha512-r3bKiGMF7EZlsgXTyyzQbS+GJTj6MvTlY3Ms1byFZLL1H9Maht8muE2LkF3pS1zU9KY4tiJeQd+KABdhyfB9Ag=="
-  "resolved" "https://registry.npmjs.org/@chainsafe/ssz/-/ssz-0.9.2.tgz"
   "version" "0.9.2"
   dependencies:
     "@chainsafe/as-sha256" "^0.3.1"
@@ -83,7 +81,7 @@
 
 "@darwinia/contracts-periphery@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/periphery":
   "resolved" "file:contracts/periphery"
-  "version" "2.0.4-pre1"
+  "version" "2.0.4-pre2"
 
 "@darwinia/contracts-tokens@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/tokens":
   "resolved" "file:contracts/tokens"
