@@ -1,1 +1,17 @@
-{}
+{
+  "DEPLOYER": "0x7aE77149ed38c5dD313e9069d790Ce7085caf0A6",
+  "BridgeProxyAdmin": "0x86c85A9bf5DEAfdeD40D9C70517883D95F50Df03",
+  "ChainMessageCommitter": "0xEf5425b3B0111297e7178BAA8E7483430Ddc69D0",
+  "ChainMessageCommitterProxy": "0xea7d0fE22AF25d9655f7AdDd6a59E37e84B3AB5F",
+  "ethlive": {
+    "FeeMarket": "0xdaE9d5E41119EacEba2a12B1bE5825e2D39DaC3d",
+    "FeeMarketProxy": "0xcA927Df15afb7629b79dA4713a871190315c7409",
+    "BeaconLightClient": "0x9C266C48F07121181d8424768f0deD0170cC63A6",
+    "ExecutionLayer": "0xe50F1Ddf0C8778773f07Eb2759d045Ece19F6Cc1",
+    "BeaconLCMandatoryReward": "0xFB371c8B99ba0b239E66E0a66bB6296b00dCD09f",
+    "EthereumStorageVerifier": "0x1e0D6Ba9D7Ddd3f9bc121c51FA051E7826f12b9f",
+    "OutboundLane": "0xcA3749C8C3aF04278D596a3fBe461481B6aa1b01",
+    "InboundLane": "0xf1B8a9F8436800499DB8186f2da2fb3e78Ff7c2B",
+    "LaneMessageCommitter": "0x56746a8099a7e6D962802A23e01FeDdc1282cDAe"
+  }
+}
