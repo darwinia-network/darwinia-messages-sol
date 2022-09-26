@@ -250,25 +250,28 @@ library SmartChainXLib {
         return result;
     }
 
+    // Darwinia > Darwinia Parachain > Moonbeam
+    //    +------------------------------^
+    // returns A2, B, C
     function deriveSenderFromSmartChainOnMoonbeam(
-        bytes4 _srcChainId,
-        address _srcMessageSender,
-        bytes4 _parachainId
-    ) internal returns (address) {
-        // H160(sender on the sourc chain) > AccountId32
+        bytes4 _darwiniaChainId,
+        address _darwiniaEndpointAddress,
+        bytes4 _darwiniaParachainId
+    ) internal returns (bytes32, bytes32, address) {
+        // H160(sender on the sourc chain) > AccountId32 A1 -> A2
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
-            _srcMessageSender
+            _darwiniaEndpointAddress
         );
 
-        // AccountId32 > derived AccountId32
+        // AccountId32 > derived AccountId32 A2 -> B
         bytes32 derivedAccountId = deriveAccountId(
-            _srcChainId,
+            _darwiniaChainId,
             derivedSubstrateAddress
         );
 
-        // derived AccountId32 > Moonbeam H160
+        // derived AccountId32 > Moonbeam H160 B -> C
         address result = XcmUtils.deriveMoonbeamAddressFromAccountId(
-            abi.encodePacked(_parachainId),
+            abi.encodePacked(_darwiniaParachainId),
             derivedAccountId
         );
 
@@ -278,7 +281,7 @@ library SmartChainXLib {
             result
         );
 
-        return result;
+        return (derivedSubstrateAddress, derivedAccountId, result);
     }
 
     // Get the last delivered nonce from the state storage of the target chain's inbound lane

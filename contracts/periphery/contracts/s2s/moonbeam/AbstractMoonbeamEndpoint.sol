@@ -21,7 +21,10 @@ abstract contract AbstractMoonbeamEndpoint {
 
     // Local params
     address public feeLocationAddress;
-    address public derivedMessageSender; // message sender derived from remoteEndpoint
+    //   darwinia endpoint addresses
+    bytes32 public darwiniaEndpointAccountId32;
+    bytes32 public darwiniaEndpointAccountId32Derived;
+    address public darwiniaEndpointAddressDerived;
 
     event TargetInputGenerated(bytes);
     event TargetTransactCallGenerated(bytes);
@@ -103,7 +106,7 @@ abstract contract AbstractMoonbeamEndpoint {
     ///////////////////////////////
     modifier onlyMessageSender() {
         require(
-            derivedMessageSender == msg.sender,
+            darwiniaEndpointAddressDerived == msg.sender,
             "MessageEndpoint: Invalid sender"
         );
         _;
@@ -137,7 +140,8 @@ abstract contract AbstractMoonbeamEndpoint {
         address _remoteEndpoint
     ) internal {
         remoteEndpoint = _remoteEndpoint;
-        derivedMessageSender = SmartChainXLib
+
+        (darwiniaEndpointAccountId32, darwiniaEndpointAccountId32Derived, darwiniaEndpointAddressDerived) = SmartChainXLib
             .deriveSenderFromSmartChainOnMoonbeam(
                 _remoteChainId,
                 _remoteEndpoint,
