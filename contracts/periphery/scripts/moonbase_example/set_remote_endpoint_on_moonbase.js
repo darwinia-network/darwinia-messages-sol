@@ -9,11 +9,27 @@ async function main() {
     const MoonbaseEndpoint = await hre.ethers.getContractFactory("MoonbaseEndpoint");
     const endpoint = await MoonbaseEndpoint.attach(endpoint_address);
     
-    await endpoint.setRemoteEndpoint("0x7061676c", "0x00000839", remote_endpoint_address); // PANGOLIN_CHAIN_ID
+    const tx = await endpoint.setRemoteEndpoint("0x7061676c", "0x00000839", remote_endpoint_address); // PANGOLIN_CHAIN_ID
+    await tx.wait()
 
-    const messageOrigin32 = await endpoint.getMessageOrigin32();
+    console.log("### MOONBASE > PANGOLIN: ")
+    const moonbaseEndpoint_A2 = await endpoint.getMessageOriginOnPangolinParachain();
     console.log(
-        `moonbase_endpoint 32: ${messageOrigin32}`
+        `MOONBASE_ENDPOINT 32(A2)       : ${moonbaseEndpoint_A2} <- manual deposit\n`
+    );
+
+    console.log("### PANGOLIN > MOONBASE: ")
+    const A2 = await endpoint.darwiniaEndpointAccountId32();
+    console.log(
+        `PANGOLIN_ENDPOINT 32(A2)       : ${A2}`
+    );
+    const B = await endpoint.darwiniaEndpointAccountId32Derived();
+    console.log(
+        `PANGOLIN_ENDPOINT DERIVED 32(B): ${B} <- manual deposit`
+    );
+    const C = await endpoint.darwiniaEndpointAddressDerived();
+    console.log(
+        `PANGOLIN_ENDPOINT DERIVED 20(C): ${C}\n`
     );
 }
 
