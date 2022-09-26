@@ -26,6 +26,9 @@ abstract contract AbstractDarwiniaEndpoint {
     bytes4 public inboundLaneId;
     address public derivedMessageSender; // message sender derived from remoteEndpoint
 
+    event TargetInputGenerated(bytes);
+    event TargetTransactCallGenerated(bytes);
+
     ///////////////////////////////
     // Outbound
     ///////////////////////////////
@@ -45,6 +48,8 @@ abstract contract AbstractDarwiniaEndpoint {
             _callPayload
         );
 
+        emit TargetInputGenerated(input);
+
         // build the TransactCall
         bytes memory tgtTransactCallEncoded = PalletEthereumXcm
             .buildTransactCall(
@@ -54,6 +59,8 @@ abstract contract AbstractDarwiniaEndpoint {
                 0,
                 input
             );
+        
+        emit TargetTransactCallGenerated(tgtTransactCallEncoded);
 
         // build the ForwardToMoonbeamCall
         bytes memory routerForwardToMoonbeamCallEncoded = PalletMessageRouter
