@@ -4,6 +4,7 @@ pragma solidity >=0.6.0;
 
 import "./IXcmUtils.sol";
 import "../../Utils.sol";
+import "@darwinia/contracts-utils/contracts/Bytes.sol";
 
 library XcmUtils {
     address public constant precompileAddress = 
@@ -25,7 +26,7 @@ library XcmUtils {
 
         Utils.revertIfFailed(success, data, "Multilocation to address failed");
 
-        return Utils.bytesToAddress(data);
+        return Utils.bytesToAddress(Bytes.substr(data, 12));
     }
 
     function deriveMoonbeamAddressFromAccountId(
