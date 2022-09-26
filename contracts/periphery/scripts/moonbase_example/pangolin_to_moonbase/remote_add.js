@@ -8,9 +8,6 @@ async function main() {
 
     const caller = await hre.ethers.getContractAt("RemoteExecute_FromPangolinToMoonbase", caller_address);
 
-    const nonce = await caller.latestNonce();
-    console.log(nonce);
-
     const fee = hre.ethers.utils.parseEther("300");
     const tx = await caller.remoteAdd(callee_adderss, { value: fee })
     console.log(tx.hash)

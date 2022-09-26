@@ -12,7 +12,7 @@ async function main() {
     const fee = hre.ethers.utils.parseEther("1");
     const tx = await caller.remoteAdd(callee_adderss, { value: fee })
 
-    console.log(tx.hash)
+    console.log((await tx.wait()).transactionHash)
 }
 
 // We recommend this pattern to be able to use async/await everywhere
