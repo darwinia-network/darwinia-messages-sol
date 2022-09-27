@@ -12,6 +12,7 @@ echo "ETH_FROM: ${ETH_FROM}"
 # import the deployment helpers
 . $(dirname $0)/common.sh
 
+
 BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
 
 export TARGET_CHAIN=darwinia
