@@ -157,7 +157,42 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         return finalized_header.state_root;
     }
 
-    function import_next_sync_committee(SyncCommitteePeriodUpdate calldata update) external {
+    function sync_committee_period_update(
+        FinalizedHeaderUpdate calldata header_update,
+        SyncCommitteePeriodUpdate calldata sc_update
+    ) external {
+        require(is_supermajority(header_update.sync_aggregate.sync_committee_bits), "!supermajor");
+        require(verify_finalized_header(
+                header_update.finalized_header,
+                header_update.finality_branch,
+                header_update.attested_header.state_root),
+                "!finalized_header"
+        );
+
+        uint64 finalized_period = compute_sync_committee_period(header_update.finalized_header.slot);
+        uint64 signature_period = compute_sync_committee_period(header_update.signature_slot);
+        require(signature_period == finalized_period, "!period");
+
+        bytes32 singature_sync_committee_root = sync_committee_roots[signature_period];
+        require(singature_sync_committee_root != bytes32(0), "!missing");
+        require(singature_sync_committee_root == hash_tree_root(header_update.signature_sync_committee), "!sync_committee");
+
+        require(verify_signed_header(
+                header_update.sync_aggregate,
+                header_update.signature_sync_committee,
+                header_update.fork_version,
+                header_update.attested_header),
+               "!sign");
+
+        if (header_update.finalized_header.slot > finalized_header.slot) {
+            finalized_header = header_update.finalized_header;
+            emit FinalizedHeaderImported(header_update.finalized_header);
+        }
+
+        import_next_sync_committee(sc_update);
+    }
+
+    function import_next_sync_committee(SyncCommitteePeriodUpdate calldata update) internal {
         require(verify_next_sync_committee(
                 update.next_sync_committee,
                 update.next_sync_committee_branch,
