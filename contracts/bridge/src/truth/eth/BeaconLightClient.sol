@@ -189,21 +189,16 @@ contract BeaconLightClient is BeaconChain, Bitfield {
             emit FinalizedHeaderImported(header_update.finalized_header);
         }
 
-        import_next_sync_committee(sc_update);
-    }
-
-    function import_next_sync_committee(SyncCommitteePeriodUpdate calldata update) internal {
         require(verify_next_sync_committee(
-                update.next_sync_committee,
-                update.next_sync_committee_branch,
-                finalized_header.state_root),
+                sc_update.next_sync_committee,
+                sc_update.next_sync_committee_branch,
+                header_update.attested_header.state_root),
                 "!next_sync_committee"
         );
 
-        uint64 current_period = compute_sync_committee_period(finalized_header.slot);
-        uint64 next_period = current_period + 1;
+        uint64 next_period = signature_period + 1;
         require(sync_committee_roots[next_period] == bytes32(0), "imported");
-        bytes32 next_sync_committee_root = hash_tree_root(update.next_sync_committee);
+        bytes32 next_sync_committee_root = hash_tree_root(sc_update.next_sync_committee);
         sync_committee_roots[next_period] = next_sync_committee_root;
         emit NextSyncCommitteeImported(next_period, next_sync_committee_root);
     }
