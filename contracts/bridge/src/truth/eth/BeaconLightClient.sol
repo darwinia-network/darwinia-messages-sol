@@ -153,8 +153,8 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         GENESIS_VALIDATORS_ROOT = _genesis_validators_root;
     }
 
-    function state_root() public view returns (bytes32) {
-        return finalized_header.state_root;
+    function body_root() public view returns (bytes32) {
+        return finalized_header.body_root;
     }
 
     function sync_committee_period_update(

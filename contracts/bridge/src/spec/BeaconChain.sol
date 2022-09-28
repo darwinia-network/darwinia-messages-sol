@@ -19,9 +19,9 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "./MerkleProof.sol";
-import "../utils/Math.sol";
+import "../utils/ScaleCodec.sol";
 
-contract BeaconChain is Math, MerkleProof {
+contract BeaconChain is MerkleProof {
     uint64 constant internal BLSPUBLICKEY_LENGTH = 48;
     uint64 constant internal BLSSIGNATURE_LENGTH = 96;
     uint64 constant internal SYNC_COMMITTEE_SIZE = 512;
@@ -47,6 +47,36 @@ contract BeaconChain is Math, MerkleProof {
         bytes32 parent_root;
         bytes32 state_root;
         bytes32 body_root;
+    }
+
+    struct BeaconBlockBody {
+        bytes32 randao_reveal;
+        bytes32 eth1_data;
+        bytes32 graffiti;
+        bytes32 proposer_slashings;
+        bytes32 attester_slashings;
+        bytes32 attestations;
+        bytes32 deposits;
+        bytes32 voluntary_exits;
+        bytes32 sync_aggregate;
+        ExecutionPayload execution_payload;
+    }
+
+    struct ExecutionPayload {
+        bytes32 parent_hash;
+        address fee_recipient;
+        bytes32 state_root;
+        bytes32 receipts_root;
+        bytes32 logs_bloom;
+        bytes32 prev_randao;
+        uint64 block_number;
+        uint64 gas_limit;
+        uint64 gas_used;
+        uint64 timestamp;
+        bytes32 extra_data;
+        uint256 base_fee_per_gas;
+        bytes32 block_hash;
+        bytes32 transactions;
     }
 
     // Return the signing root for the corresponding signing data.
@@ -107,38 +137,43 @@ contract BeaconChain is Math, MerkleProof {
         return merkle_root(leaves);
     }
 
-    function merkle_root(bytes32[] memory leaves) internal pure returns (bytes32) {
-        uint len = leaves.length;
-        if (len == 0) return bytes32(0);
-        else if (len == 1) return hash(abi.encodePacked(leaves[0]));
-        else if (len == 2) return hash_node(leaves[0], leaves[1]);
-        uint bottom_length = get_power_of_two_ceil(len);
-        bytes32[] memory o = new bytes32[](bottom_length * 2);
-        for (uint i = 0; i < len; ++i) {
-            o[bottom_length + i] = leaves[i];
-        }
-        for (uint i = bottom_length - 1; i > 0; --i) {
-            o[i] = hash_node(o[i * 2], o[i * 2 + 1]);
-        }
-        return o[1];
+    function hash_tree_root(BeaconBlockBody memory beacon_block_body) internal pure returns (bytes32) {
+        bytes32[] memory leaves = new bytes32[](10);
+        leaves[0] = beacon_block_body.randao_reveal;
+        leaves[1] = beacon_block_body.eth1_data;
+        leaves[2] = beacon_block_body.graffiti;
+        leaves[3] = beacon_block_body.proposer_slashings;
+        leaves[4] = beacon_block_body.attester_slashings;
+        leaves[5] = beacon_block_body.attestations;
+        leaves[6] = beacon_block_body.deposits;
+        leaves[7] = beacon_block_body.voluntary_exits;
+        leaves[8] = beacon_block_body.sync_aggregate;
+        leaves[9] = hash_tree_root(beacon_block_body.execution_payload);
     }
 
-    function to_little_endian_64(uint64 value) internal pure returns (bytes8 r) {
-        return bytes8(reverse64(value));
+    function hash_tree_root(ExecutionPayload memory execution_payload) internal pure returns (bytes32) {
+        bytes32[] memory leaves = new bytes32[](14);
+        leaves[0]  = execution_payload.parent_hash;
+        leaves[1]  = abi.encodePacked(execution_payload.fee_recipient, bytes16(0));
+        leaves[2]  = execution_payload.state_root;
+        leaves[3]  = execution_payload.receipts_root;
+        leaves[4]  = execution_payload.logs_bloom;
+        leaves[5]  = execution_payload.prev_randao;
+        leaves[6]  = bytes32(to_little_endian_64(execution_payload.block_number));
+        leaves[7]  = bytes32(to_little_endian_64(execution_payload.gas_limit));
+        leaves[8]  = bytes32(to_little_endian_64(execution_payload.gas_used));
+        leaves[9]  = bytes32(to_little_endian_64(execution_payload.timestamp));
+        leaves[10] = execution_payload.extra_data;
+        leaves[11] = to_little_endian_256(execution_payload.base_fee_per_gas);
+        leaves[12] = execution_payload.block_hash;
+        leaves[13] = execution_payload.transactions;
     }
 
-    function reverse64(uint64 input) internal pure returns (uint64 v) {
-        v = input;
+    function to_little_endian_64(uint64 value) internal pure returns (bytes8) {
+        return ScaleCodec.encode64(value);
+    }
 
-        // swap bytes
-        v = ((v & 0xFF00FF00FF00FF00) >> 8) |
-            ((v & 0x00FF00FF00FF00FF) << 8);
-
-        // swap 2-byte long pairs
-        v = ((v & 0xFFFF0000FFFF0000) >> 16) |
-            ((v & 0x0000FFFF0000FFFF) << 16);
-
-        // swap 4-byte long pairs
-        v = (v >> 32) | (v << 32);
+    function to_little_endian_256(uint256 value) internal pure returns (bytes32) {
+        return ScaleCodec.encode256(value);
     }
 }
