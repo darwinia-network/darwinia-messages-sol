@@ -73,7 +73,7 @@ const receive_messages_proof = async (nonce) => {
         value: ethers.utils.parseEther("1.0")
     })
     relayer = relayer.connect(ethers.provider)
-    const tx = await inbound.connect(relayer).receive_messages_proof(data, "0x", {
+    const tx = await inbound.connect(relayer).receive_messages_proof(data, "0x", data.messages.length, {
       gasLimit: 10000000
     })
     for (let i = 0; i<size; i++) {
@@ -106,7 +106,7 @@ describe("normal app send single message tests", () => {
     source = owner.address
 
     const SimpleFeeMarket = await ethers.getContractFactory("SimpleFeeMarket")
-    feeMarket = await SimpleFeeMarket.deploy(ethers.utils.parseEther("10"), 100, 100, 800_000)
+    feeMarket = await SimpleFeeMarket.deploy(ethers.utils.parseEther("10"), 100, 100, 800_000, 60)
     await feeMarket.initialize()
 
     let overrides = { value: ethers.utils.parseEther("3000") }

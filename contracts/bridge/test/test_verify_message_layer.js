@@ -77,7 +77,7 @@ const receive_messages_proof = async (inbound, srcoutbound, srcinbound, nonce) =
     const proof = await generate_darwinia_proof()
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
-    const tx = await inbound.receive_messages_proof(data, proof)
+    const tx = await inbound.receive_messages_proof(data, proof, data.messages.length)
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
@@ -106,8 +106,9 @@ describe("verify message relay tests", () => {
     const SLASH_TIME = 100
     const RELAY_TIME = 100
     const PRICE_RATIO = 800_000
+    const DUTY_RATIO = 20
     const FeeMarket = await ethers.getContractFactory("FeeMarket")
-    const feeMarket = await FeeMarket.deploy(VAULT, COLLATERAL_PERORDER, ASSIGNED_RELAYERS_NUMBER, SLASH_TIME, RELAY_TIME, PRICE_RATIO)
+    const feeMarket = await FeeMarket.deploy(VAULT, COLLATERAL_PERORDER, ASSIGNED_RELAYERS_NUMBER, SLASH_TIME, RELAY_TIME, PRICE_RATIO, DUTY_RATIO)
     await feeMarket.initialize()
 
     const MockBSCLightClient = await ethers.getContractFactory("MockBSCLightClient")

@@ -222,7 +222,7 @@ library SparseMerkleProof {
     }
 }
 
-////// src/truth/common/MessageVerifier.sol
+////// src/truth/common/BEEFYMessageVerifier.sol
 // This file is part of Darwinia.
 // Copyright (C) 2018-2022 Darwinia Network
 //
@@ -246,7 +246,7 @@ library SparseMerkleProof {
 /* import "../../interfaces/IVerifier.sol"; */
 /* import "../../utils/SparseMerkleProof.sol"; */
 
-abstract contract MessageVerifier is IVerifier {
+abstract contract BEEFYMessageVerifier is IVerifier {
 
     function message_root() public view virtual returns (bytes32);
 
@@ -330,10 +330,10 @@ abstract contract MessageVerifier is IVerifier {
 /* pragma solidity 0.7.6; */
 /* pragma abicoder v2; */
 
-/* import "../common/MessageVerifier.sol"; */
+/* import "../common/BEEFYMessageVerifier.sol"; */
 /* import "../../interfaces/ILightClient.sol"; */
 
-contract DarwiniaMessageVerifier is MessageVerifier {
+contract DarwiniaMessageVerifier is BEEFYMessageVerifier {
     ILightClient public immutable LIGHT_CLIENT;
 
     constructor(address lightclient) {

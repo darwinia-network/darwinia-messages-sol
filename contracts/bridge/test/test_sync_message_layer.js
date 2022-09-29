@@ -28,7 +28,7 @@ const send_message = async (nonce) => {
       .withArgs(nonce, source, target, encoded)
     let block = await ethers.provider.getBlock(tx.blockNumber)
     await expect(tx)
-      .to.emit(feeMarket, "Assgigned")
+      .to.emit(feeMarket, "Assigned")
       .withArgs(await outbound.encodeMessageKey(nonce), block.timestamp, await feeMarket.ASSIGNED_RELAYERS_NUMBER(), await feeMarket.COLLATERAL_PER_ORDER())
 
     const [one, two, three] = await ethers.getSigners();
@@ -68,7 +68,7 @@ const receive_messages_proof = async (nonce) => {
     const data = build_land_data(laneData)
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
-    const tx = await inbound.receive_messages_proof(data, "0x")
+    const tx = await inbound.receive_messages_proof(data, "0x", data.messages.length)
     for (let i = 0; i<size; i++) {
       await expect(tx)
         .to.emit(inbound, "MessageDispatched")
@@ -89,7 +89,7 @@ const receive_messages_delivery_proof = async (begin, end) => {
       let block = await ethers.provider.getBlock(tx.blockNumber)
       await expect(tx)
         .to.emit(feeMarket, "Settled")
-        .withArgs(await outbound.encodeMessageKey(i), block.timestamp)
+        .withArgs(await outbound.encodeMessageKey(i), block.timestamp, one.address, four.address)
     }
     await logNonce()
 }

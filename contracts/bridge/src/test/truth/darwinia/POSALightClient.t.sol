@@ -29,6 +29,7 @@ interface Hevm {
 }
 
 contract POSALightClientTest is POSACommitmentScheme, DSTest {
+    // solhint-disable-next-line const-name-snakecase
     uint constant sk = 2;
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     bytes32 private constant DOMAIN_SEPARATOR = 0x38a6d9f96ef6e79768010f6caabfe09abc43e49792d5c787ef0d4fc802855947;
@@ -40,8 +41,10 @@ contract POSALightClientTest is POSACommitmentScheme, DSTest {
         address[] memory relayers = new address[](1);
         alice = hevm.addr(sk);
         relayers[0] = alice;
-        lightclient = new POSALightClient(DOMAIN_SEPARATOR);
-        lightclient.initialize(relayers, 1, 0);
+        lightclient = new POSALightClient(
+            DOMAIN_SEPARATOR,
+            relayers, 1, 0
+        );
     }
 
     function test_import_message_commitment() public {

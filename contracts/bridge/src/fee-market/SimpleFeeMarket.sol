@@ -39,25 +39,27 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
     // Message encoded key => Order
     mapping(uint256 => Order) public orderOf;
 
-    // SlashAmount = COLLATERAL_PER_ORDER * LateTime / SLASH_TIME
-    uint32 public immutable SLASH_TIME;
-    // Time assigned relayer to relay messages
-    uint32 public immutable RELAY_TIME;
-    // RATIO_NUMERATOR of two chain's native token price, denominator of ratio is 1_000_000
-    uint32 public immutable PRICE_RATIO_NUMERATOR;
-    // The collateral relayer need to lock for each order.
+    // The collateral relayer need to lock for each order
     uint256 public immutable COLLATERAL_PER_ORDER;
+    // SlashAmount = COLLATERAL_PER_ORDER * LateTime / SLASH_TIME
+    uint256 public immutable SLASH_TIME;
+    // Time assigned relayer to relay messages
+    uint256 public immutable RELAY_TIME;
+    // RATIO_NUMERATOR of two chain's native token price, denominator of ratio is 1_000_000
+    uint256 public immutable PRICE_RATIO_NUMERATOR;
+    // Duty reward ratio
+    uint256 public immutable DUTY_REWARD_RATIO;
 
     address private constant SENTINEL_HEAD = address(0x1);
     address private constant SENTINEL_TAIL = address(0x2);
 
-    event Assgigned(uint256 indexed key, uint256 timestamp, address relayer, uint256 collateral, uint256 fee);
+    event Assigned(uint256 indexed key, uint256 timestamp, address relayer, uint256 collateral, uint256 fee);
     event Delist(address indexed prev, address indexed cur);
     event Deposit(address indexed dst, uint wad);
     event Enrol(address indexed prev, address indexed cur, uint fee);
     event Locked(address indexed src, uint wad);
     event Reward(address indexed dst, uint wad);
-    event Settled(uint256 indexed key, uint timestamp);
+    event Settled(uint256 indexed key, uint timestamp, address delivery, address confirm);
     event Slash(address indexed src, uint wad);
     event SetOutbound(address indexed out, uint256 flag);
     event UnLocked(address indexed src, uint wad);
@@ -95,15 +97,19 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
 
     constructor(
         uint256 _collateral_perorder,
-        uint32 _slash_time,
-        uint32 _relay_time,
-        uint32 _price_rario_numerator
+        uint256 _slash_time,
+        uint256 _relay_time,
+        uint256 _price_ratio_numerator,
+        uint256 _duty_reward_ratio
     ) {
         require(_slash_time > 0 && _relay_time > 0, "!0");
+        require(_price_ratio_numerator < 1_000_000, "!price_ratio");
+        require(_duty_reward_ratio < 100);
         COLLATERAL_PER_ORDER = _collateral_perorder;
         SLASH_TIME = _slash_time;
         RELAY_TIME = _relay_time;
-        PRICE_RATIO_NUMERATOR = _price_rario_numerator;
+        PRICE_RATIO_NUMERATOR = _price_ratio_numerator;
+        DUTY_REWARD_RATIO = _duty_reward_ratio;
     }
 
     function initialize() public initializer {
@@ -147,12 +153,14 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
         uint256,
         address[] memory,
         uint256[] memory,
-        uint256 [] memory
+        uint256[] memory,
+        uint256[] memory
     ) {
         require(count <= relayerCount, "!count");
         address[] memory array1 = new address[](count);
         uint256[] memory array2 = new uint256[](count);
         uint256[] memory array3 = new uint256[](count);
+        uint256[] memory array4 = new uint256[](count);
         uint index = 0;
         address cur = relayers[SENTINEL_HEAD];
         while (cur != SENTINEL_TAIL && index < count) {
@@ -160,11 +168,12 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
                 array1[index] = cur;
                 array2[index] = feeOf[cur];
                 array3[index] = balanceOf[cur];
+                array4[index] = lockedOf[cur];
                 index++;
             }
             cur = relayers[cur];
         }
-        return (index, array1, array2, array3);
+        return (index, array1, array2, array3, array4);
     }
 
     // Find top lowest maker fee relayer
@@ -284,7 +293,7 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
         // record the assigned time
         uint32 assign_time = uint32(block.timestamp);
         orderOf[key] = Order(assign_time, top_relayer, _collateral, fee);
-        emit Assgigned(key, assign_time, top_relayer, _collateral, fee);
+        emit Assigned(key, assign_time, top_relayer, _collateral, fee);
         return true;
     }
 
@@ -369,7 +378,7 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
                     total_confirm_reward += confirm_reward;
                 }
                 delete orderOf[key];
-                emit Settled(key, block.timestamp);
+                emit Settled(key, block.timestamp, entry.relayer, confirm_relayer);
             }
             // Reward every delivery relayer
             _reward(entry.relayer, every_delivery_reward);
@@ -410,7 +419,7 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
     ) private returns (uint256 delivery_reward, uint256 confirm_reward) {
         if (message_fee > 0) {
             // 60% * base fee => assigned_relayers_rewards
-            uint256 assign_reward = message_fee * 60 / 100;
+            uint256 assign_reward = message_fee * DUTY_REWARD_RATIO / 100;
             // 40% * base fee => other relayer
             uint256 other_reward = message_fee - assign_reward;
             (delivery_reward, confirm_reward) = _distribute_fee(other_reward);

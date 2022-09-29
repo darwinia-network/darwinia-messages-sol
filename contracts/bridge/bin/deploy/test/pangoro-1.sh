@@ -27,17 +27,18 @@ bridged_out_lane_pos=0
 FEEMARKET_VAULT=$ETH_FROM
 COLLATERAL_PERORDER=$(seth --to-wei 10 ether)
 ASSIGNED_RELAYERS_NUMBER=3
-SLASH_TIME=86400
-RELAY_TIME=86400
+SLASH_TIME=10800
+RELAY_TIME=10800
 # 0.01 : 2000
-PRICE_RATIO=999990
+PRICE_RATIO=999900
+DUTY_RATIO=20
 
 FeeMarket=$(deploy FeeMarket \
   $FEEMARKET_VAULT \
   $COLLATERAL_PERORDER \
   $ASSIGNED_RELAYERS_NUMBER \
   $SLASH_TIME $RELAY_TIME \
-  $PRICE_RATIO)
+  $PRICE_RATIO $DUTY_RATIO)
 
 sig="initialize()"
 data=$(seth calldata $sig)
@@ -48,12 +49,12 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
 
 # beacon light client config
 BLS_PRECOMPILE=0x0000000000000000000000000000000000000800
-SLOT=3821536
-PROPOSER_INDEX=53416
-PARENT_ROOT=0xff50c9fd3c2a821b0215979518ea66ef258b081991d5b0d84dc0a3d9664def86
-STATE_ROOT=0xb08bffddf28b209091016dbc89e9d958be09abff243f195f01c52d42c9f2d5b5
-BODY_ROOT=0xa855718d6de37ad093025a500dfa982ff6b2f3c3d57c372a433c4a4677d57548
-CURRENT_SYNC_COMMITTEE_HASH=0xc71884d50e3525867047a4ab812c65430201a1930313ac42de0ccf1f2c4b5572
+SLOT=3942240
+PROPOSER_INDEX=356685
+PARENT_ROOT=0xdf20a479d6de846d0c67cffa374f6b88422b261bc57a20cbffcd06c307bec4fb
+STATE_ROOT=0x257df51b5de6198ed9d2e3154267fab2801f56a11ccaa1ed272c7caf828d05f9
+BODY_ROOT=0x01c55f220468ed96a842b3989a19e2c6e9be370bfd8b4ce504b05e06e4d2bf34
+CURRENT_SYNC_COMMITTEE_HASH=0xeae5867c8c4bcd09c69ccbbbc1f89eb91ab2578c6205b961ef894076d6375b4c
 GENESIS_VALIDATORS_ROOT=0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb
 
 BeaconLightClient=$(deploy BeaconLightClient \
@@ -67,14 +68,12 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $GENESIS_VALIDATORS_ROOT)
 
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
-sig=$(seth sig "initialize()")
-data=$(seth calldata $sig)
-EthereumExecutionLayerProxy=$(deploy EthereumExecutionLayerProxy \
-  $ExecutionLayer \
-  $BridgeProxyAdmin \
-  $data)
 
-EthereumStorageVerifier=$(deploy EthereumStorageVerifier $EthereumExecutionLayerProxy)
+# import mandatory block reward
+reward=$(seth --to-wei 1 ether)
+BeaconLCMandatoryReward=$(deploy BeaconLCMandatoryReward $BeaconLightClient $reward)
+
+EthereumStorageVerifier=$(deploy EthereumStorageVerifier $ExecutionLayer)
 
 OutboundLane=$(deploy OutboundLane \
   $EthereumStorageVerifier \

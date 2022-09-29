@@ -1311,7 +1311,7 @@ library StorageProof {
             account_proof,
             root
         );
-        require(exists == true, "!account_proof");
+        require(exists, "!account_proof");
         State.EVMAccount memory acc = data.toEVMAccount();
         bytes memory storage_key_hash = abi.encodePacked(storage_key);
         (exists, value) = SecureMerkleTrie.get(
@@ -1489,7 +1489,7 @@ contract TargetChain {
     }
 }
 
-////// src/truth/common/StorageVerifier.sol
+////// src/truth/common/EVMStorageVerifier.sol
 // This file is part of Darwinia.
 // Copyright (C) 2018-2022 Darwinia Network
 //
@@ -1514,7 +1514,7 @@ contract TargetChain {
 /* import "../../spec/TargetChain.sol"; */
 /* import "../../spec/StorageProof.sol"; */
 
-abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
+abstract contract EVMStorageVerifier is IVerifier, SourceChain, TargetChain {
     event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
 
     struct ReceiveProof {
@@ -1757,19 +1757,28 @@ abstract contract StorageVerifier is IVerifier, SourceChain, TargetChain {
 /* pragma solidity 0.7.6; */
 /* pragma abicoder v2; */
 
-/* import "../common/StorageVerifier.sol"; */
+/* import "../common/EVMStorageVerifier.sol"; */
 /* import "../../spec/ChainMessagePosition.sol"; */
 /* import "../../interfaces/ILightClient.sol"; */
 
-contract EthereumStorageVerifier is StorageVerifier {
-    ILightClient public immutable LIGHT_CLIENT;
+contract EthereumStorageVerifier is EVMStorageVerifier {
+    ILightClient private light_client;
 
-    constructor(address lightclient) StorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
-        LIGHT_CLIENT = ILightClient(lightclient);
+    constructor(address lightclient) EVMStorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
+        light_client = ILightClient(lightclient);
     }
 
     function state_root() public view override returns (bytes32) {
-        return LIGHT_CLIENT.merkle_root();
+        return light_client.merkle_root();
     }
+
+    function LIGHT_CLIENT() external view returns (address) {
+        return address(light_client);
+    }
+
+    function changeLightClient(address lightclient) external onlySetter {
+        light_client = ILightClient(lightclient);
+    }
+
 }
 

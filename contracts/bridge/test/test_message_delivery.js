@@ -60,7 +60,7 @@ const receive_messages_proof = async (laneData, nonce) => {
     let data = build_land_data(laneData, nonce)
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
-    const tx = await inbound.receive_messages_proof(data, "0x")
+    const tx = await inbound.receive_messages_proof(data, "0x", data.messages.length)
     for (let i = 0; i<size; i++) {
       let n = from+i+1
       let result = n%2 == 0 ? true : false

@@ -27,17 +27,18 @@ bridged_out_lane_pos=0
 FEEMARKET_VAULT=$ETH_FROM
 COLLATERAL_PERORDER=$(seth --to-wei 10 ether)
 ASSIGNED_RELAYERS_NUMBER=3
-SLASH_TIME=86400
-RELAY_TIME=86400
+SLASH_TIME=10800
+RELAY_TIME=10800
 # 0.01 : 300
 PRICE_RATIO=999900
+DUTY_RATIO=20
 
 FeeMarket=$(deploy FeeMarket \
   $FEEMARKET_VAULT \
   $COLLATERAL_PERORDER \
   $ASSIGNED_RELAYERS_NUMBER \
   $SLASH_TIME $RELAY_TIME \
-  $PRICE_RATIO)
+  $PRICE_RATIO $DUTY_RATIO)
 
 sig="initialize()"
 data=$(seth calldata $sig)
@@ -47,9 +48,8 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
   $data)
 
 # bsc light client config
-block_number=22570200
-block_header=$(seth block $block_number --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545
-)
+block_number=23019000
+block_header=$(seth block $block_number --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545)
 parent_hash=$(echo "$block_header" | seth --field parentHash)
 uncle_hash=$(echo "$block_header" | seth --field sha3Uncles)
 coinbase=$(echo "$block_header" | seth --field miner)
@@ -66,20 +66,17 @@ extra_data=$(echo "$block_header" | seth --field extraData)
 mix_digest=$(echo "$block_header" | seth --field mixHash)
 nonce=$(seth --to-uint64 $(echo "$block_header" | seth --field nonce))
 
+chain_id=$(seth --to-uint256 97)
+period=$(seth --to-uint256 3)
 DATA=$(set -x; ethabi encode params \
+  -v uint64 ${chain_id:2} \
+  -v uint64 ${period:2} \
   -v "(bytes32,bytes32,address,bytes32,bytes32,bytes32,bytes,uint256,uint256,uint64,uint64,uint64,bytes,bytes32,bytes8)" \
   "(${parent_hash:2},${uncle_hash:2},${coinbase:2},${state_root:2},${transactions_root:2},${receipts_root:2},${log_bloom:2},${difficulty:2},${number:2},${gas_limit:2},${gas_used:2},${timestamp:2},${extra_data:2},${mix_digest:2},${nonce:2})")
 
-chain_id=$(seth chain-id --chain $TARGET_CHAIN)
-period=3
-BSCLightClient=$(deploy BSCLightClient $chain_id $period)
-SIG=$(set -x; cast sig "initialize((bytes32,bytes32,address,bytes32,bytes32,bytes32,bytes,uint256,uint256,uint64,uint64,uint64,bytes,bytes32,bytes8))")
-BSCLightClientProxy=$(deploy BSCLightClientProxy \
-  $BSCLightClient \
-  $BridgeProxyAdmin \
-  $SIG$DATA)
+BSCLightClient=$(deploy_v2 BSCLightClient $DATA)
 
-BSCStorageVerifier=$(deploy BSCStorageVerifier $BSCLightClientProxy)
+BSCStorageVerifier=$(deploy BSCStorageVerifier $BSCLightClient)
 
 OutboundLane=$(deploy OutboundLane \
   $BSCStorageVerifier \

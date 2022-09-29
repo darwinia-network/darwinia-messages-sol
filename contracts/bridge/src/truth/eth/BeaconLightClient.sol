@@ -82,8 +82,6 @@ interface IBLS {
 contract BeaconLightClient is BeaconChain, Bitfield {
     // Beacon block header that is finalized
     BeaconBlockHeader public finalized_header;
-    // Execution payload state root of finalized header
-    bytes32 public latest_execution_payload_state_root;
     // Sync committees corresponding to the header
     // sync_committee_perid => sync_committee_root
     mapping (uint64 => bytes32) public sync_committee_roots;
@@ -159,7 +157,7 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         return finalized_header.state_root;
     }
 
-    function import_next_sync_committee(SyncCommitteePeriodUpdate calldata update) external payable {
+    function import_next_sync_committee(SyncCommitteePeriodUpdate calldata update) external {
         require(verify_next_sync_committee(
                 update.next_sync_committee,
                 update.next_sync_committee_branch,
@@ -175,7 +173,7 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         emit NextSyncCommitteeImported(next_period, next_sync_committee_root);
     }
 
-    function import_finalized_header(FinalizedHeaderUpdate calldata update) external payable {
+    function import_finalized_header(FinalizedHeaderUpdate calldata update) external {
         require(is_supermajority(update.sync_aggregate.sync_committee_bits), "!supermajor");
         require(verify_finalized_header(
                 update.finalized_header,

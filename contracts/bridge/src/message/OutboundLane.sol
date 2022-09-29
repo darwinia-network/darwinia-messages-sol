@@ -105,16 +105,16 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     /// At the beginning of the launch, submmiter is permission, after the system is stable it will be permissionless.
     /// @param target The target contract address which you would send cross chain message to
     /// @param encoded The calldata which encoded by ABI Encoding
-    /// @return encoded_key Encoded message key
-    function send_message(address target, bytes calldata encoded) external payable override returns (uint256 encoded_key) {
-        require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce <= MAX_PENDING_MESSAGES, "TooManyPendingMessages");
+    /// @return nonce Latest generated nonce
+    function send_message(address target, bytes calldata encoded) external payable override returns (uint64) {
+        require(outboundLaneNonce.latest_generated_nonce - outboundLaneNonce.latest_received_nonce < MAX_PENDING_MESSAGES, "TooManyPendingMessages");
         require(outboundLaneNonce.latest_generated_nonce < type(uint64).max, "Overflow");
         require(encoded.length <= MAX_CALLDATA_LENGTH, "TooLargeCalldata");
 
         uint64 nonce = outboundLaneNonce.latest_generated_nonce + 1;
 
         // assign the message to top relayers
-        encoded_key = encodeMessageKey(nonce);
+        uint encoded_key = encodeMessageKey(nonce);
         require(IFeeMarket(FEE_MARKET).assign{value: msg.value}(encoded_key), "AssignRelayersFailed");
 
         outboundLaneNonce.latest_generated_nonce = nonce;
@@ -131,6 +131,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
             msg.sender,
             target,
             encoded);
+        return nonce;
     }
 
     /// Receive messages delivery proof from bridged chain.

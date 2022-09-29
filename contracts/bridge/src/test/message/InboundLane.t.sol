@@ -75,7 +75,7 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
 
     function test_receive_messages_proof() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
-        inlane.receive_messages_proof(out_data, hex"");
+        inlane.receive_messages_proof(out_data, hex"", 1);
 
         InboundLaneData memory in_data = inlane.data();
         assertEq(in_data.last_confirmed_nonce, uint(0));
@@ -90,42 +90,42 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
     function testFail_receive_messages_proof0() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
         out_data.latest_received_nonce = 1;
-        inlane.receive_messages_proof(out_data, hex"");
+        inlane.receive_messages_proof(out_data, hex"", 1);
     }
 
     function testFail_receive_messages_proof1() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
         out_data.messages[0].encoded_key = uint256(0x0000000000000000000000010000000000000000000000010000000000000002);
-        inlane.receive_messages_proof(out_data, hex"");
+        inlane.receive_messages_proof(out_data, hex"", 1);
     }
 
     function testFail_receive_messages_proof2() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
         out_data.messages[0].encoded_key = uint256(0x0000000000000000000000020000000000000000000000010000000000000001);
-        inlane.receive_messages_proof(out_data, hex"");
+        inlane.receive_messages_proof(out_data, hex"", 1);
     }
 
     function testFail_receive_messages_proof3() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
         out_data.messages[0].encoded_key = uint256(0x0000000000000000000000010000000100000000000000010000000000000001);
-        inlane.receive_messages_proof(out_data, hex"");
+        inlane.receive_messages_proof(out_data, hex"", 1);
     }
 
     function testFail_receive_messages_proof4() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
         out_data.messages[0].encoded_key = uint256(0x0000000000000000000000010000000000000001000000010000000000000001);
-        inlane.receive_messages_proof(out_data, hex"");
+        inlane.receive_messages_proof(out_data, hex"", 1);
     }
 
     function testFail_receive_messages_proof5() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
         out_data.messages[0].encoded_key = uint256(0x0000000000000000000000010000000000000000000000020000000000000001);
-        inlane.receive_messages_proof(out_data, hex"");
+        inlane.receive_messages_proof(out_data, hex"", 1);
     }
 
     function test_receive_messages_proof_multi0() public {
         OutboundLaneData memory out_data = _multi_out_lane_data();
-        inlane.receive_messages_proof(out_data, hex"");
+        inlane.receive_messages_proof(out_data, hex"", 3);
 
         InboundLaneData memory in_data = inlane.data();
         assertEq(in_data.last_confirmed_nonce, uint(0));
@@ -139,13 +139,13 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
 
     function test_receive_messages_proof_multi1() public {
         OutboundLaneData memory out_data = _out_lane_data(1);
-        inlane.receive_messages_proof(out_data, hex"");
+        inlane.receive_messages_proof(out_data, hex"", 1);
 
         out_data = _out_lane_data(2);
-        inlane.receive_messages_proof(out_data, hex"");
+        inlane.receive_messages_proof(out_data, hex"", 1);
 
         out_data = _out_lane_data(3);
-        inlane.receive_messages_proof(out_data, hex"");
+        inlane.receive_messages_proof(out_data, hex"", 1);
 
         InboundLaneData memory in_data = inlane.data();
         assertEq(in_data.last_confirmed_nonce, uint(0));

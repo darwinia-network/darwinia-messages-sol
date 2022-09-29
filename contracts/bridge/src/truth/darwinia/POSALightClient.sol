@@ -20,22 +20,20 @@ pragma abicoder v2;
 
 import "./EcdsaAuthority.sol";
 import "../../spec/POSACommitmentScheme.sol";
-import "../../proxy/Initializable.sol";
 import "../../interfaces/ILightClient.sol";
 
-contract POSALightClient is Initializable, POSACommitmentScheme, EcdsaAuthority, ILightClient {
+contract POSALightClient is POSACommitmentScheme, EcdsaAuthority, ILightClient {
     event MessageRootImported(uint256 block_number, bytes32 message_root);
 
     uint256 internal latest_block_number;
     bytes32 internal latest_message_root;
 
-    constructor(bytes32 _domain_separator) EcdsaAuthority(_domain_separator) {}
-
-    function initialize(
+    constructor(
+        bytes32 _domain_separator,
         address[] memory _relayers,
         uint256 _threshold,
         uint256 _nonce
-    ) public initializer {
+    ) EcdsaAuthority(_domain_separator) {
         __ECDSA_init__(_relayers, _threshold, _nonce);
     }
 
@@ -53,7 +51,7 @@ contract POSALightClient is Initializable, POSACommitmentScheme, EcdsaAuthority,
     function import_message_commitment(
         Commitment calldata commitment,
         bytes[] calldata signatures
-    ) external payable {
+    ) external {
         // Hash the commitment
         bytes32 commitment_hash = hash(commitment);
         // Commitment match the nonce of ecdsa-authority

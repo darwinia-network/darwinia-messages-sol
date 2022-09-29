@@ -20,14 +20,13 @@ pragma abicoder v2;
 
 import "../../spec/ChainMessagePosition.sol";
 import "../../spec/MerkleProof.sol";
-import "../../proxy/Initializable.sol";
 import "../../interfaces/ILightClient.sol";
 
 interface IConsensusLayer {
     function state_root() external view returns (bytes32);
 }
 
-contract ExecutionLayer is Initializable, MerkleProof, ILightClient {
+contract ExecutionLayer is MerkleProof, ILightClient {
     bytes32 private latest_execution_payload_state_root;
 
     address public immutable CONSENSUS_LAYER;
@@ -48,13 +47,11 @@ contract ExecutionLayer is Initializable, MerkleProof, ILightClient {
         CONSENSUS_LAYER = consensus_layer;
     }
 
-    function initialize() public initializer {}
-
     function merkle_root() public view override returns (bytes32) {
         return latest_execution_payload_state_root;
     }
 
-    function import_latest_execution_payload_state_root(ExecutionPayloadStateRootUpdate calldata update) external payable {
+    function import_latest_execution_payload_state_root(ExecutionPayloadStateRootUpdate calldata update) external {
         require(latest_execution_payload_state_root != update.latest_execution_payload_state_root, "same");
         require(verify_latest_execution_payload_state_root(
             update.latest_execution_payload_state_root,

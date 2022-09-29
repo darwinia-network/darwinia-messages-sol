@@ -32,6 +32,7 @@ contract FeeMarketTest is DSTest {
     uint32  constant internal SLASH_TIME = 1 days;
     uint32  constant internal RELAY_TIME = 1 days;
     uint32  constant internal PRICE_RATIO = 800_000;
+    uint256 constant internal DUTY_RATIO = 20;
 
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     address public vault = address(111);
@@ -49,7 +50,8 @@ contract FeeMarketTest is DSTest {
             ASSIGNED_RELAYERS_NUMBER,
             SLASH_TIME,
             RELAY_TIME,
-            PRICE_RATIO
+            PRICE_RATIO,
+            DUTY_RATIO
         );
         self = address(this);
         market.initialize();
@@ -237,7 +239,13 @@ contract FeeMarketTest is DSTest {
         assertEq(top[1], address(b));
         assertEq(top[2], address(c));
 
-        (uint index, address[] memory relayers, uint[] memory fees, uint[] memory balances) = market.getOrderBook(3, true);
+        (
+            uint index,
+            address[] memory relayers,
+            uint[] memory fees,
+            uint[] memory balances,
+            uint[] memory locks
+        ) = market.getOrderBook(3, true);
         assertEq(index, 3);
         assertEq(relayers[0], address(a));
         assertEq(relayers[1], address(b));
@@ -248,16 +256,26 @@ contract FeeMarketTest is DSTest {
         assertEq(balances[0], 1 ether);
         assertEq(balances[1], 1 ether);
         assertEq(balances[2], 1 ether);
+        assertEq(locks[0], 0 ether);
+        assertEq(locks[1], 0 ether);
+        assertEq(locks[2], 0 ether);
     }
 
     function test_assign() public {
         uint key = 1;
         init(key);
-        (uint index, address[] memory relayers, uint[] memory fees, uint[] memory balances) = market.getOrderBook(1, false);
+        (
+            uint index,
+            address[] memory relayers,
+            uint[] memory fees,
+            uint[] memory balances,
+            uint[] memory locks
+        ) = market.getOrderBook(1, false);
         assertEq(index, 0);
         assertEq(relayers[0], address(0));
         assertEq(fees[0], 0 ether);
         assertEq(balances[0], 0 ether);
+        assertEq(locks[0], 0 ether);
 
         assert_market_locked(a, 1 ether);
         assert_market_locked(b, 1 ether);

@@ -566,7 +566,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     uint256 internal locked;
 
     /// @dev Gas used per message needs to be less than `MAX_GAS_PER_MESSAGE` wei
-    uint256 private constant MAX_GAS_PER_MESSAGE = 200000;
+    uint256 private constant MAX_GAS_PER_MESSAGE = 240000;
     /// @dev Gas buffer for executing `send_message` tx
     uint256 private constant GAS_BUFFER = 10000;
     /// @dev This parameter must lesser than 256
@@ -655,7 +655,8 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// this data in the transaction, so reward confirmations lags should be minimal.
     function receive_messages_proof(
         OutboundLaneData memory outboundLaneData,
-        bytes memory messagesProof
+        bytes memory messagesProof,
+        uint delivery_size
     ) external nonReentrant {
         _verify_messages_proof(hash(outboundLaneData), messagesProof);
         // Require there is enough gas to play all messages
@@ -664,7 +665,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             "!gas"
         );
         _receive_state_update(outboundLaneData.latest_received_nonce);
-        _receive_message(outboundLaneData.messages);
+        _receive_message(outboundLaneData.messages, delivery_size);
     }
 
     /// Return the commitment of lane data.
@@ -730,11 +731,12 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     }
 
     /// Receive new message.
-    function _receive_message(Message[] memory messages) private {
+    function _receive_message(Message[] memory messages, uint delivery_size) private {
+        require(delivery_size <= messages.length, "!size");
         address relayer = msg.sender;
         uint64 begin = inboundLaneNonce.last_delivered_nonce + 1;
         uint64 next = begin;
-        for (uint256 i = 0; i < messages.length; i++) {
+        for (uint256 i = 0; i < delivery_size; i++) {
             Message memory message = messages[i];
             MessageKey memory key = decodeMessageKey(message.encoded_key);
             MessagePayload memory message_payload = message.payload;
@@ -755,13 +757,12 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             // if there are more unconfirmed messages than we may accept, reject this message
             require(next - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "TooManyUnconfirmedMessages");
 
-            // update inbound lane nonce storage
-            inboundLaneNonce.last_delivered_nonce = next;
-
             // then, dispatch message
             bool dispatch_result = _dispatch(message_payload);
-
             emit MessageDispatched(key.nonce, dispatch_result);
+
+            // update inbound lane nonce storage
+            inboundLaneNonce.last_delivered_nonce = next;
 
             next += 1;
         }
@@ -798,7 +799,7 @@ contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         );
         if (_filter(payload.target, filterCallData)) {
             // Deliver the message to the target
-            (dispatch_result,) = payload.target.call{value: 0, gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
+            (dispatch_result,) = payload.target.call{gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
         }
     }
 

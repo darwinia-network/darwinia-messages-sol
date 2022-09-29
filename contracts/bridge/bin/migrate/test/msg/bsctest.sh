@@ -23,8 +23,8 @@ bridged_chain_pos=0
 bridged_in_lane_pos=1
 bridged_out_lane_pos=0
 
-DarwiniaLightClientProxy=$(load_saddr "DarwiniaLightClientProxy")
-DarwiniaMessageVerifier=$(deploy DarwiniaMessageVerifier $DarwiniaLightClientProxy)
+POSALightClient=$(load_saddr "POSALightClient")
+DarwiniaMessageVerifier=$(deploy DarwiniaMessageVerifier $POSALightClient)
 
 OutboundLane=$(deploy OutboundLane \
   $DarwiniaMessageVerifier \
@@ -43,6 +43,6 @@ InboundLane=$(deploy InboundLane \
 
 seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1 --chain bsctest
 
-DarwiniaLightClientProxy=$(load_taddr "BSCStorageVerifier")
+BSCStorageVerifier=$(load_taddr "BSCStorageVerifier")
 (set -x; seth send -F $ETH_FROM $BSCStorageVerifier "registry(uint32,uint32,address,uint32,address)" \
   $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url https://pangoro-rpc.darwinia.network)

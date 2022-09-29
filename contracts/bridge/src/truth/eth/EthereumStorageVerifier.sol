@@ -18,18 +18,27 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../common/StorageVerifier.sol";
+import "../common/EVMStorageVerifier.sol";
 import "../../spec/ChainMessagePosition.sol";
 import "../../interfaces/ILightClient.sol";
 
-contract EthereumStorageVerifier is StorageVerifier {
-    ILightClient public immutable LIGHT_CLIENT;
+contract EthereumStorageVerifier is EVMStorageVerifier {
+    ILightClient private light_client;
 
-    constructor(address lightclient) StorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
-        LIGHT_CLIENT = ILightClient(lightclient);
+    constructor(address lightclient) EVMStorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
+        light_client = ILightClient(lightclient);
     }
 
     function state_root() public view override returns (bytes32) {
-        return LIGHT_CLIENT.merkle_root();
+        return light_client.merkle_root();
     }
+
+    function LIGHT_CLIENT() external view returns (address) {
+        return address(light_client);
+    }
+
+    function changeLightClient(address lightclient) external onlySetter {
+        light_client = ILightClient(lightclient);
+    }
+
 }
