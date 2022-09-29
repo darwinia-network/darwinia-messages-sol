@@ -1,7 +1,7 @@
 const Eth2Client = require('./eth2client').Eth2Client
 // const beacon_endpoint = "http://127.0.0.1:5052"
-// const beacon_endpoint = "http://g2.dev.darwinia.network:9596"
-const beacon_endpoint = "https://lodestar-mainnet-rpc.darwinia.network/"
+const beacon_endpoint = "http://g2.dev.darwinia.network:9596"
+// const beacon_endpoint = "https://lodestar-mainnet-rpc.darwinia.network/"
 
 const eth2Client = new Eth2Client(beacon_endpoint);
 
@@ -14,6 +14,11 @@ const log = console.log;
   // log(optimistic_update)
   const finality_update = await eth2Client.get_finality_update()
   log(finality_update)
+  const block = await eth2Client.get_beacon_block(finality_update.finalized_header.slot)
+  log(block)
+  const period = ~~(Number(finality_update.attested_header.slot) / 32 / 256)
+  const sync_period = await eth2Client.get_sync_committee_period_update(period, 1)
+  log(sync_period)
   let finalized_header = await eth2Client.get_header(finality_update.finalized_header.slot)
   const bootstrap = await eth2Client.get_bootstrap(finalized_header.root)
   log(JSON.stringify(bootstrap, null, 2))

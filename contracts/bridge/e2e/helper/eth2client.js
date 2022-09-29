@@ -86,7 +86,6 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    console.log(data)
     return data.data
   }
 
