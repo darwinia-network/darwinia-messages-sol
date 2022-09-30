@@ -4,8 +4,11 @@ set -e
 
 . $(dirname $0)/color.sh
 
-s=pangoro
-t=goerli
+# s=pangoro
+# t=goerli
+
+s=darwinia
+t=ethlive
 
 root_dir=$(realpath .)
 
@@ -18,7 +21,7 @@ origin_message_root=$(seth call $cmt "commitment()" --chain $s)
 p2 "message_root" "$origin_message_root"
 
 ADDRESSES_FILE="${root_dir}/bin/addr/${mode}/${t}.json"
-lc=$(cat $ADDRESSES_FILE | jq -r ".pangoro.DarwiniaLightClientProxy")
+lc=$(cat $ADDRESSES_FILE | jq -r ".$s.POSALightClient")
 
 echo "############# DarwiniaLightClient ###############"
 block_number=$(seth call $lc "block_number()(uint)" --chain $t)

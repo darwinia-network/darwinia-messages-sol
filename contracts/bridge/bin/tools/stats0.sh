@@ -4,15 +4,19 @@ set -e
 
 . $(dirname $0)/color.sh
 
-s=goerli
-t=pangoro
-beacon_endpoint="http://g1.dev.darwinia.network:9596"
+# s=goerli
+# t=pangoro
+# beacon_endpoint="http://g1.dev.darwinia.network:9596"
+
+s=ethlive
+t=darwinia
+beacon_endpoint="https://lodestar-mainnet-rpc.darwinia.network/"
 
 root_dir=$(realpath .)
 ADDRESSES_FILE="${root_dir}/bin/addr/${mode}/${t}.json"
 
-cl=$(cat $ADDRESSES_FILE | jq -r ".goerli.BeaconLightClient")
-el=$(cat $ADDRESSES_FILE | jq -r ".goerli.EthereumExecutionLayerProxy")
+cl=$(cat $ADDRESSES_FILE | jq -r ".$s.BeaconLightClient")
+el=$(cat $ADDRESSES_FILE | jq -r ".$s.ExecutionLayer")
 
 echo "############# EthereumConsensusLayer ###############"
 keys='slot proposer_index parent_root state_root body_root'
