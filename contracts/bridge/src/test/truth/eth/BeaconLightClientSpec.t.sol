@@ -66,21 +66,26 @@ contract BeaconLightClientSpecTest is DSTest, SyncCommitteePreset {
         assert_finalized_header();
     }
 
-    // function test_import_latest_execution_payload_state_root() public {
-    //     BeaconBlockHeader memory finalized_header = build_finalized_header();
-    //     process_import_finalized_header(finalized_header);
-    //     bytes32[] memory latest_execution_payload_state_root_branch = build_latest_execution_payload_state_root_branch();
-    //     ExecutionLayer.ExecutionPayloadStateRootUpdate memory update = ExecutionLayer.ExecutionPayloadStateRootUpdate({
-    //         latest_execution_payload_state_root: LATEST_EXECUTION_PAYLOAD_STATE_ROOT,
-    //         latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch
-    //     });
-    //     executionlayer.import_latest_execution_payload_state_root(update);
-    //     assertEq(executionlayer.merkle_root(), LATEST_EXECUTION_PAYLOAD_STATE_ROOT);
-    // }
+    function test_import_latest_execution_payload_state_root() public {
+        process_import_finalized_header();
+        BeaconBlockBody memory body = build_beacon_block_body();
+        executionlayer.import_latest_execution_payload_state_root(body);
+        assertEq(executionlayer.merkle_root(), LATEST_EXECUTION_PAYLOAD_STATE_ROOT);
+    }
 
     function test_import_finalized_header() public {
         process_import_finalized_header();
         assert_finalized_header();
+    }
+
+    function test_hash_body() public {
+        BeaconBlockBody memory body = build_beacon_block_body();
+        assertEq(hash_tree_root(body), 0x5d89f947b76eac1403fe2bd69c8105bba903e3165a446a666801946f33b561fe);
+    }
+
+    function test_hash_execution_payload() public {
+        ExecutionPayload memory payload = build_execution_payload();
+        assertEq(hash_tree_root(payload), 0x2490713379e5aa8bee358bbfe709fe283e3a291a3566f04bad8d9a185d08d738);
     }
 
     function assert_finalized_header() public {
@@ -98,15 +103,14 @@ contract BeaconLightClientSpecTest is DSTest, SyncCommitteePreset {
         lightclient.import_finalized_header(update);
     }
 
-    function build_header_update() internal pure returns (BeaconLightClient.FinalizedHeaderUpdate memory update) {
-
+    function build_header_update() internal pure returns (BeaconLightClient.FinalizedHeaderUpdate memory) {
         return BeaconLightClient.FinalizedHeaderUpdate({
             attested_header: BeaconBlockHeader({
-                slot: 160,
+                slot:           160,
                 proposer_index: 80,
-                parent_root: 0x137897af1cfe1fb5653ef013071bd1aeef1ef3f0c3bd512231f55c64e719e425,
-                state_root: 0x6c97e36f19a53e29b6cb929c40cda7da84468da3c25e11dec111b053b8f14f7b,
-                body_root: 0x86197db1dfc43279b94bb219c5b0b150b722ea241f5c406febc10a6981bd0253
+                parent_root:    0x137897af1cfe1fb5653ef013071bd1aeef1ef3f0c3bd512231f55c64e719e425,
+                state_root:     0x6c97e36f19a53e29b6cb929c40cda7da84468da3c25e11dec111b053b8f14f7b,
+                body_root:      0x86197db1dfc43279b94bb219c5b0b150b722ea241f5c406febc10a6981bd0253
             }),
             signature_sync_committee: sync_committee_case0(),
             finalized_header: build_finalized_header(),
@@ -125,11 +129,11 @@ contract BeaconLightClientSpecTest is DSTest, SyncCommitteePreset {
 
     function build_finalized_header() internal pure returns (BeaconBlockHeader memory) {
         BeaconBlockHeader memory finalized_header = BeaconBlockHeader({
-                slot: 96,
+                slot:           96,
                 proposer_index: 113,
-                parent_root: 0xbdabcb2cd4fa844539e5b6980bf041ec82ba9fe6c4fa96c891aae138a21a93fd,
-                state_root: 0x39ccd3ef13c880134355d74ebaa99a7278635ed60783affe0133a246cc56dc35,
-                body_root: 0x5d89f947b76eac1403fe2bd69c8105bba903e3165a446a666801946f33b561fe
+                parent_root:    0xbdabcb2cd4fa844539e5b6980bf041ec82ba9fe6c4fa96c891aae138a21a93fd,
+                state_root:     0x39ccd3ef13c880134355d74ebaa99a7278635ed60783affe0133a246cc56dc35,
+                body_root:      0x5d89f947b76eac1403fe2bd69c8105bba903e3165a446a666801946f33b561fe
         });
         return finalized_header;
     }
@@ -155,18 +159,38 @@ contract BeaconLightClientSpecTest is DSTest, SyncCommitteePreset {
         return next_sync_committee_branch;
     }
 
-    function build_latest_execution_payload_state_root_branch() internal pure returns (bytes32[] memory) {
-        bytes32[] memory latest_execution_payload_state_root_branch = new bytes32[](9);
-        latest_execution_payload_state_root_branch[0] = 0x6e6f207265636569707473206865726500000000000000000000000000000000;
-        latest_execution_payload_state_root_branch[1] = 0x0da04860fe44433e504e6cb82bd33d75e6777a42e61945b5b5fb1419c71154b0;
-        latest_execution_payload_state_root_branch[2] = 0x652fbde7e8c386fa3bb4eb78d00554151bde57883b291ab2518daec002b8b3b0;
-        latest_execution_payload_state_root_branch[3] = 0x812d7693874fe376731eed84416c67a6ed1a2a6799c562016882c88b866afc98;
-        latest_execution_payload_state_root_branch[4] = 0x0000000000000000000000000000000000000000000000000000000000000000;
-        latest_execution_payload_state_root_branch[5] = 0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b;
-        latest_execution_payload_state_root_branch[6] = 0xdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71;
-        latest_execution_payload_state_root_branch[7] = 0x2e04867cf7c3b3e8e9e7b200d79e4a508ad69a3fe24fae94455458f5b151c573;
-        latest_execution_payload_state_root_branch[8] = 0x888fcb085245c3f527c9970cb9e2baa448489971cc2d642c579e43c43b48a931;
-        return latest_execution_payload_state_root_branch;
+    function build_execution_payload() internal pure returns (ExecutionPayload memory) {
+        return ExecutionPayload({
+                 parent_hash:      0x086a5176b7264ec055146c18cf00fbfbc17e1d5b8e329d05ee31e646ccb8bc25,
+                 fee_recipient:    0x0000000000000000000000000000000000000000,
+                 state_root:       0x2020202020202020202020202020202020202020202020202020202020202020,
+                 receipts_root:    0x6e6f207265636569707473206865726500000000000000000000000000000000,
+                 logs_bloom:       0x0000000000000000000000000000000000000000000000000000000000000000,
+                 prev_randao:      0x8bfd65d9fced9ebead59f7b12c45476bae9e8d076b91b29f8825b497b39a79d5,
+                 block_number:     2,
+                 gas_limit:        30000000,
+                 gas_used:         0,
+                 timestamp:        1152,
+                 extra_data:       0x0000000000000000000000000000000000000000000000000000000000000000,
+                 base_fee_per_gas: 1000000000,
+                 block_hash:       0x99af7944c07bc4f6cd2901a63652d4e4286671734e753370d1401f6bd4e7e1f4,
+                 transactions:     0x7ffe241ea60187fdb0187bfa22de35d1f9bed7ab061d9401fd47e34a54fbede1
+             });
+    }
+
+    function build_beacon_block_body() internal pure returns (BeaconBlockBody memory) {
+        return BeaconBlockBody({
+             randao_reveal:      0xfa342089de677fac3ed4de0a50c4518ab6a9bb1f7487276f68a703c1b4874e86,
+             eth1_data:          0xe5a8983c1b75fb1729d091f72018e4b50dd9d12afe19c4fed929dd16403cb0b8,
+             graffiti:           0x0000000000000000000000000000000000000000000000000000000000000000,
+             proposer_slashings: 0x792930bbd5baac43bcc798ee49aa8185ef76bb3b44ba62b91d86ae569e4bb535,
+             attester_slashings: 0x7a0501f5957bdf9cb3a8ff4966f02265f968658b7a9c62642cba1165e86642f5,
+             attestations:       0x0ce8502857380438a71857e962e99296ecf70c4f8996d381a10030ff14a3329b,
+             deposits:           0x792930bbd5baac43bcc798ee49aa8185ef76bb3b44ba62b91d86ae569e4bb535,
+             voluntary_exits:    0x792930bbd5baac43bcc798ee49aa8185ef76bb3b44ba62b91d86ae569e4bb535,
+             sync_aggregate:     0x50dbcb1fd7c53f50bb3bd1a30640f38eec60300722977902a47779cae66d448c,
+             execution_payload:  build_execution_payload()
+        });
     }
 
 }

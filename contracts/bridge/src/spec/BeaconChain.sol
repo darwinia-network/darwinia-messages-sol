@@ -149,6 +149,7 @@ contract BeaconChain is MerkleProof {
         leaves[7] = beacon_block_body.voluntary_exits;
         leaves[8] = beacon_block_body.sync_aggregate;
         leaves[9] = hash_tree_root(beacon_block_body.execution_payload);
+        return merkle_root(leaves);
     }
 
     function hash_tree_root(ExecutionPayload memory execution_payload) internal pure returns (bytes32) {
@@ -167,6 +168,7 @@ contract BeaconChain is MerkleProof {
         leaves[11] = to_little_endian_256(execution_payload.base_fee_per_gas);
         leaves[12] = execution_payload.block_hash;
         leaves[13] = execution_payload.transactions;
+        return merkle_root(leaves);
     }
 
     function to_little_endian_64(uint64 value) internal pure returns (bytes8) {
