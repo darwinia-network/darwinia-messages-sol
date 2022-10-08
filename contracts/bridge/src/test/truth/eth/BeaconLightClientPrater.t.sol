@@ -25,7 +25,7 @@ import "../../spec/SyncCommittee.t.sol";
 import "../../../truth/eth/BeaconLightClient.sol";
 import "../../../truth/eth/ExecutionLayer.sol";
 
-// contract BeaconLightClientTest2 is DSTest, Bitfield, SyncCommitteePreset {
+// contract BeaconLightClientPraterTest is DSTest, Bitfield, SyncCommitteePreset {
 //     bytes32 constant CURRENT_SYNC_COMMITTEE_ROOT = 0x21053f2ba6bbb6c6d452697ea35aa1c77edfb48aae52612169d01290d90f7155;
 //     bytes32 constant GENESIS_VALIDATORS_ROOT = 0x99b09fcd43e5905236c370f184056bec6e6638cfc31a323b304fc4aa789cb4ad;
 //     bytes32 constant LATEST_EXECUTION_PAYLOAD_STATE_ROOT = 0xe55ce819dcd715afb77bac000eb6495ea0dc93e3380501100718403c063a70b0;

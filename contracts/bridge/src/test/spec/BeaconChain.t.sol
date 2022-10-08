@@ -91,7 +91,7 @@ contract BeaconChainTest is DSTest, SyncCommitteePreset {
 
     function test_sync_committee_hash() public {
         SyncCommittee memory case0 = sync_committee_case0();
-        assertEq(hash_tree_root(case0), 0x2caebdff18c50efccdd064adb761d8b885ec21755ddfdeff4be99446b0589b3f);
+        assertEq(hash_tree_root(case0), 0x5cf5804f5a8dc680445f5efd4069859f3c65dd2db869f1d091f454008f6d7ab7);
 
         SyncCommittee memory case1 = sync_committee_case1();
         assertEq(hash_tree_root(case1), 0x5cf5804f5a8dc680445f5efd4069859f3c65dd2db869f1d091f454008f6d7ab7);

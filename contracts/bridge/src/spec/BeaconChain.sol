@@ -154,7 +154,7 @@ contract BeaconChain is MerkleProof {
     function hash_tree_root(ExecutionPayload memory execution_payload) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](14);
         leaves[0]  = execution_payload.parent_hash;
-        leaves[1]  = abi.encodePacked(execution_payload.fee_recipient, bytes16(0));
+        leaves[1]  = bytes32(bytes20(execution_payload.fee_recipient));
         leaves[2]  = execution_payload.state_root;
         leaves[3]  = execution_payload.receipts_root;
         leaves[4]  = execution_payload.logs_bloom;
