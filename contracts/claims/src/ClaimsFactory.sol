@@ -1,7 +1,6 @@
-
 // hevm: flattened sources of src/ClaimsFactory.sol
 // SPDX-License-Identifier: MIT
-pragma solidity =0.8.11 >=0.8.0 <0.9.0 >=0.8.1 <0.9.0 >=0.8.11 <0.9.0;
+pragma solidity 0.8.11;
 
 ////// lib/openzeppelin-contracts/contracts/access/IAccessControl.sol
 // OpenZeppelin Contracts v4.4.1 (access/IAccessControl.sol)
