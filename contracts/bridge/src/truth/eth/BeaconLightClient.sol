@@ -162,6 +162,9 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         SyncCommitteePeriodUpdate calldata sc_update
     ) external {
         require(is_supermajority(header_update.sync_aggregate.sync_committee_bits), "!supermajor");
+        require(header_update.signature_slot > header_update.attested_header.slot &&
+                header_update.attested_header.slot >= header_update.finalized_header.slot,
+                "!skip");
         require(verify_finalized_header(
                 header_update.finalized_header,
                 header_update.finality_branch,
@@ -205,6 +208,9 @@ contract BeaconLightClient is BeaconChain, Bitfield {
 
     function import_finalized_header(FinalizedHeaderUpdate calldata update) external {
         require(is_supermajority(update.sync_aggregate.sync_committee_bits), "!supermajor");
+        require(update.signature_slot > update.attested_header.slot &&
+                update.attested_header.slot >= update.finalized_header.slot,
+                "!skip");
         require(verify_finalized_header(
                 update.finalized_header,
                 update.finality_branch,
