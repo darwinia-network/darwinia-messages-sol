@@ -25,10 +25,11 @@ import "../../spec/SyncCommittee.t.sol";
 import "../../../truth/eth/BeaconLightClient.sol";
 import "../../../truth/eth/ExecutionLayer.sol";
 
+
 contract BeaconLightClientPraterTest is DSTest, Bitfield, SyncCommitteePreset {
-    bytes32 constant CURRENT_SYNC_COMMITTEE_ROOT = 0x21053f2ba6bbb6c6d452697ea35aa1c77edfb48aae52612169d01290d90f7155;
+    bytes32 constant CURRENT_SYNC_COMMITTEE_ROOT = 0xa36ba14c9ad227f9785a6b9ffd52d3b1f40a3fbd73e7445e18f70cac121612b4;
     bytes32 constant GENESIS_VALIDATORS_ROOT = 0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb;
-    bytes32 constant LATEST_EXECUTION_PAYLOAD_STATE_ROOT = 0xe55ce819dcd715afb77bac000eb6495ea0dc93e3380501100718403c063a70b0;
+    bytes32 constant LATEST_EXECUTION_PAYLOAD_STATE_ROOT = 0xba2cb8f2d80e266a1e69845b10224430f4667f3da4273174c9b243a8661e91fe;
 
     BeaconLightClient lightclient;
     ExecutionLayer executionlayer;
@@ -39,11 +40,11 @@ contract BeaconLightClientPraterTest is DSTest, Bitfield, SyncCommitteePreset {
         bls = new MockBLS();
         lightclient = new BeaconLightClient(
             address(bls),
-            651232,
-            86325,
-            0x13189ed59789d8c28c9e4f8aed4494979075cf3c0a1ee9fd03f93816f65bbe16,
-            0xd29f11a73f0207a356e38ad5dccdaa2fdf6c94aa9c51d34e6ca29ce9dbdd6550,
-            0x6a52c3e5c4d195607035457f4263b3a3a653d9b143bc73bef5ca5c1154b5c02d,
+            4063328,
+            353355,
+            0x964a8c23cedbb4f2a44749e317ed2612b02eee158bea49e629fcbf8852f523d1,
+            0xc98b933323521f9cbf5318e8ca0d3737db76811a9232b35de9587763bd8ea05a,
+            0xe59b964884eb33a1cce0b2507da841651ac61be559c7020f57d61fb212ce3e57,
             CURRENT_SYNC_COMMITTEE_ROOT,
             GENESIS_VALIDATORS_ROOT
         );
@@ -51,42 +52,31 @@ contract BeaconLightClientPraterTest is DSTest, Bitfield, SyncCommitteePreset {
         self = address(this);
     }
 
-    function test_constructor_args() public {
+    function test_constructor_args() public {}
 
-    }
-
-    function test_import_next_sync_committee() public {
-        BeaconBlockHeader memory finalized_header = build_finalized_header();
-        process_import_finalized_header(finalized_header);
+    function test_sync_committee_period_update() public {
+        BeaconLightClient.FinalizedHeaderUpdate memory header_update = build_header_update();
         bytes32[] memory next_sync_committee_branch = build_next_sync_committee_branch();
-        BeaconLightClient.SyncCommitteePeriodUpdate memory update = BeaconLightClient.SyncCommitteePeriodUpdate({
-            next_sync_committee: sync_committee_case4(),
+        BeaconLightClient.SyncCommitteePeriodUpdate memory sc_update = BeaconLightClient.SyncCommitteePeriodUpdate({
+            next_sync_committee: sync_committee_case3(),
             next_sync_committee_branch: next_sync_committee_branch
         });
-        lightclient.import_next_sync_committee(update);
-        bytes32 stored_next_sync_committee_root = lightclient.sync_committee_roots(80);
-        assertEq(hash_tree_root(sync_committee_case4()), stored_next_sync_committee_root);
+        lightclient.sync_committee_period_update(header_update, sc_update);
+        bytes32 stored_next_sync_committee_root = lightclient.sync_committee_roots(497);
+        assertEq(hash_tree_root(sync_committee_case3()), stored_next_sync_committee_root);
+        assert_finalized_header();
     }
 
     function test_import_latest_execution_payload_state_root() public {
-        BeaconBlockHeader memory finalized_header = build_finalized_header();
-        process_import_finalized_header(finalized_header);
-        bytes32[] memory latest_execution_payload_state_root_branch = build_latest_execution_payload_state_root_branch();
-        ExecutionLayer.ExecutionPayloadStateRootUpdate memory update = ExecutionLayer.ExecutionPayloadStateRootUpdate({
-            latest_execution_payload_state_root: LATEST_EXECUTION_PAYLOAD_STATE_ROOT,
-            latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch
-        });
-        executionlayer.import_latest_execution_payload_state_root(update);
+        process_import_finalized_header();
+        BeaconBlockBody memory body = build_beacon_block_body();
+        executionlayer.import_latest_execution_payload_state_root(body);
         assertEq(executionlayer.merkle_root(), LATEST_EXECUTION_PAYLOAD_STATE_ROOT);
     }
 
     function test_import_finalized_header() public {
-        BeaconBlockHeader memory finalized_header = build_finalized_header();
-        process_import_finalized_header(finalized_header);
-        assert_finalized_header(finalized_header);
-    }
-
-    function assert_finalized_header(BeaconBlockHeader memory finalized_header) public {
+        process_import_finalized_header();
+        BeaconBlockHeader memory finalized_header = build_finalized_header1();
         (uint64 slot, uint64 proposer_index, bytes32 parent_root, bytes32 state_root, bytes32 body_root) = lightclient.finalized_header();
         assertEq(uint(slot), finalized_header.slot);
         assertEq(uint(proposer_index), finalized_header.proposer_index);
@@ -95,77 +85,166 @@ contract BeaconLightClientPraterTest is DSTest, Bitfield, SyncCommitteePreset {
         assertEq(body_root, finalized_header.body_root);
     }
 
-    function process_import_finalized_header(BeaconBlockHeader memory finalized_header) public {
-        bytes32[] memory finality_branch = build_finality_branch();
+    function test_hash_body() public {
+        BeaconBlockBody memory body = build_beacon_block_body();
+        assertEq(hash_tree_root(body), 0xe683ebcb97b578a72f9c30533a8fdf046a9473408fd3bde3c68f56308eddb922);
+    }
+
+    function test_hash_execution_payload() public {
+        ExecutionPayload memory payload = build_execution_payload();
+        assertEq(hash_tree_root(payload), 0xd14091c659bef13f4f0c95aef5f1aebc46fc22caf4a87cb6a7174a32577d4b0c);
+    }
+
+    function assert_finalized_header() public {
+        BeaconBlockHeader memory finalized_header = build_finalized_header();
+        (uint64 slot, uint64 proposer_index, bytes32 parent_root, bytes32 state_root, bytes32 body_root) = lightclient.finalized_header();
+        assertEq(uint(slot), finalized_header.slot);
+        assertEq(uint(proposer_index), finalized_header.proposer_index);
+        assertEq(parent_root, finalized_header.parent_root);
+        assertEq(state_root, finalized_header.state_root);
+        assertEq(body_root, finalized_header.body_root);
+    }
+
+    function process_import_finalized_header() public {
+        bytes32[] memory finality_branch = new bytes32[](6);
+        finality_branch[0] = 0x62f0010000000000000000000000000000000000000000000000000000000000;
+        finality_branch[1] = 0x841c29464b336fb030eb99ed756f87c4ab777422ba9e172ce014bb9b8e7ec5b6;
+        finality_branch[2] = 0xf5d713060e8a77425c6e350a7cda34e5b488c606deb3c873fd490dfc83c76ac5;
+        finality_branch[3] = 0x7d6eef9d12048dcb660df3914cc0dc44decbd7693d40856f9004a87937e00798;
+        finality_branch[4] = 0x91c80b14baaebb58d591fd3a5edad7b7f0972bc5ba1055c9d11f5ebb888cb0ee;
+        finality_branch[5] = 0x4e328a0c4b7276c0307542e2e6785ba7a8043226e9ee05328c26eeca41e52590;
 
         BeaconLightClient.FinalizedHeaderUpdate memory update = BeaconLightClient.FinalizedHeaderUpdate({
             attested_header: BeaconBlockHeader({
-                slot: 651365,
-                proposer_index: 43797,
-                parent_root: 0x30d7a76229d0b814b62b67f32600b4151c23a9e6fc20d792b93d0d29c3f58e1c,
-                state_root: 0xe5991d8aba197cc483b381bf29602fc9f32b602c5198cf268eb3fe2946b5942f,
-                body_root: 0x1919d319f54f9e0b5de79fc86f9494ae651e27698488b211acccbd4da32ba3be
+                slot:           4066456,
+                proposer_index: 169206,
+                parent_root:    0x7123b887d02b692697999f03a445d815a8e4b950bce4db51fe5c25dbc164f685,
+                state_root:     0xa88cab25b5d93ddfb41c4173ef976cc9a1f44071fa42c27954ba64ffa81f2aaf,
+                body_root:      0x8a1a19e175acae182f3f7531b14402cb45d8c12038d8940e9eb9ad6b98f27f04
             }),
-            signature_sync_committee: sync_committee_case3(),
-            finalized_header: finalized_header,
+            signature_sync_committee: sync_committee_case2(),
+            finalized_header: build_finalized_header1(),
             finality_branch: finality_branch,
             sync_aggregate: BeaconLightClient.SyncAggregate({
                 sync_committee_bits:[
-                    bytes32(0xf7fffeefebd6ff6faf7ffffd7dfffffe6ff6bfbfffdedefffffff7fff5f77dac),
-                    bytes32(0xe7fffb7fddffaefdfffffeffefffbdfffffbe6fb5fffb7fefd7f3fffffffbffb)
+                    bytes32(0x7ffeefbfffbf7bffbfe726feff6ffdfeef37f9dfa7b41fdd3fbfeffdffbe63f6),
+                    bytes32(0xedffbfdf7fffdffbeb9ddfdfcfbefff97ff4e8ffef7d3ff759deff27fbbab7ff)
                 ],
-                sync_committee_signature: hex'afef0939a9e716283e11070e716a96cbeab8af6e4d695bf3366ea9d4dcb5aaa24841da1f7c9534d6aafe2bf1d79ea2b10a7a2748d9c3b602eb5f364c7fac1a2b9fa986d4bb075d3d6a68ad1186a2a46f2359ee8c27ad7726703969255c6dcfdd'
+                sync_committee_signature: hex'8d51de130ba2af6dc637d7054807f62399ca085659b8f9d2c3a05f7400f4e43b213733f1b683f3b5000bf7c808e27f7c0771b2da1beefd004654f66a7c98ca3e462c2d980893d9cbed15f6e41396803565d0ad7013270b47c67535f48505bba3'
             }),
-            fork_version: 0x70000071,
-            signature_slot: 651366
+            fork_version: 0x02001020,
+            signature_slot: 4066457
         });
         lightclient.import_finalized_header(update);
     }
 
+    function build_header_update() internal pure returns (BeaconLightClient.FinalizedHeaderUpdate memory) {
+        return BeaconLightClient.FinalizedHeaderUpdate({
+            attested_header: BeaconBlockHeader({
+                slot:           4063408,
+                proposer_index: 178217,
+                parent_root:    0x35adec31291c4e4e66d259f82e9c4a1063eff0c3f4fbfbdca70629c6e039fc53,
+                state_root:     0x3b63548ca2fcbb6175651811185fe3c06b1f2529cb758e9049b69e02717dedc9,
+                body_root:      0x8b1a74cef69937da01bb80c89a5263964ba5cee844f4abd49142446e84290bfb
+            }),
+            signature_sync_committee: sync_committee_case2(),
+            finalized_header: build_finalized_header(),
+            finality_branch: build_finality_branch(),
+            sync_aggregate: BeaconLightClient.SyncAggregate({
+                sync_committee_bits:[
+                    bytes32(0x7ffeefbfffbf7bffbff72efeff6ffdfeef37f9dfa7b41fdd3fbfeffdfffe67f6),
+                    bytes32(0xfdffbfdf7ffffffbebbfdfdfcfbefffb7ff4e8ffef7dbff759deff27fbbab7ff)
+                ],
+                sync_committee_signature: hex'b4c2bade45ff0c4699c325fef661a8bc19b2704cb10f83c18b034702a6c9a6307abf36a1fa96850fae2947e6fcaeea5c11bbed1a29c6b7c1a4a30c6abe1d9ba9a0910ac45806306219b70b0650494dc04677551505af59c779db06860c30a3b1'
+            }),
+            fork_version: 0x02001020,
+            signature_slot: 4063410
+        });
+    }
+
     function build_finalized_header() internal pure returns (BeaconBlockHeader memory) {
         BeaconBlockHeader memory finalized_header = BeaconBlockHeader({
-                slot: 651296,
-                proposer_index: 75122,
-                parent_root: 0x8df1fc9b14535dc274a25910a35311696cb185f6b3a6214dc454c0e1120b9304,
-                state_root: 0x582d324ed86245abb2f715b796e02781952762d1ec75fc51ccee70b260c592be,
-                body_root: 0xcd4bdfe82d423c4270b68f56c9a0a805adb133519c53e0d0c4c33820c5bd407d
+                slot:           4063328,
+                proposer_index: 353355,
+                parent_root:    0x964a8c23cedbb4f2a44749e317ed2612b02eee158bea49e629fcbf8852f523d1,
+                state_root:     0xc98b933323521f9cbf5318e8ca0d3737db76811a9232b35de9587763bd8ea05a,
+                body_root:      0xe59b964884eb33a1cce0b2507da841651ac61be559c7020f57d61fb212ce3e57
         });
+        return finalized_header;
+    }
+
+    function build_finalized_header1() internal pure returns (BeaconBlockHeader memory) {
+        BeaconBlockHeader memory finalized_header = BeaconBlockHeader({
+                slot:           4066368,
+                proposer_index: 233371,
+                parent_root:    0xc6e822d978ee3cf1f811389fc087e9020fc9aebb3be250579601cf57661d9d95,
+                state_root:     0x145bf800cbd72dffb76cb3c8a45586c0632053d10af4c6163446c12d937c41b8,
+                body_root:      0xe683ebcb97b578a72f9c30533a8fdf046a9473408fd3bde3c68f56308eddb922
+            });
         return finalized_header;
     }
 
     function build_finality_branch() internal pure returns (bytes32[] memory) {
         bytes32[] memory finality_branch = new bytes32[](6);
-        finality_branch[0] = 0x814f000000000000000000000000000000000000000000000000000000000000;
-        finality_branch[1] = 0xa9735d8aacd3002f679d93725445b97dc34b5e41272b4c85326c8b143d920686;
-        finality_branch[2] = 0x1a4e08f19e3824aea37f5242cb84b4fb028dfe330d079eab0bd9bbf797ababdd;
-        finality_branch[3] = 0x79da7a757abf525a5dabd1c6af0b9bcae30af24887c4b585f27cdc8e57a82ff7;
-        finality_branch[4] = 0x78fc8fd38e5910dc692176369a93e65b1c416dcd59dff970b10de5e7e7860920;
-        finality_branch[5] = 0x9ac6f0aef5fee862aa7138e86cb18c7e9dcf92b7e1dee90802117e39742486fd;
+        finality_branch[0] = 0x03f0010000000000000000000000000000000000000000000000000000000000;
+        finality_branch[1] = 0x20138281596673b75e115e00b445b078aceeb926d13de9ca847d862cb2564c1f;
+        finality_branch[2] = 0xf5d713060e8a77425c6e350a7cda34e5b488c606deb3c873fd490dfc83c76ac5;
+        finality_branch[3] = 0x6ecd6cbd81977588b8b788f51670363c4980dfb24358bba02cddbd672eddf455;
+        finality_branch[4] = 0x52e3cf69b61aad545e242e2ef8a78df16127d59472d728d86401731350538ce6;
+        finality_branch[5] = 0xa318f6d6418032efae3e4a269d72d04c291153b67b2390216087974cc5d3ca50;
         return finality_branch;
     }
 
     function build_next_sync_committee_branch() internal pure returns (bytes32[] memory) {
         bytes32[] memory next_sync_committee_branch = new bytes32[](5);
-        next_sync_committee_branch[0] = 0x21053f2ba6bbb6c6d452697ea35aa1c77edfb48aae52612169d01290d90f7155;
-        next_sync_committee_branch[1] = 0xd32bbe1442d4b417f896e794c3a3d3e2a672bbd66a6fb7204d3c4e63fee33ef0;
-        next_sync_committee_branch[2] = 0xf7cdf4e74455d9925fff6f90e16653113b337eebe178c21b1da1f5d1e6611751;
-        next_sync_committee_branch[3] = 0x38a2c83d926d0cc5521cb4d36d096c79e453d0214bcd64d68b0423f2c48eedad;
-        next_sync_committee_branch[4] = 0x5e97dd766bf30ee49745229a3790470e642f2dd3b3c8ce13e3f7b4bc6e4b3205;
+        // root next_sync_committee in finalized_header
+        next_sync_committee_branch[0] = 0xa36ba14c9ad227f9785a6b9ffd52d3b1f40a3fbd73e7445e18f70cac121612b4;
+        next_sync_committee_branch[1] = 0xe6933bd05e22a407823145bc85f9f6e21c46c6c65f3f65832de5e6c02c123dc2;
+        next_sync_committee_branch[2] = 0x6101f5ed3408ee7847161e53d830f490e52fb18f079852851412d9d3cd1f0b58;
+        next_sync_committee_branch[3] = 0x55e1bdd17c7dcab000d4d78176b3a85348a79851d414543cc94c2a85a14cd3b6;
+        next_sync_committee_branch[4] = 0x5e4102f6b8f5bc61ebac869adf2c88964e918bff81005161b0c3c4b8724de6c0;
+
+        // root next_sync_committee in attested_header
+        // next_sync_committee_branch[0] = 0xa36ba14c9ad227f9785a6b9ffd52d3b1f40a3fbd73e7445e18f70cac121612b4;
+        // next_sync_committee_branch[1] = 0x9820907666e8cdfa916cb110286263c0191cc8a71c59b3d16ffef8cbbb4b83b0;
+        // next_sync_committee_branch[2] = 0x6ecd6cbd81977588b8b788f51670363c4980dfb24358bba02cddbd672eddf455;
+        // next_sync_committee_branch[3] = 0x52e3cf69b61aad545e242e2ef8a78df16127d59472d728d86401731350538ce6;
+        // next_sync_committee_branch[4] = 0xa318f6d6418032efae3e4a269d72d04c291153b67b2390216087974cc5d3ca50;
         return next_sync_committee_branch;
     }
 
-    function build_latest_execution_payload_state_root_branch() internal pure returns (bytes32[] memory) {
-        bytes32[] memory latest_execution_payload_state_root_branch = new bytes32[](9);
-        latest_execution_payload_state_root_branch[0] = 0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421;
-        latest_execution_payload_state_root_branch[1] = 0x89fbf2edd4374bf78f47f697abedbbb3063b0948d4c2c69a715d2664f45ef943;
-        latest_execution_payload_state_root_branch[2] = 0xb2aced9d410d818440966483a6f23f045146aa4a4d5f25918bff488af24a285f;
-        latest_execution_payload_state_root_branch[3] = 0x60187b4f101a1533632d9c730a1a419f6b61de9a412e2e33ce18b8f041e0580c;
-        latest_execution_payload_state_root_branch[4] = 0x0000000000000000000000000000000000000000000000000000000000000000;
-        latest_execution_payload_state_root_branch[5] = 0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b;
-        latest_execution_payload_state_root_branch[6] = 0xdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71;
-        latest_execution_payload_state_root_branch[7] = 0x221207ac8656532897f09f6e17c05fa2ef1d32cf1cd6187b79c5d0fa7c4ba7f4;
-        latest_execution_payload_state_root_branch[8] = 0x5e97dd766bf30ee49745229a3790470e642f2dd3b3c8ce13e3f7b4bc6e4b3205;
-        return latest_execution_payload_state_root_branch;
+    function build_execution_payload() internal pure returns (ExecutionPayload memory) {
+        return ExecutionPayload({
+                 parent_hash:      0xbb762440415eda896064e4e8f9fcd1b74adbe4586726530acecd9b2106b0e688,
+                 fee_recipient:    0x8dC847Af872947Ac18d5d63fA646EB65d4D99560,
+                 state_root:       LATEST_EXECUTION_PAYLOAD_STATE_ROOT,
+                 receipts_root:    0xef5f362b0f09407472505e9d0b7961980886397c011e377e8797db3b2cb6fdfd,
+                 logs_bloom:       0x5a9e641747cd201c31d5d7111b08bc78f7e7b05665c25dea0175e002899a3f62,
+                 prev_randao:      0xb126ec433144f3bdacc15ab6adf9805aa69841cbc9da30b2397d65db57094c3a,
+                 block_number:     7738371,
+                 gas_limit:        30000000,
+                 gas_used:         29887283,
+                 timestamp:        1665304416,
+                 extra_data:       0x6c1af7064d349ef5be90d2e1a75c07f5f784e925bcda1f7a32e8003a6f7427a9,
+                 base_fee_per_gas: 55,
+                 block_hash:       0xe0f467253ab0ca0cbcf2d60e19fe9d9672eb547e5ef99b5fee7e7fbad3a109c8,
+                 transactions:     0x000c92092b4515fc77f506734bdd78ff3b7413655284674e92ffbebc1ee853a8
+             });
+    }
+
+    function build_beacon_block_body() internal pure returns (BeaconBlockBody memory) {
+        return BeaconBlockBody({
+             randao_reveal:      0xc307895482d9d180bfcc36bb3c60c7491120f1e71e002c59a820763fd8a62844,
+             eth1_data:          0xe432e8cebdf0704e8ee73b79adc843d7a1841e0895ecf5beac8097e30579ad07,
+             graffiti:           0x0000000000000000000000000000000000000000000000000000000000000000,
+             proposer_slashings: 0x792930bbd5baac43bcc798ee49aa8185ef76bb3b44ba62b91d86ae569e4bb535,
+             attester_slashings: 0x7a0501f5957bdf9cb3a8ff4966f02265f968658b7a9c62642cba1165e86642f5,
+             attestations:       0xb7c162f3f51293b0ed700997585a8d3832cf44e14fdd450c6e1033b29e17651a,
+             deposits:           0x792930bbd5baac43bcc798ee49aa8185ef76bb3b44ba62b91d86ae569e4bb535,
+             voluntary_exits:    0x792930bbd5baac43bcc798ee49aa8185ef76bb3b44ba62b91d86ae569e4bb535,
+             sync_aggregate:     0x2241a02ad04b01b7c6dfeb3d601c02bae83317e7e1085321ddfd8b42a5ddb6f9,
+             execution_payload:  build_execution_payload()
+        });
     }
 
     function sum(bytes32[2] memory x) internal pure returns (uint256) {
@@ -174,9 +253,9 @@ contract BeaconLightClientPraterTest is DSTest, Bitfield, SyncCommitteePreset {
 
     function test_sum_sync_committee_bits() public {
         bytes32[2] memory sync_committee_bits = [
-            bytes32(0xf7fffeefebd6ff6faf7ffffd7dfffffe6ff6bfbfffdedefffffff7fff5f77dac),
-            bytes32(0xe7fffb7fddffaefdfffffeffefffbdfffffbe6fb5fffb7fefd7f3fffffffbffb)
+            bytes32(0x7ffeefbfffbf7bffbff72efeff6ffdfeef37f9dfa7b41fdd3fbfeffdfffe67f6),
+            bytes32(0xfdffbfdf7ffffffbebbfdfdfcfbefffb7ff4e8ffef7dbff759deff27fbbab7ff)
         ];
-        assertEq(sum(sync_committee_bits), 445);
+        assertEq(sum(sync_committee_bits), 420);
     }
 }
