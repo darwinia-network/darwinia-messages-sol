@@ -12,8 +12,8 @@ abstract contract AbstractDarwiniaEndpoint {
     bytes2 public remoteMessageTransactCallIndex;
 
     // router params
-    bytes2 public routerForwardToMoonbeamCallIndex;
-    uint64 public routerForwardToMoonbeamCallWeight = 337_239_000;
+    bytes2 public routerForwardCallIndex;
+    uint64 public routerForwardCallWeight = 337_239_000;
 
     // Local params
     address public dispatchAddress;
@@ -62,18 +62,19 @@ abstract contract AbstractDarwiniaEndpoint {
         
         emit TargetTransactCallGenerated(tgtTransactCallEncoded);
 
-        // build the ForwardToMoonbeamCall
-        bytes memory routerForwardToMoonbeamCallEncoded = PalletMessageRouter
-            .buildForwardToMoonbeamCall(
-                routerForwardToMoonbeamCallIndex,
-                tgtTransactCallEncoded
+        // build the ForwardCall
+        bytes memory routerForwardCallEncoded = PalletMessageRouter
+            .buildForwardCall(
+                routerForwardCallIndex,
+                tgtTransactCallEncoded,
+                0 // moonbeam
             );
 
-        // dispatch the ForwardToMoonbeamCall
+        // dispatch the ForwardCall
         uint64 messageNonce = SmartChainXLib.remoteDispatch(
             _routerSpecVersion,
-            routerForwardToMoonbeamCallEncoded,
-            routerForwardToMoonbeamCallWeight,
+            routerForwardCallEncoded,
+            routerForwardCallWeight,
             dispatchAddress,
             sendMessageCallIndex,
             outboundLaneId,
