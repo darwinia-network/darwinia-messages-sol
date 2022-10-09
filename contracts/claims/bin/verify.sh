@@ -17,5 +17,5 @@ tos=$(jq -r ". | keys_unsorted[]" "$path")
 for to in $tos;do
   calldata=$(jq -r '.["'${to}'"] | values' "$path")
   echo "verify [$to] claim proof"
-  seth send -F $ETH_FROM $CLAIMS $calldata --chain $SETH_CHAIN
+  seth call -F $ETH_FROM $CLAIMS $calldata --chain $SETH_CHAIN
 done
