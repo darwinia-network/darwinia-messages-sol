@@ -1,0 +1,16 @@
+{
+    "name": "Helix Bridge",
+    "timestamp": "2022-10-09T00:00:00.000Z",
+    "version": { "major": 0, "minor": 1, "patch": 0 },
+    "logoURI": "https://pordria.evolution.land/logos/helix.png",
+    "events": [
+      {
+        "chainId": 1,
+        "address": "0x15fC591601044351868b13a5B629c170Bf3F30A0",
+        "name": "Helix Darwinia<>Ethereum V1 Claim",
+        "detail":"-",
+        "logoURI": "https://pordria.evolution.land/logos/helix.png",
+        "proofURI": "https://raw.githubusercontent.com/darwinia-network/darwinia-messages-sol/master/contracts/claims/data/ethlive/proof/airdrop_2.json"
+      }
+    ]
+  }
