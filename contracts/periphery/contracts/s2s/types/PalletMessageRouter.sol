@@ -11,12 +11,13 @@ library PalletMessageRouter {
     ///////////////////////
     // Calls
     ///////////////////////
-    struct ForwardToMoonbeamCall {
+    struct ForwardCall {
         bytes2 callIndex;
         XcmTypes.EnumItem_VersionedXcm_V2 message;
+        uint8 target;
     }
 
-    function encodeForwardToMoonbeamCall(ForwardToMoonbeamCall memory _call)
+    function encodeForwardCall(ForwardCall memory _call)
         internal
         pure
         returns (bytes memory)
@@ -24,32 +25,35 @@ library PalletMessageRouter {
         return
             abi.encodePacked(
                 _call.callIndex,
-                XcmTypes.encodeEnumItem_VersionedXcm_V2(_call.message)
+                XcmTypes.encodeEnumItem_VersionedXcm_V2(_call.message),
+                _call.target
             );
     }
 
-    function buildForwardToMoonbeamCall(
+    function buildForwardCall(
         bytes2 _callIndex,
-        bytes memory _callOnMoonbeam
+        bytes memory _callOnTarget,
+        uint8 target
     ) internal pure returns (bytes memory) {
-        // XCM to be sent to moonbeam
+        // XCM to be sent to target
         XcmTypes.EnumItem_VersionedXcm_V2 memory xcm = XcmTypes.EnumItem_VersionedXcm_V2(
             XcmTypes.Xcm(
                 XcmTypes.EnumItem_Instruction_Transact(
                     1, // originType: SovereignAccount
                     5000000000, // requireWeightAtMost
-                    _callOnMoonbeam
+                    _callOnTarget
                 )
             )
         );
 
         // ForwardToMoonbeamCall
-        PalletMessageRouter.ForwardToMoonbeamCall
-            memory call = PalletMessageRouter.ForwardToMoonbeamCall(
+        PalletMessageRouter.ForwardCall
+            memory call = PalletMessageRouter.ForwardCall(
                 _callIndex,
-                xcm
+                xcm,
+                target
             );
 
-        return PalletMessageRouter.encodeForwardToMoonbeamCall(call);
+        return PalletMessageRouter.encodeForwardCall(call);
     }
 }

@@ -7,7 +7,7 @@ import "../../moonbeam/AbstractDarwiniaEndpoint.sol";
 contract PangolinEndpoint is AbstractDarwiniaEndpoint {
     constructor() {
         remoteMessageTransactCallIndex = 0x2600;
-        routerForwardToMoonbeamCallIndex = 0x1a01;
+        routerForwardCallIndex = 0x1a01;
         dispatchAddress = address(1025);
         sendMessageCallIndex = 0x3f03;
         storageAddress = address(1024);

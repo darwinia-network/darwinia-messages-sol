@@ -15,7 +15,7 @@ describe('TestPalletMessageRouter', function (accounts) {
         await palletMessageRouterTest.deployed();
     });
 
-    it('testEncodeVersionedXcmV2', async() => {
-        await palletMessageRouterTest.testEncodeVersionedXcmV2();
+    it('testBuildForwardCall', async() => {
+        await palletMessageRouterTest.testBuildForwardCall();
     })
 });
