@@ -39,8 +39,7 @@ if (target == 'local') {
   evm_bsc_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
   dvm_endpoint = "https://pangoro-rpc.darwinia.network"
   sub_endpoint = "wss://pangoro-rpc.darwinia.network"
-  // beacon_endpoint = "https://lodestar-kiln.chainsafe.io"
-  beacon_endpoint = "http://127.0.0.1:5052"
+  beacon_endpoint = "https://lodestar-goerli.chainsafe.io"
 
   ns_eth = 'goerli'
   ns_bsc = 'bsctest'
@@ -86,7 +85,7 @@ async function bootstrap() {
   const eth2Client = new Eth2Client(beacon_endpoint)
   const bridge = new Bridge(ethClient, bscClient, eth2Client, subClient)
   await ethClient.init(wallets, eth_fees, evm_eth_addresses, ns_dvm)
-  await bscClient.init(wallets, bsc_fees, evm_bsc_addresses, ns_dvm)
+  // await bscClient.init(wallets, bsc_fees, evm_bsc_addresses, ns_dvm)
   await subClient.init(wallets, sub_fees, dvm_addresses, ns_eth, ns_bsc)
   return {
     ethClient,

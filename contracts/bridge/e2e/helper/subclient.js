@@ -34,23 +34,24 @@ class SubClient {
     const LaneMessageCommitter = await artifacts.readArtifact("LaneMessageCommitter");
     this.ethLaneMessageCommitter = new ethers.Contract(addresses[ns_eth].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
     this.eth.LaneMessageCommitter = this.ethLaneMessageCommitter
-    this.bscLaneMessageCommitter = new ethers.Contract(addresses[ns_bsc].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
-    this.bsc.LaneMessageCommitter = this.bscLaneMessageCommitter
+
+    // this.bscLaneMessageCommitter = new ethers.Contract(addresses[ns_bsc].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)
+    // this.bsc.LaneMessageCommitter = this.bscLaneMessageCommitter
 
     const BeaconLightClient = await artifacts.readArtifact("BeaconLightClient")
     const beaconLightClient = new ethers.Contract(addresses[ns_eth].BeaconLightClient, BeaconLightClient.abi, this.provider)
 
     const ExecutionLayer = await artifacts.readArtifact("ExecutionLayer")
-    const executionLayer = new ethers.Contract(addresses[ns_eth].EthereumExecutionLayerProxy, ExecutionLayer.abi, this.provider)
+    const executionLayer = new ethers.Contract(addresses[ns_eth].ExecutionLayer, ExecutionLayer.abi, this.provider)
 
-    const BSCLightClient = await artifacts.readArtifact("BSCLightClient")
-    const bscLightClient = new ethers.Contract(addresses[ns_bsc].BSCLightClientProxy, BSCLightClient.abi, this.provider)
+    // const BSCLightClient = await artifacts.readArtifact("BSCLightClient")
+    // const bscLightClient = new ethers.Contract(addresses[ns_bsc].BSCLightClientProxy, BSCLightClient.abi, this.provider)
     this.signer = wallets[0].connect(this.provider)
     this.beaconLightClient = beaconLightClient.connect(this.signer)
-    this.bscLightClient = bscLightClient.connect(this.signer)
+    // this.bscLightClient = bscLightClient.connect(this.signer)
     this.executionLayer = executionLayer.connect(this.signer)
     this.eth.lightclient = this.executionLayer
-    this.bsc.lightclient = this.bscLightClient
+    // this.bsc.lightclient = this.bscLightClient
 
   }
 
