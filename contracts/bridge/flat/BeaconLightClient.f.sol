@@ -3,58 +3,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-////// src/spec/MerkleProof.sol
-// This file is part of Darwinia.
-// Copyright (C) 2018-2022 Darwinia Network
-//
-// Darwinia is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Darwinia is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
-
-/* pragma solidity 0.7.6; */
-
-contract MerkleProof {
-    // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
-    function is_valid_merkle_branch(
-        bytes32 leaf,
-        bytes32[] memory branch,
-        uint64 depth,
-        uint64 index,
-        bytes32 root
-    ) internal pure returns (bool) {
-        bytes32 value = leaf;
-        for (uint i = 0; i < depth; ++i) {
-            if ((index / (2**i)) % 2 == 1) {
-                value = hash_node(branch[i], value);
-            } else {
-                value = hash_node(value, branch[i]);
-            }
-        }
-        return value == root;
-    }
-
-    function hash_node(bytes32 left, bytes32 right)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return hash(abi.encodePacked(left, right));
-    }
-
-    function hash(bytes memory value) internal pure returns (bytes32) {
-        return sha256(value);
-    }
-}
-
 ////// src/utils/Math.sol
 // This file is part of Darwinia.
 // Copyright (C) 2018-2022 Darwinia Network
@@ -97,6 +45,263 @@ contract Math {
     }
 }
 
+////// src/spec/MerkleProof.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.7.6; */
+
+/* import "../utils/Math.sol"; */
+
+contract MerkleProof is Math {
+    // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
+    function is_valid_merkle_branch(
+        bytes32 leaf,
+        bytes32[] memory branch,
+        uint64 depth,
+        uint64 index,
+        bytes32 root
+    ) internal pure returns (bool) {
+        bytes32 value = leaf;
+        for (uint i = 0; i < depth; ++i) {
+            if ((index / (2**i)) % 2 == 1) {
+                value = hash_node(branch[i], value);
+            } else {
+                value = hash_node(value, branch[i]);
+            }
+        }
+        return value == root;
+    }
+
+    function merkle_root(bytes32[] memory leaves) internal pure returns (bytes32) {
+        uint len = leaves.length;
+        if (len == 0) return bytes32(0);
+        else if (len == 1) return hash(abi.encodePacked(leaves[0]));
+        else if (len == 2) return hash_node(leaves[0], leaves[1]);
+        uint bottom_length = get_power_of_two_ceil(len);
+        bytes32[] memory o = new bytes32[](bottom_length * 2);
+        for (uint i = 0; i < len; ++i) {
+            o[bottom_length + i] = leaves[i];
+        }
+        for (uint i = bottom_length - 1; i > 0; --i) {
+            o[i] = hash_node(o[i * 2], o[i * 2 + 1]);
+        }
+        return o[1];
+    }
+
+
+    function hash_node(bytes32 left, bytes32 right)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return hash(abi.encodePacked(left, right));
+    }
+
+    function hash(bytes memory value) internal pure returns (bytes32) {
+        return sha256(value);
+    }
+}
+
+////// src/utils/ScaleCodec.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.7.6; */
+
+library ScaleCodec {
+    // Decodes a SCALE encoded uint256 by converting bytes (bid endian) to little endian format
+    function decodeUint256(bytes memory data) internal pure returns (uint256) {
+        uint256 number;
+        for (uint256 i = data.length; i > 0; i--) {
+            number = number + uint256(uint8(data[i - 1])) * (2**(8 * (i - 1)));
+        }
+        return number;
+    }
+
+    // Decodes a SCALE encoded compact unsigned integer
+    function decodeUintCompact(bytes memory data)
+        internal
+        pure
+        returns (uint256 v)
+    {
+        uint8 b = readByteAtIndex(data, 0); // read the first byte
+        uint8 mode = b & 3; // bitwise operation
+
+        if (mode == 0) {
+            // [0, 63]
+            return b >> 2; // right shift to remove mode bits
+        } else if (mode == 1) {
+            // [64, 16383]
+            uint8 bb = readByteAtIndex(data, 1); // read the second byte
+            uint64 r = bb; // convert to uint64
+            r <<= 6; // multiply by * 2^6
+            r += b >> 2; // right shift to remove mode bits
+            return r;
+        } else if (mode == 2) {
+            // [16384, 1073741823]
+            uint8 b2 = readByteAtIndex(data, 1); // read the next 3 bytes
+            uint8 b3 = readByteAtIndex(data, 2);
+            uint8 b4 = readByteAtIndex(data, 3);
+
+            uint32 x1 = uint32(b) | (uint32(b2) << 8); // convert to little endian
+            uint32 x2 = x1 | (uint32(b3) << 16);
+            uint32 x3 = x2 | (uint32(b4) << 24);
+
+            x3 >>= 2; // remove the last 2 mode bits
+            return uint256(x3);
+        } else if (mode == 3) {
+            // [1073741824, 4503599627370496]
+            // solhint-disable-next-line
+            uint8 l = b >> 2; // remove mode bits
+            require(
+                l > 32,
+                "Not supported: number cannot be greater than 32 bytes"
+            );
+        } else {
+            revert("Code should be unreachable");
+        }
+    }
+
+    // Read a byte at a specific index and return it as type uint8
+    function readByteAtIndex(bytes memory data, uint8 index)
+        internal
+        pure
+        returns (uint8)
+    {
+        return uint8(data[index]);
+    }
+
+    // Sources:
+    //   * https://ethereum.stackexchange.com/questions/15350/how-to-convert-an-bytes-to-address-in-solidity/50528
+    //   * https://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel
+
+    function reverse256(uint256 input) internal pure returns (uint256 v) {
+        v = input;
+
+        // swap bytes
+        v = ((v & 0xFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00) >> 8) |
+            ((v & 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF) << 8);
+
+        // swap 2-byte long pairs
+        v = ((v & 0xFFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000) >> 16) |
+            ((v & 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF) << 16);
+
+        // swap 4-byte long pairs
+        v = ((v & 0xFFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000) >> 32) |
+            ((v & 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF) << 32);
+
+        // swap 8-byte long pairs
+        v = ((v & 0xFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF0000000000000000) >> 64) |
+            ((v & 0x0000000000000000FFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF) << 64);
+
+        // swap 16-byte long pairs
+        v = (v >> 128) | (v << 128);
+    }
+
+    function reverse128(uint128 input) internal pure returns (uint128 v) {
+        v = input;
+
+        // swap bytes
+        v = ((v & 0xFF00FF00FF00FF00FF00FF00FF00FF00) >> 8) |
+            ((v & 0x00FF00FF00FF00FF00FF00FF00FF00FF) << 8);
+
+        // swap 2-byte long pairs
+        v = ((v & 0xFFFF0000FFFF0000FFFF0000FFFF0000) >> 16) |
+            ((v & 0x0000FFFF0000FFFF0000FFFF0000FFFF) << 16);
+
+        // swap 4-byte long pairs
+        v = ((v & 0xFFFFFFFF00000000FFFFFFFF00000000) >> 32) |
+            ((v & 0x00000000FFFFFFFF00000000FFFFFFFF) << 32);
+
+        // swap 8-byte long pairs
+        v = (v >> 64) | (v << 64);
+    }
+
+    function reverse64(uint64 input) internal pure returns (uint64 v) {
+        v = input;
+
+        // swap bytes
+        v = ((v & 0xFF00FF00FF00FF00) >> 8) |
+            ((v & 0x00FF00FF00FF00FF) << 8);
+
+        // swap 2-byte long pairs
+        v = ((v & 0xFFFF0000FFFF0000) >> 16) |
+            ((v & 0x0000FFFF0000FFFF) << 16);
+
+        // swap 4-byte long pairs
+        v = (v >> 32) | (v << 32);
+    }
+
+    function reverse32(uint32 input) internal pure returns (uint32 v) {
+        v = input;
+
+        // swap bytes
+        v = ((v & 0xFF00FF00) >> 8) |
+            ((v & 0x00FF00FF) << 8);
+
+        // swap 2-byte long pairs
+        v = (v >> 16) | (v << 16);
+    }
+
+    function reverse16(uint16 input) internal pure returns (uint16 v) {
+        v = input;
+
+        // swap bytes
+        v = (v >> 8) | (v << 8);
+    }
+
+    function encode256(uint256 input) internal pure returns (bytes32) {
+        return bytes32(reverse256(input));
+    }
+
+    function encode128(uint128 input) internal pure returns (bytes16) {
+        return bytes16(reverse128(input));
+    }
+
+    function encode64(uint64 input) internal pure returns (bytes8) {
+        return bytes8(reverse64(input));
+    }
+
+    function encode32(uint32 input) internal pure returns (bytes4) {
+        return bytes4(reverse32(input));
+    }
+
+    function encode16(uint16 input) internal pure returns (bytes2) {
+        return bytes2(reverse16(input));
+    }
+
+    function encode8(uint8 input) internal pure returns (bytes1) {
+        return bytes1(input);
+    }
+}
+
 ////// src/spec/BeaconChain.sol
 // This file is part of Darwinia.
 // Copyright (C) 2018-2022 Darwinia Network
@@ -118,9 +323,9 @@ contract Math {
 /* pragma abicoder v2; */
 
 /* import "./MerkleProof.sol"; */
-/* import "../utils/Math.sol"; */
+/* import "../utils/ScaleCodec.sol"; */
 
-contract BeaconChain is Math, MerkleProof {
+contract BeaconChain is MerkleProof {
     uint64 constant internal BLSPUBLICKEY_LENGTH = 48;
     uint64 constant internal BLSSIGNATURE_LENGTH = 96;
     uint64 constant internal SYNC_COMMITTEE_SIZE = 512;
@@ -146,6 +351,36 @@ contract BeaconChain is Math, MerkleProof {
         bytes32 parent_root;
         bytes32 state_root;
         bytes32 body_root;
+    }
+
+    struct BeaconBlockBody {
+        bytes32 randao_reveal;
+        bytes32 eth1_data;
+        bytes32 graffiti;
+        bytes32 proposer_slashings;
+        bytes32 attester_slashings;
+        bytes32 attestations;
+        bytes32 deposits;
+        bytes32 voluntary_exits;
+        bytes32 sync_aggregate;
+        ExecutionPayload execution_payload;
+    }
+
+    struct ExecutionPayload {
+        bytes32 parent_hash;
+        address fee_recipient;
+        bytes32 state_root;
+        bytes32 receipts_root;
+        bytes32 logs_bloom;
+        bytes32 prev_randao;
+        uint64 block_number;
+        uint64 gas_limit;
+        uint64 gas_used;
+        uint64 timestamp;
+        bytes32 extra_data;
+        uint256 base_fee_per_gas;
+        bytes32 block_hash;
+        bytes32 transactions;
     }
 
     // Return the signing root for the corresponding signing data.
@@ -206,39 +441,102 @@ contract BeaconChain is Math, MerkleProof {
         return merkle_root(leaves);
     }
 
-    function merkle_root(bytes32[] memory leaves) internal pure returns (bytes32) {
-        uint len = leaves.length;
-        if (len == 0) return bytes32(0);
-        else if (len == 1) return hash(abi.encodePacked(leaves[0]));
-        else if (len == 2) return hash_node(leaves[0], leaves[1]);
-        uint bottom_length = get_power_of_two_ceil(len);
-        bytes32[] memory o = new bytes32[](bottom_length * 2);
-        for (uint i = 0; i < len; ++i) {
-            o[bottom_length + i] = leaves[i];
-        }
-        for (uint i = bottom_length - 1; i > 0; --i) {
-            o[i] = hash_node(o[i * 2], o[i * 2 + 1]);
-        }
-        return o[1];
+    function hash_tree_root(BeaconBlockBody memory beacon_block_body) internal pure returns (bytes32) {
+        bytes32[] memory leaves = new bytes32[](10);
+        leaves[0] = beacon_block_body.randao_reveal;
+        leaves[1] = beacon_block_body.eth1_data;
+        leaves[2] = beacon_block_body.graffiti;
+        leaves[3] = beacon_block_body.proposer_slashings;
+        leaves[4] = beacon_block_body.attester_slashings;
+        leaves[5] = beacon_block_body.attestations;
+        leaves[6] = beacon_block_body.deposits;
+        leaves[7] = beacon_block_body.voluntary_exits;
+        leaves[8] = beacon_block_body.sync_aggregate;
+        leaves[9] = hash_tree_root(beacon_block_body.execution_payload);
+        return merkle_root(leaves);
     }
 
-    function to_little_endian_64(uint64 value) internal pure returns (bytes8 r) {
-        return bytes8(reverse64(value));
+    function hash_tree_root(ExecutionPayload memory execution_payload) internal pure returns (bytes32) {
+        bytes32[] memory leaves = new bytes32[](14);
+        leaves[0]  = execution_payload.parent_hash;
+        leaves[1]  = bytes32(bytes20(execution_payload.fee_recipient));
+        leaves[2]  = execution_payload.state_root;
+        leaves[3]  = execution_payload.receipts_root;
+        leaves[4]  = execution_payload.logs_bloom;
+        leaves[5]  = execution_payload.prev_randao;
+        leaves[6]  = bytes32(to_little_endian_64(execution_payload.block_number));
+        leaves[7]  = bytes32(to_little_endian_64(execution_payload.gas_limit));
+        leaves[8]  = bytes32(to_little_endian_64(execution_payload.gas_used));
+        leaves[9]  = bytes32(to_little_endian_64(execution_payload.timestamp));
+        leaves[10] = execution_payload.extra_data;
+        leaves[11] = to_little_endian_256(execution_payload.base_fee_per_gas);
+        leaves[12] = execution_payload.block_hash;
+        leaves[13] = execution_payload.transactions;
+        return merkle_root(leaves);
     }
 
-    function reverse64(uint64 input) internal pure returns (uint64 v) {
-        v = input;
+    function to_little_endian_64(uint64 value) internal pure returns (bytes8) {
+        return ScaleCodec.encode64(value);
+    }
 
-        // swap bytes
-        v = ((v & 0xFF00FF00FF00FF00) >> 8) |
-            ((v & 0x00FF00FF00FF00FF) << 8);
+    function to_little_endian_256(uint256 value) internal pure returns (bytes32) {
+        return ScaleCodec.encode256(value);
+    }
+}
 
-        // swap 2-byte long pairs
-        v = ((v & 0xFFFF0000FFFF0000) >> 16) |
-            ((v & 0x0000FFFF0000FFFF) << 16);
+////// src/spec/BeaconLightClientUpdate.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-        // swap 4-byte long pairs
-        v = (v >> 32) | (v << 32);
+/* pragma solidity 0.7.6; */
+/* pragma abicoder v2; */
+
+/* import "./BeaconChain.sol"; */
+
+contract BeaconLightClientUpdate is BeaconChain {
+    struct SyncAggregate {
+        bytes32[2] sync_committee_bits;
+        bytes sync_committee_signature;
+    }
+
+    struct FinalizedHeaderUpdate {
+        // The beacon block header that is attested to by the sync committee
+        BeaconBlockHeader attested_header;
+
+        // Sync committee corresponding to sign attested header
+        SyncCommittee signature_sync_committee;
+
+        // The finalized beacon block header attested to by Merkle branch
+        BeaconBlockHeader finalized_header;
+        bytes32[] finality_branch;
+
+        // Sync committee aggregate signature
+        SyncAggregate sync_aggregate;
+
+        // Fork version for the aggregate signature
+        bytes4 fork_version;
+
+        // Slot at which the aggregate signature was created (untrusted)
+        uint64 signature_slot;
+    }
+
+    struct SyncCommitteePeriodUpdate {
+        // Next sync committee corresponding to the finalized header
+        SyncCommittee next_sync_committee;
+        bytes32[] next_sync_committee_branch;
     }
 }
 
@@ -548,10 +846,10 @@ contract Bitfield {
 // Etherum beacon light client.
 // Current arthitecture diverges from spec's proposed updated splitting them into:
 // - Finalized header updates: To import a recent finalized header signed by a known sync committee by `import_finalized_header`.
-// - Sync period updates: To advance to the next committee by `import_next_sync_committee`.
+// - Sync period updates: To advance to the next committee by `update_sync_committee_period`.
 //
 // To stay synced to the current sync period it needs:
-// - Get finalized_header_update and sync_period_update at least once per period.
+// - Get sync_period_update at least once per period.
 //
 // To get light-client best finalized update at period N:
 // - Fetch best finalized block's sync_aggregate_header in period N
@@ -599,7 +897,7 @@ contract Bitfield {
 /* pragma abicoder v2; */
 
 /* import "../../utils/Bitfield.sol"; */
-/* import "../../spec/BeaconChain.sol"; */
+/* import "../../spec/BeaconLightClientUpdate.sol"; */
 
 interface IBLS {
     function fast_aggregate_verify(
@@ -609,7 +907,7 @@ interface IBLS {
     ) external pure returns (bool);
 }
 
-contract BeaconLightClient is BeaconChain, Bitfield {
+contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
     // Beacon block header that is finalized
     BeaconBlockHeader public finalized_header;
     // Sync committees corresponding to the header
@@ -635,38 +933,6 @@ contract BeaconLightClient is BeaconChain, Bitfield {
     event FinalizedHeaderImported(BeaconBlockHeader finalized_header);
     event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed next_sync_committee_root);
 
-    struct SyncAggregate {
-        bytes32[2] sync_committee_bits;
-        bytes sync_committee_signature;
-    }
-
-    struct FinalizedHeaderUpdate {
-        // The beacon block header that is attested to by the sync committee
-        BeaconBlockHeader attested_header;
-
-        // Sync committee corresponding to sign attested header
-        SyncCommittee signature_sync_committee;
-
-        // The finalized beacon block header attested to by Merkle branch
-        BeaconBlockHeader finalized_header;
-        bytes32[] finality_branch;
-
-        // Sync committee aggregate signature
-        SyncAggregate sync_aggregate;
-
-        // Fork version for the aggregate signature
-        bytes4 fork_version;
-
-        // Slot at which the aggregate signature was created (untrusted)
-        uint64 signature_slot;
-    }
-
-    struct SyncCommitteePeriodUpdate {
-        // Next sync committee corresponding to the finalized header
-        SyncCommittee next_sync_committee;
-        bytes32[] next_sync_committee_branch;
-    }
-
     constructor(
         address _bls,
         uint64 _slot,
@@ -683,28 +949,66 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         GENESIS_VALIDATORS_ROOT = _genesis_validators_root;
     }
 
-    function state_root() public view returns (bytes32) {
-        return finalized_header.state_root;
+    function body_root() public view returns (bytes32) {
+        return finalized_header.body_root;
     }
 
-    function import_next_sync_committee(SyncCommitteePeriodUpdate calldata update) external {
+    // follow beacon api: /beacon/light_client/updates/?start_period={period}&count={count}
+    function update_sync_committee_period(
+        FinalizedHeaderUpdate calldata header_update,
+        SyncCommitteePeriodUpdate calldata sc_update
+    ) external {
+        require(is_supermajority(header_update.sync_aggregate.sync_committee_bits), "!supermajor");
+        require(header_update.signature_slot > header_update.attested_header.slot &&
+                header_update.attested_header.slot >= header_update.finalized_header.slot,
+                "!skip");
+        require(verify_finalized_header(
+                header_update.finalized_header,
+                header_update.finality_branch,
+                header_update.attested_header.state_root),
+                "!finalized_header"
+        );
+
+        uint64 finalized_period = compute_sync_committee_period(header_update.finalized_header.slot);
+        uint64 signature_period = compute_sync_committee_period(header_update.signature_slot);
+        require(signature_period == finalized_period, "!period");
+
+        bytes32 singature_sync_committee_root = sync_committee_roots[signature_period];
+        require(singature_sync_committee_root != bytes32(0), "!missing");
+        require(singature_sync_committee_root == hash_tree_root(header_update.signature_sync_committee), "!sync_committee");
+
+        require(verify_signed_header(
+                header_update.sync_aggregate,
+                header_update.signature_sync_committee,
+                header_update.fork_version,
+                header_update.attested_header),
+               "!sign");
+
+        if (header_update.finalized_header.slot > finalized_header.slot) {
+            finalized_header = header_update.finalized_header;
+            emit FinalizedHeaderImported(header_update.finalized_header);
+        }
+
         require(verify_next_sync_committee(
-                update.next_sync_committee,
-                update.next_sync_committee_branch,
-                finalized_header.state_root),
+                sc_update.next_sync_committee,
+                sc_update.next_sync_committee_branch,
+                header_update.finalized_header.state_root),
                 "!next_sync_committee"
         );
 
-        uint64 current_period = compute_sync_committee_period(finalized_header.slot);
-        uint64 next_period = current_period + 1;
+        uint64 next_period = signature_period + 1;
         require(sync_committee_roots[next_period] == bytes32(0), "imported");
-        bytes32 next_sync_committee_root = hash_tree_root(update.next_sync_committee);
+        bytes32 next_sync_committee_root = hash_tree_root(sc_update.next_sync_committee);
         sync_committee_roots[next_period] = next_sync_committee_root;
         emit NextSyncCommitteeImported(next_period, next_sync_committee_root);
     }
 
+    // follow beacon api: /eth/v1/beacon/light_client/finality_update/
     function import_finalized_header(FinalizedHeaderUpdate calldata update) external {
         require(is_supermajority(update.sync_aggregate.sync_committee_bits), "!supermajor");
+        require(update.signature_slot > update.attested_header.slot &&
+                update.attested_header.slot >= update.finalized_header.slot,
+                "!skip");
         require(verify_finalized_header(
                 update.finalized_header,
                 update.finality_branch,

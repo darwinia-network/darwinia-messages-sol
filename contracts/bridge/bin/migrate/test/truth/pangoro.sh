@@ -42,6 +42,6 @@ BeaconLightClient=$(deploy BeaconLightClient \
 
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
 
-EthereumStorageVerifier=$(load_saddr "EthereumStorageVerifier")
+# EthereumStorageVerifier=$(load_saddr "EthereumStorageVerifier")
 
-seth send -F $ETH_FROM $EthereumStorageVerifier "changeLightClient(address)" $ExecutionLayer
+# seth send -F $ETH_FROM $EthereumStorageVerifier "changeLightClient(address)" $ExecutionLayer
