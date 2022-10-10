@@ -18,10 +18,10 @@
 // Etherum beacon light client.
 // Current arthitecture diverges from spec's proposed updated splitting them into:
 // - Finalized header updates: To import a recent finalized header signed by a known sync committee by `import_finalized_header`.
-// - Sync period updates: To advance to the next committee by `import_next_sync_committee`.
+// - Sync period updates: To advance to the next committee by `sync_committee_period_update`.
 //
 // To stay synced to the current sync period it needs:
-// - Get finalized_header_update and sync_period_update at least once per period.
+// - Get sync_period_update at least once per period.
 //
 // To get light-client best finalized update at period N:
 // - Fetch best finalized block's sync_aggregate_header in period N
@@ -157,6 +157,7 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         return finalized_header.body_root;
     }
 
+    // follow beacon api: /beacon/light_client/updates/?start_period={period}&count={count}
     function sync_committee_period_update(
         FinalizedHeaderUpdate calldata header_update,
         SyncCommitteePeriodUpdate calldata sc_update
@@ -206,6 +207,7 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         emit NextSyncCommitteeImported(next_period, next_sync_committee_root);
     }
 
+    // follow beacon api: /eth/v1/beacon/light_client/finality_update/
     function import_finalized_header(FinalizedHeaderUpdate calldata update) external {
         require(is_supermajority(update.sync_aggregate.sync_committee_bits), "!supermajor");
         require(update.signature_slot > update.attested_header.slot &&
