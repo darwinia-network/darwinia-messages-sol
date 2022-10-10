@@ -54,14 +54,14 @@ contract BeaconLightClientSpecTest is DSTest, SyncCommitteePreset {
     function test_constructor_args() public {}
 
     // capella version in lodestar
-    function testFail_sync_committee_period_update() public {
+    function testFail_update_sync_committee_period() public {
         BeaconLightClient.FinalizedHeaderUpdate memory header_update = build_header_update();
         bytes32[] memory next_sync_committee_branch = build_next_sync_committee_branch();
         BeaconLightClient.SyncCommitteePeriodUpdate memory sc_update = BeaconLightClient.SyncCommitteePeriodUpdate({
             next_sync_committee: sync_committee_case1(),
             next_sync_committee_branch: next_sync_committee_branch
         });
-        lightclient.sync_committee_period_update(header_update, sc_update);
+        lightclient.update_sync_committee_period(header_update, sc_update);
         bytes32 stored_next_sync_committee_root = lightclient.sync_committee_roots(1);
         assertEq(hash_tree_root(sync_committee_case1()), stored_next_sync_committee_root);
         assert_finalized_header();
