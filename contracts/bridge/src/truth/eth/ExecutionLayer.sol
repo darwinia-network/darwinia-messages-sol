@@ -31,9 +31,6 @@ contract ExecutionLayer is BeaconChain, ILightClient {
 
     address public immutable CONSENSUS_LAYER;
 
-    uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_INDEX = 898;
-    uint64 constant private LATEST_EXECUTION_PAYLOAD_STATE_ROOT_DEPTH = 9;
-
     event LatestExecutionPayloadStateRootImported(bytes32 state_root);
 
     constructor(address consensus_layer) {
@@ -44,6 +41,7 @@ contract ExecutionLayer is BeaconChain, ILightClient {
         return latest_execution_payload_state_root;
     }
 
+    // follow beacon api: /eth/v2/beacon/blocks/{block_id}
     function import_latest_execution_payload_state_root(BeaconBlockBody calldata body) external {
         bytes32 state_root = body.execution_payload.state_root;
         require(latest_execution_payload_state_root != state_root, "same");
