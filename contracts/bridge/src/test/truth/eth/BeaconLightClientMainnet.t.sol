@@ -22,11 +22,12 @@ import "../../test.sol";
 import "../../mock/MockBLS.sol";
 import "../../../utils/Bitfield.sol";
 import "../../spec/SyncCommittee.t.sol";
+import "../../../spec/BeaconLightClientUpdate.sol";
 import "../../../truth/eth/BeaconLightClient.sol";
 import "../../../truth/eth/ExecutionLayer.sol";
 
 
-contract BeaconLightClientMainnetTest is DSTest, Bitfield, SyncCommitteePreset {
+contract BeaconLightClientMainnetTest is DSTest, BeaconLightClientUpdate, Bitfield, SyncCommitteePreset {
     bytes32 constant CURRENT_SYNC_COMMITTEE_ROOT = 0x5e1c2e0e1f73857bdb258e7913387d0fbd14894896e2715b69189eaed7919992;
     bytes32 constant GENESIS_VALIDATORS_ROOT = 0x4b363db94e286120d76eb905340fdd4e54bfe9f06bf33ff6cf5ad27f511bfe95;
     bytes32 constant LATEST_EXECUTION_PAYLOAD_STATE_ROOT = 0xc22665bddd71c249eff6dea84255918cc4d0537ecceaa9348419231a64259beb;
@@ -55,9 +56,9 @@ contract BeaconLightClientMainnetTest is DSTest, Bitfield, SyncCommitteePreset {
     function test_constructor_args() public {}
 
     function test_update_sync_committee_period() public {
-        BeaconLightClient.FinalizedHeaderUpdate memory header_update = build_header_update();
+        FinalizedHeaderUpdate memory header_update = build_header_update();
         bytes32[] memory next_sync_committee_branch = build_next_sync_committee_branch();
-        BeaconLightClient.SyncCommitteePeriodUpdate memory sc_update = BeaconLightClient.SyncCommitteePeriodUpdate({
+        SyncCommitteePeriodUpdate memory sc_update = SyncCommitteePeriodUpdate({
             next_sync_committee: sync_committee_case5(),
             next_sync_committee_branch: next_sync_committee_branch
         });
@@ -114,7 +115,7 @@ contract BeaconLightClientMainnetTest is DSTest, Bitfield, SyncCommitteePreset {
         finality_branch[4] = 0x2880db0f7f2281ef35342a53173c21215810354033d0c1d40813898ea299b8a2;
         finality_branch[5] = 0x7e0ba77ff7042a877d38eb195f4cf435afab2b5567b649bb1755c21c9cb8215e;
 
-        BeaconLightClient.FinalizedHeaderUpdate memory update = BeaconLightClient.FinalizedHeaderUpdate({
+        FinalizedHeaderUpdate memory update = FinalizedHeaderUpdate({
             attested_header: BeaconBlockHeader({
                 slot:           4873635,
                 proposer_index: 263940,
@@ -125,7 +126,7 @@ contract BeaconLightClientMainnetTest is DSTest, Bitfield, SyncCommitteePreset {
             signature_sync_committee: sync_committee_case4(),
             finalized_header: build_finalized_header1(),
             finality_branch: finality_branch,
-            sync_aggregate: BeaconLightClient.SyncAggregate({
+            sync_aggregate: SyncAggregate({
                 sync_committee_bits:[
                     bytes32(0xffffff7ffffffffffffffffffff7ffffffffffffffffffffffffffffffffffff),
                     bytes32(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbf)
@@ -138,8 +139,8 @@ contract BeaconLightClientMainnetTest is DSTest, Bitfield, SyncCommitteePreset {
         lightclient.import_finalized_header(update);
     }
 
-    function build_header_update() internal pure returns (BeaconLightClient.FinalizedHeaderUpdate memory) {
-        return BeaconLightClient.FinalizedHeaderUpdate({
+    function build_header_update() internal pure returns (FinalizedHeaderUpdate memory) {
+        return FinalizedHeaderUpdate({
             attested_header: BeaconBlockHeader({
                 slot:           4866499,
                 proposer_index: 83890,
@@ -150,7 +151,7 @@ contract BeaconLightClientMainnetTest is DSTest, Bitfield, SyncCommitteePreset {
             signature_sync_committee: sync_committee_case4(),
             finalized_header: build_finalized_header(),
             finality_branch: build_finality_branch(),
-            sync_aggregate: BeaconLightClient.SyncAggregate({
+            sync_aggregate: SyncAggregate({
                 sync_committee_bits:[
                     bytes32(0xffffff7ffffffffffffffffffff7ffffffffffffffffffffffffffffffffffff),
                     bytes32(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbf)

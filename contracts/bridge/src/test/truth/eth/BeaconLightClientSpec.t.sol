@@ -21,10 +21,11 @@ pragma abicoder v2;
 import "../../test.sol";
 import "../../mock/MockBLS.sol";
 import "../../spec/SyncCommittee.t.sol";
+import "../../../spec/BeaconLightClientUpdate.sol";
 import "../../../truth/eth/BeaconLightClient.sol";
 import "../../../truth/eth/ExecutionLayer.sol";
 
-contract BeaconLightClientSpecTest is DSTest, SyncCommitteePreset {
+contract BeaconLightClientSpecTest is DSTest, BeaconLightClientUpdate, SyncCommitteePreset {
 
     bytes32 constant CURRENT_SYNC_COMMITTEE_ROOT = 0x5cf5804f5a8dc680445f5efd4069859f3c65dd2db869f1d091f454008f6d7ab7;
     bytes32 constant GENESIS_VALIDATORS_ROOT = 0x32251a5a748672e3acb1e574ec27caf3b6be68d581c44c402eb166d71a89808e;
@@ -55,9 +56,9 @@ contract BeaconLightClientSpecTest is DSTest, SyncCommitteePreset {
 
     // capella version in lodestar
     function testFail_update_sync_committee_period() public {
-        BeaconLightClient.FinalizedHeaderUpdate memory header_update = build_header_update();
+        FinalizedHeaderUpdate memory header_update = build_header_update();
         bytes32[] memory next_sync_committee_branch = build_next_sync_committee_branch();
-        BeaconLightClient.SyncCommitteePeriodUpdate memory sc_update = BeaconLightClient.SyncCommitteePeriodUpdate({
+        SyncCommitteePeriodUpdate memory sc_update = SyncCommitteePeriodUpdate({
             next_sync_committee: sync_committee_case1(),
             next_sync_committee_branch: next_sync_committee_branch
         });
@@ -100,12 +101,12 @@ contract BeaconLightClientSpecTest is DSTest, SyncCommitteePreset {
     }
 
     function process_import_finalized_header() public {
-        BeaconLightClient.FinalizedHeaderUpdate memory update = build_header_update();
+        FinalizedHeaderUpdate memory update = build_header_update();
         lightclient.import_finalized_header(update);
     }
 
-    function build_header_update() internal pure returns (BeaconLightClient.FinalizedHeaderUpdate memory) {
-        return BeaconLightClient.FinalizedHeaderUpdate({
+    function build_header_update() internal pure returns (FinalizedHeaderUpdate memory) {
+        return FinalizedHeaderUpdate({
             attested_header: BeaconBlockHeader({
                 slot:           160,
                 proposer_index: 80,
@@ -116,7 +117,7 @@ contract BeaconLightClientSpecTest is DSTest, SyncCommitteePreset {
             signature_sync_committee: sync_committee_case0(),
             finalized_header: build_finalized_header(),
             finality_branch: build_finality_branch(),
-            sync_aggregate: BeaconLightClient.SyncAggregate({
+            sync_aggregate: SyncAggregate({
                 sync_committee_bits:[
                     bytes32(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
                     bytes32(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)

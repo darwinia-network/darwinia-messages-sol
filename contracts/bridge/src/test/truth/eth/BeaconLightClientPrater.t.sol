@@ -22,11 +22,12 @@ import "../../test.sol";
 import "../../mock/MockBLS.sol";
 import "../../../utils/Bitfield.sol";
 import "../../spec/SyncCommittee.t.sol";
+import "../../../spec/BeaconLightClientUpdate.sol";
 import "../../../truth/eth/BeaconLightClient.sol";
 import "../../../truth/eth/ExecutionLayer.sol";
 
 
-contract BeaconLightClientPraterTest is DSTest, Bitfield, SyncCommitteePreset {
+contract BeaconLightClientPraterTest is DSTest, BeaconLightClientUpdate, Bitfield, SyncCommitteePreset {
     bytes32 constant CURRENT_SYNC_COMMITTEE_ROOT = 0xa36ba14c9ad227f9785a6b9ffd52d3b1f40a3fbd73e7445e18f70cac121612b4;
     bytes32 constant GENESIS_VALIDATORS_ROOT = 0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb;
     bytes32 constant LATEST_EXECUTION_PAYLOAD_STATE_ROOT = 0xba2cb8f2d80e266a1e69845b10224430f4667f3da4273174c9b243a8661e91fe;
@@ -55,9 +56,9 @@ contract BeaconLightClientPraterTest is DSTest, Bitfield, SyncCommitteePreset {
     function test_constructor_args() public {}
 
     function test_update_sync_committee_period() public {
-        BeaconLightClient.FinalizedHeaderUpdate memory header_update = build_header_update();
+        FinalizedHeaderUpdate memory header_update = build_header_update();
         bytes32[] memory next_sync_committee_branch = build_next_sync_committee_branch();
-        BeaconLightClient.SyncCommitteePeriodUpdate memory sc_update = BeaconLightClient.SyncCommitteePeriodUpdate({
+        SyncCommitteePeriodUpdate memory sc_update = SyncCommitteePeriodUpdate({
             next_sync_committee: sync_committee_case3(),
             next_sync_committee_branch: next_sync_committee_branch
         });
@@ -114,7 +115,7 @@ contract BeaconLightClientPraterTest is DSTest, Bitfield, SyncCommitteePreset {
         finality_branch[4] = 0x91c80b14baaebb58d591fd3a5edad7b7f0972bc5ba1055c9d11f5ebb888cb0ee;
         finality_branch[5] = 0x4e328a0c4b7276c0307542e2e6785ba7a8043226e9ee05328c26eeca41e52590;
 
-        BeaconLightClient.FinalizedHeaderUpdate memory update = BeaconLightClient.FinalizedHeaderUpdate({
+        FinalizedHeaderUpdate memory update = FinalizedHeaderUpdate({
             attested_header: BeaconBlockHeader({
                 slot:           4066456,
                 proposer_index: 169206,
@@ -125,7 +126,7 @@ contract BeaconLightClientPraterTest is DSTest, Bitfield, SyncCommitteePreset {
             signature_sync_committee: sync_committee_case2(),
             finalized_header: build_finalized_header1(),
             finality_branch: finality_branch,
-            sync_aggregate: BeaconLightClient.SyncAggregate({
+            sync_aggregate: SyncAggregate({
                 sync_committee_bits:[
                     bytes32(0x7ffeefbfffbf7bffbfe726feff6ffdfeef37f9dfa7b41fdd3fbfeffdffbe63f6),
                     bytes32(0xedffbfdf7fffdffbeb9ddfdfcfbefff97ff4e8ffef7d3ff759deff27fbbab7ff)
@@ -138,8 +139,8 @@ contract BeaconLightClientPraterTest is DSTest, Bitfield, SyncCommitteePreset {
         lightclient.import_finalized_header(update);
     }
 
-    function build_header_update() internal pure returns (BeaconLightClient.FinalizedHeaderUpdate memory) {
-        return BeaconLightClient.FinalizedHeaderUpdate({
+    function build_header_update() internal pure returns (FinalizedHeaderUpdate memory) {
+        return FinalizedHeaderUpdate({
             attested_header: BeaconBlockHeader({
                 slot:           4063408,
                 proposer_index: 178217,
@@ -150,7 +151,7 @@ contract BeaconLightClientPraterTest is DSTest, Bitfield, SyncCommitteePreset {
             signature_sync_committee: sync_committee_case2(),
             finalized_header: build_finalized_header(),
             finality_branch: build_finality_branch(),
-            sync_aggregate: BeaconLightClient.SyncAggregate({
+            sync_aggregate: SyncAggregate({
                 sync_committee_bits:[
                     bytes32(0x7ffeefbfffbf7bffbff72efeff6ffdfeef37f9dfa7b41fdd3fbfeffdfffe67f6),
                     bytes32(0xfdffbfdf7ffffffbebbfdfdfcfbefffb7ff4e8ffef7dbff759deff27fbbab7ff)
