@@ -35,25 +35,31 @@ library PalletMessageRouter {
         bytes memory _callOnTarget,
         uint8 target
     ) internal pure returns (bytes memory) {
-        // XCM to be sent to target
-        XcmTypes.EnumItem_VersionedXcm_V2 memory xcm = XcmTypes.EnumItem_VersionedXcm_V2(
-            XcmTypes.Xcm(
-                XcmTypes.EnumItem_Instruction_Transact(
-                    1, // originType: SovereignAccount
-                    5000000000, // requireWeightAtMost
-                    _callOnTarget
-                )
-            )
-        );
+        // Message to be sent to target
+        XcmTypes.EnumItem_VersionedXcm_V2 memory message = buildXcmToBeForward(_callOnTarget);
 
         // ForwardToMoonbeamCall
         PalletMessageRouter.ForwardCall
             memory call = PalletMessageRouter.ForwardCall(
                 _callIndex,
-                xcm,
+                message,
                 target
             );
 
         return PalletMessageRouter.encodeForwardCall(call);
+    }
+
+    function buildXcmToBeForward(
+        bytes memory _dispatchCallOnTarget
+    ) internal pure returns (XcmTypes.EnumItem_VersionedXcm_V2 memory) {
+        return XcmTypes.EnumItem_VersionedXcm_V2(
+            XcmTypes.Xcm(
+                XcmTypes.EnumItem_Instruction_Transact(
+                    1, // originType: SovereignAccount
+                    5000000000, // requireWeightAtMost
+                    _dispatchCallOnTarget
+                )
+            )
+        );
     }
 }
