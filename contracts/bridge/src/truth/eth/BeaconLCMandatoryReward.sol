@@ -21,7 +21,7 @@ pragma abicoder v2;
 import "../../spec/BeaconLightClientUpdate.sol";
 
 interface IBeaconLightClient {
-    function update_sync_committee_period(
+    function import_next_sync_committee(
         BeaconLightClientUpdate.FinalizedHeaderUpdate calldata header_update,
         BeaconLightClientUpdate.SyncCommitteePeriodUpdate calldata sc_update
     ) external;
@@ -54,7 +54,7 @@ contract BeaconLCMandatoryReward {
         BeaconLightClientUpdate.FinalizedHeaderUpdate calldata header_update,
         BeaconLightClientUpdate.SyncCommitteePeriodUpdate calldata sc_update
     ) external {
-        IBeaconLightClient(consensusLayer).update_sync_committee_period(header_update, sc_update);
+        IBeaconLightClient(consensusLayer).import_next_sync_committee(header_update, sc_update);
 
         payable(msg.sender).transfer(reward);
     }
