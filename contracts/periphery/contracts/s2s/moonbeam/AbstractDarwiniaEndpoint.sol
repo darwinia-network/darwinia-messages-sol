@@ -6,6 +6,7 @@ import "../RemoteDispatchEndpoint.sol";
 import "../SmartChainXLib.sol";
 import "../types/PalletMessageRouter.sol";
 import "../types/PalletEthereumXcm.sol";
+import "../types/PalletHelixBridge.sol";
 
 abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
     // Target params
@@ -65,9 +66,60 @@ abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
                 routerForwardCallWeight
             );
     }
+
+    function _issueFromRemote(
+        uint32 _routerSpecVersion,
+        bytes2 _issueFromRemoteCallIndex,
+        // call params
+        uint128 _value,
+        bytes32 _recipient,
+        uint64[] memory _burnPrunedMessages,
+        uint64 _maxLockPrunedNonce
+    ) internal returns (uint256) {
+        PalletHelixBridge.IssueFromRemoteCall memory call = PalletHelixBridge
+            .IssueFromRemoteCall(
+                _issueFromRemoteCallIndex,
+                _value,
+                _recipient,
+                _burnPrunedMessages,
+                _maxLockPrunedNonce
+            );
+        bytes memory callEncoded = PalletHelixBridge.encodeIssueFromRemoteCall(
+            call
         );
 
-        return encodeMessageId(outboundLaneId, messageNonce);
+        return
+            _remoteDispatch(
+                _routerSpecVersion,
+                callEncoded,
+                100 // TODO: callWeight
+            );
+    }
+
+    function _handleIssuingFailureFromRemote(
+        uint32 _routerSpecVersion,
+        bytes2 _handleIssuingFailureFromRemoteCallIndex,
+        // call params
+        uint64 _failureNonce,
+        uint64[] memory _burnPrunedMessages,
+        uint64 _maxLockPrunedNonce
+    ) internal returns (uint256) {
+        PalletHelixBridge.HandleIssuingFailureFromRemoteCall
+            memory call = PalletHelixBridge.HandleIssuingFailureFromRemoteCall(
+                _handleIssuingFailureFromRemoteCallIndex,
+                _failureNonce,
+                _burnPrunedMessages,
+                _maxLockPrunedNonce
+            );
+        bytes memory callEncoded = PalletHelixBridge
+            .encodeHandleIssuingFailureFromRemoteCall(call);
+
+        return
+            _remoteDispatch(
+                _routerSpecVersion,
+                callEncoded,
+                100 // TODO: callWeight
+            );
     }
 
     ///////////////////////////////
