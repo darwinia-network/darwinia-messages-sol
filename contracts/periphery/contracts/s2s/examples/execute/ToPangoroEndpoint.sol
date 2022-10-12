@@ -19,7 +19,7 @@ contract ToPangoroEndpoint is MessageEndpoint {
         remoteSmartChainId = 45;
     }
 
-    function _canBeExecuted(address, bytes calldata)
+    function _executable(address, bytes calldata)
         internal
         pure
         override
