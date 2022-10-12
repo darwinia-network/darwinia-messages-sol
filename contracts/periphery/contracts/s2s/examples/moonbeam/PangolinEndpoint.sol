@@ -19,7 +19,7 @@ contract PangolinEndpoint is AbstractDarwiniaEndpoint {
         chainId = 0x7061676c; // pangolin chain id, pagl
     }
 
-    function _allowed(address, bytes calldata)
+    function _approved(address, bytes calldata)
         internal
         pure
         override

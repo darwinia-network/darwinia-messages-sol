@@ -10,7 +10,7 @@ abstract contract Executable {
     modifier onlyMessageSender() {
         require(
             derivedMessageSender == msg.sender,
-            "MessageEndpoint: Invalid sender"
+            "Invalid sender"
         );
         _;
     }
@@ -19,16 +19,16 @@ abstract contract Executable {
         external
         onlyMessageSender
     {
-        if (_allowed(callReceiver, callPayload)) {
+        if (_approved(callReceiver, callPayload)) {
             (bool success, ) = callReceiver.call(callPayload);
-            require(success, "MessageEndpoint: Call execution failed");
+            require(success, "Call execution failed");
         } else {
-            revert("MessageEndpoint: Unapproved call");
+            revert("Unapproved call");
         }
     }
 
     // Check if the call can be executed
-    function _allowed(address callReceiver, bytes calldata callPayload)
+    function _approved(address callReceiver, bytes calldata callPayload)
         internal
         view
         virtual

@@ -19,7 +19,7 @@ contract ToPangolinEndpoint is MessageEndpoint {
         remoteSmartChainId = 43;
     }
 
-    function _allowed(address, bytes calldata)
+    function _approved(address, bytes calldata)
         internal
         pure
         override

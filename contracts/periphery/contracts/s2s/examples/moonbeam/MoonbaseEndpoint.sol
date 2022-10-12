@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import "../../endpoints/routing/moonbeam/AbstractMoonbeamEndpoint.sol";
+import "../../endpoints/routing/AbstractMoonbeamEndpoint.sol";
 
 contract MoonbaseEndpoint is AbstractMoonbeamEndpoint {
     constructor() {
@@ -14,7 +14,7 @@ contract MoonbaseEndpoint is AbstractMoonbeamEndpoint {
         feeLocationAddress = 0xFFFffFfF8283448b3cB519Ca4732F2ddDC6A6165;
     }
 
-    function _allowed(address, bytes calldata)
+    function _approved(address, bytes calldata)
         internal
         pure
         override
