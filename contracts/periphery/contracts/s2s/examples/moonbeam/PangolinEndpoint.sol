@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import "../../moonbeam/AbstractDarwiniaEndpoint.sol";
+import "../../endpoints/routing/AbstractDarwiniaEndpoint.sol";
 
 contract PangolinEndpoint is AbstractDarwiniaEndpoint {
     constructor() {
@@ -18,7 +18,7 @@ contract PangolinEndpoint is AbstractDarwiniaEndpoint {
         inboundLaneId = 0x70616c69;
     }
 
-    function _executable(address, bytes calldata)
+    function _allowed(address, bytes calldata)
         internal
         pure
         override
@@ -27,14 +27,14 @@ contract PangolinEndpoint is AbstractDarwiniaEndpoint {
         return true;
     }
 
-    function executeOnTarget(
+    function targetExecute(
         uint32 _routerSpecVersion,
         address _callReceiver,
         bytes calldata _callPayload,
         uint256 _gasLimit
     ) external payable returns (uint256) {
         return
-            _executeOnTarget(
+            _targetExecute(
                 _routerSpecVersion,
                 TARGET_MOONBEAM,
                 _callReceiver,

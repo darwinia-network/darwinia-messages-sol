@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import "../../MessageEndpoint.sol";
+import "../../endpoints/MessageEndpoint.sol";
 
 // On Pangoro, to Pangolin
 contract ToPangolinEndpoint is MessageEndpoint {
@@ -19,7 +19,7 @@ contract ToPangolinEndpoint is MessageEndpoint {
         remoteSmartChainId = 43;
     }
 
-    function _executable(address, bytes calldata)
+    function _allowed(address, bytes calldata)
         internal
         pure
         override

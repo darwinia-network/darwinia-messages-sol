@@ -3,22 +3,22 @@
 pragma solidity ^0.8.9;
 
 import "../RemoteDispatchEndpoint.sol";
-import "../SmartChainXLib.sol";
-import "../types/PalletMessageRouter.sol";
-import "../types/XcmTypes.sol";
-import "../types/PalletEthereumXcm.sol";
-import "../types/PalletHelixBridge.sol";
+import "../Executable.sol";
+import "../../SmartChainXLib.sol";
+import "../../types/PalletMessageRouter.sol";
+import "../../types/XcmTypes.sol";
+import "../../types/PalletEthereumXcm.sol";
+import "../../types/PalletHelixBridge.sol";
 
 // TODO: AbstractLcmpXcmpDarwiniaEndpoint
 // router: darwinia parachain
-abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
+abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint, Executable {
     uint8 public constant TARGET_MOONBEAM = 0;
     uint8 public constant TARGET_ASTAR = 1;
 
     // Target params
     address public targetEndpoint;
     bytes2 public targetMessageTransactCallIndex;
-    address public derivedMessageSender; // message sender derived from targetEndpoint
 
     // router calls
     bytes2 public forwardCallIndex;
@@ -32,7 +32,7 @@ abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
     ///////////////////////////////
     // Outbound
     ///////////////////////////////
-    function _executeOnTarget(
+    function _targetExecute(
         uint32 _routerSpecVersion,
         uint8 _target,
         // target params
@@ -145,36 +145,6 @@ abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
                 100 // TODO: callWeight
             );
     }
-
-    ///////////////////////////////
-    // Inbound
-    ///////////////////////////////
-    modifier onlyMessageSender() {
-        require(
-            derivedMessageSender == msg.sender,
-            "MessageEndpoint: Invalid sender"
-        );
-        _;
-    }
-
-    function execute(address callReceiver, bytes calldata callPayload)
-        external
-        onlyMessageSender
-    {
-        if (_executable(callReceiver, callPayload)) {
-            (bool success, ) = callReceiver.call(callPayload);
-            require(success, "MessageEndpoint: Call execution failed");
-        } else {
-            revert("MessageEndpoint: Unapproved call");
-        }
-    }
-
-    // Check if the call can be executed
-    function _executable(address callReceiver, bytes calldata callPayload)
-        internal
-        view
-        virtual
-        returns (bool);
 
     ///////////////////////////////
     // Setters

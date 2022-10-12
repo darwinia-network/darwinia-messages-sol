@@ -2,17 +2,18 @@
 
 pragma solidity ^0.8.9;
 
-import "./SmartChainXLib.sol";
+import "../SmartChainXLib.sol";
+import "./Executable.sol";
 import "./RemoteDispatchEndpoint.sol";
-import "./types/PalletEthereum.sol";
-import "./types/PalletEthereumXcm.sol";
+import "../types/PalletEthereum.sol";
+import "../types/PalletEthereumXcm.sol";
 
-abstract contract MessageEndpoint is RemoteDispatchEndpoint {
+// TODO: rename: RemoteExecuteEndpoint
+abstract contract MessageEndpoint is RemoteDispatchEndpoint, Executable {
     address public remoteEndpoint;
     bytes2 public remoteMessageTransactCallIndex;
     uint64 public remoteSmartChainId; // remote smart chain id
     uint64 public remoteWeightPerGas = 40_000; // 1 gas ~= 40_000 weight
-    address public derivedMessageSender; // message sender derived from remoteEndpoint
 
     ///////////////////////////////
     // Outbound
@@ -56,36 +57,6 @@ abstract contract MessageEndpoint is RemoteDispatchEndpoint {
                 tgtTransactCallWeight
             );
     }
-
-    ///////////////////////////////
-    // Inbound
-    ///////////////////////////////
-    modifier onlyMessageSender() {
-        require(
-            derivedMessageSender == msg.sender,
-            "MessageEndpoint: Invalid sender"
-        );
-        _;
-    }
-
-    function execute(address callReceiver, bytes calldata callPayload)
-        external
-        onlyMessageSender
-    {
-        if (_executable(callReceiver, callPayload)) {
-            (bool success, ) = callReceiver.call(callPayload);
-            require(success, "MessageEndpoint: Call execution failed");
-        } else {
-            revert("MessageEndpoint: Unapproved call");
-        }
-    }
-
-    // Check if the call can be executed
-    function _executable(address callReceiver, bytes calldata callPayload)
-        internal
-        view
-        virtual
-        returns (bool);
 
     ///////////////////////////////
     // Setters

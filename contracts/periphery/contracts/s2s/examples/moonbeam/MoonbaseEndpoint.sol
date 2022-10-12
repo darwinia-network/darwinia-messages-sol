@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import "../../moonbeam/AbstractMoonbeamEndpoint.sol";
+import "../../endpoints/routing/moonbeam/AbstractMoonbeamEndpoint.sol";
 
 contract MoonbaseEndpoint is AbstractMoonbeamEndpoint {
     constructor() {

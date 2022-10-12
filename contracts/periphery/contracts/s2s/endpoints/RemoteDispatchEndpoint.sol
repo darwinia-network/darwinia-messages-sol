@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import "./SmartChainXLib.sol";
+import "../SmartChainXLib.sol";
 
 abstract contract RemoteDispatchEndpoint {
     address public dispatchAddress;
