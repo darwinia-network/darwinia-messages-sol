@@ -6,8 +6,8 @@ import "../../moonbeam/AbstractDarwiniaEndpoint.sol";
 
 contract PangolinEndpoint is AbstractDarwiniaEndpoint {
     constructor() {
-        remoteMessageTransactCallIndex = 0x2600;
-        routerForwardCallIndex = 0x1a01;
+        targetMessageTransactCallIndex = 0x2600;
+        forwardCallIndex = 0x1a01;
         dispatchAddress = address(1025);
         sendMessageCallIndex = 0x3f03;
         storageAddress = address(1024);
@@ -27,25 +27,26 @@ contract PangolinEndpoint is AbstractDarwiniaEndpoint {
         return true;
     }
 
-    function remoteExecute(
+    function executeOnTarget(
         uint32 _routerSpecVersion,
         address _callReceiver,
         bytes calldata _callPayload,
         uint256 _gasLimit
     ) external payable returns (uint256) {
         return
-            _remoteExecute(
+            _executeOnTarget(
                 _routerSpecVersion,
+                TARGET_MOONBEAM,
                 _callReceiver,
                 _callPayload,
                 _gasLimit
             );
     }
 
-    function setRemoteEndpoint(bytes4 routerChainId, address remoteEndpoint)
+    function setTargetEndpoint(bytes4 routerChainId, address targetEndpoint)
         external
     {
-        _setRemoteEndpoint(routerChainId, remoteEndpoint);
+        _setTargetEndpoint(routerChainId, targetEndpoint);
     }
 
     // origin from pangolin to moonbase, B

@@ -15,7 +15,7 @@ contract RemoteExecute_FromPangolinToMoonbase {
     event Hello(address);
 
     function remoteAdd(address callee) external payable returns (uint256) {
-        uint256 messageId = PangolinEndpoint(endpoint).remoteExecute{value: msg.value}(
+        uint256 messageId = PangolinEndpoint(endpoint).executeOnTarget{value: msg.value}(
             5320, // pangolin-parachain spec version
             callee,
             hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002", // add(2),
