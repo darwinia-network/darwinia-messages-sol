@@ -5,18 +5,26 @@ pragma solidity ^0.8.9;
 import "../RemoteDispatchEndpoint.sol";
 import "../SmartChainXLib.sol";
 import "../types/PalletMessageRouter.sol";
+import "../types/XcmTypes.sol";
 import "../types/PalletEthereumXcm.sol";
 import "../types/PalletHelixBridge.sol";
 
+// TODO: AbstractLcmpXcmpDarwiniaEndpoint
+// router: darwinia parachain
 abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
-    // Target params
-    address public remoteEndpoint;
-    bytes2 public remoteMessageTransactCallIndex;
-    address public derivedMessageSender; // message sender derived from remoteEndpoint
+    uint8 public constant TARGET_MOONBEAM = 0;
+    uint8 public constant TARGET_ASTAR = 1;
 
-    // router params
-    bytes2 public routerForwardCallIndex;
-    uint64 public routerForwardCallWeight = 337_239_000;
+    // Target params
+    address public targetEndpoint;
+    bytes2 public targetMessageTransactCallIndex;
+    address public derivedMessageSender; // message sender derived from targetEndpoint
+
+    // router calls
+    bytes2 public forwardCallIndex;
+    uint64 public forwardCallWeight = 337_239_000;
+    bytes2 public issueFromRemoteCallIndex;
+    bytes2 public handleIssuingFailureFromRemoteCallIndex;
 
     event TargetInputGenerated(bytes);
     event TargetTransactCallGenerated(bytes);
@@ -24,8 +32,10 @@ abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
     ///////////////////////////////
     // Outbound
     ///////////////////////////////
-    function _remoteExecute(
+    function _executeOnTarget(
         uint32 _routerSpecVersion,
+        uint8 _target,
+        // target params
         address _callReceiver,
         bytes calldata _callPayload,
         uint256 _gasLimit
@@ -41,35 +51,50 @@ abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
         // build the TransactCall
         bytes memory tgtTransactCallEncoded = PalletEthereumXcm
             .buildTransactCall(
-                remoteMessageTransactCallIndex,
+                targetMessageTransactCallIndex,
                 _gasLimit,
-                remoteEndpoint,
+                targetEndpoint,
                 0,
                 input
             );
 
         emit TargetTransactCallGenerated(tgtTransactCallEncoded);
 
-        // build the ForwardCall
-        bytes memory routerForwardCallEncoded = PalletMessageRouter
-            .buildForwardCall(
-                routerForwardCallIndex,
-                tgtTransactCallEncoded,
-                0 // moonbeam
+        // call router.forward
+        return
+            _forward(
+                _routerSpecVersion,
+                PalletMessageRouter.buildXcmToBeForward(tgtTransactCallEncoded),
+                _target
             );
+    }
 
-        // dispatch the ForwardCall
+    function _forward(
+        uint32 _routerSpecVersion,
+        // call params
+        XcmTypes.EnumItem_VersionedXcm_V2 memory message,
+        uint8 target
+    ) internal returns (uint256) {
+        PalletMessageRouter.ForwardCall
+            memory call = PalletMessageRouter.ForwardCall(
+                forwardCallIndex,
+                message,
+                target
+            );
+        bytes memory callEncoded = PalletMessageRouter.encodeForwardCall(
+            call
+        );
+
         return
             _remoteDispatch(
                 _routerSpecVersion,
-                routerForwardCallEncoded,
-                routerForwardCallWeight
+                callEncoded,
+                forwardCallWeight
             );
     }
 
     function _issueFromRemote(
         uint32 _routerSpecVersion,
-        bytes2 _issueFromRemoteCallIndex,
         // call params
         uint128 _value,
         bytes32 _recipient,
@@ -78,7 +103,7 @@ abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
     ) internal returns (uint256) {
         PalletHelixBridge.IssueFromRemoteCall memory call = PalletHelixBridge
             .IssueFromRemoteCall(
-                _issueFromRemoteCallIndex,
+                issueFromRemoteCallIndex,
                 _value,
                 _recipient,
                 _burnPrunedMessages,
@@ -98,7 +123,6 @@ abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
 
     function _handleIssuingFailureFromRemote(
         uint32 _routerSpecVersion,
-        bytes2 _handleIssuingFailureFromRemoteCallIndex,
         // call params
         uint64 _failureNonce,
         uint64[] memory _burnPrunedMessages,
@@ -106,7 +130,7 @@ abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
     ) internal returns (uint256) {
         PalletHelixBridge.HandleIssuingFailureFromRemoteCall
             memory call = PalletHelixBridge.HandleIssuingFailureFromRemoteCall(
-                _handleIssuingFailureFromRemoteCallIndex,
+                handleIssuingFailureFromRemoteCallIndex,
                 _failureNonce,
                 _burnPrunedMessages,
                 _maxLockPrunedNonce
@@ -155,19 +179,43 @@ abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
     ///////////////////////////////
     // Setters
     ///////////////////////////////
-    function _setRemoteEndpoint(bytes4 _remoteChainId, address _remoteEndpoint)
+    function _setTargetEndpoint(bytes4 _routerChainId, address _targetEndpoint)
         internal
     {
-        remoteEndpoint = _remoteEndpoint;
+        targetEndpoint = _targetEndpoint;
         derivedMessageSender = SmartChainXLib.deriveSenderFromRemote(
-            _remoteChainId,
-            _remoteEndpoint
+            _routerChainId,
+            _targetEndpoint
         );
     }
 
-    function _setRemoteMessageTransactCallIndex(
-        bytes2 _remoteMessageTransactCallIndex
+    function _setTargetMessageTransactCallIndex(
+        bytes2 _targetMessageTransactCallIndex
     ) internal {
-        remoteMessageTransactCallIndex = _remoteMessageTransactCallIndex;
+        targetMessageTransactCallIndex = _targetMessageTransactCallIndex;
+    }
+
+    function _setForwardCallIndex(
+        bytes2 _forwardCallIndex
+    ) internal {
+        forwardCallIndex = _forwardCallIndex;
+    }
+
+    function _setForwardCallWeight(
+        uint64 _forwardCallWeight
+    ) internal {
+        forwardCallWeight = _forwardCallWeight;
+    }
+
+    function _setIssueFromRemoteCallIndex(
+        bytes2 _issueFromRemoteCallIndex
+    ) internal {
+        issueFromRemoteCallIndex = _issueFromRemoteCallIndex;
+    }
+
+    function _setHandleIssuingFailureFromRemoteCallIndex(
+        bytes2 _handleIssuingFailureFromRemoteCallIndex
+    ) internal {
+        handleIssuingFailureFromRemoteCallIndex = _handleIssuingFailureFromRemoteCallIndex;
     }
 }
