@@ -34,7 +34,7 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    return data.data
+    return data.data.message
   }
 
   async get_beacon_block_root(id) {
