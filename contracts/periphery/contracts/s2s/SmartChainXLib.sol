@@ -257,7 +257,7 @@ library SmartChainXLib {
         bytes4 _darwiniaChainId,
         address _darwiniaEndpointAddress,
         bytes4 _darwiniaParachainId
-    ) internal returns (bytes32, bytes32, address) {
+    ) internal returns (address) {
         // H160(sender on the sourc chain) > AccountId32 A1 -> A2
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
             _darwiniaEndpointAddress
@@ -281,7 +281,7 @@ library SmartChainXLib {
             result
         );
 
-        return (derivedSubstrateAddress, derivedAccountId, result);
+        return result;
     }
 
     // Get the last delivered nonce from the state storage of the target chain's inbound lane

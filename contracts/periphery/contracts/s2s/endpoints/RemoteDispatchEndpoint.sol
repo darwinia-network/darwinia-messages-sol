@@ -13,6 +13,8 @@ abstract contract RemoteDispatchEndpoint {
     bytes32 public storageKeyForMarketFee;
     bytes4 public outboundLaneId;
     bytes4 public inboundLaneId;
+    // The chain on which this endpoint deployed
+    bytes4 public chainId;
 
     ///////////////////////////////
     // Outbound
@@ -38,6 +40,20 @@ abstract contract RemoteDispatchEndpoint {
         );
 
         return encodeMessageId(outboundLaneId, messageNonce);
+    }
+
+    // Dapp use this function to get the derived origin(used on remote chain)
+    function getDerivedAccountId() external view returns (bytes32) {
+        bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
+            address(this)
+        );
+
+        bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
+            chainId,
+            derivedSubstrateAddress
+        );
+
+        return derivedAccountId;
     }
 
     ///////////////////////////////

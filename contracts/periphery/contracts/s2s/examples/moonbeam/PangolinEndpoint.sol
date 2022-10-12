@@ -16,6 +16,7 @@ contract PangolinEndpoint is AbstractDarwiniaEndpoint {
         storageKeyForLastDeliveredNonce = 0xdcdffe6202217f0ecb0ec75d8a09b32ce5f83cf83f2127eb47afdc35d6e43fab;
         outboundLaneId = 0x70616c69;
         inboundLaneId = 0x70616c69;
+        chainId = 0x7061676c; // pangolin chain id, pagl
     }
 
     function _allowed(address, bytes calldata)
@@ -47,21 +48,5 @@ contract PangolinEndpoint is AbstractDarwiniaEndpoint {
         external
     {
         _setTargetEndpoint(routerChainId, targetEndpoint);
-    }
-
-    // origin from pangolin to moonbase, B
-    function getMessageOriginOnPangolinParachain() external view returns (bytes32) {
-        // H160(sender on the sourc chain) > AccountId32
-        bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
-            address(this)
-        );
-
-        // AccountId32 > derived AccountId32
-        bytes32 derivedAccountId = SmartChainXLib.deriveAccountId(
-            0x7061676c, // pangolin chain id // pagl
-            derivedSubstrateAddress
-        );
-
-        return derivedAccountId;
     }
 }

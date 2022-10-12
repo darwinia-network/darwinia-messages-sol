@@ -6,15 +6,15 @@ import "../../endpoints/routing/moonbeam/AbstractMoonbeamEndpoint.sol";
 
 contract MoonbaseEndpoint is AbstractMoonbeamEndpoint {
     constructor() {
-        remoteSmartChainId = 43;
-        remoteMessageTransactCallIndex = 0x2901;
+        targetSmartChainId = 43;
+        targetMessageTransactCallIndex = 0x2901;
         routerSendMessageCallIndex = 0x1503;
         routerOutboundLaneId = 0x70616c69; // pali
         routerParachainId = 0x00000839;
         feeLocationAddress = 0xFFFffFfF8283448b3cB519Ca4732F2ddDC6A6165;
     }
 
-    function _executable(address, bytes calldata)
+    function _allowed(address, bytes calldata)
         internal
         pure
         override
@@ -23,14 +23,14 @@ contract MoonbaseEndpoint is AbstractMoonbeamEndpoint {
         return true;
     }
 
-    function remoteExecute(
+    function targetExecute(
         uint32 _tgtSpecVersion,
         address _callReceiver,
         bytes calldata _callPayload,
         uint256 _gasLimit,
         uint128 _deliveryAndDispatchFee
     ) external payable {
-        _remoteExecute(
+        _targetExecute(
             _tgtSpecVersion,
             _callReceiver,
             _callPayload,
@@ -39,22 +39,12 @@ contract MoonbaseEndpoint is AbstractMoonbeamEndpoint {
         );
     }
 
-    function setRemoteEndpoint(
-        bytes4 _remoteChainId,
+    function setTargetEndpoint(
+        bytes4 _targetChainId,
         bytes4 _parachainId,
-        address _remoteEndpoint
+        address _targetEndpoint
     ) external
     {
-        _setRemoteEndpoint(_remoteChainId, _parachainId, _remoteEndpoint);
-    }
-
-    // origin from moonbase to pangolin, A2
-    function getMessageOriginOnPangolinParachain() external view returns (bytes32) {
-        // H160(sender on the source chain) > AccountId32
-        bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
-            address(this)
-        );
-       
-        return derivedSubstrateAddress;
+        _setTargetEndpoint(_targetChainId, _parachainId, _targetEndpoint);
     }
 }

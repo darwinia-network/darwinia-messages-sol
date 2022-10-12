@@ -2,17 +2,18 @@
 
 pragma solidity ^0.8.9;
 
+import "../../../endpoints/Executable.sol";
 import "../../../SmartChainXLib.sol";
 import "../../../types/PalletEthereum.sol";
 import "../../../types/PalletBridgeMessages.sol";
 import "../../../precompiles/moonbeam/XcmTransactorV1.sol";
 
-abstract contract AbstractMoonbeamEndpoint {
-    // Remote params
-    address public remoteEndpoint;
-    uint64 public remoteSmartChainId;
-    bytes2 public remoteMessageTransactCallIndex;
-    uint64 public remoteWeightPerGas = 40_000; // 1 gas ~= 40_000 weight
+abstract contract AbstractMoonbeamEndpoint is Executable {
+    // Target params
+    address public targetEndpoint;
+    uint64 public targetSmartChainId;
+    bytes2 public targetMessageTransactCallIndex;
+    uint64 public targetWeightPerGas = 40_000; // 1 gas ~= 40_000 weight
 
     // router params
     bytes2 public routerSendMessageCallIndex;
@@ -21,10 +22,6 @@ abstract contract AbstractMoonbeamEndpoint {
 
     // Local params
     address public feeLocationAddress;
-    //   darwinia endpoint addresses
-    bytes32 public darwiniaEndpointAccountId32;
-    bytes32 public darwiniaEndpointAccountId32Derived;
-    address public darwiniaEndpointAddressDerived;
 
     event TargetInputGenerated(bytes);
     event TargetTransactCallGenerated(bytes);
@@ -33,7 +30,7 @@ abstract contract AbstractMoonbeamEndpoint {
     ///////////////////////////////
     // Outbound
     ///////////////////////////////
-    function _remoteExecute(
+    function _targetExecute(
         uint32 _tgtSpecVersion,
         address _callReceiver,
         bytes calldata _callPayload,
@@ -54,11 +51,11 @@ abstract contract AbstractMoonbeamEndpoint {
         bytes memory tgtTransactCallEncoded = PalletEthereum
             .encodeMessageTransactCall(
                 PalletEthereum.MessageTransactCall(
-                    remoteMessageTransactCallIndex,
+                    targetMessageTransactCallIndex,
                     PalletEthereum.buildTransactionV2ForMessageTransact(
                         _gasLimit,
-                        remoteEndpoint,
-                        remoteSmartChainId,
+                        targetEndpoint,
+                        targetSmartChainId,
                         tgtInput
                     )
                 )
@@ -66,7 +63,7 @@ abstract contract AbstractMoonbeamEndpoint {
 
         emit TargetTransactCallGenerated(tgtTransactCallEncoded);
 
-        uint64 tgtTransactCallWeight = uint64(_gasLimit * remoteWeightPerGas);
+        uint64 tgtTransactCallWeight = uint64(_gasLimit * targetWeightPerGas);
 
         // send_message dispatch call that will be executed on crab parachain
         bytes memory message = SmartChainXLib.buildMessage(
@@ -101,66 +98,45 @@ abstract contract AbstractMoonbeamEndpoint {
         );
     }
 
-    ///////////////////////////////
-    // Inbound
-    ///////////////////////////////
-    modifier onlyMessageSender() {
-        require(
-            darwiniaEndpointAddressDerived == msg.sender,
-            "MessageEndpoint: Invalid sender"
+    // origin from moonbase to pangolin, A2
+    function getDerivedAccountId() external view returns (bytes32) {
+        bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
+            address(this)
         );
-        _;
+       
+        return derivedSubstrateAddress;
     }
-
-    function execute(address callReceiver, bytes calldata callPayload)
-        external
-        onlyMessageSender
-    {
-        if (_executable(callReceiver, callPayload)) {
-            (bool success, ) = callReceiver.call(callPayload);
-            require(success, "MessageEndpoint: Call execution failed");
-        } else {
-            revert("MessageEndpoint: Unapproved call");
-        }
-    }
-
-    // Check if the call can be executed
-    function _executable(address callReceiver, bytes calldata callPayload)
-        internal
-        view
-        virtual
-        returns (bool);
 
     ///////////////////////////////
     // Setters
     ///////////////////////////////
-    function _setRemoteEndpoint(
-        bytes4 _remoteChainId,
+    function _setTargetEndpoint(
+        bytes4 _targetChainId,
         bytes4 _parachainId,
-        address _remoteEndpoint
+        address _targetEndpoint
     ) internal {
-        remoteEndpoint = _remoteEndpoint;
+        targetEndpoint = _targetEndpoint;
 
-        (darwiniaEndpointAccountId32, darwiniaEndpointAccountId32Derived, darwiniaEndpointAddressDerived) = SmartChainXLib
+        derivedMessageSender = SmartChainXLib
             .deriveSenderFromSmartChainOnMoonbeam(
-                _remoteChainId,
-                _remoteEndpoint,
+                _targetChainId,
+                _targetEndpoint,
                 _parachainId
             );
     }
 
-    function _setRemoteMessageTransactCallIndex(
-        bytes2 _remoteMessageTransactCallIndex
+    function _setTargetMessageTransactCallIndex(
+        bytes2 _targetMessageTransactCallIndex
     ) internal {
-        remoteMessageTransactCallIndex = _remoteMessageTransactCallIndex;
+        targetMessageTransactCallIndex = _targetMessageTransactCallIndex;
     }
 
-    function _setRemoteSmartChainId(uint64 _remoteSmartChainId) internal {
-        remoteSmartChainId = _remoteSmartChainId;
+    function _setTargetSmartChainId(uint64 _targetSmartChainId) internal {
+        targetSmartChainId = _targetSmartChainId;
     }
 
-    function _setRemoteWeightPerGas(uint64 _remoteWeightPerGas) internal {
-        remoteWeightPerGas = _remoteWeightPerGas;
+    function _setTargetWeightPerGas(uint64 _targetWeightPerGas) internal {
+        targetWeightPerGas = _targetWeightPerGas;
     }
 
     function _setRouterSendMessageCallIndex(bytes2 _routerSendMessageCallIndex)
