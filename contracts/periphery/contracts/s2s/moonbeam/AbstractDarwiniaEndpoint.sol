@@ -2,29 +2,20 @@
 
 pragma solidity ^0.8.9;
 
+import "../RemoteDispatchEndpoint.sol";
 import "../SmartChainXLib.sol";
 import "../types/PalletMessageRouter.sol";
 import "../types/PalletEthereumXcm.sol";
 
-abstract contract AbstractDarwiniaEndpoint {
-    // Remote params
+abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint {
+    // Target params
     address public remoteEndpoint;
     bytes2 public remoteMessageTransactCallIndex;
+    address public derivedMessageSender; // message sender derived from remoteEndpoint
 
     // router params
     bytes2 public routerForwardCallIndex;
     uint64 public routerForwardCallWeight = 337_239_000;
-
-    // Local params
-    address public dispatchAddress;
-    bytes2 public sendMessageCallIndex;
-    address public storageAddress;
-    bytes32 public storageKeyForLatestNonce;
-    bytes32 public storageKeyForLastDeliveredNonce;
-    bytes32 public storageKeyForMarketFee;
-    bytes4 public outboundLaneId;
-    bytes4 public inboundLaneId;
-    address public derivedMessageSender; // message sender derived from remoteEndpoint
 
     event TargetInputGenerated(bytes);
     event TargetTransactCallGenerated(bytes);
@@ -32,10 +23,6 @@ abstract contract AbstractDarwiniaEndpoint {
     ///////////////////////////////
     // Outbound
     ///////////////////////////////
-    function fee() public view returns (uint256) {
-        return SmartChainXLib.marketFee(storageAddress, storageKeyForMarketFee);
-    }
-
     function _remoteExecute(
         uint32 _routerSpecVersion,
         address _callReceiver,
@@ -59,7 +46,7 @@ abstract contract AbstractDarwiniaEndpoint {
                 0,
                 input
             );
-        
+
         emit TargetTransactCallGenerated(tgtTransactCallEncoded);
 
         // build the ForwardCall
@@ -71,15 +58,13 @@ abstract contract AbstractDarwiniaEndpoint {
             );
 
         // dispatch the ForwardCall
-        uint64 messageNonce = SmartChainXLib.remoteDispatch(
-            _routerSpecVersion,
-            routerForwardCallEncoded,
-            routerForwardCallWeight,
-            dispatchAddress,
-            sendMessageCallIndex,
-            outboundLaneId,
-            storageAddress,
-            storageKeyForLatestNonce
+        return
+            _remoteDispatch(
+                _routerSpecVersion,
+                routerForwardCallEncoded,
+                routerForwardCallWeight
+            );
+    }
         );
 
         return encodeMessageId(outboundLaneId, messageNonce);
@@ -115,104 +100,22 @@ abstract contract AbstractDarwiniaEndpoint {
         virtual
         returns (bool);
 
-    // Get the last delivered inbound message id
-    function lastDeliveredMessageId() public view returns (uint256) {
-        uint64 nonce = SmartChainXLib.lastDeliveredNonce(
-            storageAddress,
-            storageKeyForLastDeliveredNonce,
-            inboundLaneId
-        );
-        return encodeMessageId(inboundLaneId, nonce);
-    }
-
-    // Check if an inbound message has been delivered
-    function isMessageDelivered(uint256 messageId) public view returns (bool) {
-        (bytes4 laneId, uint64 nonce) = decodeMessageId(messageId);
-        uint64 lastNonce = SmartChainXLib.lastDeliveredNonce(
-            storageAddress,
-            storageKeyForLastDeliveredNonce,
-            laneId
-        );
-        return nonce <= lastNonce;
-    }
-
-    ///////////////////////////////
-    // Common functions
-    ///////////////////////////////
-    function decodeMessageId(uint256 messageId)
-        public
-        pure
-        returns (bytes4, uint64)
-    {
-        return (
-            bytes4(uint32(messageId >> 64)),
-            uint64(messageId & 0xffffffffffffffff)
-        );
-    }
-
-    function encodeMessageId(bytes4 laneId, uint64 nonce)
-        public
-        pure
-        returns (uint256)
-    {
-        return (uint256(uint32(laneId)) << 64) + uint256(nonce);
-    }
-
     ///////////////////////////////
     // Setters
     ///////////////////////////////
-    function _setRemoteEndpoint(
-        bytes4 _routerChainId,
-        address _remoteEndpoint
-    ) internal {
+    function _setRemoteEndpoint(bytes4 _remoteChainId, address _remoteEndpoint)
+        internal
+    {
         remoteEndpoint = _remoteEndpoint;
         derivedMessageSender = SmartChainXLib.deriveSenderFromRemote(
-            _routerChainId,
+            _remoteChainId,
             _remoteEndpoint
         );
-    }
-
-    function _setOutboundLaneId(bytes4 _outboundLaneId) internal {
-        outboundLaneId = _outboundLaneId;
     }
 
     function _setRemoteMessageTransactCallIndex(
         bytes2 _remoteMessageTransactCallIndex
     ) internal {
         remoteMessageTransactCallIndex = _remoteMessageTransactCallIndex;
-    }
-
-    function _setStorageAddress(address _storageAddress) internal {
-        storageAddress = _storageAddress;
-    }
-
-    function _setDispatchAddress(address _dispatchAddress) internal {
-        dispatchAddress = _dispatchAddress;
-    }
-
-    function _setSendMessageCallIndex(bytes2 _sendMessageCallIndex) internal {
-        sendMessageCallIndex = _sendMessageCallIndex;
-    }
-
-    function _setStorageKeyForMarketFee(bytes32 _storageKeyForMarketFee)
-        internal
-    {
-        storageKeyForMarketFee = _storageKeyForMarketFee;
-    }
-
-    function _setStorageKeyForLatestNonce(bytes32 _storageKeyForLatestNonce)
-        internal
-    {
-        storageKeyForLatestNonce = _storageKeyForLatestNonce;
-    }
-
-    function _setInboundLaneId(bytes4 _inboundLaneId) internal {
-        inboundLaneId = _inboundLaneId;
-    }
-
-    function _setStorageKeyForLastDeliveredNonce(
-        bytes32 _storageKeyForLastDeliveredNonce
-    ) internal {
-        storageKeyForLastDeliveredNonce = _storageKeyForLastDeliveredNonce;
     }
 }
