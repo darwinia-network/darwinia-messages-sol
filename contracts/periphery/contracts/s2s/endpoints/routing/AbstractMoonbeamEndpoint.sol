@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.9;
 
-import "../../../endpoints/Executable.sol";
-import "../../../SmartChainXLib.sol";
-import "../../../types/PalletEthereum.sol";
-import "../../../types/PalletBridgeMessages.sol";
-import "../../../precompiles/moonbeam/XcmTransactorV1.sol";
+import "../../endpoints/Executable.sol";
+import "../../SmartChainXLib.sol";
+import "../../types/PalletEthereum.sol";
+import "../../types/PalletBridgeMessages.sol";
+import "../../precompiles/moonbeam/XcmTransactorV1.sol";
 
 abstract contract AbstractMoonbeamEndpoint is Executable {
     // Target params
