@@ -99,8 +99,8 @@ module.exports = {
       gasPrice: 53100000000
     },
     moonbase: {
-      url: 'http://g2.dev.darwinia.network:8888',
-      network_id: "1280",
+      url: 'https://rpc.api.moonbase.moonbeam.network',
+      network_id: "1287",
       accounts: [MOONBASE_PRIVATE_KEY],
       gas: 3_000_000,
       gasPrice: 53100000000
