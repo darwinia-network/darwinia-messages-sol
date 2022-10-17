@@ -1,3 +1,6 @@
+pay attention to:
+chain_id, lane_id, the balance of derived account on parachain
+
 In `contracts/periphery` dir:
 
 1. deploy endpoints
