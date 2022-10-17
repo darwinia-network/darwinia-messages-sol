@@ -3,6 +3,7 @@
 pragma solidity ^0.8.9;
 
 import "./PangolinEndpoint.sol";
+import "../../SmartChainXLib.sol";
 
 // pangolin > pangolin-parachain > moonbase
 contract RemoteExecute_FromPangolinToMoonbase {
@@ -16,12 +17,12 @@ contract RemoteExecute_FromPangolinToMoonbase {
 
     function remoteAdd(address callee) external payable returns (uint256) {
         uint256 messageId = PangolinEndpoint(endpoint).targetExecute{value: msg.value}(
-            5320, // pangolin-parachain spec version
+            5330, // pangolin-parachain spec version
             callee,
             hex"1003e2d20000000000000000000000000000000000000000000000000000000000000002", // add(2),
             120000 // gas limit
         );
-
+        
         return messageId;
     }
 

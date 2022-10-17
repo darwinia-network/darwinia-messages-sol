@@ -8,9 +8,9 @@ async function main() {
 
     const caller = await hre.ethers.getContractAt("RemoteExecute_FromPangolinToMoonbase", caller_address);
 
-    const fee = hre.ethers.utils.parseEther("300");
+    const fee = hre.ethers.utils.parseEther("250");
     const tx = await caller.remoteAdd(callee_adderss, { value: fee })
-    console.log(tx.hash)
+    console.log(await tx.wait())
 }
 
 // We recommend this pattern to be able to use async/await everywhere

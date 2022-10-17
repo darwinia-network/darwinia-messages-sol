@@ -9,13 +9,24 @@ contract PangolinEndpoint is AbstractDarwiniaEndpoint {
         targetMessageTransactCallIndex = 0x2600;
         forwardCallIndex = 0x1a01;
         dispatchAddress = address(1025);
-        sendMessageCallIndex = 0x3f03;
         storageAddress = address(1024);
-        storageKeyForMarketFee = 0x39bf2363dd0720bd6e11a4c86f4949322edb70953213f33a6ef6b8a5e3ffcab2;
-        storageKeyForLatestNonce = 0xdcdffe6202217f0ecb0ec75d8a09b32c96c246acb9b55077390e3ca723a0ca1f;
-        storageKeyForLastDeliveredNonce = 0xdcdffe6202217f0ecb0ec75d8a09b32ce5f83cf83f2127eb47afdc35d6e43fab;
-        outboundLaneId = 0x70616c69;
-        inboundLaneId = 0x70616c69;
+
+        // pangolin parachain
+        // sendMessageCallIndex = 0x3f03;
+        // storageKeyForMarketFee = 0x39bf2363dd0720bd6e11a4c86f4949322edb70953213f33a6ef6b8a5e3ffcab2;
+        // storageKeyForLatestNonce = 0xdcdffe6202217f0ecb0ec75d8a09b32c96c246acb9b55077390e3ca723a0ca1f;
+        // storageKeyForLastDeliveredNonce = 0xdcdffe6202217f0ecb0ec75d8a09b32ce5f83cf83f2127eb47afdc35d6e43fab;
+        // outboundLaneId = 0x70616c69;
+        // inboundLaneId = 0x70616c69;
+
+        // pangolin parachain alpha
+        sendMessageCallIndex = 0x4703;  
+        storageKeyForMarketFee = 0xfb100650c3bdbe7b8ed495411b1951cc2edb70953213f33a6ef6b8a5e3ffcab2; // pangolin parachain alpha
+        storageKeyForLatestNonce = 0x492db8fd8188abfb7e5eb22add55deb396c246acb9b55077390e3ca723a0ca1f; // pangolin parachain alpha
+        storageKeyForLastDeliveredNonce = 0x492db8fd8188abfb7e5eb22add55deb3e5f83cf83f2127eb47afdc35d6e43fab; // pangolin parachain alpha
+        outboundLaneId = 0x706c7061;
+        inboundLaneId = 0x706c7061;
+
         chainId = 0x7061676c; // pangolin chain id, pagl
     }
 

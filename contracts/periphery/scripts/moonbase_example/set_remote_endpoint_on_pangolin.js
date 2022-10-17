@@ -9,10 +9,10 @@ async function main() {
     const pangolinEndpoint = await PangolinEndpoint.attach(endpoint_address);
     await pangolinEndpoint.setTargetEndpoint("0x70676c70", remote_endpoint_address); // PANGOLIN_PARACHAIN_CHAIN_ID
 
-    // const C1 = await pangolinEndpoint.derivedMessageSender();
-    // console.log(
-    //     `MOONBASE_ENDPOINT DERIVED 20(C1): ${C1}\n`
-    // );
+    const pangolinEndpoint_B = await pangolinEndpoint.getDerivedAccountId();
+    console.log(
+        `PANGOLIN_ENDPOINT 32(B)        : ${pangolinEndpoint_B} <- manual deposit\n`
+    );
 }
 
 // We recommend this pattern to be able to use async/await everywhere

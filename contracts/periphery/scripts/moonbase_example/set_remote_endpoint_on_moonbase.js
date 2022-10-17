@@ -14,7 +14,7 @@ async function main() {
 
     const moonbaseEndpoint_A2 = await moonbaseEndpoint.getDerivedAccountId();
     console.log(
-        `MOONBASE_ENDPOINT 32(A2)       : ${moonbaseEndpoint_A2} <- manual deposit\n`
+        `MOONBASE_ENDPOINT 32(A2)       : ${moonbaseEndpoint_A2} <- manual deposit`
     );
 
     // const C = await moonbaseEndpoint.derivedMessageSender();
