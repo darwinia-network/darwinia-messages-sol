@@ -7,7 +7,8 @@ async function main() {
     const remote_endpoint_address = process.argv[3]
     const PangolinEndpoint = await hre.ethers.getContractFactory("PangolinEndpoint");
     const pangolinEndpoint = await PangolinEndpoint.attach(endpoint_address);
-    await pangolinEndpoint.setTargetEndpoint("0x70676c70", remote_endpoint_address); // PANGOLIN_PARACHAIN_CHAIN_ID
+    // await pangolinEndpoint.setTargetEndpoint("0x70676c70", remote_endpoint_address); // PANGOLIN_PARACHAIN_CHAIN_ID, pglp
+    await pangolinEndpoint.setTargetEndpoint("0x70677061", remote_endpoint_address); // PANGOLIN_PARACHAIN_ALPHA_CHAIN_ID, pgpa
 
     const pangolinEndpoint_B = await pangolinEndpoint.getDerivedAccountId();
     console.log(

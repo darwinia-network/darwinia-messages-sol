@@ -9,7 +9,13 @@ contract MoonbaseEndpoint is AbstractMoonbeamEndpoint {
         targetSmartChainId = 43;
         targetMessageTransactCallIndex = 0x2901;
         routerSendMessageCallIndex = 0x1503;
-        routerOutboundLaneId = 0x70616c69; // pali
+
+        // pangolin parachain
+        // routerOutboundLaneId = 0x70616c69; // pali
+
+        // pangolin parachain alpha
+        routerOutboundLaneId = 0x706c7061; // plpa
+
         routerParachainId = 0x00000839;
         feeLocationAddress = 0xFFFffFfF8283448b3cB519Ca4732F2ddDC6A6165;
     }

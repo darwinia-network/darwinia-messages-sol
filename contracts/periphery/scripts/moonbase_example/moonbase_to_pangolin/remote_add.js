@@ -6,11 +6,8 @@ async function main() {
     const callee_adderss = process.argv[3]
 
     const caller = await hre.ethers.getContractAt("RemoteExecute_FromMoonbaseToPangolin", caller_address);
-    // const Caller = await hre.ethers.getContractFactory("RemoteExecute_FromMoonbaseToPangolin");
-    // const caller = await Caller.attach(caller_address);
 
-    const fee = hre.ethers.utils.parseEther("1");
-    const tx = await caller.remoteAdd(callee_adderss, { value: fee })
+    const tx = await caller.remoteAdd(callee_adderss)
 
     console.log((await tx.wait()).transactionHash)
 }
