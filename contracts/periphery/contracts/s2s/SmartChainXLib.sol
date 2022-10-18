@@ -25,7 +25,6 @@ library SmartChainXLib {
 
     event LcmpMessngeGenerated(bytes);
     event DispatchResult(bool success, bytes result);
-    event DerivedAddresses(bytes32, bytes32, address);
 
     // Dispatch a call on the remote blockchain
     function remoteDispatch(
@@ -206,6 +205,20 @@ library SmartChainXLib {
         Utils.revertIfFailed(success, data, _errMsg);
     }
 
+    function deriveSenderFromAccountId(
+        bytes4 _srcChainId,
+        bytes32 _messageSender
+    ) internal returns (address) {
+        // AccountId32 > derived AccountId32
+        bytes32 derivedAccountId = deriveAccountId(
+            _srcChainId,
+            _messageSender
+        );
+
+        // derived AccountId32 > H160
+        return AccountId.deriveEthereumAddress(derivedAccountId);
+    }
+
     // derive an address from remote sender address (sender on the source chain).
     //
     // * `Darwinia Smart Chain` to `Darwinia Smart Chain`
@@ -232,22 +245,7 @@ library SmartChainXLib {
             _srcMessageSender
         );
 
-        // AccountId32 > derived AccountId32
-        bytes32 derivedAccountId = deriveAccountId(
-            _srcChainId,
-            derivedSubstrateAddress
-        );
-
-        // derived AccountId32 > H160
-        address result = AccountId.deriveEthereumAddress(derivedAccountId);
-
-        emit DerivedAddresses(
-            derivedSubstrateAddress,
-            derivedAccountId,
-            result
-        );
-
-        return result;
+        return deriveSenderFromAccountId(_srcChainId, derivedSubstrateAddress);
     }
 
     // Darwinia > Darwinia Parachain > Moonbeam
@@ -273,12 +271,6 @@ library SmartChainXLib {
         address result = XcmUtils.deriveMoonbeamAddressFromAccountId(
             abi.encodePacked(_darwiniaParachainId),
             derivedAccountId
-        );
-
-        emit DerivedAddresses(
-            derivedSubstrateAddress,
-            derivedAccountId,
-            result
         );
 
         return result;
