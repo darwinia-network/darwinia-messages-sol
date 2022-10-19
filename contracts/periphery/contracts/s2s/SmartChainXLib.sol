@@ -208,7 +208,7 @@ library SmartChainXLib {
     function deriveSenderFromAccountId(
         bytes4 _srcChainId,
         bytes32 _messageSender
-    ) internal returns (address) {
+    ) internal view returns (address) {
         // AccountId32 > derived AccountId32
         bytes32 derivedAccountId = deriveAccountId(
             _srcChainId,
@@ -239,7 +239,7 @@ library SmartChainXLib {
     function deriveSenderFromRemote(
         bytes4 _srcChainId,
         address _srcMessageSender
-    ) internal returns (address) {
+    ) internal view returns (address) {
         // H160(sender on the source chain) > AccountId32
         bytes32 derivedSubstrateAddress = AccountId.deriveSubstrateAddress(
             _srcMessageSender
