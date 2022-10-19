@@ -67,33 +67,33 @@
     "ts-node" "^8.0.2"
     "url-join" "^4.0.0"
 
-"@darwinia/addresses@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/packages/addresses":
+"@darwinia/addresses@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-messages-sol/packages/addresses":
   "resolved" "file:packages/addresses"
   "version" "1.0.0"
 
-"@darwinia/assets@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/packages/assets":
+"@darwinia/assets@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-messages-sol/packages/assets":
   "resolved" "file:packages/assets"
   "version" "1.0.0"
 
-"@darwinia/contracts-bridge@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/bridge":
+"@darwinia/contracts-bridge@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-messages-sol/contracts/bridge":
   "resolved" "file:contracts/bridge"
   "version" "1.0.0"
 
-"@darwinia/contracts-periphery@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/periphery":
+"@darwinia/contracts-periphery@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-messages-sol/contracts/periphery":
   "resolved" "file:contracts/periphery"
-  "version" "2.0.5-pre1"
+  "version" "2.0.5-pre2"
 
-"@darwinia/contracts-tokens@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/tokens":
+"@darwinia/contracts-tokens@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-messages-sol/contracts/tokens":
   "resolved" "file:contracts/tokens"
   "version" "1.0.0"
   dependencies:
     "evolutionlandcommon" "1.0.6"
 
-"@darwinia/contracts-utils@^1.0.0", "@darwinia/contracts-utils@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/utils":
+"@darwinia/contracts-utils@^1.0.0", "@darwinia/contracts-utils@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-messages-sol/contracts/utils":
   "resolved" "file:contracts/utils"
   "version" "1.0.3"
 
-"@darwinia/contracts-verify@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-bridges-sol/contracts/verify":
+"@darwinia/contracts-verify@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-messages-sol/contracts/verify":
   "resolved" "file:contracts/verify"
   "version" "1.0.0"
 
