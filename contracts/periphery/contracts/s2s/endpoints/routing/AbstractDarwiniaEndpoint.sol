@@ -60,26 +60,29 @@ abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint, Executable
 
         emit TargetTransactCallGenerated(tgtTransactCallEncoded);
 
+        // calc requireWeightAtMost
+        uint64 requireWeightAtMost = 1_000_000_000_000 / 40_000_000 * uint64(_gasLimit) + 25_000_000;
+
         // call router.forward
         return
             _forward(
                 _routerSpecVersion,
-                PalletMessageRouter.buildXcmToBeForward(tgtTransactCallEncoded),
-                _target
+                _target,
+                PalletMessageRouter.buildXcmToBeForward(tgtTransactCallEncoded, requireWeightAtMost)
             );
     }
 
     function _forward(
         uint32 _routerSpecVersion,
         // call params
-        XcmTypes.EnumItem_VersionedXcm_V2 memory message,
-        uint8 target
+        uint8 _target,
+        XcmTypes.EnumItem_VersionedXcm_V2 memory _message
     ) internal returns (uint256) {
         PalletMessageRouter.ForwardCall
             memory call = PalletMessageRouter.ForwardCall(
                 forwardCallIndex,
-                message,
-                target
+                _target,
+                _message
             );
         bytes memory callEncoded = PalletMessageRouter.encodeForwardCall(
             call
@@ -147,7 +150,7 @@ abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint, Executable
     }
 
     ///////////////////////////////
-    // Setters
+    // Inbound
     ///////////////////////////////
     function _setTargetEndpoint(bytes4 _routerChainId, address _targetEndpoint)
         internal
@@ -159,6 +162,9 @@ abstract contract AbstractDarwiniaEndpoint is RemoteDispatchEndpoint, Executable
         );
     }
 
+    ///////////////////////////////
+    // Setters
+    ///////////////////////////////
     function _setTargetMessageTransactCallIndex(
         bytes2 _targetMessageTransactCallIndex
     ) internal {

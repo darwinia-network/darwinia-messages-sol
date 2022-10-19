@@ -13,8 +13,8 @@ library PalletMessageRouter {
     ///////////////////////
     struct ForwardCall {
         bytes2 callIndex;
-        XcmTypes.EnumItem_VersionedXcm_V2 message;
         uint8 target;
+        XcmTypes.EnumItem_VersionedXcm_V2 message;
     }
 
     function encodeForwardCall(ForwardCall memory _call)
@@ -25,38 +25,40 @@ library PalletMessageRouter {
         return
             abi.encodePacked(
                 _call.callIndex,
-                XcmTypes.encodeEnumItem_VersionedXcm_V2(_call.message),
-                _call.target
+                _call.target,
+                XcmTypes.encodeEnumItem_VersionedXcm_V2(_call.message)
             );
     }
 
     function buildForwardCall(
         bytes2 _callIndex,
+        uint8 _target,
         bytes memory _callOnTarget,
-        uint8 target
+        uint64 _requireWeightAtMost
     ) internal pure returns (bytes memory) {
         // Message to be sent to target
-        XcmTypes.EnumItem_VersionedXcm_V2 memory message = buildXcmToBeForward(_callOnTarget);
+        XcmTypes.EnumItem_VersionedXcm_V2 memory message = buildXcmToBeForward(_callOnTarget, _requireWeightAtMost);
 
         // ForwardToMoonbeamCall
         PalletMessageRouter.ForwardCall
             memory call = PalletMessageRouter.ForwardCall(
                 _callIndex,
-                message,
-                target
+                _target,
+                message
             );
 
         return PalletMessageRouter.encodeForwardCall(call);
     }
 
     function buildXcmToBeForward(
-        bytes memory _dispatchCallOnTarget
+        bytes memory _dispatchCallOnTarget,
+        uint64 _requireWeightAtMost
     ) internal pure returns (XcmTypes.EnumItem_VersionedXcm_V2 memory) {
         return XcmTypes.EnumItem_VersionedXcm_V2(
             XcmTypes.Xcm(
                 XcmTypes.EnumItem_Instruction_Transact(
                     1, // originType: SovereignAccount
-                    5000000000, // requireWeightAtMost
+                    _requireWeightAtMost,
                     _dispatchCallOnTarget
                 )
             )
