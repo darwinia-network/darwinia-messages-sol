@@ -81,7 +81,7 @@
 
 "@darwinia/contracts-periphery@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-messages-sol/contracts/periphery":
   "resolved" "file:contracts/periphery"
-  "version" "2.0.5-pre2"
+  "version" "2.0.5-pre3"
 
 "@darwinia/contracts-tokens@file:/Users/wuminzhe/Projects/darwinia-network/darwinia-messages-sol/contracts/tokens":
   "resolved" "file:contracts/tokens"
