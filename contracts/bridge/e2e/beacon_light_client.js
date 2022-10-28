@@ -96,6 +96,7 @@ describe("bridge e2e test: beacon light client", () => {
     // gasLimit: 10000000,
     // gasPrice: 1300000000
     const tx = await subClient.beaconLightClient.import_finalized_header(finalized_header_update, {gasLimit: 10000000})
+    log(tx)
 
     await expect(tx)
       .to.emit(subClient.executionLayer, "FinalizedHeaderImported")
