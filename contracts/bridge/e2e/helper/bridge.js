@@ -170,7 +170,7 @@ class Bridge {
     const finalized_header = await this.subClient.beaconLightClient.finalized_header()
     const finalized_block = await this.eth2Client.get_beacon_block(finalized_header.slot)
 
-    const latest_execution_payload_state_root = finalized_block.message.body.execution_payload.state_root
+    const latest_execution_payload_state_root = finalized_block.body.execution_payload.state_root
     const latest_execution_payload_state_root_branch = await this.eth2Client.get_latest_execution_payload_state_root_branch(finalized_header.slot)
 
     const execution_payload_state_root_update = {
@@ -272,7 +272,7 @@ class Bridge {
     if (from == 'eth') {
       const finalized_header = await this.sub.beaconLightClient.finalized_header()
       const finality_block = await this.eth2Client.get_beacon_block(finalized_header.slot)
-      return finality_block.message.body.execution_payload.block_number
+      return finality_block.body.execution_payload.block_number
     } else if (from == 'bsc') {
       const finalized_header = await this.subClient.bscLightClient.finalized_checkpoint()
       return finalized_header.number

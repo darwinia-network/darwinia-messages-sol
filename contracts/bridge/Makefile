@@ -19,7 +19,7 @@ npm:; yarn install
 # install solc version
 # example to install other versions: `make solc SOLC_VERSION=0_8_2`
 SOLC_VERSION := ${SOLC_VERSION-0_7_6}
-solc:; nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_${SOLC_VERSION}
+solc:; nix profile install -f https://github.com/dapphub/dapptools/archive/master.tar.gz solc-static-versions.solc_${SOLC_VERSION}
 
 # Build & test
 build    :; dapp build
