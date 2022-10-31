@@ -151,6 +151,10 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, M
         return latestChainMessagesRoot;
     }
 
+    function block_number() public view override returns (uint256) {
+        return slot0.latestBlockNumber;
+    }
+
     function getFinalizedChainMessagesRoot() external view returns (bytes32) {
         return latestChainMessagesRoot;
     }

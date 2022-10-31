@@ -235,8 +235,8 @@ describe("bridge e2e test: beacon light client", () => {
 
     const tx = await subClient.executionLayer.import_latest_execution_payload_state_root(body)
     await expect(tx)
-      .to.emit(subClient.executionLayer, "LatestExecutionPayloadStateRootImported")
-      .withArgs(p.state_root)
+      .to.emit(subClient.executionLayer, "LatestExecutionPayloadImported")
+      .withArgs(p.block_number, p.state_root)
   })
 })
 
