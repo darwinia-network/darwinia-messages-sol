@@ -49,11 +49,11 @@ contract ExecutionLayer is BeaconChain, ILightClient {
     // follow beacon api: /eth/v2/beacon/blocks/{block_id}
     function import_latest_execution_payload_state_root(BeaconBlockBody calldata body) external {
         bytes32 state_root = body.execution_payload.state_root;
-        uint256 block_number = body.execution_payload.block_number;
-        require(block_number > latest_execution_payload_block_number, "!new");
+        uint256 new_block_number = body.execution_payload.block_number;
+        require(new_block_number > latest_execution_payload_block_number, "!new");
         require(hash_tree_root(body) == IConsensusLayer(CONSENSUS_LAYER).body_root(), "!body");
         latest_execution_payload_state_root = state_root;
-        latest_execution_payload_block_number = block_number;
-        emit LatestExecutionPayloadImported(block_number, state_root);
+        latest_execution_payload_block_number = new_block_number;
+        emit LatestExecutionPayloadImported(new_block_number, state_root);
     }
 }

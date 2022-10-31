@@ -24,6 +24,7 @@ pragma abicoder v2;
 
 interface ILightClient {
     function merkle_root() external view returns (bytes32);
+    function block_number() external view returns (uint256);
 }
 
 ////// src/spec/POSACommitmentScheme.sol
@@ -515,7 +516,7 @@ contract POSALightClient is POSACommitmentScheme, EcdsaAuthority, ILightClient {
         __ECDSA_init__(_relayers, _threshold, _nonce);
     }
 
-    function block_number() public view returns (uint256) {
+    function block_number() public view override returns (uint256) {
         return latest_block_number;
     }
 
