@@ -12,6 +12,7 @@
     "EthereumStorageVerifier": "0x0631D83Dfd95559f13Ca4426fb052f6DD6a25e8f",
     "OutboundLane": "0x2f6aE7fDbB7c0c613F7923Ddce3E5b71aFE71f78",
     "InboundLane": "0x8F02B779EaD342Bb431A2f6cCc7866EB1928AE88",
-    "LaneMessageCommitter": "0x286979170bB820801EB6148a00d2D15De63E780F"
+    "LaneMessageCommitter": "0x286979170bB820801EB6148a00d2D15De63E780F",
+    "BeaconLightClientMigrator": "0x1b587abB9a5c2108FB8d10cA0ab5905B95e0B649"
   }
 }

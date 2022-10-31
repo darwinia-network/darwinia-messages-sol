@@ -22,4 +22,4 @@ hevm flatten --source-file src/truth/eth/BeaconLightClient.sol             --jso
 hevm flatten --source-file src/truth/eth/EthereumStorageVerifier.sol       --json-file out/dapp.sol.json > flat/EthereumStorageVerifier.f.sol
 hevm flatten --source-file src/truth/eth/ExecutionLayer.sol                --json-file out/dapp.sol.json > flat/ExecutionLayer.f.sol
 hevm flatten --source-file src/truth/eth/BeaconLCMandatoryReward.sol       --json-file out/dapp.sol.json > flat/BeaconLCMandatoryReward.f.sol
-hevm flatten --source-file src/migrate/BeaconLightClientMigrator.sol      --json-file out/dapp.sol.json > flat/BeaconLigthtClientMigrator.f.sol
+hevm flatten --source-file src/migrate/BeaconLightClientMigrator.sol      --json-file out/dapp.sol.json > flat/BeaconLightClientMigrator.f.sol
