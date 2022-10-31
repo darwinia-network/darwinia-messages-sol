@@ -27,7 +27,7 @@ GENESIS_VALIDATORS_ROOT=0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a
 OLD_BEACON_LC=$(load_saddr "BeaconLightClient")
 EthereumStorageVerifier=$(load_saddr "EthereumStorageVerifier")
 
-BeaconLightClientMigrator=$(deploy BeaconLightClientMigrator \
+BeaconLightClientMigrator=$(dapp create src/migrate/BeaconLightClientMigrator.sol:BeaconLightClientMigrator \
   $OLD_BEACON_LC \
   $EthereumStorageVerifier \
   $BLS_PRECOMPILE \
