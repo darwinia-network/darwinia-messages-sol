@@ -82,6 +82,10 @@ contract BeaconLightClientMigrator {
         // change light client
         IEthereumStorageVerifier(ETHEREUM_STORAGE_VERIFIER).changeLightClient(address(new_execution_layer));
 
+        returnSetter();
+    }
+
+    function returnSetter() public {
         // return auth
         IEthereumStorageVerifier(ETHEREUM_STORAGE_VERIFIER).changeSetter(HELIX_DAO);
     }

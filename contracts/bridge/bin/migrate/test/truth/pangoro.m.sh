@@ -24,16 +24,19 @@ load_taddr() {
 BLS_PRECOMPILE=0x0000000000000000000000000000000000000800
 GENESIS_VALIDATORS_ROOT=0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb
 
+HelixDaoMultisig=0x43d6711EB86C852Ec1E04af55C52a0dd51b2C743
 OLD_BEACON_LC=$(load_saddr "BeaconLightClient")
 EthereumStorageVerifier=$(load_saddr "EthereumStorageVerifier")
 
 BeaconLightClientMigrator=$(dapp create src/migrate/BeaconLightClientMigrator.sol:BeaconLightClientMigrator \
+  $HelixDaoMultisig \
   $OLD_BEACON_LC \
   $EthereumStorageVerifier \
   $BLS_PRECOMPILE \
   $GENESIS_VALIDATORS_ROOT)
 
-HelixDaoMultisig=0x43d6711EB86C852Ec1E04af55C52a0dd51b2C743
-data=$(seth calldata "changeSetter(address)" $BeaconLightClientMigrator
+save_contract "BeaconLightClientMigrator" "$BeaconLightClientMigrator"
+
+data=$(seth calldata "changeSetter(address)" $BeaconLightClientMigrator)
 seth send $HelixDaoMultisig "submitTransaction(address,uint,bytes)" $EthereumStorageVerifier 0 $data
 seth send $BeaconLightClientMigrator "migrate()"
