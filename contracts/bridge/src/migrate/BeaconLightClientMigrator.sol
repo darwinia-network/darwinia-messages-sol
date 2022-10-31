@@ -24,23 +24,27 @@ import "../truth/eth/ExecutionLayer.sol";
 
 interface IEthereumStorageVerifier {
     function changeLightClient(address lightclient) external;
+    function changeSetter(address setter) external;
 }
 
 contract BeaconLightClientMigrator {
     BeaconLightClient public new_beacon_lc;
     ExecutionLayer public new_execution_layer;
 
+    address public immutable HELIX_DAO;
     address public immutable OLD_BEACON_LC;
     address public immutable ETHEREUM_STORAGE_VERIFIER;
     address public immutable BLS_PRECOMPILE;
     bytes32 public immutable GENESIS_VALIDATORS_ROOT;
 
     constructor(
+        address helix_dao,
         address old_lc,
         address verifier,
         address bls,
         bytes32 genesis_validators_root
     ) {
+        HELIX_DAO = helix_dao;
         OLD_BEACON_LC = old_lc;
         ETHEREUM_STORAGE_VERIFIER = verifier;
         BLS_PRECOMPILE = bls;
@@ -77,5 +81,8 @@ contract BeaconLightClientMigrator {
         new_execution_layer = new ExecutionLayer(address(new_beacon_lc));
         // change light client
         IEthereumStorageVerifier(ETHEREUM_STORAGE_VERIFIER).changeLightClient(address(new_execution_layer));
+
+        // return auth
+        IEthereumStorageVerifier(ETHEREUM_STORAGE_VERIFIER).changeSetter(HELIX_DAO);
     }
 }
