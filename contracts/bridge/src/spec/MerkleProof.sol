@@ -17,7 +17,9 @@
 
 pragma solidity 0.7.6;
 
-contract MerkleProof {
+import "../utils/Math.sol";
+
+contract MerkleProof is Math {
     // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
     function is_valid_merkle_branch(
         bytes32 leaf,
@@ -36,6 +38,23 @@ contract MerkleProof {
         }
         return value == root;
     }
+
+    function merkle_root(bytes32[] memory leaves) internal pure returns (bytes32) {
+        uint len = leaves.length;
+        if (len == 0) return bytes32(0);
+        else if (len == 1) return hash(abi.encodePacked(leaves[0]));
+        else if (len == 2) return hash_node(leaves[0], leaves[1]);
+        uint bottom_length = get_power_of_two_ceil(len);
+        bytes32[] memory o = new bytes32[](bottom_length * 2);
+        for (uint i = 0; i < len; ++i) {
+            o[bottom_length + i] = leaves[i];
+        }
+        for (uint i = bottom_length - 1; i > 0; --i) {
+            o[i] = hash_node(o[i * 2], o[i * 2 + 1]);
+        }
+        return o[1];
+    }
+
 
     function hash_node(bytes32 left, bytes32 right)
         internal
