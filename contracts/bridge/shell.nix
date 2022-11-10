@@ -5,11 +5,12 @@ in
   pkgs.mkShell {
     src = null;
     name = "darwinia-bridge-sol";
-    buildInputs = with pkgs; [
-      pkgs.dapp
-      pkgs.seth
-      pkgs.go-ethereum-unlimited
-      pkgs.hevm
-      pkgs.nodejs
+    buildInputs = [
+      dapp
+      seth
+      go-ethereum-unlimited
+      hevm
+      nodejs
     ];
+    LANG="en_US.UTF-8";
   }
