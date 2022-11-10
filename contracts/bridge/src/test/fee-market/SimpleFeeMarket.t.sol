@@ -65,14 +65,14 @@ contract SimpleFeeMarketTest is DSTest {
         assertEq(market.PRICE_RATIO_NUMERATOR(), uint(PRICE_RATIO));
    }
 
-   function test_set_setter() public {
-       market.setSetter(address(0));
-       assertEq(market.setter(), address(0));
+   function test_set_setter_fuzz(address setter) public {
+       market.setSetter(setter);
+       assertEq(market.setter(), setter);
    }
 
-   function test_set_outbound() public {
-       market.setOutbound(self, 1);
-       assertEq(market.outbounds(self), 1);
+   function test_set_outbound_fuzz(uint flag) public {
+       market.setOutbound(self, flag);
+       assertEq(market.outbounds(self), flag);
    }
 
    function test_initial_state() public {

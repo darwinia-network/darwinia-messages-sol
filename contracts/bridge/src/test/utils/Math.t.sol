@@ -35,6 +35,18 @@ contract MathTest is DSTest, Math {
         assertEq(get_power_of_two_ceil(100), 128);
     }
 
+    function prove_get_power_of_two_ceil(uint x) public {
+        if (x == 0 || x == type(uint).max) return;
+        uint y = get_power_of_two_ceil(x);
+        assertTrue(y / 2 < x && x <= y);
+    }
+
+    function prove_log_2(uint x) public {
+        if (x == 0) return;
+        uint y = log_2(x);
+        assertTrue(2**(y-1) < x && x <= 2**y);
+    }
+
     function test_log_2() public {
         assertEq(log_2(1), 0);
         assertEq(log_2(2), 1);

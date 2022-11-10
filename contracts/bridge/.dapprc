@@ -1,6 +1,6 @@
 # Make dependencies available
 export DAPP_REMAPPINGS=$(cat remappings.txt)
-export DAPP_SRC=flat
+export DAPP_SRC=src
 export DAPP_OUT=out
 export DAPP_EVM_VERSION=istanbul
 export DAPP_JSON=out/dapp.sol.json
@@ -20,6 +20,8 @@ export DAPP_BUILD_OPTIMIZE_RUNS=999999
 if [ "$DEEP_FUZZ" = "true" ]
 then
   export DAPP_TEST_FUZZ_RUNS=50000 # Fuzz for a long time if DEEP_FUZZ is set to true.
+  export DAPP_TEST_MAX_ITERATIONS=10
 else
   export DAPP_TEST_FUZZ_RUNS=100 # Only fuzz briefly if DEEP_FUZZ is not set to true.
+  export DAPP_TEST_MAX_ITERATIONS=3
 fi
