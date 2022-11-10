@@ -14,6 +14,10 @@ jobs:
             os_attr: darwin
       fail-fast: false
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: contracts/bridge
     steps:
       - uses: actions/checkout@v2
       - uses: cachix/install-nix-action@v14.1
@@ -25,8 +29,8 @@ jobs:
           name: dapp
           signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
       - name: build
-        working-directory: ./contracts/bridge
         run: nix-shell --pure --command 'make build'
       - name: test
-        working-directory: ./contracts/bridge
         run: nix-shell --pure --command 'make test'
+      - name: smt-checker
+        run: nix-shell --pure --command 'make smt-checker'
