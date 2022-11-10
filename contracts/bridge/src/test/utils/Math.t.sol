@@ -19,6 +19,7 @@ pragma solidity 0.7.6;
 
 import "../test.sol";
 import "../../utils/Math.sol";
+pragma experimental SMTChecker;
 
 contract MathTest is DSTest, Math {
     function test_get_power_of_two_ceil() public {
