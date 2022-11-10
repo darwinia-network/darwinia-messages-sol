@@ -1,16 +1,19 @@
 let
-  sources = import ./nix/sources.nix;
-  pkgs = import sources.dapptools {};
+  pkgs = import (builtins.fetchGit rec {
+    name = "dapptools-${rev}";
+    url = https://github.com/dapphub/dapptools;
+    rev = "adcc076b1441b3a928a8f0b42b2a63f05d9bcf0d";
+  }) {};
+
 in
   pkgs.mkShell {
     src = null;
-    name = "darwinia-bridge-sol";
-    buildInputs = [
-      dapp
-      seth
-      go-ethereum-unlimited
-      hevm
-      nodejs
+    name = "dapptools-template";
+    buildInputs = with pkgs; [
+      pkgs.dapp
+      pkgs.seth
+      pkgs.go-ethereum-unlimited
+      pkgs.hevm
     ];
     LANG="en_US.UTF-8";
   }
