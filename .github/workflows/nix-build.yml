@@ -22,12 +22,11 @@ jobs:
         shell: bash
         working-directory: contracts/bridge
     steps:
-      - uses: actions/checkout@v2
-      - uses: cachix/install-nix-action@v14.1
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
         with:
-          # https://discourse.nixos.org/t/understanding-binutils-darwin-wrapper-nix-support-bad-substitution/11475/2
           nix_path: nixpkgs=channel:nixos-unstable
-      - uses: cachix/cachix-action@v10
+      - uses: cachix/cachix-action@v11
         with:
           name: dapp
       - name: build
