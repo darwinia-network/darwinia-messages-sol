@@ -29,7 +29,5 @@ jobs:
       - uses: cachix/cachix-action@v11
         with:
           name: dapp
-      - name: build
-        run: nix-shell --pure --command 'make build'
       - name: test
         run: nix-shell --pure --command 'make test'
