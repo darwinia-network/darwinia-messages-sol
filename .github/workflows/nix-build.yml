@@ -31,5 +31,3 @@ jobs:
         run: nix-shell --pure --command 'make build'
       - name: test
         run: nix-shell --pure --command 'make test'
-      - name: smt-checker
-        run: nix-shell --pure --command 'make smt-checker'
