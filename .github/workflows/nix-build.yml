@@ -21,6 +21,8 @@ jobs:
       run:
         shell: bash
         working-directory: contracts/bridge
+    env:
+      CI: true
     steps:
       - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v18
