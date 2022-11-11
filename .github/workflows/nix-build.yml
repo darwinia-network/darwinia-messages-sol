@@ -20,6 +20,5 @@ jobs:
       - uses: cachix/cachix-action@v11
         with:
           name: dapp
-      - run: echo "$CI"
       - name: test
-        run: nix-shell --pure --command 'make test'
+        run: nix-shell --run 'make test'
