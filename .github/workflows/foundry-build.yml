@@ -9,7 +9,7 @@ env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  run-ci:
+  build:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -22,11 +22,5 @@ jobs:
         with:
           version: nightly
 
-      - name: Run tests
+      - name: test
         run: forge test
-
-      # - name: Install deps
-      #   run: forge install
-
-      # - name: Check gas snapshots
-      #   run: forge snapshot --check
