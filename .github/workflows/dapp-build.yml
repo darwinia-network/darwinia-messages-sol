@@ -1,4 +1,4 @@
-name: "Nix Build"
+name: "Dapp Build"
 on:
   push:
     branches: [ master ]
@@ -20,5 +20,6 @@ jobs:
       - uses: cachix/cachix-action@v11
         with:
           name: dapp
+
       - name: test
         run: nix-shell --run 'make test'

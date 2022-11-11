@@ -1,5 +1,5 @@
 .PHONY: all install update npm solc
-.PHONY: build test clean doc lint estimate size e2e audit flatten smt-checker
+.PHONY: build test clean doc lint estimate size e2e audit flatten
 .PHONY: deploy deploy-mainnet deploy-rinkeby verify check-api-key
 .PHONY: local-testnet migrate-local
 # include .env file and export its env vars
@@ -7,8 +7,6 @@
 -include .env
 
 all: build
-
-smt: smt-checker
 
 install: solc update npm
 
@@ -49,5 +47,3 @@ migrate-test  :; @./bin/migrate-test.sh
 
 # verify on Etherscan
 verify :; ETH_RPC_URL=$(call network,$(network_name)) dapp verify-contract src/Greeter.sol:Greeter $(contract_address)
-
-smt-checker :; DAPP_STANDARD_JSON=dapp_smtchecker.json dapp build
