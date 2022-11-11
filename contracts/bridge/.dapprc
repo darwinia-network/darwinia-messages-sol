@@ -18,11 +18,13 @@ export DAPP_BUILD_OPTIMIZE_RUNS=999999
 
 if [ "$CI" = "true" ]
 then
-  export DAPP_TEST_FUZZ_RUNS=50000 # Fuzz for a long time if DEEP_FUZZ is set to true.
+  export DAPP_TEST_FUZZ_RUNS=50000
   export DAPP_TEST_MAX_ITERATIONS=10
   export DAPP_TEST_VERBOSITY=0
 else
-  export DAPP_TEST_FUZZ_RUNS=100 # Only fuzz briefly if DEEP_FUZZ is not set to true.
+  export DAPP_TEST_FUZZ_RUNS=100
   export DAPP_TEST_MAX_ITERATIONS=3
   export DAPP_TEST_VERBOSITY=3
 fi
+
+echo $CI
