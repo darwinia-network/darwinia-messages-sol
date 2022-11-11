@@ -27,4 +27,4 @@ else
   export DAPP_TEST_VERBOSITY=3
 fi
 
-echo $CI
+echo "CI: $CI"
