@@ -32,4 +32,5 @@ jobs:
         with:
           name: dapp
       - name: test
+        run: echo "$CI"
         run: nix-shell --pure --command 'make test'
