@@ -7,22 +7,11 @@ on:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [ ubuntu-latest, macos-latest ]
-        include:
-          - os: ubuntu-latest
-            os_attr: linux
-          - os: macos-latest
-            os_attr: darwin
-      fail-fast: false
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
         working-directory: contracts/bridge
-    env:
-      CI: true
     steps:
       - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v18

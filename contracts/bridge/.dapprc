@@ -26,5 +26,3 @@ else
   export DAPP_TEST_MAX_ITERATIONS=3
   export DAPP_TEST_VERBOSITY=3
 fi
-
-echo "CI: $CI"
