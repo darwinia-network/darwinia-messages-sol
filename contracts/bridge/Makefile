@@ -27,6 +27,7 @@ test     :; dapp test # --ffi # enable if you need the `ffi` cheat code on HEVM
 clean    :; dapp clean
 lint     :; yarn run lint
 doc      :; yarn run docs
+cov      :; @./bin/coverage.sh
 audit    :; @./bin/audit.sh
 flatten  :; @./bin/flatten.sh
 estimate :; @./bin/estimate-gas.sh ${contract}
