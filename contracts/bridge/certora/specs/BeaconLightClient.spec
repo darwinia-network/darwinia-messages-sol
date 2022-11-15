@@ -39,19 +39,19 @@ rule ip_finalized_header() {
     assert(slot1 > slot0, "import new block header");
 }
 
-/* rule ip_next_sync_committee() { */
-/*     uint64 slot0 = get_finalized_header_slot(); */
-/*     uint64 period0 = slot0 / SLOTS_PER_EPOCH() / EPOCHS_PER_SYNC_COMMITTEE_PERIOD(); */
-/*     bytes32 root0 = sync_committee_roots(period0); */
+// rule ip_next_sync_committee() {
+//     uint64 slot0 = get_finalized_header_slot();
+//     uint64 period0 = slot0 / SLOTS_PER_EPOCH() / EPOCHS_PER_SYNC_COMMITTEE_PERIOD();
+//     bytes32 root0 = sync_committee_roots(period0);
 
-/*     env e; */
-/*     call_ip_next_sync_committee(e); */
+//     env e;
+//     call_ip_next_sync_committee(e);
 
-/*     uint64 period1 = period0 + 1; */
-/*     bytes32 root1 = sync_committee_roots(period1); */
+//     uint64 period1 = period0 + 1;
+//     bytes32 root1 = sync_committee_roots(period1);
 
-/*     uint64 slot1 = get_finalized_header_slot(); */
-/*     assert(slot1 >= slot0, "import new block header or not"); */
-/*     bytes32 zero = 0x0000000000000000000000000000000000000000000000000000000000000000; */
-/*     assert(root0 != zero && root1 == zero => (root1 != zero), "import new synccommittee"); */
-/* } */
+//     uint64 slot1 = get_finalized_header_slot();
+//     assert(slot1 >= slot0, "import new block header or not");
+//     bytes32 zero = 0x0000000000000000000000000000000000000000000000000000000000000000;
+//     assert(root0 != zero && root1 == zero => (root1 != zero), "import new synccommittee");
+// }
