@@ -4,3 +4,4 @@
 **.last_conf*
 certora-logs
 resource_errors.json
+.zip-output-url.txt

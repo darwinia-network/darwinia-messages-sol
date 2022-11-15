@@ -2,7 +2,7 @@
 
 methods {
     finalized_header() returns (uint64,uint64,bytes32,bytes32,bytes32) envfree
-    sync_committee_roots(uint64) returns (bytes32) envfree
+    sync_committee_roots(uint64) returns bytes32 envfree
 
 //    call_ip_next_sync_committee()
     call_ip_finalized_header()
