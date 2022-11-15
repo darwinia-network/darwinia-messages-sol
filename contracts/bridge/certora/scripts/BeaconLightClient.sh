@@ -13,9 +13,9 @@ certoraRun harness/BeaconLightClientHarness.sol:BeaconLightClientHarness \
     --rule_sanity basic \
     $RULE \
     --optimistic_loop \
-    --include_empty_fallback
+    --include_empty_fallback \
     --msg "BeaconLightClient"
+
     # --debug \
     # --typecheck_only \
-
     # --multi_assert_check \

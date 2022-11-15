@@ -22,3 +22,4 @@ clean:
 	git clean -fdX
 	touch $(PATCH)
 
+.PHONY: help munged record clean

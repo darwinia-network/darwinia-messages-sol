@@ -26,12 +26,15 @@ contract BeaconLightClientHarness is BeaconLightClient {
     ){}
 
     FinalizedHeaderUpdate finalized_header_update;
-    SyncCommitteePeriodUpdate sync_committee_update;
-    function call_import_next_sync_committee(
-    ) external {
-        import_next_sync_committee(
-            finalized_header_update,
-            sync_committee_update
-        );
+    // SyncCommitteePeriodUpdate sync_committee_update;
+    // function call_ip_next_sync_committee() external {
+    //     import_next_sync_committee(
+    //         finalized_header_update,
+    //         sync_committee_update
+    //     );
+    // }
+
+    function call_ip_finalized_header() external {
+        import_finalized_header(finalized_header_update);
     }
 }
