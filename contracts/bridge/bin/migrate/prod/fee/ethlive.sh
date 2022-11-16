@@ -6,6 +6,7 @@ unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
 export NETWORK_NAME=ethlive
+export TARGET_CHAIN=darwinia
 export ETH_RPC_URL=https://mainnet.infura.io/$INFURA_KEY
 
 echo "ETH_FROM: ${ETH_FROM}"
