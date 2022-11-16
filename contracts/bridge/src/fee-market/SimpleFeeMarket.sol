@@ -315,8 +315,7 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
                 break;
             } else {
                 prune(prev, cur);
-                prev = cur;
-                cur = relayers[cur];
+                cur = relayers[prev];
             }
         }
     }
