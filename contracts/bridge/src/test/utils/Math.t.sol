@@ -70,7 +70,7 @@ contract MathTest is DSTest, Math {
     }
 
     function prove_log_2(uint x) public {
-        if (x == 0) return;
+        if (x == 0 || x >= 0x8000000000000000000000000000000000000000000000000000000000000000) return;
         uint y = log_2(x);
         assertTrue(2**(y-1) < x && x <= 2**y);
     }
