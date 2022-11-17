@@ -6,13 +6,13 @@
   "goerli": {
     "FeeMarket": "0x2835AFd9C53802694327Bb7DA2Fd62092B9498b5",
     "FeeMarketProxy": "0x25ee4212CfA2DC29E6a5e4A857b9656E439259c9",
-    "BeaconLightClient": "0x64CEE61102be7Aef77B72Db8678f2107739d450e",
-    "ExecutionLayer": "0x7cf9A51AbeB2DfD4F4145e089488064fcf7840Aa",
+    "BeaconLightClient": "0xeB000E5C281E87Fc2043950baEF81d16e1d5826b",
+    "ExecutionLayer": "0x9B4DcCa74Aed95A2Ebd7C8312dDfd202df819C07",
     "BeaconLCMandatoryReward": "0xFd2083e78591AfA0e280a8b59262a75CaCE34691",
     "EthereumStorageVerifier": "0x0631D83Dfd95559f13Ca4426fb052f6DD6a25e8f",
     "OutboundLane": "0x2f6aE7fDbB7c0c613F7923Ddce3E5b71aFE71f78",
     "InboundLane": "0x8F02B779EaD342Bb431A2f6cCc7866EB1928AE88",
     "LaneMessageCommitter": "0x286979170bB820801EB6148a00d2D15De63E780F",
-    "BeaconLightClientMigrator": "0x1b587abB9a5c2108FB8d10cA0ab5905B95e0B649"
+    "BeaconLightClientMigrator": "0x54bB9b7405c25A2cb173Dc1794820d20610CD47A"
   }
 }

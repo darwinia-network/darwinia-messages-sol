@@ -40,3 +40,9 @@ save_contract "BeaconLightClientMigrator" "$BeaconLightClientMigrator"
 data=$(seth calldata "changeSetter(address)" $BeaconLightClientMigrator)
 seth send $HelixDaoMultisig "submitTransaction(address,uint,bytes)" $EthereumStorageVerifier 0 $data
 seth send $BeaconLightClientMigrator "migrate()"
+
+BeaconLightClient=$(seth call $BeaconLightClientMigrator "new_beacon_lc()(address)")
+save_contract "BeaconLightClient" "$BeaconLightClient"
+
+ExecutionLayer=$(seth call $BeaconLightClientMigrator "new_execution_layer()(address)")
+save_contract "ExecutionLayer" "$ExecutionLayer"
