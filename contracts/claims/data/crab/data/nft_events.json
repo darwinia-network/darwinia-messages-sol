@@ -7,18 +7,18 @@
     {
       "chainId": 44,
       "address": "0xA561c8F6AC9eCb31e0793fBe2CCEc136a7e4bE84",
-      "name": "August PLO Rewards",
-      "detail":"-",
-      "logoURI": "https://pordria.evolution.land/logos/darwinia.png",
-      "proofURI": "https://raw.githubusercontent.com/darwinia-network/darwinia-messages-sol/master/contracts/claims/data/crab/proof/aug_23.json"
-    },
-    {
-      "chainId": 44,
-      "address": "0xA561c8F6AC9eCb31e0793fBe2CCEc136a7e4bE84",
       "name": "September PLO Rewards",
       "detail":"-",
       "logoURI": "https://pordria.evolution.land/logos/darwinia.png",
       "proofURI": "https://raw.githubusercontent.com/darwinia-network/darwinia-messages-sol/master/contracts/claims/data/crab/proof/sep_26.json"
+    },
+    {
+      "chainId": 44,
+      "address": "0xA561c8F6AC9eCb31e0793fBe2CCEc136a7e4bE84",
+      "name": "August PLO Rewards",
+      "detail":"-",
+      "logoURI": "https://pordria.evolution.land/logos/darwinia.png",
+      "proofURI": "https://raw.githubusercontent.com/darwinia-network/darwinia-messages-sol/master/contracts/claims/data/crab/proof/aug_23.json"
     }
   ]
 }
