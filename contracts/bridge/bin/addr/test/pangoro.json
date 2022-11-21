@@ -4,7 +4,7 @@
   "ChainMessageCommitter": "0xbbE9068eD672A886E546b47091a525d553EbA1F0",
   "ChainMessageCommitterProxy": "0x96A326193c18f467AC9be9E7CB3422fa78F8f9f7",
   "goerli": {
-    "FeeMarket": "0x2835AFd9C53802694327Bb7DA2Fd62092B9498b5",
+    "FeeMarket": "0x437eD31bCDE0B9FFe3454bb185a0d37988e2A0cd",
     "FeeMarketProxy": "0x25ee4212CfA2DC29E6a5e4A857b9656E439259c9",
     "BeaconLightClient": "0x459aFc6f394BCd2e353d99Fd88Cb6293b8Ecc34d",
     "ExecutionLayer": "0xe35A2C47aDDAEe469a0ef6722afd0aF528FfCf34",
