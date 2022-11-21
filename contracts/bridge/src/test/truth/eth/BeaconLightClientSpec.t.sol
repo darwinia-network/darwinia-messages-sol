@@ -53,8 +53,7 @@ contract BeaconLightClientSpecTest is DSTest, BeaconLightClientUpdate, SyncCommi
 
     function test_constructor_args() public {}
 
-    // capella version in lodestar
-    function testFail_import_next_sync_committee() public {
+    function test_import_next_sync_committee() public {
         FinalizedHeaderUpdate memory header_update = build_header_update();
         bytes32[] memory next_sync_committee_branch = build_next_sync_committee_branch();
         SyncCommitteePeriodUpdate memory sc_update = SyncCommitteePeriodUpdate({
