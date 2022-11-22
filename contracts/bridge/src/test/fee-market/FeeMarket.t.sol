@@ -60,6 +60,14 @@ contract FeeMarketTest is DSTest {
         c = new Guy(market);
     }
 
+    function invariant_setter() public {
+         assertEq(market.setter(), self);
+    }
+
+    function invariant_totalSupply() public {
+        assert_market_balances();
+    }
+
     function test_constructor_args() public {
         assertEq(market.setter(), self);
         assertEq(market.VAULT(), vault);

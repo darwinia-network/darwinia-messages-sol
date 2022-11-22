@@ -1,4 +1,4 @@
-name: CI
+name: "Hardhat Build"
 
 on:
   push:
