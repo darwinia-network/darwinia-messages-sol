@@ -32,14 +32,15 @@ pragma abicoder v2;
 
 import "../interfaces/IOutboundLane.sol";
 import "./OutboundLaneVerifier.sol";
+import "../spec/SourceChain.sol";
 import "../utils/IncrementalMerkleTree.sol";
 
 // Everything about outgoing messages sending.
-contract OutboundLaneUDP is IOutboundLane, OutboundLaneVerifier {
-    using IncrementalMerkleTree for IncrementalMerkleTree.Tree
-    /// slot 1
+contract BaseOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChain {
+    using IncrementalMerkleTree for IncrementalMerkleTree.Tree;
+    // slot 1
     bytes32 public root;
-    /// slot [2, 34]
+    // slot [2, 34]
     IncrementalMerkleTree.Tree public imt;
 
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
@@ -50,7 +51,6 @@ contract OutboundLaneUDP is IOutboundLane, OutboundLaneVerifier {
     /// @param _thisLanePosition The lanePosition of this outbound lane
     /// @param _bridgedChainPosition The bridgedChainPosition of outbound lane
     /// @param _bridgedLanePosition The lanePosition of target inbound lane
-    /// @param _latest_nonce The latest_nonce of outbound lane
     constructor(
         address _lightClientBridge,
         uint32 _thisChainPosition,
@@ -71,24 +71,19 @@ contract OutboundLaneUDP is IOutboundLane, OutboundLaneVerifier {
     /// @param target The target contract address which you would send cross chain message to
     /// @param encoded The calldata which encoded by ABI Encoding
     /// @return nonce Latest nonce
-    function send_message(address target, bytes calldata encoded) external override returns (uint64) {
-        uint32 nonce = tree.count + 1;
-        uint encoded_key = encodeMessageKey(nonce);
-        MessagePayload memory payload = MessagePayload({
-            key: encoded_key,
+    function send_message(address target, bytes calldata encoded) external payable override returns (uint64) {
+        require(msg.value == 0, "nonpayable");
+        uint64 nonce = uint64(imt.count + 1);
+        Message memory message = Message(encodeMessageKey(nonce), MessagePayload({
             source: msg.sender,
             target: target,
             encoded: encoded
-        });
-        bytes32 msg_hash = hash(payload);
+        }));
+        bytes32 msg_hash = hash(message);
         imt.insert(msg_hash);
         root = imt.root();
-        emit MessageAccepted(
-            nonce_,
-            msg.sender,
-            target,
-            encoded);
-        return nonce_;
+        emit MessageAccepted(nonce, msg.sender, target, encoded);
+        return nonce;
     }
 
     /// Return the commitment of lane data.
@@ -97,6 +92,6 @@ contract OutboundLaneUDP is IOutboundLane, OutboundLaneVerifier {
     }
 
     function message_size() public view returns (uint64 size) {
-        size = imt.count();
+        size = uint64(imt.count);
     }
 }

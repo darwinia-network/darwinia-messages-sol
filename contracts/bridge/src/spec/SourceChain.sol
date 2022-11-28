@@ -164,6 +164,20 @@ contract SourceChain {
         return keccak256(encoded);
     }
 
+    function hash(Message memory message)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(
+            abi.encode(
+                MESSAGE_TYPEHASH,
+                message.encoded_key,
+                hash(message.payload)
+            )
+        );
+    }
+
     function hash(MessagePayload memory payload)
         internal
         pure

@@ -32,19 +32,15 @@ pragma abicoder v2;
 
 import "../interfaces/ICrossChainFilter.sol";
 import "./InboundLaneVerifier.sol";
+import "../spec/SourceChain.sol";
 
 /// @title Everything about incoming messages receival
-/// @author echo
-/// @notice The inbound lane is the message layer of the bridge
-/// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
-contract InboundLaneUDP is InboundLaneVerifier {
-    /// slot 1
-    mapping(uint32 => bool) dones;
+contract BaseInboundLane is InboundLaneVerifier, SourceChain {
+    mapping(uint => bool) dones;
 
     /// @dev Notifies an observer that the message has dispatched
     /// @param nonce The message nonce
-    /// @param result The message result
-    event MessageDispatched(uint64 nonce, bool result);
+    event MessageDispatched(uint64 nonce);
 
     /// @dev Deploys the InboundLane contract
     /// @param _lightClientBridge The contract address of on-chain light client
@@ -57,7 +53,7 @@ contract InboundLaneUDP is InboundLaneVerifier {
         uint32 _thisChainPosition,
         uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition,
+        uint32 _bridgedLanePosition
     ) InboundLaneVerifier(
         _lightClientBridge,
         _thisChainPosition,
@@ -67,56 +63,20 @@ contract InboundLaneUDP is InboundLaneVerifier {
     ) {}
 
     /// Receive messages proof from bridged chain.
-    ///
-    /// The weight of the call assumes that the transaction always brings outbound lane
-    /// state update. Because of that, the submitter (relayer) has no benefit of not including
-    /// this data in the transaction, so reward confirmations lags should be minimal.
-    function receive_messages_proof(
-        OutboundLaneData memory outboundLaneData,
-        bytes memory messagesProof,
-    ) external nonReentrant {
-        _verify_messages_proof(hash(outboundLaneData), messagesProof);
-        _receive_message(outboundLaneData.messages);
+    function receive_messages_proof(Message memory message, bytes memory proof) external {
+        _verify_messages_proof(hash(message), proof);
+        _receive_message(message);
     }
 
     /// Return the commitment of lane data.
-    function commitment() external view returns (bytes32) {
+    function commitment() external pure returns (bytes32) {
         return bytes32(0);
-    }
-
-    /// Get lane data from the storage.
-    function data() public view returns (InboundLaneData memory lane_data) {
-        uint64 size = _relayers_size();
-        if (size > 0) {
-            lane_data.relayers = new UnrewardedRelayer[](size);
-            uint64 front = inboundLaneNonce.relayer_range_front;
-            for (uint64 index = 0; index < size; index++) {
-                lane_data.relayers[index] = relayers[front + index];
-            }
-        }
-        lane_data.last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
-        lane_data.last_delivered_nonce = inboundLaneNonce.last_delivered_nonce;
-    }
-
-    function _relayers_size() private view returns (uint64 size) {
-        if (inboundLaneNonce.relayer_range_back >= inboundLaneNonce.relayer_range_front) {
-            size = inboundLaneNonce.relayer_range_back - inboundLaneNonce.relayer_range_front + 1;
-        }
-    }
-
-    function _relayers_back() private view returns (address pre_relayer) {
-        if (_relayers_size() > 0) {
-            uint64 back = inboundLaneNonce.relayer_range_back;
-            pre_relayer = relayers[back].relayer;
-        }
     }
 
     /// Receive new message.
     function _receive_message(Message memory message) private {
         MessageKey memory key = decodeMessageKey(message.encoded_key);
         Slot0 memory _slot0 = slot0;
-        // check message nonce is correct and increment nonce for replay protection
-        require(key.nonce == next, "InvalidNonce");
         // check message is from the correct source chain position
         require(key.this_chain_pos == _slot0.bridged_chain_pos, "InvalidSourceChainId");
         // check message is from the correct source lane position
@@ -132,7 +92,8 @@ contract InboundLaneUDP is InboundLaneVerifier {
         MessagePayload memory message_payload = message.payload;
         // then, dispatch message
         bool dispatch_result = _dispatch(message_payload);
-        emit MessageDispatched(key.nonce, dispatch_result);
+        require(dispatch_result == true, "DispatchFailed");
+        emit MessageDispatched(key.nonce);
     }
 
     /// @dev dispatch the cross chain message
@@ -154,7 +115,7 @@ contract InboundLaneUDP is InboundLaneVerifier {
         );
         if (_filter(payload.target, filterCallData)) {
             // Deliver the message to the target
-            (dispatch_result,) = payload.target.call{gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
+            (dispatch_result,) = payload.target.call(payload.encoded);
         }
     }
 
@@ -166,7 +127,7 @@ contract InboundLaneUDP is InboundLaneVerifier {
     /// @return canCall the filter static call result, Return True only when target contract
     /// implement the `ICrossChainFilter` interface with return data is True.
     function _filter(address target, bytes memory encoded) private view returns (bool canCall) {
-        (bool ok, bytes memory result) = target.staticcall{gas: GAS_BUFFER}(encoded);
+        (bool ok, bytes memory result) = target.staticcall(encoded);
         if (ok) {
             if (result.length == 32) {
                 canCall = abi.decode(result, (bool));

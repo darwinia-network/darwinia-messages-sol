@@ -6,7 +6,7 @@ pragma solidity 0.7.6;
 /// @title IncrementalMerkleTree
 /// @author Illusory Systems Inc.
 /// @notice An incremental merkle tree modeled on the eth2 deposit contract.
-library MerkleLib {
+library IncrementalMerkleTree {
     uint256 internal constant TREE_DEPTH = 32;
     uint256 internal constant MAX_LEAVES = 2**TREE_DEPTH - 1;
 
