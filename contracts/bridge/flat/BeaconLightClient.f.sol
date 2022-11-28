@@ -992,7 +992,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         require(verify_next_sync_committee(
                 sc_update.next_sync_committee,
                 sc_update.next_sync_committee_branch,
-                header_update.finalized_header.state_root),
+                header_update.attested_header.state_root),
                 "!next_sync_committee"
         );
 
