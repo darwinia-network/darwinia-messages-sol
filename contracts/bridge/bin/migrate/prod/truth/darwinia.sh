@@ -42,13 +42,3 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $GENESIS_VALIDATORS_ROOT)
 
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
-
-EthereumStorageVerifier=$(load_saddr "EthereumStorageVerifier")
-
-HelixDaoMultisig=0xBd1a110ec476b4775c43905000288881367B1a88
-
-data=$(seth calldata "changeLightClient(address)" $ExecutionLayer)
-seth call -F $HelixDaoMultisig $EthereumStorageVerifier $data
-# seth send -F $ETH_FROM $HelixDaoMultisig "submitTransaction(address,uint,bytes)" $EthereumStorageVerifier 0 $data
-# count=$(seth call $HelixDaoMultisig "transactionCount()(uint)")
-# seth call $HelixDaoMultisig "transactions(uint)(address,uint,bytes,bool)" $(( $count - 1 ))
