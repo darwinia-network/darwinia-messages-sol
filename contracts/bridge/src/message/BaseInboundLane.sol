@@ -33,6 +33,7 @@ pragma abicoder v2;
 import "../interfaces/ICrossChainFilter.sol";
 import "./InboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
+import "../utils/IncrementalMerkleTree.sol";
 
 /// @title Everything about incoming messages receival
 contract BaseInboundLane is InboundLaneVerifier, SourceChain {
@@ -63,9 +64,23 @@ contract BaseInboundLane is InboundLaneVerifier, SourceChain {
     ) {}
 
     /// Receive messages proof from bridged chain.
-    function receive_messages_proof(Message memory message, bytes memory proof) external {
-        _verify_messages_proof(hash(message), proof);
-        _receive_message(message);
+    function receive_message(
+        bytes32 outlane_data_hash,
+        bytes memory lane_proof,
+        Message memory message,
+        bytes32[32] calldata message_proof
+    ) external {
+        _verify_messages_proof(outlane_data_hash, lane_proof);
+        _receive_message(message, outlane_data_hash, message_proof);
+    }
+
+    function _verify_message(
+        bytes32 root,
+        bytes32 leaf,
+        bytes32[32] calldata proof,
+        uint256 index
+    ) internal pure returns (bool) {
+        return root == IncrementalMerkleTree.branchRoot(leaf, proof, index);
     }
 
     /// Return the commitment of lane data.
@@ -74,7 +89,7 @@ contract BaseInboundLane is InboundLaneVerifier, SourceChain {
     }
 
     /// Receive new message.
-    function _receive_message(Message memory message) private {
+    function _receive_message(Message memory message, bytes32 outlane_data_hash, bytes32[32] calldata message_proof) private {
         MessageKey memory key = decodeMessageKey(message.encoded_key);
         Slot0 memory _slot0 = slot0;
         // check message is from the correct source chain position
@@ -89,9 +104,12 @@ contract BaseInboundLane is InboundLaneVerifier, SourceChain {
         require(dones[key.nonce] == false, "done");
         dones[key.nonce] = true;
 
+        _verify_message(outlane_data_hash, hash(message), message_proof, key.nonce);
+
         MessagePayload memory message_payload = message.payload;
         // then, dispatch message
         bool dispatch_result = _dispatch(message_payload);
+        // only success dispatched msg could pass, dapp could retry failed message
         require(dispatch_result == true, "DispatchFailed");
         emit MessageDispatched(key.nonce);
     }
