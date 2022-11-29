@@ -36,7 +36,7 @@ import "../spec/SourceChain.sol";
 import "../utils/IncrementalMerkleTree.sol";
 
 // Everything about outgoing messages sending.
-contract BaseOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChain {
+contract ParallelOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChain {
     using IncrementalMerkleTree for IncrementalMerkleTree.Tree;
     // slot 1
     bytes32 private root;

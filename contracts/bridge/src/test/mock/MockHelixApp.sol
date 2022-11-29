@@ -18,9 +18,9 @@
 pragma solidity 0.7.6;
 
 import "../../interfaces/ICrossChainFilter.sol";
-import "../interfaces/IOutboundLane.sol";
+import "../../interfaces/IOutboundLane.sol";
 
-contract HelixApp {
+contract HelixApp is ICrossChainFilter {
 
     modifier only_inlane() {
         _;

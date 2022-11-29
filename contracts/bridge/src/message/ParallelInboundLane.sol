@@ -36,7 +36,7 @@ import "../spec/SourceChain.sol";
 import "../utils/IncrementalMerkleTree.sol";
 
 /// @title Everything about incoming messages receival
-contract BaseInboundLane is InboundLaneVerifier, SourceChain {
+contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
     mapping(uint => bool) public dones;
 
     /// @dev Notifies an observer that the message has dispatched
@@ -109,7 +109,7 @@ contract BaseInboundLane is InboundLaneVerifier, SourceChain {
         MessagePayload memory message_payload = message.payload;
         // then, dispatch message
         bool dispatch_result = _dispatch(message_payload);
-        // only success dispatched msg could pass, dapp could retry failed message
+        // only success dispatched message could pass, dapp could retry revert message
         require(dispatch_result == true, "DispatchFailed");
         emit MessageDispatched(key.nonce);
     }

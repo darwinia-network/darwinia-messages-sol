@@ -19,25 +19,25 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../test.sol";
-import "../../message/BaseOutboundLane.sol";
+import "../../message/ParallelOutboundLane.sol";
 import "../../spec/SourceChain.sol";
 import "../mock/MockLightClient.sol";
 import "../mock/NormalApp.sol";
 
-contract BaseOutboundLaneTest is DSTest, SourceChain {
+contract ParallelOutboundLaneTest is DSTest, SourceChain {
     uint32 constant internal THIS_CHAIN_POS = 0;
     uint32 constant internal THIS_OUT_LANE_POS = 2;
     uint32 constant internal BRIDGED_CHAIN_POS = 1;
     uint32 constant internal BRIDGED_IN_LANE_POS = 3;
 
     MockLightClient public lightclient;
-    BaseOutboundLane public outlane;
+    ParallelOutboundLane public outlane;
     NormalApp public app;
     address public self;
 
     function setUp() public {
         lightclient = new MockLightClient();
-        outlane = new BaseOutboundLane(
+        outlane = new ParallelOutboundLane(
             address(lightclient),
             THIS_CHAIN_POS,
             THIS_OUT_LANE_POS,
