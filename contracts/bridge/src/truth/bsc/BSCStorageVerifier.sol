@@ -18,14 +18,14 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../common/EVMStorageVerifier.sol";
+import "../common/LaneStorageVerifier.sol";
 import "../../spec/ChainMessagePosition.sol";
 import "../../interfaces/ILightClient.sol";
 
-contract BSCStorageVerifier is EVMStorageVerifier {
+contract BSCStorageVerifier is LaneStorageVerifier {
     ILightClient public immutable LIGHT_CLIENT;
 
-    constructor(address lightclient) EVMStorageVerifier(uint32(ChainMessagePosition.BSC), 0, 1, 2) {
+    constructor(address lightclient) LaneStorageVerifier(uint32(ChainMessagePosition.BSC), 0, 1, 2) {
         LIGHT_CLIENT = ILightClient(lightclient);
     }
 
