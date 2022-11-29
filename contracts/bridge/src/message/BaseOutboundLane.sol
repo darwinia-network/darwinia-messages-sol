@@ -39,9 +39,9 @@ import "../utils/IncrementalMerkleTree.sol";
 contract BaseOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChain {
     using IncrementalMerkleTree for IncrementalMerkleTree.Tree;
     // slot 1
-    bytes32 public root;
+    bytes32 private root;
     // slot [2, 34]
-    IncrementalMerkleTree.Tree public imt;
+    IncrementalMerkleTree.Tree private imt;
 
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
 
@@ -63,7 +63,9 @@ contract BaseOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChain {
         _thisLanePosition,
         _bridgedChainPosition,
         _bridgedLanePosition
-    ) {}
+    ) {
+        root = imt.root();
+    }
 
     /// @dev Send message over lane.
     /// Submitter could be a contract or just an EOA address.
@@ -91,7 +93,11 @@ contract BaseOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChain {
         return root;
     }
 
-    function message_size() public view returns (uint64 size) {
-        size = uint64(imt.count);
+    function message_size() public view returns (uint64) {
+        return uint64(imt.count);
+    }
+
+    function imt_branch() public view returns (bytes32[32] memory) {
+        return imt.branch;
     }
 }
