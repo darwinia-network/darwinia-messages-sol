@@ -12,10 +12,10 @@ class EvmClient {
     const FeeMarket = await artifacts.readArtifact("FeeMarket");
     this.feeMarket = new ethers.Contract(addresses[ns].FeeMarketProxy, FeeMarket.abi, this.provider)
 
-    const OutboundLane = await artifacts.readArtifact("OutboundLane")
+    const OutboundLane = await artifacts.readArtifact("SerialOutboundLane")
     const outbound = new ethers.Contract(addresses[ns].OutboundLane, OutboundLane.abi,  this.provider)
 
-    const InboundLane = await artifacts.readArtifact("InboundLane")
+    const InboundLane = await artifacts.readArtifact("SerialInboundLane")
     const inbound = new ethers.Contract(addresses[ns].InboundLane, InboundLane.abi, this.provider)
 
     this.signer = wallets[0].connect(this.provider)

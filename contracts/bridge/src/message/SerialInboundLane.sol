@@ -40,7 +40,7 @@ import "../spec/TargetChain.sol";
 /// @author echo
 /// @notice The inbound lane is the message layer of the bridge
 /// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
-contract InboundLane is InboundLaneVerifier, SourceChain, TargetChain {
+contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// slot 1
     InboundLaneNonce public inboundLaneNonce;
     /// slot 2

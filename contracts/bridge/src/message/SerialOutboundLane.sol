@@ -38,7 +38,7 @@ import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 
 // Everything about outgoing messages sending.
-contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, SourceChain {
+contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, SourceChain {
     /// slot 1
     OutboundLaneNonce public outboundLaneNonce;
     /// slot 2
