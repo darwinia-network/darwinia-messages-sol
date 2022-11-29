@@ -198,19 +198,12 @@ contract BeaconLightClientPraterTest is DSTest, BeaconLightClientUpdate, Bitfiel
 
     function build_next_sync_committee_branch() internal pure returns (bytes32[] memory) {
         bytes32[] memory next_sync_committee_branch = new bytes32[](5);
-        // root next_sync_committee in finalized_header
-        next_sync_committee_branch[0] = 0xa36ba14c9ad227f9785a6b9ffd52d3b1f40a3fbd73e7445e18f70cac121612b4;
-        next_sync_committee_branch[1] = 0xe6933bd05e22a407823145bc85f9f6e21c46c6c65f3f65832de5e6c02c123dc2;
-        next_sync_committee_branch[2] = 0x6101f5ed3408ee7847161e53d830f490e52fb18f079852851412d9d3cd1f0b58;
-        next_sync_committee_branch[3] = 0x55e1bdd17c7dcab000d4d78176b3a85348a79851d414543cc94c2a85a14cd3b6;
-        next_sync_committee_branch[4] = 0x5e4102f6b8f5bc61ebac869adf2c88964e918bff81005161b0c3c4b8724de6c0;
-
         // root next_sync_committee in attested_header
-        // next_sync_committee_branch[0] = 0xa36ba14c9ad227f9785a6b9ffd52d3b1f40a3fbd73e7445e18f70cac121612b4;
-        // next_sync_committee_branch[1] = 0x9820907666e8cdfa916cb110286263c0191cc8a71c59b3d16ffef8cbbb4b83b0;
-        // next_sync_committee_branch[2] = 0x6ecd6cbd81977588b8b788f51670363c4980dfb24358bba02cddbd672eddf455;
-        // next_sync_committee_branch[3] = 0x52e3cf69b61aad545e242e2ef8a78df16127d59472d728d86401731350538ce6;
-        // next_sync_committee_branch[4] = 0xa318f6d6418032efae3e4a269d72d04c291153b67b2390216087974cc5d3ca50;
+        next_sync_committee_branch[0] = 0xa36ba14c9ad227f9785a6b9ffd52d3b1f40a3fbd73e7445e18f70cac121612b4;
+        next_sync_committee_branch[1] = 0x9820907666e8cdfa916cb110286263c0191cc8a71c59b3d16ffef8cbbb4b83b0;
+        next_sync_committee_branch[2] = 0x6ecd6cbd81977588b8b788f51670363c4980dfb24358bba02cddbd672eddf455;
+        next_sync_committee_branch[3] = 0x52e3cf69b61aad545e242e2ef8a78df16127d59472d728d86401731350538ce6;
+        next_sync_committee_branch[4] = 0xa318f6d6418032efae3e4a269d72d04c291153b67b2390216087974cc5d3ca50;
         return next_sync_committee_branch;
     }
 

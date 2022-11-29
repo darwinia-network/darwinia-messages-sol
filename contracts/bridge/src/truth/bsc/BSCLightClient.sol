@@ -151,6 +151,10 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
         return finalized_checkpoint.state_root;
     }
 
+    function block_number() public view override returns (uint256) {
+        return finalized_checkpoint.number;
+    }
+
     function finalized_authorities_contains(address value) external view returns (bool) {
         return _finalized_authorities.contains(value);
     }

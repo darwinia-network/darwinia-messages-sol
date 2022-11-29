@@ -24,6 +24,7 @@ pragma abicoder v2;
 
 interface ILightClient {
     function merkle_root() external view returns (bytes32);
+    function block_number() external view returns (uint256);
 }
 
 ////// src/utils/rlp/RLPEncode.sol
@@ -1252,6 +1253,10 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
 
     function merkle_root() public view override returns (bytes32) {
         return finalized_checkpoint.state_root;
+    }
+
+    function block_number() public view override returns (uint256) {
+        return finalized_checkpoint.number;
     }
 
     function finalized_authorities_contains(address value) external view returns (bool) {
