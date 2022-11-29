@@ -23,7 +23,6 @@ import "../../message/InboundLane.sol";
 import "../../spec/TargetChain.sol";
 import "../../spec/SourceChain.sol";
 import "../mock/MockLightClient.sol";
-import "../mock/MockFeeMarket.sol";
 import "../mock/NormalApp.sol";
 
 interface Hevm {
@@ -38,14 +37,12 @@ contract InboundLandTest is DSTest, SourceChain, TargetChain {
 
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     MockLightClient public lightclient;
-    MockFeeMarket public market;
     InboundLane public inlane;
     NormalApp public app;
     address public self;
 
     function setUp() public {
         lightclient = new MockLightClient();
-        market = new MockFeeMarket();
         inlane = new InboundLane(
             address(lightclient),
             THIS_CHAIN_POS,

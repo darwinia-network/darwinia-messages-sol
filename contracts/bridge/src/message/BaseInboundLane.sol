@@ -37,7 +37,7 @@ import "../utils/IncrementalMerkleTree.sol";
 
 /// @title Everything about incoming messages receival
 contract BaseInboundLane is InboundLaneVerifier, SourceChain {
-    mapping(uint => bool) dones;
+    mapping(uint => bool) public dones;
 
     /// @dev Notifies an observer that the message has dispatched
     /// @param nonce The message nonce

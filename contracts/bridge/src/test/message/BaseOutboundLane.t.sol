@@ -24,17 +24,12 @@ import "../../spec/SourceChain.sol";
 import "../mock/MockLightClient.sol";
 import "../mock/NormalApp.sol";
 
-interface Hevm {
-    function load(address c, bytes32 loc) external returns (bytes32 val);
-}
-
 contract BaseOutboundLaneTest is DSTest, SourceChain {
     uint32 constant internal THIS_CHAIN_POS = 0;
     uint32 constant internal THIS_OUT_LANE_POS = 2;
     uint32 constant internal BRIDGED_CHAIN_POS = 1;
     uint32 constant internal BRIDGED_IN_LANE_POS = 3;
 
-    Hevm internal hevm = Hevm(HEVM_ADDRESS);
     MockLightClient public lightclient;
     BaseOutboundLane public outlane;
     NormalApp public app;
@@ -75,6 +70,7 @@ contract BaseOutboundLaneTest is DSTest, SourceChain {
                 encoded: encoded
             }))
         );
+        assertEq(outlane.encodeMessageKey(1), 0x0000000000000000000000000000000200000001000000030000000000000001);
         assertEq(msg_hash, 0x24df9438f702fd58f57a5307c88714bbc1553b63c024de9ea89d8c9ab9e0d576);
         assertEq(outlane.commitment(), 0x98ca2eb3c08322f6837586afaf34eead83377184f0d8570f92b9953fcf8cc614);
         bytes32[32] memory branch = outlane.imt_branch();
