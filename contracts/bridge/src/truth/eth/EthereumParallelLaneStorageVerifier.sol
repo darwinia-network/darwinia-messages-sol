@@ -18,29 +18,29 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../../interfaces/IVerifier.sol";
 import "../../spec/StorageProof.sol";
 import "../../spec/ChainMessagePosition.sol";
 import "../../interfaces/ILightClient.sol";
 
-contract EthereumParallelLaneStorageVerifier is IVerifier {
+contract EthereumParallelLaneStorageVerifier {
     struct Proof {
         bytes accountProof;
         bytes laneRootProof;
     }
 
-    uint256 public immutable GINDEX;
+    // chain_pos ++ lane_pos
+    uint256 public immutable LINDEX;
     uint256 public immutable LANE_ROOT_SLOT;
     address public immutable LIGHT_CLIENT;
     address public immutable PARALLEL_OUTLANE;
 
     constructor(
-        uint256 gindex,
+        uint256 lindex,
         uint256 lane_root_slot,
         address light_client,
         address parallel_outlane
     ) {
-        GINDEX = gindex;
+        LINDEX = lindex;
         LANE_ROOT_SLOT = lane_root_slot;
         LIGHT_CLIENT = light_client;
         PARALLEL_OUTLANE = parallel_outlane;
@@ -50,9 +50,8 @@ contract EthereumParallelLaneStorageVerifier is IVerifier {
         return ILightClient(LIGHT_CLIENT).merkle_root();
     }
 
-    function verify_gindex(uint32 chain_pos, uint32 lane_pos) public pure returns (bool) {
-        //TODO
-        return false;
+    function verify_lindex(uint32 chain_pos, uint32 lane_pos) internal pure returns (bool) {
+        return LINDEX == ((chain_pos << 32) + lane_pos);
     }
 
     function verify_messages_proof(
@@ -61,7 +60,7 @@ contract EthereumParallelLaneStorageVerifier is IVerifier {
         uint32 lane_pos,
         bytes calldata encoded_proof
     ) external view override returns (bool) {
-        require(verify_gindex(chain_pos, lane_pos), "!gindex");
+        require(verify_lindex(chain_pos, lane_pos), "!lindex");
         Proof memory proof = abi.decode(encoded_proof, (Proof));
 
         // extract root storage value from proof
@@ -92,15 +91,5 @@ contract EthereumParallelLaneStorageVerifier is IVerifier {
 
     function toBytes32(bytes memory bts) internal pure returns (bytes32 data) {
         return bytes32(toUint(bts));
-    }
-
-    // TODO: remove
-    function verify_messages_delivery_proof(
-        bytes32,
-        uint32,
-        uint32,
-        bytes calldata
-    ) external pure override returns (bool) {
-        return false;
     }
 }
