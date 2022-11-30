@@ -64,7 +64,8 @@ contract ParallelOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChai
         _bridgedChainPosition,
         _bridgedLanePosition
     ) {
-        root = imt.root();
+        // init with empty tree
+        root = 0x27ae5ba08d7291c96c8cbddcc148bf48a6d68c7974b94356f53754ef6171d757;
     }
 
     /// @dev Send message over lane.

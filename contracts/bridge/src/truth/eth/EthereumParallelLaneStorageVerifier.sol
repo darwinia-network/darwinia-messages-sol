@@ -18,67 +18,55 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "../common/ParallelLaneStorageVerifier.sol";
 import "../../interfaces/IVerifier.sol";
 import "../../spec/StorageProof.sol";
+import "../../spec/ChainMessagePosition.sol";
+import "../../interfaces/ILightClient.sol";
 
-abstract contract ParallelLaneStorageVerifier is IVerifier {
-    event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
-
+contract EthereumParallelLaneStorageVerifier is IVerifier {
     struct Proof {
         bytes accountProof;
         bytes laneRootProof;
     }
 
-    uint256 public immutable THIS_CHAIN_POSITION;
+    uint256 public immutable GINDEX;
     uint256 public immutable LANE_ROOT_SLOT;
-
-    // bridgedChainPosition => lanePosition => lanes
-    mapping(uint32 => mapping(uint32 => address)) public lanes;
-    address public setter;
-
-    modifier onlySetter {
-        require(msg.sender == setter, "forbidden");
-        _;
-    }
-
-    function changeSetter(address _setter) external onlySetter {
-        setter = _setter;
-    }
+    address public immutable LIGHT_CLIENT;
+    address public immutable PARALLEL_OUTLANE;
 
     constructor(
-        uint32 this_chain_position,
-        uint256 lane_root_slot
+        uint256 gindex,
+        uint256 lane_root_slot,
+        address lightclient,
+        address parallel_outlane
     ) {
-        THIS_CHAIN_POSITION = this_chain_position;
-        LANE_ROOT_SLOT = lane_root_slot;
-        setter = msg.sender;
+        light_client = lightclient;
     }
 
-    function registry(uint32 bridgedChainPosition, uint32 outboundPosition, address outbound, uint32 inboundPositon, address inbound) external onlySetter {
-        require(bridgedChainPosition != THIS_CHAIN_POSITION, "invalid_chain_pos");
-        lanes[bridgedChainPosition][outboundPosition] = outbound;
-        lanes[bridgedChainPosition][inboundPositon] = inbound;
-        emit Registry(bridgedChainPosition, outboundPosition, outbound);
-        emit Registry(bridgedChainPosition, inboundPositon, inbound);
+    function state_root() public view override returns (bytes32) {
+        return ILightClient(light_client).merkle_root();
     }
 
-    function state_root() public view virtual returns (bytes32);
+    function verify_gindex(uint32 chain_pos, uint32 lane_pos) public pure returns (bool) {
+        //TODO
+        return false;
+    }
 
     function verify_messages_proof(
-        bytes32 outlane_hash,
+        bytes32 outlane_commitment,
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata encoded_proof
     ) external view override returns (bool) {
-        address lane = lanes[chain_pos][lane_pos];
-        require(lane != address(0), "!outlane");
+        require(verify_gindex(chain_pos, lane_pos), "!gindex");
         Proof memory proof = abi.decode(encoded_proof, (Proof));
 
-        // extract nonce storage value from proof
+        // extract root storage value from proof
         bytes32 root_storage = toBytes32(
             StorageProof.verify_single_storage_proof(
                 state_root(),
-                lane,
+                PARALLEL_OUTLANE,
                 proof.accountProof,
                 bytes32(LANE_ROOT_SLOT),
                 proof.laneRootProof
@@ -86,7 +74,7 @@ abstract contract ParallelLaneStorageVerifier is IVerifier {
         );
 
         // check the lane_data_hash
-        return outlane_hash == root_storage;
+        return outlane_commitment == root_storage;
     }
 
     function toUint(bytes memory bts) internal pure returns (uint data) {
@@ -104,6 +92,7 @@ abstract contract ParallelLaneStorageVerifier is IVerifier {
         return bytes32(toUint(bts));
     }
 
+    // TODO: remove
     function verify_messages_delivery_proof(
         bytes32,
         uint32,
