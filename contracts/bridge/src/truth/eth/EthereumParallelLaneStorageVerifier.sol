@@ -50,7 +50,7 @@ contract EthereumParallelLaneStorageVerifier {
         return ILightClient(LIGHT_CLIENT).merkle_root();
     }
 
-    function verify_lindex(uint32 chain_pos, uint32 lane_pos) internal pure returns (bool) {
+    function verify_lindex(uint32 chain_pos, uint32 lane_pos) internal view returns (bool) {
         return LINDEX == ((chain_pos << 32) + lane_pos);
     }
 
@@ -59,7 +59,7 @@ contract EthereumParallelLaneStorageVerifier {
         uint32 chain_pos,
         uint32 lane_pos,
         bytes calldata encoded_proof
-    ) external view override returns (bool) {
+    ) external view returns (bool) {
         require(verify_lindex(chain_pos, lane_pos), "!lindex");
         Proof memory proof = abi.decode(encoded_proof, (Proof));
 

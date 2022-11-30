@@ -77,8 +77,8 @@ contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
     function _verify_message(
         bytes32 root,
         bytes32 leaf,
-        bytes32[32] calldata proof,
-        uint256 index
+        uint256 index,
+        bytes32[32] calldata proof
     ) internal pure returns (bool) {
         return root == IncrementalMerkleTree.branchRoot(leaf, proof, index);
     }
@@ -104,7 +104,7 @@ contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
         require(dones[key.nonce] == false, "done");
         dones[key.nonce] = true;
 
-        _verify_message(outlane_data_hash, hash(message), message_proof, key.nonce);
+        _verify_message(outlane_data_hash, hash(message), key.nonce, message_proof);
 
         MessagePayload memory message_payload = message.payload;
         // then, dispatch message
