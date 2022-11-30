@@ -28,7 +28,7 @@ contract EthereumParallelLaneStorageVerifier {
         bytes laneRootProof;
     }
 
-    // chain_pos ++ lane_pos
+    // bridged_chain_pos ++ bridged_lane_pos
     uint256 public immutable LINDEX;
     uint256 public immutable LANE_ROOT_SLOT;
     address public immutable LIGHT_CLIENT;
