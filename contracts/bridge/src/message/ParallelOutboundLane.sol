@@ -76,7 +76,7 @@ contract ParallelOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChai
     /// @return nonce Latest nonce
     function send_message(address target, bytes calldata encoded) external payable override returns (uint64) {
         require(msg.value == 0, "nonpayable");
-        uint64 nonce = uint64(imt.count + 1);
+        uint64 nonce = uint64(imt.count);
         Message memory message = Message(encodeMessageKey(nonce), MessagePayload({
             source: msg.sender,
             target: target,

@@ -18,7 +18,6 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../common/ParallelLaneStorageVerifier.sol";
 import "../../interfaces/IVerifier.sol";
 import "../../spec/StorageProof.sol";
 import "../../spec/ChainMessagePosition.sol";
@@ -38,14 +37,17 @@ contract EthereumParallelLaneStorageVerifier is IVerifier {
     constructor(
         uint256 gindex,
         uint256 lane_root_slot,
-        address lightclient,
+        address light_client,
         address parallel_outlane
     ) {
-        light_client = lightclient;
+        GINDEX = gindex;
+        LANE_ROOT_SLOT = lane_root_slot;
+        LIGHT_CLIENT = light_client;
+        PARALLEL_OUTLANE = parallel_outlane;
     }
 
-    function state_root() public view override returns (bytes32) {
-        return ILightClient(light_client).merkle_root();
+    function state_root() public view returns (bytes32) {
+        return ILightClient(LIGHT_CLIENT).merkle_root();
     }
 
     function verify_gindex(uint32 chain_pos, uint32 lane_pos) public pure returns (bool) {
@@ -73,7 +75,7 @@ contract EthereumParallelLaneStorageVerifier is IVerifier {
             )
         );
 
-        // check the lane_data_hash
+        // check outlane_commitment correct
         return outlane_commitment == root_storage;
     }
 

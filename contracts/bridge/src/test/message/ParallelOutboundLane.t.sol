@@ -61,18 +61,18 @@ contract ParallelOutboundLaneTest is DSTest, SourceChain {
         address target = address(1);
         bytes memory encoded = abi.encodeWithSignature("foo()");
         uint256 nonce = perform_send_message(target, encoded);
-        assertEq(nonce, 1);
+        assertEq(nonce, 0);
         assertEq(outlane.message_size(), uint(1));
         bytes32 msg_hash = hash(
-            Message(outlane.encodeMessageKey(1), MessagePayload({
+            Message(outlane.encodeMessageKey(0), MessagePayload({
                 source: address(app),
                 target: target,
                 encoded: encoded
             }))
         );
-        assertEq(outlane.encodeMessageKey(1), 0x0000000000000000000000000000000200000001000000030000000000000001);
-        assertEq(msg_hash, 0x24df9438f702fd58f57a5307c88714bbc1553b63c024de9ea89d8c9ab9e0d576);
-        assertEq(outlane.commitment(), 0x98ca2eb3c08322f6837586afaf34eead83377184f0d8570f92b9953fcf8cc614);
+        assertEq(outlane.encodeMessageKey(0), 0x0000000000000000000000000000000200000001000000030000000000000000);
+        assertEq(msg_hash, 0xd3017e1be5d2d653d4c9a5d4816def46ce761a305e9d2c6ed3ab4cfbfef94c24);
+        assertEq(outlane.commitment(), 0xe848457486977cfa62bfddf1c56baad8b8048f4419cbb83e1d6aab9269a53798);
         bytes32[32] memory branch = outlane.imt_branch();
         assertEq(branch[0], msg_hash);
     }
@@ -85,15 +85,15 @@ contract ParallelOutboundLaneTest is DSTest, SourceChain {
         perform_send_message(target, encoded);
 
         MessagePayload memory payload = MessagePayload(address(app), target, encoded);
-        bytes32 msg_hash1 = hash(Message(outlane.encodeMessageKey(1), payload));
-        assertEq(msg_hash1, 0x24df9438f702fd58f57a5307c88714bbc1553b63c024de9ea89d8c9ab9e0d576);
-        bytes32 msg_hash2 = hash(Message(outlane.encodeMessageKey(2), payload));
-        assertEq(msg_hash2, 0xbc2839cbd650480f79654999fcd75b82208084506a2a99bc1c7a28cdae0b3d37);
-        bytes32 msg_hash3 = hash(Message(outlane.encodeMessageKey(3), payload));
-        assertEq(msg_hash3, 0x426538a3b42c1fb97863a6847aa9a45bf80479a8011a1dcabc3bfd802e567d0b);
+        bytes32 msg_hash1 = hash(Message(outlane.encodeMessageKey(0), payload));
+        assertEq(msg_hash1, 0xd3017e1be5d2d653d4c9a5d4816def46ce761a305e9d2c6ed3ab4cfbfef94c24);
+        bytes32 msg_hash2 = hash(Message(outlane.encodeMessageKey(1), payload));
+        assertEq(msg_hash2, 0x24df9438f702fd58f57a5307c88714bbc1553b63c024de9ea89d8c9ab9e0d576);
+        bytes32 msg_hash3 = hash(Message(outlane.encodeMessageKey(2), payload));
+        assertEq(msg_hash3, 0xbc2839cbd650480f79654999fcd75b82208084506a2a99bc1c7a28cdae0b3d37);
 
         assertEq(outlane.message_size(), uint(3));
-        assertEq(outlane.commitment(), 0x65ab04ae1aa3d58e20ee1d954dc21e1e92fb429701d218583b80c4de2638bf92);
+        assertEq(outlane.commitment(), 0x13d79059b88e111e9822a9566c5b2d4dbf6d41ae7cedf723626ce4294db80512);
     }
 
     function perform_send_message(address target, bytes memory encoded) public returns (uint256) {

@@ -55,13 +55,13 @@ contract ParallelInboundLandTest is DSTest, SourceChain {
     function test_receive_message() public {
         address target = address(app);
         bytes memory encoded = abi.encodeWithSignature("foo()");
-        uint256 key = 0x0000000000000000000000000000000200000001000000030000000000000001;
+        uint256 key = 0x0000000000000000000000000000000200000001000000030000000000000000;
         Message memory message = Message(key, MessagePayload({
             source: address(app),
             target: target,
             encoded: encoded
         }));
-        assertEq(hash(message), 0x38ad9f0de250d89cdcf16d616357f22fee617b665e34f0a2d1e2764cbf4ac021);
+        assertEq(hash(message), 0xa27115ef7595101a3fccf934e06ebfdc53d951136b459fb11ead1bbbf85d1680);
         bytes32[32] memory proof = [
             bytes32(0x0000000000000000000000000000000000000000000000000000000000000000),
             bytes32(0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5),
@@ -96,9 +96,9 @@ contract ParallelInboundLandTest is DSTest, SourceChain {
             bytes32(0x93237c50ba75ee485f4c22adf2f741400bdf8d6a9cc7df7ecae576221665d735),
             bytes32(0x8448818bb4ae4562849e949e17ac16e0be16688e156b5cf15e098c627c0056a9)
         ];
-        inlane.receive_message(0x805a85210ae34779afb76af1dd77f30abccd820dff526a0679bcd78195feb7c9, hex"", message, proof);
+        inlane.receive_message(0xa8f477eb0e0ce8f6cc7f3a0f23f3d8075444eeb96f11bdca0c49b1355bd1e97b, hex"", message, proof);
 
         assertEq(inlane.commitment(), bytes32(0));
-        assertTrue(inlane.dones(1));
+        assertTrue(inlane.dones(0));
     }
 }
