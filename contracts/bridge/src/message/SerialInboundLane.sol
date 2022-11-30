@@ -129,7 +129,7 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         uint64 _last_confirmed_nonce,
         uint64 _last_delivered_nonce
     ) InboundLaneVerifier(
-        _lightClientBridge,
+        _verifier,
         _thisChainPosition,
         _thisLanePosition,
         _bridgedChainPosition,

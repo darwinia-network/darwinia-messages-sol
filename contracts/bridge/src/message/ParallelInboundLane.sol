@@ -33,7 +33,7 @@ pragma abicoder v2;
 import "../interfaces/ICrossChainFilter.sol";
 import "./InboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
-import "../utils/IncrementalMerkleTree.sol";
+import "../utils/imt/IncrementalMerkleTree.sol";
 
 /// @title Everything about incoming messages receival
 contract ParallelInboundLane is InboundLaneVerifier, SourceChain {

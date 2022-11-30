@@ -86,7 +86,7 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
         uint64 _latest_received_nonce,
         uint64 _latest_generated_nonce
     ) OutboundLaneVerifier(
-        _lightClientBridge,
+        _verifier,
         _thisChainPosition,
         _thisLanePosition,
         _bridgedChainPosition,

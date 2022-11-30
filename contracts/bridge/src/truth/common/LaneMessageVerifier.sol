@@ -20,7 +20,7 @@ pragma abicoder v2;
 
 import "../../spec/MessageProof.sol";
 import "../../interfaces/IVerifier.sol";
-import "../../utils/SparseMerkleProof.sol";
+import "../../utils/smt/SparseMerkleProof.sol";
 
 abstract contract LaneMessageVerifier is IVerifier {
 

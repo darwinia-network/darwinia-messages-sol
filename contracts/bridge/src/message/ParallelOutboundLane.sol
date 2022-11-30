@@ -33,7 +33,7 @@ pragma abicoder v2;
 import "../interfaces/IOutboundLane.sol";
 import "./OutboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
-import "../utils/IncrementalMerkleTree.sol";
+import "../utils/imt/IncrementalMerkleTree.sol";
 
 // Everything about outgoing messages sending.
 contract ParallelOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChain {
@@ -58,7 +58,7 @@ contract ParallelOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChai
         uint32 _bridgedChainPosition,
         uint32 _bridgedLanePosition
     ) OutboundLaneVerifier(
-        _lightClientBridge,
+        _verifier,
         _thisChainPosition,
         _thisLanePosition,
         _bridgedChainPosition,
