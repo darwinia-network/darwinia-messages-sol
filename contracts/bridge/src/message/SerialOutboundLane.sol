@@ -67,7 +67,7 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
     }
 
     /// @dev Deploys the OutboundLane contract
-    /// @param _lightClientBridge The contract address of on-chain light client
+    /// @param _verifier The contract address of on-chain verifier
     /// @param _thisChainPosition The thisChainPosition of outbound lane
     /// @param _thisLanePosition The lanePosition of this outbound lane
     /// @param _bridgedChainPosition The bridgedChainPosition of outbound lane
@@ -76,7 +76,7 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
     /// @param _latest_received_nonce The latest_received_nonce of outbound lane
     /// @param _latest_generated_nonce The latest_generated_nonce of outbound lane
     constructor(
-        address _lightClientBridge,
+        address _verifier,
         address _feeMarket,
         uint32 _thisChainPosition,
         uint32 _thisLanePosition,

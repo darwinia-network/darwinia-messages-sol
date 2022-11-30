@@ -46,13 +46,13 @@ contract ParallelOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChai
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
 
     /// @dev Deploys the OutboundLane contract
-    /// @param _lightClientBridge The contract address of on-chain light client
+    /// @param _verifier The contract address of on-chain verifier
     /// @param _thisChainPosition The thisChainPosition of outbound lane
     /// @param _thisLanePosition The lanePosition of this outbound lane
     /// @param _bridgedChainPosition The bridgedChainPosition of outbound lane
     /// @param _bridgedLanePosition The lanePosition of target inbound lane
     constructor(
-        address _lightClientBridge,
+        address _verifier,
         uint32 _thisChainPosition,
         uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,

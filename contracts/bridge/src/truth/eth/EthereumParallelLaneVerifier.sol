@@ -18,11 +18,11 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../common/SerialLaneStorageVerifier.sol";
+import "../common/ParallelLaneStorageVerifier.sol";
 import "../../spec/ChainMessagePosition.sol";
 import "../../interfaces/ILightClient.sol";
 
-contract EthereumStorageVerifier is SerialLaneStorageVerifier {
+contract EthereumParallelLaneVerifier is ParallelLaneStorageVerifier {
     ILightClient private light_client;
 
     constructor(address lightclient) SerialLaneStorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {

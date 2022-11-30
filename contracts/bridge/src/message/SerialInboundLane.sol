@@ -113,7 +113,7 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     }
 
     /// @dev Deploys the InboundLane contract
-    /// @param _lightClientBridge The contract address of on-chain light client
+    /// @param _verifier The contract address of on-chain verifier
     /// @param _thisChainPosition The thisChainPosition of inbound lane
     /// @param _thisLanePosition The lanePosition of this inbound lane
     /// @param _bridgedChainPosition The bridgedChainPosition of inbound lane
@@ -121,7 +121,7 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// @param _last_confirmed_nonce The last_confirmed_nonce of inbound lane
     /// @param _last_delivered_nonce The last_delivered_nonce of inbound lane
     constructor(
-        address _lightClientBridge,
+        address _verifier,
         uint32 _thisChainPosition,
         uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,
