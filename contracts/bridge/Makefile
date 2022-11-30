@@ -1,4 +1,4 @@
-.PHONY: all install update npm solc
+.PHONY: all install update npm solc foundry
 .PHONY: build test clean doc lint estimate size e2e audit flatten
 .PHONY: deploy deploy-mainnet deploy-rinkeby verify check-api-key
 .PHONY: local-testnet migrate-local
@@ -10,11 +10,15 @@ all: build
 
 install: solc update npm
 
+tools: foundry
+
 # dapp deps
 update:; dapp update
 
 # npm deps for linting etc.
 npm:; yarn install
+
+foundry:; cargo install --git https://github.com/foundry-rs/foundry --profile local --locked foundry-cli anvil
 
 # install solc version
 # example to install other versions: `make solc SOLC_VERSION=0_8_2`

@@ -21,7 +21,7 @@ pragma abicoder v2;
 import "../../interfaces/IVerifier.sol";
 import "../../spec/StorageProof.sol";
 
-abstract contract BaseLaneStorageVerifier is IVerifier {
+abstract contract ParallelLaneStorageVerifier is IVerifier {
     event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
 
     struct Proof {

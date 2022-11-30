@@ -23,7 +23,7 @@ import "../../spec/SourceChain.sol";
 import "../../spec/TargetChain.sol";
 import "../../spec/StorageProof.sol";
 
-abstract contract LaneStorageVerifier is IVerifier, SourceChain, TargetChain {
+abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetChain {
     event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
 
     struct ReceiveProof {
