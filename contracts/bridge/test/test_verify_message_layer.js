@@ -113,8 +113,8 @@ describe("verify message relay tests", () => {
 
     const MockBSCLightClient = await ethers.getContractFactory("MockBSCLightClient")
     const MockDarwiniaLightClient = await ethers.getContractFactory("MockDarwiniaLightClient")
-    const OutboundLane = await ethers.getContractFactory("OutboundLane")
-    const InboundLane = await ethers.getContractFactory("InboundLane")
+    const OutboundLane = await ethers.getContractFactory("SerialOutboundLane")
+    const InboundLane = await ethers.getContractFactory("SerialInboundLane")
     const ChainMessageCommitter = await ethers.getContractFactory("ChainMessageCommitter")
     const LaneMessageCommitter = await ethers.getContractFactory("LaneMessageCommitter")
 
