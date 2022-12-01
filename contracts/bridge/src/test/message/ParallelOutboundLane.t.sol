@@ -30,15 +30,12 @@ contract ParallelOutboundLaneTest is DSTest, SourceChain {
     uint32 constant internal BRIDGED_CHAIN_POS = 1;
     uint32 constant internal BRIDGED_IN_LANE_POS = 3;
 
-    MockLightClient public lightclient;
     ParallelOutboundLane public outlane;
     NormalApp public app;
     address public self;
 
     function setUp() public {
-        lightclient = new MockLightClient();
         outlane = new ParallelOutboundLane(
-            address(lightclient),
             THIS_CHAIN_POS,
             THIS_OUT_LANE_POS,
             BRIDGED_CHAIN_POS,
@@ -70,9 +67,10 @@ contract ParallelOutboundLaneTest is DSTest, SourceChain {
                 encoded: encoded
             }))
         );
+
         assertEq(outlane.encodeMessageKey(0), 0x0000000000000000000000000000000200000001000000030000000000000000);
-        assertEq(msg_hash, 0xd3017e1be5d2d653d4c9a5d4816def46ce761a305e9d2c6ed3ab4cfbfef94c24);
-        assertEq(outlane.commitment(), 0xe848457486977cfa62bfddf1c56baad8b8048f4419cbb83e1d6aab9269a53798);
+        assertEq(msg_hash, 0x92d82c01f47742df2d289dd6a7eff88e6bca95f5c94ed3a4a9823247aadce4ae);
+        assertEq(outlane.commitment(), 0xaf1895aef5d259c5550219c9f02e0a670416f2c69b1c5040f442ba7dc80b725d);
         bytes32[32] memory branch = outlane.imt_branch();
         assertEq(branch[0], msg_hash);
     }
@@ -86,14 +84,14 @@ contract ParallelOutboundLaneTest is DSTest, SourceChain {
 
         MessagePayload memory payload = MessagePayload(address(app), target, encoded);
         bytes32 msg_hash1 = hash(Message(outlane.encodeMessageKey(0), payload));
-        assertEq(msg_hash1, 0xd3017e1be5d2d653d4c9a5d4816def46ce761a305e9d2c6ed3ab4cfbfef94c24);
+        assertEq(msg_hash1, 0x92d82c01f47742df2d289dd6a7eff88e6bca95f5c94ed3a4a9823247aadce4ae);
         bytes32 msg_hash2 = hash(Message(outlane.encodeMessageKey(1), payload));
-        assertEq(msg_hash2, 0x24df9438f702fd58f57a5307c88714bbc1553b63c024de9ea89d8c9ab9e0d576);
+        assertEq(msg_hash2, 0xe62da3ba053e2beff830250dfda483d26af912e254774c9f9e90ce67eb26834f);
         bytes32 msg_hash3 = hash(Message(outlane.encodeMessageKey(2), payload));
-        assertEq(msg_hash3, 0xbc2839cbd650480f79654999fcd75b82208084506a2a99bc1c7a28cdae0b3d37);
+        assertEq(msg_hash3, 0xf31763f2dd627e6f69cd69e7dabde863936fb352f75aef72aae954a09c4b1819);
 
         assertEq(outlane.message_size(), uint(3));
-        assertEq(outlane.commitment(), 0x13d79059b88e111e9822a9566c5b2d4dbf6d41ae7cedf723626ce4294db80512);
+        assertEq(outlane.commitment(), 0xc4504c558fcc759fe2cf35bc9ba69132c093263d4e17357ae48d1ece7482800a);
     }
 
     function perform_send_message(address target, bytes memory encoded) public returns (uint256) {

@@ -31,12 +31,12 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../interfaces/IOutboundLane.sol";
-import "./OutboundLaneVerifier.sol";
+import "./LaneIdentity.sol";
 import "../spec/SourceChain.sol";
 import "../utils/imt/IncrementalMerkleTree.sol";
 
 // Everything about outgoing messages sending.
-contract ParallelOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChain {
+contract ParallelOutboundLane is IOutboundLane, LaneIdentity, SourceChain {
     using IncrementalMerkleTree for IncrementalMerkleTree.Tree;
     // slot 1
     bytes32 private root;
@@ -46,19 +46,16 @@ contract ParallelOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChai
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
 
     /// @dev Deploys the OutboundLane contract
-    /// @param _verifier The contract address of on-chain verifier
     /// @param _thisChainPosition The thisChainPosition of outbound lane
     /// @param _thisLanePosition The lanePosition of this outbound lane
     /// @param _bridgedChainPosition The bridgedChainPosition of outbound lane
     /// @param _bridgedLanePosition The lanePosition of target inbound lane
     constructor(
-        address _verifier,
         uint32 _thisChainPosition,
         uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,
         uint32 _bridgedLanePosition
-    ) OutboundLaneVerifier(
-        _verifier,
+    ) LaneIdentity (
         _thisChainPosition,
         _thisLanePosition,
         _bridgedChainPosition,
@@ -100,5 +97,23 @@ contract ParallelOutboundLane is IOutboundLane, OutboundLaneVerifier, SourceChai
 
     function imt_branch() public view returns (bytes32[32] memory) {
         return imt.branch;
+    }
+
+    // 32 bytes to identify an unique message from source chain
+    // MessageKey encoding:
+    // ThisChainPosition | ThisLanePosition | BridgedChainPosition | BridgedLanePosition | Nonce
+    // [0..8)   bytes ---- Reserved
+    // [8..12)  bytes ---- ThisChainPosition
+    // [16..20) bytes ---- ThisLanePosition
+    // [12..16) bytes ---- BridgedChainPosition
+    // [20..24) bytes ---- BridgedLanePosition
+    // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
+    function encodeMessageKey(uint64 nonce) public view override returns (uint256) {
+        Slot0 memory _slot0 = slot0;
+        return (uint256(_slot0.this_chain_pos) << 160) +
+                (uint256(_slot0.this_lane_pos) << 128) +
+                (uint256(_slot0.bridged_chain_pos) << 96) +
+                (uint256(_slot0.bridged_lane_pos) << 64) +
+                uint256(nonce);
     }
 }
