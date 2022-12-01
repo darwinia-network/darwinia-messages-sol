@@ -34,9 +34,12 @@ import "../interfaces/ICrossChainFilter.sol";
 import "./InboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../utils/imt/IncrementalMerkleTree.sol";
+import "../utils/call/ExcessivelySafeCall.sol";
 
 /// @title Everything about incoming messages receival
 contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
+    using ExcessivelySafeCall for address;
+
     mapping(uint => bool) public dones;
 
     /// @dev Notifies an observer that the message has dispatched
@@ -133,7 +136,11 @@ contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
         );
         if (_filter(payload.target, filterCallData)) {
             // Deliver the message to the target
-            (dispatch_result,) = payload.target.call(payload.encoded);
+            (dispatch_result,) = payload.target.excessivelySafeCall(
+                gasleft(),
+                0,
+                payload.encoded
+            );
         }
     }
 
@@ -145,7 +152,11 @@ contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
     /// @return canCall the filter static call result, Return True only when target contract
     /// implement the `ICrossChainFilter` interface with return data is True.
     function _filter(address target, bytes memory encoded) private view returns (bool canCall) {
-        (bool ok, bytes memory result) = target.staticcall(encoded);
+        (bool ok, bytes memory result) = target.excessivelySafeStaticCall(
+            gasleft(),
+            32,
+            encoded
+        );
         if (ok) {
             if (result.length == 32) {
                 canCall = abi.decode(result, (bool));

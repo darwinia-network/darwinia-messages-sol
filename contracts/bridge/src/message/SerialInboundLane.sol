@@ -35,12 +35,15 @@ import "../interfaces/ICrossChainFilter.sol";
 import "./InboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
+import "../utils/call/ExcessivelySafeCall.sol";
 
 /// @title Everything about incoming messages receival
 /// @author echo
 /// @notice The inbound lane is the message layer of the bridge
 /// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
 contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
+    using ExcessivelySafeCall for address;
+
     /// slot 1
     InboundLaneNonce public inboundLaneNonce;
     /// slot 2
@@ -294,7 +297,11 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         );
         if (_filter(payload.target, filterCallData)) {
             // Deliver the message to the target
-            (dispatch_result,) = payload.target.call{gas: MAX_GAS_PER_MESSAGE}(payload.encoded);
+            (dispatch_result,) = payload.target.excessivelySafeCall(
+                MAX_GAS_PER_MESSAGE,
+                0,
+                payload.encoded
+            );
         }
     }
 
@@ -306,7 +313,11 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// @return canCall the filter static call result, Return True only when target contract
     /// implement the `ICrossChainFilter` interface with return data is True.
     function _filter(address target, bytes memory encoded) private view returns (bool canCall) {
-        (bool ok, bytes memory result) = target.staticcall{gas: GAS_BUFFER}(encoded);
+        (bool ok, bytes memory result) = target.excessivelySafeStaticCall(
+            GAS_BUFFER,
+            32,
+            encoded
+        );
         if (ok) {
             if (result.length == 32) {
                 canCall = abi.decode(result, (bool));
