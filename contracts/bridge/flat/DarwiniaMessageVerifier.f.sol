@@ -91,7 +91,7 @@ struct MessageSingleProof {
     bytes32[] proof;
 }
 
-////// src/utils/SparseMerkleProof.sol
+////// src/utils/smt/SparseMerkleProof.sol
 // This file is part of Darwinia.
 // Copyright (C) 2018-2022 Darwinia Network
 //
@@ -223,7 +223,7 @@ library SparseMerkleProof {
     }
 }
 
-////// src/truth/common/BEEFYMessageVerifier.sol
+////// src/truth/common/LaneMessageVerifier.sol
 // This file is part of Darwinia.
 // Copyright (C) 2018-2022 Darwinia Network
 //
@@ -245,9 +245,9 @@ library SparseMerkleProof {
 
 /* import "../../spec/MessageProof.sol"; */
 /* import "../../interfaces/IVerifier.sol"; */
-/* import "../../utils/SparseMerkleProof.sol"; */
+/* import "../../utils/smt/SparseMerkleProof.sol"; */
 
-abstract contract BEEFYMessageVerifier is IVerifier {
+abstract contract LaneMessageVerifier is IVerifier {
 
     function message_root() public view virtual returns (bytes32);
 
@@ -331,10 +331,10 @@ abstract contract BEEFYMessageVerifier is IVerifier {
 /* pragma solidity 0.7.6; */
 /* pragma abicoder v2; */
 
-/* import "../common/BEEFYMessageVerifier.sol"; */
+/* import "../common/LaneMessageVerifier.sol"; */
 /* import "../../interfaces/ILightClient.sol"; */
 
-contract DarwiniaMessageVerifier is BEEFYMessageVerifier {
+contract DarwiniaMessageVerifier is LaneMessageVerifier {
     ILightClient public immutable LIGHT_CLIENT;
 
     constructor(address lightclient) {

@@ -22,7 +22,7 @@ import "../common/SerialLaneStorageVerifier.sol";
 import "../../spec/ChainMessagePosition.sol";
 import "../../interfaces/ILightClient.sol";
 
-contract EthereumSerialVerifier is SerialLaneStorageVerifier {
+contract EthereumSerialLaneVerifier is SerialLaneStorageVerifier {
     ILightClient private light_client;
 
     constructor(address lightclient) SerialLaneStorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {

@@ -1,4 +1,4 @@
-// hevm: flattened sources of src/truth/eth/EthereumStorageVerifier.sol
+// hevm: flattened sources of src/truth/bsc/BSCSerialLaneVerifier.sol
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.7.6;
 pragma abicoder v2;
@@ -252,6 +252,20 @@ contract SourceChain {
             );
         }
         return keccak256(encoded);
+    }
+
+    function hash(Message memory message)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(
+            abi.encode(
+                MESSAGE_TYPEHASH,
+                message.encoded_key,
+                hash(message.payload)
+            )
+        );
     }
 
     function hash(MessagePayload memory payload)
@@ -1490,7 +1504,7 @@ contract TargetChain {
     }
 }
 
-////// src/truth/common/EVMStorageVerifier.sol
+////// src/truth/common/SerialLaneStorageVerifier.sol
 // This file is part of Darwinia.
 // Copyright (C) 2018-2022 Darwinia Network
 //
@@ -1515,7 +1529,7 @@ contract TargetChain {
 /* import "../../spec/TargetChain.sol"; */
 /* import "../../spec/StorageProof.sol"; */
 
-abstract contract EVMStorageVerifier is IVerifier, SourceChain, TargetChain {
+abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetChain {
     event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
 
     struct ReceiveProof {
@@ -1738,7 +1752,7 @@ abstract contract EVMStorageVerifier is IVerifier, SourceChain, TargetChain {
     }
 }
 
-////// src/truth/eth/EthereumStorageVerifier.sol
+////// src/truth/bsc/BSCSerialLaneVerifier.sol
 // This file is part of Darwinia.
 // Copyright (C) 2018-2022 Darwinia Network
 //
@@ -1758,28 +1772,19 @@ abstract contract EVMStorageVerifier is IVerifier, SourceChain, TargetChain {
 /* pragma solidity 0.7.6; */
 /* pragma abicoder v2; */
 
-/* import "../common/EVMStorageVerifier.sol"; */
+/* import "../common/SerialLaneStorageVerifier.sol"; */
 /* import "../../spec/ChainMessagePosition.sol"; */
 /* import "../../interfaces/ILightClient.sol"; */
 
-contract EthereumStorageVerifier is EVMStorageVerifier {
-    ILightClient private light_client;
+contract BSCSerialLaneVerifier is SerialLaneStorageVerifier {
+    ILightClient public immutable LIGHT_CLIENT;
 
-    constructor(address lightclient) EVMStorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
-        light_client = ILightClient(lightclient);
+    constructor(address lightclient) SerialLaneStorageVerifier(uint32(ChainMessagePosition.BSC), 0, 1, 2) {
+        LIGHT_CLIENT = ILightClient(lightclient);
     }
 
     function state_root() public view override returns (bytes32) {
-        return light_client.merkle_root();
+        return LIGHT_CLIENT.merkle_root();
     }
-
-    function LIGHT_CLIENT() external view returns (address) {
-        return address(light_client);
-    }
-
-    function changeLightClient(address lightclient) external onlySetter {
-        light_client = ILightClient(lightclient);
-    }
-
 }
 
