@@ -34,33 +34,21 @@ bridged_out_lane_pos=2
 
 lindex=$(cal "($this_chain_pos << 32) + $bridged_out_lane_pos")
 lane_root_slot=1
-
 ExecutionLayer=$(load_saddr "ExecutionLayer")
-bridged_out_lan=
+bridged_out_lane=$(load_taddr "ParallelOutboundLane")
 EthereumParallelLaneStorageVerifier=$(deploy EthereumParallelLaneStorageVerifier \
   $lindex \
   $lane_root_slot \
   $ExecutionLayer \
   $bridged_out_lane)
 
-ParallelOutboundLane=$(deploy ParallelOutboundLane \
-  $BSCStorageVerifier \
-  $FeeMarketProxy \
-  $this_chain_pos \
-  $this_out_lane_pos \
-  $bridged_chain_pos \
-  $bridged_in_lane_pos 1 0 0)
-
-InboundLane=$(deploy InboundLane \
-  $BSCStorageVerifier \
+ParallelInboundLane=$(deploy ParallelInboundLane \
+  $EthereumParallelLaneStorageVerifier \
   $this_chain_pos \
   $this_in_lane_pos \
   $bridged_chain_pos \
-  $bridged_out_lane_pos 0 0)
+  $bridged_out_lane_pos)
 
-LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
-seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $OutboundLane $InboundLane
-ChainMessageCommitterProxy=$(cat $ADDRESSES_FILE | jq -r ".ChainMessageCommitterProxy")
-seth send -F $ETH_FROM $ChainMessageCommitterProxy "registry(address)" $LaneMessageCommitter
-
-seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1
+LaneMessageCommitter=$(load_saddr "LaneMessageCommitter")
+ParallelOutboundLane=$(load_saddr "ParallelOutboundLane")
+seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $ParallelOutboundLane $ParallelInboundLane
