@@ -37,7 +37,7 @@ contract POSALightClient is POSACommitmentScheme, EcdsaAuthority, ILightClient {
         __ECDSA_init__(_relayers, _threshold, _nonce);
     }
 
-    function block_number() public view returns (uint256) {
+    function block_number() public view override returns (uint256) {
         return latest_block_number;
     }
 

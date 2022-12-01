@@ -24,6 +24,7 @@ pragma abicoder v2;
 
 interface ILightClient {
     function merkle_root() external view returns (bytes32);
+    function block_number() external view returns (uint256);
 }
 
 ////// src/utils/Math.sol
@@ -563,10 +564,11 @@ interface IConsensusLayer {
 
 contract ExecutionLayer is BeaconChain, ILightClient {
     bytes32 private latest_execution_payload_state_root;
+    uint256 private latest_execution_payload_block_number;
 
     address public immutable CONSENSUS_LAYER;
 
-    event LatestExecutionPayloadStateRootImported(bytes32 state_root);
+    event LatestExecutionPayloadImported(uint256 block_number, bytes32 state_root);
 
     constructor(address consensus_layer) {
         CONSENSUS_LAYER = consensus_layer;
@@ -576,13 +578,19 @@ contract ExecutionLayer is BeaconChain, ILightClient {
         return latest_execution_payload_state_root;
     }
 
+    function block_number() public view override returns (uint256) {
+        return latest_execution_payload_block_number;
+    }
+
     // follow beacon api: /eth/v2/beacon/blocks/{block_id}
     function import_latest_execution_payload_state_root(BeaconBlockBody calldata body) external {
         bytes32 state_root = body.execution_payload.state_root;
-        require(latest_execution_payload_state_root != state_root, "same");
+        uint256 new_block_number = body.execution_payload.block_number;
+        require(new_block_number > latest_execution_payload_block_number, "!new");
         require(hash_tree_root(body) == IConsensusLayer(CONSENSUS_LAYER).body_root(), "!body");
         latest_execution_payload_state_root = state_root;
-        emit LatestExecutionPayloadStateRootImported(state_root);
+        latest_execution_payload_block_number = new_block_number;
+        emit LatestExecutionPayloadImported(new_block_number, state_root);
     }
 }
 

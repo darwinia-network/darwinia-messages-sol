@@ -31,6 +31,7 @@ test     :; dapp test # --ffi # enable if you need the `ffi` cheat code on HEVM
 clean    :; dapp clean
 lint     :; yarn run lint
 doc      :; yarn run docs
+cov      :; @./bin/coverage.sh
 audit    :; @./bin/audit.sh
 flatten  :; @./bin/flatten.sh
 estimate :; @./bin/estimate-gas.sh ${contract}
@@ -51,4 +52,4 @@ migrate-test  :; @./bin/migrate-test.sh
 migrate-prod  :; @./bin/migrate-prod.sh
 
 # verify on Etherscan
-verify:; ETH_RPC_URL=$(call network,$(network_name)) dapp verify-contract src/Greeter.sol:Greeter $(contract_address)
+verify :; ETH_RPC_URL=$(call network,$(network_name)) dapp verify-contract src/Greeter.sol:Greeter $(contract_address)

@@ -37,6 +37,9 @@
         "SnowswapRouter": "0xaf5caa87a7d3718622604268c43ff6ce9d2cec3c",
         "SnowswapPair/Crab-xRing": "0xF157c9393255Db1728bC6483c3545Ca8a1655a0F"
     },
+    "45": {
+        "HelixDaoMultisig": "0x43d6711EB86C852Ec1E04af55C52a0dd51b2C743"
+    },
     "46": {
         "HelixDaoMultisig": "0xBd1a110ec476b4775c43905000288881367B1a88",
         "HelixDaoTimeLock": "0xA546F42BeB3DEa617b0F3Ca6995C7Df5dfCaD29D",

@@ -24,6 +24,7 @@ pragma abicoder v2;
 
 interface ILightClient {
     function merkle_root() external view returns (bytes32);
+    function block_number() external view returns (uint256);
 }
 
 ////// src/interfaces/IVerifier.sol

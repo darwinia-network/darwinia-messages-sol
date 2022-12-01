@@ -17,7 +17,28 @@
 
 pragma solidity 0.7.6;
 
-interface ILightClient {
-    function merkle_root() external view returns (bytes32);
-    function block_number() external view returns (uint256);
+import "../../utils/Math.sol";
+pragma experimental SMTChecker;
+
+contract MathTest is Math {
+    function property_get_power_of_two_ceil(uint x) public pure {
+        if (x == 0 || x == type(uint).max) return;
+        uint y = get_power_of_two_ceil(x);
+        assert(y / 2 < x && x <= y);
+    }
+
+    function property_log_2(uint x) public pure {
+        if (x <= 1) return;
+        uint y = log_2(x);
+        assert(2**(y-1) < x && x <= 2**y);
+    }
+
+    function property_max(uint x, uint y) public pure {
+        uint z = _max(x, y);
+        if (z == x) {
+            assert(z >= y);
+        } {
+            assert(z >= x);
+        }
+    }
 }
