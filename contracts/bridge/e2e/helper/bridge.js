@@ -163,6 +163,8 @@ class Bridge {
         gasLimit: 5000000
       })
 
+    log(tx)
+
     // const new_finalized_header = await this.subClient.beaconLightClient.finalized_header()
   }
 
