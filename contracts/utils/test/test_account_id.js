@@ -16,8 +16,8 @@ describe('AccountIdTest', function (accounts) {
         await accountIdTest.deployed();
     });
 
-    it('fromAddress', async() => {
-        await accountIdTest.testFromAddress();
+    it('deriveSubstrateAddress', async() => {
+        await accountIdTest.testDeriveSubstrateAddress();
     })
 
     it('testDeriveEthereumAddressFromDvmAccountId', async() => {

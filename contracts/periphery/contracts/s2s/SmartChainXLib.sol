@@ -1,22 +1,18 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0;
+pragma solidity ^0.8.0;
 
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
-import "@darwinia/contracts-utils/contracts/Bytes.sol";
 import "@darwinia/contracts-utils/contracts/Hash.sol";
 
 import "./interfaces/IStateStorage.sol";
 import "./types/CommonTypes.sol";
 import "./types/PalletBridgeMessages.sol";
-import "./types/PalletEthereum.sol";
 
 library SmartChainXLib {
-    bytes public constant account_derivation_prefix =
+    bytes public constant ACCOUNT_DERIVATION_PREFIX =
         "pallet-bridge/account-derivation/account";
-
-    event DispatchResult(bool success, bytes result);
 
     // Send message over lane by calling the `send_message` dispatch call on
     // the source chain which is identified by the `callIndex` param.
@@ -56,14 +52,21 @@ library SmartChainXLib {
         uint64 _weight,
         bytes memory _call
     ) internal view returns (bytes memory) {
+        // enum CallOrigin
+        //   0: SourceRoot
+        //   1: TargetAccount
+        //   2: SourceAccount
         CommonTypes.EnumItemWithAccountId memory origin = CommonTypes
             .EnumItemWithAccountId(
-                2, // index in enum
-                AccountId.fromAddress(address(this)) // UserApp contract address
+                2, // CallOrigin::SourceAccount
+                AccountId.deriveSubstrateAddress(address(this)) // UserApp contract address
             );
 
+        // enum DispatchFeePayment
+        //   0: AtSourceChain
+        //   1: AtTargetChain
         CommonTypes.EnumItemWithNull memory dispatchFeePayment = CommonTypes
-            .EnumItemWithNull(0);
+            .EnumItemWithNull(0); // DispatchFeePayment::AtSourceChain
 
         return
             CommonTypes.encodeMessage(
@@ -128,12 +131,9 @@ library SmartChainXLib {
         view
         returns (bytes32)
     {
-        bytes memory prefixLength = ScaleCodec.encodeUintCompact(
-            account_derivation_prefix.length
-        );
         bytes memory data = abi.encodePacked(
-            prefixLength,
-            account_derivation_prefix,
+            bytes1(0xa0), // compact length of ACCOUNT_DERIVATION_PREFIX
+            ACCOUNT_DERIVATION_PREFIX,
             _srcChainId,
             _accountId
         );
