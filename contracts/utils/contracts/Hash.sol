@@ -30,7 +30,7 @@ library Hash {
 
     // Blake2_128Concat
     function blake2b128Concat(bytes memory src) internal view returns (bytes memory) {
-        bytes16 out = blake2b128(src);
-        return abi.encodePacked(out, src);
+        Blake2b.Instance memory instance = Blake2b.init(hex"", 16);
+        return abi.encodePacked(instance.finalize(src), src);
     }
 }

@@ -1,24 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0;
+pragma solidity ^0.8.0;
 
 import "@darwinia/contracts-utils/contracts/Bytes.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "hardhat/console.sol";
 
 library CommonTypes {
-    function decodeUint128(bytes memory _data) internal pure returns (uint128) {
-        require(_data.length >= 16, "The data is not enough");
-        bytes memory reversed = Bytes.reverse(_data);
-        return uint128(Bytes.toBytes16(reversed, 0));
-    }
-
-    function decodeUint64(bytes memory _data) internal pure returns (uint64) {
-        require(_data.length >= 8, "The data is not enough");
-        bytes memory reversed = Bytes.reverse(_data);
-        return uint64(Bytes.toBytes8(reversed, 0));
-    }
-
     struct EnumItemWithAccountId {
         uint8 index;
         bytes32 accountId;
@@ -49,12 +37,15 @@ library CommonTypes {
     ////////////////////////////////////
     function ceilDivide(uint a, uint b) internal pure returns (uint) {
         if (a % b == 0) {
-            return uint(a) / b;
+            return a / b;
         } else {
-            return uint(a) / b + 1;
+            return a / b + 1;
         }
     }
 
+    // bits: bit amount used, 1: true, 0: false
+    // bytesLength: bytes used by bits
+    // result: the bytes
     struct BitVecU8 {
         uint bits;
         bytes result;
@@ -100,9 +91,9 @@ library CommonTypes {
 
         bytes32 id = Bytes.toBytes32(Bytes.substr(_data, 0, 32));
 
-        uint128 collateral = decodeUint128(Bytes.substr(_data, 32, 16));
+        uint128 collateral = ScaleCodec.decodeUint128(Bytes.substr(_data, 32, 16));
 
-        uint128 fee = decodeUint128(Bytes.substr(_data, 48, 16));
+        uint128 fee = ScaleCodec.decodeUint128(Bytes.substr(_data, 48, 16));
 
         return Relayer(id, collateral, fee);
     }
@@ -155,9 +146,9 @@ library CommonTypes {
             "The data is not enough to decode OutboundLaneData"
         );
 
-        uint64 oldestUnprunedNonce = decodeUint64(Bytes.substr(_data, 0, 8));
-        uint64 latestReceivedNonce = decodeUint64(Bytes.substr(_data, 8, 8));
-        uint64 latestGeneratedNonce = decodeUint64(Bytes.substr(_data, 16, 8));
+        uint64 oldestUnprunedNonce = ScaleCodec.decodeUint64(Bytes.substr(_data, 0, 8));
+        uint64 latestReceivedNonce = ScaleCodec.decodeUint64(Bytes.substr(_data, 8, 8));
+        uint64 latestGeneratedNonce = ScaleCodec.decodeUint64(Bytes.substr(_data, 16, 8));
 
         return
             OutboundLaneData(
@@ -181,8 +172,8 @@ library CommonTypes {
         pure
         returns (DeliveredMessages memory)
     {
-        uint64 begin = decodeUint64(Bytes.substr(_data, 0, 8));
-        uint64 end = decodeUint64(Bytes.substr(_data, 8, 8));
+        uint64 begin = ScaleCodec.decodeUint64(Bytes.substr(_data, 0, 8));
+        uint64 end = ScaleCodec.decodeUint64(Bytes.substr(_data, 8, 8));
         BitVecU8 memory dispatchResults = decodeBitVecU8(
             Bytes.substr(_data, 16)
         );
@@ -266,7 +257,7 @@ library CommonTypes {
         }
 
         // decode lastConfirmedNonce
-        result.lastConfirmedNonce = decodeUint64(
+        result.lastConfirmedNonce = ScaleCodec.decodeUint64(
             Bytes.substr(_data, consumedLength)
         );
 
@@ -309,8 +300,11 @@ library CommonTypes {
             abi.encodePacked(
                 ScaleCodec.encode32(_message.specVersion),
                 ScaleCodec.encode64(_message.weight),
-                encodeEnumItemWithAccountId(_message.origin),
-                encodeEnumItemWithNull(_message.dispatchFeePayment),
+                // origin
+                _message.origin.index,
+                _message.origin.accountId,
+                // dispatchFeePayment
+                _message.dispatchFeePayment.index,
                 ScaleCodec.encodeBytes(_message.call)
             );
     }
