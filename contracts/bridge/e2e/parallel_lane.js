@@ -71,8 +71,8 @@ describe("bridge e2e test: verify message/storage proof", () => {
     await bridge.relay_eth_execution_payload()
   })
 
-  it.skip("2", async function () {
-    const nonce = await ethClient.parallel_outbound.message_size()
+  it("2", async function () {
+    const nonce = (await ethClient.parallel_outbound.message_size()).sub(1)
     const encoded_key = await ethClient.parallel_outbound.encodeMessageKey(nonce)
     const message = {
       encoded_key,
@@ -83,10 +83,11 @@ describe("bridge e2e test: verify message/storage proof", () => {
       }
     }
 
-    const tx = await bridge.confirm_messages_to_sub('eth')
+    const tx = await bridge.dispatch_parallel_message_to_sub('eth', message)
+    log(tx)
     await expect(tx)
       .to.emit(ethClient.outbound, "MessagesDelivered")
-      .withArgs(o.latest_received_nonce.add(1), i.last_delivered_nonce)
+      .withArgs(nonce)
   })
 
   it.skip("4.2", async function () {

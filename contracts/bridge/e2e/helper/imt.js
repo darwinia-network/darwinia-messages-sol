@@ -1,3 +1,4 @@
+const { toHexString } = require('@chainsafe/ssz')
 const {
   Tree,
   zeroNode,
@@ -22,19 +23,20 @@ class IncrementalMerkleTree extends Tree {
     return this.rootNode.root
   }
 
+  getSingleProof(i) {
+    const gindex = toGindex(32, BigInt(i))
+    return super.getSingleProof(gindex)
+  }
+
+  getSingleHexProof(i) {
+    let proof = this.getSingleProof(i)
+    return proof.map(toHexString)
+  }
 }
 
 module.exports.IncrementalMerkleTree = IncrementalMerkleTree
 
 // const ls = [Buffer.alloc(32, 1), Buffer.alloc(32, 2)]
 // const t = new IncrementalMerkleTree(ls)
-// console.log(toHex(t.root()))
-// const i = toGindex(32, BigInt(0))
-// const p = t.getSingleProof(i)
-// p.map(x => {
-//   console.log(toHex(x))
-// })
-
-// function toHex(bytes) {
-//   return Buffer.from(bytes).toString("hex");
-// }
+// console.log(toHexString(t.root()))
+// console.log(t.getSingleHexProof(0))

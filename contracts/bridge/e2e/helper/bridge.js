@@ -1,11 +1,14 @@
+const { toHexString, ListCompositeType, ByteVectorType, ByteListType } = require('@chainsafe/ssz')
 const { BigNumber } = require("ethers")
-const { toHexString } = require('@chainsafe/ssz')
 const { IncrementalMerkleTree } = require("./imt")
+const { messageHash } = require('./msg')
 const rlp = require("rlp")
 
 const LANE_IDENTIFY_SLOT="0x0000000000000000000000000000000000000000000000000000000000000000"
 const LANE_NONCE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000001"
 const LANE_MESSAGE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000002"
+
+const LANE_ROOT_SLOT="0x0000000000000000000000000000000000000000000000000000000000000001"
 
 const get_storage_proof = async (client, addr, storageKeys, blockNumber = 'latest') => {
   if (blockNumber != 'latest') {
@@ -78,6 +81,23 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(bytes accountProof, bytes laneIDProof, bytes laneNonceProof, bytes[] laneMessagesProof)"
     ], [ proof ])
+}
+
+const generate_parallel_lane_storage_proof = async (client, block_number) => {
+  const addr = client.parallel_outbound.address
+  const laneRootProof = await get_storage_proof(client, addr, [LANE_ROOT_SLOT], block_number)
+  console.log(laneRootProof)
+  const proof = {
+    "accountProof": toHexString(rlp.encode(laneRootProof.accountProof)),
+    "laneRootProof": toHexString(rlp.encode(laneRootProof.storageProof[0].proof))
+  }
+  const p = ethers.utils.defaultAbiCoder.encode([
+    "tuple(bytes accountProof, bytes laneRootProof)"
+  ], [ proof ])
+  return {
+    proof: p,
+    root: laneRootProof.storageProof[0].value
+  }
 }
 
 const generate_message_proof = async (chain_committer, lane_committer, lane_pos, block_number) => {
@@ -237,7 +257,7 @@ class Bridge {
     }
 
     const tx = await this.subClient.executionLayer.import_latest_execution_payload_state_root(body)
-    console.log(tx)
+    // console.log(tx)
   }
 
   async relay_bsc_header() {
@@ -327,7 +347,19 @@ class Bridge {
 
   async dispatch_parallel_message_to_sub(from, msg) {
     const c = this[from]
-    
+    const finality_block_number = await this.finality_block_number(from)
+    const p = await generate_parallel_lane_storage_proof(c, finality_block_number)
+    const msg_hash = messageHash(msg)
+    const msg_size = await c.parallel_outbound.message_size()
+    const leaves = Array(msg_size).fill(Buffer.from(msg_hash))
+    const t = new IncrementalMerkleTree(leaves)
+    const msg_proof = t.getSingleHexProof(msg_size - 1)
+    return await this.sub[from].parallel_inbound.receive_message(
+      p.root,
+      p.proof,
+      msg,
+      msg_proof
+    )
   }
 
   async finality_block_number(from) {
