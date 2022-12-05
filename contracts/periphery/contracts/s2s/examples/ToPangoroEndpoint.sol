@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
 import "../MessageEndpoint.sol";
 
 // On Pangolin, to Pangoro
-contract ToPangoroEndpoint is MessageEndpoint {
+contract ToPangoroEndpoint is MessageEndpoint(0x726f6c69, 0x726f6c69) {
     constructor() {
-        outboundLaneId = 0x726f6c69;
-        inboundLaneId = 0x726f6c69;
-        storageAddress = address(1024);
-        dispatchAddress = address(1025);
         storageKeyForMarketFee = 0x7621b367d09b75f6876b13089ee0ded52edb70953213f33a6ef6b8a5e3ffcab2;
         storageKeyForLatestNonce = 0xc9b76e645ba80b6ca47619d64cb5e58d96c246acb9b55077390e3ca723a0ca1f;
         storageKeyForLastDeliveredNonce = 0xc9b76e645ba80b6ca47619d64cb5e58de5f83cf83f2127eb47afdc35d6e43fab;
@@ -62,22 +58,10 @@ contract ToPangoroEndpoint is MessageEndpoint {
             );
     }
 
-    function setOutboundLaneId(bytes4 _outboundLaneId) external {
-        _setOutboundLaneId(_outboundLaneId);
-    }
-
     function setRemoteMessageTransactCallIndex(
         bytes2 _remoteMessageTransactCallIndex
     ) external {
         _setRemoteMessageTransactCallIndex(_remoteMessageTransactCallIndex);
-    }
-
-    function setStorageAddress(address _storageAddress) external {
-        _setStorageAddress(_storageAddress);
-    }
-
-    function setDispatchAddress(address _dispatchAddress) external {
-        _setDispatchAddress(_dispatchAddress);
     }
 
     function setSendMessageCallIndex(bytes2 _sendMessageCallIndex) external {
@@ -94,14 +78,6 @@ contract ToPangoroEndpoint is MessageEndpoint {
         external
     {
         _setStorageKeyForLatestNonce(_storageKeyForLatestNonce);
-    }
-
-    function setRemoteWeightPerGas(uint64 _remoteWeightPerGas) external {
-        _setRemoteWeightPerGas(_remoteWeightPerGas);
-    }
-
-    function setInboundLaneId(bytes4 _inboundLaneId) external {
-        _setInboundLaneId(_inboundLaneId);
     }
 
     function setRemoteSmartChainId(uint64 _remoteSmartChainId) external {
