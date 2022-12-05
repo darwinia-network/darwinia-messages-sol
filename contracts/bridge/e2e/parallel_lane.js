@@ -63,7 +63,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
       )
   })
 
-  it("1.1", async function () {
+  it.skip("1.1", async function () {
     await bridge.relay_eth_header()
   })
 
@@ -71,69 +71,18 @@ describe("bridge e2e test: verify message/storage proof", () => {
     await bridge.relay_eth_execution_payload()
   })
 
-  it.skip("1.3", async function () {
-    const nonce = await ethClient.outbound.outboundLaneNonce()
-    const begin = nonce.latest_received_nonce.add(1)
-    const end = nonce.latest_generated_nonce
-    const o = await ethClient.outbound.data()
-    let data = build_land_data(o)
-    const tx = await bridge.dispatch_messages_to_sub('eth', data)
-    for (let i=begin; i<=end; i++) {
-      await expect(tx)
-        .to.emit(subClient.eth.inbound, "MessageDispatched")
-        .withArgs(
-          i,
-          false
-        )
-    }
-  })
-
-  it.skip("2.1", async function () {
-    const nonce = await bscClient.outbound.outboundLaneNonce()
-    const tx = await bscClient.outbound.send_message(
-      target,
-      encoded,
-      bsc_overrides
-    )
-    await expect(tx)
-      .to.emit(bscClient.outbound, "MessageAccepted")
-      .withArgs(
-        nonce.latest_generated_nonce.add(1),
+  it.skip("2", async function () {
+    const nonce = await ethClient.parallel_outbound.message_size()
+    const encoded_key = await ethClient.parallel_outbound.encodeMessageKey(nonce)
+    const message = {
+      encoded_key,
+      payload: {
         source,
         target,
         encoded
-      )
-  })
-
-  it.skip("2.2", async function () {
-    await bridge.relay_bsc_header()
-  })
-
-  it.skip("2.3", async function () {
-    const nonce = await bscClient.outbound.outboundLaneNonce()
-    const begin = nonce.latest_received_nonce.add(1)
-    const end = nonce.latest_generated_nonce
-    const o = await bscClient.outbound.data()
-    let data = build_land_data(o)
-    const tx = await bridge.dispatch_messages_to_sub('bsc', data)
-    log(tx)
-    for (let i=begin; i<=end; i++) {
-      await expect(tx)
-        .to.emit(subClient.bsc.inbound, "MessageDispatched")
-        .withArgs(
-          i,
-          false
-        )
+      }
     }
-  })
 
-  it.skip("3", async function () {
-    await bridge.relay_sub_header()
-  })
-
-  it.skip("4.1", async function () {
-    const i = await subClient.eth.inbound.data()
-    const o = await ethClient.outbound.outboundLaneNonce()
     const tx = await bridge.confirm_messages_to_sub('eth')
     await expect(tx)
       .to.emit(ethClient.outbound, "MessagesDelivered")

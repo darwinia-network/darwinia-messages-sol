@@ -29,5 +29,8 @@
     "hardhat-gas-reporter": "^1.0.6",
     "merkletreejs": "0.2.18",
     "shx": "^0.3.3"
+  },
+  "dependencies": {
+    "@noble/hashes": "^1.1.4"
   }
 }
