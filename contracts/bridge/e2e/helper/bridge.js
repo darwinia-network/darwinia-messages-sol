@@ -86,7 +86,6 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
 const generate_parallel_lane_storage_proof = async (client, block_number) => {
   const addr = client.parallel_outbound.address
   const laneRootProof = await get_storage_proof(client, addr, [LANE_ROOT_SLOT], block_number)
-  console.log(laneRootProof)
   const proof = {
     "accountProof": toHexString(rlp.encode(laneRootProof.accountProof)),
     "laneRootProof": toHexString(rlp.encode(laneRootProof.storageProof[0].proof))
@@ -128,6 +127,22 @@ const hash_tree_root = (forks, sszTypeName, forkName, input) => {
 const hash = (typ, input) => {
   const value = typ.fromJson(input)
   return toHexString(typ.hashTreeRoot(value))
+}
+
+const fetch_old_msgs = (from) => {
+  if (from == 'eth) {
+    const msg0 = {
+      encoded_key: "0x0000000000000000000000010000000200000000000000030000000000000000",
+      payload: {
+        source: '0x3DFe30fb7b46b99e234Ed0F725B5304257F78992',
+        target: '0x0000000000000000000000000000000000000000',
+        encoded: '0x'
+      }
+    }
+    return [messageHash(msg0)]
+  } else {
+    return []
+  }
 }
 
 /**
@@ -199,6 +214,7 @@ class Bridge {
         gasLimit: 5000000
       })
 
+    console.log(tx.hash)
     // const new_finalized_header = await this.subClient.beaconLightClient.finalized_header()
   }
 
@@ -257,7 +273,7 @@ class Bridge {
     }
 
     const tx = await this.subClient.executionLayer.import_latest_execution_payload_state_root(body)
-    // console.log(tx)
+    console.log(tx.hash)
   }
 
   async relay_bsc_header() {
@@ -350,10 +366,10 @@ class Bridge {
     const finality_block_number = await this.finality_block_number(from)
     const p = await generate_parallel_lane_storage_proof(c, finality_block_number)
     const msg_hash = messageHash(msg)
-    const msg_size = await c.parallel_outbound.message_size()
-    const leaves = Array(msg_size).fill(Buffer.from(msg_hash))
-    const t = new IncrementalMerkleTree(leaves)
-    const msg_proof = t.getSingleHexProof(msg_size - 1)
+    const old_msgs = fetch_old_msgs(from)
+    const msgs = old_msgs.concat([msg_hash])
+    const t = new IncrementalMerkleTree(msgs)
+    const msg_proof = t.getSingleHexProof(msgs.length - 1)
     return await this.sub[from].parallel_inbound.receive_message(
       p.root,
       p.proof,

@@ -10,7 +10,8 @@ const log = console.log
 const LANE_ROOT_SLOT="0x0000000000000000000000000000000000000000000000000000000000000001"
 let ethClient, subClient, bridge
 let eth_signer, source
-const target = "0x0000000000000000000000000000000000000000"
+const sub_target = "0x4DBdC9767F03dd078B5a1FC05053Dd0C071Cc005"
+const eth_target = "0xbB8Ac813748e57B6e8D2DfA7cB79b641bD0524c1"
 const encoded = "0x"
 
 const build_land_data = (laneData) => {
@@ -23,7 +24,7 @@ const build_land_data = (laneData) => {
         encoded_key: laneData.messages[i].encoded_key,
         payload: {
           source,
-          target,
+          sub_target,
           encoded,
         }
       }
@@ -50,7 +51,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
   it.skip("1", async () => {
     const nonce = await ethClient.parallel_outbound.message_size()
     const tx = await ethClient.parallel_outbound.send_message(
-      target,
+      sub_target,
       encoded
     )
     await expect(tx)
@@ -58,9 +59,20 @@ describe("bridge e2e test: verify message/storage proof", () => {
       .withArgs(
         nonce,
         source,
-        target,
+        sub_target,
         encoded
       )
+
+    const encoded_key = await ethClient.parallel_outbound.encodeMessageKey(nonce)
+    const message = {
+      encoded_key,
+      payload: {
+        source,
+        sub_target,
+        encoded
+      }
+    }
+    log(message)
   })
 
   it.skip("1.1", async function () {
@@ -71,14 +83,14 @@ describe("bridge e2e test: verify message/storage proof", () => {
     await bridge.relay_eth_execution_payload()
   })
 
-  it("2", async function () {
+  it.skip("2", async function () {
     const nonce = (await ethClient.parallel_outbound.message_size()).sub(1)
     const encoded_key = await ethClient.parallel_outbound.encodeMessageKey(nonce)
     const message = {
       encoded_key,
       payload: {
         source,
-        target,
+        sub_target,
         encoded
       }
     }
@@ -86,56 +98,39 @@ describe("bridge e2e test: verify message/storage proof", () => {
     const tx = await bridge.dispatch_parallel_message_to_sub('eth', message)
     log(tx)
     await expect(tx)
-      .to.emit(ethClient.outbound, "MessagesDelivered")
+      .to.emit(subClient.parallel_inbound, "MessagesDelivered")
       .withArgs(nonce)
   })
 
-  it.skip("4.2", async function () {
-    const i = await subClient.bsc.inbound.data()
-    const o = await bscClient.outbound.outboundLaneNonce()
-    const tx = await bridge.confirm_messages_to_sub('bsc')
-    await expect(tx)
-      .to.emit(ethClient.outbound, "MessagesDelivered")
-      .withArgs(o.latest_received_nonce.add(1), i.last_delivered_nonce, 0)
-  })
-
-  it.skip("5.1", async function () {
-    const nonce = await subClient.eth.outbound.outboundLaneNonce()
-    const tx = await subClient.eth.outbound.send_message(
-      target,
-      encoded,
-      sub_overrides
+  it.skip("3", async function () {
+    const nonce = await subClient.eth.parallel_outbound.message_size()
+    const tx = await subClient.eth.parallel_outbound.send_message(
+      eth_target,
+      encoded
     )
 
     await expect(tx)
-      .to.emit(subClient.eth.outbound, "MessageAccepted")
+      .to.emit(subClient.eth.parallel_outbound, "MessageAccepted")
       .withArgs(
-        nonce.latest_generated_nonce.add(1),
+        nonce,
         source,
-        target,
+        eth_target,
         encoded
       )
-  })
 
-  it.skip("5.2", async function () {
-    const nonce = await subClient.bsc.outbound.outboundLaneNonce()
-    const tx = await subClient.bsc.outbound.send_message(
-      target,
-      encoded,
-      eth_overrides
-    )
-
-    await expect(tx)
-      .to.emit(subClient.bsc.outbound, "MessageAccepted")
-      .withArgs(
-        nonce.latest_generated_nonce.add(1),
+    const encoded_key = await subClient.eth.parallel_outbound.encodeMessageKey(nonce)
+    const message = {
+      encoded_key,
+      payload: {
         source,
-        target,
+        eth_target,
         encoded
-      )
+      }
+    }
+    log(message)
   })
 
-  it.skip("6", async function () {
+  it.skip("3.1", async function () {
     await bridge.relay_sub_header()
   })
 

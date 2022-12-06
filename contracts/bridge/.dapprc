@@ -1,6 +1,6 @@
 # Make dependencies available
 export DAPP_REMAPPINGS=$(cat remappings.txt)
-export DAPP_SRC=flat
+export DAPP_SRC=src
 export DAPP_OUT=out
 export DAPP_EVM_VERSION=istanbul
 export DAPP_JSON=out/dapp.sol.json

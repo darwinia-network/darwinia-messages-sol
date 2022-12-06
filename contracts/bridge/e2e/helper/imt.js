@@ -10,8 +10,9 @@ class IncrementalMerkleTree extends Tree {
   constructor(leaves) {
     super(zeroNode(32))
     this.depth = 32
-    if (leaves) {
-      leaves.map((leave, index) => {
+    const leafs = Array.from(leaves)
+    if (leafs.length) {
+      leafs.map((leave, index) => {
         const gindex = toGindex(this.depth, BigInt(index));
         const newNode = LeafNode.fromRoot(leave);
         this.setNode(gindex, newNode);
