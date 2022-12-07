@@ -2,7 +2,6 @@ const { defaultAbiCoder } = require("@ethersproject/abi")
 const keccak256 = ethers.utils.keccak256
 
 function messageHash(msg) {
-  console.log(msg)
   return keccak256(defaultAbiCoder.encode(
     [
       "bytes32",

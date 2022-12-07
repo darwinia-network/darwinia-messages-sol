@@ -100,9 +100,9 @@ const generate_parallel_lane_storage_proof = async (client, block_number) => {
 }
 
 const generate_message_proof = async (chain_committer, lane_committer, lane_pos, block_number) => {
-  const bridgedChainPos = await lane_committer.bridgedChainPosition()
+  const bridgedChainPos = await lane_committer.BRIDGED_CHAIN_POSITION()
   const proof = await chain_committer.prove(bridgedChainPos, lane_pos, {
-    blockNumber: block_number
+    blockTag: block_number
   })
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(tuple(bytes32,bytes32[]),tuple(bytes32,bytes32[]))"
@@ -130,7 +130,7 @@ const hash = (typ, input) => {
 }
 
 const fetch_old_msgs = (from) => {
-  if (from == 'eth) {
+  if (from == 'eth') {
     const msg0 = {
       encoded_key: "0x0000000000000000000000010000000200000000000000030000000000000000",
       payload: {
@@ -139,8 +139,24 @@ const fetch_old_msgs = (from) => {
         encoded: '0x'
       }
     }
-    return [messageHash(msg0)]
+    const msg1 = {
+      encoded_key: "0x0000000000000000000000010000000200000000000000030000000000000001",
+      payload: {
+        source: '0x3DFe30fb7b46b99e234Ed0F725B5304257F78992',
+        target: '0x4DBdC9767F03dd078B5a1FC05053Dd0C071Cc005',
+        encoded: '0x'
+      }
+    }
+    return [messageHash(msg0), messageHash(msg1)]
   } else {
+    const msg0 = {
+      encoded_key: "0x0000000000000000000000000000000200000001000000030000000000000000",
+      payload: {
+        source: '0x3DFe30fb7b46b99e234Ed0F725B5304257F78992',
+        target: '0xbB8Ac813748e57B6e8D2DfA7cB79b641bD0524c1',
+        encoded: '0x'
+      }
+    }
     return []
   }
 }
@@ -325,10 +341,27 @@ class Bridge {
   async dispatch_messages_from_sub(to, data) {
     const c = this[to]
     const info = await this.sub[to].outbound.getLaneInfo()
-    const finality_block_number = await c.lightClient.block_number()
-    const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[to].LaneMessageCommitter, info[1])
+    const finality_block_number = (await c.lightClient.block_number()).toNumber()
+    const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[to].LaneMessageCommitter, info[1], finality_block_number)
     return await c.inbound.receive_messages_proof(data, proof, data.messages.length)
   }
+
+  async dispatch_parallel_message_from_sub(to, msg) {
+    const c = this[to]
+    const info = await this.sub[to].parallel_outbound.getLaneInfo()
+    const finality_block_number = (await c.lightClient.block_number()).toNumber()
+    const lane_root = await this.sub[to].parallel_outbound.commitment({blockTag: finality_block_number})
+    const lane_proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[to].LaneMessageCommitter, info[1], finality_block_number)
+
+    const old_msgs = fetch_old_msgs('sub')
+    const msgs = old_msgs.concat([messageHash(msg)])
+    console.log(msgs)
+    const t = new IncrementalMerkleTree(msgs)
+    const msg_proof = t.getSingleHexProof(msgs.length - 1)
+    console.log(msg_proof)
+    return await c.parallel_inbound.receive_message(lane_root, lane_proof, msg, msg_proof)
+  }
+
 
   async confirm_messages_from_sub(to) {
     const c = this[to]
