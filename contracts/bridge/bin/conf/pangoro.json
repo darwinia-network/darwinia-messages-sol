@@ -8,12 +8,12 @@
           {
             "this_lane_pos": 0,
             "bridged_lane_pos": 1,
-            "type": "out"
+            "type": "serial_out"
           },
           {
             "this_lane_pos": 1,
             "bridged_lane_pos": 0,
-            "type": "in"
+            "type": "serial_in"
           },
           {
             "this_lane_pos": 2,
@@ -33,12 +33,12 @@
           {
             "this_lane_pos": 0,
             "bridged_lane_pos": 1,
-            "type": "out"
+            "type": "serial_out"
           },
           {
             "this_lane_pos": 1,
             "bridged_lane_pos": 0,
-            "type": "in"
+            "type": "serial_in"
           }
         ]
       }
