@@ -10,7 +10,7 @@ export ETH_FROM=${TEST_LOCAL_DVM_FROM:-0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91
 echo "ETH_FROM: ${ETH_FROM}"
 
 . $(dirname $0)/base.sh
-load-addresses
+load_addresses
 
 # darwinia to bsc bridge config
 this_chain_pos=0

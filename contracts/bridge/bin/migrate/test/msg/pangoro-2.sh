@@ -12,14 +12,6 @@ export ETH_RPC_URL=http://35.247.165.91:9933
 
 . $(dirname $0)/base.sh
 
-load_saddr() {
-  jq -r ".[\"$TARGET_CHAIN\"].\"$1\"" "$PWD/bin/addr/$MODE/$NETWORK_NAME.json"
-}
-
-load_taddr() {
-  jq -r ".[\"$NETWORK_NAME\"].\"$1\"" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json"
-}
-
 old_outlane=$(load_saddr "OutboundLane")
 FeeMarketProxy=$(load_saddr "FeeMarketProxy")
 seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $old_outlane 0

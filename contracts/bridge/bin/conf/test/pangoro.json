@@ -1,6 +1,6 @@
 {
-  "ChainMessageCommitter": {
-    "LaneMessageCommitters": [
+  "Chain": {
+    "Lanes": [
       {},
       {
         "bridged_chain_pos": 1,

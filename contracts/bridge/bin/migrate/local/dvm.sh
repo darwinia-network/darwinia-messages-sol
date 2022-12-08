@@ -2,8 +2,9 @@
 
 set -eo pipefail
 
-export NETWORK_NAME=local-dvm
+export NETWORK_NAME=dvm
+export TARGET_CHAIN=evm-eth2
+
 . $(dirname $0)/base.sh
 
 set -x
-load-addresses

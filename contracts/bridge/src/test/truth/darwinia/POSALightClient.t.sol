@@ -89,6 +89,29 @@ contract POSALightClientTest is POSACommitmentScheme, DSTest {
         assertEq(digest, 0xab023a4b2e14eac7518885bec31cf79c691793ede728b47f8a8a159e1774b007);
     }
 
+    function test_message_commitment_hash3() public {
+        bytes memory data = abi.encode(
+                COMMIT_TYPEHASH,
+                3926690,
+                0x502cc17dd3575ce54f67c02c9ae215968f4582c4dbe0bec4d83571db6afb2079,
+                4
+            );
+        bytes32 struct_hash = keccak256(data);
+        bytes32 digest = ECDSA.toTypedDataHash(domain_separator(), struct_hash);
+        assertEq(digest, 0x554bcd23878199a38384829887e16116d0a70a4c254bdbd149f117ac7f00b956);
+    }
+
+    function domain_separator() public pure returns (bytes32 s) {
+        s = keccak256(
+                abi.encodePacked(
+                    "45",
+                    "Pangoro",
+                    "::"
+                    "ecdsa-authority"
+                )
+            );
+    }
+
     function domain_separator_darwinia() public pure returns (bytes32 s) {
         s = keccak256(
                 abi.encodePacked(

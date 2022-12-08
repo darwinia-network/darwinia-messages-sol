@@ -27,6 +27,7 @@ solc:; nix profile install -f https://github.com/dapphub/dapptools/archive/maste
 
 # Build & test
 build    :; dapp build
+flat     :; dapp flat
 test     :; dapp test # --ffi # enable if you need the `ffi` cheat code on HEVM
 clean    :; dapp clean
 lint     :; yarn run lint
@@ -51,5 +52,8 @@ migrate-local :; @./bin/migrate-local.sh
 migrate-test  :; @./bin/migrate-test.sh
 migrate-prod  :; @./bin/migrate-prod.sh
 
-# verify on Etherscan
-verify :; ETH_RPC_URL=$(call network,$(network_name)) dapp verify-contract src/Greeter.sol:Greeter $(contract_address)
+# verify
+verify-test:; @./bin/verify-test.sh $(network_name)
+
+# status
+msg-sts :; @./bin/stats.sh
