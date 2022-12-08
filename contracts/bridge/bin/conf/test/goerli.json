@@ -1,0 +1,35 @@
+{
+  "Chain": {
+    "Lanes": [
+      {
+        "bridged_chain_pos": 0,
+        "lanes": [
+          {
+            "this_lane_pos": 0,
+            "bridged_lane_pos": 1,
+            "type": "out"
+          },
+          {
+            "this_lane_pos": 1,
+            "bridged_lane_pos": 0,
+            "type": "in"
+          }
+        ]
+      },
+      {}
+    ],
+    "this_chain_pos": 1
+  },
+  "FeeMarket": {
+    "collateral_perorder": 100000000000000,
+    "slash_time": 86400,
+    "relay_time": 86400,
+    "price_ratio": 100
+  },
+  "DarwiniaLightClient": {
+    "domain_separator": "0x38a6d9f96ef6e79768010f6caabfe09abc43e49792d5c787ef0d4fc802855947",
+    "relayers": "[0x68898db1012808808c903f390909c52d9f706749]",
+    "threshold": 1,
+    "nonce": 0
+  }
+}
