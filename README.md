@@ -28,17 +28,14 @@ Then install dependencies
 yarn install
 ```
 
-### Environment variables
+### Environment variables (Optional)
 
 `.env` example:
 
 ```bash
 MAINNET_RPC_URL="https://eth-mainnet.alchemyapi.io/v2/your-api-key"
-RINKEBY_RPC_URL="https://eth-rinkeby.alchemyapi.io/v2/your-api-key" 
-ROPSTEN_RPC_URL="https://eth-ropsten.alchemyapi.io/v2/your-api-key"
-KOVAN_RPC_URL="https://eth-kovan.alchemyapi.io/v2/your-api-key" 
+GOERLI_RPC_URL="https://eth-rinkeby.alchemyapi.io/v2/your-api-key" 
 PRIVATE_KEY=your private key 
-ETHERSCAN_API_KEY="your etherscan API key" (optional)
 ```
 
 ### Build
