@@ -24,21 +24,18 @@ clheader=$(seth call $cl "finalized_header()(uint64,uint64,bytes32,bytes32,bytes
 p "$keys" "$clheader"
 
 slot=$(echo $clheader | cut -d' ' -f "1")
-
 echo "############# EthereumExecutionLayer ###############"
+block_number=$(seth call $el "block_number()(uint)" --chain $t)
 state_root=$(seth call $el "merkle_root()(bytes32)" --chain $t)
 # p2 "state_root" "$state_root"
 elheader=$(curl -fsSX GET $beacon_endpoint/eth/v2/beacon/blocks/$slot -H  "accept: application/json" | jq ".data.message.body.execution_payload")
-block_number=$(echo "$elheader" | jq -r ".block_number")
+merge_block_number=$(echo "$elheader" | jq -r ".block_number")
 merge_state_root=$(echo "$elheader" | jq -r ".state_root")
-
 if [ "$state_root" != "$merge_state_root" ]; then
-  echo "syncing"
   echo "\
-${TPUT_YELLOW}block_number   $block_number
+${TPUT_RED}block_number   $block_number${TPUT_RESET} -> ${TPUT_GREEN}$merge_block_number ${TPUT_RESET}
 ${TPUT_RED}state_root     $state_root${TPUT_RESET} -> ${TPUT_GREEN}$merge_state_root ${TPUT_RESET}"
 else
-  echo "synced"
   echo "\
 ${TPUT_GREEN}block_number   $block_number
 ${TPUT_GREEN}state_root     $state_root${TPUT_RESET}"
