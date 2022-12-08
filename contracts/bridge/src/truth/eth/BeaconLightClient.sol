@@ -21,7 +21,7 @@
 // - Sync period updates: To advance to the next committee by `import_next_sync_committee`.
 //
 // To stay synced to the current sync period it needs:
-// - Get finalized_header_update and sync_period_update at least once per period.
+// - Get sync_period_update at least once per period.
 //
 // To get light-client best finalized update at period N:
 // - Fetch best finalized block's sync_aggregate_header in period N
@@ -69,7 +69,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../../utils/Bitfield.sol";
-import "../../spec/BeaconChain.sol";
+import "../../spec/BeaconLightClientUpdate.sol";
 
 interface IBLS {
     function fast_aggregate_verify(
@@ -79,7 +79,7 @@ interface IBLS {
     ) external pure returns (bool);
 }
 
-contract BeaconLightClient is BeaconChain, Bitfield {
+contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
     // Beacon block header that is finalized
     BeaconBlockHeader public finalized_header;
     // Sync committees corresponding to the header
@@ -105,38 +105,6 @@ contract BeaconLightClient is BeaconChain, Bitfield {
     event FinalizedHeaderImported(BeaconBlockHeader finalized_header);
     event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed next_sync_committee_root);
 
-    struct SyncAggregate {
-        bytes32[2] sync_committee_bits;
-        bytes sync_committee_signature;
-    }
-
-    struct FinalizedHeaderUpdate {
-        // The beacon block header that is attested to by the sync committee
-        BeaconBlockHeader attested_header;
-
-        // Sync committee corresponding to sign attested header
-        SyncCommittee signature_sync_committee;
-
-        // The finalized beacon block header attested to by Merkle branch
-        BeaconBlockHeader finalized_header;
-        bytes32[] finality_branch;
-
-        // Sync committee aggregate signature
-        SyncAggregate sync_aggregate;
-
-        // Fork version for the aggregate signature
-        bytes4 fork_version;
-
-        // Slot at which the aggregate signature was created (untrusted)
-        uint64 signature_slot;
-    }
-
-    struct SyncCommitteePeriodUpdate {
-        // Next sync committee corresponding to the finalized header
-        SyncCommittee next_sync_committee;
-        bytes32[] next_sync_committee_branch;
-    }
-
     constructor(
         address _bls,
         uint64 _slot,
@@ -153,28 +121,66 @@ contract BeaconLightClient is BeaconChain, Bitfield {
         GENESIS_VALIDATORS_ROOT = _genesis_validators_root;
     }
 
-    function state_root() public view returns (bytes32) {
-        return finalized_header.state_root;
+    function body_root() public view returns (bytes32) {
+        return finalized_header.body_root;
     }
 
-    function import_next_sync_committee(SyncCommitteePeriodUpdate calldata update) external {
+    // follow beacon api: /beacon/light_client/updates/?start_period={period}&count={count}
+    function import_next_sync_committee(
+        FinalizedHeaderUpdate calldata header_update,
+        SyncCommitteePeriodUpdate calldata sc_update
+    ) external {
+        require(is_supermajority(header_update.sync_aggregate.sync_committee_bits), "!supermajor");
+        require(header_update.signature_slot > header_update.attested_header.slot &&
+                header_update.attested_header.slot >= header_update.finalized_header.slot,
+                "!skip");
+        require(verify_finalized_header(
+                header_update.finalized_header,
+                header_update.finality_branch,
+                header_update.attested_header.state_root),
+                "!finalized_header"
+        );
+
+        uint64 finalized_period = compute_sync_committee_period(header_update.finalized_header.slot);
+        uint64 signature_period = compute_sync_committee_period(header_update.signature_slot);
+        require(signature_period == finalized_period, "!period");
+
+        bytes32 singature_sync_committee_root = sync_committee_roots[signature_period];
+        require(singature_sync_committee_root != bytes32(0), "!missing");
+        require(singature_sync_committee_root == hash_tree_root(header_update.signature_sync_committee), "!sync_committee");
+
+        require(verify_signed_header(
+                header_update.sync_aggregate,
+                header_update.signature_sync_committee,
+                header_update.fork_version,
+                header_update.attested_header),
+               "!sign");
+
+        if (header_update.finalized_header.slot > finalized_header.slot) {
+            finalized_header = header_update.finalized_header;
+            emit FinalizedHeaderImported(header_update.finalized_header);
+        }
+
         require(verify_next_sync_committee(
-                update.next_sync_committee,
-                update.next_sync_committee_branch,
-                finalized_header.state_root),
+                sc_update.next_sync_committee,
+                sc_update.next_sync_committee_branch,
+                header_update.attested_header.state_root),
                 "!next_sync_committee"
         );
 
-        uint64 current_period = compute_sync_committee_period(finalized_header.slot);
-        uint64 next_period = current_period + 1;
+        uint64 next_period = signature_period + 1;
         require(sync_committee_roots[next_period] == bytes32(0), "imported");
-        bytes32 next_sync_committee_root = hash_tree_root(update.next_sync_committee);
+        bytes32 next_sync_committee_root = hash_tree_root(sc_update.next_sync_committee);
         sync_committee_roots[next_period] = next_sync_committee_root;
         emit NextSyncCommitteeImported(next_period, next_sync_committee_root);
     }
 
+    // follow beacon api: /eth/v1/beacon/light_client/finality_update/
     function import_finalized_header(FinalizedHeaderUpdate calldata update) external {
         require(is_supermajority(update.sync_aggregate.sync_committee_bits), "!supermajor");
+        require(update.signature_slot > update.attested_header.slot &&
+                update.attested_header.slot >= update.finalized_header.slot,
+                "!skip");
         require(verify_finalized_header(
                 update.finalized_header,
                 update.finality_branch,

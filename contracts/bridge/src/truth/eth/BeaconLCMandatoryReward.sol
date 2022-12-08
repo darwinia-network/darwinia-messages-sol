@@ -18,18 +18,13 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "../../spec/BeaconLightClientUpdate.sol";
+
 interface IBeaconLightClient {
-    struct SyncCommittee {
-        bytes[512] pubkeys;
-        bytes aggregate_pubkey;
-    }
-
-    struct SyncCommitteePeriodUpdate {
-        SyncCommittee next_sync_committee;
-        bytes32[] next_sync_committee_branch;
-    }
-
-    function import_next_sync_committee(SyncCommitteePeriodUpdate calldata update) external;
+    function import_next_sync_committee(
+        BeaconLightClientUpdate.FinalizedHeaderUpdate calldata header_update,
+        BeaconLightClientUpdate.SyncCommitteePeriodUpdate calldata sc_update
+    ) external;
     function sync_committee_roots(uint64 period) external view returns (bytes32);
 }
 
@@ -56,9 +51,10 @@ contract BeaconLCMandatoryReward {
     }
 
     function import_mandatory_next_sync_committee_for_reward(
-        IBeaconLightClient.SyncCommitteePeriodUpdate calldata update
+        BeaconLightClientUpdate.FinalizedHeaderUpdate calldata header_update,
+        BeaconLightClientUpdate.SyncCommitteePeriodUpdate calldata sc_update
     ) external {
-        IBeaconLightClient(consensusLayer).import_next_sync_committee(update);
+        IBeaconLightClient(consensusLayer).import_next_sync_committee(header_update, sc_update);
 
         payable(msg.sender).transfer(reward);
     }

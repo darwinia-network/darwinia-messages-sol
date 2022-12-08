@@ -10,6 +10,6 @@ in
       pkgs.seth
       pkgs.go-ethereum-unlimited
       pkgs.hevm
-      pkgs.nodejs
     ];
+    LANG="en_US.UTF-8";
   }

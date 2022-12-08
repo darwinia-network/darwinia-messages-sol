@@ -731,11 +731,11 @@ contract FeeMarket is Initializable, IFeeMarket {
             if (_enough_balance(cur)) {
                 array[index] = cur;
                 index++;
+                prev = cur;
             } else {
                 prune(prev, cur);
             }
-            prev = cur;
-            cur = relayers[cur];
+            cur = relayers[prev];
         }
         require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
         return array;

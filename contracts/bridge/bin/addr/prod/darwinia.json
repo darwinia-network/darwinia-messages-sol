@@ -4,10 +4,10 @@
   "ChainMessageCommitter": "0xEf5425b3B0111297e7178BAA8E7483430Ddc69D0",
   "ChainMessageCommitterProxy": "0xea7d0fE22AF25d9655f7AdDd6a59E37e84B3AB5F",
   "ethlive": {
-    "FeeMarket": "0xdaE9d5E41119EacEba2a12B1bE5825e2D39DaC3d",
+    "FeeMarket": "0xD1182CddB414FfC00eF2Ce18299A1E12e1a552BE",
     "FeeMarketProxy": "0xcA927Df15afb7629b79dA4713a871190315c7409",
-    "BeaconLightClient": "0x9C266C48F07121181d8424768f0deD0170cC63A6",
-    "ExecutionLayer": "0xe50F1Ddf0C8778773f07Eb2759d045Ece19F6Cc1",
+    "BeaconLightClient": "0xD2A37C4523542F2dFD7Cb792D2aeAd5c61C1bAAE",
+    "ExecutionLayer": "0xeC3c9B4d3674B3D03fdf20b082A3C2c669075990",
     "BeaconLCMandatoryReward": "0xFB371c8B99ba0b239E66E0a66bB6296b00dCD09f",
     "EthereumStorageVerifier": "0x1e0D6Ba9D7Ddd3f9bc121c51FA051E7826f12b9f",
     "OutboundLane": "0xcA3749C8C3aF04278D596a3fBe461481B6aa1b01",

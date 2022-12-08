@@ -4,14 +4,15 @@
   "ChainMessageCommitter": "0xbbE9068eD672A886E546b47091a525d553EbA1F0",
   "ChainMessageCommitterProxy": "0x96A326193c18f467AC9be9E7CB3422fa78F8f9f7",
   "goerli": {
-    "FeeMarket": "0x2835AFd9C53802694327Bb7DA2Fd62092B9498b5",
+    "FeeMarket": "0x437eD31bCDE0B9FFe3454bb185a0d37988e2A0cd",
     "FeeMarketProxy": "0x25ee4212CfA2DC29E6a5e4A857b9656E439259c9",
-    "BeaconLightClient": "0xe5EFb53465AF71C363a9DF8CD920068537988752",
-    "ExecutionLayer": "0xE69C61AF1D1c9DD48bde7e4e671EC6B5F76CCD8E",
+    "BeaconLightClient": "0x459aFc6f394BCd2e353d99Fd88Cb6293b8Ecc34d",
+    "ExecutionLayer": "0xe35A2C47aDDAEe469a0ef6722afd0aF528FfCf34",
     "BeaconLCMandatoryReward": "0xFd2083e78591AfA0e280a8b59262a75CaCE34691",
     "EthereumStorageVerifier": "0x0631D83Dfd95559f13Ca4426fb052f6DD6a25e8f",
     "OutboundLane": "0x2f6aE7fDbB7c0c613F7923Ddce3E5b71aFE71f78",
     "InboundLane": "0x8F02B779EaD342Bb431A2f6cCc7866EB1928AE88",
-    "LaneMessageCommitter": "0x286979170bB820801EB6148a00d2D15De63E780F"
+    "LaneMessageCommitter": "0x286979170bB820801EB6148a00d2D15De63E780F",
+    "BeaconLightClientMigrator": "0x847e77b590F956A909129C4945db30539d5Db9c5"
   }
 }
