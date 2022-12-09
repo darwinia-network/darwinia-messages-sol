@@ -33,6 +33,7 @@ contract Math {
     }
 
     function log_2(uint256 x) internal pure returns (uint256 pow) {
+        require(0 < x && x < 0x8000000000000000000000000000000000000000000000000000000000000001, "invalid");
         uint256 a = 1;
         while (a < x) {
             a <<= 1;

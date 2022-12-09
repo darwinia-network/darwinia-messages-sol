@@ -38,7 +38,7 @@ import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 
 // Everything about outgoing messages sending.
-contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, SourceChain {
+contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, SourceChain {
     /// slot 1
     OutboundLaneNonce public outboundLaneNonce;
     /// slot 2
@@ -67,7 +67,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     }
 
     /// @dev Deploys the OutboundLane contract
-    /// @param _lightClientBridge The contract address of on-chain light client
+    /// @param _verifier The contract address of on-chain verifier
     /// @param _thisChainPosition The thisChainPosition of outbound lane
     /// @param _thisLanePosition The lanePosition of this outbound lane
     /// @param _bridgedChainPosition The bridgedChainPosition of outbound lane
@@ -76,7 +76,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
     /// @param _latest_received_nonce The latest_received_nonce of outbound lane
     /// @param _latest_generated_nonce The latest_generated_nonce of outbound lane
     constructor(
-        address _lightClientBridge,
+        address _verifier,
         address _feeMarket,
         uint32 _thisChainPosition,
         uint32 _thisLanePosition,
@@ -86,7 +86,7 @@ contract OutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, Sourc
         uint64 _latest_received_nonce,
         uint64 _latest_generated_nonce
     ) OutboundLaneVerifier(
-        _lightClientBridge,
+        _verifier,
         _thisChainPosition,
         _thisLanePosition,
         _bridgedChainPosition,

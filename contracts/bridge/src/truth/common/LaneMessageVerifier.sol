@@ -20,9 +20,9 @@ pragma abicoder v2;
 
 import "../../spec/MessageProof.sol";
 import "../../interfaces/IVerifier.sol";
-import "../../utils/SparseMerkleProof.sol";
+import "../../utils/smt/SparseMerkleProof.sol";
 
-abstract contract BEEFYMessageVerifier is IVerifier {
+abstract contract LaneMessageVerifier is IVerifier {
 
     function message_root() public view virtual returns (bytes32);
 

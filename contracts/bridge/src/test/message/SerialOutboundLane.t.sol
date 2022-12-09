@@ -19,7 +19,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../test.sol";
-import "../../message/OutboundLane.sol";
+import "../../message/SerialOutboundLane.sol";
 import "../../spec/TargetChain.sol";
 import "../../spec/SourceChain.sol";
 import "../mock/MockLightClient.sol";
@@ -30,7 +30,7 @@ interface Hevm {
     function load(address c, bytes32 loc) external returns (bytes32 val);
 }
 
-contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
+contract SerialOutboundLaneTest is DSTest, SourceChain, TargetChain {
     uint32 constant internal THIS_CHAIN_POS = 0;
     uint32 constant internal THIS_OUT_LANE_POS = 0;
     uint32 constant internal BRIDGED_CHAIN_POS = 1;
@@ -39,14 +39,14 @@ contract OutboundLaneTest is DSTest, SourceChain, TargetChain {
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     MockLightClient public lightclient;
     MockFeeMarket public market;
-    OutboundLane public outlane;
+    SerialOutboundLane public outlane;
     NormalApp public app;
     address public self;
 
     function setUp() public {
         lightclient = new MockLightClient();
         market = new MockFeeMarket();
-        outlane = new OutboundLane(
+        outlane = new SerialOutboundLane(
             address(lightclient),
             address(market),
             THIS_CHAIN_POS,

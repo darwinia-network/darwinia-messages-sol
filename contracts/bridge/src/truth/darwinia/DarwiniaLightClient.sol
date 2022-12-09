@@ -21,7 +21,7 @@ pragma abicoder v2;
 import "../../utils/ECDSA.sol";
 import "../../utils/Math.sol";
 import "../../utils/Bitfield.sol";
-import "../../utils/SparseMerkleProof.sol";
+import "../../utils/smt/SparseMerkleProof.sol";
 import "../../spec/BEEFYCommitmentScheme.sol";
 import "../../interfaces/ILightClient.sol";
 

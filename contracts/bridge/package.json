@@ -44,5 +44,8 @@
     "solc-0.7": "npm:solc@^0.7.6",
     "solhint": "^3.3.6",
     "solidity-docgen": "^0.5.13"
+  },
+  "dependencies": {
+    "@ethersproject/abi": "^5.7.0"
   }
 }

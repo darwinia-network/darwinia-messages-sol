@@ -78,11 +78,11 @@ class Eth2Client {
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
-    return data.data
+    return data
   }
 
   async get_finality_update() {
-    const url = `${this.endopoint}/eth/v1/beacon/light_client/finality_update/`
+    const url = `${this.endopoint}/eth/v1/beacon/light_client/finality_update`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()
@@ -90,7 +90,7 @@ class Eth2Client {
   }
 
   async get_optimistic_update() {
-    const url = `${this.endopoint}/eth/v1/beacon/light_client/optimistic_update/`
+    const url = `${this.endopoint}/eth/v1/beacon/light_client/optimistic_update`
     const headers = {'accept': 'application/json'}
     const response = await fetch(url)
     const data = await response.json()

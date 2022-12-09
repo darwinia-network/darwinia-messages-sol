@@ -77,8 +77,6 @@ typings/
 # dotenv environment variables file
 .env
 
-# built library using in commonjs module syntax
-lib/
 # UMD bundles that export the global variable
 _bundles
 

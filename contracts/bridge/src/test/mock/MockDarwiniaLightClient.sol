@@ -18,7 +18,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../../utils/SparseMerkleProof.sol";
+import "../../utils/smt/SparseMerkleProof.sol";
 
 contract MockDarwiniaLightClient {
     struct MessagesProof {

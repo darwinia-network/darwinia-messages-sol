@@ -7,6 +7,8 @@
     "POSALightClient": "0xef8ef3A1705f42e7FC1e06809940ec5942F5bB98",
     "DarwiniaMessageVerifier": "0xa7E9dC6aBe0EfcdaBB8ED0471De0c56013066c20",
     "OutboundLane": "0x449337BBe404CaE0bA82f3451661AF7481f37aaC",
-    "InboundLane": "0xBEF08069FD1F43CB48Afd436D73F1a59019B87D7"
+    "InboundLane": "0xBEF08069FD1F43CB48Afd436D73F1a59019B87D7",
+    "ParallelOutboundLane": "0xedD0683d354b2d2c209Ac8c574ef88E85bdBEa70",
+    "ParallelInboundLane": "0x86cD0E947341Ef91ef6a1D0382ECC62e49686b57"
   }
 }

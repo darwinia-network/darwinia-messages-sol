@@ -17,8 +17,8 @@
 
 pragma solidity 0.7.6;
 
-import "../test.sol";
-import "../../utils/SparseMerkleProof.sol";
+import "../../test.sol";
+import "../../../utils/smt/SparseMerkleProof.sol";
 
 contract SparseMerkleProofTest is DSTest {
     // └─ 609cb3db293942026cbe8a4af05e7c3bf84d5d0ddd3e7992cba7679672a7320b

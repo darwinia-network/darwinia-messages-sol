@@ -13,6 +13,9 @@
     "OutboundLane": "0x2f6aE7fDbB7c0c613F7923Ddce3E5b71aFE71f78",
     "InboundLane": "0x8F02B779EaD342Bb431A2f6cCc7866EB1928AE88",
     "LaneMessageCommitter": "0x286979170bB820801EB6148a00d2D15De63E780F",
-    "BeaconLightClientMigrator": "0x847e77b590F956A909129C4945db30539d5Db9c5"
+    "BeaconLightClientMigrator": "0x847e77b590F956A909129C4945db30539d5Db9c5",
+    "ParallelOutboundLane": "0xD874668CA4D556F7C77317650a6C4acF16D639e2",
+    "EthereumParallelLaneStorageVerifier": "0xE8Bf59B8f1e7De7eC441318a0D9B56b1a9eeC649",
+    "ParallelInboundLane": "0x0f82Dc70C65F62799E6436f41d605756f943140e"
   }
 }

@@ -18,10 +18,10 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../common/BEEFYMessageVerifier.sol";
+import "../common/LaneMessageVerifier.sol";
 import "../../interfaces/ILightClient.sol";
 
-contract DarwiniaMessageVerifier is BEEFYMessageVerifier {
+contract DarwiniaMessageVerifier is LaneMessageVerifier {
     ILightClient public immutable LIGHT_CLIENT;
 
     constructor(address lightclient) {

@@ -1,10 +1,14 @@
+const { toHexString, ListCompositeType, ByteVectorType, ByteListType } = require('@chainsafe/ssz')
 const { BigNumber } = require("ethers")
-const { toHexString } = require('@chainsafe/ssz')
+const { IncrementalMerkleTree } = require("./imt")
+const { messageHash } = require('./msg')
 const rlp = require("rlp")
 
 const LANE_IDENTIFY_SLOT="0x0000000000000000000000000000000000000000000000000000000000000000"
 const LANE_NONCE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000001"
 const LANE_MESSAGE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000002"
+
+const LANE_ROOT_SLOT="0x0000000000000000000000000000000000000000000000000000000000000001"
 
 const get_storage_proof = async (client, addr, storageKeys, blockNumber = 'latest') => {
   if (blockNumber != 'latest') {
@@ -79,10 +83,26 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
     ], [ proof ])
 }
 
+const generate_parallel_lane_storage_proof = async (client, block_number) => {
+  const addr = client.parallel_outbound.address
+  const laneRootProof = await get_storage_proof(client, addr, [LANE_ROOT_SLOT], block_number)
+  const proof = {
+    "accountProof": toHexString(rlp.encode(laneRootProof.accountProof)),
+    "laneRootProof": toHexString(rlp.encode(laneRootProof.storageProof[0].proof))
+  }
+  const p = ethers.utils.defaultAbiCoder.encode([
+    "tuple(bytes accountProof, bytes laneRootProof)"
+  ], [ proof ])
+  return {
+    proof: p,
+    root: laneRootProof.storageProof[0].value
+  }
+}
+
 const generate_message_proof = async (chain_committer, lane_committer, lane_pos, block_number) => {
-  const bridgedChainPos = await lane_committer.bridgedChainPosition()
+  const bridgedChainPos = await lane_committer.BRIDGED_CHAIN_POSITION()
   const proof = await chain_committer.prove(bridgedChainPos, lane_pos, {
-    blockNumber: block_number
+    blockTag: block_number
   })
   return ethers.utils.defaultAbiCoder.encode([
     "tuple(tuple(bytes32,bytes32[]),tuple(bytes32,bytes32[]))"
@@ -92,6 +112,53 @@ const generate_message_proof = async (chain_committer, lane_committer, lane_pos,
         [proof.laneProof.root, proof.laneProof.proof]
       ]
     ])
+}
+
+const get_ssz_type = (forks, sszTypeName, forkName) => {
+  return forks[forkName][sszTypeName]
+}
+
+const hash_tree_root = (forks, sszTypeName, forkName, input) => {
+  const type = get_ssz_type(forks, sszTypeName, forkName)
+  const value = type.fromJson(input)
+  return toHexString(type.hashTreeRoot(value))
+}
+
+const hash = (typ, input) => {
+  const value = typ.fromJson(input)
+  return toHexString(typ.hashTreeRoot(value))
+}
+
+const fetch_old_msgs = (from) => {
+  if (from == 'eth') {
+    const msg0 = {
+      encoded_key: "0x0000000000000000000000010000000200000000000000030000000000000000",
+      payload: {
+        source: '0x3DFe30fb7b46b99e234Ed0F725B5304257F78992',
+        target: '0x0000000000000000000000000000000000000000',
+        encoded: '0x'
+      }
+    }
+    const msg1 = {
+      encoded_key: "0x0000000000000000000000010000000200000000000000030000000000000001",
+      payload: {
+        source: '0x3DFe30fb7b46b99e234Ed0F725B5304257F78992',
+        target: '0x4DBdC9767F03dd078B5a1FC05053Dd0C071Cc005',
+        encoded: '0x'
+      }
+    }
+    return [messageHash(msg0), messageHash(msg1)]
+  } else {
+    const msg0 = {
+      encoded_key: "0x0000000000000000000000000000000200000001000000030000000000000000",
+      payload: {
+        source: '0x3DFe30fb7b46b99e234Ed0F725B5304257F78992',
+        target: '0xbB8Ac813748e57B6e8D2DfA7cB79b641bD0524c1',
+        encoded: '0x'
+      }
+    }
+    return []
+  }
 }
 
 /**
@@ -129,7 +196,7 @@ class Bridge {
     let finalized_header = finality_update.finalized_header
     const period = Number(finalized_header.slot) / 32 / 256
     const sync_change = await this.eth2Client.get_sync_committee_period_update(~~period - 1, 1)
-    const next_sync = sync_change[0]
+    const next_sync = sync_change[0].data
     const current_sync_committee = next_sync.next_sync_committee
 
     let sync_aggregate_slot = Number(attested_header.slot) + 1
@@ -163,24 +230,66 @@ class Bridge {
         gasLimit: 5000000
       })
 
+    console.log(tx.hash)
     // const new_finalized_header = await this.subClient.beaconLightClient.finalized_header()
   }
 
   async relay_eth_execution_payload() {
+    const x = await import("@chainsafe/lodestar-types")
+    const ssz = x.ssz
+    const BeaconBlockBody = ssz.allForks.bellatrix.BeaconBlockBody
+
     const finalized_header = await this.subClient.beaconLightClient.finalized_header()
-    const finalized_block = await this.eth2Client.get_beacon_block(finalized_header.slot)
 
-    const latest_execution_payload_state_root = finalized_block.body.execution_payload.state_root
-    const latest_execution_payload_state_root_branch = await this.eth2Client.get_latest_execution_payload_state_root_branch(finalized_header.slot)
+    const block = await this.eth2Client.get_beacon_block(finalized_header.slot)
+    const b = block.body
+    const p = b.execution_payload
 
-    const execution_payload_state_root_update = {
-      latest_execution_payload_state_root,
-      latest_execution_payload_state_root_branch: latest_execution_payload_state_root_branch.witnesses
+    const ProposerSlashing = get_ssz_type(ssz, 'ProposerSlashing', 'phase0')
+    const ProposerSlashings = new ListCompositeType(ProposerSlashing, 16)
+    const AttesterSlashing = get_ssz_type(ssz, 'AttesterSlashing', 'phase0')
+    const AttesterSlashings = new ListCompositeType(AttesterSlashing, 2)
+    const Attestation = get_ssz_type(ssz, 'Attestation', 'phase0')
+    const Attestations = new ListCompositeType(Attestation, 128)
+    const Deposit = get_ssz_type(ssz, 'Deposit', 'phase0')
+    const Deposits = new ListCompositeType(Deposit, 16)
+    const SignedVoluntaryExit = get_ssz_type(ssz, 'SignedVoluntaryExit', 'phase0')
+    const SignedVoluntaryExits = new ListCompositeType(SignedVoluntaryExit, 16)
+
+    const LogsBloom = new ByteVectorType(256)
+    const ExtraData = new ByteListType(32)
+
+    const body = {
+        randao_reveal:       hash_tree_root(x, 'BLSSignature', 'ssz', b.randao_reveal),
+        eth1_data:           hash_tree_root(ssz, 'Eth1Data', 'phase0', b.eth1_data),
+        graffiti:            b.graffiti,
+        proposer_slashings:  hash(ProposerSlashings, b.proposer_slashings),
+        attester_slashings:  hash(AttesterSlashings, b.attester_slashings),
+        attestations:        hash(Attestations, b.attestations),
+        deposits:            hash(Deposits, b.deposits),
+        voluntary_exits:     hash(SignedVoluntaryExits, b.voluntary_exits),
+        sync_aggregate:      hash_tree_root(ssz, 'SyncAggregate', 'altair', b.sync_aggregate),
+
+        execution_payload:   {
+          parent_hash:       p.parent_hash,
+          fee_recipient:     p.fee_recipient,
+          state_root:        p.state_root,
+          receipts_root:     p.receipts_root,
+          logs_bloom:        hash(LogsBloom, p.logs_bloom),
+          prev_randao:       p.prev_randao,
+          block_number:      p.block_number,
+          gas_limit:         p.gas_limit,
+          gas_used:          p.gas_used,
+          timestamp:         p.timestamp,
+          extra_data:        hash(ExtraData, p.extra_data),
+          base_fee_per_gas:  p.base_fee_per_gas,
+          block_hash:        p.block_hash,
+          transactions:      hash_tree_root(ssz, 'Transactions', 'bellatrix', p.transactions)
+        }
     }
 
-    const tx = await this.subClient.executionLayer.import_latest_execution_payload_state_root(execution_payload_state_root_update)
-    const state_root = await this.subClient.executionLayer.merkle_root()
-    console.log(state_root)
+    const tx = await this.subClient.executionLayer.import_latest_execution_payload_state_root(body)
+    console.log(tx.hash)
   }
 
   async relay_bsc_header() {
@@ -232,10 +341,27 @@ class Bridge {
   async dispatch_messages_from_sub(to, data) {
     const c = this[to]
     const info = await this.sub[to].outbound.getLaneInfo()
-    const finality_block_number = await c.lightClient.block_number()
-    const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[to].LaneMessageCommitter, info[1])
+    const finality_block_number = (await c.lightClient.block_number()).toNumber()
+    const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[to].LaneMessageCommitter, info[1], finality_block_number)
     return await c.inbound.receive_messages_proof(data, proof, data.messages.length)
   }
+
+  async dispatch_parallel_message_from_sub(to, msg) {
+    const c = this[to]
+    const info = await this.sub[to].parallel_outbound.getLaneInfo()
+    const finality_block_number = (await c.lightClient.block_number()).toNumber()
+    const lane_root = await this.sub[to].parallel_outbound.commitment({blockTag: finality_block_number})
+    const lane_proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[to].LaneMessageCommitter, info[1], finality_block_number)
+
+    const old_msgs = fetch_old_msgs('sub')
+    const msgs = old_msgs.concat([messageHash(msg)])
+    console.log(msgs)
+    const t = new IncrementalMerkleTree(msgs)
+    const msg_proof = t.getSingleHexProof(msgs.length - 1)
+    console.log(msg_proof)
+    return await c.parallel_inbound.receive_message(lane_root, lane_proof, msg, msg_proof)
+  }
+
 
   async confirm_messages_from_sub(to) {
     const c = this[to]
@@ -266,6 +392,23 @@ class Bridge {
     const finality_block_number = c.lightClient.block_number()
     const proof = await generate_message_proof(this.sub.chainMessageCommitter, this.sub[from].LaneMessageCommitter, info[1])
     return await c.outbound.receive_messages_delivery_proof(i, proof)
+  }
+
+  async dispatch_parallel_message_to_sub(from, msg) {
+    const c = this[from]
+    const finality_block_number = await this.finality_block_number(from)
+    const p = await generate_parallel_lane_storage_proof(c, finality_block_number)
+    const msg_hash = messageHash(msg)
+    const old_msgs = fetch_old_msgs(from)
+    const msgs = old_msgs.concat([msg_hash])
+    const t = new IncrementalMerkleTree(msgs)
+    const msg_proof = t.getSingleHexProof(msgs.length - 1)
+    return await this.sub[from].parallel_inbound.receive_message(
+      p.root,
+      p.proof,
+      msg,
+      msg_proof
+    )
   }
 
   async finality_block_number(from) {

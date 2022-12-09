@@ -19,24 +19,11 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../interfaces/IVerifier.sol";
+import "./LaneIdentity.sol";
 
-contract OutboundLaneVerifier {
-    /// @dev Indentify slot
-    Slot0 internal slot0;
-
+contract OutboundLaneVerifier is LaneIdentity {
     /// @dev The contract address of on-chain verifier
     IVerifier public immutable VERIFIER;
-
-    struct Slot0 {
-        // Bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
-        uint32 bridged_lane_pos;
-        // Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-        uint32 bridged_chain_pos;
-        // This lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
-        uint32 this_lane_pos;
-        // This chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
-        uint32 this_chain_pos;
-    }
 
     constructor(
         address _verifier,
@@ -44,12 +31,13 @@ contract OutboundLaneVerifier {
         uint32 _thisLanePosition,
         uint32 _bridgedChainPosition,
         uint32 _bridgedLanePosition
+    ) LaneIdentity(
+        _thisChainPosition,
+        _thisLanePosition,
+        _bridgedChainPosition,
+        _bridgedLanePosition
     ) {
         VERIFIER = IVerifier(_verifier);
-        slot0.this_chain_pos = _thisChainPosition;
-        slot0.this_lane_pos = _thisLanePosition;
-        slot0.bridged_chain_pos = _bridgedChainPosition;
-        slot0.bridged_lane_pos = _bridgedLanePosition;
     }
 
     function _verify_messages_delivery_proof(
@@ -67,16 +55,6 @@ contract OutboundLaneVerifier {
         );
     }
 
-    function getLaneInfo() external view returns (uint32,uint32,uint32,uint32) {
-        Slot0 memory _slot0 = slot0;
-        return (
-            _slot0.this_chain_pos,
-            _slot0.this_lane_pos,
-            _slot0.bridged_chain_pos,
-            _slot0.bridged_lane_pos
-        );
-    }
-
     // 32 bytes to identify an unique message from source chain
     // MessageKey encoding:
     // ThisChainPosition | ThisLanePosition | BridgedChainPosition | BridgedLanePosition | Nonce
@@ -86,7 +64,7 @@ contract OutboundLaneVerifier {
     // [12..16) bytes ---- BridgedChainPosition
     // [20..24) bytes ---- BridgedLanePosition
     // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
-    function encodeMessageKey(uint64 nonce) public view returns (uint256) {
+    function encodeMessageKey(uint64 nonce) public view override returns (uint256) {
         Slot0 memory _slot0 = slot0;
         return (uint256(_slot0.this_chain_pos) << 160) +
                 (uint256(_slot0.this_lane_pos) << 128) +
