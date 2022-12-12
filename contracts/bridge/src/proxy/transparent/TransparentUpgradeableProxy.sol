@@ -1,4 +1,13 @@
 // SPDX-License-Identifier: MIT
+//
+// OpenZeppelin Contracts (v3.4.2-solc-0.7) (proxy/TransparentUpgradeableProxy.sol)
+//
+// Discussion: https://github.com/OpenZeppelin/openzeppelin-contracts/issues/2638
+// Inspired:   https://github.com/wighawag/hardhat-deploy/blob/4d5b527e07a4742cf97f9648a6e1d2795edbfd22/solc_0.7/proxy/OptimizedTransparentUpgradeableProxy.sol
+// Diff:
+// * Make admin immutable
+// * Remove `changeAdmin(address)` function
+// * Remove `AdminChanged(address,address)` event
 
 pragma solidity 0.7.6;
 

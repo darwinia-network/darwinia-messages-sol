@@ -64,6 +64,8 @@
 // next_sync_committee can be imported at any time of the period, not strictly at the period borders.
 // - No need to query for period 0 next_sync_committee until the end of period 0
 // - After the import next_sync_committee of period 0, populate period 1's committee
+//
+// Inspired: https://github.com/ethereum/annotated-spec/blob/master/altair/sync-protocol.md
 
 pragma solidity 0.7.6;
 pragma abicoder v2;
