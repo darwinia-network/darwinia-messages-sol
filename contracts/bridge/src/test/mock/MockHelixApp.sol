@@ -35,6 +35,10 @@ contract HelixApp is ICrossChainFilter {
         return true;
     }
 
+    function retry() external {
+        // outlane.retry_failed_message()
+    }
+
     // source
     function lock() external payable {
         // 1. transfer token to backing
