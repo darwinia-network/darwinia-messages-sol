@@ -151,5 +151,8 @@ contract ParallelInboundLandTest is DSTest, SourceChain {
         assertEq(inlane.commitment(), bytes32(0));
         assertTrue(inlane.dones(0));
         assertEq(inlane.fails(0), hash(message));
+
+        bool r = inlane.retry_failed_message(message);
+        assertTrue(!r);
     }
 }
