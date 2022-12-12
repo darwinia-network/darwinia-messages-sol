@@ -66,7 +66,7 @@ number_underscore = 'preserve'
 [fuzz]
 runs = 256
 max_local_rejects = 1024
-max_global_rejects = 65536
+max_rejects = 65536
 dictionary_weight = 40
 include_storage = true
 include_push_bytes = true
