@@ -80,14 +80,15 @@ interface IBLS {
 }
 
 contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
-    // Beacon block header that is finalized
+    /// @dev Beacon block header that is finalized
     BeaconBlockHeader public finalized_header;
-    // Sync committees corresponding to the header
-    // sync_committee_perid => sync_committee_root
+    /// @dev Sync committees corresponding to the header
+    /// sync_committee_perid => sync_committee_root
     mapping (uint64 => bytes32) public sync_committee_roots;
 
-    // address(0x0800)
+    /// @dev bls12-381 precompile address(0x0800)
     address private immutable BLS_PRECOMPILE;
+    /// @dev Beacon chain genesis validators root
     bytes32 public immutable GENESIS_VALIDATORS_ROOT;
     // A bellatrix beacon state has 25 fields, with a depth of 5.
     // | field                               | gindex | depth |
@@ -121,11 +122,13 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         GENESIS_VALIDATORS_ROOT = _genesis_validators_root;
     }
 
+    /// @dev Return beacon light client finalized header's body root
+    /// @return body root
     function body_root() public view returns (bytes32) {
         return finalized_header.body_root;
     }
 
-    // follow beacon api: /beacon/light_client/updates/?start_period={period}&count={count}
+    /// @dev follow beacon api: /beacon/light_client/updates/?start_period={period}&count={count}
     function import_next_sync_committee(
         FinalizedHeaderUpdate calldata header_update,
         SyncCommitteePeriodUpdate calldata sc_update
@@ -175,7 +178,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         emit NextSyncCommitteeImported(next_period, next_sync_committee_root);
     }
 
-    // follow beacon api: /eth/v1/beacon/light_client/finality_update/
+    /// @dev follow beacon api: /eth/v1/beacon/light_client/finality_update/
     function import_finalized_header(FinalizedHeaderUpdate calldata update) external {
         require(is_supermajority(update.sync_aggregate.sync_committee_bits), "!supermajor");
         require(update.signature_slot > update.attested_header.slot &&

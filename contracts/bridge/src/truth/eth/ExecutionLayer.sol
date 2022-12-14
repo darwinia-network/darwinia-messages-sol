@@ -27,9 +27,11 @@ interface IConsensusLayer {
 }
 
 contract ExecutionLayer is BeaconChain, ILightClient {
+    /// @dev latest execution payload's state root of beacon chain state root
     bytes32 private latest_execution_payload_state_root;
+    /// @dev latest execution payload's block number of beacon chain state root
     uint256 private latest_execution_payload_block_number;
-
+    /// @dev consensus layer
     address public immutable CONSENSUS_LAYER;
 
     event LatestExecutionPayloadImported(uint256 block_number, bytes32 state_root);
@@ -38,15 +40,19 @@ contract ExecutionLayer is BeaconChain, ILightClient {
         CONSENSUS_LAYER = consensus_layer;
     }
 
+    /// @dev Return latest execution payload state root
+    /// @return merkle root
     function merkle_root() public view override returns (bytes32) {
         return latest_execution_payload_state_root;
     }
 
+    /// @dev Return latest execution payload block number
+    /// @return block number
     function block_number() public view override returns (uint256) {
         return latest_execution_payload_block_number;
     }
 
-    // follow beacon api: /eth/v2/beacon/blocks/{block_id}
+    /// @dev follow beacon api: /eth/v2/beacon/blocks/{block_id}
     function import_latest_execution_payload_state_root(BeaconBlockBody calldata body) external {
         bytes32 state_root = body.execution_payload.state_root;
         uint256 new_block_number = body.execution_payload.block_number;
