@@ -123,7 +123,7 @@ describe("verify message relay tests", () => {
     sourceInbound = await InboundLane.deploy(targetLightClient.address, sourceChainPos, sourceInLanePos, targetChainPos, targetOutLanePos, 0, 0)
     darwiniaLaneCommitter0 = await LaneMessageCommitter.deploy(sourceChainPos, targetChainPos)
     await darwiniaLaneCommitter0.registry(sourceOutbound.address, sourceInbound.address)
-    darwiniaChainCommitter = await ChainMessageCommitter.deploy(sourceChainPos)
+    darwiniaChainCommitter = await ChainMessageCommitter.deploy()
     await darwiniaChainCommitter.initialize()
     await darwiniaChainCommitter.registry(darwiniaLaneCommitter0.address)
 
