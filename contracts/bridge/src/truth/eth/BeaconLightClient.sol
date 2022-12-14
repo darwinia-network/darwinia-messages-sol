@@ -161,8 +161,9 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
             emit FinalizedHeaderImported(header_update.finalized_header);
         }
 
+        bytes32 next_sync_committee_root = hash_tree_root(sc_update.next_sync_committee);
         require(verify_next_sync_committee(
-                sc_update.next_sync_committee,
+                next_sync_committee_root,
                 sc_update.next_sync_committee_branch,
                 header_update.attested_header.state_root),
                 "!next_sync_committee"
@@ -170,7 +171,6 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
 
         uint64 next_period = signature_period + 1;
         require(sync_committee_roots[next_period] == bytes32(0), "imported");
-        bytes32 next_sync_committee_root = hash_tree_root(sc_update.next_sync_committee);
         sync_committee_roots[next_period] = next_sync_committee_root;
         emit NextSyncCommitteeImported(next_period, next_sync_committee_root);
     }
@@ -254,12 +254,11 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
     }
 
     function verify_next_sync_committee(
-        SyncCommittee calldata next_sync_committee,
+        bytes32 next_sync_committee_root,
         bytes32[] calldata next_sync_committee_branch,
         bytes32 header_state_root
     ) internal pure returns (bool) {
         require(next_sync_committee_branch.length == NEXT_SYNC_COMMITTEE_DEPTH, "!next_sync_committee_branch");
-        bytes32 next_sync_committee_root = hash_tree_root(next_sync_committee);
         return is_valid_merkle_branch(
             next_sync_committee_root,
             next_sync_committee_branch,

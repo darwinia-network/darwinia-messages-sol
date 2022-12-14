@@ -138,6 +138,12 @@ contract BeaconChainTest is DSTest, SyncCommitteePreset {
         assertEq(hash_node(header, domain), hex'0e8af0f2acda0f48227ed7a28b824716bc87dc6e25916bde8f3efd9459507068');
     }
 
+    function test_keccak_256() public {
+        bytes32 domain = hex'07000000e7acb21061790987fa1c1e745cccfb358370b33e8af2b2c18938e6c2';
+        bytes32 header = hex'b82ffe1e2e7d9dd678aaedd630e75192f1e8b802b9a3b61e6cc7fbaf8ecdd6ec';
+        assertEq(keccak256(abi.encodePacked(domain,header)), hex'3741817c57d89340dbeb28c92ab3a461ccf147575702c0311bd112959ad2f858');
+    }
+
     function test_is_valid_merkle_branch_case0() public {
         bytes32[] memory branch = new bytes32[](5);
         branch[0] = 0x5cf5804f5a8dc680445f5efd4069859f3c65dd2db869f1d091f454008f6d7ab7;
