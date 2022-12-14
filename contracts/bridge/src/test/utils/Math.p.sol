@@ -32,13 +32,4 @@ contract MathTest is Math {
         uint y = log_2(x);
         assert(2**(y-1) < x && x <= 2**y);
     }
-
-    function property_max(uint x, uint y) public pure {
-        uint z = _max(x, y);
-        if (z == x) {
-            assert(z >= y);
-        } {
-            assert(z >= x);
-        }
-    }
 }

@@ -20,22 +20,21 @@ pragma abicoder v2;
 
 import "../common/MessageCommitter.sol";
 import "../../interfaces/IMessageCommitter.sol";
-import "../../proxy/Initializable.sol";
 
 /// @title ChainMessageCommitter
 /// @author echo
 /// @notice Chain message committer commit messages from all lane committers
 /// @dev Chain message use sparse merkle tree to commit all messages
-contract ChainMessageCommitter is Initializable, MessageCommitter {
+contract ChainMessageCommitter is MessageCommitter {
     /// @dev Max of all chain position
     uint256 public maxChainPosition;
     /// @dev Bridged chain position => lane committer
     mapping(uint256 => address) public chainOf;
-    /// @dev Governance role to set chains config
+    /// @dev Governance role to add chains config
     address public setter;
 
-    /// @dev This chain position
-    uint256 public immutable THIS_CHAIN_POSITION;
+    /// @dev Darwinia chain position
+    uint256 public constant THIS_CHAIN_POSITION = 0;
 
     event Registry(uint256 pos, address committer);
 
@@ -44,19 +43,9 @@ contract ChainMessageCommitter is Initializable, MessageCommitter {
         _;
     }
 
-    /// @dev Constructor params
-    /// @param _thisChainPosition This chain positon
-    constructor(uint256 _thisChainPosition) {
-        THIS_CHAIN_POSITION = _thisChainPosition;
-    }
-
-    function initialize() public initializer {
-        __CMC_init__(msg.sender);
-    }
-
-    function __CMC_init__(address _setter) internal onlyInitializing {
+    constructor() {
         maxChainPosition = THIS_CHAIN_POSITION;
-        setter = _setter;
+        setter = msg.sender;
     }
 
     function count() public view override returns (uint256) {
@@ -74,15 +63,16 @@ contract ChainMessageCommitter is Initializable, MessageCommitter {
         setter = _setter;
     }
 
-    /// @dev Registry a lane committer
+    /// @dev Registry a lane committer and could not remove it
     /// @notice Only could be called by setter
     /// @param committer Address of lane committer
     function registry(address committer) external onlySetter {
+        require(THIS_CHAIN_POSITION == IMessageCommitter(committer).THIS_CHAIN_POSITION(), "!thisChainPosition");
         uint256 pos = IMessageCommitter(committer).BRIDGED_CHAIN_POSITION();
         require(THIS_CHAIN_POSITION != pos, "!bridgedChainPosition");
-        require(THIS_CHAIN_POSITION == IMessageCommitter(committer).THIS_CHAIN_POSITION(), "!thisChainPosition");
-        chainOf[pos] = committer;
-        maxChainPosition = _max(maxChainPosition, pos);
+        require(maxChainPosition + 1 == pos, "!bridgedChainPosition");
+        maxChainPosition += 1;
+        chainOf[maxChainPosition] = committer;
         emit Registry(pos, committer);
     }
 
