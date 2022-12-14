@@ -44,7 +44,6 @@ contract ChainMessageCommitter is MessageCommitter {
     }
 
     constructor() {
-        maxChainPosition = THIS_CHAIN_POSITION;
         setter = msg.sender;
     }
 
