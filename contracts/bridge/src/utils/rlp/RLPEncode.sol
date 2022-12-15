@@ -104,21 +104,23 @@ library RLPEncode {
     function _writeLength(uint256 _len, uint256 _offset) private pure returns (bytes memory) {
         bytes memory encoded;
 
-        if (_len < 56) {
-            encoded = new bytes(1);
-            encoded[0] = bytes1(uint8(_len) + uint8(_offset));
-        } else {
-            uint256 lenLen;
-            uint256 i = 1;
-            while (_len / i != 0) {
-                lenLen++;
-                i *= 256;
-            }
+        unchecked {
+            if (_len < 56) {
+                encoded = new bytes(1);
+                encoded[0] = bytes1(uint8(_len) + uint8(_offset));
+            } else {
+                uint256 lenLen;
+                uint256 i = 1;
+                while (_len / i != 0) {
+                    lenLen++;
+                    i *= 256;
+                }
 
-            encoded = new bytes(lenLen + 1);
-            encoded[0] = bytes1(uint8(lenLen) + uint8(_offset) + 55);
-            for (i = 1; i <= lenLen; i++) {
-                encoded[i] = bytes1(uint8((_len / (256**(lenLen - i))) % 256));
+                encoded = new bytes(lenLen + 1);
+                encoded[0] = bytes1(uint8(lenLen) + uint8(_offset) + 55);
+                for (i = 1; i <= lenLen; i++) {
+                    encoded[i] = bytes1(uint8((_len / (256**(lenLen - i))) % 256));
+                }
             }
         }
 
@@ -135,15 +137,17 @@ library RLPEncode {
         bytes memory b = abi.encodePacked(_x);
 
         uint256 i = 0;
-        for (; i < 32; i++) {
+        for (; i < 32; ) {
             if (b[i] != 0) {
                 break;
             }
+            unchecked { ++i; }
         }
 
         bytes memory res = new bytes(32 - i);
-        for (uint256 j = 0; j < res.length; j++) {
+        for (uint256 j = 0; j < res.length; ) {
             res[j] = b[i++];
+            unchecked { ++j; }
         }
 
         return res;
@@ -165,17 +169,23 @@ library RLPEncode {
         uint256 src = _src;
         uint256 len = _len;
 
-        for (; len >= 32; len -= 32) {
-            assembly {
+        for (; len >= 32; ) {
+            assembly ("memory-safe") {
                 mstore(dest, mload(src))
             }
-            dest += 32;
-            src += 32;
+            unchecked {
+                dest += 32;
+                src += 32;
+                len -= 32;
+            }
         }
 
-        uint256 mask = 256**(32 - len) - 1;
+        uint256 mask;
+        unchecked {
+            mask = 256**(32 - len) - 1;
+        }
 
-        assembly {
+        assembly ("memory-safe") {
             let srcpart := and(mload(src), not(mask))
             let destpart := and(mload(dest), mask)
             mstore(dest, or(destpart, srcpart))
@@ -195,26 +205,28 @@ library RLPEncode {
 
         uint256 len;
         uint256 i = 0;
-        for (; i < _list.length; i++) {
+        for (; i < _list.length; ) {
             len += _list[i].length;
+            unchecked { ++i; }
         }
 
         bytes memory flattened = new bytes(len);
         uint256 flattenedPtr;
-        assembly {
+        assembly ("memory-safe") {
             flattenedPtr := add(flattened, 0x20)
         }
 
-        for (i = 0; i < _list.length; i++) {
+        for (i = 0; i < _list.length; ) {
             bytes memory item = _list[i];
 
             uint256 listPtr;
-            assembly {
+            assembly ("memory-safe") {
                 listPtr := add(item, 0x20)
             }
 
             _memcpy(flattenedPtr, listPtr, item.length);
             flattenedPtr += _list[i].length;
+            unchecked { ++i; }
         }
 
         return flattened;

@@ -60,8 +60,9 @@ library BLS {
         uint len = pubkeys.length;
         require(len > 0, "!pubkeys");
         G1Point memory g1 = G1.deserialize(pubkeys[0]);
-        for (uint i = 1; i < len; i++) {
+        for (uint i = 1; i < len; ) {
             g1 = g1.add(G1.deserialize(pubkeys[i]));
+            unchecked { ++i; }
         }
         require(!g1.is_infinity(), "infinity");
         return g1;
@@ -102,30 +103,32 @@ library BLS {
     // https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-5.4
     function expand_message_xmd(bytes32 message) internal pure returns (bytes memory) {
         bytes memory b0Input = new bytes(143);
-        assembly {
+        assembly ("memory-safe") {
             mstore(add(add(b0Input, 0x20), 0x40), message)
         }
         b0Input[96] = 0x01;
-        for (uint i = 0; i < 44; i++) {
+        for (uint i = 0; i < 44; ) {
             b0Input[i+99] = bytes(DST_G2)[i];
+            unchecked { ++i; }
         }
 
         bytes32 b0 = sha256(b0Input);
 
         bytes memory output = new bytes(256);
         bytes32 chunk = sha256(abi.encodePacked(b0, bytes1(0x01), bytes(DST_G2)));
-        assembly {
+        assembly ("memory-safe") {
             mstore(add(output, 0x20), chunk)
         }
-        for (uint i = 2; i < 9; i++) {
+        for (uint i = 2; i < 9; ) {
             bytes32 input;
-            assembly {
+            assembly ("memory-safe") {
                 input := xor(b0, mload(add(output, add(0x20, mul(0x20, sub(i, 2))))))
             }
             chunk = sha256(abi.encodePacked(input, bytes1(uint8(i)), bytes(DST_G2)));
-            assembly {
+            assembly ("memory-safe") {
                 mstore(add(output, add(0x20, mul(0x20, sub(i, 1)))), chunk)
             }
+            unchecked { ++i; }
         }
 
         return output;

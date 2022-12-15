@@ -76,10 +76,11 @@ library FP {
         input[7] = q().b;
         uint[2] memory output;
 
-        assembly {
+        assembly ("memory-safe") {
             if iszero(staticcall(sub(gas(), 2000), BIG_MOD_EXP, input, 256, output, 64)) {
-                returndatacopy(0, 0, returndatasize())
-                revert(0, returndatasize())
+                let p := mload(0x40)
+                returndatacopy(p, 0, returndatasize())
+                revert(p, returndatasize())
             }
         }
         return Fp(output[0], output[1]);

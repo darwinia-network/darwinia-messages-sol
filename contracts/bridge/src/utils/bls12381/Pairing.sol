@@ -60,10 +60,11 @@ library Pairing {
         input[23] = s.y.c1.b;
         uint[1] memory output;
 
-        assembly {
+        assembly ("memory-safe") {
             if iszero(staticcall(161000, PAIRING, input, 768, output, 32)) {
-                returndatacopy(0, 0, returndatasize())
-                revert(0, returndatasize())
+                let pt := mload(0x40)
+                returndatacopy(pt, 0, returndatasize())
+                revert(pt, returndatasize())
             }
         }
 

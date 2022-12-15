@@ -36,15 +36,15 @@ library ExcessivelySafeCall {
         // by assembly calling "handle" function
         // we call via assembly to avoid memcopying a very large returndata
         // returned by a malicious contract
-        assembly {
+        assembly ("memory-safe") {
             _success := call(
-            _gas, // gas
-            _target, // recipient
-            0, // ether value
-            add(_calldata, 0x20), // inloc
-            mload(_calldata), // inlen
-            0, // outloc
-            0 // outlen
+                _gas, // gas
+                _target, // recipient
+                0, // ether value
+                add(_calldata, 0x20), // inloc
+                mload(_calldata), // inlen
+                0, // outloc
+                0 // outlen
             )
             // limit our copy to 256 bytes
             _toCopy := returndatasize()
@@ -88,14 +88,14 @@ library ExcessivelySafeCall {
         // by assembly calling "handle" function
         // we call via assembly to avoid memcopying a very large returndata
         // returned by a malicious contract
-        assembly {
+        assembly ("memory-safe") {
             _success := staticcall(
-            _gas, // gas
-            _target, // recipient
-            add(_calldata, 0x20), // inloc
-            mload(_calldata), // inlen
-            0, // outloc
-            0 // outlen
+                _gas, // gas
+                _target, // recipient
+                add(_calldata, 0x20), // inloc
+                mload(_calldata), // inlen
+                0, // outloc
+                0 // outlen
             )
             // limit our copy to 256 bytes
             _toCopy := returndatasize()
@@ -110,22 +110,17 @@ library ExcessivelySafeCall {
         return (_success, _returnData);
     }
 
-    /**
-     * @notice Swaps function selectors in encoded contract calls
-     * @dev Allows reuse of encoded calldata for functions with identical
-     * argument types but different names. It simply swaps out the first 4 bytes
-     * for the new selector. This function modifies memory in place, and should
-     * only be used with caution.
-     * @param _newSelector The new 4-byte selector
-     * @param _buf The encoded contract args
-     */
-    function swapSelector(bytes4 _newSelector, bytes memory _buf)
-    internal
-    pure
-    {
+    /// @notice Swaps function selectors in encoded contract calls
+    /// @dev Allows reuse of encoded calldata for functions with identical
+    /// argument types but different names. It simply swaps out the first 4 bytes
+    /// for the new selector. This function modifies memory in place, and should
+    /// only be used with caution.
+    /// @param _newSelector The new 4-byte selector
+    /// @param _buf The encoded contract args
+    function swapSelector(bytes4 _newSelector, bytes memory _buf) internal pure {
         require(_buf.length >= 4);
         uint256 _mask = LOW_28_MASK;
-        assembly {
+        assembly ("memory-safe") {
             // load the first word of
             let _word := mload(add(_buf, 0x20))
             // mask out the top 4 bytes

@@ -155,13 +155,17 @@ library MerkleTrie {
         TrieNode memory currentNode;
 
         // Proof is top-down, so we start at the first element (root).
-        for (uint256 i = 0; i < _proof.length; i++) {
+        for (uint256 i = 0; i < _proof.length; ) {
             currentNode = _proof[i];
-            currentKeyIndex += currentKeyIncrement;
 
-            // Keep track of the proof elements we actually need.
-            // It's expensive to resize arrays, so this simply reduces gas costs.
-            pathLength += 1;
+            unchecked {
+                currentKeyIndex += currentKeyIncrement;
+
+                // Keep track of the proof elements we actually need.
+                // It's expensive to resize arrays, so this simply reduces gas costs.
+                pathLength += 1;
+                ++i;
+            }
 
             if (currentKeyIndex == 0) {
                 // First proof element is always the root node.
@@ -197,7 +201,10 @@ library MerkleTrie {
             } else if (currentNode.decoded.length == LEAF_OR_EXTENSION_NODE_LENGTH) {
                 bytes memory path = _getNodePath(currentNode);
                 uint8 prefix = uint8(path[0]);
-                uint8 offset = 2 - (prefix % 2);
+                uint8 offset;
+                unchecked {
+                    offset= 2 - (prefix % 2);
+                }
                 bytes memory pathRemainder = BytesUtils.slice(path, offset);
                 bytes memory keyRemainder = BytesUtils.slice(key, currentKeyIndex);
                 uint256 sharedNibbleLength = _getSharedNibbleLength(pathRemainder, keyRemainder);
@@ -251,9 +258,10 @@ library MerkleTrie {
         RLPDecode.RLPItem[] memory nodes = RLPDecode.readList(_proof);
         TrieNode[] memory proof = new TrieNode[](nodes.length);
 
-        for (uint256 i = 0; i < nodes.length; i++) {
+        for (uint256 i = 0; i < nodes.length; ) {
             bytes memory encoded = RLPDecode.readBytes(nodes[i]);
             proof[i] = TrieNode({ encoded: encoded, decoded: RLPDecode.readList(encoded) });
+            unchecked { ++i; }
         }
 
         return proof;
@@ -312,7 +320,7 @@ library MerkleTrie {
     {
         uint256 i = 0;
         while (_a.length > i && _b.length > i && _a[i] == _b[i]) {
-            i++;
+            unchecked { ++i; }
         }
         return i;
     }

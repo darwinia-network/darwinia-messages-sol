@@ -33,7 +33,7 @@ library Bytes {
         }
         uint addr;
         uint addr2;
-        assembly {
+        assembly ("memory-safe") {
             addr := add(self, /*BYTES_HEADER_SIZE*/32)
             addr2 := add(other, /*BYTES_HEADER_SIZE*/32)
         }
@@ -49,7 +49,6 @@ library Bytes {
         pure
         returns (bytes memory)
     {
-        require(startIndex <= self.length);
         uint256 len = self.length - startIndex;
         uint256 addr = Memory.dataPtr(self);
         return Memory.toBytes(addr + startIndex, len);
@@ -101,7 +100,7 @@ library Bytes {
         uint len = end - start;
         require(0 <= len && len <= 32, "!slice");
 
-        assembly{
+        assembly ("memory-safe") {
             r := mload(add(add(self, 0x20), start))
         }
 

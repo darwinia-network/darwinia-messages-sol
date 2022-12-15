@@ -36,7 +36,7 @@ library BytesUtils {
 
         bytes memory tempBytes;
 
-        assembly {
+        assembly ("memory-safe") {
             switch iszero(_length)
             case 0 {
                 // Get a location of some free memory and store it in tempBytes as
@@ -103,7 +103,7 @@ library BytesUtils {
     function toBytes32(bytes memory _bytes) internal pure returns (bytes32) {
         if (_bytes.length < 32) {
             bytes32 ret;
-            assembly {
+            assembly ("memory-safe") {
                 ret := mload(add(_bytes, 32))
             }
             return ret;
@@ -119,9 +119,12 @@ library BytesUtils {
     function toNibbles(bytes memory _bytes) internal pure returns (bytes memory) {
         bytes memory nibbles = new bytes(_bytes.length * 2);
 
-        for (uint256 i = 0; i < _bytes.length; i++) {
-            nibbles[i * 2] = _bytes[i] >> 4;
-            nibbles[i * 2 + 1] = bytes1(uint8(_bytes[i]) % 16);
+        unchecked {
+            for (uint256 i = 0; i < _bytes.length; ) {
+                    nibbles[i * 2] = _bytes[i] >> 4;
+                    nibbles[i * 2 + 1] = bytes1(uint8(_bytes[i]) % 16);
+                    ++i;
+            }
         }
 
         return nibbles;
@@ -130,8 +133,10 @@ library BytesUtils {
     function fromNibbles(bytes memory _bytes) internal pure returns (bytes memory) {
         bytes memory ret = new bytes(_bytes.length / 2);
 
-        for (uint256 i = 0; i < ret.length; i++) {
-            ret[i] = (_bytes[i * 2] << 4) | (_bytes[i * 2 + 1]);
+        unchecked {
+            for (uint256 i = 0; i < ret.length; i++) {
+                ret[i] = (_bytes[i * 2] << 4) | (_bytes[i * 2 + 1]);
+            }
         }
 
         return ret;

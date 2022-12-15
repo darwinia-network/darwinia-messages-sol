@@ -134,10 +134,12 @@ library Bits {
     function highestBitSet(uint256 self) internal pure returns (uint8 highest) {
         require(self != 0);
         uint256 val = self;
-        for (uint8 i = 128; i >= 1; i >>= 1) {
-            if (val & (((ONE << i) - 1) << i) != 0) {
-                highest += i;
-                val >>= i;
+        unchecked {
+            for (uint8 i = 128; i >= 1; i >>= 1) {
+                if (val & (((ONE << i) - 1) << i) != 0) {
+                    highest += i;
+                    val >>= i;
+                }
             }
         }
     }
@@ -148,10 +150,12 @@ library Bits {
     function lowestBitSet(uint256 self) internal pure returns (uint8 lowest) {
         require(self != 0);
         uint256 val = self;
-        for (uint8 i = 128; i >= 1; i >>= 1) {
-            if (val & ((ONE << i) - 1) == 0) {
-                lowest += i;
-                val >>= i;
+        unchecked {
+            for (uint8 i = 128; i >= 1; i >>= 1) {
+                if (val & ((ONE << i) - 1) == 0) {
+                    lowest += i;
+                    val >>= i;
+                }
             }
         }
     }

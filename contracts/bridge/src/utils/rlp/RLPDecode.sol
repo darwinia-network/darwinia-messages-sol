@@ -57,7 +57,7 @@ library RLPDecode {
      */
     function toRLPItem(bytes memory _in) internal pure returns (RLPItem memory) {
         uint256 ptr;
-        assembly {
+        assembly ("memory-safe") {
             ptr := add(_in, 32)
         }
 
@@ -91,12 +91,14 @@ library RLPDecode {
 
             out[itemCount] = RLPItem({ length: itemLength + itemOffset, ptr: _in.ptr + offset });
 
-            itemCount += 1;
-            offset += itemOffset + itemLength;
+            unchecked {
+                itemCount += 1;
+                offset += itemOffset + itemLength;
+            }
         }
 
         // Decrease the array size to match the actual item count.
-        assembly {
+        assembly ("memory-safe") {
             mstore(out, itemCount)
         }
 
@@ -166,7 +168,7 @@ library RLPDecode {
 
         uint256 ptr = _in.ptr + itemOffset;
         bytes32 out;
-        assembly {
+        assembly ("memory-safe") {
             out := mload(ptr)
 
             // Shift the bytes over to match the item size.
@@ -215,7 +217,7 @@ library RLPDecode {
 
         uint256 ptr = _in.ptr;
         uint256 out;
-        assembly {
+        assembly ("memory-safe") {
             out := byte(0, mload(ptr))
         }
 
@@ -290,7 +292,7 @@ library RLPDecode {
 
         uint256 ptr = _in.ptr;
         uint256 prefix;
-        assembly {
+        assembly ("memory-safe") {
             prefix := byte(0, mload(ptr))
         }
 
@@ -314,7 +316,7 @@ library RLPDecode {
             require(_in.length > lenOfStrLen, "Invalid RLP long string length.");
 
             uint256 strLen;
-            assembly {
+            assembly ("memory-safe") {
                 // Pick out the string length.
                 strLen := div(mload(add(ptr, 1)), exp(256, sub(32, lenOfStrLen)))
             }
@@ -337,7 +339,7 @@ library RLPDecode {
             require(_in.length > lenOfListLen, "Invalid RLP long list length.");
 
             uint256 listLen;
-            assembly {
+            assembly ("memory-safe") {
                 // Pick out the list length.
                 listLen := div(mload(add(ptr, 1)), exp(256, sub(32, lenOfListLen)))
             }
@@ -367,18 +369,21 @@ library RLPDecode {
 
         uint256 src = _src + _offset;
         uint256 dest;
-        assembly {
+        assembly ("memory-safe") {
             dest := add(out, 32)
         }
 
         // Copy over as many complete words as we can.
-        for (uint256 i = 0; i < _length / 32; i++) {
-            assembly {
+        for (uint256 i = 0; i < _length / 32; ) {
+            assembly ("memory-safe") {
                 mstore(dest, mload(src))
             }
 
-            src += 32;
-            dest += 32;
+            unchecked {
+                src += 32;
+                dest += 32;
+                ++i;
+            }
         }
 
         // Pick out the remaining bytes.
@@ -387,7 +392,7 @@ library RLPDecode {
             mask = 256**(32 - (_length % 32)) - 1;
         }
 
-        assembly {
+        assembly ("memory-safe") {
             mstore(dest, or(and(mload(src), not(mask)), and(mload(dest), mask)))
         }
         return out;
