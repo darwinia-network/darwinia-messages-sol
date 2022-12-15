@@ -1,6 +1,6 @@
 // hevm: flattened sources of src/message/ParallelInboundLane.sol
 // SPDX-License-Identifier: GPL-3.0 AND MIT OR Apache-2.0
-pragma solidity =0.7.6;
+pragma solidity =0.8.17;
 pragma abicoder v2;
 
 ////// src/interfaces/ICrossChainFilter.sol
@@ -20,7 +20,7 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /// @title A interface for message layer to filter unsafe message
 /// @author echo
@@ -53,7 +53,7 @@ interface ICrossChainFilter {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 interface IVerifier {
     function verify_messages_proof(
@@ -88,7 +88,7 @@ interface IVerifier {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 abstract contract LaneIdentity {
     function encodeMessageKey(uint64 nonce) public view virtual returns (uint256);
@@ -147,7 +147,7 @@ abstract contract LaneIdentity {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../interfaces/IVerifier.sol"; */
@@ -223,7 +223,7 @@ contract InboundLaneVerifier is LaneIdentity {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 contract SourceChain {
@@ -411,7 +411,7 @@ contract SourceChain {
 }
 
 ////// src/utils/call/ExcessivelySafeCall.sol
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /// code source from: https://github.com/LayerZero-Labs/solidity-examples/blob/main/contracts/util/ExcessivelySafeCall.sol
 
@@ -550,7 +550,7 @@ library ExcessivelySafeCall {
 }
 
 ////// src/utils/imt/IncrementalMerkleTree.sol
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /// code source from https://github.com/nomad-xyz/monorepo/blob/main/packages/contracts-core/contracts/libs/Merkle.sol
 
@@ -777,7 +777,7 @@ library IncrementalMerkleTree {
 // The assigned nonce is reported using `MessageAccepted` event. When message is
 // delivered to the the bridged chain, it is reported using `MessagesDelivered` event.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../interfaces/ICrossChainFilter.sol"; */

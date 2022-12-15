@@ -17,7 +17,7 @@
 //
 // Code from https://github.com/ethereum/solidity-examples
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 pragma abicoder v2;
 
 library Bits {

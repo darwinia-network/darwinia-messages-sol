@@ -1,6 +1,6 @@
 // hevm: flattened sources of src/truth/bsc/BSCLightClient.sol
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.7.6;
+pragma solidity =0.8.17;
 pragma abicoder v2;
 
 ////// src/interfaces/ILightClient.sol
@@ -20,7 +20,7 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 interface ILightClient {
     function merkle_root() external view returns (bytes32);
@@ -44,7 +44,7 @@ interface ILightClient {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /**
  * @title RLPEncode
@@ -267,7 +267,7 @@ library RLPEncode {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../utils/rlp/RLPEncode.sol"; */
@@ -382,7 +382,7 @@ contract BinanceSmartChain {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 enum ChainMessagePosition {
@@ -408,7 +408,7 @@ enum ChainMessagePosition {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 library Memory {
 
@@ -514,7 +514,7 @@ library Memory {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import {Memory} from "./Memory.sol"; */
 
@@ -625,7 +625,7 @@ library Bytes {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /// @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
 ///
@@ -737,7 +737,7 @@ library ECDSA {
 //
 // OpenZeppelin Contracts (last updated v4.6.0) (utils/structs/EnumerableSet.sol)
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /**
  * @dev Library for managing
@@ -1179,7 +1179,7 @@ library EnumerableSet {
 //                                Authority set
 // ```
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../../utils/Bytes.sol"; */

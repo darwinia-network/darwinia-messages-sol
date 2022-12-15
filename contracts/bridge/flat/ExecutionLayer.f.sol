@@ -1,6 +1,6 @@
 // hevm: flattened sources of src/truth/eth/ExecutionLayer.sol
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.7.6;
+pragma solidity =0.8.17;
 pragma abicoder v2;
 
 ////// src/interfaces/ILightClient.sol
@@ -20,7 +20,7 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 interface ILightClient {
     function merkle_root() external view returns (bytes32);
@@ -44,7 +44,7 @@ interface ILightClient {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 contract Math {
     /// Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.
@@ -87,7 +87,7 @@ contract Math {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "../utils/Math.sol"; */
 
@@ -158,7 +158,7 @@ contract MerkleProof is Math {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 library ScaleCodec {
     // Decodes a SCALE encoded uint256 by converting bytes (bid endian) to little endian format
@@ -344,7 +344,7 @@ library ScaleCodec {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "./MerkleProof.sol"; */
@@ -526,7 +526,7 @@ contract BeaconChain is MerkleProof {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 enum ChainMessagePosition {
@@ -552,7 +552,7 @@ enum ChainMessagePosition {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../../spec/ChainMessagePosition.sol"; */

@@ -1,10 +1,10 @@
 // hevm: flattened sources of src/proxy/BridgeProxyAdmin.sol
 // SPDX-License-Identifier: GPL-3.0 AND MIT
-pragma solidity =0.7.6;
+pragma solidity =0.8.17;
 
 ////// src/proxy/transparent/Context.sol
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /*
  * @dev Provides information about the current execution context, including the
@@ -29,7 +29,7 @@ abstract contract Context {
 
 ////// src/proxy/transparent/Ownable.sol
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "./Context.sol"; */
 
@@ -99,7 +99,7 @@ abstract contract Ownable is Context {
 
 ////// src/proxy/transparent/Address.sol
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /**
  * @dev Collection of functions related to the address type
@@ -289,7 +289,7 @@ library Address {
 
 ////// src/proxy/transparent/Proxy.sol
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /**
  * @dev This abstract contract provides a fallback function that delegates all calls to another contract using the EVM
@@ -373,7 +373,7 @@ abstract contract Proxy {
 
 ////// src/proxy/transparent/UpgradeableProxy.sol
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "./Proxy.sol"; */
 /* import "./Address.sol"; */
@@ -452,7 +452,7 @@ contract UpgradeableProxy is Proxy {
 
 ////// src/proxy/transparent/TransparentUpgradeableProxy.sol
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "./UpgradeableProxy.sol"; */
 
@@ -581,7 +581,7 @@ contract TransparentUpgradeableProxy is UpgradeableProxy {
 
 ////// src/proxy/transparent/ProxyAdmin.sol
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "./Ownable.sol"; */
 /* import "./TransparentUpgradeableProxy.sol"; */
@@ -663,7 +663,7 @@ contract ProxyAdmin is Ownable {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "./transparent/ProxyAdmin.sol"; */
 

@@ -1,6 +1,6 @@
 // hevm: flattened sources of src/fee-market/FeeMarket.sol
 // SPDX-License-Identifier: GPL-3.0 AND MIT
-pragma solidity =0.7.6;
+pragma solidity =0.8.17;
 pragma abicoder v2;
 
 ////// src/interfaces/IFeeMarket.sol
@@ -20,7 +20,7 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /// @title A interface for user to enroll to be a relayer.
@@ -48,7 +48,7 @@ interface IFeeMarket {
 
 ////// src/proxy/transparent/Address.sol
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /**
  * @dev Collection of functions related to the address type
@@ -240,7 +240,7 @@ library Address {
 //
 // OpenZeppelin Contracts (last updated v4.7.0) (proxy/utils/Initializable.sol)
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "./transparent/Address.sol"; */
 
@@ -405,7 +405,7 @@ abstract contract Initializable {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../interfaces/IFeeMarket.sol"; */

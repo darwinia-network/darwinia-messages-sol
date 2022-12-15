@@ -65,7 +65,7 @@
 // - No need to query for period 0 next_sync_committee until the end of period 0
 // - After the import next_sync_committee of period 0, populate period 1's committee
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 pragma abicoder v2;
 
 import "../../utils/Bitfield.sol";

@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 pragma abicoder v2;
 
 import "../Bytes.sol";
@@ -113,7 +113,7 @@ library BLS {
         bytes32 b0 = sha256(b0Input);
 
         bytes memory output = new bytes(256);
-        bytes32 chunk = sha256(abi.encodePacked(b0, byte(0x01), bytes(DST_G2)));
+        bytes32 chunk = sha256(abi.encodePacked(b0, bytes1(0x01), bytes(DST_G2)));
         assembly {
             mstore(add(output, 0x20), chunk)
         }
@@ -122,7 +122,7 @@ library BLS {
             assembly {
                 input := xor(b0, mload(add(output, add(0x20, mul(0x20, sub(i, 2))))))
             }
-            chunk = sha256(abi.encodePacked(input, byte(uint8(i)), bytes(DST_G2)));
+            chunk = sha256(abi.encodePacked(input, bytes1(uint8(i)), bytes(DST_G2)));
             assembly {
                 mstore(add(output, add(0x20, mul(0x20, sub(i, 1)))), chunk)
             }

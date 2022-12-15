@@ -75,7 +75,7 @@
 //                                Authority set
 // ```
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 pragma abicoder v2;
 
 import "../../utils/Bytes.sol";

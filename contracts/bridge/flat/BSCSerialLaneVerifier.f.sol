@@ -1,6 +1,6 @@
 // hevm: flattened sources of src/truth/bsc/BSCSerialLaneVerifier.sol
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.7.6;
+pragma solidity =0.8.17;
 pragma abicoder v2;
 
 ////// src/interfaces/ILightClient.sol
@@ -20,7 +20,7 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 interface ILightClient {
     function merkle_root() external view returns (bytes32);
@@ -44,7 +44,7 @@ interface ILightClient {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 interface IVerifier {
     function verify_messages_proof(
@@ -79,7 +79,7 @@ interface IVerifier {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 enum ChainMessagePosition {
@@ -105,7 +105,7 @@ enum ChainMessagePosition {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 contract SourceChain {
@@ -309,7 +309,7 @@ contract SourceChain {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /**
  * @title RLDecode
@@ -711,7 +711,7 @@ library RLPDecode {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "../utils/rlp/RLPDecode.sol"; */
 
@@ -755,7 +755,7 @@ library State {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /**
  * @title BytesUtils
@@ -899,7 +899,7 @@ library BytesUtils {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* Library Imports */
 /* import "../BytesUtils.sol"; */
@@ -1219,7 +1219,7 @@ library MerkleTrie {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* Library Imports */
 /* import "./MerkleTrie.sol"; */
@@ -1302,7 +1302,7 @@ library SecureMerkleTrie {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "./State.sol"; */
 /* import "../utils/rlp/RLPDecode.sol"; */
@@ -1378,7 +1378,7 @@ library StorageProof {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 contract TargetChain {
@@ -1521,7 +1521,7 @@ contract TargetChain {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../../interfaces/IVerifier.sol"; */
@@ -1769,7 +1769,7 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../common/SerialLaneStorageVerifier.sol"; */

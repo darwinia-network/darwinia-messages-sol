@@ -1,6 +1,6 @@
 // hevm: flattened sources of src/message/SerialOutboundLane.sol
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.7.6;
+pragma solidity =0.8.17;
 pragma abicoder v2;
 
 ////// src/interfaces/IFeeMarket.sol
@@ -20,7 +20,7 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /// @title A interface for user to enroll to be a relayer.
@@ -63,7 +63,7 @@ interface IFeeMarket {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /// @title A interface for app layer to send cross chain message
 /// @author echo
@@ -95,7 +95,7 @@ interface IOutboundLane {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 interface IVerifier {
     function verify_messages_proof(
@@ -130,7 +130,7 @@ interface IVerifier {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 abstract contract LaneIdentity {
     function encodeMessageKey(uint64 nonce) public view virtual returns (uint256);
@@ -189,7 +189,7 @@ abstract contract LaneIdentity {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../interfaces/IVerifier.sol"; */
@@ -265,7 +265,7 @@ contract OutboundLaneVerifier is LaneIdentity {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 contract SourceChain {
@@ -469,7 +469,7 @@ contract SourceChain {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 contract TargetChain {
@@ -625,7 +625,7 @@ contract TargetChain {
 // The assigned nonce is reported using `MessageAccepted` event. When message is
 // delivered to the the bridged chain, it is reported using `MessagesDelivered` event.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../interfaces/IOutboundLane.sol"; */

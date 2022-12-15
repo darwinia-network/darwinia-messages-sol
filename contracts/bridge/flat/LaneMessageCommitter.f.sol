@@ -1,6 +1,6 @@
 // hevm: flattened sources of src/truth/darwinia/LaneMessageCommitter.sol
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.7.6;
+pragma solidity =0.8.17;
 pragma abicoder v2;
 
 ////// src/interfaces/ILane.sol
@@ -20,7 +20,7 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 interface ILane {
     function getLaneInfo() external view returns (uint32,uint32,uint32,uint32);
@@ -43,7 +43,7 @@ interface ILane {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 struct MessageProof {
     MessageSingleProof chainProof;
@@ -72,7 +72,7 @@ struct MessageSingleProof {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../spec/MessageProof.sol"; */
@@ -104,7 +104,7 @@ interface IMessageCommitter {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 contract Math {
     /// Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.
@@ -147,7 +147,7 @@ contract Math {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../../utils/Math.sol"; */
@@ -264,7 +264,7 @@ abstract contract MessageCommitter is Math {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../common/MessageCommitter.sol"; */

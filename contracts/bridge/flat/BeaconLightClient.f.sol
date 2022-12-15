@@ -1,6 +1,6 @@
 // hevm: flattened sources of src/truth/eth/BeaconLightClient.sol
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.7.6;
+pragma solidity =0.8.17;
 pragma abicoder v2;
 
 ////// src/utils/Math.sol
@@ -20,7 +20,7 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 contract Math {
     /// Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.
@@ -63,7 +63,7 @@ contract Math {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "../utils/Math.sol"; */
 
@@ -134,7 +134,7 @@ contract MerkleProof is Math {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 library ScaleCodec {
     // Decodes a SCALE encoded uint256 by converting bytes (bid endian) to little endian format
@@ -320,7 +320,7 @@ library ScaleCodec {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "./MerkleProof.sol"; */
@@ -502,7 +502,7 @@ contract BeaconChain is MerkleProof {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "./BeaconChain.sol"; */
@@ -560,7 +560,7 @@ contract BeaconLightClientUpdate is BeaconChain {
 //
 // Code from https://github.com/ethereum/solidity-examples
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 library Bits {
@@ -717,7 +717,7 @@ library Bits {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "./Bits.sol"; */
 
@@ -894,7 +894,7 @@ contract Bitfield {
 // - No need to query for period 0 next_sync_committee until the end of period 0
 // - After the import next_sync_committee of period 0, populate period 1's committee
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../../utils/Bitfield.sol"; */

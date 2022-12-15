@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
 /// @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
 ///

@@ -1,6 +1,6 @@
 // hevm: flattened sources of src/truth/darwinia/ChainMessageCommitter.sol
 // SPDX-License-Identifier: GPL-3.0 AND MIT
-pragma solidity =0.7.6;
+pragma solidity =0.8.17;
 pragma abicoder v2;
 
 ////// src/spec/MessageProof.sol
@@ -20,7 +20,7 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 struct MessageProof {
     MessageSingleProof chainProof;
@@ -49,7 +49,7 @@ struct MessageSingleProof {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../spec/MessageProof.sol"; */
@@ -66,7 +66,7 @@ interface IMessageCommitter {
 
 ////// src/proxy/transparent/Address.sol
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /**
  * @dev Collection of functions related to the address type
@@ -258,7 +258,7 @@ library Address {
 //
 // OpenZeppelin Contracts (last updated v4.7.0) (proxy/utils/Initializable.sol)
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "./transparent/Address.sol"; */
 
@@ -423,7 +423,7 @@ abstract contract Initializable {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 contract Math {
     /// Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.
@@ -466,7 +466,7 @@ contract Math {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../../utils/Math.sol"; */
@@ -583,7 +583,7 @@ abstract contract MessageCommitter is Math {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 /* pragma abicoder v2; */
 
 /* import "../common/MessageCommitter.sol"; */
