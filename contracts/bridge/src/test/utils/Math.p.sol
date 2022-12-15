@@ -18,7 +18,6 @@
 pragma solidity 0.8.17;
 
 import "../../utils/Math.sol";
-pragma experimental SMTChecker;
 
 contract MathTest is Math {
     function property_get_power_of_two_ceil(uint x) public pure {

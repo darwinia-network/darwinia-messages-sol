@@ -54,8 +54,10 @@ library FP {
     }
 
     function add(Fp memory x, Fp memory y) internal pure returns (Fp memory z) {
-        z.b = x.b + y.b;
-        z.a = x.a + y.a + (z.b >= x.b && x.b >= y.b ? 0 : 1);
+        unchecked {
+            z.b = x.b + y.b;
+            z.a = x.a + y.a + (z.b >= x.b && x.b >= y.b ? 0 : 1);
+        }
     }
 
     function serialize(Fp memory x) internal pure returns (bytes memory) {

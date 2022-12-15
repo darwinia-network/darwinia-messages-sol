@@ -382,7 +382,10 @@ library RLPDecode {
         }
 
         // Pick out the remaining bytes.
-        uint256 mask = 256**(32 - (_length % 32)) - 1;
+        uint256 mask;
+        unchecked {
+            mask = 256**(32 - (_length % 32)) - 1;
+        }
 
         assembly {
             mstore(dest, or(and(mload(src), not(mask)), and(mload(dest), mask)))
