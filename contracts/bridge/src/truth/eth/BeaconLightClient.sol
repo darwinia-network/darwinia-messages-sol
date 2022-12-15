@@ -243,7 +243,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
     function verify_finalized_header(
         BeaconBlockHeader calldata header,
         bytes32[] calldata finality_branch,
-        bytes32 attested_header_root
+        bytes32 attested_header_state_root
     ) internal pure returns (bool) {
         require(finality_branch.length == FINALIZED_CHECKPOINT_ROOT_DEPTH, "!finality_branch");
         bytes32 header_root = hash_tree_root(header);
@@ -252,7 +252,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
             finality_branch,
             FINALIZED_CHECKPOINT_ROOT_DEPTH,
             FINALIZED_CHECKPOINT_ROOT_INDEX,
-            attested_header_root
+            attested_header_state_root
         );
     }
 
