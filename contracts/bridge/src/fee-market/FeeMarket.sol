@@ -472,6 +472,8 @@ contract FeeMarket is Initializable, IFeeMarket {
                 unchecked { ++slot; }
             }
             assert(false);
+            // resolve warning
+            return (0, 0);
         } else {
             return (number, message_fee);
         }
