@@ -239,6 +239,8 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         uint64 next = begin;
         for (uint256 i = 0; i < delivery_size; ) {
             Message memory message = messages[i];
+            unchecked { ++i; }
+
             MessageKey memory key = decodeMessageKey(message.encoded_key);
             MessagePayload memory message_payload = message.payload;
             if (key.nonce < next) {
@@ -265,10 +267,7 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             // update inbound lane nonce storage
             inboundLaneNonce.last_delivered_nonce = next;
 
-            unchecked {
-                next += 1;
-                ++i;
-            }
+            unchecked { ++next; }
         }
         if (inboundLaneNonce.last_delivered_nonce >= begin) {
             uint64 end = inboundLaneNonce.last_delivered_nonce;
