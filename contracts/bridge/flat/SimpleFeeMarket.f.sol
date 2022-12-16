@@ -1,6 +1,7 @@
 // hevm: flattened sources of src/fee-market/SimpleFeeMarket.sol
 // SPDX-License-Identifier: GPL-3.0 AND MIT
 pragma solidity =0.8.17;
+pragma abicoder v2;
 
 ////// src/interfaces/IFeeMarket.sol
 // This file is part of Darwinia.

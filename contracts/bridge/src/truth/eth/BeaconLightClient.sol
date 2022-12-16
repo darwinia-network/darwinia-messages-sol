@@ -66,6 +66,7 @@
 // - After the import next_sync_committee of period 0, populate period 1's committee
 
 pragma solidity 0.8.17;
+pragma abicoder v2;
 
 import "../../utils/Bitfield.sol";
 import "../../spec/BeaconLightClientUpdate.sol";

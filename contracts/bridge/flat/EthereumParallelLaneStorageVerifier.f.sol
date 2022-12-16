@@ -1,6 +1,7 @@
 // hevm: flattened sources of src/truth/eth/EthereumParallelLaneStorageVerifier.sol
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.17;
+pragma abicoder v2;
 
 ////// src/interfaces/ILightClient.sol
 // This file is part of Darwinia.

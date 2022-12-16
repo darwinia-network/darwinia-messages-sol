@@ -76,6 +76,7 @@
 // ```
 
 pragma solidity 0.8.17;
+pragma abicoder v2;
 
 import "../../utils/Bytes.sol";
 import "../../utils/ECDSA.sol";

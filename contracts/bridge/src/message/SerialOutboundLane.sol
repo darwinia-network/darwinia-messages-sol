@@ -29,6 +29,7 @@
 // delivered to the the bridged chain, it is reported using `MessagesDelivered` event.
 
 pragma solidity 0.8.17;
+pragma abicoder v2;
 
 import "../interfaces/IOutboundLane.sol";
 import "../interfaces/IFeeMarket.sol";

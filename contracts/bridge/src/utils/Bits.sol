@@ -18,6 +18,7 @@
 // Code from https://github.com/ethereum/solidity-examples
 
 pragma solidity 0.8.17;
+pragma abicoder v2;
 
 library Bits {
     uint256 private constant ONE = uint256(1);

@@ -1,6 +1,7 @@
 // hevm: flattened sources of src/truth/darwinia/LaneMessageCommitter.sol
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.17;
+pragma abicoder v2;
 
 ////// src/interfaces/ILane.sol
 // This file is part of Darwinia.
