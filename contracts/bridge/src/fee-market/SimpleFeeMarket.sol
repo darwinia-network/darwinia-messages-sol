@@ -169,7 +169,7 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
                 array2[index] = feeOf[cur];
                 array3[index] = balanceOf[cur];
                 array4[index] = lockedOf[cur];
-                unchecked { index++; }
+                index++;
             }
             cur = relayers[cur];
         }
@@ -351,10 +351,10 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
     // Pay rewards to given relayers, optionally rewarding confirmation relayer.
     function _pay_relayers_rewards(DeliveredRelayer[] memory delivery_relayers, address confirm_relayer) private {
         uint256 total_confirm_reward = 0;
-        for (uint256 i = 0; i < delivery_relayers.length; ) {
+        for (uint256 i = 0; i < delivery_relayers.length; i++) {
             DeliveredRelayer memory entry = delivery_relayers[i];
             uint256 every_delivery_reward = 0;
-            for (uint256 key = entry.begin; key <= entry.end; ) {
+            for (uint256 key = entry.begin; key <= entry.end; key++) {
                 uint256 assigned_time = orderOf[key].time;
                 require(assigned_time > 0, "!exist");
                 require(block.timestamp >= assigned_time, "!time");
@@ -378,11 +378,9 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
                 }
                 delete orderOf[key];
                 emit Settled(key, block.timestamp, entry.relayer, confirm_relayer);
-                unchecked { ++key; }
             }
             // Reward every delivery relayer
             _reward(entry.relayer, every_delivery_reward);
-            unchecked { ++i; }
         }
         // Reward confirm relayer
         _reward(confirm_relayer, total_confirm_reward);

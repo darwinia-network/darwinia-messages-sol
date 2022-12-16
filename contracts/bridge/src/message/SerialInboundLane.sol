@@ -177,10 +177,8 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         if (size > 0) {
             lane_data.relayers = new UnrewardedRelayer[](size);
             uint64 front = inboundLaneNonce.relayer_range_front;
-            unchecked {
-                for (uint64 index = 0; index < size; index++) {
-                    lane_data.relayers[index] = relayers[front + index];
-                }
+            for (uint64 index = 0; index < size; index++) {
+                lane_data.relayers[index] = relayers[front + index];
             }
         }
         lane_data.last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
@@ -212,19 +210,17 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             uint64 new_confirmed_nonce = latest_received_nonce;
             uint64 front = inboundLaneNonce.relayer_range_front;
             uint64 back = inboundLaneNonce.relayer_range_back;
-            unchecked {
-                for (uint64 index = front; index <= back; index++) {
-                    UnrewardedRelayer storage entry = relayers[index];
-                    if (entry.messages.end <= new_confirmed_nonce) {
-                        // Firstly, remove all of the records where higher nonce <= new confirmed nonce
-                        delete relayers[index];
-                        inboundLaneNonce.relayer_range_front = index + 1;
-                    } else if (entry.messages.begin <= new_confirmed_nonce) {
-                        // Secondly, update the next record with lower nonce equal to new confirmed nonce if needed.
-                        // Note: There will be max. 1 record to update as we don't allow messages from relayers to
-                        // overlap.
-                        entry.messages.begin = new_confirmed_nonce + 1;
-                    }
+            for (uint64 index = front; index <= back; index++) {
+                UnrewardedRelayer storage entry = relayers[index];
+                if (entry.messages.end <= new_confirmed_nonce) {
+                    // Firstly, remove all of the records where higher nonce <= new confirmed nonce
+                    delete relayers[index];
+                    inboundLaneNonce.relayer_range_front = index + 1;
+                } else if (entry.messages.begin <= new_confirmed_nonce) {
+                    // Secondly, update the next record with lower nonce equal to new confirmed nonce if needed.
+                    // Note: There will be max. 1 record to update as we don't allow messages from relayers to
+                    // overlap.
+                    entry.messages.begin = new_confirmed_nonce + 1;
                 }
             }
             inboundLaneNonce.last_confirmed_nonce = new_confirmed_nonce;
@@ -238,7 +234,7 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         address relayer = msg.sender;
         uint64 begin = inboundLaneNonce.last_delivered_nonce + 1;
         uint64 next = begin;
-        for (uint256 i = 0; i < delivery_size; ) {
+        for (uint256 i = 0; i < delivery_size; i++) {
             Message memory message = messages[i];
             MessageKey memory key = decodeMessageKey(message.encoded_key);
             MessagePayload memory message_payload = message.payload;
@@ -266,10 +262,7 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             // update inbound lane nonce storage
             inboundLaneNonce.last_delivered_nonce = next;
 
-            unchecked {
-                next += 1;
-                ++i;
-            }
+            next += 1;
         }
         if (inboundLaneNonce.last_delivered_nonce >= begin) {
             uint64 end = inboundLaneNonce.last_delivered_nonce;

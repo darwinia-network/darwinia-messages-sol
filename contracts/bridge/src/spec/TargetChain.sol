@@ -112,7 +112,7 @@ contract TargetChain {
     {
         uint relayersLength = relayers.length;
         bytes memory encoded = abi.encode(relayersLength);
-        for (uint256 i = 0; i < relayersLength; ) {
+        for (uint256 i = 0; i < relayersLength; i++) {
             UnrewardedRelayer memory r = relayers[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -122,7 +122,6 @@ contract TargetChain {
                     hash(r.messages)
                 )
             );
-            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
