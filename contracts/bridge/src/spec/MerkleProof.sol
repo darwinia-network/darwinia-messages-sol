@@ -29,12 +29,13 @@ contract MerkleProof is Math {
         bytes32 root
     ) internal pure returns (bool) {
         bytes32 value = leaf;
-        for (uint i = 0; i < depth; ++i) {
+        for (uint i = 0; i < depth; ) {
             if ((index / (2**i)) % 2 == 1) {
                 value = hash_node(branch[i], value);
             } else {
                 value = hash_node(value, branch[i]);
             }
+            unchecked { ++i; }
         }
         return value == root;
     }
@@ -46,11 +47,13 @@ contract MerkleProof is Math {
         else if (len == 2) return hash_node(leaves[0], leaves[1]);
         uint bottom_length = get_power_of_two_ceil(len);
         bytes32[] memory o = new bytes32[](bottom_length * 2);
-        for (uint i = 0; i < len; ++i) {
-            o[bottom_length + i] = leaves[i];
-        }
-        for (uint i = bottom_length - 1; i > 0; --i) {
-            o[i] = hash_node(o[i * 2], o[i * 2 + 1]);
+        unchecked {
+            for (uint i = 0; i < len; ) {
+                o[bottom_length + i] = leaves[i];
+            }
+            for (uint i = bottom_length - 1; i > 0; --i) {
+                o[i] = hash_node(o[i * 2], o[i * 2 + 1]);
+            }
         }
         return o[1];
     }

@@ -129,7 +129,7 @@ contract SourceChain {
     {
         uint msgsLength = msgs.length;
         bytes memory encoded = abi.encode(msgsLength);
-        for (uint256 i = 0; i < msgsLength; i ++) {
+        for (uint256 i = 0; i < msgsLength; ) {
             MessageStorage memory message = msgs[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -139,6 +139,7 @@ contract SourceChain {
                     message.payload_hash
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
@@ -150,7 +151,7 @@ contract SourceChain {
     {
         uint msgsLength = msgs.length;
         bytes memory encoded = abi.encode(msgsLength);
-        for (uint256 i = 0; i < msgsLength; i ++) {
+        for (uint256 i = 0; i < msgsLength; ) {
             Message memory message = msgs[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -160,6 +161,7 @@ contract SourceChain {
                     hash(message.payload)
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
