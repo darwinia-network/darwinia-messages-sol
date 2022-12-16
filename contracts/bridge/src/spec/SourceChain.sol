@@ -16,7 +16,6 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.8.17;
-pragma abicoder v2;
 
 contract SourceChain {
     /// The MessagePayload is the structure of RPC which should be delivery to target chain

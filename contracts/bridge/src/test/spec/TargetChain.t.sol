@@ -16,7 +16,6 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.8.17;
-pragma abicoder v2;
 
 import "../test.sol";
 import "../../spec/TargetChain.sol";

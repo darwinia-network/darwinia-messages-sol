@@ -1,7 +1,6 @@
 // hevm: flattened sources of src/message/SerialInboundLane.sol
 // SPDX-License-Identifier: GPL-3.0 AND MIT OR Apache-2.0
 pragma solidity =0.8.17;
-pragma abicoder v2;
 
 ////// src/interfaces/ICrossChainFilter.sol
 // This file is part of Darwinia.
