@@ -62,7 +62,7 @@ library StorageProof {
         uint key_size = storage_keys.length;
         require(key_size == storage_proofs.length, "!storage_proof_len");
         values = new bytes[](key_size);
-        for (uint i = 0; i < key_size; i++) {
+        for (uint i = 0; i < key_size; ) {
             values[i] = verify_single_storage_proof(
                 root,
                 account,
@@ -70,6 +70,7 @@ library StorageProof {
                 storage_keys[i],
                 storage_proofs[i]
             );
+            unchecked { ++i; }
         }
     }
 }
