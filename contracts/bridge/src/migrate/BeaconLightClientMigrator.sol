@@ -16,7 +16,6 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.8.17;
-pragma abicoder v2;
 
 import "../truth/eth/BeaconLightClient.sol";
 import "../truth/eth/ExecutionLayer.sol";
