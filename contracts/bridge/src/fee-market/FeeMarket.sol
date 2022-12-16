@@ -164,8 +164,9 @@ contract FeeMarket is Initializable, IFeeMarket {
     function getOrder(uint256 key) external view returns (Order memory, OrderExt[] memory) {
         Order memory order = orderOf[key];
         OrderExt[] memory assigned_relayers = new OrderExt[](order.number);
-        for (uint slot = 0; slot < order.number; slot++) {
+        for (uint slot = 0; slot < order.number; ) {
             assigned_relayers[slot] = assignedRelayers[key][slot];
+            unchecked { ++slot; }
         }
         return (order, assigned_relayers);
     }
@@ -197,7 +198,7 @@ contract FeeMarket is Initializable, IFeeMarket {
                 array2[index] = feeOf[cur];
                 array3[index] = balanceOf[cur];
                 array4[index] = lockedOf[cur];
-                index++;
+                unchecked { index++; }
             }
             cur = relayers[cur];
         }
@@ -213,7 +214,7 @@ contract FeeMarket is Initializable, IFeeMarket {
         while (cur != SENTINEL_TAIL && index < ASSIGNED_RELAYERS_NUMBER) {
             if (_enough_balance(cur)) {
                 array[index] = cur;
-                index++;
+                unchecked { index++; }
             }
             cur = relayers[cur];
         }
@@ -312,12 +313,13 @@ contract FeeMarket is Initializable, IFeeMarket {
         address[] memory top_relayers = _get_and_prune_top_relayers();
         address last = top_relayers[top_relayers.length - 1];
         require(msg.value == feeOf[last], "!fee");
-        for (uint slot = 0; slot < top_relayers.length; slot++) {
+        for (uint slot = 0; slot < top_relayers.length; ) {
             address r = top_relayers[slot];
             require(isRelayer(r), "!relayer");
             _lock(r, COLLATERAL_PER_ORDER);
             assignedRelayers[key][slot] = OrderExt(r, feeOf[r]);
             emit AssignedExt(key, slot, r, feeOf[r]);
+            unchecked { ++slot; }
         }
         // Record the assigned time
         orderOf[key] = Order(uint32(block.timestamp), uint32(ASSIGNED_RELAYERS_NUMBER), COLLATERAL_PER_ORDER);
@@ -340,7 +342,7 @@ contract FeeMarket is Initializable, IFeeMarket {
         while (cur != SENTINEL_TAIL && index < ASSIGNED_RELAYERS_NUMBER) {
             if (_enough_balance(cur)) {
                 array[index] = cur;
-                index++;
+                unchecked { index++; }
                 prev = cur;
             } else {
                 prune(prev, cur);
@@ -393,10 +395,10 @@ contract FeeMarket is Initializable, IFeeMarket {
     ) private {
         uint256 total_confirm_reward = 0;
         uint256 total_vault_reward = 0;
-        for (uint256 i = 0; i < delivery_relayers.length; i++) {
+        for (uint256 i = 0; i < delivery_relayers.length; ) {
             DeliveredRelayer memory entry = delivery_relayers[i];
             uint256 every_delivery_reward = 0;
-            for (uint256 key = entry.begin; key <= entry.end; key++) {
+            for (uint256 key = entry.begin; key <= entry.end; ) {
                 (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) = _settle_order(key);
                 every_delivery_reward += delivery_reward;
                 total_confirm_reward += confirm_reward;
@@ -404,9 +406,11 @@ contract FeeMarket is Initializable, IFeeMarket {
                 // Clean order
                 _clean_order(key);
                 emit Settled(key, block.timestamp, entry.relayer, confirm_relayer);
+                unchecked { ++key; }
             }
             // Reward every delivery relayer
             _reward(entry.relayer, every_delivery_reward);
+            unchecked { ++i; }
         }
         // Reward confirm relayer
         _reward(confirm_relayer, total_confirm_reward);
@@ -459,13 +463,14 @@ contract FeeMarket is Initializable, IFeeMarket {
     ) private view returns (uint256, uint256) {
         (bool is_ontime, uint diff_time, uint number,) = _get_order_status(key);
         if (is_ontime) {
-            for (uint slot = 0; slot < number; slot++) {
+            for (uint slot = 0; slot < number; ) {
                 // The message confirmed in the `slot` assign_relayer
                 // [slot, slot+1)
                 if (slot * RELAY_TIME <= diff_time && diff_time < (slot + 1) * RELAY_TIME) {
                     uint256 slot_price = getSlotFee(key, slot);
                     return (slot, slot_price);
                 }
+                unchecked { ++slot; }
             }
             assert(false);
         } else {
@@ -479,7 +484,7 @@ contract FeeMarket is Initializable, IFeeMarket {
     ) private returns (uint256 slot_offensive_slash) {
         (bool is_ontime, uint diff_time, uint number, uint collateral) = _get_order_status(key);
         if (is_ontime) {
-            for (uint _slot = 0; _slot < number; _slot++) {
+            for (uint _slot = 0; _slot < number; ) {
                 address assign_relayer = getAssignedRelayer(key, _slot);
                 if (_slot < slot) {
                     uint256 slash_fee = collateral * 2 / 10;
@@ -489,17 +494,19 @@ contract FeeMarket is Initializable, IFeeMarket {
                 } else {
                     _unlock(assign_relayer, collateral);
                 }
+                unchecked { ++_slot; }
             }
         } else {
             uint256 slash_fee = collateral * 2 / 10;
             uint256 remaining = collateral - slash_fee;
             uint256 late_time = diff_time - number * RELAY_TIME;
             slash_fee += late_time >= SLASH_TIME ? remaining : (remaining * late_time / SLASH_TIME);
-            for (uint _slot = 0; _slot < number; _slot++) {
+            for (uint _slot = 0; _slot < number; ) {
                 address assign_relayer = getAssignedRelayer(key, _slot);
                 _slash(assign_relayer, slash_fee);
                 _unlock(assign_relayer, (collateral - slash_fee));
                 slot_offensive_slash += slash_fee;
+                unchecked { ++_slot; }
             }
         }
     }
@@ -514,12 +521,13 @@ contract FeeMarket is Initializable, IFeeMarket {
         if (is_ontime && _total_reward > 0) {
             require(number > slot, "!slot");
             uint _per_reward = _total_reward / (number - slot);
-            for (uint _slot = 0; _slot < number; _slot++) {
+            for (uint _slot = 0; _slot < number; ) {
                 if (_slot >= slot) {
                     address assign_relayer = getAssignedRelayer(key, _slot);
                     _reward(assign_relayer, _per_reward);
                     slot_duty_reward += _per_reward;
                 }
+                unchecked { ++_slot; }
             }
         } else {
             return 0;
@@ -528,8 +536,9 @@ contract FeeMarket is Initializable, IFeeMarket {
 
     function _clean_order(uint256 key) private {
         (, , uint number,) = _get_order_status(key);
-        for (uint _slot = 0; _slot < number; _slot++) {
+        for (uint _slot = 0; _slot < number; ) {
             delete assignedRelayers[key][_slot];
+            unchecked { ++_slot; }
         }
         delete orderOf[key];
     }
