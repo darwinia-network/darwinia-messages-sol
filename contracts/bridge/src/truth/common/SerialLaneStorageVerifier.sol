@@ -132,9 +132,10 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
 
             require(size == values.length, "!values_len");
             MessageStorage[] memory messages = new MessageStorage[](size);
-            for (uint64 i=0; i < size; i++) {
+            for (uint64 i=0; i < size; ) {
                uint256 key = (identify_storage << 64) + latest_received_nonce + 1 + i;
                messages[i] = MessageStorage(key, toBytes32(values[i]));
+               unchecked { ++i; }
             }
             lane_data.messages = messages;
         }
@@ -143,9 +144,11 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
 
     function build_message_keys(uint64 latest_received_nonce, uint64 size) internal view returns (bytes32[] memory) {
         bytes32[] memory storage_keys = new bytes32[](size);
-        uint64 begin = latest_received_nonce + 1;
-        for (uint64 index=0; index < size;) {
-            storage_keys[index++] = bytes32(mapLocation(LANE_MESSAGE_SLOT, begin + index));
+        unchecked {
+            uint64 begin = latest_received_nonce + 1;
+            for (uint64 index=0; index < size;) {
+                storage_keys[index++] = bytes32(mapLocation(LANE_MESSAGE_SLOT, begin + index));
+            }
         }
         return storage_keys;
     }
@@ -193,10 +196,12 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
             uint64 len = 2 * size;
             // find all messages storage keys
             bytes32[] memory storage_keys = new bytes32[](len);
-            for (uint64 index=0; index < len;) {
-                uint256 relayersLocation = mapLocation(LANE_MESSAGE_SLOT, front + index/2);
-                storage_keys[index++] = bytes32(relayersLocation);
-                storage_keys[index++] = bytes32(relayersLocation + 1);
+            unchecked {
+                for (uint64 index=0; index < len;) {
+                    uint256 relayersLocation = mapLocation(LANE_MESSAGE_SLOT, front + index/2);
+                    storage_keys[index++] = bytes32(relayersLocation);
+                    storage_keys[index++] = bytes32(relayersLocation + 1);
+                }
             }
 
             // extract messages storage value from proof
@@ -210,15 +215,17 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
 
             require(len == values.length, "!values_len");
             UnrewardedRelayer[] memory unrewarded_relayers = new UnrewardedRelayer[](size);
-            for (uint64 i=0; i < size; i++) {
-               uint slot2 = toUint(values[2*i+1]);
-               unrewarded_relayers[i] = UnrewardedRelayer(
-                   address(uint160(toUint(values[2*i]))),
-                   DeliveredMessages(
-                       uint64(slot2),
-                       uint64(slot2 >> 64)
-                   )
-               );
+            unchecked {
+                for (uint64 i=0; i < size; i++) {
+                   uint slot2 = toUint(values[2*i+1]);
+                   unrewarded_relayers[i] = UnrewardedRelayer(
+                       address(uint160(toUint(values[2*i]))),
+                       DeliveredMessages(
+                           uint64(slot2),
+                           uint64(slot2 >> 64)
+                       )
+                   );
+                }
             }
             lane_data.relayers = unrewarded_relayers;
         }
@@ -232,7 +239,7 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
             return 0;
         }
         require(len <= 32, "!len");
-        assembly {
+        assembly ("memory-safe") {
             data := div(mload(add(bts, 32)), exp(256, sub(32, len)))
         }
     }

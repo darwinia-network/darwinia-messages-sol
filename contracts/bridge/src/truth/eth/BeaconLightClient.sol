@@ -220,12 +220,14 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         uint participants = sum(sync_aggregate.sync_committee_bits);
         bytes[] memory participant_pubkeys = new bytes[](participants);
         uint64 n = 0;
-        for (uint64 i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
-            uint index = i >> 8;
-            uint sindex = i / 8 % 32;
-            uint offset = i % 8;
-            if (uint8(sync_aggregate.sync_committee_bits[index][sindex]) >> offset & 1 == 1) {
-                participant_pubkeys[n++] = sync_committee.pubkeys[i];
+        unchecked {
+            for (uint64 i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
+                uint index = i >> 8;
+                uint sindex = i / 8 % 32;
+                uint offset = i % 8;
+                if (uint8(sync_aggregate.sync_committee_bits[index][sindex]) >> offset & 1 == 1) {
+                    participant_pubkeys[n++] = sync_committee.pubkeys[i];
+                }
             }
         }
 
@@ -287,7 +289,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
             }
         } else {
             if (out.length > 0) {
-                assembly {
+                assembly ("memory-safe") {
                     let returndata_size := mload(out)
                     revert(add(32, out), returndata_size)
                 }

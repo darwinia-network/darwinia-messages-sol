@@ -84,7 +84,7 @@ contract EthereumParallelLaneStorageVerifier {
             return 0;
         }
         require(len <= 32, "!len");
-        assembly {
+        assembly ("memory-safe") {
             data := div(mload(add(bts, 32)), exp(256, sub(32, len)))
         }
     }

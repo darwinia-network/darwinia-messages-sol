@@ -363,7 +363,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, M
         uint256 width = get_power_of_two_ceil(len);
         /// @dev For each randomSignature, do:
         bytes32[] memory leaves = new bytes32[](requiredNumOfSignatures);
-        for (uint256 i = 0; i < requiredNumOfSignatures; ++i) {
+        for (uint256 i = 0; i < requiredNumOfSignatures; ) {
             uint8 pos = uint8(proof.positions[i]);
 
             require(pos < len, "Bridge: invalid signer position");
@@ -378,6 +378,7 @@ contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, M
 
             address signer = ECDSA.recover(commitmentHash, proof.signatures[i].r, proof.signatures[i].vs);
             leaves[i] = keccak256(abi.encodePacked(signer));
+            unchecked { ++i; }
         }
 
         require((1 << proof.depth) == width, "Bridge: invalid depth");

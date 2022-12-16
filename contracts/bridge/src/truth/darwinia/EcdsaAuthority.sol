@@ -83,7 +83,7 @@ contract EcdsaAuthority {
         require(_threshold >= 1, "0");
         // Initializing relayers.
         address current = SENTINEL;
-        for (uint256 i = 0; i < _relayers.length; i++) {
+        for (uint256 i = 0; i < _relayers.length; ) {
             // Relayer address cannot be null.
             address r = _relayers[i];
             require(r != address(0) && r != SENTINEL && r != address(this) && current != r, "!relayer");
@@ -92,6 +92,7 @@ contract EcdsaAuthority {
             relayers[current] = r;
             current = r;
             emit AddedRelayer(r);
+            unchecked { ++i; }
         }
         relayers[current] = SENTINEL;
         count = _relayers.length;
