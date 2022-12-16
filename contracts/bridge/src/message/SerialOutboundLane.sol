@@ -159,10 +159,12 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
         uint64 size = message_size();
         if (size > 0) {
             lane_data.messages = new MessageStorage[](size);
-            uint64 begin = outboundLaneNonce.latest_received_nonce + 1;
-            for (uint64 index = 0; index < size; index++) {
-                uint64 nonce = index + begin;
-                lane_data.messages[index] = MessageStorage(encodeMessageKey(nonce), messages[nonce]);
+            unchecked {
+                uint64 begin = outboundLaneNonce.latest_received_nonce + 1;
+                for (uint64 index = 0; index < size; index++) {
+                    uint64 nonce = index + begin;
+                    lane_data.messages[index] = MessageStorage(encodeMessageKey(nonce), messages[nonce]);
+                }
             }
         }
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
@@ -215,8 +217,9 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
         // messages in this range => with_capacity call must succeed here or we'll be unable to receive
         // confirmations at all
         uint64 last_entry_end = 0;
-        for (uint64 i = 0; i < relayers.length; i++) {
+        for (uint64 i = 0; i < relayers.length; ) {
             UnrewardedRelayer memory entry = relayers[i];
+            unchecked { ++i; }
             // unrewarded relayer entry must have at least 1 unconfirmed message
             // (guaranteed by the `InboundLane::receive_message()`)
             require(entry.messages.end >= entry.messages.begin, "EmptyUnrewardedRelayerEntry");
@@ -245,8 +248,10 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
             nonce.oldest_unpruned_nonce <= nonce.latest_received_nonce)
         {
             delete messages[nonce.oldest_unpruned_nonce];
-            pruned_messages += 1;
-            nonce.oldest_unpruned_nonce += 1;
+            unchecked {
+                pruned_messages += 1;
+                nonce.oldest_unpruned_nonce += 1;
+            }
         }
         if (pruned_messages > 0) {
             outboundLaneNonce.oldest_unpruned_nonce = nonce.oldest_unpruned_nonce;
@@ -261,11 +266,12 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
         uint64 received_end
     ) private {
         IFeeMarket.DeliveredRelayer[] memory delivery_relayers = new IFeeMarket.DeliveredRelayer[](relayers.length);
-        for (uint256 i = 0; i < relayers.length; i++) {
+        for (uint256 i = 0; i < relayers.length; ) {
             UnrewardedRelayer memory r = relayers[i];
             uint64 nonce_begin = _max(r.messages.begin, received_start);
             uint64 nonce_end = _min(r.messages.end, received_end);
             delivery_relayers[i] = IFeeMarket.DeliveredRelayer(r.relayer, encodeMessageKey(nonce_begin), encodeMessageKey(nonce_end));
+            unchecked { ++i; }
         }
         require(IFeeMarket(FEE_MARKET).settle(delivery_relayers, msg.sender), "SettleFailed");
     }
