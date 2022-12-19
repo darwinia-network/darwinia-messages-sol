@@ -17,6 +17,8 @@
 
 pragma solidity 0.7.6;
 
+import "../Memory.sol";
+
 /**
  * @title RLPEncode
  * @author Bakaoh (with modifications)
@@ -150,39 +152,6 @@ library RLPEncode {
     }
 
     /**
-     * Copies a piece of memory to another location.
-     * @notice From: https://github.com/Arachnid/solidity-stringutils/blob/master/src/strings.sol.
-     * @param _dest Destination location.
-     * @param _src Source location.
-     * @param _len Length of memory to copy.
-     */
-    function _memcpy(
-        uint256 _dest,
-        uint256 _src,
-        uint256 _len
-    ) private pure {
-        uint256 dest = _dest;
-        uint256 src = _src;
-        uint256 len = _len;
-
-        for (; len >= 32; len -= 32) {
-            assembly {
-                mstore(dest, mload(src))
-            }
-            dest += 32;
-            src += 32;
-        }
-
-        uint256 mask = 256**(32 - len) - 1;
-
-        assembly {
-            let srcpart := and(mload(src), not(mask))
-            let destpart := and(mload(dest), mask)
-            mstore(dest, or(destpart, srcpart))
-        }
-    }
-
-    /**
      * Flattens a list of byte strings into one byte string.
      * @notice From: https://github.com/sammayo/solidity-rlp-encoder/blob/master/RLPEncode.sol.
      * @param _list List of byte strings to flatten.
@@ -201,19 +170,15 @@ library RLPEncode {
 
         bytes memory flattened = new bytes(len);
         uint256 flattenedPtr;
-        assembly {
-            flattenedPtr := add(flattened, 0x20)
-        }
+        (flattenedPtr,) = Memory.fromBytes(flattened);
 
         for (i = 0; i < _list.length; i++) {
             bytes memory item = _list[i];
 
             uint256 listPtr;
-            assembly {
-                listPtr := add(item, 0x20)
-            }
+            (listPtr,) = Memory.fromBytes(item);
 
-            _memcpy(flattenedPtr, listPtr, item.length);
+            Memory.copy(listPtr, flattenedPtr, item.length);
             flattenedPtr += _list[i].length;
         }
 
