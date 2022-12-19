@@ -17,6 +17,8 @@
 
 pragma solidity 0.7.6;
 
+import "../Memory.sol";
+
 /**
  * @title RLDecode
  * @dev Adapted from "RLPDecode" by Hamdi Allam (hamdi.allam97@gmail.com).
@@ -367,26 +369,10 @@ library RLPDecode {
 
         uint256 src = _src + _offset;
         uint256 dest;
-        assembly {
-            dest := add(out, 32)
-        }
+        (dest, ) = Memory.fromBytes(out);
 
-        // Copy over as many complete words as we can.
-        for (uint256 i = 0; i < _length / 32; i++) {
-            assembly {
-                mstore(dest, mload(src))
-            }
+        Memory.copy(src, dest, _length);
 
-            src += 32;
-            dest += 32;
-        }
-
-        // Pick out the remaining bytes.
-        uint256 mask = 256**(32 - (_length % 32)) - 1;
-
-        assembly {
-            mstore(dest, or(and(mload(src), not(mask)), and(mload(dest), mask)))
-        }
         return out;
     }
 
