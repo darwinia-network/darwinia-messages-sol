@@ -59,9 +59,7 @@ library RLPDecode {
      */
     function toRLPItem(bytes memory _in) internal pure returns (RLPItem memory) {
         uint256 ptr;
-        assembly {
-            ptr := add(_in, 32)
-        }
+        (ptr,) = memory.fromBytes(_in);
 
         return RLPItem({ length: _in.length, ptr: ptr });
     }
