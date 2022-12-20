@@ -104,6 +104,7 @@ library MerkleTrie {
         bytes memory _proof,
         bytes32 _root
     ) internal pure returns (bool _exists, bytes memory _value) {
+        require(_key.length > 0, "MerkleTrie: empty key");
         TrieNode[] memory proof = _parseProof(_proof);
         (uint256 pathLength, bytes memory keyRemainder, bool isFinalNode) = _walkNodePath(
             proof,
