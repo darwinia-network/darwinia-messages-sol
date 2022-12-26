@@ -76,26 +76,21 @@ library Memory {
     // This function does not check the or destination, it only copies
     // the bytes.
     function copy(uint src, uint dest, uint len) internal pure {
-        // Copy word-length chunks while possible
-        for (; len >= WORD_SIZE; len -= WORD_SIZE) {
-            assembly {
-                mstore(dest, mload(src))
-            }
-            dest += WORD_SIZE;
-            src += WORD_SIZE;
-        }
-
-        // Copy remaining bytes
-        uint mask;
-
-        unchecked {
-            mask = 256 ** (WORD_SIZE - len) - 1;
-        }
-
+        // Mostly based on Solidity's copy_memory_to_memory:
+        // https://github.com/ethereum/solidity/blob/34dd30d71b4da730488be72ff6af7083cf2a91f6/libsolidity/codegen/YulUtilFunctions.cpp#L102-L114
         assembly {
-            let srcpart := and(mload(src), not(mask))
-            let destpart := and(mload(dest), mask)
-            mstore(dest, or(destpart, srcpart))
+            let i := 0
+            for {
+
+            } lt(i, len) {
+                i := add(i, 32)
+            } {
+                mstore(add(dest, i), mload(add(src, i)))
+            }
+
+            if gt(i, len) {
+                mstore(add(dest, len), 0)
+            }
         }
     }
 
