@@ -23,8 +23,8 @@ import "../../interfaces/ILightClient.sol";
 
 contract EthereumParallelLaneStorageVerifier {
     struct Proof {
-        bytes accountProof;
-        bytes laneRootProof;
+        bytes[] accountProof;
+        bytes[] laneRootProof;
     }
 
     // bridged_chain_pos ++ bridged_lane_pos

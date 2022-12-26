@@ -29,35 +29,32 @@ library StorageProof {
     function verify_single_storage_proof(
         bytes32 root,
         address account,
-        bytes memory account_proof,
+        bytes[] memory account_proof,
         bytes32 storage_key,
-        bytes memory storage_proof
+        bytes[] memory storage_proof
     ) internal pure returns (bytes memory value) {
         bytes memory account_hash = abi.encodePacked(account);
-        (bool exists, bytes memory data) = SecureMerkleTrie.get(
+        bytes memory data = SecureMerkleTrie.get(
             account_hash,
             account_proof,
             root
         );
-        require(exists, "!account_proof");
         State.EVMAccount memory acc = data.toEVMAccount();
         bytes memory storage_key_hash = abi.encodePacked(storage_key);
-        (exists, value) = SecureMerkleTrie.get(
+        value = SecureMerkleTrie.get(
             storage_key_hash,
             storage_proof,
             acc.storage_root
         );
-        if (exists) {
-            value = value.toRLPItem().readBytes();
-        }
+        value = value.toRLPItem().readBytes();
     }
 
     function verify_multi_storage_proof(
         bytes32 root,
         address account,
-        bytes memory account_proof,
+        bytes[] memory account_proof,
         bytes32[] memory storage_keys,
-        bytes[] memory storage_proofs
+        bytes[][] memory storage_proofs
     ) internal pure returns (bytes[] memory values) {
         uint key_size = storage_keys.length;
         require(key_size == storage_proofs.length, "!storage_proof_len");
