@@ -107,29 +107,6 @@ library Bytes {
         return r >> (256 - len * 8);
     }
 
-    /// @notice Converts a byte array into a nibble array by splitting each byte into two nibbles.
-    ///         Resulting nibble array will be exactly twice as long as the input byte array.
-    //
-    /// @param _bytes Input byte array to convert.
-    //
-    /// @return Resulting nibble array.
-    function toNibbles(bytes memory _bytes) internal pure returns (bytes memory) {
-        uint256 bytesLength = _bytes.length;
-        bytes memory nibbles = new bytes(bytesLength * 2);
-        bytes1 b;
-
-        for (uint256 i = 0; i < bytesLength; ) {
-            b = _bytes[i];
-            nibbles[i * 2] = b >> 4;
-            nibbles[i * 2 + 1] = b & 0x0f;
-            unchecked {
-                ++i;
-            }
-        }
-
-        return nibbles;
-    }
-
     /// alias of substr
     function slice(
         bytes memory self,

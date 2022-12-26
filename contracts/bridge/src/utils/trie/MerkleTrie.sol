@@ -18,6 +18,7 @@
 pragma solidity 0.8.17;
 
 import { Bytes } from "../Bytes.sol";
+import { Nibble } from "./Nibble.sol";
 import { RLPDecode } from "../rlp/RLPDecode.sol";
 
 /**
@@ -112,7 +113,7 @@ library MerkleTrie {
         require(_key.length > 0, "MerkleTrie: empty key");
 
         TrieNode[] memory proof = _parseProof(_proof);
-        bytes memory key = Bytes.toNibbles(_key);
+        bytes memory key = Nibble.toNibbles(_key);
         bytes memory currentNodeID = abi.encodePacked(_root);
         uint256 currentKeyIndex = 0;
 
@@ -276,7 +277,7 @@ library MerkleTrie {
      * @return Node path, converted to an array of nibbles.
      */
     function _getNodePath(TrieNode memory _node) private pure returns (bytes memory) {
-        return Bytes.toNibbles(RLPDecode.readBytes(_node.decoded[0]));
+        return Nibble.toNibbles(RLPDecode.readBytes(_node.decoded[0]));
     }
 
     /**
