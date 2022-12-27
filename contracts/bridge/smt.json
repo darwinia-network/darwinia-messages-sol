@@ -695,7 +695,10 @@
         "src/test/utils/Math.p.sol": [
           "MathPropertyTest"
         ]
-      }
+      },
+      "invariants": [
+        "contract"
+      ]
     },
     "evmVersion": "london"
   }
