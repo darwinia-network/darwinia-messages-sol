@@ -17,27 +17,11 @@
 
 pragma solidity 0.8.17;
 
-import "../../utils/Math.sol";
-
-contract MathPropertyTest is Math {
-    function property_get_power_of_two_ceil(uint x) public pure {
-        if (x == 0 || x == type(uint).max) return;
-        uint y = get_power_of_two_ceil(x);
-        assert(y / 2 < x && x <= y);
-    }
-
-    function property_log_2(uint x) public pure {
-        if (x <= 1) return;
-        uint y = log_2(x);
-        assert(2**(y-1) < x && x <= 2**y);
-    }
-
-    function property_max(uint x, uint y) public pure {
-        uint z = _max(x, y);
-        if (z == x) {
-            assert(z >= y);
-        } {
-            assert(z >= x);
-        }
-    }
+interface Hevm {
+    function roll(uint) external;
+    function warp(uint) external;
+    function addr(uint256) external returns (address);
+    function sign(uint256,bytes32) external returns (uint8,bytes32,bytes32);
+    function load(address c, bytes32 loc) external returns (bytes32 val);
 }
+

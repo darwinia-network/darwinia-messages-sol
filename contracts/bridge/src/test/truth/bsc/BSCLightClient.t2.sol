@@ -25,11 +25,11 @@ contract BSCLightClientTest2 is DSTest, BinanceSmartChain {
     uint64 constant private CHAIN_ID = 97;
     uint64 constant private PERIOD = 3;
 
-    ParliaWrapper public parlia;
+    ParliaWrapper2 public parlia;
 
     function setUp() public {
         BSCHeader memory genesis_header = build_genesis_header();
-        parlia = new ParliaWrapper(CHAIN_ID, PERIOD, genesis_header);
+        parlia = new ParliaWrapper2(CHAIN_ID, PERIOD, genesis_header);
     }
 
     function test_constructor_args() public {
@@ -254,7 +254,7 @@ contract BSCLightClientTest2 is DSTest, BinanceSmartChain {
     }
 }
 
-contract ParliaWrapper is BSCLightClient {
+contract ParliaWrapper2 is BSCLightClient {
     constructor(uint64 chain_id, uint64 period, BSCHeader memory header) BSCLightClient(chain_id, period, header) {}
 
     function recover_creator(BSCHeader memory header) public view returns (address) {

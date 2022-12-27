@@ -18,15 +18,12 @@
 pragma solidity 0.8.17;
 
 import "../test.sol";
+import "../hevm.sol";
 import "../../message/SerialInboundLane.sol";
 import "../../spec/TargetChain.sol";
 import "../../spec/SourceChain.sol";
 import "../mock/MockLightClient.sol";
 import "../mock/NormalApp.sol";
-
-interface Hevm {
-    function load(address c, bytes32 loc) external returns (bytes32 val);
-}
 
 contract SerialInboundLandTest is DSTest, SourceChain, TargetChain {
     uint32 constant internal THIS_CHAIN_POS = 0;

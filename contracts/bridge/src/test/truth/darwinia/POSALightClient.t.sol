@@ -18,14 +18,10 @@
 pragma solidity 0.8.17;
 
 import "../../test.sol";
+import "../../hevm.sol";
 import "../../../utils/ECDSA.sol";
 import "../../../spec/POSACommitmentScheme.sol";
 import "../../../truth/darwinia/POSALightClient.sol";
-
-interface Hevm {
-    function sign(uint256,bytes32) external returns (uint8,bytes32,bytes32);
-    function addr(uint256) external returns (address);
-}
 
 contract POSALightClientTest is POSACommitmentScheme, DSTest {
     // solhint-disable-next-line const-name-snakecase

@@ -1,0 +1,5 @@
+dapp---use: Could not find solc-0.8.17 in your path or nix store.
+Temporarily installing solc-0.8.17...
+Tip: run `nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_8_17` for a lasting installation of this version.
+warning: unknown setting 'experimental-features'
+error: interrupted by the user

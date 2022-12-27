@@ -18,13 +18,10 @@
 pragma solidity 0.8.17;
 
 import "../../test.sol";
+import "../../hevm.sol";
 import "../../../utils/Math.sol";
 import "../../../spec/BEEFYCommitmentScheme.sol";
 import "../../../truth/darwinia/DarwiniaLightClient.sol";
-
-interface Hevm {
-    function roll(uint) external;
-}
 
 contract DarwiniaLightClientTest is DSTest, Math {
     bytes32 constant internal NETWORK = 0x4372616200000000000000000000000000000000000000000000000000000000;

@@ -18,12 +18,9 @@
 pragma solidity 0.8.17;
 
 import "../test.sol";
+import "../hevm.sol";
 import "../../interfaces/IFeeMarket.sol";
 import "../../fee-market/SimpleFeeMarket.sol";
-
-interface Hevm {
-    function warp(uint) external;
-}
 
 contract SimpleFeeMarketTest is DSTest {
     uint256 constant internal COLLATERAL_PERORDER = 1 ether;
@@ -36,9 +33,9 @@ contract SimpleFeeMarketTest is DSTest {
     address public self;
 
     SimpleFeeMarket public market;
-    Guy       public a;
-    Guy       public b;
-    Guy       public c;
+    One             public a;
+    One             public b;
+    One             public c;
 
     function setUp() public {
          market = new SimpleFeeMarket(
@@ -50,9 +47,9 @@ contract SimpleFeeMarketTest is DSTest {
          );
          self = address(this);
          market.initialize();
-         a = new Guy(market);
-         b = new Guy(market);
-         c = new Guy(market);
+         a = new One(market);
+         b = new One(market);
+         c = new One(market);
     }
 
     function invariant_setter() public {
@@ -444,17 +441,17 @@ contract SimpleFeeMarketTest is DSTest {
         perform_assign(key, 1 ether);
     }
 
-    function newDeliveredRelayers(Guy relayer, uint key) public pure returns (IFeeMarket.DeliveredRelayer[] memory) {
+    function newDeliveredRelayers(One relayer, uint key) public pure returns (IFeeMarket.DeliveredRelayer[] memory) {
         IFeeMarket.DeliveredRelayer[] memory deliveredRelayers = new IFeeMarket.DeliveredRelayer[](1);
         deliveredRelayers[0] = IFeeMarket.DeliveredRelayer(address(relayer), key, key);
         return deliveredRelayers;
     }
 
-    function assert_eth_balance(Guy guy, uint balance) public {
+    function assert_eth_balance(One guy, uint balance) public {
         assertEq(address(guy).balance, balance);
     }
 
-    function assert_market_balance(Guy guy, uint balance) public {
+    function assert_market_balance(One guy, uint balance) public {
         assertEq(market.balanceOf(address(guy)), balance);
     }
 
@@ -465,11 +462,11 @@ contract SimpleFeeMarketTest is DSTest {
         assertEq(ba + bb + bc, market.totalSupply());
     }
 
-    function assert_market_locked(Guy guy, uint locked) public {
+    function assert_market_locked(One guy, uint locked) public {
         assertEq(market.lockedOf(address(guy)), locked);
     }
 
-    function assert_market_order(Guy guy, uint key) public {
+    function assert_market_order(One guy, uint key) public {
         (uint32 assignedTime, address assignedRelayer, uint collateral, uint fee) = market.orderOf(key);
         assertEq(assignedTime, block.timestamp);
         assertEq(collateral, COLLATERAL_PERORDER);
@@ -493,43 +490,43 @@ contract SimpleFeeMarketTest is DSTest {
         assertEq(market.totalSupply(), supply);
     }
 
-    function assert_market_is_relayer(Guy guy) public {
+    function assert_market_is_relayer(One guy) public {
         assertTrue(market.isRelayer(address(guy)));
     }
 
-    function assert_market_is_not_relayer(Guy guy) public {
+    function assert_market_is_not_relayer(One guy) public {
         assertTrue(!market.isRelayer(address(guy)));
     }
 
-    function assert_market_fee_of(Guy guy, uint fee) public {
+    function assert_market_fee_of(One guy, uint fee) public {
         assertEq(market.feeOf(address(guy)), fee);
     }
 
-    function perform_join(Guy guy, uint wad) public {
+    function perform_join(One guy, uint wad) public {
         guy.join{value: wad}();
     }
 
-    function perform_exit(Guy guy, uint wad) public {
+    function perform_exit(One guy, uint wad) public {
         guy.exit(wad);
     }
 
-    function perform_enroll(Guy guy, address prev, uint wad, uint fee) public {
+    function perform_enroll(One guy, address prev, uint wad, uint fee) public {
         guy.enroll{value: wad}(prev, fee);
     }
 
-    function perform_leave(Guy guy, address prev) public {
+    function perform_leave(One guy, address prev) public {
         guy.leave(prev);
     }
 
-    function perform_enrol(Guy guy, address prev, uint fee) public {
+    function perform_enrol(One guy, address prev, uint fee) public {
         guy.enrol(prev, fee);
     }
 
-    function perform_delist(Guy guy, address prev) public {
+    function perform_delist(One guy, address prev) public {
         guy.delist(prev);
     }
 
-    function perform_move(Guy guy, address old_prev, address new_prev, uint new_fee) public {
+    function perform_move(One guy, address old_prev, address new_prev, uint new_fee) public {
         guy.move(old_prev, new_prev, new_fee);
     }
 
@@ -538,7 +535,7 @@ contract SimpleFeeMarketTest is DSTest {
     }
 }
 
-contract Guy {
+contract One {
     SimpleFeeMarket market;
 
     constructor(SimpleFeeMarket _market) {
