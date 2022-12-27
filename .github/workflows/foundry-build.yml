@@ -27,9 +27,8 @@ jobs:
         with:
           version: nightly
 
-      - name: Install Fuzz
+      - name: Install test-case-generator
         run: make fuzz
-      - run: fuzz
 
       - name: test
         run: forge test

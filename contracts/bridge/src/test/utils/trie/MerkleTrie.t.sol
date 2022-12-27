@@ -281,7 +281,7 @@ contract MerkleTrieTest is DSTest {
         )
     {
         string[] memory cmds = new string[](5);
-        cmds[0] = "fuzz";
+        cmds[0] = "test-case-generator";
         cmds[1] = "-m";
         cmds[2] = "trie";
         cmds[3] = "-v";
