@@ -22,4 +22,4 @@ jobs:
           name: dapp
 
       - name: test
-        run: nix-shell --run 'make fuzz && test'
+        run: nix-shell --run 'make fuzz && make test'
