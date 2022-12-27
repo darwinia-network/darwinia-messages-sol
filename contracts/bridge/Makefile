@@ -1,4 +1,4 @@
-.PHONY: all install update npm solc foundry
+.PHONY: all install update npm solc fuzz foundry
 .PHONY: build test clean doc lint estimate size e2e audit flatten
 .PHONY: deploy deploy-mainnet deploy-rinkeby verify check-api-key
 .PHONY: local-testnet migrate-local
@@ -8,9 +8,9 @@
 
 all: build
 
-install: solc update npm
+install: solc update npm fuzz
 
-tools: foundry
+tools: foundry fuzz
 
 # dapp deps
 update:; dapp update
@@ -18,6 +18,7 @@ update:; dapp update
 # npm deps for linting etc.
 npm:; yarn install
 
+fuzz:; go install github.com/hujw77/test-case-generator@v1.0.0
 foundry:; cargo install --git https://github.com/foundry-rs/foundry --profile local --locked foundry-cli anvil
 
 # install solc version
