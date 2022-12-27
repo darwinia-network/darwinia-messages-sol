@@ -37,7 +37,7 @@ audit    :; @./bin/audit.sh
 flatten  :; @./bin/flatten.sh
 estimate :; @./bin/estimate-gas.sh ${contract}
 size     :; @./bin/contract-size.sh ${contract}
-gen-smt  :; export DAPP_SMTCHECKER=1 && dapp mk-standard-json | jq '.settings.modelChecker += {"contracts": {"src/test/utils/Math.p.sol": ["MathPropertyTest"]}}' &> dapp_smtchecker.json
+gen-smt  :; export DAPP_SMTCHECKER=1 && dapp mk-standard-json | jq '.settings.modelChecker += {"contracts": {"src/test/utils/Math.p.sol": ["MathPropertyTest"]}}' &> smt.json
 
 # Deployment helpers
 deploy       :; @./bin/deploy.sh $(network_name)

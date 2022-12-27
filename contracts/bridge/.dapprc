@@ -18,7 +18,7 @@ export DAPP_BUILD_OPTIMIZE_RUNS=999999
 
 if [ "$CI" = "true" ]
 then
-  export DAPP_STANDARD_JSON=./dapp_smtchecker.json
+  export DAPP_STANDARD_JSON=smt.json
   export DAPP_TEST_FUZZ_RUNS=10000
   export DAPP_TEST_MAX_ITERATIONS=6
   export DAPP_TEST_VERBOSITY=0
