@@ -20,17 +20,18 @@ pragma solidity 0.8.17;
 import "../Memory.sol";
 
 /**
- * @title RLPEncode
- * @author Bakaoh (with modifications)
+ * @custom:attribution https://github.com/bakaoh/solidity-rlp-encode
+ * @title RLPWriter
+ * @author RLPWriter is a library for encoding Solidity types to RLP bytes. Adapted from Bakaoh's
+ *         RLPEncode library (https://github.com/bakaoh/solidity-rlp-encode) with minor
+ *         modifications to improve legibility.
  */
 library RLPEncode {
-    /**********************
-     * Internal Functions *
-     **********************/
-
     /**
-     * RLP encodes a byte string.
+     * @notice RLP encodes a byte string.
+     *
      * @param _in The byte string to encode.
+     *
      * @return The RLP encoded string in bytes.
      */
     function writeBytes(bytes memory _in) internal pure returns (bytes memory) {
@@ -46,8 +47,10 @@ library RLPEncode {
     }
 
     /**
-     * RLP encodes a list of RLP encoded byte byte strings.
+     * @notice RLP encodes a list of RLP encoded byte byte strings.
+     *
      * @param _in The list of RLP encoded byte strings.
+     *
      * @return The RLP encoded list of items in bytes.
      */
     function writeList(bytes[] memory _in) internal pure returns (bytes memory) {
@@ -56,8 +59,10 @@ library RLPEncode {
     }
 
     /**
-     * RLP encodes a string.
+     * @notice RLP encodes a string.
+     *
      * @param _in The string to encode.
+     *
      * @return The RLP encoded string in bytes.
      */
     function writeString(string memory _in) internal pure returns (bytes memory) {
@@ -65,8 +70,10 @@ library RLPEncode {
     }
 
     /**
-     * RLP encodes an address.
+     * @notice RLP encodes an address.
+     *
      * @param _in The address to encode.
+     *
      * @return The RLP encoded address in bytes.
      */
     function writeAddress(address _in) internal pure returns (bytes memory) {
@@ -74,8 +81,10 @@ library RLPEncode {
     }
 
     /**
-     * RLP encodes a uint.
+     * @notice RLP encodes a uint.
+     *
      * @param _in The uint256 to encode.
+     *
      * @return The RLP encoded uint256 in bytes.
      */
     function writeUint(uint256 _in) internal pure returns (bytes memory) {
@@ -83,8 +92,10 @@ library RLPEncode {
     }
 
     /**
-     * RLP encodes a bool.
+     * @notice RLP encodes a bool.
+     *
      * @param _in The bool to encode.
+     *
      * @return The RLP encoded bool in bytes.
      */
     function writeBool(bool _in) internal pure returns (bytes memory) {
@@ -93,36 +104,32 @@ library RLPEncode {
         return encoded;
     }
 
-    /*********************
-     * Private Functions *
-     *********************/
-
     /**
-     * Encode the first byte, followed by the `len` in binary form if `length` is more than 55.
-     * @param _len The length of the string or the payload.
+     * @notice Encode the first byte and then the `len` in binary form if `length` is more than 55.
+     *
+     * @param _len    The length of the string or the payload.
      * @param _offset 128 if item is string, 192 if item is list.
+     *
      * @return RLP encoded bytes.
      */
     function _writeLength(uint256 _len, uint256 _offset) private pure returns (bytes memory) {
         bytes memory encoded;
 
-        unchecked {
-            if (_len < 56) {
-                encoded = new bytes(1);
-                encoded[0] = bytes1(uint8(_len) + uint8(_offset));
-            } else {
-                uint256 lenLen;
-                uint256 i = 1;
-                while (_len / i != 0) {
-                    lenLen++;
-                    i *= 256;
-                }
+        if (_len < 56) {
+            encoded = new bytes(1);
+            encoded[0] = bytes1(uint8(_len) + uint8(_offset));
+        } else {
+            uint256 lenLen;
+            uint256 i = 1;
+            while (_len / i != 0) {
+                lenLen++;
+                i *= 256;
+            }
 
-                encoded = new bytes(lenLen + 1);
-                encoded[0] = bytes1(uint8(lenLen) + uint8(_offset) + 55);
-                for (i = 1; i <= lenLen; i++) {
-                    encoded[i] = bytes1(uint8((_len / (256**(lenLen - i))) % 256));
-                }
+            encoded = new bytes(lenLen + 1);
+            encoded[0] = bytes1(uint8(lenLen) + uint8(_offset) + 55);
+            for (i = 1; i <= lenLen; i++) {
+                encoded[i] = bytes1(uint8((_len / (256**(lenLen - i))) % 256));
             }
         }
 
@@ -130,26 +137,25 @@ library RLPEncode {
     }
 
     /**
-     * Encode integer in big endian binary form with no leading zeroes.
-     * @notice TODO: This should be optimized with assembly to save gas costs.
+     * @notice Encode integer in big endian binary form with no leading zeroes.
+     *
      * @param _x The integer to encode.
+     *
      * @return RLP encoded bytes.
      */
     function _toBinary(uint256 _x) private pure returns (bytes memory) {
         bytes memory b = abi.encodePacked(_x);
 
         uint256 i = 0;
-        for (; i < 32; ) {
+        for (; i < 32; i++) {
             if (b[i] != 0) {
                 break;
             }
-            unchecked { ++i; }
         }
 
         bytes memory res = new bytes(32 - i);
-        for (uint256 j = 0; j < res.length; ) {
+        for (uint256 j = 0; j < res.length; j++) {
             res[j] = b[i++];
-            unchecked { ++j; }
         }
 
         return res;
