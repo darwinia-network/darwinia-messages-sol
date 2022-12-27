@@ -28,7 +28,7 @@ solc:; nix profile install -f https://github.com/dapphub/dapptools/archive/maste
 # Build & test
 build    :; dapp build
 flat     :; dapp flat
-test     :; dapp test # --ffi # enable if you need the `ffi` cheat code on HEVM
+test     :; dapp test --ffi # enable if you need the `ffi` cheat code on HEVM
 clean    :; dapp clean
 lint     :; yarn run lint
 doc      :; yarn run docs

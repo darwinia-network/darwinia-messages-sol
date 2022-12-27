@@ -23,5 +23,6 @@ interface Hevm {
     function addr(uint256) external returns (address);
     function sign(uint256,bytes32) external returns (uint8,bytes32,bytes32);
     function load(address c, bytes32 loc) external returns (bytes32 val);
+    function ffi(string[] calldata) external returns (bytes memory);
 }
 
