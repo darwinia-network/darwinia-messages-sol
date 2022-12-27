@@ -686,14 +686,16 @@
       }
     },
     "modelChecker": {
-      "contracts": {
-        "src/test/utils/Math.p.sol": ["MathPropertyTest"]
-      },
       "engine": "chc",
       "targets": [
         "assert"
       ],
-      "timeout": 20000
+      "timeout": 20000,
+      "contracts": {
+        "src/test/utils/Math.p.sol": [
+          "MathPropertyTest"
+        ]
+      }
     },
     "evmVersion": "london"
   }
