@@ -35,6 +35,12 @@ contract MathTest is DSTest, Math {
         assertEq(get_power_of_two_ceil(100), 128);
     }
 
+    function test_get_power_of_two_ceil_fuzz(uint x) public {
+        if (x < 1 || x >= 0x8000000000000000000000000000000000000000000000000000000000000000) return;
+        uint y = log_2(x);
+        assertEq(y, _ceilLog2(x));
+    }
+
     function test_log_2() public {
         assertEq(log_2(1), 0);
         assertEq(log_2(2), 1);
@@ -84,5 +90,28 @@ contract MathTest is DSTest, Math {
         } else {
             fail();
         }
+    }
+
+    function _ceilLog2(uint256 _in) internal pure returns (uint256) {
+        require(_in > 0, "Cannot compute ceil(log_2) of 0.");
+
+        if (_in == 1) {
+            return 0;
+        }
+
+        uint256 val = _in;
+        uint256 highest = 0;
+        for (uint256 i = 128; i >= 1; i >>= 1) {
+            if (val & (((uint256(1) << i) - 1) << i) != 0) {
+                highest += i;
+                val >>= i;
+            }
+        }
+
+        if ((uint256(1) << highest) != _in) {
+            highest += 1;
+        }
+
+        return highest;
     }
 }
