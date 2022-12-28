@@ -30,6 +30,16 @@ contract BitfiledTest is Bitfield, DSTest {
         assertEq(countSetBits(bitVector), 2);
     }
 
+    function test_count_set_bits_fuzz(uint x) public {
+        uint y = countSetBits(x);
+        assertEq(y, csb(x));
+    }
+
+    function csb(uint x) internal pure returns (uint c) {
+        for (c; x > 0; c++)
+            x &= x - 1;
+    }
+
     function test_is_set() public {
         uint bitVector = 3;
         assertTrue(isSet(bitVector, 0));
