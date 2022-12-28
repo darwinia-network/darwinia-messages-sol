@@ -72,6 +72,23 @@ library Memory {
         }
     }
 
+    // Allocates 'numBytes' bytes in memory. This will prevent the Solidity compiler
+    // from using this area of memory. It will also initialize the area by setting
+    // each byte to '0'.
+    function allocate(uint numBytes) internal pure returns (uint addr) {
+        // Take the current value of the free memory pointer, and update.
+        assembly ("memory-safe") {
+            addr := mload(/*FREE_MEM_PTR*/0x40)
+            mstore(/*FREE_MEM_PTR*/0x40, add(addr, numBytes))
+        }
+        uint words = (numBytes + WORD_SIZE - 1) / WORD_SIZE;
+        for (uint i = 0; i < words; i++) {
+            assembly ("memory-safe") {
+                mstore(add(addr, mul(i, /*WORD_SIZE*/32)), 0)
+            }
+        }
+    }
+
     // Copy 'len' bytes from memory address 'src', to address 'dest'.
     // This function does not check the or destination, it only copies
     // the bytes.
@@ -94,12 +111,33 @@ library Memory {
         }
     }
 
+    // Returns a memory pointer to the provided bytes array.
+    function ptr(bytes memory bts) internal pure returns (uint addr) {
+        assembly ("memory-safe") {
+            addr := bts
+        }
+    }
+
     // This function does the same as 'dataPtr(bytes memory)', but will also return the
     // length of the provided bytes array.
     function fromBytes(bytes memory bts) internal pure returns (uint addr, uint len) {
         len = bts.length;
         assembly {
             addr := add(bts, /*BYTES_HEADER_SIZE*/32)
+        }
+    }
+
+    // Get the word stored at memory address 'addr' as a 'uint'.
+    function toUint(uint addr) internal pure returns (uint n) {
+        assembly {
+            n := mload(addr)
+        }
+    }
+
+    // Get the word stored at memory address 'addr' as a 'bytes32'.
+    function toBytes32(uint addr) internal pure returns (bytes32 bts) {
+        assembly {
+            bts := mload(addr)
         }
     }
 }
