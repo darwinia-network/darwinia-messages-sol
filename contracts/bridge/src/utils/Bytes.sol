@@ -49,6 +49,7 @@ library Bytes {
         pure
         returns (bytes memory)
     {
+        require(startIndex <= self.length);
         uint256 len = self.length - startIndex;
         uint256 addr = Memory.dataPtr(self);
         return Memory.toBytes(addr + startIndex, len);
