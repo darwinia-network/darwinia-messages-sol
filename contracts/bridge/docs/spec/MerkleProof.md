@@ -10,6 +10,7 @@
 
 - [Functions](#functions)
   - [is_valid_merkle_branch](#is_valid_merkle_branch)
+  - [merkle_root](#merkle_root)
   - [hash_node](#hash_node)
   - [hash](#hash)
 
@@ -28,6 +29,21 @@ No description
 ```solidity
   function is_valid_merkle_branch(
   ) internal returns (bool)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### merkle_root
+No description
+
+
+#### Declaration
+```solidity
+  function merkle_root(
+  ) internal returns (bytes32)
 ```
 
 #### Modifiers:

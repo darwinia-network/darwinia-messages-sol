@@ -17,9 +17,10 @@
   - [hash_tree_root](#hash_tree_root-1)
   - [hash_tree_root](#hash_tree_root-2)
   - [hash_tree_root](#hash_tree_root-3)
-  - [merkle_root](#merkle_root)
+  - [hash_tree_root](#hash_tree_root-4)
+  - [hash_tree_root](#hash_tree_root-5)
   - [to_little_endian_64](#to_little_endian_64)
-  - [reverse64](#reverse64)
+  - [to_little_endian_256](#to_little_endian_256)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -142,13 +143,28 @@ No modifiers
 
 
 
-### merkle_root
+### hash_tree_root
 No description
 
 
 #### Declaration
 ```solidity
-  function merkle_root(
+  function hash_tree_root(
+  ) internal returns (bytes32)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### hash_tree_root
+No description
+
+
+#### Declaration
+```solidity
+  function hash_tree_root(
   ) internal returns (bytes32)
 ```
 
@@ -164,7 +180,7 @@ No description
 #### Declaration
 ```solidity
   function to_little_endian_64(
-  ) internal returns (bytes8 r)
+  ) internal returns (bytes8)
 ```
 
 #### Modifiers:
@@ -172,14 +188,14 @@ No modifiers
 
 
 
-### reverse64
+### to_little_endian_256
 No description
 
 
 #### Declaration
 ```solidity
-  function reverse64(
-  ) internal returns (uint64 v)
+  function to_little_endian_256(
+  ) internal returns (bytes32)
 ```
 
 #### Modifiers:

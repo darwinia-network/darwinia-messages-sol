@@ -11,7 +11,8 @@
 - [Globals](#globals)
 - [Functions](#functions)
   - [constructor](#constructor)
-  - [state_root](#state_root)
+  - [merkle_root](#merkle_root)
+  - [block_number](#block_number)
   - [finalized_authorities_contains](#finalized_authorities_contains)
   - [length_of_finalized_authorities](#length_of_finalized_authorities)
   - [finalized_authorities_at](#finalized_authorities_at)
@@ -24,8 +25,6 @@
 Signers: N * 32 bytes as hex encoded (20 characters)
 Signature: 65 bytes](#vanity-32-bytes%0Asigners-n--32-bytes-as-hex-encoded-20-characters%0Asignature-65-bytes)
   - [bytesToAddress](#bytestoaddress)
-  - [_add](#_add)
-  - [_sub](#_sub)
 - [Events](#events)
   - [FinalizedHeaderImported](#finalizedheaderimported)
 
@@ -52,24 +51,37 @@ No description
 #### Declaration
 ```solidity
   function constructor(
-  ) public StorageVerifier
+  ) public
 ```
 
 #### Modifiers:
-| Modifier |
-| --- |
-| StorageVerifier |
+No modifiers
 
 
 
-### state_root
+### merkle_root
 No description
 
 
 #### Declaration
 ```solidity
-  function state_root(
+  function merkle_root(
   ) public returns (bytes32)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### block_number
+No description
+
+
+#### Declaration
+```solidity
+  function block_number(
+  ) public returns (uint256)
 ```
 
 #### Modifiers:
@@ -138,11 +150,11 @@ No modifiers
 
 
 ### import_finalized_epoch_header
-Import finalized checkpoint
 len(headers) == N/2 + 1, headers[0] == finalized_checkpoint
 the first group headers that relayer submitted should exactly follow the initial
 checkpoint eg. the initial header number is x, the first call of this extrinsic
 should submit headers with numbers [x + epoch_length, x + epoch_length + 1, ... , x + epoch_length + N/2]
+> Import finalized checkpoint
 
 
 #### Declaration
@@ -201,36 +213,6 @@ No description
 ```solidity
   function bytesToAddress(
   ) internal returns (address addr)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### _add
-No description
-
-
-#### Declaration
-```solidity
-  function _add(
-  ) internal returns (uint256 z)
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### _sub
-No description
-
-
-#### Declaration
-```solidity
-  function _sub(
-  ) internal returns (uint256 z)
 ```
 
 #### Modifiers:

@@ -23,6 +23,7 @@ RLP encodes a byte string.
 
 
 
+
 #### Declaration
 ```solidity
   function writeBytes(
@@ -38,12 +39,14 @@ No modifiers
 | --- | --- | --- |
 |`_in` | bytes | The byte string to encode.
 
+
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`The` | RLP encoded string in bytes.
 ### writeList
 RLP encodes a list of RLP encoded byte byte strings.
+
 
 
 
@@ -62,12 +65,14 @@ No modifiers
 | --- | --- | --- |
 |`_in` | bytes[] | The list of RLP encoded byte strings.
 
+
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`The` | RLP encoded list of items in bytes.
 ### writeString
 RLP encodes a string.
+
 
 
 
@@ -86,12 +91,14 @@ No modifiers
 | --- | --- | --- |
 |`_in` | string | The string to encode.
 
+
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`The` | RLP encoded string in bytes.
 ### writeAddress
 RLP encodes an address.
+
 
 
 
@@ -110,12 +117,14 @@ No modifiers
 | --- | --- | --- |
 |`_in` | address | The address to encode.
 
+
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`The` | RLP encoded address in bytes.
 ### writeUint
 RLP encodes a uint.
+
 
 
 
@@ -134,12 +143,14 @@ No modifiers
 | --- | --- | --- |
 |`_in` | uint256 | The uint256 to encode.
 
+
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`The` | RLP encoded uint256 in bytes.
 ### writeBool
 RLP encodes a bool.
+
 
 
 
@@ -157,6 +168,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_in` | bool | The bool to encode.
+
 
 #### Returns:
 | Type | Description |

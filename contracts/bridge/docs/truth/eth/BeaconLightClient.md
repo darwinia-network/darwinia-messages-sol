@@ -11,7 +11,7 @@
 - [Globals](#globals)
 - [Functions](#functions)
   - [constructor](#constructor)
-  - [state_root](#state_root)
+  - [body_root](#body_root)
   - [import_next_sync_committee](#import_next_sync_committee)
   - [import_finalized_header](#import_finalized_header)
   - [verify_signed_header](#verify_signed_header)
@@ -34,7 +34,6 @@
 | Var | Type |
 | --- | --- |
 | finalized_header | struct BeaconChain.BeaconBlockHeader |
-| latest_execution_payload_state_root | bytes32 |
 | sync_committee_roots | mapping(uint64 => bytes32) |
 | GENESIS_VALIDATORS_ROOT | bytes32 |
 
@@ -57,13 +56,13 @@ No modifiers
 
 
 
-### state_root
+### body_root
 No description
 
 
 #### Declaration
 ```solidity
-  function state_root(
+  function body_root(
   ) public returns (bytes32)
 ```
 

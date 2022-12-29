@@ -15,8 +15,12 @@
   - [dataPtr](#dataptr)
   - [toBytes](#tobytes)
   - [toBytes](#tobytes-1)
+  - [allocate](#allocate)
   - [copy](#copy)
+  - [ptr](#ptr)
   - [fromBytes](#frombytes)
+  - [toUint](#touint)
+  - [toBytes32](#tobytes32)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -107,6 +111,21 @@ No modifiers
 
 
 
+### allocate
+No description
+
+
+#### Declaration
+```solidity
+  function allocate(
+  ) internal returns (uint256 addr)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
 ### copy
 No description
 
@@ -122,6 +141,21 @@ No modifiers
 
 
 
+### ptr
+No description
+
+
+#### Declaration
+```solidity
+  function ptr(
+  ) internal returns (uint256 addr)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
 ### fromBytes
 No description
 
@@ -130,6 +164,36 @@ No description
 ```solidity
   function fromBytes(
   ) internal returns (uint256 addr, uint256 len)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### toUint
+No description
+
+
+#### Declaration
+```solidity
+  function toUint(
+  ) internal returns (uint256 n)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### toBytes32
+No description
+
+
+#### Declaration
+```solidity
+  function toBytes32(
+  ) internal returns (bytes32 bts)
 ```
 
 #### Modifiers:

@@ -1,7 +1,9 @@
 # MerkleTrie
 
 
-
+MerkleTrie is a small library for verifying standard Ethereum Merkle-Patricia trie
+        inclusion proofs. By default, this library assumes a hexary trie. One can change the
+        trie radix constant to support other trie radixes.
 
 
 ## Contents
@@ -27,15 +29,14 @@
 | PREFIX_EXTENSION_ODD | uint8 |
 | PREFIX_LEAF_EVEN | uint8 |
 | PREFIX_LEAF_ODD | uint8 |
-| RLP_NULL | bytes1 |
 
 
 
 ## Functions
 
 ### verifyInclusionProof
-Verifies a proof that a given key/value pair is present in the
-Merkle trie.
+Verifies a proof that a given key/value pair is present in the trie.
+
 
 
 
@@ -44,9 +45,9 @@ Merkle trie.
   function verifyInclusionProof(
     bytes _key,
     bytes _value,
-    bytes _proof,
+    bytes[] _proof,
     bytes32 _root
-  ) internal returns (bool _verified)
+  ) internal returns (bool)
 ```
 
 #### Modifiers:
@@ -55,20 +56,22 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_key` | bytes | Key of the node to search for, as a hex string.
+|`_key` | bytes |   Key of the node to search for, as a hex string.
 |`_value` | bytes | Value of the node to search for, as a hex string.
-|`_proof` | bytes | Merkle trie inclusion proof for the desired node. Unlike
-traditional Merkle trees, this proof is executed top-down and consists
-of a list of RLP-encoded nodes that make a path down to the target node.
-|`_root` | bytes32 | Known root of the Merkle trie. Used to verify that the
-included proof is correctly constructed.
+|`_proof` | bytes[] | Merkle trie inclusion proof for the desired node. Unlike traditional Merkle
+              trees, this proof is executed top-down and consists of a list of RLP-encoded
+              nodes that make a path down to the target node.
+|`_root` | bytes32 |  Known root of the Merkle trie. Used to verify that the included proof is
+              correctly constructed.
+
 
 #### Returns:
 | Type | Description |
 | --- | --- |
-|`_verified` | `true` if the k/v pair exists in the trie, `false` otherwise.
+|`Whether` | or not the proof is valid.
 ### get
 Retrieves the value associated with a given key.
+
 
 
 
@@ -76,9 +79,9 @@ Retrieves the value associated with a given key.
 ```solidity
   function get(
     bytes _key,
-    bytes _proof,
+    bytes[] _proof,
     bytes32 _root
-  ) internal returns (bool _exists, bytes _value)
+  ) internal returns (bytes)
 ```
 
 #### Modifiers:
@@ -87,14 +90,14 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_key` | bytes | Key to search for, as hex bytes.
-|`_proof` | bytes | Merkle trie inclusion proof for the key.
-|`_root` | bytes32 | Known root of the Merkle trie.
+|`_key` | bytes |   Key to search for, as hex bytes.
+|`_proof` | bytes[] | Merkle trie inclusion proof for the key.
+|`_root` | bytes32 |  Known root of the Merkle trie.
+
 
 #### Returns:
 | Type | Description |
 | --- | --- |
-|`_exists` | Whether or not the key exists.
-|`_value` | Value of the key if it exists.
+|`Value` | of the key if it exists.
 
 
