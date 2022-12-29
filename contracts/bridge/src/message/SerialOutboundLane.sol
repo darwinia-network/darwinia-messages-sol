@@ -36,12 +36,14 @@ import "./OutboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 
-// Everything about outgoing messages sending.
+/// @title SerialOutboundLane
+/// @notice Everything about outgoing messages sending.
+/// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
 contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, SourceChain {
-    /// slot 1
+    /// @dev slot 1
     OutboundLaneNonce public outboundLaneNonce;
-    /// slot 2
-    /// nonce => hash(MessagePayload)
+    /// @dev slot 2
+    /// @notice nonce => hash(MessagePayload)
     mapping(uint64 => bytes32) public messages;
 
     address public immutable FEE_MARKET;

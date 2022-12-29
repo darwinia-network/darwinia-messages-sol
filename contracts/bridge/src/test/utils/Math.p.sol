@@ -27,7 +27,7 @@ contract MathPropertyTest is Math {
     }
 
     function property_log_2(uint x) public pure {
-        if (x <= 1) return;
+        if (x < 3) return;
         uint y = log_2(x);
         assert(2**(y-1) < x && x <= 2**y);
     }

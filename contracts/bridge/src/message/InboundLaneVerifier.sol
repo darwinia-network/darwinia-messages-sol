@@ -20,6 +20,8 @@ pragma solidity 0.8.17;
 import "../interfaces/IVerifier.sol";
 import "./LaneIdentity.sol";
 
+/// @title InboundLaneVerifier
+/// @notice The message/storage verifier for inbound lane.
 contract InboundLaneVerifier is LaneIdentity {
     /// @dev The contract address of on-chain verifier
     IVerifier public immutable VERIFIER;

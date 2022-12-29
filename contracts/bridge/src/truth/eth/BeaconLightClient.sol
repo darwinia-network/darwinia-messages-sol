@@ -79,13 +79,13 @@ interface IBLS {
 }
 
 contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
-    // Beacon block header that is finalized
+    /// @notice Beacon block header that is finalized
     BeaconBlockHeader public finalized_header;
-    // Sync committees corresponding to the header
-    // sync_committee_perid => sync_committee_root
+    /// @notice Sync committees corresponding to the header
+    /// @dev sync_committee_perid => sync_committee_root
     mapping (uint64 => bytes32) public sync_committee_roots;
 
-    // address(0x0800)
+    /// @notice address(0x0800)
     address private immutable BLS_PRECOMPILE;
     bytes32 public immutable GENESIS_VALIDATORS_ROOT;
     // A bellatrix beacon state has 25 fields, with a depth of 5.

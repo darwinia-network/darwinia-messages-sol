@@ -35,10 +35,13 @@ import "../spec/SourceChain.sol";
 import "../utils/imt/IncrementalMerkleTree.sol";
 import "../utils/call/ExcessivelySafeCall.sol";
 
-/// @title Everything about incoming messages receival
+/// @title ParallelInboundLane
+/// @notice Everything about incoming messages receival
+/// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
 contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
     using ExcessivelySafeCall for address;
 
+    /// @dev message nonce => dispatch result
     mapping(uint => bool) public dones;
 
     /// @dev Notifies an observer that the message has dispatched

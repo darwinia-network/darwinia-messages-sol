@@ -19,12 +19,25 @@ pragma solidity 0.8.17;
 
 import "../spec/MessageProof.sol";
 
+/// @title IMessageCommitter
+/// @notice A interface for message committer
 interface IMessageCommitter {
+    /// @notice Return leave count
     function count() external view returns (uint256);
+    /// @notice Return pos leave proof
+    /// @param pos Which position leave to be prove
+    /// @return MessageSingleProof message single proof of the leave
     function proof(uint256 pos) external view returns (MessageSingleProof memory);
+    /// @notice Return committer address of positon
+    /// @param pos Which positon of all leaves
+    /// @return committer address of the positon
     function leaveOf(uint256 pos) external view returns (address);
+    /// @notice Return message commitment of the committer
+    /// @return commitment hash
     function commitment() external view returns (bytes32);
 
+    /// @notice this chain position
     function THIS_CHAIN_POSITION() external view returns (uint32);
+    /// @notice bridged chain position
     function BRIDGED_CHAIN_POSITION() external view returns (uint32);
 }

@@ -88,33 +88,33 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
     using Bytes for bytes;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    // Finalized BSC checkpoint
+    /// @notice Finalized BSC checkpoint
     StoredBlockHeader public finalized_checkpoint;
-    // Finalized BSC authorities
+    /// @notice Finalized BSC authorities
     EnumerableSet.AddressSet private _finalized_authorities;
 
-    // Chaind ID
+    /// @notice Chaind ID
     uint64 public immutable CHAIN_ID;
-    // Block period
+    /// @notice Block period
     uint64 public immutable PERIOD;
 
-    // Minimum gas limit
+    /// @notice Minimum gas limit
     uint64 constant private MIN_GAS_LIMIT = 5000;
-    // Maximum gas limit
+    /// @notice Maximum gas limit
     uint64 constant private MAX_GAS_LIMIT = 0x7fffffffffffffff;
-    // Epoch length
+    /// @notice Epoch length
     uint256 constant private EPOCH = 200;
-    // Difficulty for NOTURN block
+    /// @notice Difficulty for NOTURN block
     uint256 constant private DIFF_NOTURN = 1;
-    // Difficulty for INTURN block
+    /// @notice Difficulty for INTURN block
     uint256 constant private DIFF_INTURN = 2;
-    // Fixed number of extra-data prefix bytes reserved for signer vanity
+    /// @notice Fixed number of extra-data prefix bytes reserved for signer vanity
     uint256 constant private VANITY_LENGTH = 32;
-    // Address length
+    /// @notice Address length
     uint256 constant private ADDRESS_LENGTH = 20;
-    // Fixed number of extra-data suffix bytes reserved for signer signature
+    /// @notice Fixed number of extra-data suffix bytes reserved for signer signature
     uint256 constant private SIGNATURE_LENGTH = 65;
-    // Keccak of RLP encoding of empty list
+    /// @notice Keccak of RLP encoding of empty list
     bytes32 constant private KECCAK_EMPTY_LIST_RLP = 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347;
 
     event FinalizedHeaderImported(StoredBlockHeader finalized_header, address[] signers);
@@ -170,7 +170,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
         return _finalized_authorities.values();
     }
 
-    /// Import finalized checkpoint
+    /// @dev Import finalized checkpoint
     /// @notice len(headers) == N/2 + 1, headers[0] == finalized_checkpoint
     /// the first group headers that relayer submitted should exactly follow the initial
     /// checkpoint eg. the initial header number is x, the first call of this extrinsic

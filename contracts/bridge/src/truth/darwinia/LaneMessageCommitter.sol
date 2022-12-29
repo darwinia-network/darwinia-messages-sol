@@ -21,7 +21,6 @@ import "../common/MessageCommitter.sol";
 import "../../interfaces/ILane.sol";
 
 /// @title LaneMessageCommitter
-/// @author echo
 /// @notice Lane message committer commit all messages from this chain to bridged chain
 /// @dev Lane message use sparse merkle tree to commit all messages
 contract LaneMessageCommitter is MessageCommitter {

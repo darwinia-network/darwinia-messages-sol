@@ -17,7 +17,15 @@
 
 pragma solidity 0.8.17;
 
+/// @title IVerifier
+/// @notice A interface for message layer to verify the correctness of the lane hash
 interface IVerifier {
+    /// @notice Verify outlane data hash using message/storage proof
+    /// @param outlane_data_hash The outlane data hash to be verify
+    /// @param chain_pos Bridged chain position
+    /// @param lane_pos Bridged outlane position
+    /// @param encoded_proof Message/storage abi-encoded proof
+    /// @return the verify result
     function verify_messages_proof(
         bytes32 outlane_data_hash,
         uint32 chain_pos,
@@ -25,6 +33,12 @@ interface IVerifier {
         bytes calldata encoded_proof
     ) external view returns (bool);
 
+    /// @notice Verify inlane data hash using message/storage proof
+    /// @param inlane_data_hash The inlane data hash to be verify
+    /// @param chain_pos Bridged chain position
+    /// @param lane_pos Bridged outlane position
+    /// @param encoded_proof Message/storage abi-encoded proof
+    /// @return the verify result
     function verify_messages_delivery_proof(
         bytes32 inlane_data_hash,
         uint32 chain_pos,

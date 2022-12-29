@@ -34,12 +34,14 @@ import "./LaneIdentity.sol";
 import "../spec/SourceChain.sol";
 import "../utils/imt/IncrementalMerkleTree.sol";
 
-// Everything about outgoing messages sending.
+/// @title ParallelOutboundLane
+/// @notice Everything about outgoing messages sending.
+/// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
 contract ParallelOutboundLane is IOutboundLane, LaneIdentity, SourceChain {
     using IncrementalMerkleTree for IncrementalMerkleTree.Tree;
-    // slot 1
+    /// @dev slot 1, messages root
     bytes32 private root;
-    // slot [2, 34]
+    /// @dev slot [2, 34] incremental merkle tree
     IncrementalMerkleTree.Tree private imt;
 
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);

@@ -22,7 +22,6 @@ import "../../interfaces/IMessageCommitter.sol";
 import "../../proxy/Initializable.sol";
 
 /// @title ChainMessageCommitter
-/// @author echo
 /// @notice Chain message committer commit messages from all lane committers
 /// @dev Chain message use sparse merkle tree to commit all messages
 contract ChainMessageCommitter is Initializable, MessageCommitter {

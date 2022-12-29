@@ -36,17 +36,16 @@ import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 import "../utils/call/ExcessivelySafeCall.sol";
 
-/// @title Everything about incoming messages receival
-/// @author echo
-/// @notice The inbound lane is the message layer of the bridge
+/// @title SerialInboundLane
+/// @notice The inbound lane is the message layer of the bridge, Everything about incoming messages receival
 /// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
 contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     using ExcessivelySafeCall for address;
 
-    /// slot 1
+    /// @dev slot 1
     InboundLaneNonce public inboundLaneNonce;
-    /// slot 2
-    /// index => UnrewardedRelayer
+    /// @dev slot 2
+    /// @notice index => UnrewardedRelayer
     /// indexes to relayers and messages that they have delivered to this lane (ordered by
     /// message nonce).
     ///

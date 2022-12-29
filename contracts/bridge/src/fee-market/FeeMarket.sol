@@ -20,39 +20,42 @@ pragma solidity 0.8.17;
 import "../interfaces/IFeeMarket.sol";
 import "../proxy/Initializable.sol";
 
+/// @title FeeMarket
+/// @notice FeeMarket is a contract for users to use native tokens of source chain as the method of cross-chain payment
+/// @dev See https://github.com/darwinia-network/darwinia-messages-substrate/tree/main/modules/fee-market
 contract FeeMarket is Initializable, IFeeMarket {
-    // Relayer count
+    /// @notice Relayer count
     uint256 public relayerCount;
-    // Governance role to decide which outbounds message to relay
+    /// @notice Governance role to decide which outbounds message to relay
     address public setter;
-    // Outbounds which message will be relayed by relayers
+    /// @notice Outbounds which message will be relayed by relayers
     mapping(address => uint256) public outbounds;
-    // Balance of the relayer including deposit and eared fee
+    /// @notice Balance of the relayer including deposit and eared fee
     mapping(address => uint256) public balanceOf;
-    // Locked balance of relayer for relay messages
+    /// @notice Locked balance of relayer for relay messages
     mapping(address => uint256) public lockedOf;
-    // All relayers in fee-market, they are linked one by one and sorted by the relayer fee asc
+    /// @notice All relayers in fee-market, they are linked one by one and sorted by the relayer fee asc
     mapping(address => address) public relayers;
-    // Maker fee of the relayer
+    /// @notice Maker fee of the relayer
     mapping(address => uint256) public feeOf;
-    // Message encoded key => Order
+    /// @notice Message encoded key => Order
     mapping(uint256 => Order) public orderOf;
-    // message encoded key => assigned slot => assigned relayer
+    /// @notice message encoded key => assigned slot => assigned relayer
     mapping(uint256 => mapping(uint256 => OrderExt)) public assignedRelayers;
 
-    // System treasury
+    /// @notice System treasury
     address public immutable VAULT;
-    // SlashAmount = COLLATERAL_PER_ORDER * LateTime / SLASH_TIME
+    /// @notice SlashAmount = COLLATERAL_PER_ORDER * LateTime / SLASH_TIME
     uint256 public immutable SLASH_TIME;
-    // Time assigned relayer to relay messages
+    /// @notice Time assigned relayer to relay messages
     uint256 public immutable RELAY_TIME;
-    // Fee market assigned relayers numbers
+    /// @notice Fee market assigned relayers numbers
     uint256 public immutable ASSIGNED_RELAYERS_NUMBER;
-    // RATIO_NUMERATOR of two chain's native token price, denominator of ratio is 1_000_000
+    /// @notice RATIO_NUMERATOR of two chain's native token price, denominator of ratio is 1_000_000
     uint256 public immutable PRICE_RATIO_NUMERATOR;
-    // The collateral relayer need to lock for each order.
+    /// @notice The collateral relayer need to lock for each order.
     uint256 public immutable COLLATERAL_PER_ORDER;
-    // Duty reward ratio
+    /// @notice Duty reward ratio
     uint256 public immutable DUTY_REWARD_RATIO;
 
     address private constant SENTINEL_HEAD = address(0x1);

@@ -17,6 +17,8 @@
 
 pragma solidity 0.8.17;
 
+/// @title LaneIdentity
+/// @notice The identity of lane.
 abstract contract LaneIdentity {
     function encodeMessageKey(uint64 nonce) public view virtual returns (uint256);
 

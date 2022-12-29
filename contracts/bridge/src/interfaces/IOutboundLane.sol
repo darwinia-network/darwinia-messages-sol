@@ -18,7 +18,6 @@
 pragma solidity 0.8.17;
 
 /// @title A interface for app layer to send cross chain message
-/// @author echo
 /// @notice The app layer could implement the interface `IOnMessageDelivered` to receive message dispatch result (optionally)
 interface IOutboundLane {
     /// @notice Send message over lane.

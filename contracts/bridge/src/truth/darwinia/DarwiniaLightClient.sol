@@ -25,7 +25,6 @@ import "../../spec/BEEFYCommitmentScheme.sol";
 import "../../interfaces/ILightClient.sol";
 
 /// @title A entry contract for the Ethereum-like light client
-/// @author echo
 /// @notice The light client is the trust layer of the bridge
 /// @dev See https://hackmd.kahub.in/Nx9YEaOaTRCswQjVbn4WsQ?view
 contract DarwiniaLightClient is ILightClient, Bitfield, BEEFYCommitmentScheme, Math {
