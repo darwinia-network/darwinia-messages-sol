@@ -20,8 +20,7 @@ pragma solidity 0.8.17;
 contract MockLightClient {
     function verify_messages_proof(
         bytes32,
-        uint32,
-        uint32,
+        uint,
         bytes calldata
     ) external pure returns (bool) {
         return true;
@@ -29,8 +28,7 @@ contract MockLightClient {
 
     function verify_messages_delivery_proof(
         bytes32,
-        uint32,
-        uint32,
+        uint,
         bytes calldata
     ) external pure returns (bool) {
         return true;

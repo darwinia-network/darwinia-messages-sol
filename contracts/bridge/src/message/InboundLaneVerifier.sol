@@ -45,15 +45,21 @@ contract InboundLaneVerifier is LaneIdentity {
         bytes32 outlane_data_hash,
         bytes memory encoded_proof
     ) internal view {
-        Slot0 memory _slot0 = slot0;
         require(
             VERIFIER.verify_messages_proof(
                 outlane_data_hash,
-                _slot0.this_chain_pos,
-                _slot0.bridged_lane_pos,
+                get_bridged_lane_id(),
                 encoded_proof
             ), "!proof"
         );
+    }
+
+    function get_bridged_lane_id() internal view returns (uint256) {
+        Slot0 memory _slot0 = slot0;
+        return (uint256(_slot0.bridged_chain_pos) << 160) +
+                (uint256(_slot0.bridged_lane_pos) << 128) +
+                (uint256(_slot0.this_chain_pos) << 96) +
+                (uint256(_slot0.this_lane_pos) << 64);
     }
 
     /// 32 bytes to identify an unique message from source chain
@@ -66,11 +72,6 @@ contract InboundLaneVerifier is LaneIdentity {
     /// [20..24) bytes ---- ThisLanePosition
     /// [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
     function encodeMessageKey(uint64 nonce) public view override returns (uint256) {
-        Slot0 memory _slot0 = slot0;
-        return (uint256(_slot0.bridged_chain_pos) << 160) +
-                (uint256(_slot0.bridged_lane_pos) << 128) +
-                (uint256(_slot0.this_chain_pos) << 96) +
-                (uint256(_slot0.this_lane_pos) << 64) +
-                uint256(nonce);
+        return get_bridged_lane_id() + uint256(nonce);
     }
 }

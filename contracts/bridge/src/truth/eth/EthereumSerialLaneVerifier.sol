@@ -24,7 +24,7 @@ import "../../interfaces/ILightClient.sol";
 contract EthereumSerialLaneVerifier is SerialLaneStorageVerifier {
     ILightClient private light_client;
 
-    constructor(address lightclient) SerialLaneStorageVerifier(uint32(ChainMessagePosition.ETH), 0, 1, 2) {
+    constructor(address lightclient) SerialLaneStorageVerifier(uint32(ChainMessagePosition.ETH), 1, 2) {
         light_client = ILightClient(lightclient);
     }
 

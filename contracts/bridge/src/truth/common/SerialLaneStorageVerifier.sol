@@ -24,16 +24,14 @@ import "../../spec/StorageProof.sol";
 
 abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetChain {
     event Registry(
-        uint256 bridgedChainPosition,
-        uint256 outlanePosition,
+        uint256 outlaneId,
         address outlane,
-        uint256 inlanePos,
+        uint256 inlaneId,
         address inlane
     );
 
     struct ReceiveProof {
         bytes[] accountProof;
-        bytes[] laneIDProof;
         bytes[] laneNonceProof;
         bytes[][] laneMessagesProof;
     }
@@ -45,12 +43,11 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
     }
 
     uint256 public immutable THIS_CHAIN_POSITION;
-    uint256 public immutable LANE_IDENTIFY_SLOT;
     uint256 public immutable LANE_NONCE_SLOT;
     uint256 public immutable LANE_MESSAGE_SLOT;
 
-    // bridgedChainPosition => lanePosition => lanes
-    mapping(uint32 => mapping(uint32 => address)) public lanes;
+    // laneId => lanes
+    mapping(uint256 => address) public lanes;
     address public setter;
 
     modifier onlySetter {
@@ -64,44 +61,33 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
 
     constructor(
         uint32 this_chain_position,
-        uint256 lane_identify_slot,
         uint256 lane_nonce_slot,
         uint256 lane_message_slot
     ) {
         THIS_CHAIN_POSITION = this_chain_position;
-        LANE_IDENTIFY_SLOT = lane_identify_slot;
         LANE_NONCE_SLOT = lane_nonce_slot;
         LANE_MESSAGE_SLOT = lane_message_slot;
         setter = msg.sender;
     }
 
-    function registry(uint32 bridgedChainPosition, uint32 outboundPosition, address outbound, uint32 inboundPositon, address inbound) external onlySetter {
-        require(bridgedChainPosition != THIS_CHAIN_POSITION, "invalid_chain_pos");
-        lanes[bridgedChainPosition][outboundPosition] = outbound;
-        lanes[bridgedChainPosition][inboundPositon] = inbound;
-        emit Registry(bridgedChainPosition, outboundPosition, outbound, inboundPositon, inbound);
+    function registry(uint256 outlaneId, address outbound, uint256 inlaneId, address inbound) external onlySetter {
+        lanes[outlaneId] = outbound;
+        lanes[inlaneId] = inbound;
+        emit Registry(outlaneId, outbound, inlaneId, inbound);
     }
 
     function state_root() public view virtual returns (bytes32);
 
     function verify_messages_proof(
         bytes32 outlane_hash,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 outlaneId,
         bytes calldata encoded_proof
     ) external view override returns (bool) {
-        address lane = lanes[chain_pos][lane_pos];
+        address lane = lanes[outlaneId];
         require(lane != address(0), "!outlane");
         ReceiveProof memory proof = abi.decode(encoded_proof, (ReceiveProof));
 
-        // extract identify storage value from proof
-        uint identify_storage = toUint(StorageProof.verify_single_storage_proof(
-            state_root(),
-            lane,
-            proof.accountProof,
-            bytes32(LANE_IDENTIFY_SLOT),
-            proof.laneIDProof
-        ));
+        uint identify_storage = outlaneId;
 
         // extract nonce storage value from proof
         uint nonce_storage = toUint(StorageProof.verify_single_storage_proof(
@@ -137,7 +123,7 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
             require(size == values.length, "!values_len");
             MessageStorage[] memory messages = new MessageStorage[](size);
             for (uint64 i=0; i < size; ) {
-               uint256 key = (identify_storage << 64) + latest_received_nonce + 1 + i;
+               uint256 key = identify_storage + latest_received_nonce + 1 + i;
                messages[i] = MessageStorage(key, toBytes32(values[i]));
                unchecked { ++i; }
             }
@@ -159,11 +145,10 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
 
     function verify_messages_delivery_proof(
         bytes32 inlane_hash,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 inlaneId,
         bytes calldata encoded_proof
     ) external view override returns (bool) {
-        address lane = lanes[chain_pos][lane_pos];
+        address lane = lanes[inlaneId];
         require(lane != address(0), "!inlane");
         DeliveryProof memory proof = abi.decode(encoded_proof, (DeliveryProof));
 

@@ -57,4 +57,12 @@ abstract contract LaneIdentity {
            _slot0.bridged_lane_pos
        );
     }
+
+    function getLaneId() external view returns (uint256) {
+        uint256 _slot0;
+        assembly ("memory-safe") {
+          _slot0 := sload(slot0.slot)
+        }
+        return _slot0 << 64;
+    }
 }
