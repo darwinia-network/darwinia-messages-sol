@@ -21,9 +21,9 @@ pragma solidity =0.8.17;
 
 /* pragma solidity 0.8.17; */
 
-/// @title A interface for message layer to filter unsafe message
-/// @author echo
-/// @notice The app layer must implement the interface `ICrossChainFilter`
+/// @title ICrossChainFilter
+/// @notice A interface for message layer to filter unsafe message
+/// @dev The app layer must implement the interface `ICrossChainFilter`
 interface ICrossChainFilter {
     /// @notice Verify the source sender and payload of source chain messages,
     /// Generally, app layer cross-chain messages require validation of sourceAccount
@@ -54,7 +54,15 @@ interface ICrossChainFilter {
 
 /* pragma solidity 0.8.17; */
 
+/// @title IVerifier
+/// @notice A interface for message layer to verify the correctness of the lane hash
 interface IVerifier {
+    /// @notice Verify outlane data hash using message/storage proof
+    /// @param outlane_data_hash The outlane data hash to be verify
+    /// @param chain_pos Bridged chain position
+    /// @param lane_pos Bridged outlane position
+    /// @param encoded_proof Message/storage abi-encoded proof
+    /// @return the verify result
     function verify_messages_proof(
         bytes32 outlane_data_hash,
         uint32 chain_pos,
@@ -62,6 +70,12 @@ interface IVerifier {
         bytes calldata encoded_proof
     ) external view returns (bool);
 
+    /// @notice Verify inlane data hash using message/storage proof
+    /// @param inlane_data_hash The inlane data hash to be verify
+    /// @param chain_pos Bridged chain position
+    /// @param lane_pos Bridged outlane position
+    /// @param encoded_proof Message/storage abi-encoded proof
+    /// @return the verify result
     function verify_messages_delivery_proof(
         bytes32 inlane_data_hash,
         uint32 chain_pos,
@@ -89,6 +103,8 @@ interface IVerifier {
 
 /* pragma solidity 0.8.17; */
 
+/// @title LaneIdentity
+/// @notice The identity of lane.
 abstract contract LaneIdentity {
     function encodeMessageKey(uint64 nonce) public view virtual returns (uint256);
 
@@ -147,11 +163,12 @@ abstract contract LaneIdentity {
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
 /* import "../interfaces/IVerifier.sol"; */
 /* import "./LaneIdentity.sol"; */
 
+/// @title InboundLaneVerifier
+/// @notice The message/storage verifier for inbound lane.
 contract InboundLaneVerifier is LaneIdentity {
     /// @dev The contract address of on-chain verifier
     IVerifier public immutable VERIFIER;
@@ -223,10 +240,11 @@ contract InboundLaneVerifier is LaneIdentity {
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
+/// @title SourceChain
+/// @notice Source chain specification
 contract SourceChain {
-    /// The MessagePayload is the structure of RPC which should be delivery to target chain
+    /// @notice The MessagePayload is the structure of RPC which should be delivery to target chain
     /// @param source The source contract address which send the message
     /// @param target The targe contract address which receive the message
     /// @param encoded The calldata which encoded by ABI Encoding
@@ -236,41 +254,47 @@ contract SourceChain {
         bytes encoded; /*(abi.encodePacked(SELECTOR, PARAMS))*/
     }
 
-    /// Message key (unique message identifier) as it is stored in the storage.
+    /// @notice Message key (unique message identifier) as it is stored in the storage.
+    /// @param this_chain_pos This chain position
+    /// @param this_lane_pos Position of the message this lane.
+    /// @param bridged_chain_pos Bridged chain position
+    /// @param bridged_lane_pos Position of the message bridged lane.
+    /// @param nonce Nonce of the message.
     struct MessageKey {
-        // This chain position
         uint32 this_chain_pos;
-        // Position of the message this lane.
         uint32 this_lane_pos;
-        // Bridged chain position
         uint32 bridged_chain_pos;
-        // Position of the message bridged lane.
         uint32 bridged_lane_pos;
-        // Nonce of the message.
         uint64 nonce;
     }
 
+    /// @notice Message storage representation
+    /// @param encoded_key Encoded message key
+    /// @param payload_hash Hash of payload
     struct MessageStorage {
         uint256 encoded_key;
         bytes32 payload_hash;
     }
 
-    /// Message as it is stored in the storage.
+    /// @notice Message as it is stored in the storage.
+    /// @param encoded_key Encoded message key.
+    /// @param payload Message payload.
     struct Message {
-        // Encoded message key.
         uint256 encoded_key;
-        // Message payload.
         MessagePayload payload;
     }
 
-    /// Outbound lane data.
+    /// @notice Outbound lane data.
+    /// @param latest_received_nonce Nonce of the latest message, received by bridged chain.
+    /// @param messages Messages sent through this lane.
     struct OutboundLaneData {
-        // Nonce of the latest message, received by bridged chain.
         uint64 latest_received_nonce;
-        // Messages sent through this lane.
         Message[] messages;
     }
 
+    /// @notice Outbound lane data storage representation
+    /// @param latest_received_nonce Nonce of the latest message, received by bridged chain.
+    /// @param messages Messages storage representation
     struct OutboundLaneDataStorage {
         uint64 latest_received_nonce;
         MessageStorage[] messages;
@@ -301,6 +325,7 @@ contract SourceChain {
     /// )
     bytes32 internal constant MESSAGEPAYLOAD_TYPEHASH = 0x582ffe1da2ae6da425fa2c8a2c423012be36b65787f7994d78362f66e4f84101;
 
+    /// @notice Hash of OutboundLaneData
     function hash(OutboundLaneData memory data)
         internal
         pure
@@ -315,6 +340,7 @@ contract SourceChain {
         );
     }
 
+    /// @notice Hash of OutboundLaneDataStorage
     function hash(OutboundLaneDataStorage memory data)
         internal
         pure
@@ -329,6 +355,7 @@ contract SourceChain {
         );
     }
 
+    /// @notice Hash of MessageStorage
     function hash(MessageStorage[] memory msgs)
         internal
         pure
@@ -336,7 +363,7 @@ contract SourceChain {
     {
         uint msgsLength = msgs.length;
         bytes memory encoded = abi.encode(msgsLength);
-        for (uint256 i = 0; i < msgsLength; i ++) {
+        for (uint256 i = 0; i < msgsLength; ) {
             MessageStorage memory message = msgs[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -346,10 +373,12 @@ contract SourceChain {
                     message.payload_hash
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
 
+    /// @notice Hash of Message[]
     function hash(Message[] memory msgs)
         internal
         pure
@@ -357,7 +386,7 @@ contract SourceChain {
     {
         uint msgsLength = msgs.length;
         bytes memory encoded = abi.encode(msgsLength);
-        for (uint256 i = 0; i < msgsLength; i ++) {
+        for (uint256 i = 0; i < msgsLength; ) {
             Message memory message = msgs[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -367,10 +396,12 @@ contract SourceChain {
                     hash(message.payload)
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
 
+    /// @notice Hash of Message
     function hash(Message memory message)
         internal
         pure
@@ -385,6 +416,7 @@ contract SourceChain {
         );
     }
 
+    /// @notice Hash of MessagePayload
     function hash(MessagePayload memory payload)
         internal
         pure
@@ -400,6 +432,9 @@ contract SourceChain {
         );
     }
 
+    /// @notice Decode message key
+    /// @param encoded Encoded message key
+    /// @return key Decoded message key
     function decodeMessageKey(uint256 encoded) internal pure returns (MessageKey memory key) {
         key.this_chain_pos = uint32(encoded >> 160);
         key.this_lane_pos = uint32(encoded >> 128);
@@ -427,29 +462,29 @@ contract SourceChain {
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
+/// @title TargetChain
+/// @notice Target chain specification
 contract TargetChain {
-    /// Delivered messages with their dispatch result.
+    /// @notice Delivered messages with their dispatch result.
+    /// @param begin Nonce of the first message that has been delivered (inclusive).
+    /// @param end Nonce of the last message that has been delivered (inclusive).
     struct DeliveredMessages {
-        // Nonce of the first message that has been delivered (inclusive).
         uint64 begin;
-        // Nonce of the last message that has been delivered (inclusive).
         uint64 end;
     }
 
-    /// Unrewarded relayer entry stored in the inbound lane data.
-    ///
-    /// This struct represents a continuous range of messages that have been delivered by the same
+    /// @notice Unrewarded relayer entry stored in the inbound lane data.
+    /// @dev This struct represents a continuous range of messages that have been delivered by the same
     /// relayer and whose confirmations are still pending.
+    /// @param relayer Address of the relayer.
+    /// @param messages Messages range, delivered by this relayer.
     struct UnrewardedRelayer {
-        // Address of the relayer.
         address relayer;
-        // Messages range, delivered by this relayer.
         DeliveredMessages messages;
     }
 
-    /// Inbound lane data
+    /// @notice Inbound lane data
     struct InboundLaneData {
         // Identifiers of relayers and messages that they have delivered to this lane (ordered by
         // message nonce).
@@ -501,6 +536,7 @@ contract TargetChain {
     /// )
     bytes32 internal constant DELIVEREDMESSAGES_TYPETASH = 0x1984c1907b379883ef1736e0351d28f5b4b82026a854e28971d89eb48f32fbe2;
 
+    /// @notice Hash of InboundLaneData
     function hash(InboundLaneData memory inboundLaneData)
         internal
         pure
@@ -516,6 +552,7 @@ contract TargetChain {
         );
     }
 
+    /// @notice Hash of UnrewardedRelayer[]
     function hash(UnrewardedRelayer[] memory relayers)
         internal
         pure
@@ -523,7 +560,7 @@ contract TargetChain {
     {
         uint relayersLength = relayers.length;
         bytes memory encoded = abi.encode(relayersLength);
-        for (uint256 i = 0; i < relayersLength; i++) {
+        for (uint256 i = 0; i < relayersLength; ) {
             UnrewardedRelayer memory r = relayers[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -533,10 +570,12 @@ contract TargetChain {
                     hash(r.messages)
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
 
+    /// @notice Hash of DeliveredMessages
     function hash(DeliveredMessages memory messages)
         internal
         pure
@@ -590,15 +629,15 @@ library ExcessivelySafeCall {
         // by assembly calling "handle" function
         // we call via assembly to avoid memcopying a very large returndata
         // returned by a malicious contract
-        assembly {
+        assembly ("memory-safe") {
             _success := call(
-            _gas, // gas
-            _target, // recipient
-            0, // ether value
-            add(_calldata, 0x20), // inloc
-            mload(_calldata), // inlen
-            0, // outloc
-            0 // outlen
+                _gas, // gas
+                _target, // recipient
+                0, // ether value
+                add(_calldata, 0x20), // inloc
+                mload(_calldata), // inlen
+                0, // outloc
+                0 // outlen
             )
             // limit our copy to 256 bytes
             _toCopy := returndatasize()
@@ -642,14 +681,14 @@ library ExcessivelySafeCall {
         // by assembly calling "handle" function
         // we call via assembly to avoid memcopying a very large returndata
         // returned by a malicious contract
-        assembly {
+        assembly ("memory-safe") {
             _success := staticcall(
-            _gas, // gas
-            _target, // recipient
-            add(_calldata, 0x20), // inloc
-            mload(_calldata), // inlen
-            0, // outloc
-            0 // outlen
+                _gas, // gas
+                _target, // recipient
+                add(_calldata, 0x20), // inloc
+                mload(_calldata), // inlen
+                0, // outloc
+                0 // outlen
             )
             // limit our copy to 256 bytes
             _toCopy := returndatasize()
@@ -664,22 +703,17 @@ library ExcessivelySafeCall {
         return (_success, _returnData);
     }
 
-    /**
-     * @notice Swaps function selectors in encoded contract calls
-     * @dev Allows reuse of encoded calldata for functions with identical
-     * argument types but different names. It simply swaps out the first 4 bytes
-     * for the new selector. This function modifies memory in place, and should
-     * only be used with caution.
-     * @param _newSelector The new 4-byte selector
-     * @param _buf The encoded contract args
-     */
-    function swapSelector(bytes4 _newSelector, bytes memory _buf)
-    internal
-    pure
-    {
+    /// @notice Swaps function selectors in encoded contract calls
+    /// @dev Allows reuse of encoded calldata for functions with identical
+    /// argument types but different names. It simply swaps out the first 4 bytes
+    /// for the new selector. This function modifies memory in place, and should
+    /// only be used with caution.
+    /// @param _newSelector The new 4-byte selector
+    /// @param _buf The encoded contract args
+    function swapSelector(bytes4 _newSelector, bytes memory _buf) internal pure {
         require(_buf.length >= 4);
         uint256 _mask = LOW_28_MASK;
-        assembly {
+        assembly ("memory-safe") {
             // load the first word of
             let _word := mload(add(_buf, 0x20))
             // mask out the top 4 bytes
@@ -722,7 +756,6 @@ library ExcessivelySafeCall {
 // delivered to the the bridged chain, it is reported using `MessagesDelivered` event.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
 /* import "../interfaces/ICrossChainFilter.sol"; */
 /* import "./InboundLaneVerifier.sol"; */
@@ -730,17 +763,16 @@ library ExcessivelySafeCall {
 /* import "../spec/TargetChain.sol"; */
 /* import "../utils/call/ExcessivelySafeCall.sol"; */
 
-/// @title Everything about incoming messages receival
-/// @author echo
-/// @notice The inbound lane is the message layer of the bridge
+/// @title SerialInboundLane
+/// @notice The inbound lane is the message layer of the bridge, Everything about incoming messages receival
 /// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
 contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     using ExcessivelySafeCall for address;
 
-    /// slot 1
+    /// @dev slot 1
     InboundLaneNonce public inboundLaneNonce;
-    /// slot 2
-    /// index => UnrewardedRelayer
+    /// @dev slot 2
+    /// @notice index => UnrewardedRelayer
     /// indexes to relayers and messages that they have delivered to this lane (ordered by
     /// message nonce).
     ///
@@ -870,8 +902,10 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         if (size > 0) {
             lane_data.relayers = new UnrewardedRelayer[](size);
             uint64 front = inboundLaneNonce.relayer_range_front;
-            for (uint64 index = 0; index < size; index++) {
-                lane_data.relayers[index] = relayers[front + index];
+            unchecked {
+                for (uint64 index = 0; index < size; index++) {
+                    lane_data.relayers[index] = relayers[front + index];
+                }
             }
         }
         lane_data.last_confirmed_nonce = inboundLaneNonce.last_confirmed_nonce;
@@ -903,17 +937,19 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             uint64 new_confirmed_nonce = latest_received_nonce;
             uint64 front = inboundLaneNonce.relayer_range_front;
             uint64 back = inboundLaneNonce.relayer_range_back;
-            for (uint64 index = front; index <= back; index++) {
-                UnrewardedRelayer storage entry = relayers[index];
-                if (entry.messages.end <= new_confirmed_nonce) {
-                    // Firstly, remove all of the records where higher nonce <= new confirmed nonce
-                    delete relayers[index];
-                    inboundLaneNonce.relayer_range_front = index + 1;
-                } else if (entry.messages.begin <= new_confirmed_nonce) {
-                    // Secondly, update the next record with lower nonce equal to new confirmed nonce if needed.
-                    // Note: There will be max. 1 record to update as we don't allow messages from relayers to
-                    // overlap.
-                    entry.messages.begin = new_confirmed_nonce + 1;
+            unchecked {
+                for (uint64 index = front; index <= back; index++) {
+                    UnrewardedRelayer storage entry = relayers[index];
+                    if (entry.messages.end <= new_confirmed_nonce) {
+                        // Firstly, remove all of the records where higher nonce <= new confirmed nonce
+                        delete relayers[index];
+                        inboundLaneNonce.relayer_range_front = index + 1;
+                    } else if (entry.messages.begin <= new_confirmed_nonce) {
+                        // Secondly, update the next record with lower nonce equal to new confirmed nonce if needed.
+                        // Note: There will be max. 1 record to update as we don't allow messages from relayers to
+                        // overlap.
+                        entry.messages.begin = new_confirmed_nonce + 1;
+                    }
                 }
             }
             inboundLaneNonce.last_confirmed_nonce = new_confirmed_nonce;
@@ -927,8 +963,9 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         address relayer = msg.sender;
         uint64 begin = inboundLaneNonce.last_delivered_nonce + 1;
         uint64 next = begin;
-        for (uint256 i = 0; i < delivery_size; i++) {
+        for (uint256 i = 0; i < delivery_size; ) {
             Message memory message = messages[i];
+            unchecked { ++i; }
             MessageKey memory key = decodeMessageKey(message.encoded_key);
             MessagePayload memory message_payload = message.payload;
             if (key.nonce < next) {
@@ -955,7 +992,7 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             // update inbound lane nonce storage
             inboundLaneNonce.last_delivered_nonce = next;
 
-            next += 1;
+            unchecked { ++next; }
         }
         if (inboundLaneNonce.last_delivered_nonce >= begin) {
             uint64 end = inboundLaneNonce.last_delivered_nonce;

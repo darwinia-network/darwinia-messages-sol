@@ -21,11 +21,17 @@ pragma solidity =0.8.17;
 
 /* pragma solidity 0.8.17; */
 
+/// @notice MessageProof
+/// @param chainProof Chain message single proof
+/// @param laneProof Lane message single proof
 struct MessageProof {
     MessageSingleProof chainProof;
     MessageSingleProof laneProof;
 }
 
+/// @notice MessageSingleProof
+/// @param root Merkle root
+/// @param proof Merkle proof
 struct MessageSingleProof {
     bytes32 root;
     bytes32[] proof;
@@ -49,17 +55,29 @@ struct MessageSingleProof {
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
 /* import "../spec/MessageProof.sol"; */
 
+/// @title IMessageCommitter
+/// @notice A interface for message committer
 interface IMessageCommitter {
+    /// @notice Return leave count
     function count() external view returns (uint256);
+    /// @notice Return pos leave proof
+    /// @param pos Which position leave to be prove
+    /// @return MessageSingleProof message single proof of the leave
     function proof(uint256 pos) external view returns (MessageSingleProof memory);
+    /// @notice Return committer address of positon
+    /// @param pos Which positon of all leaves
+    /// @return committer address of the positon
     function leaveOf(uint256 pos) external view returns (address);
+    /// @notice Return message commitment of the committer
+    /// @return commitment hash
     function commitment() external view returns (bytes32);
 
+    /// @notice this chain position
     function THIS_CHAIN_POSITION() external view returns (uint32);
+    /// @notice bridged chain position
     function BRIDGED_CHAIN_POSITION() external view returns (uint32);
 }
 
@@ -87,16 +105,22 @@ library Address {
      *  - an address where a contract will be created
      *  - an address where a contract lived, but was destroyed
      * ====
+     *
+     * [IMPORTANT]
+     * ====
+     * You shouldn't rely on `isContract` to protect against flash loan attacks!
+     *
+     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets
+     * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract
+     * constructor.
+     * ====
      */
     function isContract(address account) internal view returns (bool) {
-        // This method relies on extcodesize, which returns 0 for contracts in
-        // construction, since the code is only stored at the end of the
-        // constructor execution.
+        // This method relies on extcodesize/address.code.length, which returns 0
+        // for contracts in construction, since the code is only stored at the end
+        // of the constructor execution.
 
-        uint256 size;
-        // solhint-disable-next-line no-inline-assembly
-        assembly { size := extcodesize(account) }
-        return size > 0;
+        return account.code.length > 0;
     }
 
     /**
@@ -118,14 +142,13 @@ library Address {
     function sendValue(address payable recipient, uint256 amount) internal {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
-        // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
-        (bool success, ) = recipient.call{ value: amount }("");
+        (bool success, ) = recipient.call{value: amount}("");
         require(success, "Address: unable to send value, recipient may have reverted");
     }
 
     /**
      * @dev Performs a Solidity function call using a low level `call`. A
-     * plain`call` is an unsafe replacement for a function call: use this
+     * plain `call` is an unsafe replacement for a function call: use this
      * function instead.
      *
      * If `target` reverts with a revert reason, it is bubbled up by this
@@ -142,7 +165,7 @@ library Address {
      * _Available since v3.1._
      */
     function functionCall(address target, bytes memory data) internal returns (bytes memory) {
-      return functionCall(target, data, "Address: low-level call failed");
+        return functionCallWithValue(target, data, 0, "Address: low-level call failed");
     }
 
     /**
@@ -151,7 +174,11 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+    function functionCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
         return functionCallWithValue(target, data, 0, errorMessage);
     }
 
@@ -166,7 +193,11 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value
+    ) internal returns (bytes memory) {
         return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
     }
 
@@ -176,13 +207,15 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
         require(address(this).balance >= value, "Address: insufficient balance for call");
-        require(isContract(target), "Address: call to non-contract");
-
-        // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call{ value: value }(data);
-        return _verifyCallResult(success, returndata, errorMessage);
+        (bool success, bytes memory returndata) = target.call{value: value}(data);
+        return verifyCallResultFromTarget(target, success, returndata, errorMessage);
     }
 
     /**
@@ -201,12 +234,13 @@ library Address {
      *
      * _Available since v3.3._
      */
-    function functionStaticCall(address target, bytes memory data, string memory errorMessage) internal view returns (bytes memory) {
-        require(isContract(target), "Address: static call to non-contract");
-
-        // solhint-disable-next-line avoid-low-level-calls
+    function functionStaticCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal view returns (bytes memory) {
         (bool success, bytes memory returndata) = target.staticcall(data);
-        return _verifyCallResult(success, returndata, errorMessage);
+        return verifyCallResultFromTarget(target, success, returndata, errorMessage);
     }
 
     /**
@@ -225,30 +259,68 @@ library Address {
      *
      * _Available since v3.4._
      */
-    function functionDelegateCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
-        require(isContract(target), "Address: delegate call to non-contract");
-
-        // solhint-disable-next-line avoid-low-level-calls
+    function functionDelegateCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
         (bool success, bytes memory returndata) = target.delegatecall(data);
-        return _verifyCallResult(success, returndata, errorMessage);
+        return verifyCallResultFromTarget(target, success, returndata, errorMessage);
     }
 
-    function _verifyCallResult(bool success, bytes memory returndata, string memory errorMessage) private pure returns(bytes memory) {
+    /**
+     * @dev Tool to verify that a low level call to smart-contract was successful, and revert (either by bubbling
+     * the revert reason or using the provided one) in case of unsuccessful call or if target was not a contract.
+     *
+     * _Available since v4.8._
+     */
+    function verifyCallResultFromTarget(
+        address target,
+        bool success,
+        bytes memory returndata,
+        string memory errorMessage
+    ) internal view returns (bytes memory) {
+        if (success) {
+            if (returndata.length == 0) {
+                // only check isContract if the call was successful and the return data is empty
+                // otherwise we already know that it was a contract
+                require(isContract(target), "Address: call to non-contract");
+            }
+            return returndata;
+        } else {
+            _revert(returndata, errorMessage);
+        }
+    }
+
+    /**
+     * @dev Tool to verify that a low level call was successful, and revert if it wasn't, either by bubbling the
+     * revert reason or using the provided one.
+     *
+     * _Available since v4.3._
+     */
+    function verifyCallResult(
+        bool success,
+        bytes memory returndata,
+        string memory errorMessage
+    ) internal pure returns (bytes memory) {
         if (success) {
             return returndata;
         } else {
-            // Look for revert reason and bubble it up if present
-            if (returndata.length > 0) {
-                // The easiest way to bubble the revert reason is using memory via assembly
+            _revert(returndata, errorMessage);
+        }
+    }
 
-                // solhint-disable-next-line no-inline-assembly
-                assembly {
-                    let returndata_size := mload(returndata)
-                    revert(add(32, returndata), returndata_size)
-                }
-            } else {
-                revert(errorMessage);
+    function _revert(bytes memory returndata, string memory errorMessage) private pure {
+        // Look for revert reason and bubble it up if present
+        if (returndata.length > 0) {
+            // The easiest way to bubble the revert reason is using memory via assembly
+            /// @solidity memory-safe-assembly
+            assembly {
+                let returndata_size := mload(returndata)
+                revert(add(32, returndata), returndata_size)
             }
+        } else {
+            revert(errorMessage);
         }
     }
 }
@@ -466,7 +538,6 @@ contract Math {
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
 /* import "../../utils/Math.sol"; */
 /* import "../../spec/MessageProof.sol"; */
@@ -481,16 +552,18 @@ abstract contract MessageCommitter is Math {
     /// @return Commitment of this committer
     function commitment() public view returns (bytes32) {
         bytes32[] memory hashes = new bytes32[](get_power_of_two_ceil(count()));
-        for (uint256 pos = 0; pos < count(); pos++) {
-            hashes[pos] = commitment(pos);
-        }
-        uint256 hashLength = hashes.length;
-        for (uint256 j = 0; hashLength > 1; j = 0) {
-            for (uint256 i = 0; i < hashLength; i = i + 2) {
-                hashes[j] = hash_node(hashes[i], hashes[i + 1]);
-                j = j + 1;
+        unchecked {
+            for (uint256 pos = 0; pos < count(); pos++) {
+                hashes[pos] = commitment(pos);
             }
-            hashLength = hashLength - j;
+            uint256 hashLength = hashes.length;
+            for (uint256 j = 0; hashLength > 1; j = 0) {
+                for (uint256 i = 0; i < hashLength; i = i + 2) {
+                    hashes[j] = hash_node(hashes[i], hashes[i + 1]);
+                    j = j + 1;
+                }
+                hashLength = hashLength - j;
+            }
         }
         return hashes[0];
     }
@@ -529,25 +602,29 @@ abstract contract MessageCommitter is Math {
         uint depth = log_2(num_leafs);
         require(2**depth == num_leafs, "!depth");
         bytes32[] memory tree = new bytes32[](num_nodes);
-        for (uint i = 0; i < count(); i++) {
-            tree[num_leafs + i] = commitment(i);
-        }
-        for (uint i = num_leafs - 1; i > 0; i--) {
-            tree[i] = hash_node(tree[i * 2], tree[i * 2 + 1]);
+        unchecked {
+            for (uint i = 0; i < count(); i++) {
+                tree[num_leafs + i] = commitment(i);
+            }
+            for (uint i = num_leafs - 1; i > 0; i--) {
+                tree[i] = hash_node(tree[i * 2], tree[i * 2 + 1]);
+            }
         }
         return tree;
     }
 
     function get_proof(bytes32[] memory tree, uint256 depth, uint256 pos) internal pure returns (bytes32[] memory) {
         bytes32[] memory decommitment = new bytes32[](depth);
-        uint256 index = (1 << depth) + pos;
-        for (uint i = 0; i < depth; i++) {
-            if (index & 1 == 0) {
-                decommitment[i] = tree[index + 1];
-            } else {
-                decommitment[i] = tree[index - 1];
+        unchecked {
+            uint256 index = (1 << depth) + pos;
+            for (uint i = 0; i < depth; i++) {
+                if (index & 1 == 0) {
+                    decommitment[i] = tree[index + 1];
+                } else {
+                    decommitment[i] = tree[index - 1];
+                }
+                index = index >> 1;
             }
-            index = index >> 1;
         }
         return decommitment;
     }
@@ -583,14 +660,12 @@ abstract contract MessageCommitter is Math {
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
 /* import "../common/MessageCommitter.sol"; */
 /* import "../../interfaces/IMessageCommitter.sol"; */
 /* import "../../proxy/Initializable.sol"; */
 
 /// @title ChainMessageCommitter
-/// @author echo
 /// @notice Chain message committer commit messages from all lane committers
 /// @dev Chain message use sparse merkle tree to commit all messages
 contract ChainMessageCommitter is Initializable, MessageCommitter {

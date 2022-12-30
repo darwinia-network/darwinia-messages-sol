@@ -21,8 +21,14 @@ pragma solidity =0.8.17;
 
 /* pragma solidity 0.8.17; */
 
+/// @title ILane
+/// @notice A interface for light client
 interface ILightClient {
+    /// @notice Return the merkle root of light client
+    /// @return merkle root
     function merkle_root() external view returns (bytes32);
+    /// @notice Return the block number of light client
+    /// @return block number
     function block_number() external view returns (uint256);
 }
 
@@ -44,15 +50,17 @@ interface ILightClient {
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
+/// @title POSACommitmentScheme
+/// @notice POSA commitment scheme
 contract POSACommitmentScheme {
-    // keccak256(
-    //     "Commitment(uint32 block_number,bytes32 message_root,uint256 nonce)"
-    // );
+    /// @notice commit typehash
+    /// keccak256(
+    ///     "Commitment(uint32 block_number,bytes32 message_root,uint256 nonce)"
+    /// );
     bytes32 internal constant COMMIT_TYPEHASH = 0xaca824a0c4edb3b2c17f33fea9cb21b33c7ee16c8e634c36b3bf851c9de7a223;
 
-    /// The Commitment contains the message_root with block_number that is used for message verify
+    /// @notice The Commitment contains the message_root with block_number that is used for message verify
     /// @param block_number block number for the given commitment
     /// @param message_root Darwnia message root commitment hash
     struct Commitment {
@@ -61,6 +69,7 @@ contract POSACommitmentScheme {
         uint256 nonce;
     }
 
+    /// @notice Return hash of commitment
     function hash(Commitment memory c)
         internal
         pure
@@ -206,7 +215,6 @@ library ECDSA {
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
 /* import "../../utils/ECDSA.sol"; */
 
@@ -273,7 +281,7 @@ contract EcdsaAuthority {
         require(_threshold >= 1, "0");
         // Initializing relayers.
         address current = SENTINEL;
-        for (uint256 i = 0; i < _relayers.length; i++) {
+        for (uint256 i = 0; i < _relayers.length; ) {
             // Relayer address cannot be null.
             address r = _relayers[i];
             require(r != address(0) && r != SENTINEL && r != address(this) && current != r, "!relayer");
@@ -282,6 +290,7 @@ contract EcdsaAuthority {
             relayers[current] = r;
             current = r;
             emit AddedRelayer(r);
+            unchecked { ++i; }
         }
         relayers[current] = SENTINEL;
         count = _relayers.length;
@@ -494,7 +503,6 @@ contract EcdsaAuthority {
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
 /* import "./EcdsaAuthority.sol"; */
 /* import "../../spec/POSACommitmentScheme.sol"; */

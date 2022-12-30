@@ -21,373 +21,15 @@ pragma solidity =0.8.17;
 
 /* pragma solidity 0.8.17; */
 
+/// @title ILane
+/// @notice A interface for light client
 interface ILightClient {
+    /// @notice Return the merkle root of light client
+    /// @return merkle root
     function merkle_root() external view returns (bytes32);
+    /// @notice Return the block number of light client
+    /// @return block number
     function block_number() external view returns (uint256);
-}
-
-////// src/utils/rlp/RLPEncode.sol
-// This file is part of Darwinia.
-// Copyright (C) 2018-2022 Darwinia Network
-//
-// Darwinia is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Darwinia is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
-
-/* pragma solidity 0.8.17; */
-
-/**
- * @title RLPEncode
- * @author Bakaoh (with modifications)
- */
-library RLPEncode {
-    /**********************
-     * Internal Functions *
-     **********************/
-
-    /**
-     * RLP encodes a byte string.
-     * @param _in The byte string to encode.
-     * @return The RLP encoded string in bytes.
-     */
-    function writeBytes(bytes memory _in) internal pure returns (bytes memory) {
-        bytes memory encoded;
-
-        if (_in.length == 1 && uint8(_in[0]) < 128) {
-            encoded = _in;
-        } else {
-            encoded = abi.encodePacked(_writeLength(_in.length, 128), _in);
-        }
-
-        return encoded;
-    }
-
-    /**
-     * RLP encodes a list of RLP encoded byte byte strings.
-     * @param _in The list of RLP encoded byte strings.
-     * @return The RLP encoded list of items in bytes.
-     */
-    function writeList(bytes[] memory _in) internal pure returns (bytes memory) {
-        bytes memory list = _flatten(_in);
-        return abi.encodePacked(_writeLength(list.length, 192), list);
-    }
-
-    /**
-     * RLP encodes a string.
-     * @param _in The string to encode.
-     * @return The RLP encoded string in bytes.
-     */
-    function writeString(string memory _in) internal pure returns (bytes memory) {
-        return writeBytes(bytes(_in));
-    }
-
-    /**
-     * RLP encodes an address.
-     * @param _in The address to encode.
-     * @return The RLP encoded address in bytes.
-     */
-    function writeAddress(address _in) internal pure returns (bytes memory) {
-        return writeBytes(abi.encodePacked(_in));
-    }
-
-    /**
-     * RLP encodes a uint.
-     * @param _in The uint256 to encode.
-     * @return The RLP encoded uint256 in bytes.
-     */
-    function writeUint(uint256 _in) internal pure returns (bytes memory) {
-        return writeBytes(_toBinary(_in));
-    }
-
-    /**
-     * RLP encodes a bool.
-     * @param _in The bool to encode.
-     * @return The RLP encoded bool in bytes.
-     */
-    function writeBool(bool _in) internal pure returns (bytes memory) {
-        bytes memory encoded = new bytes(1);
-        encoded[0] = (_in ? bytes1(0x01) : bytes1(0x80));
-        return encoded;
-    }
-
-    /*********************
-     * Private Functions *
-     *********************/
-
-    /**
-     * Encode the first byte, followed by the `len` in binary form if `length` is more than 55.
-     * @param _len The length of the string or the payload.
-     * @param _offset 128 if item is string, 192 if item is list.
-     * @return RLP encoded bytes.
-     */
-    function _writeLength(uint256 _len, uint256 _offset) private pure returns (bytes memory) {
-        bytes memory encoded;
-
-        if (_len < 56) {
-            encoded = new bytes(1);
-            encoded[0] = bytes1(uint8(_len) + uint8(_offset));
-        } else {
-            uint256 lenLen;
-            uint256 i = 1;
-            while (_len / i != 0) {
-                lenLen++;
-                i *= 256;
-            }
-
-            encoded = new bytes(lenLen + 1);
-            encoded[0] = bytes1(uint8(lenLen) + uint8(_offset) + 55);
-            for (i = 1; i <= lenLen; i++) {
-                encoded[i] = bytes1(uint8((_len / (256**(lenLen - i))) % 256));
-            }
-        }
-
-        return encoded;
-    }
-
-    /**
-     * Encode integer in big endian binary form with no leading zeroes.
-     * @notice TODO: This should be optimized with assembly to save gas costs.
-     * @param _x The integer to encode.
-     * @return RLP encoded bytes.
-     */
-    function _toBinary(uint256 _x) private pure returns (bytes memory) {
-        bytes memory b = abi.encodePacked(_x);
-
-        uint256 i = 0;
-        for (; i < 32; i++) {
-            if (b[i] != 0) {
-                break;
-            }
-        }
-
-        bytes memory res = new bytes(32 - i);
-        for (uint256 j = 0; j < res.length; j++) {
-            res[j] = b[i++];
-        }
-
-        return res;
-    }
-
-    /**
-     * Copies a piece of memory to another location.
-     * @notice From: https://github.com/Arachnid/solidity-stringutils/blob/master/src/strings.sol.
-     * @param _dest Destination location.
-     * @param _src Source location.
-     * @param _len Length of memory to copy.
-     */
-    function _memcpy(
-        uint256 _dest,
-        uint256 _src,
-        uint256 _len
-    ) private pure {
-        uint256 dest = _dest;
-        uint256 src = _src;
-        uint256 len = _len;
-
-        for (; len >= 32; len -= 32) {
-            assembly {
-                mstore(dest, mload(src))
-            }
-            dest += 32;
-            src += 32;
-        }
-
-        uint256 mask = 256**(32 - len) - 1;
-
-        assembly {
-            let srcpart := and(mload(src), not(mask))
-            let destpart := and(mload(dest), mask)
-            mstore(dest, or(destpart, srcpart))
-        }
-    }
-
-    /**
-     * Flattens a list of byte strings into one byte string.
-     * @notice From: https://github.com/sammayo/solidity-rlp-encoder/blob/master/RLPEncode.sol.
-     * @param _list List of byte strings to flatten.
-     * @return The flattened byte string.
-     */
-    function _flatten(bytes[] memory _list) private pure returns (bytes memory) {
-        if (_list.length == 0) {
-            return new bytes(0);
-        }
-
-        uint256 len;
-        uint256 i = 0;
-        for (; i < _list.length; i++) {
-            len += _list[i].length;
-        }
-
-        bytes memory flattened = new bytes(len);
-        uint256 flattenedPtr;
-        assembly {
-            flattenedPtr := add(flattened, 0x20)
-        }
-
-        for (i = 0; i < _list.length; i++) {
-            bytes memory item = _list[i];
-
-            uint256 listPtr;
-            assembly {
-                listPtr := add(item, 0x20)
-            }
-
-            _memcpy(flattenedPtr, listPtr, item.length);
-            flattenedPtr += _list[i].length;
-        }
-
-        return flattened;
-    }
-}
-
-////// src/spec/BinanceSmartChain.sol
-// This file is part of Darwinia.
-// Copyright (C) 2018-2022 Darwinia Network
-//
-// Darwinia is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Darwinia is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
-
-/* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
-
-/* import "../utils/rlp/RLPEncode.sol"; */
-
-contract BinanceSmartChain {
-    // BSC(Binance Smart Chain) header
-    struct BSCHeader {
-        // Parent block hash
-        bytes32 parent_hash;
-        // Block uncles hash
-        bytes32 uncle_hash;
-        // validator address
-        address coinbase;
-        // Block state root
-        bytes32 state_root;
-        // Block transactions root
-        bytes32 transactions_root;
-        // Block receipts root
-        bytes32 receipts_root;
-        // Block logs bloom, represents a 2048 bit bloom filter
-        bytes log_bloom;
-        // Block difficulty
-        uint256 difficulty;
-        // Block number
-        uint256 number;
-        // Block gas limit
-        uint64 gas_limit;
-        // Gas used for transactions execution
-        uint64 gas_used;
-        // Block timestamp
-        uint64 timestamp;
-        // Block extra data
-        bytes extra_data;
-        // Block mix digest
-        bytes32 mix_digest;
-        // Block nonce, represents a 64-bit hash
-        bytes8 nonce;
-    }
-
-    // Compute hash of this header (keccak of the RLP with seal)
-    function hash(BSCHeader memory header) internal pure returns (bytes32) {
-        return keccak256(rlp(header));
-    }
-
-    // Compute hash of this header with chain id
-    function hash_with_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes32) {
-        return keccak256(rlp_chain_id(header, chain_id));
-    }
-
-    // Compute the RLP of this header
-    function rlp(BSCHeader memory header) internal pure returns (bytes memory data) {
-        bytes[] memory list = new bytes[](15);
-
-        list[0] = RLPEncode.writeBytes(abi.encodePacked(header.parent_hash));
-        list[1] = RLPEncode.writeBytes(abi.encodePacked(header.uncle_hash));
-        list[2] = RLPEncode.writeAddress(header.coinbase);
-        list[3] = RLPEncode.writeBytes(abi.encodePacked(header.state_root));
-        list[4] = RLPEncode.writeBytes(abi.encodePacked(header.transactions_root));
-        list[5] = RLPEncode.writeBytes(abi.encodePacked(header.receipts_root));
-        list[6] = RLPEncode.writeBytes(header.log_bloom);
-        list[7] = RLPEncode.writeUint(header.difficulty);
-        list[8] = RLPEncode.writeUint(header.number);
-        list[9] = RLPEncode.writeUint(header.gas_limit);
-        list[10] = RLPEncode.writeUint(header.gas_used);
-        list[11] = RLPEncode.writeUint(header.timestamp);
-        list[12] = RLPEncode.writeBytes(header.extra_data);
-        list[13] = RLPEncode.writeBytes(abi.encodePacked(header.mix_digest));
-        list[14] = RLPEncode.writeBytes(abi.encodePacked(header.nonce));
-
-        data = RLPEncode.writeList(list);
-    }
-
-    // Compute the RLP of this header with chain id
-    function rlp_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes memory data) {
-        bytes[] memory list = new bytes[](16);
-
-        list[0] = RLPEncode.writeUint(chain_id);
-        list[1] = RLPEncode.writeBytes(abi.encodePacked(header.parent_hash));
-        list[2] = RLPEncode.writeBytes(abi.encodePacked(header.uncle_hash));
-        list[3] = RLPEncode.writeAddress(header.coinbase);
-        list[4] = RLPEncode.writeBytes(abi.encodePacked(header.state_root));
-        list[5] = RLPEncode.writeBytes(abi.encodePacked(header.transactions_root));
-        list[6] = RLPEncode.writeBytes(abi.encodePacked(header.receipts_root));
-        list[7] = RLPEncode.writeBytes(header.log_bloom);
-        list[8] = RLPEncode.writeUint(header.difficulty);
-        list[9] = RLPEncode.writeUint(header.number);
-        list[10] = RLPEncode.writeUint(header.gas_limit);
-        list[11] = RLPEncode.writeUint(header.gas_used);
-        list[12] = RLPEncode.writeUint(header.timestamp);
-        list[13] = RLPEncode.writeBytes(header.extra_data);
-        list[14] = RLPEncode.writeBytes(abi.encodePacked(header.mix_digest));
-        list[15] = RLPEncode.writeBytes(abi.encodePacked(header.nonce));
-
-        data = RLPEncode.writeList(list);
-    }
-}
-
-////// src/spec/ChainMessagePosition.sol
-// This file is part of Darwinia.
-// Copyright (C) 2018-2022 Darwinia Network
-//
-// Darwinia is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Darwinia is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
-
-/* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
-
-enum ChainMessagePosition {
-    Darwinia,
-    ETH,
-    BSC
 }
 
 ////// src/utils/Memory.sol
@@ -464,25 +106,49 @@ library Memory {
         }
     }
 
+    // Allocates 'numBytes' bytes in memory. This will prevent the Solidity compiler
+    // from using this area of memory. It will also initialize the area by setting
+    // each byte to '0'.
+    function allocate(uint numBytes) internal pure returns (uint addr) {
+        // Take the current value of the free memory pointer, and update.
+        assembly ("memory-safe") {
+            addr := mload(/*FREE_MEM_PTR*/0x40)
+            mstore(/*FREE_MEM_PTR*/0x40, add(addr, numBytes))
+        }
+        uint words = (numBytes + WORD_SIZE - 1) / WORD_SIZE;
+        for (uint i = 0; i < words; i++) {
+            assembly ("memory-safe") {
+                mstore(add(addr, mul(i, /*WORD_SIZE*/32)), 0)
+            }
+        }
+    }
+
     // Copy 'len' bytes from memory address 'src', to address 'dest'.
     // This function does not check the or destination, it only copies
     // the bytes.
     function copy(uint src, uint dest, uint len) internal pure {
-        // Copy word-length chunks while possible
-        for (; len >= WORD_SIZE; len -= WORD_SIZE) {
-            assembly {
-                mstore(dest, mload(src))
-            }
-            dest += WORD_SIZE;
-            src += WORD_SIZE;
-        }
-
-        // Copy remaining bytes
-        uint mask = 256 ** (WORD_SIZE - len) - 1;
+        // Mostly based on Solidity's copy_memory_to_memory:
+        // https://github.com/ethereum/solidity/blob/34dd30d71b4da730488be72ff6af7083cf2a91f6/libsolidity/codegen/YulUtilFunctions.cpp#L102-L114
         assembly {
-            let srcpart := and(mload(src), not(mask))
-            let destpart := and(mload(dest), mask)
-            mstore(dest, or(destpart, srcpart))
+            let i := 0
+            for {
+
+            } lt(i, len) {
+                i := add(i, 32)
+            } {
+                mstore(add(dest, i), mload(add(src, i)))
+            }
+
+            if gt(i, len) {
+                mstore(add(dest, len), 0)
+            }
+        }
+    }
+
+    // Returns a memory pointer to the provided bytes array.
+    function ptr(bytes memory bts) internal pure returns (uint addr) {
+        assembly ("memory-safe") {
+            addr := bts
         }
     }
 
@@ -494,6 +160,361 @@ library Memory {
             addr := add(bts, /*BYTES_HEADER_SIZE*/32)
         }
     }
+
+    // Get the word stored at memory address 'addr' as a 'uint'.
+    function toUint(uint addr) internal pure returns (uint n) {
+        assembly {
+            n := mload(addr)
+        }
+    }
+
+    // Get the word stored at memory address 'addr' as a 'bytes32'.
+    function toBytes32(uint addr) internal pure returns (bytes32 bts) {
+        assembly {
+            bts := mload(addr)
+        }
+    }
+}
+
+////// src/utils/rlp/RLPEncode.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.8.17; */
+
+/* import "../Memory.sol"; */
+
+/**
+ * @custom:attribution https://github.com/bakaoh/solidity-rlp-encode
+ * @title RLPWriter
+ * @author RLPWriter is a library for encoding Solidity types to RLP bytes. Adapted from Bakaoh's
+ *         RLPEncode library (https://github.com/bakaoh/solidity-rlp-encode) with minor
+ *         modifications to improve legibility.
+ */
+library RLPEncode {
+    /**
+     * @notice RLP encodes a byte string.
+     *
+     * @param _in The byte string to encode.
+     *
+     * @return The RLP encoded string in bytes.
+     */
+    function writeBytes(bytes memory _in) internal pure returns (bytes memory) {
+        bytes memory encoded;
+
+        if (_in.length == 1 && uint8(_in[0]) < 128) {
+            encoded = _in;
+        } else {
+            encoded = abi.encodePacked(_writeLength(_in.length, 128), _in);
+        }
+
+        return encoded;
+    }
+
+    /**
+     * @notice RLP encodes a list of RLP encoded byte byte strings.
+     *
+     * @param _in The list of RLP encoded byte strings.
+     *
+     * @return The RLP encoded list of items in bytes.
+     */
+    function writeList(bytes[] memory _in) internal pure returns (bytes memory) {
+        bytes memory list = _flatten(_in);
+        return abi.encodePacked(_writeLength(list.length, 192), list);
+    }
+
+    /**
+     * @notice RLP encodes a string.
+     *
+     * @param _in The string to encode.
+     *
+     * @return The RLP encoded string in bytes.
+     */
+    function writeString(string memory _in) internal pure returns (bytes memory) {
+        return writeBytes(bytes(_in));
+    }
+
+    /**
+     * @notice RLP encodes an address.
+     *
+     * @param _in The address to encode.
+     *
+     * @return The RLP encoded address in bytes.
+     */
+    function writeAddress(address _in) internal pure returns (bytes memory) {
+        return writeBytes(abi.encodePacked(_in));
+    }
+
+    /**
+     * @notice RLP encodes a uint.
+     *
+     * @param _in The uint256 to encode.
+     *
+     * @return The RLP encoded uint256 in bytes.
+     */
+    function writeUint(uint256 _in) internal pure returns (bytes memory) {
+        return writeBytes(_toBinary(_in));
+    }
+
+    /**
+     * @notice RLP encodes a bool.
+     *
+     * @param _in The bool to encode.
+     *
+     * @return The RLP encoded bool in bytes.
+     */
+    function writeBool(bool _in) internal pure returns (bytes memory) {
+        bytes memory encoded = new bytes(1);
+        encoded[0] = (_in ? bytes1(0x01) : bytes1(0x80));
+        return encoded;
+    }
+
+    /**
+     * @notice Encode the first byte and then the `len` in binary form if `length` is more than 55.
+     *
+     * @param _len    The length of the string or the payload.
+     * @param _offset 128 if item is string, 192 if item is list.
+     *
+     * @return RLP encoded bytes.
+     */
+    function _writeLength(uint256 _len, uint256 _offset) private pure returns (bytes memory) {
+        bytes memory encoded;
+
+        if (_len < 56) {
+            encoded = new bytes(1);
+            encoded[0] = bytes1(uint8(_len) + uint8(_offset));
+        } else {
+            uint256 lenLen;
+            uint256 i = 1;
+            while (_len / i != 0) {
+                lenLen++;
+                i *= 256;
+            }
+
+            encoded = new bytes(lenLen + 1);
+            encoded[0] = bytes1(uint8(lenLen) + uint8(_offset) + 55);
+            for (i = 1; i <= lenLen; i++) {
+                encoded[i] = bytes1(uint8((_len / (256**(lenLen - i))) % 256));
+            }
+        }
+
+        return encoded;
+    }
+
+    /**
+     * @notice Encode integer in big endian binary form with no leading zeroes.
+     *
+     * @param _x The integer to encode.
+     *
+     * @return RLP encoded bytes.
+     */
+    function _toBinary(uint256 _x) private pure returns (bytes memory) {
+        bytes memory b = abi.encodePacked(_x);
+
+        uint256 i = 0;
+        for (; i < 32; i++) {
+            if (b[i] != 0) {
+                break;
+            }
+        }
+
+        bytes memory res = new bytes(32 - i);
+        for (uint256 j = 0; j < res.length; j++) {
+            res[j] = b[i++];
+        }
+
+        return res;
+    }
+
+    /**
+     * Flattens a list of byte strings into one byte string.
+     * @notice From: https://github.com/sammayo/solidity-rlp-encoder/blob/master/RLPEncode.sol.
+     * @param _list List of byte strings to flatten.
+     * @return The flattened byte string.
+     */
+    function _flatten(bytes[] memory _list) private pure returns (bytes memory) {
+        if (_list.length == 0) {
+            return new bytes(0);
+        }
+
+        uint256 len;
+        uint256 i = 0;
+        for (; i < _list.length; ) {
+            len += _list[i].length;
+            unchecked { ++i; }
+        }
+
+        bytes memory flattened = new bytes(len);
+        uint256 flattenedPtr;
+        (flattenedPtr,) = Memory.fromBytes(flattened);
+
+        for (i = 0; i < _list.length; ) {
+            bytes memory item = _list[i];
+
+            uint256 listPtr;
+            (listPtr,) = Memory.fromBytes(item);
+            Memory.copy(listPtr, flattenedPtr, item.length);
+            flattenedPtr += _list[i].length;
+            unchecked { ++i; }
+        }
+
+        return flattened;
+    }
+}
+
+////// src/spec/BinanceSmartChain.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.8.17; */
+
+/* import "../utils/rlp/RLPEncode.sol"; */
+
+/// @title BinanceSmartChain
+/// @notice Binance smart chain specification
+contract BinanceSmartChain {
+    /// @notice BSC(Binance Smart Chain) header
+    /// @param parent_hash Parent block hash
+    /// @param uncle_hash Block uncles hash
+    /// @param coinbase Validator address
+    /// @param state_root Block state root
+    /// @param transactions_root Block transactions root
+    /// @param receipts_root Block receipts root
+    /// @param log_bloom Block logs bloom, represents a 2048 bit bloom filter
+    /// @param difficulty Block difficulty
+    /// @param number Block number
+    /// @param gas_limit Block gas limit
+    /// @param gas_used Gas used for transactions execution
+    /// @param timestamp Block timestamp
+    /// @param extra_data Block extra data
+    /// @param mix_digest Block mix digest
+    /// @param nonce Block nonce, represents a 64-bit hash
+    struct BSCHeader {
+        bytes32 parent_hash;
+        bytes32 uncle_hash;
+        address coinbase;
+        bytes32 state_root;
+        bytes32 transactions_root;
+        bytes32 receipts_root;
+        bytes log_bloom;
+        uint256 difficulty;
+        uint256 number;
+        uint64 gas_limit;
+        uint64 gas_used;
+        uint64 timestamp;
+        bytes extra_data;
+        bytes32 mix_digest;
+        bytes8 nonce;
+    }
+
+    /// @notice Compute hash of this header (keccak of the RLP with seal)
+    function hash(BSCHeader memory header) internal pure returns (bytes32) {
+        return keccak256(rlp(header));
+    }
+
+    /// @notice Compute hash of this header with chain id
+    function hash_with_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes32) {
+        return keccak256(rlp_chain_id(header, chain_id));
+    }
+
+    /// @notice Compute the RLP of this header
+    function rlp(BSCHeader memory header) internal pure returns (bytes memory data) {
+        bytes[] memory list = new bytes[](15);
+
+        list[0] = RLPEncode.writeBytes(abi.encodePacked(header.parent_hash));
+        list[1] = RLPEncode.writeBytes(abi.encodePacked(header.uncle_hash));
+        list[2] = RLPEncode.writeAddress(header.coinbase);
+        list[3] = RLPEncode.writeBytes(abi.encodePacked(header.state_root));
+        list[4] = RLPEncode.writeBytes(abi.encodePacked(header.transactions_root));
+        list[5] = RLPEncode.writeBytes(abi.encodePacked(header.receipts_root));
+        list[6] = RLPEncode.writeBytes(header.log_bloom);
+        list[7] = RLPEncode.writeUint(header.difficulty);
+        list[8] = RLPEncode.writeUint(header.number);
+        list[9] = RLPEncode.writeUint(header.gas_limit);
+        list[10] = RLPEncode.writeUint(header.gas_used);
+        list[11] = RLPEncode.writeUint(header.timestamp);
+        list[12] = RLPEncode.writeBytes(header.extra_data);
+        list[13] = RLPEncode.writeBytes(abi.encodePacked(header.mix_digest));
+        list[14] = RLPEncode.writeBytes(abi.encodePacked(header.nonce));
+
+        data = RLPEncode.writeList(list);
+    }
+
+    /// @notice Compute the RLP of this header with chain id
+    function rlp_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes memory data) {
+        bytes[] memory list = new bytes[](16);
+
+        list[0] = RLPEncode.writeUint(chain_id);
+        list[1] = RLPEncode.writeBytes(abi.encodePacked(header.parent_hash));
+        list[2] = RLPEncode.writeBytes(abi.encodePacked(header.uncle_hash));
+        list[3] = RLPEncode.writeAddress(header.coinbase);
+        list[4] = RLPEncode.writeBytes(abi.encodePacked(header.state_root));
+        list[5] = RLPEncode.writeBytes(abi.encodePacked(header.transactions_root));
+        list[6] = RLPEncode.writeBytes(abi.encodePacked(header.receipts_root));
+        list[7] = RLPEncode.writeBytes(header.log_bloom);
+        list[8] = RLPEncode.writeUint(header.difficulty);
+        list[9] = RLPEncode.writeUint(header.number);
+        list[10] = RLPEncode.writeUint(header.gas_limit);
+        list[11] = RLPEncode.writeUint(header.gas_used);
+        list[12] = RLPEncode.writeUint(header.timestamp);
+        list[13] = RLPEncode.writeBytes(header.extra_data);
+        list[14] = RLPEncode.writeBytes(abi.encodePacked(header.mix_digest));
+        list[15] = RLPEncode.writeBytes(abi.encodePacked(header.nonce));
+
+        data = RLPEncode.writeList(list);
+    }
+}
+
+////// src/spec/ChainMessagePosition.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.8.17; */
+
+/// @notice Chain message position
+enum ChainMessagePosition {
+    Darwinia,
+    ETH,
+    BSC
 }
 
 ////// src/utils/Bytes.sol
@@ -531,7 +552,7 @@ library Bytes {
         }
         uint addr;
         uint addr2;
-        assembly {
+        assembly ("memory-safe") {
             addr := add(self, /*BYTES_HEADER_SIZE*/32)
             addr2 := add(other, /*BYTES_HEADER_SIZE*/32)
         }
@@ -565,7 +586,7 @@ library Bytes {
     ) internal pure returns (bytes memory) {
         require(startIndex + len <= self.length);
         if (len == 0) {
-            return "";
+            return new bytes(0);
         }
         uint256 addr = Memory.dataPtr(self);
         return Memory.toBytes(addr + startIndex, len);
@@ -599,11 +620,25 @@ library Bytes {
         uint len = end - start;
         require(0 <= len && len <= 32, "!slice");
 
-        assembly{
+        assembly ("memory-safe") {
             r := mload(add(add(self, 0x20), start))
         }
 
         return r >> (256 - len * 8);
+    }
+
+    /// alias of substr
+    function slice(
+        bytes memory self,
+        uint256 startIndex,
+        uint256 len
+    ) internal pure returns (bytes memory) {
+        return substr(self, startIndex, len);
+    }
+
+    /// alias of substr
+    function slice(bytes memory self, uint256 startIndex) internal pure returns (bytes memory) {
+        return substr(self, startIndex);
     }
 }
 
@@ -764,10 +799,12 @@ library ECDSA {
  *
  * [WARNING]
  * ====
- *  Trying to delete such a structure from storage will likely result in data corruption, rendering the structure unusable.
- *  See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.
+ * Trying to delete such a structure from storage will likely result in data corruption, rendering the structure
+ * unusable.
+ * See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.
  *
- *  In order to clean an EnumerableSet, you can either remove all elements one by one or create a fresh instance using an array of EnumerableSet.
+ * In order to clean an EnumerableSet, you can either remove all elements one by one or create a fresh instance using an
+ * array of EnumerableSet.
  * ====
  */
 library EnumerableSet {
@@ -949,7 +986,15 @@ library EnumerableSet {
      * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
      */
     function values(Bytes32Set storage set) internal view returns (bytes32[] memory) {
-        return _values(set._inner);
+        bytes32[] memory store = _values(set._inner);
+        bytes32[] memory result;
+
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := store
+        }
+
+        return result;
     }
 
     // AddressSet
@@ -1060,7 +1105,7 @@ library EnumerableSet {
     }
 
     /**
-     * @dev Returns the number of values on the set. O(1).
+     * @dev Returns the number of values in the set. O(1).
      */
     function length(UintSet storage set) internal view returns (uint256) {
         return _length(set._inner);
@@ -1179,7 +1224,6 @@ library EnumerableSet {
 // ```
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
 /* import "../../utils/Bytes.sol"; */
 /* import "../../utils/ECDSA.sol"; */
@@ -1192,33 +1236,33 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
     using Bytes for bytes;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    // Finalized BSC checkpoint
+    /// @notice Finalized BSC checkpoint
     StoredBlockHeader public finalized_checkpoint;
-    // Finalized BSC authorities
+    /// @notice Finalized BSC authorities
     EnumerableSet.AddressSet private _finalized_authorities;
 
-    // Chaind ID
+    /// @notice Chaind ID
     uint64 public immutable CHAIN_ID;
-    // Block period
+    /// @notice Block period
     uint64 public immutable PERIOD;
 
-    // Minimum gas limit
+    /// @notice Minimum gas limit
     uint64 constant private MIN_GAS_LIMIT = 5000;
-    // Maximum gas limit
+    /// @notice Maximum gas limit
     uint64 constant private MAX_GAS_LIMIT = 0x7fffffffffffffff;
-    // Epoch length
+    /// @notice Epoch length
     uint256 constant private EPOCH = 200;
-    // Difficulty for NOTURN block
+    /// @notice Difficulty for NOTURN block
     uint256 constant private DIFF_NOTURN = 1;
-    // Difficulty for INTURN block
+    /// @notice Difficulty for INTURN block
     uint256 constant private DIFF_INTURN = 2;
-    // Fixed number of extra-data prefix bytes reserved for signer vanity
+    /// @notice Fixed number of extra-data prefix bytes reserved for signer vanity
     uint256 constant private VANITY_LENGTH = 32;
-    // Address length
+    /// @notice Address length
     uint256 constant private ADDRESS_LENGTH = 20;
-    // Fixed number of extra-data suffix bytes reserved for signer signature
+    /// @notice Fixed number of extra-data suffix bytes reserved for signer signature
     uint256 constant private SIGNATURE_LENGTH = 65;
-    // Keccak of RLP encoding of empty list
+    /// @notice Keccak of RLP encoding of empty list
     bytes32 constant private KECCAK_EMPTY_LIST_RLP = 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347;
 
     event FinalizedHeaderImported(StoredBlockHeader finalized_header, address[] signers);
@@ -1274,7 +1318,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
         return _finalized_authorities.values();
     }
 
-    /// Import finalized checkpoint
+    /// @dev Import finalized checkpoint
     /// @notice len(headers) == N/2 + 1, headers[0] == finalized_checkpoint
     /// the first group headers that relayer submitted should exactly follow the initial
     /// checkpoint eg. the initial header number is x, the first call of this extrinsic
@@ -1301,7 +1345,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
         _finalized_authorities.remove(signer0);
 
         // check already have `N/2` valid headers signed by different authority separately
-        for (uint i = 1; i < headers.length; i++) {
+        for (uint i = 1; i < headers.length; ) {
             contextless_checks(headers[i]);
             // check parent
             contextual_checks(headers[i], headers[i-1]);
@@ -1310,6 +1354,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
             address signerN = _recover_creator(headers[i]);
             require(_finalized_authorities.contains(signerN), "!signerN");
             _finalized_authorities.remove(signerN);
+            unchecked { ++i; }
         }
 
         // clean old finalized_authorities
@@ -1338,15 +1383,17 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
     // Clean finalized authority set
     function _clean_finalized_authority_set() private {
         address[] memory v = _finalized_authorities.values();
-        for (uint i = 0; i < v.length; i++) {
+        for (uint i = 0; i < v.length; ) {
             _finalized_authorities.remove(v[i]);
+            unchecked { ++i; }
         }
     }
 
     // Save new finalized authority set to storage
     function _finalize_authority_set(address[] memory authorities) private {
-        for (uint i = 0; i < authorities.length; i++) {
+        for (uint i = 0; i < authorities.length; ) {
             _finalized_authorities.add(authorities[i]);
+            unchecked { ++i; }
         }
     }
 
@@ -1383,7 +1430,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
         // check extra-data contains vanity, validators and signature
         require(header.extra_data.length > VANITY_LENGTH, "!vanity");
 
-        uint validator_bytes_len = _sub(header.extra_data.length, VANITY_LENGTH + SIGNATURE_LENGTH);
+        uint validator_bytes_len = header.extra_data.length - (VANITY_LENGTH + SIGNATURE_LENGTH);
         // ensure extra-data contains a validator list on checkpoint, but none otherwise
         bool is_checkpoint = header.number % EPOCH == 0;
         if (is_checkpoint) {
@@ -1405,7 +1452,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
 
         // ensure block's timestamp isn't too close to it's parent
         // and header. timestamp is greater than parents'
-        require(header.timestamp >= _add(parent.timestamp, PERIOD), "!timestamp");
+        require(header.timestamp >= parent.timestamp + PERIOD, "!timestamp");
     }
 
     // Recover block creator from signature
@@ -1449,7 +1496,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
         bytes32 r;
         bytes32 s;
         uint8 v;
-        assembly {
+        assembly ("memory-safe") {
             r := mload(add(signature, 0x20))
             s := mload(add(signature, 0x40))
             v := byte(0, mload(add(signature, 0x60)))
@@ -1473,23 +1520,17 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
         require(signers_raw.length % ADDRESS_LENGTH == 0, "!signers");
         uint256 num_signers = signers_raw.length / ADDRESS_LENGTH;
         address[] memory signers = new address[](num_signers);
-        for (uint i = 0; i < num_signers; i++) {
+        for (uint i = 0; i < num_signers; ) {
             signers[i] = bytesToAddress(signers_raw.substr(i * ADDRESS_LENGTH, ADDRESS_LENGTH));
+            unchecked { ++i; }
         }
         return signers;
     }
 
     function bytesToAddress(bytes memory bys) internal pure returns (address addr) {
-        assembly {
+        assembly ("memory-safe") {
           addr := mload(add(bys,20))
         }
-    }
-
-    function _add(uint x, uint y) internal pure returns (uint z) {
-        require((z = x + y) >= x);
-    }
-    function _sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x);
     }
 }
 

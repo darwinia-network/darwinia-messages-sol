@@ -20,11 +20,10 @@ pragma solidity =0.8.17;
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
-/// @title A interface for user to enroll to be a relayer.
-/// @author echo
-/// @notice After enroll to be a relyer , you have the duty to relay
+/// @title IFeeMarket
+/// @notice A interface for user to enroll to be a relayer.
+/// @dev After enroll to be a relyer , you have the duty to relay
 /// the meesage which is assigned to you, or you will be slashed
 interface IFeeMarket {
     //  Relayer which delivery the messages
@@ -65,7 +64,6 @@ interface IFeeMarket {
 /* pragma solidity 0.8.17; */
 
 /// @title A interface for app layer to send cross chain message
-/// @author echo
 /// @notice The app layer could implement the interface `IOnMessageDelivered` to receive message dispatch result (optionally)
 interface IOutboundLane {
     /// @notice Send message over lane.
@@ -96,7 +94,15 @@ interface IOutboundLane {
 
 /* pragma solidity 0.8.17; */
 
+/// @title IVerifier
+/// @notice A interface for message layer to verify the correctness of the lane hash
 interface IVerifier {
+    /// @notice Verify outlane data hash using message/storage proof
+    /// @param outlane_data_hash The outlane data hash to be verify
+    /// @param chain_pos Bridged chain position
+    /// @param lane_pos Bridged outlane position
+    /// @param encoded_proof Message/storage abi-encoded proof
+    /// @return the verify result
     function verify_messages_proof(
         bytes32 outlane_data_hash,
         uint32 chain_pos,
@@ -104,6 +110,12 @@ interface IVerifier {
         bytes calldata encoded_proof
     ) external view returns (bool);
 
+    /// @notice Verify inlane data hash using message/storage proof
+    /// @param inlane_data_hash The inlane data hash to be verify
+    /// @param chain_pos Bridged chain position
+    /// @param lane_pos Bridged outlane position
+    /// @param encoded_proof Message/storage abi-encoded proof
+    /// @return the verify result
     function verify_messages_delivery_proof(
         bytes32 inlane_data_hash,
         uint32 chain_pos,
@@ -131,6 +143,8 @@ interface IVerifier {
 
 /* pragma solidity 0.8.17; */
 
+/// @title LaneIdentity
+/// @notice The identity of lane.
 abstract contract LaneIdentity {
     function encodeMessageKey(uint64 nonce) public view virtual returns (uint256);
 
@@ -189,11 +203,12 @@ abstract contract LaneIdentity {
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
 /* import "../interfaces/IVerifier.sol"; */
 /* import "./LaneIdentity.sol"; */
 
+/// @title OutboundLaneVerifier
+/// @notice The message/storage verifier for outbound lane.
 contract OutboundLaneVerifier is LaneIdentity {
     /// @dev The contract address of on-chain verifier
     IVerifier public immutable VERIFIER;
@@ -265,10 +280,11 @@ contract OutboundLaneVerifier is LaneIdentity {
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
+/// @title SourceChain
+/// @notice Source chain specification
 contract SourceChain {
-    /// The MessagePayload is the structure of RPC which should be delivery to target chain
+    /// @notice The MessagePayload is the structure of RPC which should be delivery to target chain
     /// @param source The source contract address which send the message
     /// @param target The targe contract address which receive the message
     /// @param encoded The calldata which encoded by ABI Encoding
@@ -278,41 +294,47 @@ contract SourceChain {
         bytes encoded; /*(abi.encodePacked(SELECTOR, PARAMS))*/
     }
 
-    /// Message key (unique message identifier) as it is stored in the storage.
+    /// @notice Message key (unique message identifier) as it is stored in the storage.
+    /// @param this_chain_pos This chain position
+    /// @param this_lane_pos Position of the message this lane.
+    /// @param bridged_chain_pos Bridged chain position
+    /// @param bridged_lane_pos Position of the message bridged lane.
+    /// @param nonce Nonce of the message.
     struct MessageKey {
-        // This chain position
         uint32 this_chain_pos;
-        // Position of the message this lane.
         uint32 this_lane_pos;
-        // Bridged chain position
         uint32 bridged_chain_pos;
-        // Position of the message bridged lane.
         uint32 bridged_lane_pos;
-        // Nonce of the message.
         uint64 nonce;
     }
 
+    /// @notice Message storage representation
+    /// @param encoded_key Encoded message key
+    /// @param payload_hash Hash of payload
     struct MessageStorage {
         uint256 encoded_key;
         bytes32 payload_hash;
     }
 
-    /// Message as it is stored in the storage.
+    /// @notice Message as it is stored in the storage.
+    /// @param encoded_key Encoded message key.
+    /// @param payload Message payload.
     struct Message {
-        // Encoded message key.
         uint256 encoded_key;
-        // Message payload.
         MessagePayload payload;
     }
 
-    /// Outbound lane data.
+    /// @notice Outbound lane data.
+    /// @param latest_received_nonce Nonce of the latest message, received by bridged chain.
+    /// @param messages Messages sent through this lane.
     struct OutboundLaneData {
-        // Nonce of the latest message, received by bridged chain.
         uint64 latest_received_nonce;
-        // Messages sent through this lane.
         Message[] messages;
     }
 
+    /// @notice Outbound lane data storage representation
+    /// @param latest_received_nonce Nonce of the latest message, received by bridged chain.
+    /// @param messages Messages storage representation
     struct OutboundLaneDataStorage {
         uint64 latest_received_nonce;
         MessageStorage[] messages;
@@ -343,6 +365,7 @@ contract SourceChain {
     /// )
     bytes32 internal constant MESSAGEPAYLOAD_TYPEHASH = 0x582ffe1da2ae6da425fa2c8a2c423012be36b65787f7994d78362f66e4f84101;
 
+    /// @notice Hash of OutboundLaneData
     function hash(OutboundLaneData memory data)
         internal
         pure
@@ -357,6 +380,7 @@ contract SourceChain {
         );
     }
 
+    /// @notice Hash of OutboundLaneDataStorage
     function hash(OutboundLaneDataStorage memory data)
         internal
         pure
@@ -371,6 +395,7 @@ contract SourceChain {
         );
     }
 
+    /// @notice Hash of MessageStorage
     function hash(MessageStorage[] memory msgs)
         internal
         pure
@@ -378,7 +403,7 @@ contract SourceChain {
     {
         uint msgsLength = msgs.length;
         bytes memory encoded = abi.encode(msgsLength);
-        for (uint256 i = 0; i < msgsLength; i ++) {
+        for (uint256 i = 0; i < msgsLength; ) {
             MessageStorage memory message = msgs[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -388,10 +413,12 @@ contract SourceChain {
                     message.payload_hash
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
 
+    /// @notice Hash of Message[]
     function hash(Message[] memory msgs)
         internal
         pure
@@ -399,7 +426,7 @@ contract SourceChain {
     {
         uint msgsLength = msgs.length;
         bytes memory encoded = abi.encode(msgsLength);
-        for (uint256 i = 0; i < msgsLength; i ++) {
+        for (uint256 i = 0; i < msgsLength; ) {
             Message memory message = msgs[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -409,10 +436,12 @@ contract SourceChain {
                     hash(message.payload)
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
 
+    /// @notice Hash of Message
     function hash(Message memory message)
         internal
         pure
@@ -427,6 +456,7 @@ contract SourceChain {
         );
     }
 
+    /// @notice Hash of MessagePayload
     function hash(MessagePayload memory payload)
         internal
         pure
@@ -442,6 +472,9 @@ contract SourceChain {
         );
     }
 
+    /// @notice Decode message key
+    /// @param encoded Encoded message key
+    /// @return key Decoded message key
     function decodeMessageKey(uint256 encoded) internal pure returns (MessageKey memory key) {
         key.this_chain_pos = uint32(encoded >> 160);
         key.this_lane_pos = uint32(encoded >> 128);
@@ -469,29 +502,29 @@ contract SourceChain {
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
+/// @title TargetChain
+/// @notice Target chain specification
 contract TargetChain {
-    /// Delivered messages with their dispatch result.
+    /// @notice Delivered messages with their dispatch result.
+    /// @param begin Nonce of the first message that has been delivered (inclusive).
+    /// @param end Nonce of the last message that has been delivered (inclusive).
     struct DeliveredMessages {
-        // Nonce of the first message that has been delivered (inclusive).
         uint64 begin;
-        // Nonce of the last message that has been delivered (inclusive).
         uint64 end;
     }
 
-    /// Unrewarded relayer entry stored in the inbound lane data.
-    ///
-    /// This struct represents a continuous range of messages that have been delivered by the same
+    /// @notice Unrewarded relayer entry stored in the inbound lane data.
+    /// @dev This struct represents a continuous range of messages that have been delivered by the same
     /// relayer and whose confirmations are still pending.
+    /// @param relayer Address of the relayer.
+    /// @param messages Messages range, delivered by this relayer.
     struct UnrewardedRelayer {
-        // Address of the relayer.
         address relayer;
-        // Messages range, delivered by this relayer.
         DeliveredMessages messages;
     }
 
-    /// Inbound lane data
+    /// @notice Inbound lane data
     struct InboundLaneData {
         // Identifiers of relayers and messages that they have delivered to this lane (ordered by
         // message nonce).
@@ -543,6 +576,7 @@ contract TargetChain {
     /// )
     bytes32 internal constant DELIVEREDMESSAGES_TYPETASH = 0x1984c1907b379883ef1736e0351d28f5b4b82026a854e28971d89eb48f32fbe2;
 
+    /// @notice Hash of InboundLaneData
     function hash(InboundLaneData memory inboundLaneData)
         internal
         pure
@@ -558,6 +592,7 @@ contract TargetChain {
         );
     }
 
+    /// @notice Hash of UnrewardedRelayer[]
     function hash(UnrewardedRelayer[] memory relayers)
         internal
         pure
@@ -565,7 +600,7 @@ contract TargetChain {
     {
         uint relayersLength = relayers.length;
         bytes memory encoded = abi.encode(relayersLength);
-        for (uint256 i = 0; i < relayersLength; i++) {
+        for (uint256 i = 0; i < relayersLength; ) {
             UnrewardedRelayer memory r = relayers[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -575,10 +610,12 @@ contract TargetChain {
                     hash(r.messages)
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
 
+    /// @notice Hash of DeliveredMessages
     function hash(DeliveredMessages memory messages)
         internal
         pure
@@ -625,7 +662,6 @@ contract TargetChain {
 // delivered to the the bridged chain, it is reported using `MessagesDelivered` event.
 
 /* pragma solidity 0.8.17; */
-/* pragma abicoder v2; */
 
 /* import "../interfaces/IOutboundLane.sol"; */
 /* import "../interfaces/IFeeMarket.sol"; */
@@ -633,12 +669,14 @@ contract TargetChain {
 /* import "../spec/SourceChain.sol"; */
 /* import "../spec/TargetChain.sol"; */
 
-// Everything about outgoing messages sending.
+/// @title SerialOutboundLane
+/// @notice Everything about outgoing messages sending.
+/// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
 contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain, SourceChain {
-    /// slot 1
+    /// @dev slot 1
     OutboundLaneNonce public outboundLaneNonce;
-    /// slot 2
-    /// nonce => hash(MessagePayload)
+    /// @dev slot 2
+    /// @notice nonce => hash(MessagePayload)
     mapping(uint64 => bytes32) public messages;
 
     address public immutable FEE_MARKET;
@@ -755,10 +793,12 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
         uint64 size = message_size();
         if (size > 0) {
             lane_data.messages = new MessageStorage[](size);
-            uint64 begin = outboundLaneNonce.latest_received_nonce + 1;
-            for (uint64 index = 0; index < size; index++) {
-                uint64 nonce = index + begin;
-                lane_data.messages[index] = MessageStorage(encodeMessageKey(nonce), messages[nonce]);
+            unchecked {
+                uint64 begin = outboundLaneNonce.latest_received_nonce + 1;
+                for (uint64 index = 0; index < size; index++) {
+                    uint64 nonce = index + begin;
+                    lane_data.messages[index] = MessageStorage(encodeMessageKey(nonce), messages[nonce]);
+                }
             }
         }
         lane_data.latest_received_nonce = outboundLaneNonce.latest_received_nonce;
@@ -811,8 +851,9 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
         // messages in this range => with_capacity call must succeed here or we'll be unable to receive
         // confirmations at all
         uint64 last_entry_end = 0;
-        for (uint64 i = 0; i < relayers.length; i++) {
+        for (uint64 i = 0; i < relayers.length; ) {
             UnrewardedRelayer memory entry = relayers[i];
+            unchecked { ++i; }
             // unrewarded relayer entry must have at least 1 unconfirmed message
             // (guaranteed by the `InboundLane::receive_message()`)
             require(entry.messages.end >= entry.messages.begin, "EmptyUnrewardedRelayerEntry");
@@ -841,8 +882,10 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
             nonce.oldest_unpruned_nonce <= nonce.latest_received_nonce)
         {
             delete messages[nonce.oldest_unpruned_nonce];
-            pruned_messages += 1;
-            nonce.oldest_unpruned_nonce += 1;
+            unchecked {
+                pruned_messages += 1;
+                nonce.oldest_unpruned_nonce += 1;
+            }
         }
         if (pruned_messages > 0) {
             outboundLaneNonce.oldest_unpruned_nonce = nonce.oldest_unpruned_nonce;
@@ -857,11 +900,12 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
         uint64 received_end
     ) private {
         IFeeMarket.DeliveredRelayer[] memory delivery_relayers = new IFeeMarket.DeliveredRelayer[](relayers.length);
-        for (uint256 i = 0; i < relayers.length; i++) {
+        for (uint256 i = 0; i < relayers.length; ) {
             UnrewardedRelayer memory r = relayers[i];
             uint64 nonce_begin = _max(r.messages.begin, received_start);
             uint64 nonce_end = _min(r.messages.end, received_end);
             delivery_relayers[i] = IFeeMarket.DeliveredRelayer(r.relayer, encodeMessageKey(nonce_begin), encodeMessageKey(nonce_end));
+            unchecked { ++i; }
         }
         require(IFeeMarket(FEE_MARKET).settle(delivery_relayers, msg.sender), "SettleFailed");
     }
