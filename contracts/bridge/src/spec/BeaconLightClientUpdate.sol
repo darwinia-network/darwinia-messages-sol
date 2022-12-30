@@ -19,35 +19,39 @@ pragma solidity 0.8.17;
 
 import "./BeaconChain.sol";
 
+/// @title BeaconLightClientUpdate
+/// @notice Beacon light client update specification
 contract BeaconLightClientUpdate is BeaconChain {
+    /// @notice Sync aggregate
+    /// @param sync_committee_bits Sync committee bits
+    /// @param sync_committee_signature Sync committee signature
     struct SyncAggregate {
         bytes32[2] sync_committee_bits;
         bytes sync_committee_signature;
     }
 
+    /// @notice Finalized header update
+    /// @param attested_header Header attested to by the sync committee
+    /// @param signature_sync_committee  Sync committee corresponding to sign attested header
+    /// @param finalized_header The finalized beacon block header
+    /// @param finality_branch Finalized header corresponding to `attested_header.state_root`
+    /// @param sync_aggregate Sync committee aggregate signature
+    /// @param fork_version Fork version for the aggregate signature
+    /// @param signature_slot Slot at which the aggregate signature was created (untrusted)
     struct FinalizedHeaderUpdate {
-        // The beacon block header that is attested to by the sync committee
         BeaconBlockHeader attested_header;
-
-        // Sync committee corresponding to sign attested header
         SyncCommittee signature_sync_committee;
-
-        // The finalized beacon block header attested to by Merkle branch
         BeaconBlockHeader finalized_header;
         bytes32[] finality_branch;
-
-        // Sync committee aggregate signature
         SyncAggregate sync_aggregate;
-
-        // Fork version for the aggregate signature
         bytes4 fork_version;
-
-        // Slot at which the aggregate signature was created (untrusted)
         uint64 signature_slot;
     }
 
+    /// @notice Sync committee period update
+    /// @param next_sync_committee Next sync committee
+    /// @param next_sync_committee_branch Next sync committee corresponding to `attested_header.state_root`
     struct SyncCommitteePeriodUpdate {
-        // Next sync committee corresponding to the finalized header
         SyncCommittee next_sync_committee;
         bytes32[] next_sync_committee_branch;
     }

@@ -1,7 +1,7 @@
 # BeaconLightClientUpdate
 
 
-
+Beacon light client update specification
 
 
 ## Contents

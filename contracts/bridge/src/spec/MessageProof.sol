@@ -17,11 +17,17 @@
 
 pragma solidity 0.8.17;
 
+/// @notice MessageProof
+/// @param chainProof Chain message single proof
+/// @param laneProof Lane message single proof
 struct MessageProof {
     MessageSingleProof chainProof;
     MessageSingleProof laneProof;
 }
 
+/// @notice MessageSingleProof
+/// @param root Merkle root
+/// @param proof Merkle proof
 struct MessageSingleProof {
     bytes32 root;
     bytes32[] proof;

@@ -1,7 +1,7 @@
 # BeaconChain
 
 
-
+Beacon chain specification
 
 
 ## Contents
@@ -39,7 +39,7 @@
 ## Functions
 
 ### compute_signing_root
-No description
+Return the signing root for the corresponding signing data.
 
 
 #### Declaration
@@ -54,7 +54,8 @@ No modifiers
 
 
 ### compute_fork_data_root
-No description
+Return the 32-byte fork data root for the ``current_version`` and ``genesis_validators_root``.
+This is used primarily in signature domains to avoid collisions across forks/chains.
 
 
 #### Declaration
@@ -69,7 +70,7 @@ No modifiers
 
 
 ### compute_domain
-No description
+Return the domain for the ``domain_type`` and ``fork_version``.
 
 
 #### Declaration
@@ -84,7 +85,7 @@ No modifiers
 
 
 ### hash_tree_root
-No description
+Return hash tree root of fork data
 
 
 #### Declaration
@@ -99,7 +100,7 @@ No modifiers
 
 
 ### hash_tree_root
-No description
+Return hash tree root of signing data
 
 
 #### Declaration
@@ -114,7 +115,7 @@ No modifiers
 
 
 ### hash_tree_root
-No description
+Return hash tree root of sync committee
 
 
 #### Declaration
@@ -129,7 +130,7 @@ No modifiers
 
 
 ### hash_tree_root
-No description
+Return hash tree root of beacon block header
 
 
 #### Declaration
@@ -144,7 +145,7 @@ No modifiers
 
 
 ### hash_tree_root
-No description
+Return hash tree root of beacon block body
 
 
 #### Declaration
@@ -159,7 +160,7 @@ No modifiers
 
 
 ### hash_tree_root
-No description
+Return hash tree root of execution payload
 
 
 #### Declaration
@@ -174,7 +175,7 @@ No modifiers
 
 
 ### to_little_endian_64
-No description
+Return little endian of uint64
 
 
 #### Declaration
@@ -189,7 +190,7 @@ No modifiers
 
 
 ### to_little_endian_256
-No description
+Return little endian of uint256
 
 
 #### Declaration

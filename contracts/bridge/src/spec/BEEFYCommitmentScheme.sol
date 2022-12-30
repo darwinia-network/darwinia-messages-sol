@@ -19,11 +19,13 @@ pragma solidity 0.8.17;
 
 import "../utils/ScaleCodec.sol";
 
+/// @title BEEFYCommitmentScheme
+/// @notice Beefy commitment scheme
 contract BEEFYCommitmentScheme {
     using ScaleCodec for uint32;
     using ScaleCodec for uint64;
 
-    /// Next BEEFY authority set
+    /// @notice Next BEEFY authority set
     /// @param id ID of the next set
     /// @param len Number of validators in the set
     /// @param root Merkle Root Hash build from BEEFY AuthorityIds
@@ -33,7 +35,7 @@ contract BEEFYCommitmentScheme {
         bytes32 root;
     }
 
-    /// The payload being signed
+    /// @notice The payload being signed
     /// @param network Source chain network identifier
     /// @param mmr MMR root hash
     /// @param messageRoot Darwnia message root commitment hash
@@ -45,7 +47,7 @@ contract BEEFYCommitmentScheme {
         NextValidatorSet nextValidatorSet;
     }
 
-    /// The Commitment, with its payload, is the core thing we are trying to verify with this contract.
+    /// @notice The Commitment, with its payload, is the core thing we are trying to verify with this contract.
     /// It contains a next validator set or not and a MMR root that commits to the darwinia history,
     /// including past blocks and can be used to verify darwinia blocks.
     /// @param payload the payload of the new commitment in beefy justifications (in
@@ -60,6 +62,7 @@ contract BEEFYCommitmentScheme {
 
     bytes4 internal constant PAYLOAD_SCALE_ENCOD_PREFIX = 0x04646280;
 
+    /// @notice Return hash of commitment
     function hash(Commitment memory commitment)
         public
         pure
@@ -76,6 +79,7 @@ contract BEEFYCommitmentScheme {
         );
     }
 
+    /// @notice Return hash of payload
     function hash(Payload memory payload)
         internal
         pure

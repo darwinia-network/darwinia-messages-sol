@@ -1,7 +1,7 @@
 # POSACommitmentScheme
 
 
-
+POSA commitment scheme
 
 
 ## Contents
@@ -27,7 +27,7 @@
 ## Functions
 
 ### hash
-No description
+Return hash of commitment
 
 
 #### Declaration

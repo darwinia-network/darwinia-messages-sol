@@ -1,7 +1,7 @@
 # TargetChain
 
 
-
+Target chain specification
 
 
 ## Contents
@@ -31,7 +31,7 @@
 ## Functions
 
 ### hash
-No description
+Hash of InboundLaneData
 
 
 #### Declaration
@@ -46,7 +46,7 @@ No modifiers
 
 
 ### hash
-No description
+Hash of UnrewardedRelayer[]
 
 
 #### Declaration
@@ -61,7 +61,7 @@ No modifiers
 
 
 ### hash
-No description
+Hash of DeliveredMessages
 
 
 #### Declaration

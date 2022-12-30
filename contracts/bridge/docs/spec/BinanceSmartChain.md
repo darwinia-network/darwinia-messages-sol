@@ -1,7 +1,7 @@
 # BinanceSmartChain
 
 
-
+Binance smart chain specification
 
 
 ## Contents
@@ -22,7 +22,7 @@
 ## Functions
 
 ### hash
-No description
+Compute hash of this header (keccak of the RLP with seal)
 
 
 #### Declaration
@@ -37,7 +37,7 @@ No modifiers
 
 
 ### hash_with_chain_id
-No description
+Compute hash of this header with chain id
 
 
 #### Declaration
@@ -52,7 +52,7 @@ No modifiers
 
 
 ### rlp
-No description
+Compute the RLP of this header
 
 
 #### Declaration
@@ -67,7 +67,7 @@ No modifiers
 
 
 ### rlp_chain_id
-No description
+Compute the RLP of this header with chain id
 
 
 #### Declaration

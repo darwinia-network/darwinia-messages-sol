@@ -19,52 +19,54 @@ pragma solidity 0.8.17;
 
 import "../utils/rlp/RLPEncode.sol";
 
+/// @title BinanceSmartChain
+/// @notice Binance smart chain specification
 contract BinanceSmartChain {
-    // BSC(Binance Smart Chain) header
+    /// @notice BSC(Binance Smart Chain) header
+    /// @param parent_hash Parent block hash
+    /// @param uncle_hash Block uncles hash
+    /// @param coinbase Validator address
+    /// @param state_root Block state root
+    /// @param transactions_root Block transactions root
+    /// @param receipts_root Block receipts root
+    /// @param log_bloom Block logs bloom, represents a 2048 bit bloom filter
+    /// @param difficulty Block difficulty
+    /// @param number Block number
+    /// @param gas_limit Block gas limit
+    /// @param gas_used Gas used for transactions execution
+    /// @param timestamp Block timestamp
+    /// @param extra_data Block extra data
+    /// @param mix_digest Block mix digest
+    /// @param nonce Block nonce, represents a 64-bit hash
     struct BSCHeader {
-        // Parent block hash
         bytes32 parent_hash;
-        // Block uncles hash
         bytes32 uncle_hash;
-        // validator address
         address coinbase;
-        // Block state root
         bytes32 state_root;
-        // Block transactions root
         bytes32 transactions_root;
-        // Block receipts root
         bytes32 receipts_root;
-        // Block logs bloom, represents a 2048 bit bloom filter
         bytes log_bloom;
-        // Block difficulty
         uint256 difficulty;
-        // Block number
         uint256 number;
-        // Block gas limit
         uint64 gas_limit;
-        // Gas used for transactions execution
         uint64 gas_used;
-        // Block timestamp
         uint64 timestamp;
-        // Block extra data
         bytes extra_data;
-        // Block mix digest
         bytes32 mix_digest;
-        // Block nonce, represents a 64-bit hash
         bytes8 nonce;
     }
 
-    // Compute hash of this header (keccak of the RLP with seal)
+    /// @notice Compute hash of this header (keccak of the RLP with seal)
     function hash(BSCHeader memory header) internal pure returns (bytes32) {
         return keccak256(rlp(header));
     }
 
-    // Compute hash of this header with chain id
+    /// @notice Compute hash of this header with chain id
     function hash_with_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes32) {
         return keccak256(rlp_chain_id(header, chain_id));
     }
 
-    // Compute the RLP of this header
+    /// @notice Compute the RLP of this header
     function rlp(BSCHeader memory header) internal pure returns (bytes memory data) {
         bytes[] memory list = new bytes[](15);
 
@@ -87,7 +89,7 @@ contract BinanceSmartChain {
         data = RLPEncode.writeList(list);
     }
 
-    // Compute the RLP of this header with chain id
+    /// @notice Compute the RLP of this header with chain id
     function rlp_chain_id(BSCHeader memory header, uint64 chain_id) internal pure returns (bytes memory data) {
         bytes[] memory list = new bytes[](16);
 

@@ -19,8 +19,10 @@ pragma solidity 0.8.17;
 
 import "../utils/Math.sol";
 
+/// @title MerkleProof
+/// @notice Merkle proof specification
 contract MerkleProof is Math {
-    // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
+    /// @notice Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
     function is_valid_merkle_branch(
         bytes32 leaf,
         bytes32[] memory branch,

@@ -1,7 +1,7 @@
 # State
 
 
-
+State specification
 
 
 ## Contents
@@ -19,19 +19,28 @@
 ## Functions
 
 ### toEVMAccount
-No description
+Convert data input to EVMAccount
+
 
 
 #### Declaration
 ```solidity
   function toEVMAccount(
+    bytes data
   ) internal returns (struct State.EVMAccount)
 ```
 
 #### Modifiers:
 No modifiers
 
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`data` | bytes | RLP data of EVMAccount
 
-
+#### Returns:
+| Type | Description |
+| --- | --- |
+|`EVMAccount` | object
 
 

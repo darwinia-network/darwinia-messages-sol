@@ -21,11 +21,20 @@ import "./State.sol";
 import "../utils/rlp/RLPDecode.sol";
 import "../utils/trie/SecureMerkleTrie.sol";
 
+/// @title StorageProof
+/// @notice Storage proof specification
 library StorageProof {
     using State for bytes;
     using RLPDecode for bytes;
     using RLPDecode for RLPDecode.RLPItem;
 
+    /// @notice Verify single storage proof
+    /// @param root State root
+    /// @param account Account address to be prove
+    /// @param account_proof Merkle trie inclusion proof for the account
+    /// @param storage_key Storage key to be prove
+    /// @param storage_proof Merkle trie inclusion proof for storage key
+    /// @return value of the key if it exists
     function verify_single_storage_proof(
         bytes32 root,
         address account,
@@ -49,6 +58,13 @@ library StorageProof {
         value = value.toRLPItem().readBytes();
     }
 
+    /// @notice Verify multi storage proof
+    /// @param root State root
+    /// @param account Account address to be prove
+    /// @param account_proof Merkle trie inclusion proof for the account
+    /// @param storage_keys Multi storage key to be prove
+    /// @param storage_proofs Merkle trie inclusion multi proof for storage keys
+    /// @return values of the keys if it exists
     function verify_multi_storage_proof(
         bytes32 root,
         address account,

@@ -1,7 +1,7 @@
 # SourceChain
 
 
-
+Source chain specification
 
 
 ## Contents
@@ -35,7 +35,7 @@
 ## Functions
 
 ### hash
-No description
+Hash of OutboundLaneData
 
 
 #### Declaration
@@ -50,7 +50,7 @@ No modifiers
 
 
 ### hash
-No description
+Hash of OutboundLaneDataStorage
 
 
 #### Declaration
@@ -65,7 +65,7 @@ No modifiers
 
 
 ### hash
-No description
+Hash of MessageStorage
 
 
 #### Declaration
@@ -80,7 +80,7 @@ No modifiers
 
 
 ### hash
-No description
+Hash of Message[]
 
 
 #### Declaration
@@ -95,7 +95,7 @@ No modifiers
 
 
 ### hash
-No description
+Hash of Message
 
 
 #### Declaration
@@ -110,7 +110,7 @@ No modifiers
 
 
 ### hash
-No description
+Hash of MessagePayload
 
 
 #### Declaration
@@ -125,19 +125,28 @@ No modifiers
 
 
 ### decodeMessageKey
-No description
+Decode message key
+
 
 
 #### Declaration
 ```solidity
   function decodeMessageKey(
+    uint256 encoded
   ) internal returns (struct SourceChain.MessageKey key)
 ```
 
 #### Modifiers:
 No modifiers
 
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`encoded` | uint256 | Encoded message key
 
-
+#### Returns:
+| Type | Description |
+| --- | --- |
+|`key` | Decoded message key
 
 

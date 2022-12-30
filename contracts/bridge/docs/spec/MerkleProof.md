@@ -1,7 +1,7 @@
 # MerkleProof
 
 
-
+Merkle proof specification
 
 
 ## Contents
@@ -22,7 +22,7 @@
 ## Functions
 
 ### is_valid_merkle_branch
-No description
+Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
 
 
 #### Declaration

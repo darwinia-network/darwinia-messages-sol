@@ -19,9 +19,16 @@ pragma solidity 0.8.17;
 
 import "../utils/rlp/RLPDecode.sol";
 
+/// @title State
+/// @notice State specification
 library State {
     using RLPDecode for RLPDecode.RLPItem;
 
+    /// @notice EVMAccount state object
+    /// @param nonce Nonce of account
+    /// @param balance balance of account
+    /// @param storage_root Storage root of account
+    /// @param code_hash Code hash of account
     struct EVMAccount {
         uint256 nonce;
         uint256 balance;
@@ -29,6 +36,9 @@ library State {
         bytes32 code_hash;
     }
 
+    /// @notice Convert data input to EVMAccount
+    /// @param data RLP data of EVMAccount
+    /// @return EVMAccount object
     function toEVMAccount(bytes memory data) internal pure returns (EVMAccount memory) {
         RLPDecode.RLPItem[] memory account = RLPDecode.readList(data);
 
