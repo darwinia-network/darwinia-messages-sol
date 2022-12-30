@@ -19,4 +19,3 @@ slither flat/LaneMessageCommitter.f.sol $FIXED_PARAMS        > audit/LaneMessage
 slither flat/OutboundLane.f.sol $FIXED_PARAMS                > audit/OutboundLane.md
 slither flat/POSALightClient.f.sol $FIXED_PARAMS             > audit/POSALightClient.md
 slither flat/SimpleFeeMarket.f.sol $FIXED_PARAMS             > audit/SimpleFeeMarket.md
-

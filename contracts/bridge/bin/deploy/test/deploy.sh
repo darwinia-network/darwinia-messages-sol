@@ -2,8 +2,6 @@
 
 set -e
 
-export MODE=test
-
 # 0
 # export ETH_GAS_PRICE=10000000000
 # . $(dirname $0)/deploy/test/pangoro.sh

@@ -41,21 +41,14 @@ size     :; @./bin/contract-size.sh ${contract}
 gen-smt  :; export DAPP_SMTCHECKER=1 && dapp mk-standard-json | jq '.settings.modelChecker += {"contracts": {"src/test/utils/Math.p.sol": ["MathPropertyTest"]}, "invariants": ["contract"]}' &> smt.json
 
 # Deployment helpers
-deploy       :; @./bin/deploy.sh $(network_name)
-deploy-local :; @./bin/deploy-local.sh
-deploy-test  :; @./bin/deploy-test.sh
-deploy-prod  :; @./bin/deploy-prod.sh
+deploy      :; @./bin/deploy.sh $(mode)
+# Migration
+migrate     :; @./bin/migrate.sh $(mode)
+# verify
+verify      :; @./bin/verify.sh $(mode)
+# status
+stats       :; @./bin/stats.sh $(mode)
 
 # Local testnet starter
 local-testnet :; @./bin/start-services.sh
 
-# Migration
-migrate-local :; @./bin/migrate-local.sh
-migrate-test  :; @./bin/migrate-test.sh
-migrate-prod  :; @./bin/migrate-prod.sh
-
-# verify
-verify-test:; @./bin/verify-test.sh $(network_name)
-
-# status
-msg-sts :; @./bin/stats.sh
