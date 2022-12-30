@@ -52,7 +52,7 @@ contract RLPDecodeTest is DSTest {
         RLPDecode.readBytes(hex"ff");
     }
 
-    function testFail_readBytes_invalidRemainder_reverts() external {
+    function testFail_readBytes_invalidRemainder_reverts() external pure {
         // vm.expectRevert("RLPDecode: bytes value contains an invalid remainder");
         RLPDecode.readBytes(hex"800a");
     }
@@ -210,76 +210,76 @@ contract RLPDecodeTest is DSTest {
         );
     }
 
-    function testFail_decode_list_leadingZerosInLongLengthArray2_reverts() external {
+    function testFail_decode_list_leadingZerosInLongLengthArray2_reverts() external pure {
         // vm.expectRevert(
         //     "RLPDecode: length of content must not have any leading zeros (long string)"
         // );
         RLPDecode.readList(hex"b800");
     }
 
-    function testFail_decode_list_leadingZerosInLongLengthList1_reverts() external {
+    function testFail_decode_list_leadingZerosInLongLengthList1_reverts() external pure {
         // vm.expectRevert("RLPDecode: length of content must not have any leading zeros (long list)");
         RLPDecode.readList(
             hex"fb00000040000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
         );
     }
 
-    function testFail_decode_list_nonOptimalLongLengthArray1_reverts() external {
+    function testFail_decode_list_nonOptimalLongLengthArray1_reverts() external pure {
         // vm.expectRevert("RLPDecode: length of content must be greater than 55 bytes (long string)");
         RLPDecode.readList(hex"b81000112233445566778899aabbccddeeff");
     }
 
-    function testFail_decode_list_nonOptimalLongLengthArray2_reverts() external {
+    function testFail_decode_list_nonOptimalLongLengthArray2_reverts() external pure {
         // vm.expectRevert("RLPDecode: length of content must be greater than 55 bytes (long string)");
         RLPDecode.readList(hex"b801ff");
     }
 
-    function testFail_decode_list_invalidValue_reverts() external {
+    function testFail_decode_list_invalidValue_reverts() external pure {
         // vm.expectRevert(
         //     "RLPDecode: length of content must be greater than string length (short string)"
         // );
         RLPDecode.readList(hex"91");
     }
 
-    function testFail_decode_list_invalidRemainder_reverts() external {
+    function testFail_decode_list_invalidRemainder_reverts() external pure {
         // vm.expectRevert("RLPDecode: list item has an invalid data remainder");
         RLPDecode.readList(hex"c000");
     }
 
-    function testFail_decode_list_notEnoughContentForString1_reverts() external {
+    function testFail_decode_list_notEnoughContentForString1_reverts() external pure {
         // vm.expectRevert(
         //     "RLPDecode: length of content must be greater than total length (long string)"
         // );
         RLPDecode.readList(hex"ba010000aabbccddeeff");
     }
 
-    function testFail_decode_list_notEnoughContentForString2_reverts() external {
+    function testFail_decode_list_notEnoughContentForString2_reverts() external pure {
         // vm.expectRevert(
         //     "RLPDecode: length of content must be greater than total length (long string)"
         // );
         RLPDecode.readList(hex"b840ffeeddccbbaa99887766554433221100");
     }
 
-    function testFail_decode_list_notEnoughContentForList1_reverts() external {
+    function testFail_decode_list_notEnoughContentForList1_reverts() external pure {
         // vm.expectRevert(
         //     "RLPDecode: length of content must be greater than total length (long list)"
         // );
         RLPDecode.readList(hex"f90180");
     }
 
-    function testFail_decode_list_notEnoughContentForList2_reverts() external {
+    function testFail_decode_list_notEnoughContentForList2_reverts() external pure {
         // vm.expectRevert(
         //     "RLPDecode: length of content must be greater than total length (long list)"
         // );
         RLPDecode.readList(hex"ffffffffffffffffff0001020304050607");
     }
 
-    function testFail_decode_list_longStringLessThan56Bytes_reverts() external {
+    function testFail_decode_list_longStringLessThan56Bytes_reverts() external pure {
         // vm.expectRevert("RLPDecode: length of content must be greater than 55 bytes (long string)");
         RLPDecode.readList(hex"b80100");
     }
 
-    function testFail_decode_list_longListLessThan56Bytes_reverts() external {
+    function testFail_decode_list_longListLessThan56Bytes_reverts() external pure {
         // vm.expectRevert("RLPDecode: length of content must be greater than 55 bytes (long list)");
         RLPDecode.readList(hex"f80100");
     }
