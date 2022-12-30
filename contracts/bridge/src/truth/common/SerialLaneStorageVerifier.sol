@@ -23,7 +23,13 @@ import "../../spec/TargetChain.sol";
 import "../../spec/StorageProof.sol";
 
 abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetChain {
-    event Registry(uint256 bridgedChainPosition, uint256 lanePosition, address lane);
+    event Registry(
+        uint256 bridgedChainPosition,
+        uint256 outlanePosition,
+        address outlane,
+        uint256 inlanePos,
+        address inlane
+    );
 
     struct ReceiveProof {
         bytes[] accountProof;
@@ -73,8 +79,7 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
         require(bridgedChainPosition != THIS_CHAIN_POSITION, "invalid_chain_pos");
         lanes[bridgedChainPosition][outboundPosition] = outbound;
         lanes[bridgedChainPosition][inboundPositon] = inbound;
-        emit Registry(bridgedChainPosition, outboundPosition, outbound);
-        emit Registry(bridgedChainPosition, inboundPositon, inbound);
+        emit Registry(bridgedChainPosition, outboundPosition, outbound, inboundPositon, inbound);
     }
 
     function state_root() public view virtual returns (bytes32);
