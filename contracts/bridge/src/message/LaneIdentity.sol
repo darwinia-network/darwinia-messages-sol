@@ -58,11 +58,10 @@ abstract contract LaneIdentity {
        );
     }
 
-    function getLaneId() external view returns (uint256) {
-        uint256 _slot0;
+    function getLaneId() external view returns (uint256 id) {
         assembly ("memory-safe") {
-          _slot0 := sload(slot0.slot)
+          id := sload(slot0.slot)
         }
-        return _slot0 << 64;
+        return id << 64;
     }
 }
