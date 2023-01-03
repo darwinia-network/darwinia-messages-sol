@@ -37,7 +37,7 @@ contract MockDarwiniaLightClient {
 
     function verify_messages_proof(
         bytes32 outlane_data_hash,
-        uint256 oulane_id,
+        uint256 outlane_id,
         bytes calldata encoded_proof
     ) external view returns (bool) {
         uint32 chain_pos = uint32(outlane_id >> 96);
