@@ -37,19 +37,21 @@ contract MockDarwiniaLightClient {
 
     function verify_messages_proof(
         bytes32 outlane_data_hash,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 oulane_id,
         bytes calldata encoded_proof
     ) external view returns (bool) {
+        uint32 chain_pos = uint32(outlane_id >> 96);
+        uint32 lane_pos = uint32(outlane_id >> 128);
         return validate_lane_data_match_root(outlane_data_hash, chain_pos, lane_pos, encoded_proof);
     }
 
     function verify_messages_delivery_proof(
         bytes32 inlane_data_hash,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 inlane_id,
         bytes calldata encoded_proof
     ) external view returns (bool) {
+        uint32 chain_pos = uint32(inlane_id >> 96);
+        uint32 lane_pos = uint32(inlane_id >> 128);
         return validate_lane_data_match_root(inlane_data_hash, chain_pos, lane_pos, encoded_proof);
     }
 
