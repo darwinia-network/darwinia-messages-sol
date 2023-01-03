@@ -58,28 +58,24 @@ interface ICrossChainFilter {
 /// @notice A interface for message layer to verify the correctness of the lane hash
 interface IVerifier {
     /// @notice Verify outlane data hash using message/storage proof
-    /// @param outlane_data_hash The outlane data hash to be verify
-    /// @param chain_pos Bridged chain position
-    /// @param lane_pos Bridged outlane position
+    /// @param outlane_data_hash The bridged outlane data hash to be verify
+    /// @param outlane_id The bridged outlen id
     /// @param encoded_proof Message/storage abi-encoded proof
     /// @return the verify result
     function verify_messages_proof(
         bytes32 outlane_data_hash,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 outlane_id,
         bytes calldata encoded_proof
     ) external view returns (bool);
 
     /// @notice Verify inlane data hash using message/storage proof
-    /// @param inlane_data_hash The inlane data hash to be verify
-    /// @param chain_pos Bridged chain position
-    /// @param lane_pos Bridged outlane position
+    /// @param inlane_data_hash The bridged inlane data hash to be verify
+    /// @param inlane_id The bridged inlane id
     /// @param encoded_proof Message/storage abi-encoded proof
     /// @return the verify result
     function verify_messages_delivery_proof(
         bytes32 inlane_data_hash,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 inlane_id,
         bytes calldata encoded_proof
     ) external view returns (bool);
 }
@@ -143,6 +139,13 @@ abstract contract LaneIdentity {
            _slot0.bridged_lane_pos
        );
     }
+
+    function getLaneId() external view returns (uint256 id) {
+        assembly ("memory-safe") {
+          id := sload(slot0.slot)
+        }
+        return id << 64;
+    }
 }
 
 ////// src/message/InboundLaneVerifier.sol
@@ -192,15 +195,21 @@ contract InboundLaneVerifier is LaneIdentity {
         bytes32 outlane_data_hash,
         bytes memory encoded_proof
     ) internal view {
-        Slot0 memory _slot0 = slot0;
         require(
             VERIFIER.verify_messages_proof(
                 outlane_data_hash,
-                _slot0.this_chain_pos,
-                _slot0.bridged_lane_pos,
+                get_bridged_lane_id(),
                 encoded_proof
             ), "!proof"
         );
+    }
+
+    function get_bridged_lane_id() internal view returns (uint256) {
+        Slot0 memory _slot0 = slot0;
+        return (uint256(_slot0.bridged_chain_pos) << 160) +
+                (uint256(_slot0.bridged_lane_pos) << 128) +
+                (uint256(_slot0.this_chain_pos) << 96) +
+                (uint256(_slot0.this_lane_pos) << 64);
     }
 
     /// 32 bytes to identify an unique message from source chain
@@ -213,12 +222,7 @@ contract InboundLaneVerifier is LaneIdentity {
     /// [20..24) bytes ---- ThisLanePosition
     /// [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
     function encodeMessageKey(uint64 nonce) public view override returns (uint256) {
-        Slot0 memory _slot0 = slot0;
-        return (uint256(_slot0.bridged_chain_pos) << 160) +
-                (uint256(_slot0.bridged_lane_pos) << 128) +
-                (uint256(_slot0.this_chain_pos) << 96) +
-                (uint256(_slot0.this_lane_pos) << 64) +
-                uint256(nonce);
+        return get_bridged_lane_id() + uint256(nonce);
     }
 }
 

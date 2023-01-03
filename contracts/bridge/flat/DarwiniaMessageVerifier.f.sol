@@ -55,28 +55,24 @@ interface ILightClient {
 /// @notice A interface for message layer to verify the correctness of the lane hash
 interface IVerifier {
     /// @notice Verify outlane data hash using message/storage proof
-    /// @param outlane_data_hash The outlane data hash to be verify
-    /// @param chain_pos Bridged chain position
-    /// @param lane_pos Bridged outlane position
+    /// @param outlane_data_hash The bridged outlane data hash to be verify
+    /// @param outlane_id The bridged outlen id
     /// @param encoded_proof Message/storage abi-encoded proof
     /// @return the verify result
     function verify_messages_proof(
         bytes32 outlane_data_hash,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 outlane_id,
         bytes calldata encoded_proof
     ) external view returns (bool);
 
     /// @notice Verify inlane data hash using message/storage proof
-    /// @param inlane_data_hash The inlane data hash to be verify
-    /// @param chain_pos Bridged chain position
-    /// @param lane_pos Bridged outlane position
+    /// @param inlane_data_hash The bridged inlane data hash to be verify
+    /// @param inlane_id The bridged inlane id
     /// @param encoded_proof Message/storage abi-encoded proof
     /// @return the verify result
     function verify_messages_delivery_proof(
         bytes32 inlane_data_hash,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 inlane_id,
         bytes calldata encoded_proof
     ) external view returns (bool);
 }
@@ -280,19 +276,21 @@ abstract contract LaneMessageVerifier is IVerifier {
 
     function verify_messages_proof(
         bytes32 outlane_data_hash,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 outlane_id,
         bytes calldata encoded_proof
     ) external override view returns (bool) {
+        uint32 chain_pos = uint32(outlane_id >> 96);
+        uint32 lane_pos = uint32(outlane_id >> 128);
         return validate_lane_data_match_root(outlane_data_hash, chain_pos, lane_pos, encoded_proof);
     }
 
     function verify_messages_delivery_proof(
         bytes32 inlane_data_hash,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 inlane_id,
         bytes calldata encoded_proof
     ) external override view returns (bool) {
+        uint32 chain_pos = uint32(inlane_id >> 96);
+        uint32 lane_pos = uint32(inlane_id >> 128);
         return validate_lane_data_match_root(inlane_data_hash, chain_pos, lane_pos, encoded_proof);
     }
 

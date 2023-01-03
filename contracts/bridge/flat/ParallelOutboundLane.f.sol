@@ -92,6 +92,13 @@ abstract contract LaneIdentity {
            _slot0.bridged_lane_pos
        );
     }
+
+    function getLaneId() external view returns (uint256 id) {
+        assembly ("memory-safe") {
+          id := sload(slot0.slot)
+        }
+        return id << 64;
+    }
 }
 
 ////// src/spec/SourceChain.sol
