@@ -131,7 +131,7 @@ describe("verify message relay tests", () => {
     targetOutbound = await OutboundLane.deploy(sourceLightClient.address, feeMarket.address, targetChainPos, targetOutLanePos, sourceChainPos, sourceInLanePos, 1, 0, 0)
     targetInbound = await InboundLane.deploy(sourceLightClient.address, targetChainPos, targetInLanePos, sourceChainPos, sourceOutLanePos, 0, 0)
 
-    await targetLightClient.setBound(sourceChainPos, targetOutLanePos, targetOutbound.address, targetInLanePos, targetInbound.address)
+    await targetLightClient.setBound(targetOutbound.getLaneId(), targetOutbound.address, targetInbound.getLaneId(), targetInbound.address)
 
     const [one, two, three] = await ethers.getSigners();
     let overrides = {
