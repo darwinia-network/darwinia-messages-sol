@@ -41,12 +41,16 @@ import "../utils/call/ExcessivelySafeCall.sol";
 contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
     using ExcessivelySafeCall for address;
 
-    /// @dev message nonce => dispatch result
-    mapping(uint => bool) public dones;
+    /// nonce => is_message_dispathed
+    mapping(uint64 => bool) public dones;
+    /// nonce => failed message
+    mapping(uint64 => bytes32) public fails;
 
     /// @dev Notifies an observer that the message has dispatched
     /// @param nonce The message nonce
-    event MessageDispatched(uint64 nonce);
+    event MessageDispatched(uint64 indexed nonce, bool dispatch_result);
+
+    event RetryFailedMessage(uint64 indexed nonce , bool dispatch_result);
 
     /// @dev Deploys the InboundLane contract
     /// @param _verifier The contract address of on-chain verifier
@@ -77,6 +81,17 @@ contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
     ) external {
         _verify_messages_proof(outlane_data_hash, lane_proof);
         _receive_message(message, outlane_data_hash, message_proof);
+    }
+
+    /// Retry failed message
+    function retry_failed_message(Message calldata message) external returns (bool dispatch_result) {
+        MessageKey memory key = decodeMessageKey(message.encoded_key);
+        require(fails[key.nonce] == hash(message), "InvalidFailedMessage");
+        dispatch_result = _dispatch(message.payload);
+        if (dispatch_result) {
+            delete fails[key.nonce];
+        }
+        emit RetryFailedMessage(key.nonce, dispatch_result);
     }
 
     function _verify_message(
@@ -114,11 +129,11 @@ contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
         MessagePayload memory message_payload = message.payload;
         // then, dispatch message
         bool dispatch_result = _dispatch(message_payload);
-        // only success dispatched message could pass, dapp could retry revert message
-        require(dispatch_result == true, "DispatchFailed");
-        emit MessageDispatched(key.nonce);
+        if (!dispatch_result) {
+            fails[key.nonce] = hash(message);
+        }
+        emit MessageDispatched(key.nonce, dispatch_result);
     }
-
     /// @dev dispatch the cross chain message
     /// @param payload payload of the dispatch message
     /// @return dispatch_result the dispatch call result

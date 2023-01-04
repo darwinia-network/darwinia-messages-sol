@@ -81,17 +81,6 @@ contract MathTest is DSTest, Math {
         assertTrue(2**(y-1) < x && x <= 2**y);
     }
 
-    function prove_max(uint x, uint y) public {
-        uint z = _max(x, y);
-        if (z == x) {
-            assertGe(z, y);
-        } else if (z == y) {
-            assertGe(z, x);
-        } else {
-            fail();
-        }
-    }
-
     function _ceilLog2(uint256 _in) internal pure returns (uint256) {
         require(_in > 0, "Cannot compute ceil(log_2) of 0.");
 

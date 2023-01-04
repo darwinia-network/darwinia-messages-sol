@@ -69,21 +69,7 @@ contract LaneMessageCommitter is MessageCommitter {
         setter = _setter;
     }
 
-    /// @dev Change lane address of the given positon
-    /// @notice Only could be called by setter
-    /// @param pos The given positon
-    /// @param lane New lane address of the given positon
-    function changeLane(uint256 pos, address lane) external onlySetter {
-        require(laneOf[pos] != address(0), "!exist");
-        (uint32 _thisChainPosition, uint32 _thisLanePosition, uint32 _bridgedChainPosition, ) = ILane(lane).getLaneInfo();
-        require(THIS_CHAIN_POSITION == _thisChainPosition, "!thisChainPosition");
-        require(BRIDGED_CHAIN_POSITION == _bridgedChainPosition, "!bridgedChainPosition");
-        require(pos == _thisLanePosition, "!thisLanePosition");
-        laneOf[pos] = lane;
-        emit ChangeLane(pos, lane);
-    }
-
-    /// @dev Registry a pair of out lane and in lane
+    /// @dev Registry a pair of out lane and in lane, could not remove them
     /// @notice Only could be called by setter
     /// @param outboundLane Address of outbound lane
     /// @param inboundLane Address of inbound lane

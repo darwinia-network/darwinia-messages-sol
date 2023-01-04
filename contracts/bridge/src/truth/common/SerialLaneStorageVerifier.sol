@@ -70,7 +70,10 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
         setter = msg.sender;
     }
 
+    /// Registry a pair of out lane and in lane, could not remove them
     function registry(uint256 outlaneId, address outbound, uint256 inlaneId, address inbound) external onlySetter {
+        require(lanes[outlaneId] == address(0), "!empty");
+        require(lanes[inlaneId] == address(0), "!empty");
         lanes[outlaneId] = outbound;
         lanes[inlaneId] = inbound;
         emit Registry(outlaneId, outbound, inlaneId, inbound);

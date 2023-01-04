@@ -28,8 +28,8 @@ contract EcdsaAuthority {
     uint256 internal count;
     /// @dev Number of required confirmations for update operations
     uint256 internal threshold;
-    /// @dev Store all relayers in the linked list
-    mapping(address => address) internal relayers;
+    /// @dev Store all relayers in the mapping
+    mapping(address => bool) internal relayers;
 
     // keccak256(
     //     "chain_id | spec_name | :: | pallet_name"
@@ -52,7 +52,6 @@ contract EcdsaAuthority {
     //     "ChangeRelayer(bytes4 sig,bytes params,uint256 nonce)"
     // );
     bytes32 private constant RELAY_TYPEHASH = 0x30a82982a8d5050d1c83bbea574aea301a4d317840a8c4734a308ffaa6a63bc8;
-    address private constant SENTINEL = address(0x1);
 
     event AddedRelayer(address relayer);
     event RemovedRelayer(address relayer);
@@ -80,20 +79,16 @@ contract EcdsaAuthority {
         require(_threshold <= _relayers.length, "!threshold");
         // There has to be at least one relayer.
         require(_threshold >= 1, "0");
-        // Initializing relayers.
-        address current = SENTINEL;
-        for (uint256 i = 0; i < _relayers.length; ) {
+        for (uint256 i = 0; i < _relayers.length; i++) {
             // Relayer address cannot be null.
             address r = _relayers[i];
-            require(r != address(0) && r != SENTINEL && r != address(this) && current != r, "!relayer");
+            require(r != address(0) && r != address(this), "!relayer");
             // No duplicate relayers allowed.
-            require(relayers[r] == address(0), "duplicate");
-            relayers[current] = r;
-            current = r;
+            require(relayers[r] == false, "duplicate");
+            relayers[r] = true;
             emit AddedRelayer(r);
             unchecked { ++i; }
         }
-        relayers[current] = SENTINEL;
         count = _relayers.length;
         threshold = _threshold;
         nonce = _nonce;
@@ -110,13 +105,12 @@ contract EcdsaAuthority {
         uint256 _threshold,
         bytes[] memory _signatures
     ) external {
-        // Relayer address cannot be null, the sentinel or the registry itself.
-        require(_relayer != address(0) && _relayer != SENTINEL && _relayer != address(this), "!relayer");
+        // Relayer address cannot be null, or the registry itself.
+        require(_relayer != address(0) && _relayer != address(this), "!relayer");
         // No duplicate relayers allowed.
-        require(relayers[_relayer] == address(0), "duplicate");
+        require(relayers[_relayer] == false, "duplicate");
         _verify_relayer_signatures(ADD_RELAYER_SIG, abi.encode(_relayer, _threshold), _signatures);
-        relayers[_relayer] = relayers[SENTINEL];
-        relayers[SENTINEL] = _relayer;
+        relayers[_relayer] = true;
         count++;
         emit AddedRelayer(_relayer);
         // Change threshold if threshold was changed.
@@ -138,12 +132,9 @@ contract EcdsaAuthority {
     ) external {
         // Only allow to remove a relayer, if threshold can still be reached.
         require(count - 1 >= _threshold, "!threshold");
-        // Validate relayer address and check that it corresponds to relayer index.
-        require(_relayer != address(0) && _relayer != SENTINEL, "!relayer");
-        require(relayers[_prevRelayer] == _relayer, "!pair");
+        require(relayers[_relayer] == true, "!relayer");
         _verify_relayer_signatures(REMOVE_RELAYER_SIG, abi.encode(_prevRelayer, _relayer, _threshold), _signatures);
-        relayers[_prevRelayer] = relayers[_relayer];
-        relayers[_relayer] = address(0);
+        relayers[_relayer] = false;
         count--;
         emit RemovedRelayer(_relayer);
         // Change threshold if threshold was changed.
@@ -163,17 +154,14 @@ contract EcdsaAuthority {
         address _newRelayer,
         bytes[] memory _signatures
     ) external {
-        // Relayer address cannot be null, the sentinel or the registry itself.
-        require(_newRelayer != address(0) && _newRelayer != SENTINEL && _newRelayer != address(this), "!relayer");
+        // Relayer address cannot be null, or the registry itself.
+        require(_newRelayer != address(0) && _newRelayer != address(this), "!relayer");
         // No duplicate guards allowed.
-        require(relayers[_newRelayer] == address(0), "duplicate");
-        // Validate oldRelayer address and check that it corresponds to relayer index.
-        require(_oldRelayer != address(0) && _oldRelayer != SENTINEL, "!oldRelayer");
-        require(relayers[_prevRelayer] == _oldRelayer, "!pair");
+        require(relayers[_newRelayer] == false, "duplicate");
+        require(relayers[_oldRelayer] == true);
         _verify_relayer_signatures(SWAP_RELAYER_SIG, abi.encode(_prevRelayer, _oldRelayer, _newRelayer), _signatures);
-        relayers[_newRelayer] = relayers[_oldRelayer];
-        relayers[_prevRelayer] = _newRelayer;
-        relayers[_oldRelayer] = address(0);
+        relayers[_oldRelayer] = false;
+        relayers[_newRelayer] = true;
         emit RemovedRelayer(_oldRelayer);
         emit AddedRelayer(_newRelayer);
     }
@@ -202,23 +190,7 @@ contract EcdsaAuthority {
     }
 
     function is_relayer(address _relayer) public view returns (bool) {
-        return _relayer != SENTINEL && relayers[_relayer] != address(0);
-    }
-
-    /// @dev Returns array of relayers.
-    /// @return Array of relayers.
-    function get_relayers() public view returns (address[] memory) {
-        address[] memory array = new address[](count);
-
-        // populate return array
-        uint256 index = 0;
-        address current = relayers[SENTINEL];
-        while (current != SENTINEL) {
-            array[index] = current;
-            current = relayers[current];
-            index++;
-        }
-        return array;
+        return relayers[_relayer];
     }
 
     function _verify_relayer_signatures(
@@ -272,7 +244,7 @@ contract EcdsaAuthority {
         address current;
         for (uint256 i = 0; i < requiredSignatures; i++) {
             current = ECDSA.recover(dataHash, signatures[i]);
-            require(current > last && relayers[current] != address(0) && current != SENTINEL, "!signer");
+            require(current > last && relayers[current] != false, "!signer");
             last = current;
         }
     }

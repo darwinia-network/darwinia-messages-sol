@@ -17,22 +17,25 @@
 
 pragma solidity 0.8.17;
 
-contract Math {
-    /// Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.
-    /// Commonly used for "how many nodes do I need for a bottom tree layer fitting x elements?"
-    /// Example: 0->1, 1->1, 2->2, 3->4, 4->4, 5->8, 6->8, 7->8, 8->8, 9->16.
-    function get_power_of_two_ceil(uint256 x) internal pure returns (uint256) {
-        if (x <= 1) return 1;
-        else if (x == 2) return 2;
-        else return 2 * get_power_of_two_ceil((x + 1) >> 1);
+import "../test.sol";
+
+contract HashTest is DSTest {
+
+    function test_keccak_256() public {
+        bytes32 domain = hex'07000000e7acb21061790987fa1c1e745cccfb358370b33e8af2b2c18938e6c2';
+        bytes32 header = hex'b82ffe1e2e7d9dd678aaedd630e75192f1e8b802b9a3b61e6cc7fbaf8ecdd6ec';
+        uint b = gasleft();
+        keccak256(abi.encodePacked(domain,header));
+        uint g = b - gasleft();
+        emit log_uint(g);
     }
 
-    function log_2(uint256 x) internal pure returns (uint256 pow) {
-        require(0 < x && x < 0x8000000000000000000000000000000000000000000000000000000000000001, "invalid");
-        uint256 a = 1;
-        while (a < x) {
-            a <<= 1;
-            pow++;
-        }
+    function test_sha_256() public {
+        bytes32 domain = hex'07000000e7acb21061790987fa1c1e745cccfb358370b33e8af2b2c18938e6c2';
+        bytes32 header = hex'b82ffe1e2e7d9dd678aaedd630e75192f1e8b802b9a3b61e6cc7fbaf8ecdd6ec';
+        uint b = gasleft();
+        sha256(abi.encodePacked(domain,header));
+        uint g = b - gasleft();
+        emit log_uint(g);
     }
 }

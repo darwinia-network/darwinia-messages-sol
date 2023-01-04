@@ -14,6 +14,9 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+//
+// Inspired: https://github.com/ralexstokes/deposit-verifier/blob/master/deposit_verifier.sol
+//           https://github.com/sigp/milagro_bls
 
 pragma solidity 0.8.17;
 
