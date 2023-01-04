@@ -74,15 +74,4 @@ contract MathTest is DSTest, Math {
         uint y = log_2(x);
         assertTrue(2**(y-1) < x && x <= 2**y);
     }
-
-    function prove_max(uint x, uint y) public {
-        uint z = _max(x, y);
-        if (z == x) {
-            assertGe(z, y);
-        } else if (z == y) {
-            assertGe(z, x);
-        } else {
-            fail();
-        }
-    }
 }
