@@ -12,7 +12,8 @@ The light client is the trust layer of the bridge
 - [Globals](#globals)
 - [Functions](#functions)
   - [constructor](#constructor)
-  - [message_root](#message_root)
+  - [merkle_root](#merkle_root)
+  - [block_number](#block_number)
   - [getFinalizedChainMessagesRoot](#getfinalizedchainmessagesroot)
   - [getFinalizedBlockNumber](#getfinalizedblocknumber)
   - [getCurrentId](#getcurrentid)
@@ -80,14 +81,29 @@ No modifiers
 |`currentAuthoritySetLen` | uint32 | The length of the current authority set
 |`currentAuthoritySetRoot` | bytes32 | The merkle tree of the current authority set
 
-### message_root
+### merkle_root
 No description
 
 
 #### Declaration
 ```solidity
-  function message_root(
+  function merkle_root(
   ) public returns (bytes32)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### block_number
+No description
+
+
+#### Declaration
+```solidity
+  function block_number(
+  ) public returns (uint256)
 ```
 
 #### Modifiers:

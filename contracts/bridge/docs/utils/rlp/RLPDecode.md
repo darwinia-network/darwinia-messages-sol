@@ -1,8 +1,10 @@
 # RLPDecode
 
 
+RLPReader is a library for parsing RLP-encoded byte arrays into Solidity types. Adapted
+        from Solidity-RLP (https://github.com/hamdiallam/Solidity-RLP) by Hamdi Allam with
+        various tweaks to improve readability.
 
-> Adapted from "RLPDecode" by Hamdi Allam (hamdi.allam97@gmail.com).
 
 ## Contents
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -31,6 +33,7 @@ Converts bytes to a reference to memory position and length.
 
 
 
+
 #### Declaration
 ```solidity
   function toRLPItem(
@@ -46,12 +49,14 @@ No modifiers
 | --- | --- | --- |
 |`_in` | bytes | Input bytes to convert.
 
+
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`Output` | memory reference.
 ### readList
 Reads an RLP list value into a list of RLP items.
+
 
 
 
@@ -70,12 +75,14 @@ No modifiers
 | --- | --- | --- |
 |`_in` | struct RLPDecode.RLPItem | RLP list value.
 
+
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`Decoded` | RLP list items.
 ### readList
 Reads an RLP list value into a list of RLP items.
+
 
 
 
@@ -94,12 +101,14 @@ No modifiers
 | --- | --- | --- |
 |`_in` | bytes | RLP list value.
 
+
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`Decoded` | RLP list items.
 ### readBytes
 Reads an RLP bytes value into bytes.
+
 
 
 
@@ -118,12 +127,14 @@ No modifiers
 | --- | --- | --- |
 |`_in` | struct RLPDecode.RLPItem | RLP bytes value.
 
+
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`Decoded` | bytes.
 ### readBytes
 Reads an RLP bytes value into bytes.
+
 
 
 
@@ -142,10 +153,37 @@ No modifiers
 | --- | --- | --- |
 |`_in` | bytes | RLP bytes value.
 
+
 #### Returns:
 | Type | Description |
 | --- | --- |
 |`Decoded` | bytes.
+### readRawBytes
+Reads the raw bytes of an RLP item.
+
+
+
+
+#### Declaration
+```solidity
+  function readRawBytes(
+    struct RLPDecode.RLPItem _in
+  ) internal returns (bytes)
+```
+
+#### Modifiers:
+No modifiers
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_in` | struct RLPDecode.RLPItem | RLP item to read.
+
+
+#### Returns:
+| Type | Description |
+| --- | --- |
+|`Raw` | RLP bytes.
 ### readString
 Reads an RLP string value into a string.
 
@@ -290,125 +328,5 @@ No modifiers
 | Type | Description |
 | --- | --- |
 |`Decoded` | uint256.
-### readBool
-Reads an RLP bool value into a bool.
-
-
-
-#### Declaration
-```solidity
-  function readBool(
-    struct RLPDecode.RLPItem _in
-  ) internal returns (bool)
-```
-
-#### Modifiers:
-No modifiers
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_in` | struct RLPDecode.RLPItem | RLP bool value.
-
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`Decoded` | bool.
-### readBool
-Reads an RLP bool value into a bool.
-
-
-
-#### Declaration
-```solidity
-  function readBool(
-    bytes _in
-  ) internal returns (bool)
-```
-
-#### Modifiers:
-No modifiers
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_in` | bytes | RLP bool value.
-
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`Decoded` | bool.
-### readAddress
-Reads an RLP address value into a address.
-
-
-
-#### Declaration
-```solidity
-  function readAddress(
-    struct RLPDecode.RLPItem _in
-  ) internal returns (address)
-```
-
-#### Modifiers:
-No modifiers
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_in` | struct RLPDecode.RLPItem | RLP address value.
-
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`Decoded` | address.
-### readAddress
-Reads an RLP address value into a address.
-
-
-
-#### Declaration
-```solidity
-  function readAddress(
-    bytes _in
-  ) internal returns (address)
-```
-
-#### Modifiers:
-No modifiers
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_in` | bytes | RLP address value.
-
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`Decoded` | address.
-### readRawBytes
-Reads the raw bytes of an RLP item.
-
-
-
-#### Declaration
-```solidity
-  function readRawBytes(
-    struct RLPDecode.RLPItem _in
-  ) internal returns (bytes)
-```
-
-#### Modifiers:
-No modifiers
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_in` | struct RLPDecode.RLPItem | RLP item to read.
-
-#### Returns:
-| Type | Description |
-| --- | --- |
-|`Raw` | RLP bytes.
 
 

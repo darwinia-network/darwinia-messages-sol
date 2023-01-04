@@ -11,6 +11,7 @@
 - [Globals](#globals)
 - [Functions](#functions)
   - [constructor](#constructor)
+  - [__ECDSA_init__](#__ecdsa_init__)
   - [add_relayer](#add_relayer)
   - [remove_relayer](#remove_relayer)
   - [swap_relayer](#swap_relayer)
@@ -43,15 +44,13 @@
 
 ### constructor
 No description
-> Sets initial storage of contract.
+> Sets initial immutable variable of contract.
 
 
 #### Declaration
 ```solidity
   function constructor(
-    bytes32 _domain_separator,
-    address[] _relayers,
-    uint256 _threshold
+    bytes32 _domain_separator
   ) public
 ```
 
@@ -62,8 +61,30 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_domain_separator` | bytes32 | source chain domain_separator
+
+### __ECDSA_init__
+No description
+> initial storage of the proxy contract.
+
+
+#### Declaration
+```solidity
+  function __ECDSA_init__(
+    address[] _relayers,
+    uint256 _threshold,
+    uint256 _nonce
+  ) internal
+```
+
+#### Modifiers:
+No modifiers
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
 |`_relayers` | address[] | List of relayers.
 |`_threshold` | uint256 | Number of required confirmations for check commitment or change relayers.
+|`_nonce` | uint256 | Nonce of initial state.
 
 ### add_relayer
 Adds the `relayer` to the registry and updates the threshold to `_threshold`.

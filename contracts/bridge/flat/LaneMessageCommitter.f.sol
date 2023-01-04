@@ -1,7 +1,6 @@
 // hevm: flattened sources of src/truth/darwinia/LaneMessageCommitter.sol
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.7.6;
-pragma abicoder v2;
+pragma solidity =0.8.17;
 
 ////// src/interfaces/ILane.sol
 // This file is part of Darwinia.
@@ -20,10 +19,17 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
+/// @title ILane
+/// @notice A interface for user to fetch lane info
 interface ILane {
-    function getLaneInfo() external view returns (uint32,uint32,uint32,uint32);
+    /// @dev Return lane info
+    /// @return this_chain_pos This chain position
+    /// @return this_lane_pos This lane position
+    /// @return bridged_chain_pos Bridged chain pos
+    /// @return bridged_lane_pos Bridged lane pos
+    function getLaneInfo() external view returns (uint32 this_chain_pos, uint32 this_lane_pos, uint32 bridged_chain_pos, uint32 bridged_lane_pos);
 }
 
 ////// src/spec/MessageProof.sol
@@ -43,13 +49,19 @@ interface ILane {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
+/// @notice MessageProof
+/// @param chainProof Chain message single proof
+/// @param laneProof Lane message single proof
 struct MessageProof {
     MessageSingleProof chainProof;
     MessageSingleProof laneProof;
 }
 
+/// @notice MessageSingleProof
+/// @param root Merkle root
+/// @param proof Merkle proof
 struct MessageSingleProof {
     bytes32 root;
     bytes32[] proof;
@@ -72,18 +84,30 @@ struct MessageSingleProof {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
 /* import "../spec/MessageProof.sol"; */
 
+/// @title IMessageCommitter
+/// @notice A interface for message committer
 interface IMessageCommitter {
+    /// @notice Return leave count
     function count() external view returns (uint256);
+    /// @notice Return pos leave proof
+    /// @param pos Which position leave to be prove
+    /// @return MessageSingleProof message single proof of the leave
     function proof(uint256 pos) external view returns (MessageSingleProof memory);
+    /// @notice Return committer address of positon
+    /// @param pos Which positon of all leaves
+    /// @return committer address of the positon
     function leaveOf(uint256 pos) external view returns (address);
+    /// @notice Return message commitment of the committer
+    /// @return commitment hash
     function commitment() external view returns (bytes32);
 
+    /// @notice this chain position
     function THIS_CHAIN_POSITION() external view returns (uint32);
+    /// @notice bridged chain position
     function BRIDGED_CHAIN_POSITION() external view returns (uint32);
 }
 
@@ -104,7 +128,7 @@ interface IMessageCommitter {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 contract Math {
     /// Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.
@@ -147,8 +171,7 @@ contract Math {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
 /* import "../../utils/Math.sol"; */
 /* import "../../spec/MessageProof.sol"; */
@@ -163,16 +186,18 @@ abstract contract MessageCommitter is Math {
     /// @return Commitment of this committer
     function commitment() public view returns (bytes32) {
         bytes32[] memory hashes = new bytes32[](get_power_of_two_ceil(count()));
-        for (uint256 pos = 0; pos < count(); pos++) {
-            hashes[pos] = commitment(pos);
-        }
-        uint256 hashLength = hashes.length;
-        for (uint256 j = 0; hashLength > 1; j = 0) {
-            for (uint256 i = 0; i < hashLength; i = i + 2) {
-                hashes[j] = hash_node(hashes[i], hashes[i + 1]);
-                j = j + 1;
+        unchecked {
+            for (uint256 pos = 0; pos < count(); pos++) {
+                hashes[pos] = commitment(pos);
             }
-            hashLength = hashLength - j;
+            uint256 hashLength = hashes.length;
+            for (uint256 j = 0; hashLength > 1; j = 0) {
+                for (uint256 i = 0; i < hashLength; i = i + 2) {
+                    hashes[j] = hash_node(hashes[i], hashes[i + 1]);
+                    j = j + 1;
+                }
+                hashLength = hashLength - j;
+            }
         }
         return hashes[0];
     }
@@ -211,25 +236,29 @@ abstract contract MessageCommitter is Math {
         uint depth = log_2(num_leafs);
         require(2**depth == num_leafs, "!depth");
         bytes32[] memory tree = new bytes32[](num_nodes);
-        for (uint i = 0; i < count(); i++) {
-            tree[num_leafs + i] = commitment(i);
-        }
-        for (uint i = num_leafs - 1; i > 0; i--) {
-            tree[i] = hash_node(tree[i * 2], tree[i * 2 + 1]);
+        unchecked {
+            for (uint i = 0; i < count(); i++) {
+                tree[num_leafs + i] = commitment(i);
+            }
+            for (uint i = num_leafs - 1; i > 0; i--) {
+                tree[i] = hash_node(tree[i * 2], tree[i * 2 + 1]);
+            }
         }
         return tree;
     }
 
     function get_proof(bytes32[] memory tree, uint256 depth, uint256 pos) internal pure returns (bytes32[] memory) {
         bytes32[] memory decommitment = new bytes32[](depth);
-        uint256 index = (1 << depth) + pos;
-        for (uint i = 0; i < depth; i++) {
-            if (index & 1 == 0) {
-                decommitment[i] = tree[index + 1];
-            } else {
-                decommitment[i] = tree[index - 1];
+        unchecked {
+            uint256 index = (1 << depth) + pos;
+            for (uint i = 0; i < depth; i++) {
+                if (index & 1 == 0) {
+                    decommitment[i] = tree[index + 1];
+                } else {
+                    decommitment[i] = tree[index - 1];
+                }
+                index = index >> 1;
             }
-            index = index >> 1;
         }
         return decommitment;
     }
@@ -264,14 +293,12 @@ abstract contract MessageCommitter is Math {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
 /* import "../common/MessageCommitter.sol"; */
 /* import "../../interfaces/ILane.sol"; */
 
 /// @title LaneMessageCommitter
-/// @author echo
 /// @notice Lane message committer commit all messages from this chain to bridged chain
 /// @dev Lane message use sparse merkle tree to commit all messages
 contract LaneMessageCommitter is MessageCommitter {

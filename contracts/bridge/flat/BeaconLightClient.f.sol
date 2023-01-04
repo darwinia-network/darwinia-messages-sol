@@ -1,7 +1,6 @@
 // hevm: flattened sources of src/truth/eth/BeaconLightClient.sol
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.7.6;
-pragma abicoder v2;
+pragma solidity =0.8.17;
 
 ////// src/utils/Math.sol
 // This file is part of Darwinia.
@@ -20,7 +19,7 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 contract Math {
     /// Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.
@@ -63,12 +62,14 @@ contract Math {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "../utils/Math.sol"; */
 
+/// @title MerkleProof
+/// @notice Merkle proof specification
 contract MerkleProof is Math {
-    // Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
+    /// @notice Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
     function is_valid_merkle_branch(
         bytes32 leaf,
         bytes32[] memory branch,
@@ -77,12 +78,13 @@ contract MerkleProof is Math {
         bytes32 root
     ) internal pure returns (bool) {
         bytes32 value = leaf;
-        for (uint i = 0; i < depth; ++i) {
+        for (uint i = 0; i < depth; ) {
             if ((index / (2**i)) % 2 == 1) {
                 value = hash_node(branch[i], value);
             } else {
                 value = hash_node(value, branch[i]);
             }
+            unchecked { ++i; }
         }
         return value == root;
     }
@@ -94,11 +96,13 @@ contract MerkleProof is Math {
         else if (len == 2) return hash_node(leaves[0], leaves[1]);
         uint bottom_length = get_power_of_two_ceil(len);
         bytes32[] memory o = new bytes32[](bottom_length * 2);
-        for (uint i = 0; i < len; ++i) {
-            o[bottom_length + i] = leaves[i];
-        }
-        for (uint i = bottom_length - 1; i > 0; --i) {
-            o[i] = hash_node(o[i * 2], o[i * 2 + 1]);
+        unchecked {
+            for (uint i = 0; i < len; ++i) {
+                o[bottom_length + i] = leaves[i];
+            }
+            for (uint i = bottom_length - 1; i > 0; --i) {
+                o[i] = hash_node(o[i * 2], o[i * 2 + 1]);
+            }
         }
         return o[1];
     }
@@ -134,14 +138,16 @@ contract MerkleProof is Math {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 library ScaleCodec {
     // Decodes a SCALE encoded uint256 by converting bytes (bid endian) to little endian format
     function decodeUint256(bytes memory data) internal pure returns (uint256) {
         uint256 number;
-        for (uint256 i = data.length; i > 0; i--) {
-            number = number + uint256(uint8(data[i - 1])) * (2**(8 * (i - 1)));
+        unchecked {
+            for (uint256 i = data.length; i > 0; i--) {
+                number = number + uint256(uint8(data[i - 1])) * (2**(8 * (i - 1)));
+            }
         }
         return number;
     }
@@ -320,32 +326,51 @@ library ScaleCodec {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
 /* import "./MerkleProof.sol"; */
 /* import "../utils/ScaleCodec.sol"; */
 
+/// @title BeaconChain
+/// @notice Beacon chain specification
 contract BeaconChain is MerkleProof {
+    /// @notice bls public key length
     uint64 constant internal BLSPUBLICKEY_LENGTH = 48;
+    /// @notice bls signature length
     uint64 constant internal BLSSIGNATURE_LENGTH = 96;
+    /// @notice sync committee size
     uint64 constant internal SYNC_COMMITTEE_SIZE = 512;
 
+    /// @notice Fork data
+    /// @param current_version Current verison
+    /// @param genesis_validators_root Genesis validators root
     struct ForkData {
         bytes4 current_version;
         bytes32 genesis_validators_root;
     }
 
+    /// @notice Signing data
+    /// @param object_root Root of signing object
+    /// @param domain Domain
     struct SigningData {
         bytes32 object_root;
         bytes32 domain;
     }
 
+    /// @notice Sync committee
+    /// @param pubkeys Pubkeys of sync committee
+    /// @param aggregate_pubkey Aggregate pubkey of sync committee
     struct SyncCommittee {
         bytes[SYNC_COMMITTEE_SIZE] pubkeys;
         bytes aggregate_pubkey;
     }
 
+    /// @notice Beacon block header
+    /// @param slot Slot
+    /// @param proposer_index Index of proposer
+    /// @param parent_root Parent root hash
+    /// @param state_root State root hash
+    /// @param body_root Body root hash
     struct BeaconBlockHeader {
         uint64 slot;
         uint64 proposer_index;
@@ -354,6 +379,17 @@ contract BeaconChain is MerkleProof {
         bytes32 body_root;
     }
 
+    /// @notice Beacon block body
+    /// @param randao_reveal Randao reveal
+    /// @param eth1_data Eth1 data vote
+    /// @param graffiti Arbitrary data
+    /// @param proposer_slashings Proposer slashings
+    /// @param attester_slashings Attester slashings
+    /// @param attestations Attestations
+    /// @param deposits Deposits
+    /// @param voluntary_exits Voluntary exits
+    /// @param sync_aggregate Sync aggregate
+    /// @param execution_payload Execution payload [New in Bellatrix]
     struct BeaconBlockBody {
         bytes32 randao_reveal;
         bytes32 eth1_data;
@@ -367,6 +403,21 @@ contract BeaconChain is MerkleProof {
         ExecutionPayload execution_payload;
     }
 
+    /// @notice Execution payload, execution block header fields
+    /// @param parent_hash Parent hash
+    /// @param fee_recipient Beneficiary
+    /// @param state_root State root
+    /// @param receipts_root Receipts root
+    /// @param logs_bloom Logs bloom
+    /// @param prev_randao Difficulty
+    /// @param block_number Number
+    /// @param gas_limit Gas limit
+    /// @param gas_used Gas used
+    /// @param timestamp Timestamp
+    /// @param extra_data Extra data
+    /// @param base_fee_per_gas Base fee per gas
+    /// @param block_hash Hash of execution block
+    /// @param transactions Transactions
     struct ExecutionPayload {
         bytes32 parent_hash;
         address fee_recipient;
@@ -384,7 +435,7 @@ contract BeaconChain is MerkleProof {
         bytes32 transactions;
     }
 
-    // Return the signing root for the corresponding signing data.
+    /// @notice Return the signing root for the corresponding signing data.
     function compute_signing_root(BeaconBlockHeader memory beacon_header, bytes32 domain) internal pure returns (bytes32){
         return hash_tree_root(SigningData({
                 object_root: hash_tree_root(beacon_header),
@@ -393,8 +444,8 @@ contract BeaconChain is MerkleProof {
         );
     }
 
-    // Return the 32-byte fork data root for the ``current_version`` and ``genesis_validators_root``.
-    // This is used primarily in signature domains to avoid collisions across forks/chains.
+    /// @notice Return the 32-byte fork data root for the ``current_version`` and ``genesis_validators_root``.
+    /// This is used primarily in signature domains to avoid collisions across forks/chains.
     function compute_fork_data_root(bytes4 current_version, bytes32 genesis_validators_root) internal pure returns (bytes32){
         return hash_tree_root(ForkData({
                 current_version: current_version,
@@ -403,20 +454,23 @@ contract BeaconChain is MerkleProof {
         );
     }
 
-    //  Return the domain for the ``domain_type`` and ``fork_version``.
+    /// @notice Return the domain for the ``domain_type`` and ``fork_version``.
     function compute_domain(bytes4 domain_type, bytes4 fork_version, bytes32 genesis_validators_root) internal pure returns (bytes32){
         bytes32 fork_data_root = compute_fork_data_root(fork_version, genesis_validators_root);
         return bytes32(domain_type) | fork_data_root >> 32;
     }
 
+    /// @notice Return hash tree root of fork data
     function hash_tree_root(ForkData memory fork_data) internal pure returns (bytes32) {
         return hash_node(bytes32(fork_data.current_version), fork_data.genesis_validators_root);
     }
 
+    /// @notice Return hash tree root of signing data
     function hash_tree_root(SigningData memory signing_data) internal pure returns (bytes32) {
         return hash_node(signing_data.object_root, signing_data.domain);
     }
 
+    /// @notice Return hash tree root of sync committee
     function hash_tree_root(SyncCommittee memory sync_committee) internal pure returns (bytes32) {
         bytes32[] memory pubkeys_leaves = new bytes32[](SYNC_COMMITTEE_SIZE);
         for (uint i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
@@ -432,6 +486,7 @@ contract BeaconChain is MerkleProof {
         return hash_node(pubkeys_root, aggregate_pubkey_root);
     }
 
+    /// @notice Return hash tree root of beacon block header
     function hash_tree_root(BeaconBlockHeader memory beacon_header) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](5);
         leaves[0] = bytes32(to_little_endian_64(beacon_header.slot));
@@ -442,6 +497,7 @@ contract BeaconChain is MerkleProof {
         return merkle_root(leaves);
     }
 
+    /// @notice Return hash tree root of beacon block body
     function hash_tree_root(BeaconBlockBody memory beacon_block_body) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](10);
         leaves[0] = beacon_block_body.randao_reveal;
@@ -457,6 +513,7 @@ contract BeaconChain is MerkleProof {
         return merkle_root(leaves);
     }
 
+    /// @notice Return hash tree root of execution payload
     function hash_tree_root(ExecutionPayload memory execution_payload) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](14);
         leaves[0]  = execution_payload.parent_hash;
@@ -476,10 +533,12 @@ contract BeaconChain is MerkleProof {
         return merkle_root(leaves);
     }
 
+    /// @notice Return little endian of uint64
     function to_little_endian_64(uint64 value) internal pure returns (bytes8) {
         return ScaleCodec.encode64(value);
     }
 
+    /// @notice Return little endian of uint256
     function to_little_endian_256(uint256 value) internal pure returns (bytes32) {
         return ScaleCodec.encode256(value);
     }
@@ -502,40 +561,43 @@ contract BeaconChain is MerkleProof {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
 /* import "./BeaconChain.sol"; */
 
+/// @title BeaconLightClientUpdate
+/// @notice Beacon light client update specification
 contract BeaconLightClientUpdate is BeaconChain {
+    /// @notice Sync aggregate
+    /// @param sync_committee_bits Sync committee bits
+    /// @param sync_committee_signature Sync committee signature
     struct SyncAggregate {
         bytes32[2] sync_committee_bits;
         bytes sync_committee_signature;
     }
 
+    /// @notice Finalized header update
+    /// @param attested_header Header attested to by the sync committee
+    /// @param signature_sync_committee  Sync committee corresponding to sign attested header
+    /// @param finalized_header The finalized beacon block header
+    /// @param finality_branch Finalized header corresponding to `attested_header.state_root`
+    /// @param sync_aggregate Sync committee aggregate signature
+    /// @param fork_version Fork version for the aggregate signature
+    /// @param signature_slot Slot at which the aggregate signature was created (untrusted)
     struct FinalizedHeaderUpdate {
-        // The beacon block header that is attested to by the sync committee
         BeaconBlockHeader attested_header;
-
-        // Sync committee corresponding to sign attested header
         SyncCommittee signature_sync_committee;
-
-        // The finalized beacon block header attested to by Merkle branch
         BeaconBlockHeader finalized_header;
         bytes32[] finality_branch;
-
-        // Sync committee aggregate signature
         SyncAggregate sync_aggregate;
-
-        // Fork version for the aggregate signature
         bytes4 fork_version;
-
-        // Slot at which the aggregate signature was created (untrusted)
         uint64 signature_slot;
     }
 
+    /// @notice Sync committee period update
+    /// @param next_sync_committee Next sync committee
+    /// @param next_sync_committee_branch Next sync committee corresponding to `attested_header.state_root`
     struct SyncCommitteePeriodUpdate {
-        // Next sync committee corresponding to the finalized header
         SyncCommittee next_sync_committee;
         bytes32[] next_sync_committee_branch;
     }
@@ -560,8 +622,7 @@ contract BeaconLightClientUpdate is BeaconChain {
 //
 // Code from https://github.com/ethereum/solidity-examples
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
 library Bits {
     uint256 private constant ONE = uint256(1);
@@ -677,10 +738,12 @@ library Bits {
     function highestBitSet(uint256 self) internal pure returns (uint8 highest) {
         require(self != 0);
         uint256 val = self;
-        for (uint8 i = 128; i >= 1; i >>= 1) {
-            if (val & (((ONE << i) - 1) << i) != 0) {
-                highest += i;
-                val >>= i;
+        unchecked {
+            for (uint8 i = 128; i >= 1; i >>= 1) {
+                if (val & (((ONE << i) - 1) << i) != 0) {
+                    highest += i;
+                    val >>= i;
+                }
             }
         }
     }
@@ -691,10 +754,12 @@ library Bits {
     function lowestBitSet(uint256 self) internal pure returns (uint8 lowest) {
         require(self != 0);
         uint256 val = self;
-        for (uint8 i = 128; i >= 1; i >>= 1) {
-            if (val & ((ONE << i) - 1) == 0) {
-                lowest += i;
-                val >>= i;
+        unchecked {
+            for (uint8 i = 128; i >= 1; i >>= 1) {
+                if (val & ((ONE << i) - 1) == 0) {
+                    lowest += i;
+                    val >>= i;
+                }
             }
         }
     }
@@ -717,7 +782,7 @@ library Bits {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "./Bits.sol"; */
 
@@ -765,17 +830,19 @@ contract Bitfield {
             "invalid length"
         );
 
-        uint256 prime = BIG_PRIME[seed%20];
-        uint256 begin = seed % 256;
-        uint256 found = 0;
+        unchecked {
+            uint256 prime = BIG_PRIME[seed%20];
+            uint256 begin = seed % 256;
+            uint256 found = 0;
 
-        for (uint256 i = 0; found < n; ++i) {
-            uint8 index = uint8((prime * (begin + i)) % length);
+            for (uint256 i = 0; found < n; ++i) {
+                uint8 index = uint8((prime * (begin + i)) % length);
 
-            // require randomly seclected bit to be set in prior
-            if ((prior >> index) & 1 == 1) {
-                bitfield = set(bitfield, index);
-                found++;
+                // require randomly seclected bit to be set in prior
+                if ((prior >> index) & 1 == 1) {
+                    bitfield = set(bitfield, index);
+                    found++;
+                }
             }
         }
 
@@ -788,8 +855,9 @@ contract Bitfield {
         returns (uint256 bitfield)
     {
         uint256 length = bitsToSet.length;
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length; ) {
             bitfield = set(bitfield, bitsToSet[i]);
+            unchecked { ++i; }
         }
 
         return bitfield;
@@ -799,14 +867,16 @@ contract Bitfield {
     /// The alogrithm below is implemented after https://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation.
     /// Further improvements are possible, see the article above.
     function countSetBits(uint256 x) internal pure returns (uint256) {
-        x = (x & M1) + ((x >> 1) & M1); //put count of each  2 bits into those  2 bits
-        x = (x & M2) + ((x >> 2) & M2); //put count of each  4 bits into those  4 bits
-        x = (x & M4) + ((x >> 4) & M4); //put count of each  8 bits into those  8 bits
-        x = (x & M8) + ((x >> 8) & M8); //put count of each 16 bits into those 16 bits
-        x = (x & M16) + ((x >> 16) & M16); //put count of each 32 bits into those 32 bits
-        x = (x & M32) + ((x >> 32) & M32); //put count of each 64 bits into those 64 bits
-        x = (x & M64) + ((x >> 64) & M64); //put count of each 128 bits into those 128 bits
-        x = (x & M128) + ((x >> 128) & M128); //put count of each 256 bits into those 256 bits
+        unchecked {
+            x = (x & M1) + ((x >> 1) & M1); //put count of each  2 bits into those  2 bits
+            x = (x & M2) + ((x >> 2) & M2); //put count of each  4 bits into those  4 bits
+            x = (x & M4) + ((x >> 4) & M4); //put count of each  8 bits into those  8 bits
+            x = (x & M8) + ((x >> 8) & M8); //put count of each 16 bits into those 16 bits
+            x = (x & M16) + ((x >> 16) & M16); //put count of each 32 bits into those 32 bits
+            x = (x & M32) + ((x >> 32) & M32); //put count of each 64 bits into those 64 bits
+            x = (x & M64) + ((x >> 64) & M64); //put count of each 128 bits into those 128 bits
+            x = (x & M128) + ((x >> 128) & M128); //put count of each 256 bits into those 256 bits
+        }
         return x;
     }
 
@@ -894,8 +964,7 @@ contract Bitfield {
 // - No need to query for period 0 next_sync_committee until the end of period 0
 // - After the import next_sync_committee of period 0, populate period 1's committee
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
 /* import "../../utils/Bitfield.sol"; */
 /* import "../../spec/BeaconLightClientUpdate.sol"; */
@@ -909,13 +978,13 @@ interface IBLS {
 }
 
 contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
-    // Beacon block header that is finalized
+    /// @notice Beacon block header that is finalized
     BeaconBlockHeader public finalized_header;
-    // Sync committees corresponding to the header
-    // sync_committee_perid => sync_committee_root
+    /// @notice Sync committees corresponding to the header
+    /// @dev sync_committee_perid => sync_committee_root
     mapping (uint64 => bytes32) public sync_committee_roots;
 
-    // address(0x0800)
+    /// @notice address(0x0800)
     address private immutable BLS_PRECOMPILE;
     bytes32 public immutable GENESIS_VALIDATORS_ROOT;
     // A bellatrix beacon state has 25 fields, with a depth of 5.
@@ -1049,12 +1118,14 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         uint participants = sum(sync_aggregate.sync_committee_bits);
         bytes[] memory participant_pubkeys = new bytes[](participants);
         uint64 n = 0;
-        for (uint64 i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
-            uint index = i >> 8;
-            uint sindex = i / 8 % 32;
-            uint offset = i % 8;
-            if (uint8(sync_aggregate.sync_committee_bits[index][sindex]) >> offset & 1 == 1) {
-                participant_pubkeys[n++] = sync_committee.pubkeys[i];
+        unchecked {
+            for (uint64 i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
+                uint index = i >> 8;
+                uint sindex = i / 8 % 32;
+                uint offset = i % 8;
+                if (uint8(sync_aggregate.sync_committee_bits[index][sindex]) >> offset & 1 == 1) {
+                    participant_pubkeys[n++] = sync_committee.pubkeys[i];
+                }
             }
         }
 
@@ -1116,7 +1187,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
             }
         } else {
             if (out.length > 0) {
-                assembly {
+                assembly ("memory-safe") {
                     let returndata_size := mload(out)
                     revert(add(32, out), returndata_size)
                 }

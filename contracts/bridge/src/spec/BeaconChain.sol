@@ -15,32 +15,51 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 import "./MerkleProof.sol";
 import "../utils/ScaleCodec.sol";
 
+/// @title BeaconChain
+/// @notice Beacon chain specification
 contract BeaconChain is MerkleProof {
+    /// @notice bls public key length
     uint64 constant internal BLSPUBLICKEY_LENGTH = 48;
+    /// @notice bls signature length
     uint64 constant internal BLSSIGNATURE_LENGTH = 96;
+    /// @notice sync committee size
     uint64 constant internal SYNC_COMMITTEE_SIZE = 512;
 
+    /// @notice Fork data
+    /// @param current_version Current verison
+    /// @param genesis_validators_root Genesis validators root
     struct ForkData {
         bytes4 current_version;
         bytes32 genesis_validators_root;
     }
 
+    /// @notice Signing data
+    /// @param object_root Root of signing object
+    /// @param domain Domain
     struct SigningData {
         bytes32 object_root;
         bytes32 domain;
     }
 
+    /// @notice Sync committee
+    /// @param pubkeys Pubkeys of sync committee
+    /// @param aggregate_pubkey Aggregate pubkey of sync committee
     struct SyncCommittee {
         bytes[SYNC_COMMITTEE_SIZE] pubkeys;
         bytes aggregate_pubkey;
     }
 
+    /// @notice Beacon block header
+    /// @param slot Slot
+    /// @param proposer_index Index of proposer
+    /// @param parent_root Parent root hash
+    /// @param state_root State root hash
+    /// @param body_root Body root hash
     struct BeaconBlockHeader {
         uint64 slot;
         uint64 proposer_index;
@@ -49,6 +68,17 @@ contract BeaconChain is MerkleProof {
         bytes32 body_root;
     }
 
+    /// @notice Beacon block body
+    /// @param randao_reveal Randao reveal
+    /// @param eth1_data Eth1 data vote
+    /// @param graffiti Arbitrary data
+    /// @param proposer_slashings Proposer slashings
+    /// @param attester_slashings Attester slashings
+    /// @param attestations Attestations
+    /// @param deposits Deposits
+    /// @param voluntary_exits Voluntary exits
+    /// @param sync_aggregate Sync aggregate
+    /// @param execution_payload Execution payload [New in Bellatrix]
     struct BeaconBlockBody {
         bytes32 randao_reveal;
         bytes32 eth1_data;
@@ -62,6 +92,21 @@ contract BeaconChain is MerkleProof {
         ExecutionPayload execution_payload;
     }
 
+    /// @notice Execution payload, execution block header fields
+    /// @param parent_hash Parent hash
+    /// @param fee_recipient Beneficiary
+    /// @param state_root State root
+    /// @param receipts_root Receipts root
+    /// @param logs_bloom Logs bloom
+    /// @param prev_randao Difficulty
+    /// @param block_number Number
+    /// @param gas_limit Gas limit
+    /// @param gas_used Gas used
+    /// @param timestamp Timestamp
+    /// @param extra_data Extra data
+    /// @param base_fee_per_gas Base fee per gas
+    /// @param block_hash Hash of execution block
+    /// @param transactions Transactions
     struct ExecutionPayload {
         bytes32 parent_hash;
         address fee_recipient;
@@ -79,7 +124,7 @@ contract BeaconChain is MerkleProof {
         bytes32 transactions;
     }
 
-    // Return the signing root for the corresponding signing data.
+    /// @notice Return the signing root for the corresponding signing data.
     function compute_signing_root(BeaconBlockHeader memory beacon_header, bytes32 domain) internal pure returns (bytes32){
         return hash_tree_root(SigningData({
                 object_root: hash_tree_root(beacon_header),
@@ -88,8 +133,8 @@ contract BeaconChain is MerkleProof {
         );
     }
 
-    // Return the 32-byte fork data root for the ``current_version`` and ``genesis_validators_root``.
-    // This is used primarily in signature domains to avoid collisions across forks/chains.
+    /// @notice Return the 32-byte fork data root for the ``current_version`` and ``genesis_validators_root``.
+    /// This is used primarily in signature domains to avoid collisions across forks/chains.
     function compute_fork_data_root(bytes4 current_version, bytes32 genesis_validators_root) internal pure returns (bytes32){
         return hash_tree_root(ForkData({
                 current_version: current_version,
@@ -98,20 +143,23 @@ contract BeaconChain is MerkleProof {
         );
     }
 
-    //  Return the domain for the ``domain_type`` and ``fork_version``.
+    /// @notice Return the domain for the ``domain_type`` and ``fork_version``.
     function compute_domain(bytes4 domain_type, bytes4 fork_version, bytes32 genesis_validators_root) internal pure returns (bytes32){
         bytes32 fork_data_root = compute_fork_data_root(fork_version, genesis_validators_root);
         return bytes32(domain_type) | fork_data_root >> 32;
     }
 
+    /// @notice Return hash tree root of fork data
     function hash_tree_root(ForkData memory fork_data) internal pure returns (bytes32) {
         return hash_node(bytes32(fork_data.current_version), fork_data.genesis_validators_root);
     }
 
+    /// @notice Return hash tree root of signing data
     function hash_tree_root(SigningData memory signing_data) internal pure returns (bytes32) {
         return hash_node(signing_data.object_root, signing_data.domain);
     }
 
+    /// @notice Return hash tree root of sync committee
     function hash_tree_root(SyncCommittee memory sync_committee) internal pure returns (bytes32) {
         bytes32[] memory pubkeys_leaves = new bytes32[](SYNC_COMMITTEE_SIZE);
         for (uint i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
@@ -127,6 +175,7 @@ contract BeaconChain is MerkleProof {
         return hash_node(pubkeys_root, aggregate_pubkey_root);
     }
 
+    /// @notice Return hash tree root of beacon block header
     function hash_tree_root(BeaconBlockHeader memory beacon_header) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](5);
         leaves[0] = bytes32(to_little_endian_64(beacon_header.slot));
@@ -137,6 +186,7 @@ contract BeaconChain is MerkleProof {
         return merkle_root(leaves);
     }
 
+    /// @notice Return hash tree root of beacon block body
     function hash_tree_root(BeaconBlockBody memory beacon_block_body) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](10);
         leaves[0] = beacon_block_body.randao_reveal;
@@ -152,6 +202,7 @@ contract BeaconChain is MerkleProof {
         return merkle_root(leaves);
     }
 
+    /// @notice Return hash tree root of execution payload
     function hash_tree_root(ExecutionPayload memory execution_payload) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](14);
         leaves[0]  = execution_payload.parent_hash;
@@ -171,10 +222,12 @@ contract BeaconChain is MerkleProof {
         return merkle_root(leaves);
     }
 
+    /// @notice Return little endian of uint64
     function to_little_endian_64(uint64 value) internal pure returns (bytes8) {
         return ScaleCodec.encode64(value);
     }
 
+    /// @notice Return little endian of uint256
     function to_little_endian_256(uint256 value) internal pure returns (bytes32) {
         return ScaleCodec.encode256(value);
     }

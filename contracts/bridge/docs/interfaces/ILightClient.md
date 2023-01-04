@@ -1,7 +1,7 @@
 # ILightClient
 
 
-
+A interface for light client
 
 
 ## Contents
@@ -9,8 +9,7 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [Functions](#functions)
-  - [verify_messages_proof](#verify_messages_proof)
-  - [verify_messages_delivery_proof](#verify_messages_delivery_proof)
+  - [merkle_root](#merkle_root)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -19,35 +18,43 @@
 
 ## Functions
 
-### verify_messages_proof
-No description
+### merkle_root
+Return the merkle root of light client
+
 
 
 #### Declaration
 ```solidity
-  function verify_messages_proof(
-  ) external returns (bool)
+  function merkle_root(
+  ) external returns (bytes32)
 ```
 
 #### Modifiers:
 No modifiers
 
 
+#### Returns:
+| Type | Description |
+| --- | --- |
+|`merkle` | root
+### block_number
+Return the block number of light client
 
-### verify_messages_delivery_proof
-No description
 
 
 #### Declaration
 ```solidity
-  function verify_messages_delivery_proof(
-  ) external returns (bool)
+  function block_number(
+  ) external returns (uint256)
 ```
 
 #### Modifiers:
 No modifiers
 
 
-
+#### Returns:
+| Type | Description |
+| --- | --- |
+|`block` | number
 
 

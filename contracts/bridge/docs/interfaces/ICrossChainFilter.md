@@ -1,8 +1,9 @@
 # ICrossChainFilter
 
 
-The app layer must implement the interface `ICrossChainFilter`
+A interface for message layer to filter unsafe message
 
+> The app layer must implement the interface `ICrossChainFilter`
 
 ## Contents
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->

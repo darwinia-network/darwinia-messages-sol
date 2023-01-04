@@ -2,5 +2,6 @@
 
 set -e
 
-. $(dirname $0)/tools/stats0.sh
-. $(dirname $0)/tools/stats1.sh
+export MODE=${1?}
+
+. $(dirname $0)/stats/${MODE}/stats.sh

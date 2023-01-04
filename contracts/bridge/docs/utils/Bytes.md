@@ -14,6 +14,8 @@
   - [substr](#substr-1)
   - [concat](#concat)
   - [slice_to_uint](#slice_to_uint)
+  - [slice](#slice)
+  - [slice](#slice-1)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -90,6 +92,36 @@ No description
 ```solidity
   function slice_to_uint(
   ) internal returns (uint256 r)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### slice
+alias of substr
+
+
+#### Declaration
+```solidity
+  function slice(
+  ) internal returns (bytes)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### slice
+alias of substr
+
+
+#### Declaration
+```solidity
+  function slice(
+  ) internal returns (bytes)
 ```
 
 #### Modifiers:

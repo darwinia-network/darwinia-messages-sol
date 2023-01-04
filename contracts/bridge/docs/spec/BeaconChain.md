@@ -1,7 +1,7 @@
 # BeaconChain
 
 
-
+Beacon chain specification
 
 
 ## Contents
@@ -17,9 +17,10 @@
   - [hash_tree_root](#hash_tree_root-1)
   - [hash_tree_root](#hash_tree_root-2)
   - [hash_tree_root](#hash_tree_root-3)
-  - [merkle_root](#merkle_root)
+  - [hash_tree_root](#hash_tree_root-4)
+  - [hash_tree_root](#hash_tree_root-5)
   - [to_little_endian_64](#to_little_endian_64)
-  - [reverse64](#reverse64)
+  - [to_little_endian_256](#to_little_endian_256)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -38,7 +39,7 @@
 ## Functions
 
 ### compute_signing_root
-No description
+Return the signing root for the corresponding signing data.
 
 
 #### Declaration
@@ -53,7 +54,8 @@ No modifiers
 
 
 ### compute_fork_data_root
-No description
+Return the 32-byte fork data root for the ``current_version`` and ``genesis_validators_root``.
+This is used primarily in signature domains to avoid collisions across forks/chains.
 
 
 #### Declaration
@@ -68,7 +70,7 @@ No modifiers
 
 
 ### compute_domain
-No description
+Return the domain for the ``domain_type`` and ``fork_version``.
 
 
 #### Declaration
@@ -83,7 +85,7 @@ No modifiers
 
 
 ### hash_tree_root
-No description
+Return hash tree root of fork data
 
 
 #### Declaration
@@ -98,7 +100,7 @@ No modifiers
 
 
 ### hash_tree_root
-No description
+Return hash tree root of signing data
 
 
 #### Declaration
@@ -113,7 +115,7 @@ No modifiers
 
 
 ### hash_tree_root
-No description
+Return hash tree root of sync committee
 
 
 #### Declaration
@@ -128,7 +130,7 @@ No modifiers
 
 
 ### hash_tree_root
-No description
+Return hash tree root of beacon block header
 
 
 #### Declaration
@@ -142,13 +144,28 @@ No modifiers
 
 
 
-### merkle_root
-No description
+### hash_tree_root
+Return hash tree root of beacon block body
 
 
 #### Declaration
 ```solidity
-  function merkle_root(
+  function hash_tree_root(
+  ) internal returns (bytes32)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### hash_tree_root
+Return hash tree root of execution payload
+
+
+#### Declaration
+```solidity
+  function hash_tree_root(
   ) internal returns (bytes32)
 ```
 
@@ -158,13 +175,13 @@ No modifiers
 
 
 ### to_little_endian_64
-No description
+Return little endian of uint64
 
 
 #### Declaration
 ```solidity
   function to_little_endian_64(
-  ) internal returns (bytes8 r)
+  ) internal returns (bytes8)
 ```
 
 #### Modifiers:
@@ -172,14 +189,14 @@ No modifiers
 
 
 
-### reverse64
-No description
+### to_little_endian_256
+Return little endian of uint256
 
 
 #### Declaration
 ```solidity
-  function reverse64(
-  ) internal returns (uint64 v)
+  function to_little_endian_256(
+  ) internal returns (bytes32)
 ```
 
 #### Modifiers:

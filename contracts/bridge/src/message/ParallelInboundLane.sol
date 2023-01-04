@@ -27,8 +27,7 @@
 // The assigned nonce is reported using `MessageAccepted` event. When message is
 // delivered to the the bridged chain, it is reported using `MessagesDelivered` event.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 import "../interfaces/ICrossChainFilter.sol";
 import "./InboundLaneVerifier.sol";
@@ -36,7 +35,9 @@ import "../spec/SourceChain.sol";
 import "../utils/imt/IncrementalMerkleTree.sol";
 import "../utils/call/ExcessivelySafeCall.sol";
 
-/// @title Everything about incoming messages receival
+/// @title ParallelInboundLane
+/// @notice Everything about incoming messages receival
+/// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
 contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
     using ExcessivelySafeCall for address;
 

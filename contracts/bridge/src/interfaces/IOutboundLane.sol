@@ -15,10 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
 /// @title A interface for app layer to send cross chain message
-/// @author echo
 /// @notice The app layer could implement the interface `IOnMessageDelivered` to receive message dispatch result (optionally)
 interface IOutboundLane {
     /// @notice Send message over lane.

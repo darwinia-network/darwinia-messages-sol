@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
 import "../test.sol";
 import "../../message/OutboundLaneVerifier.sol";
@@ -51,5 +51,9 @@ contract OutboundLaneVerifierTest is DSTest {
 
     function test_encode_message_key() public {
         assertEq(verifier.encodeMessageKey(1), uint256(0x0000000000000000000000000000000000000001000000010000000000000001));
+    }
+
+    function test_lane_id() public {
+        assertEq(verifier.getLaneId(), uint256(0x0000000000000000000000000000000000000001000000010000000000000000));
     }
 }

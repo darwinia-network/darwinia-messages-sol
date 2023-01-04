@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
 import "../test.sol";
 import "../../utils/Bitfield.sol";
@@ -28,6 +28,16 @@ contract BitfiledTest is Bitfield, DSTest {
         assertEq(countSetBits(bitVector), 1);
         bitVector = 3;
         assertEq(countSetBits(bitVector), 2);
+    }
+
+    function test_count_set_bits_fuzz(uint x) public {
+        uint y = countSetBits(x);
+        assertEq(y, csb(x));
+    }
+
+    function csb(uint x) internal pure returns (uint c) {
+        for (c; x > 0; c++)
+            x &= x - 1;
     }
 
     function test_is_set() public {

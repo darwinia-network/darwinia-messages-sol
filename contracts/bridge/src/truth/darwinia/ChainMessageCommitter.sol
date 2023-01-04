@@ -15,14 +15,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 import "../common/MessageCommitter.sol";
 import "../../interfaces/IMessageCommitter.sol";
 
 /// @title ChainMessageCommitter
-/// @author echo
 /// @notice Chain message committer commit messages from all lane committers
 /// @dev Chain message use sparse merkle tree to commit all messages
 contract ChainMessageCommitter is MessageCommitter {

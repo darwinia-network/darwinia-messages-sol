@@ -15,12 +15,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
-/// @title A interface for user to enroll to be a relayer.
-/// @author echo
-/// @notice After enroll to be a relyer , you have the duty to relay
+/// @title IFeeMarket
+/// @notice A interface for user to enroll to be a relayer.
+/// @dev After enroll to be a relyer , you have the duty to relay
 /// the meesage which is assigned to you, or you will be slashed
 interface IFeeMarket {
     //  Relayer which delivery the messages

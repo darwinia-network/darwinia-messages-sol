@@ -15,8 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 contract MockBSCLightClient {
     struct StorageProof {
@@ -30,17 +29,17 @@ contract MockBSCLightClient {
 
     uint256 public immutable LANE_COMMITMENT_POSITION;
 
-    // bridgedChainPosition => lanePosition => lanes
-    mapping(uint32 => mapping(uint32 => address)) public lanes;
+    // laneId => lanes
+    mapping(uint => address) public lanes;
     bytes32 public stateRoot;
 
     constructor(uint32 lane_commitment_position) {
         LANE_COMMITMENT_POSITION = lane_commitment_position;
     }
 
-    function setBound(uint32 bridgedChainPosition, uint32 outboundPosition, address outbound, uint32 inboundPositon, address inbound) public {
-        lanes[bridgedChainPosition][outboundPosition] = outbound;
-        lanes[bridgedChainPosition][inboundPositon] = inbound;
+    function setBound(uint outlane_id, address outbound, uint inlane_id, address inbound) public {
+        lanes[outlane_id] = outbound;
+        lanes[inlane_id] = inbound;
     }
 
     function relayHeader(bytes32 _stateRoot) public {
@@ -49,12 +48,11 @@ contract MockBSCLightClient {
 
     function verify_messages_proof(
         bytes32,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 lane_id,
         bytes calldata
     ) external view returns (bool) {
         // StorageProof memory storage_proof = abi.decode(proof, (StorageProof));
-        address lane = lanes[chain_pos][lane_pos];
+        address lane = lanes[lane_id];
         require(lane != address(0), "missing: lane addr");
         return true;
         // return verify_storage_proof(
@@ -67,12 +65,11 @@ contract MockBSCLightClient {
 
     function verify_messages_delivery_proof(
         bytes32,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 lane_id,
         bytes calldata
     ) external view returns (bool) {
         // StorageProof memory storage_proof = abi.decode(proof, (StorageProof));
-        address lane = lanes[chain_pos][lane_pos];
+        address lane = lanes[lane_id];
         require(lane != address(0), "missing: lane addr");
         return true;
         // return verify_storage_proof(

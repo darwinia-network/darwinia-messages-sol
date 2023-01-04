@@ -15,16 +15,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
+/// @title POSACommitmentScheme
+/// @notice POSA commitment scheme
 contract POSACommitmentScheme {
-    // keccak256(
-    //     "Commitment(uint32 block_number,bytes32 message_root,uint256 nonce)"
-    // );
+    /// @notice commit typehash
+    /// keccak256(
+    ///     "Commitment(uint32 block_number,bytes32 message_root,uint256 nonce)"
+    /// );
     bytes32 internal constant COMMIT_TYPEHASH = 0xaca824a0c4edb3b2c17f33fea9cb21b33c7ee16c8e634c36b3bf851c9de7a223;
 
-    /// The Commitment contains the message_root with block_number that is used for message verify
+    /// @notice The Commitment contains the message_root with block_number that is used for message verify
     /// @param block_number block number for the given commitment
     /// @param message_root Darwnia message root commitment hash
     struct Commitment {
@@ -33,6 +35,7 @@ contract POSACommitmentScheme {
         uint256 nonce;
     }
 
+    /// @notice Return hash of commitment
     function hash(Commitment memory c)
         internal
         pure

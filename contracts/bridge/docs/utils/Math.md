@@ -11,7 +11,7 @@
 - [Functions](#functions)
   - [get_power_of_two_ceil](#get_power_of_two_ceil)
   - [log_2](#log_2)
-  - [max](#max)
+  - [_max](#_max)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -52,13 +52,13 @@ No modifiers
 
 
 
-### max
+### _max
 No description
 
 
 #### Declaration
 ```solidity
-  function max(
+  function _max(
   ) internal returns (uint256 z)
 ```
 

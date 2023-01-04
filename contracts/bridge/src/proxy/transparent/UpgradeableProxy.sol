@@ -2,7 +2,7 @@
 //
 // OpenZeppelin Contracts (v3.4.2-solc-0.7) (proxy/UpgradeableProxy.sol)
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
 import "./Proxy.sol";
 import "./Address.sol";

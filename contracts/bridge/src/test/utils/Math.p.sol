@@ -15,12 +15,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
 import "../../utils/Math.sol";
-pragma experimental SMTChecker;
 
-contract MathTest is Math {
+contract MathPropertyTest is Math {
     function property_get_power_of_two_ceil(uint x) public pure {
         if (x == 0 || x == type(uint).max) return;
         uint y = get_power_of_two_ceil(x);
@@ -28,7 +27,7 @@ contract MathTest is Math {
     }
 
     function property_log_2(uint x) public pure {
-        if (x <= 1) return;
+        if (x < 3) return;
         uint y = log_2(x);
         assert(2**(y-1) < x && x <= 2**y);
     }

@@ -57,12 +57,12 @@ const generate_storage_delivery_proof = async (client, front, end, block_number)
   const keys = build_relayer_keys(front, end)
   const laneRelayersProof = await get_storage_proof(client, addr, keys, block_number)
   const proof = {
-    "accountProof": toHexString(rlp.encode(laneIDProof.accountProof)),
-    "laneNonceProof": toHexString(rlp.encode(laneNonceProof.storageProof[0].proof)),
-    "laneRelayersProof": laneRelayersProof.storageProof.map((p) => toHexString(rlp.encode(p.proof))),
+    "accountProof": laneIDProof.accountProof,
+    "laneNonceProof": laneNonceProof.storageProof[0].proof,
+    "laneRelayersProof": laneRelayersProof.storageProof.map((p) => p.proof),
   }
   return ethers.utils.defaultAbiCoder.encode([
-    "tuple(bytes accountProof, bytes laneNonceProof, bytes[] laneRelayersProof)"
+    "tuple(bytes[] accountProof, bytes[] laneNonceProof, bytes[][] laneRelayersProof)"
     ], [ proof ])
 }
 
@@ -73,13 +73,13 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
   const keys = build_message_keys(begin, end)
   const laneMessageProof = await get_storage_proof(client, addr, keys, block_number)
   const proof = {
-    "accountProof": toHexString(rlp.encode(laneIdProof.accountProof)),
-    "laneIDProof": toHexString(rlp.encode(laneIdProof.storageProof[0].proof)),
-    "laneNonceProof": toHexString(rlp.encode(laneNonceProof.storageProof[0].proof)),
-    "laneMessagesProof": laneMessageProof.storageProof.map((p) => toHexString(rlp.encode(p.proof))),
+    "accountProof": laneIdProof.accountProof,
+    "laneIDProof": laneIdProof.storageProof[0].proof,
+    "laneNonceProof": laneNonceProof.storageProof[0].proof,
+    "laneMessagesProof": laneMessageProof.storageProof.map((p) => p.proof),
   }
   return ethers.utils.defaultAbiCoder.encode([
-    "tuple(bytes accountProof, bytes laneIDProof, bytes laneNonceProof, bytes[] laneMessagesProof)"
+    "tuple(bytes[] accountProof, bytes[] laneIDProof, bytes[] laneNonceProof, bytes[][] laneMessagesProof)"
     ], [ proof ])
 }
 
@@ -87,11 +87,11 @@ const generate_parallel_lane_storage_proof = async (client, block_number) => {
   const addr = client.parallel_outbound.address
   const laneRootProof = await get_storage_proof(client, addr, [LANE_ROOT_SLOT], block_number)
   const proof = {
-    "accountProof": toHexString(rlp.encode(laneRootProof.accountProof)),
-    "laneRootProof": toHexString(rlp.encode(laneRootProof.storageProof[0].proof))
+    "accountProof": laneRootProof.accountProof,
+    "laneRootProof": laneRootProof.storageProof[0].proof
   }
   const p = ethers.utils.defaultAbiCoder.encode([
-    "tuple(bytes accountProof, bytes laneRootProof)"
+    "tuple(bytes[] accountProof, bytes[] laneRootProof)"
   ], [ proof ])
   return {
     proof: p,

@@ -14,6 +14,8 @@ Chain message committer commit messages from all lane committers
   - [onlySetter](#onlysetter)
 - [Functions](#functions)
   - [constructor](#constructor)
+  - [initialize](#initialize)
+  - [__CMC_init__](#__cmc_init__)
   - [count](#count)
   - [leaveOf](#leaveof)
   - [changeSetter](#changesetter)
@@ -33,7 +35,7 @@ Chain message committer commit messages from all lane committers
 | maxChainPosition | uint256 |
 | chainOf | mapping(uint256 => address) |
 | setter | address |
-| thisChainPosition | uint256 |
+| THIS_CHAIN_POSITION | uint256 |
 
 
 ## Modifiers
@@ -70,6 +72,40 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_thisChainPosition` | uint256 | This chain positon
+
+### initialize
+No description
+
+
+#### Declaration
+```solidity
+  function initialize(
+  ) public initializer
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| initializer |
+
+
+
+### __CMC_init__
+No description
+
+
+#### Declaration
+```solidity
+  function __CMC_init__(
+  ) internal onlyInitializing
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyInitializing |
+
+
 
 ### count
 No description

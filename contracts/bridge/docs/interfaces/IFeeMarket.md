@@ -1,9 +1,10 @@
 # IFeeMarket
 
 
-After enroll to be a relyer , you have the duty to relay
-the meesage which is assigned to you, or you will be slashed
+A interface for user to enroll to be a relayer.
 
+> After enroll to be a relyer , you have the duty to relay
+the meesage which is assigned to you, or you will be slashed
 
 ## Contents
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->

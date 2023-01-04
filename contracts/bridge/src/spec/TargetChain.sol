@@ -15,30 +15,30 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
+/// @title TargetChain
+/// @notice Target chain specification
 contract TargetChain {
-    /// Delivered messages with their dispatch result.
+    /// @notice Delivered messages with their dispatch result.
+    /// @param begin Nonce of the first message that has been delivered (inclusive).
+    /// @param end Nonce of the last message that has been delivered (inclusive).
     struct DeliveredMessages {
-        // Nonce of the first message that has been delivered (inclusive).
         uint64 begin;
-        // Nonce of the last message that has been delivered (inclusive).
         uint64 end;
     }
 
-    /// Unrewarded relayer entry stored in the inbound lane data.
-    ///
-    /// This struct represents a continuous range of messages that have been delivered by the same
+    /// @notice Unrewarded relayer entry stored in the inbound lane data.
+    /// @dev This struct represents a continuous range of messages that have been delivered by the same
     /// relayer and whose confirmations are still pending.
+    /// @param relayer Address of the relayer.
+    /// @param messages Messages range, delivered by this relayer.
     struct UnrewardedRelayer {
-        // Address of the relayer.
         address relayer;
-        // Messages range, delivered by this relayer.
         DeliveredMessages messages;
     }
 
-    /// Inbound lane data
+    /// @notice Inbound lane data
     struct InboundLaneData {
         // Identifiers of relayers and messages that they have delivered to this lane (ordered by
         // message nonce).
@@ -90,6 +90,7 @@ contract TargetChain {
     /// )
     bytes32 internal constant DELIVEREDMESSAGES_TYPETASH = 0x1984c1907b379883ef1736e0351d28f5b4b82026a854e28971d89eb48f32fbe2;
 
+    /// @notice Hash of InboundLaneData
     function hash(InboundLaneData memory inboundLaneData)
         internal
         pure
@@ -105,6 +106,7 @@ contract TargetChain {
         );
     }
 
+    /// @notice Hash of UnrewardedRelayer[]
     function hash(UnrewardedRelayer[] memory relayers)
         internal
         pure
@@ -112,7 +114,7 @@ contract TargetChain {
     {
         uint relayersLength = relayers.length;
         bytes memory encoded = abi.encode(relayersLength);
-        for (uint256 i = 0; i < relayersLength; i++) {
+        for (uint256 i = 0; i < relayersLength; ) {
             UnrewardedRelayer memory r = relayers[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -122,10 +124,12 @@ contract TargetChain {
                     hash(r.messages)
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
 
+    /// @notice Hash of DeliveredMessages
     function hash(DeliveredMessages memory messages)
         internal
         pure

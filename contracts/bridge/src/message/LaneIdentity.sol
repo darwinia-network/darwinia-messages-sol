@@ -15,8 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
+/// @title LaneIdentity
+/// @notice The identity of lane.
 abstract contract LaneIdentity {
     function encodeMessageKey(uint64 nonce) public view virtual returns (uint256);
 
@@ -54,5 +56,12 @@ abstract contract LaneIdentity {
            _slot0.bridged_chain_pos,
            _slot0.bridged_lane_pos
        );
+    }
+
+    function getLaneId() external view returns (uint256 id) {
+        assembly ("memory-safe") {
+          id := sload(slot0.slot)
+        }
+        return id << 64;
     }
 }

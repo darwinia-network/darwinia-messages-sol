@@ -1,8 +1,9 @@
 # FeeMarket
 
 
+FeeMarket is a contract for users to use native tokens of source chain as the method of cross-chain payment
 
-
+> See https://github.com/darwinia-network/darwinia-messages-substrate/tree/main/modules/fee-market
 
 ## Contents
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -15,11 +16,11 @@
   - [enoughBalance](#enoughbalance)
 - [Functions](#functions)
   - [constructor](#constructor)
+  - [initialize](#initialize)
+  - [__FM_init__](#__fm_init__)
   - [receive](#receive)
   - [setSetter](#setsetter)
   - [setOutbound](#setoutbound)
-  - [setParaTime](#setparatime)
-  - [setParaRelay](#setpararelay)
   - [market_fee](#market_fee)
   - [totalSupply](#totalsupply)
   - [getOrder](#getorder)
@@ -40,7 +41,8 @@
   - [assign](#assign)
   - [settle](#settle)
 - [Events](#events)
-  - [Assgigned](#assgigned)
+  - [Assigned](#assigned)
+  - [AssignedExt](#assignedext)
   - [Delist](#delist)
   - [Deposit](#deposit)
   - [Enrol](#enrol)
@@ -60,11 +62,6 @@
 
 | Var | Type |
 | --- | --- |
-| slashTime | uint32 |
-| relayTime | uint32 |
-| assignedRelayersNumber | uint32 |
-| priceRatio | uint32 |
-| collateralPerOrder | uint256 |
 | relayerCount | uint256 |
 | setter | address |
 | outbounds | mapping(address => uint256) |
@@ -75,6 +72,12 @@
 | orderOf | mapping(uint256 => struct FeeMarket.Order) |
 | assignedRelayers | mapping(uint256 => mapping(uint256 => struct FeeMarket.OrderExt)) |
 | VAULT | address |
+| SLASH_TIME | uint256 |
+| RELAY_TIME | uint256 |
+| ASSIGNED_RELAYERS_NUMBER | uint256 |
+| PRICE_RATIO_NUMERATOR | uint256 |
+| COLLATERAL_PER_ORDER | uint256 |
+| DUTY_REWARD_RATIO | uint256 |
 
 
 ## Modifiers
@@ -127,6 +130,40 @@ No modifiers
 
 
 
+### initialize
+No description
+
+
+#### Declaration
+```solidity
+  function initialize(
+  ) public initializer
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| initializer |
+
+
+
+### __FM_init__
+No description
+
+
+#### Declaration
+```solidity
+  function __FM_init__(
+  ) internal onlyInitializing
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyInitializing |
+
+
+
 ### receive
 No description
 
@@ -166,40 +203,6 @@ No description
 #### Declaration
 ```solidity
   function setOutbound(
-  ) external onlySetter
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlySetter |
-
-
-
-### setParaTime
-No description
-
-
-#### Declaration
-```solidity
-  function setParaTime(
-  ) external onlySetter
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlySetter |
-
-
-
-### setParaRelay
-No description
-
-
-#### Declaration
-```solidity
-  function setParaRelay(
   ) external onlySetter
 ```
 
@@ -262,7 +265,7 @@ No description
 #### Declaration
 ```solidity
   function getOrderBook(
-  ) external returns (uint256, address[], uint256[], uint256[])
+  ) external returns (uint256, address[], uint256[], uint256[], uint256[])
 ```
 
 #### Modifiers:
@@ -505,7 +508,13 @@ No description
 
 ## Events
 
-### Assgigned
+### Assigned
+No description
+
+  
+
+
+### AssignedExt
 No description
 
   

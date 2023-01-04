@@ -2,7 +2,7 @@
 //
 // Inspired: https://github.com/ethereum/solidity-examples
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
 import {Memory} from "./Memory.sol";
 
@@ -20,7 +20,7 @@ library Bytes {
         }
         uint addr;
         uint addr2;
-        assembly {
+        assembly ("memory-safe") {
             addr := add(self, /*BYTES_HEADER_SIZE*/32)
             addr2 := add(other, /*BYTES_HEADER_SIZE*/32)
         }
@@ -54,7 +54,7 @@ library Bytes {
     ) internal pure returns (bytes memory) {
         require(startIndex + len <= self.length);
         if (len == 0) {
-            return "";
+            return new bytes(0);
         }
         uint256 addr = Memory.dataPtr(self);
         return Memory.toBytes(addr + startIndex, len);
@@ -88,10 +88,24 @@ library Bytes {
         uint len = end - start;
         require(0 <= len && len <= 32, "!slice");
 
-        assembly{
+        assembly ("memory-safe") {
             r := mload(add(add(self, 0x20), start))
         }
 
         return r >> (256 - len * 8);
+    }
+
+    /// alias of substr
+    function slice(
+        bytes memory self,
+        uint256 startIndex,
+        uint256 len
+    ) internal pure returns (bytes memory) {
+        return substr(self, startIndex, len);
+    }
+
+    /// alias of substr
+    function slice(bytes memory self, uint256 startIndex) internal pure returns (bytes memory) {
+        return substr(self, startIndex);
     }
 }

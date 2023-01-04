@@ -15,8 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 import "../../spec/StorageProof.sol";
 import "../../spec/ChainMessagePosition.sol";
@@ -24,8 +23,8 @@ import "../../interfaces/ILightClient.sol";
 
 contract EthereumParallelLaneStorageVerifier {
     struct Proof {
-        bytes accountProof;
-        bytes laneRootProof;
+        bytes[] accountProof;
+        bytes[] laneRootProof;
     }
 
     // bridged_chain_pos ++ bridged_lane_pos
@@ -84,7 +83,7 @@ contract EthereumParallelLaneStorageVerifier {
             return 0;
         }
         require(len <= 32, "!len");
-        assembly {
+        assembly ("memory-safe") {
             data := div(mload(add(bts, 32)), exp(256, sub(32, len)))
         }
     }

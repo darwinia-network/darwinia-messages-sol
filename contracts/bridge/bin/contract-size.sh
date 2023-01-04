@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-. $(dirname $0)/common.sh
+. $(dirname $0)/base.sh
 
 if [[ -z $contract ]]; then
   if [[ -z ${1} ]];then

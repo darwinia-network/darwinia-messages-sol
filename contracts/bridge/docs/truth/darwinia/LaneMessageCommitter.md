@@ -34,8 +34,8 @@ Lane message committer commit all messages from this chain to bridged chain
 | setter | address |
 | laneCount | uint256 |
 | laneOf | mapping(uint256 => address) |
-| thisChainPosition | uint256 |
-| bridgedChainPosition | uint256 |
+| THIS_CHAIN_POSITION | uint256 |
+| BRIDGED_CHAIN_POSITION | uint256 |
 
 
 ## Modifiers

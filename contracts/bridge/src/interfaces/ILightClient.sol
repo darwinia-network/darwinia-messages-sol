@@ -15,9 +15,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
+/// @title ILane
+/// @notice A interface for light client
 interface ILightClient {
+    /// @notice Return the merkle root of light client
+    /// @return merkle root
     function merkle_root() external view returns (bytes32);
+    /// @notice Return the block number of light client
+    /// @return block number
     function block_number() external view returns (uint256);
 }

@@ -1,7 +1,6 @@
 // hevm: flattened sources of src/fee-market/FeeMarket.sol
 // SPDX-License-Identifier: GPL-3.0 AND MIT
-pragma solidity =0.7.6;
-pragma abicoder v2;
+pragma solidity =0.8.17;
 
 ////// src/interfaces/IFeeMarket.sol
 // This file is part of Darwinia.
@@ -20,12 +19,11 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
-/// @title A interface for user to enroll to be a relayer.
-/// @author echo
-/// @notice After enroll to be a relyer , you have the duty to relay
+/// @title IFeeMarket
+/// @notice A interface for user to enroll to be a relayer.
+/// @dev After enroll to be a relyer , you have the duty to relay
 /// the meesage which is assigned to you, or you will be slashed
 interface IFeeMarket {
     //  Relayer which delivery the messages
@@ -48,7 +46,7 @@ interface IFeeMarket {
 
 ////// src/proxy/transparent/Address.sol
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /**
  * @dev Collection of functions related to the address type
@@ -70,16 +68,22 @@ library Address {
      *  - an address where a contract will be created
      *  - an address where a contract lived, but was destroyed
      * ====
+     *
+     * [IMPORTANT]
+     * ====
+     * You shouldn't rely on `isContract` to protect against flash loan attacks!
+     *
+     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets
+     * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract
+     * constructor.
+     * ====
      */
     function isContract(address account) internal view returns (bool) {
-        // This method relies on extcodesize, which returns 0 for contracts in
-        // construction, since the code is only stored at the end of the
-        // constructor execution.
+        // This method relies on extcodesize/address.code.length, which returns 0
+        // for contracts in construction, since the code is only stored at the end
+        // of the constructor execution.
 
-        uint256 size;
-        // solhint-disable-next-line no-inline-assembly
-        assembly { size := extcodesize(account) }
-        return size > 0;
+        return account.code.length > 0;
     }
 
     /**
@@ -101,14 +105,13 @@ library Address {
     function sendValue(address payable recipient, uint256 amount) internal {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
-        // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
-        (bool success, ) = recipient.call{ value: amount }("");
+        (bool success, ) = recipient.call{value: amount}("");
         require(success, "Address: unable to send value, recipient may have reverted");
     }
 
     /**
      * @dev Performs a Solidity function call using a low level `call`. A
-     * plain`call` is an unsafe replacement for a function call: use this
+     * plain `call` is an unsafe replacement for a function call: use this
      * function instead.
      *
      * If `target` reverts with a revert reason, it is bubbled up by this
@@ -125,7 +128,7 @@ library Address {
      * _Available since v3.1._
      */
     function functionCall(address target, bytes memory data) internal returns (bytes memory) {
-      return functionCall(target, data, "Address: low-level call failed");
+        return functionCallWithValue(target, data, 0, "Address: low-level call failed");
     }
 
     /**
@@ -134,7 +137,11 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+    function functionCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
         return functionCallWithValue(target, data, 0, errorMessage);
     }
 
@@ -149,7 +156,11 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value
+    ) internal returns (bytes memory) {
         return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
     }
 
@@ -159,13 +170,15 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
         require(address(this).balance >= value, "Address: insufficient balance for call");
-        require(isContract(target), "Address: call to non-contract");
-
-        // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call{ value: value }(data);
-        return _verifyCallResult(success, returndata, errorMessage);
+        (bool success, bytes memory returndata) = target.call{value: value}(data);
+        return verifyCallResultFromTarget(target, success, returndata, errorMessage);
     }
 
     /**
@@ -184,12 +197,13 @@ library Address {
      *
      * _Available since v3.3._
      */
-    function functionStaticCall(address target, bytes memory data, string memory errorMessage) internal view returns (bytes memory) {
-        require(isContract(target), "Address: static call to non-contract");
-
-        // solhint-disable-next-line avoid-low-level-calls
+    function functionStaticCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal view returns (bytes memory) {
         (bool success, bytes memory returndata) = target.staticcall(data);
-        return _verifyCallResult(success, returndata, errorMessage);
+        return verifyCallResultFromTarget(target, success, returndata, errorMessage);
     }
 
     /**
@@ -208,30 +222,68 @@ library Address {
      *
      * _Available since v3.4._
      */
-    function functionDelegateCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
-        require(isContract(target), "Address: delegate call to non-contract");
-
-        // solhint-disable-next-line avoid-low-level-calls
+    function functionDelegateCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
         (bool success, bytes memory returndata) = target.delegatecall(data);
-        return _verifyCallResult(success, returndata, errorMessage);
+        return verifyCallResultFromTarget(target, success, returndata, errorMessage);
     }
 
-    function _verifyCallResult(bool success, bytes memory returndata, string memory errorMessage) private pure returns(bytes memory) {
+    /**
+     * @dev Tool to verify that a low level call to smart-contract was successful, and revert (either by bubbling
+     * the revert reason or using the provided one) in case of unsuccessful call or if target was not a contract.
+     *
+     * _Available since v4.8._
+     */
+    function verifyCallResultFromTarget(
+        address target,
+        bool success,
+        bytes memory returndata,
+        string memory errorMessage
+    ) internal view returns (bytes memory) {
+        if (success) {
+            if (returndata.length == 0) {
+                // only check isContract if the call was successful and the return data is empty
+                // otherwise we already know that it was a contract
+                require(isContract(target), "Address: call to non-contract");
+            }
+            return returndata;
+        } else {
+            _revert(returndata, errorMessage);
+        }
+    }
+
+    /**
+     * @dev Tool to verify that a low level call was successful, and revert if it wasn't, either by bubbling the
+     * revert reason or using the provided one.
+     *
+     * _Available since v4.3._
+     */
+    function verifyCallResult(
+        bool success,
+        bytes memory returndata,
+        string memory errorMessage
+    ) internal pure returns (bytes memory) {
         if (success) {
             return returndata;
         } else {
-            // Look for revert reason and bubble it up if present
-            if (returndata.length > 0) {
-                // The easiest way to bubble the revert reason is using memory via assembly
+            _revert(returndata, errorMessage);
+        }
+    }
 
-                // solhint-disable-next-line no-inline-assembly
-                assembly {
-                    let returndata_size := mload(returndata)
-                    revert(add(32, returndata), returndata_size)
-                }
-            } else {
-                revert(errorMessage);
+    function _revert(bytes memory returndata, string memory errorMessage) private pure {
+        // Look for revert reason and bubble it up if present
+        if (returndata.length > 0) {
+            // The easiest way to bubble the revert reason is using memory via assembly
+            /// @solidity memory-safe-assembly
+            assembly {
+                let returndata_size := mload(returndata)
+                revert(add(32, returndata), returndata_size)
             }
+        } else {
+            revert(errorMessage);
         }
     }
 }
@@ -240,7 +292,7 @@ library Address {
 //
 // OpenZeppelin Contracts (last updated v4.7.0) (proxy/utils/Initializable.sol)
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "./transparent/Address.sol"; */
 
@@ -405,45 +457,47 @@ abstract contract Initializable {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
 /* import "../interfaces/IFeeMarket.sol"; */
 /* import "../proxy/Initializable.sol"; */
 
+/// @title FeeMarket
+/// @notice FeeMarket is a contract for users to use native tokens of source chain as the method of cross-chain payment
+/// @dev See https://github.com/darwinia-network/darwinia-messages-substrate/tree/main/modules/fee-market
 contract FeeMarket is Initializable, IFeeMarket {
-    // Relayer count
+    /// @notice Relayer count
     uint256 public relayerCount;
-    // Governance role to decide which outbounds message to relay
+    /// @notice Governance role to decide which outbounds message to relay
     address public setter;
-    // Outbounds which message will be relayed by relayers
+    /// @notice Outbounds which message will be relayed by relayers
     mapping(address => uint256) public outbounds;
-    // Balance of the relayer including deposit and eared fee
+    /// @notice Balance of the relayer including deposit and eared fee
     mapping(address => uint256) public balanceOf;
-    // Locked balance of relayer for relay messages
+    /// @notice Locked balance of relayer for relay messages
     mapping(address => uint256) public lockedOf;
-    // All relayers in fee-market, they are linked one by one and sorted by the relayer fee asc
+    /// @notice All relayers in fee-market, they are linked one by one and sorted by the relayer fee asc
     mapping(address => address) public relayers;
-    // Maker fee of the relayer
+    /// @notice Maker fee of the relayer
     mapping(address => uint256) public feeOf;
-    // Message encoded key => Order
+    /// @notice Message encoded key => Order
     mapping(uint256 => Order) public orderOf;
-    // message encoded key => assigned slot => assigned relayer
+    /// @notice message encoded key => assigned slot => assigned relayer
     mapping(uint256 => mapping(uint256 => OrderExt)) public assignedRelayers;
 
-    // System treasury
+    /// @notice System treasury
     address public immutable VAULT;
-    // SlashAmount = COLLATERAL_PER_ORDER * LateTime / SLASH_TIME
+    /// @notice SlashAmount = COLLATERAL_PER_ORDER * LateTime / SLASH_TIME
     uint256 public immutable SLASH_TIME;
-    // Time assigned relayer to relay messages
+    /// @notice Time assigned relayer to relay messages
     uint256 public immutable RELAY_TIME;
-    // Fee market assigned relayers numbers
+    /// @notice Fee market assigned relayers numbers
     uint256 public immutable ASSIGNED_RELAYERS_NUMBER;
-    // RATIO_NUMERATOR of two chain's native token price, denominator of ratio is 1_000_000
+    /// @notice RATIO_NUMERATOR of two chain's native token price, denominator of ratio is 1_000_000
     uint256 public immutable PRICE_RATIO_NUMERATOR;
-    // The collateral relayer need to lock for each order.
+    /// @notice The collateral relayer need to lock for each order.
     uint256 public immutable COLLATERAL_PER_ORDER;
-    // Duty reward ratio
+    /// @notice Duty reward ratio
     uint256 public immutable DUTY_REWARD_RATIO;
 
     address private constant SENTINEL_HEAD = address(0x1);
@@ -554,8 +608,9 @@ contract FeeMarket is Initializable, IFeeMarket {
     function getOrder(uint256 key) external view returns (Order memory, OrderExt[] memory) {
         Order memory order = orderOf[key];
         OrderExt[] memory assigned_relayers = new OrderExt[](order.number);
-        for (uint slot = 0; slot < order.number; slot++) {
+        for (uint slot = 0; slot < order.number; ) {
             assigned_relayers[slot] = assignedRelayers[key][slot];
+            unchecked { ++slot; }
         }
         return (order, assigned_relayers);
     }
@@ -587,7 +642,7 @@ contract FeeMarket is Initializable, IFeeMarket {
                 array2[index] = feeOf[cur];
                 array3[index] = balanceOf[cur];
                 array4[index] = lockedOf[cur];
-                index++;
+                unchecked { index++; }
             }
             cur = relayers[cur];
         }
@@ -603,7 +658,7 @@ contract FeeMarket is Initializable, IFeeMarket {
         while (cur != SENTINEL_TAIL && index < ASSIGNED_RELAYERS_NUMBER) {
             if (_enough_balance(cur)) {
                 array[index] = cur;
-                index++;
+                unchecked { index++; }
             }
             cur = relayers[cur];
         }
@@ -702,12 +757,13 @@ contract FeeMarket is Initializable, IFeeMarket {
         address[] memory top_relayers = _get_and_prune_top_relayers();
         address last = top_relayers[top_relayers.length - 1];
         require(msg.value == feeOf[last], "!fee");
-        for (uint slot = 0; slot < top_relayers.length; slot++) {
+        for (uint slot = 0; slot < top_relayers.length; ) {
             address r = top_relayers[slot];
             require(isRelayer(r), "!relayer");
             _lock(r, COLLATERAL_PER_ORDER);
             assignedRelayers[key][slot] = OrderExt(r, feeOf[r]);
             emit AssignedExt(key, slot, r, feeOf[r]);
+            unchecked { ++slot; }
         }
         // Record the assigned time
         orderOf[key] = Order(uint32(block.timestamp), uint32(ASSIGNED_RELAYERS_NUMBER), COLLATERAL_PER_ORDER);
@@ -730,7 +786,7 @@ contract FeeMarket is Initializable, IFeeMarket {
         while (cur != SENTINEL_TAIL && index < ASSIGNED_RELAYERS_NUMBER) {
             if (_enough_balance(cur)) {
                 array[index] = cur;
-                index++;
+                unchecked { index++; }
                 prev = cur;
             } else {
                 prune(prev, cur);
@@ -783,10 +839,10 @@ contract FeeMarket is Initializable, IFeeMarket {
     ) private {
         uint256 total_confirm_reward = 0;
         uint256 total_vault_reward = 0;
-        for (uint256 i = 0; i < delivery_relayers.length; i++) {
+        for (uint256 i = 0; i < delivery_relayers.length; ) {
             DeliveredRelayer memory entry = delivery_relayers[i];
             uint256 every_delivery_reward = 0;
-            for (uint256 key = entry.begin; key <= entry.end; key++) {
+            for (uint256 key = entry.begin; key <= entry.end; ) {
                 (uint256 delivery_reward, uint256 confirm_reward, uint256 vault_reward) = _settle_order(key);
                 every_delivery_reward += delivery_reward;
                 total_confirm_reward += confirm_reward;
@@ -794,9 +850,11 @@ contract FeeMarket is Initializable, IFeeMarket {
                 // Clean order
                 _clean_order(key);
                 emit Settled(key, block.timestamp, entry.relayer, confirm_relayer);
+                unchecked { ++key; }
             }
             // Reward every delivery relayer
             _reward(entry.relayer, every_delivery_reward);
+            unchecked { ++i; }
         }
         // Reward confirm relayer
         _reward(confirm_relayer, total_confirm_reward);
@@ -849,15 +907,18 @@ contract FeeMarket is Initializable, IFeeMarket {
     ) private view returns (uint256, uint256) {
         (bool is_ontime, uint diff_time, uint number,) = _get_order_status(key);
         if (is_ontime) {
-            for (uint slot = 0; slot < number; slot++) {
+            for (uint slot = 0; slot < number; ) {
                 // The message confirmed in the `slot` assign_relayer
                 // [slot, slot+1)
                 if (slot * RELAY_TIME <= diff_time && diff_time < (slot + 1) * RELAY_TIME) {
                     uint256 slot_price = getSlotFee(key, slot);
                     return (slot, slot_price);
                 }
+                unchecked { ++slot; }
             }
             assert(false);
+            // resolve warning
+            return (0, 0);
         } else {
             return (number, message_fee);
         }
@@ -869,7 +930,7 @@ contract FeeMarket is Initializable, IFeeMarket {
     ) private returns (uint256 slot_offensive_slash) {
         (bool is_ontime, uint diff_time, uint number, uint collateral) = _get_order_status(key);
         if (is_ontime) {
-            for (uint _slot = 0; _slot < number; _slot++) {
+            for (uint _slot = 0; _slot < number; ) {
                 address assign_relayer = getAssignedRelayer(key, _slot);
                 if (_slot < slot) {
                     uint256 slash_fee = collateral * 2 / 10;
@@ -879,17 +940,19 @@ contract FeeMarket is Initializable, IFeeMarket {
                 } else {
                     _unlock(assign_relayer, collateral);
                 }
+                unchecked { ++_slot; }
             }
         } else {
             uint256 slash_fee = collateral * 2 / 10;
             uint256 remaining = collateral - slash_fee;
             uint256 late_time = diff_time - number * RELAY_TIME;
             slash_fee += late_time >= SLASH_TIME ? remaining : (remaining * late_time / SLASH_TIME);
-            for (uint _slot = 0; _slot < number; _slot++) {
+            for (uint _slot = 0; _slot < number; ) {
                 address assign_relayer = getAssignedRelayer(key, _slot);
                 _slash(assign_relayer, slash_fee);
                 _unlock(assign_relayer, (collateral - slash_fee));
                 slot_offensive_slash += slash_fee;
+                unchecked { ++_slot; }
             }
         }
     }
@@ -904,12 +967,13 @@ contract FeeMarket is Initializable, IFeeMarket {
         if (is_ontime && _total_reward > 0) {
             require(number > slot, "!slot");
             uint _per_reward = _total_reward / (number - slot);
-            for (uint _slot = 0; _slot < number; _slot++) {
+            for (uint _slot = 0; _slot < number; ) {
                 if (_slot >= slot) {
                     address assign_relayer = getAssignedRelayer(key, _slot);
                     _reward(assign_relayer, _per_reward);
                     slot_duty_reward += _per_reward;
                 }
+                unchecked { ++_slot; }
             }
         } else {
             return 0;
@@ -918,8 +982,9 @@ contract FeeMarket is Initializable, IFeeMarket {
 
     function _clean_order(uint256 key) private {
         (, , uint number,) = _get_order_status(key);
-        for (uint _slot = 0; _slot < number; _slot++) {
+        for (uint _slot = 0; _slot < number; ) {
             delete assignedRelayers[key][_slot];
+            unchecked { ++_slot; }
         }
         delete orderOf[key];
     }

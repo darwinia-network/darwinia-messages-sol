@@ -2,14 +2,16 @@
 //
 // Inspired: https://github.com/Snowfork/snowbridge/blob/main/core/packages/contracts/contracts/ScaleCodec.sol
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
 library ScaleCodec {
     // Decodes a SCALE encoded uint256 by converting bytes (bid endian) to little endian format
     function decodeUint256(bytes memory data) internal pure returns (uint256) {
         uint256 number;
-        for (uint256 i = data.length; i > 0; i--) {
-            number = number + uint256(uint8(data[i - 1])) * (2**(8 * (i - 1)));
+        unchecked {
+            for (uint256 i = data.length; i > 0; i--) {
+                number = number + uint256(uint8(data[i - 1])) * (2**(8 * (i - 1)));
+            }
         }
         return number;
     }

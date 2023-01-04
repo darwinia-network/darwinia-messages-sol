@@ -1,7 +1,7 @@
 # OutboundLaneVerifier
 
 
-
+The message/storage verifier for outbound lane.
 
 
 ## Contents
@@ -12,7 +12,6 @@
 - [Functions](#functions)
   - [constructor](#constructor)
   - [_verify_messages_delivery_proof](#_verify_messages_delivery_proof)
-  - [getLaneInfo](#getlaneinfo)
   - [encodeMessageKey](#encodemessagekey)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -23,8 +22,7 @@
 
 | Var | Type |
 | --- | --- |
-| slot0 | struct OutboundLaneVerifier.Slot0 |
-| lightClient | contract ILightClient |
+| VERIFIER | contract IVerifier |
 
 
 
@@ -37,11 +35,13 @@ No description
 #### Declaration
 ```solidity
   function constructor(
-  ) public
+  ) public LaneIdentity
 ```
 
 #### Modifiers:
-No modifiers
+| Modifier |
+| --- |
+| LaneIdentity |
 
 
 
@@ -53,21 +53,6 @@ No description
 ```solidity
   function _verify_messages_delivery_proof(
   ) internal
-```
-
-#### Modifiers:
-No modifiers
-
-
-
-### getLaneInfo
-No description
-
-
-#### Declaration
-```solidity
-  function getLaneInfo(
-  ) external returns (uint32, uint32, uint32, uint32)
 ```
 
 #### Modifiers:

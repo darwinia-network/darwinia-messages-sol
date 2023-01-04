@@ -2,7 +2,7 @@
 //
 // OpenZeppelin Contracts (v3.4.2-solc-0.7) (proxy/ProxyAdmin.sol)
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
 import "./Ownable.sol";
 import "./TransparentUpgradeableProxy.sol";
@@ -12,7 +12,6 @@ import "./TransparentUpgradeableProxy.sol";
  * explanation of why you would want to use this see the documentation for {TransparentUpgradeableProxy}.
  */
 contract ProxyAdmin is Ownable {
-
     /**
      * @dev Returns the current implementation of `proxy`.
      *
@@ -62,7 +61,11 @@ contract ProxyAdmin is Ownable {
      *
      * - This contract must be the admin of `proxy`.
      */
-    function upgradeAndCall(TransparentUpgradeableProxy proxy, address implementation, bytes memory data) public payable virtual onlyOwner {
+    function upgradeAndCall(
+        TransparentUpgradeableProxy proxy,
+        address implementation,
+        bytes memory data
+    ) public payable virtual onlyOwner {
         proxy.upgradeToAndCall{value: msg.value}(implementation, data);
     }
 }

@@ -15,13 +15,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
+/// @notice MessageProof
+/// @param chainProof Chain message single proof
+/// @param laneProof Lane message single proof
 struct MessageProof {
     MessageSingleProof chainProof;
     MessageSingleProof laneProof;
 }
 
+/// @notice MessageSingleProof
+/// @param root Merkle root
+/// @param proof Merkle proof
 struct MessageSingleProof {
     bytes32 root;
     bytes32[] proof;

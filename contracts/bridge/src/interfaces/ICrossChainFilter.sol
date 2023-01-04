@@ -15,11 +15,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
-/// @title A interface for message layer to filter unsafe message
-/// @author echo
-/// @notice The app layer must implement the interface `ICrossChainFilter`
+/// @title ICrossChainFilter
+/// @notice A interface for message layer to filter unsafe message
+/// @dev The app layer must implement the interface `ICrossChainFilter`
 interface ICrossChainFilter {
     /// @notice Verify the source sender and payload of source chain messages,
     /// Generally, app layer cross-chain messages require validation of sourceAccount

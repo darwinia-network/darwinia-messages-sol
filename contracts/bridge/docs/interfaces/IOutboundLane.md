@@ -28,9 +28,9 @@ At the beginning of the launch, submmiter is permission, after the system is sta
 #### Declaration
 ```solidity
   function send_message(
-    address targetContract,
+    address target,
     bytes encoded
-  ) external returns (uint256)
+  ) external returns (uint64 nonce)
 ```
 
 #### Modifiers:
@@ -39,8 +39,12 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`targetContract` | address | The target contract address which you would send cross chain message to
+|`target` | address | The target contract address which you would send cross chain message to
 |`encoded` | bytes | The calldata which encoded by ABI Encoding `abi.encodePacked(SELECTOR, PARAMS)`
 
+#### Returns:
+| Type | Description |
+| --- | --- |
+|`nonce` | Latest generated nonce
 
 

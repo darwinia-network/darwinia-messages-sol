@@ -9,7 +9,7 @@
     "test:e2e": "npx hardhat test --no-compile e2e/*.js",
     "ci": "CI=true npx hardhat test && yarn mv-reporter",
     "mv-reporter": "mv gasReporterOutput.json ../../gasReporterOutput-bridge.json",
-    "docs": "solidity-docgen -i ./src -e ./src/test --solc-module solc-0.7 -t docs/templates && doctoc ./docs/ --maxlevel 3",
+    "docs": "solidity-docgen -i ./src -e ./src/test --solc-module solc-0.8 -t docs/templates && doctoc ./docs/ --maxlevel 3",
     "clean": "shx rm -rf cache artifacts abi",
     "lint": "yarn solhint",
     "lint:check": "yarn solhint:check",
@@ -41,9 +41,9 @@
     "node-fetch": "2",
     "rlp": "^3.0.0",
     "shx": "^0.3.3",
-    "solc-0.7": "npm:solc@^0.7.6",
+    "solc-0.8": "npm:solc@^0.8.17",
     "solhint": "^3.3.6",
-    "solidity-docgen": "^0.5.13"
+    "solidity-docgen": "^0.5.16"
   },
   "dependencies": {
     "@ethersproject/abi": "^5.7.0"

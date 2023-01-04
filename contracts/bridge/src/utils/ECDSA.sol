@@ -5,7 +5,7 @@
 // * Fixed: https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-4h98-2769-gh6h
 // * Add `toTypedDataHash(bytes32, bytes32)` function
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
 /// @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
 ///

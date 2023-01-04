@@ -15,8 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 import "../common/SerialLaneStorageVerifier.sol";
 import "../../spec/ChainMessagePosition.sol";
@@ -25,7 +24,7 @@ import "../../interfaces/ILightClient.sol";
 contract BSCSerialLaneVerifier is SerialLaneStorageVerifier {
     ILightClient public immutable LIGHT_CLIENT;
 
-    constructor(address lightclient) SerialLaneStorageVerifier(uint32(ChainMessagePosition.BSC), 0, 1, 2) {
+    constructor(address lightclient) SerialLaneStorageVerifier(uint32(ChainMessagePosition.BSC), 1, 2) {
         LIGHT_CLIENT = ILightClient(lightclient);
     }
 

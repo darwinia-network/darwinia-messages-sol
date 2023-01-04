@@ -12,7 +12,7 @@
 - [Functions](#functions)
   - [constructor](#constructor)
   - [block_number](#block_number)
-  - [message_root](#message_root)
+  - [merkle_root](#merkle_root)
   - [import_message_commitment](#import_message_commitment)
 - [Events](#events)
   - [MessageRootImported](#messagerootimported)
@@ -64,13 +64,13 @@ No modifiers
 
 
 
-### message_root
+### merkle_root
 No description
 
 
 #### Declaration
 ```solidity
-  function message_root(
+  function merkle_root(
   ) public returns (bytes32)
 ```
 

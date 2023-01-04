@@ -1,7 +1,7 @@
 # MerkleProof
 
 
-
+Merkle proof specification
 
 
 ## Contents
@@ -10,6 +10,7 @@
 
 - [Functions](#functions)
   - [is_valid_merkle_branch](#is_valid_merkle_branch)
+  - [merkle_root](#merkle_root)
   - [hash_node](#hash_node)
   - [hash](#hash)
 
@@ -21,13 +22,28 @@
 ## Functions
 
 ### is_valid_merkle_branch
-No description
+Check if ``leaf`` at ``index`` verifies against the Merkle ``root`` and ``branch``.
 
 
 #### Declaration
 ```solidity
   function is_valid_merkle_branch(
   ) internal returns (bool)
+```
+
+#### Modifiers:
+No modifiers
+
+
+
+### merkle_root
+No description
+
+
+#### Declaration
+```solidity
+  function merkle_root(
+  ) internal returns (bytes32)
 ```
 
 #### Modifiers:

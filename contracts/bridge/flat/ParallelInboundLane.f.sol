@@ -1,7 +1,6 @@
 // hevm: flattened sources of src/message/ParallelInboundLane.sol
 // SPDX-License-Identifier: GPL-3.0 AND MIT OR Apache-2.0
-pragma solidity =0.7.6;
-pragma abicoder v2;
+pragma solidity =0.8.17;
 
 ////// src/interfaces/ICrossChainFilter.sol
 // This file is part of Darwinia.
@@ -20,11 +19,11 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
-/// @title A interface for message layer to filter unsafe message
-/// @author echo
-/// @notice The app layer must implement the interface `ICrossChainFilter`
+/// @title ICrossChainFilter
+/// @notice A interface for message layer to filter unsafe message
+/// @dev The app layer must implement the interface `ICrossChainFilter`
 interface ICrossChainFilter {
     /// @notice Verify the source sender and payload of source chain messages,
     /// Generally, app layer cross-chain messages require validation of sourceAccount
@@ -53,20 +52,30 @@ interface ICrossChainFilter {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
+/// @title IVerifier
+/// @notice A interface for message layer to verify the correctness of the lane hash
 interface IVerifier {
+    /// @notice Verify outlane data hash using message/storage proof
+    /// @param outlane_data_hash The bridged outlane data hash to be verify
+    /// @param outlane_id The bridged outlen id
+    /// @param encoded_proof Message/storage abi-encoded proof
+    /// @return the verify result
     function verify_messages_proof(
         bytes32 outlane_data_hash,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 outlane_id,
         bytes calldata encoded_proof
     ) external view returns (bool);
 
+    /// @notice Verify inlane data hash using message/storage proof
+    /// @param inlane_data_hash The bridged inlane data hash to be verify
+    /// @param inlane_id The bridged inlane id
+    /// @param encoded_proof Message/storage abi-encoded proof
+    /// @return the verify result
     function verify_messages_delivery_proof(
         bytes32 inlane_data_hash,
-        uint32 chain_pos,
-        uint32 lane_pos,
+        uint256 inlane_id,
         bytes calldata encoded_proof
     ) external view returns (bool);
 }
@@ -88,8 +97,10 @@ interface IVerifier {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
+/// @title LaneIdentity
+/// @notice The identity of lane.
 abstract contract LaneIdentity {
     function encodeMessageKey(uint64 nonce) public view virtual returns (uint256);
 
@@ -128,6 +139,13 @@ abstract contract LaneIdentity {
            _slot0.bridged_lane_pos
        );
     }
+
+    function getLaneId() external view returns (uint256 id) {
+        assembly ("memory-safe") {
+          id := sload(slot0.slot)
+        }
+        return id << 64;
+    }
 }
 
 ////// src/message/InboundLaneVerifier.sol
@@ -147,12 +165,13 @@ abstract contract LaneIdentity {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
 /* import "../interfaces/IVerifier.sol"; */
 /* import "./LaneIdentity.sol"; */
 
+/// @title InboundLaneVerifier
+/// @notice The message/storage verifier for inbound lane.
 contract InboundLaneVerifier is LaneIdentity {
     /// @dev The contract address of on-chain verifier
     IVerifier public immutable VERIFIER;
@@ -176,15 +195,21 @@ contract InboundLaneVerifier is LaneIdentity {
         bytes32 outlane_data_hash,
         bytes memory encoded_proof
     ) internal view {
-        Slot0 memory _slot0 = slot0;
         require(
             VERIFIER.verify_messages_proof(
                 outlane_data_hash,
-                _slot0.this_chain_pos,
-                _slot0.bridged_lane_pos,
+                get_bridged_lane_id(),
                 encoded_proof
             ), "!proof"
         );
+    }
+
+    function get_bridged_lane_id() internal view returns (uint256) {
+        Slot0 memory _slot0 = slot0;
+        return (uint256(_slot0.bridged_chain_pos) << 160) +
+                (uint256(_slot0.bridged_lane_pos) << 128) +
+                (uint256(_slot0.this_chain_pos) << 96) +
+                (uint256(_slot0.this_lane_pos) << 64);
     }
 
     /// 32 bytes to identify an unique message from source chain
@@ -197,12 +222,7 @@ contract InboundLaneVerifier is LaneIdentity {
     /// [20..24) bytes ---- ThisLanePosition
     /// [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
     function encodeMessageKey(uint64 nonce) public view override returns (uint256) {
-        Slot0 memory _slot0 = slot0;
-        return (uint256(_slot0.bridged_chain_pos) << 160) +
-                (uint256(_slot0.bridged_lane_pos) << 128) +
-                (uint256(_slot0.this_chain_pos) << 96) +
-                (uint256(_slot0.this_lane_pos) << 64) +
-                uint256(nonce);
+        return get_bridged_lane_id() + uint256(nonce);
     }
 }
 
@@ -223,11 +243,12 @@ contract InboundLaneVerifier is LaneIdentity {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
+/// @title SourceChain
+/// @notice Source chain specification
 contract SourceChain {
-    /// The MessagePayload is the structure of RPC which should be delivery to target chain
+    /// @notice The MessagePayload is the structure of RPC which should be delivery to target chain
     /// @param source The source contract address which send the message
     /// @param target The targe contract address which receive the message
     /// @param encoded The calldata which encoded by ABI Encoding
@@ -237,41 +258,47 @@ contract SourceChain {
         bytes encoded; /*(abi.encodePacked(SELECTOR, PARAMS))*/
     }
 
-    /// Message key (unique message identifier) as it is stored in the storage.
+    /// @notice Message key (unique message identifier) as it is stored in the storage.
+    /// @param this_chain_pos This chain position
+    /// @param this_lane_pos Position of the message this lane.
+    /// @param bridged_chain_pos Bridged chain position
+    /// @param bridged_lane_pos Position of the message bridged lane.
+    /// @param nonce Nonce of the message.
     struct MessageKey {
-        // This chain position
         uint32 this_chain_pos;
-        // Position of the message this lane.
         uint32 this_lane_pos;
-        // Bridged chain position
         uint32 bridged_chain_pos;
-        // Position of the message bridged lane.
         uint32 bridged_lane_pos;
-        // Nonce of the message.
         uint64 nonce;
     }
 
+    /// @notice Message storage representation
+    /// @param encoded_key Encoded message key
+    /// @param payload_hash Hash of payload
     struct MessageStorage {
         uint256 encoded_key;
         bytes32 payload_hash;
     }
 
-    /// Message as it is stored in the storage.
+    /// @notice Message as it is stored in the storage.
+    /// @param encoded_key Encoded message key.
+    /// @param payload Message payload.
     struct Message {
-        // Encoded message key.
         uint256 encoded_key;
-        // Message payload.
         MessagePayload payload;
     }
 
-    /// Outbound lane data.
+    /// @notice Outbound lane data.
+    /// @param latest_received_nonce Nonce of the latest message, received by bridged chain.
+    /// @param messages Messages sent through this lane.
     struct OutboundLaneData {
-        // Nonce of the latest message, received by bridged chain.
         uint64 latest_received_nonce;
-        // Messages sent through this lane.
         Message[] messages;
     }
 
+    /// @notice Outbound lane data storage representation
+    /// @param latest_received_nonce Nonce of the latest message, received by bridged chain.
+    /// @param messages Messages storage representation
     struct OutboundLaneDataStorage {
         uint64 latest_received_nonce;
         MessageStorage[] messages;
@@ -302,6 +329,7 @@ contract SourceChain {
     /// )
     bytes32 internal constant MESSAGEPAYLOAD_TYPEHASH = 0x582ffe1da2ae6da425fa2c8a2c423012be36b65787f7994d78362f66e4f84101;
 
+    /// @notice Hash of OutboundLaneData
     function hash(OutboundLaneData memory data)
         internal
         pure
@@ -316,6 +344,7 @@ contract SourceChain {
         );
     }
 
+    /// @notice Hash of OutboundLaneDataStorage
     function hash(OutboundLaneDataStorage memory data)
         internal
         pure
@@ -330,6 +359,7 @@ contract SourceChain {
         );
     }
 
+    /// @notice Hash of MessageStorage
     function hash(MessageStorage[] memory msgs)
         internal
         pure
@@ -337,7 +367,7 @@ contract SourceChain {
     {
         uint msgsLength = msgs.length;
         bytes memory encoded = abi.encode(msgsLength);
-        for (uint256 i = 0; i < msgsLength; i ++) {
+        for (uint256 i = 0; i < msgsLength; ) {
             MessageStorage memory message = msgs[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -347,10 +377,12 @@ contract SourceChain {
                     message.payload_hash
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
 
+    /// @notice Hash of Message[]
     function hash(Message[] memory msgs)
         internal
         pure
@@ -358,7 +390,7 @@ contract SourceChain {
     {
         uint msgsLength = msgs.length;
         bytes memory encoded = abi.encode(msgsLength);
-        for (uint256 i = 0; i < msgsLength; i ++) {
+        for (uint256 i = 0; i < msgsLength; ) {
             Message memory message = msgs[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -368,10 +400,12 @@ contract SourceChain {
                     hash(message.payload)
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
 
+    /// @notice Hash of Message
     function hash(Message memory message)
         internal
         pure
@@ -386,6 +420,7 @@ contract SourceChain {
         );
     }
 
+    /// @notice Hash of MessagePayload
     function hash(MessagePayload memory payload)
         internal
         pure
@@ -401,6 +436,9 @@ contract SourceChain {
         );
     }
 
+    /// @notice Decode message key
+    /// @param encoded Encoded message key
+    /// @return key Decoded message key
     function decodeMessageKey(uint256 encoded) internal pure returns (MessageKey memory key) {
         key.this_chain_pos = uint32(encoded >> 160);
         key.this_lane_pos = uint32(encoded >> 128);
@@ -411,7 +449,7 @@ contract SourceChain {
 }
 
 ////// src/utils/call/ExcessivelySafeCall.sol
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /// code source from: https://github.com/LayerZero-Labs/solidity-examples/blob/main/contracts/util/ExcessivelySafeCall.sol
 
@@ -448,15 +486,15 @@ library ExcessivelySafeCall {
         // by assembly calling "handle" function
         // we call via assembly to avoid memcopying a very large returndata
         // returned by a malicious contract
-        assembly {
+        assembly ("memory-safe") {
             _success := call(
-            _gas, // gas
-            _target, // recipient
-            0, // ether value
-            add(_calldata, 0x20), // inloc
-            mload(_calldata), // inlen
-            0, // outloc
-            0 // outlen
+                _gas, // gas
+                _target, // recipient
+                0, // ether value
+                add(_calldata, 0x20), // inloc
+                mload(_calldata), // inlen
+                0, // outloc
+                0 // outlen
             )
             // limit our copy to 256 bytes
             _toCopy := returndatasize()
@@ -500,14 +538,14 @@ library ExcessivelySafeCall {
         // by assembly calling "handle" function
         // we call via assembly to avoid memcopying a very large returndata
         // returned by a malicious contract
-        assembly {
+        assembly ("memory-safe") {
             _success := staticcall(
-            _gas, // gas
-            _target, // recipient
-            add(_calldata, 0x20), // inloc
-            mload(_calldata), // inlen
-            0, // outloc
-            0 // outlen
+                _gas, // gas
+                _target, // recipient
+                add(_calldata, 0x20), // inloc
+                mload(_calldata), // inlen
+                0, // outloc
+                0 // outlen
             )
             // limit our copy to 256 bytes
             _toCopy := returndatasize()
@@ -522,22 +560,17 @@ library ExcessivelySafeCall {
         return (_success, _returnData);
     }
 
-    /**
-     * @notice Swaps function selectors in encoded contract calls
-     * @dev Allows reuse of encoded calldata for functions with identical
-     * argument types but different names. It simply swaps out the first 4 bytes
-     * for the new selector. This function modifies memory in place, and should
-     * only be used with caution.
-     * @param _newSelector The new 4-byte selector
-     * @param _buf The encoded contract args
-     */
-    function swapSelector(bytes4 _newSelector, bytes memory _buf)
-    internal
-    pure
-    {
+    /// @notice Swaps function selectors in encoded contract calls
+    /// @dev Allows reuse of encoded calldata for functions with identical
+    /// argument types but different names. It simply swaps out the first 4 bytes
+    /// for the new selector. This function modifies memory in place, and should
+    /// only be used with caution.
+    /// @param _newSelector The new 4-byte selector
+    /// @param _buf The encoded contract args
+    function swapSelector(bytes4 _newSelector, bytes memory _buf) internal pure {
         require(_buf.length >= 4);
         uint256 _mask = LOW_28_MASK;
-        assembly {
+        assembly ("memory-safe") {
             // load the first word of
             let _word := mload(add(_buf, 0x20))
             // mask out the top 4 bytes
@@ -550,7 +583,7 @@ library ExcessivelySafeCall {
 }
 
 ////// src/utils/imt/IncrementalMerkleTree.sol
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /// code source from https://github.com/nomad-xyz/monorepo/blob/main/packages/contracts-core/contracts/libs/Merkle.sol
 
@@ -576,13 +609,15 @@ library IncrementalMerkleTree {
 
         _tree.count += 1;
         uint256 size = _tree.count;
-        for (uint256 i = 0; i < TREE_DEPTH; i++) {
+        for (uint256 i = 0; i < TREE_DEPTH; ) {
             if ((size & 1) == 1) {
                 _tree.branch[i] = _node;
                 return;
             }
             _node = keccak256(abi.encodePacked(_tree.branch[i], _node));
             size /= 2;
+
+            unchecked { ++i; }
         }
         // As the loop should always end prematurely with the `return` statement,
         // this code should be unreachable. We assert `false` just to be safe.
@@ -600,7 +635,7 @@ library IncrementalMerkleTree {
     {
         uint256 _index = _tree.count;
 
-        for (uint256 i = 0; i < TREE_DEPTH; i++) {
+        for (uint256 i = 0; i < TREE_DEPTH; ) {
             uint256 _ithBit = (_index >> i) & 0x01;
             bytes32 _next = _tree.branch[i];
             if (_ithBit == 1) {
@@ -608,6 +643,8 @@ library IncrementalMerkleTree {
             } else {
                 _current = keccak256(abi.encodePacked(_current, _zeroes[i]));
             }
+
+            unchecked { ++i; }
         }
     }
 
@@ -670,7 +707,7 @@ library IncrementalMerkleTree {
     ) internal pure returns (bytes32 _current) {
         _current = _item;
 
-        for (uint256 i = 0; i < TREE_DEPTH; i++) {
+        for (uint256 i = 0; i < TREE_DEPTH; ) {
             uint256 _ithBit = (_index >> i) & 0x01;
             bytes32 _next = _branch[i];
             if (_ithBit == 1) {
@@ -678,6 +715,8 @@ library IncrementalMerkleTree {
             } else {
                 _current = keccak256(abi.encodePacked(_current, _next));
             }
+
+            unchecked { ++i; }
         }
     }
 
@@ -777,8 +816,7 @@ library IncrementalMerkleTree {
 // The assigned nonce is reported using `MessageAccepted` event. When message is
 // delivered to the the bridged chain, it is reported using `MessagesDelivered` event.
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
 /* import "../interfaces/ICrossChainFilter.sol"; */
 /* import "./InboundLaneVerifier.sol"; */
@@ -786,10 +824,13 @@ library IncrementalMerkleTree {
 /* import "../utils/imt/IncrementalMerkleTree.sol"; */
 /* import "../utils/call/ExcessivelySafeCall.sol"; */
 
-/// @title Everything about incoming messages receival
+/// @title ParallelInboundLane
+/// @notice Everything about incoming messages receival
+/// @dev See https://itering.notion.site/Basic-Message-Channel-c41f0c9e453c478abb68e93f6a067c52
 contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
     using ExcessivelySafeCall for address;
 
+    /// @dev message nonce => dispatch result
     mapping(uint => bool) public dones;
 
     /// @dev Notifies an observer that the message has dispatched

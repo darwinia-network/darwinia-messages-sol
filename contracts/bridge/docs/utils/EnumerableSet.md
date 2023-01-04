@@ -27,10 +27,12 @@ and `uint256` (`UintSet`) are supported.
 
 [WARNING]
 ====
- Trying to delete such a structure from storage will likely result in data corruption, rendering the structure unusable.
- See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.
+Trying to delete such a structure from storage will likely result in data corruption, rendering the structure
+unusable.
+See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.
 
- In order to clean an EnumerableSet, you can either remove all elements one by one or create a fresh instance using an array of EnumerableSet.
+In order to clean an EnumerableSet, you can either remove all elements one by one or create a fresh instance using an
+array of EnumerableSet.
 ====
 
 ## Contents
@@ -333,7 +335,7 @@ No modifiers
 
 ### length
 No description
-> Returns the number of values on the set. O(1).
+> Returns the number of values in the set. O(1).
 
 #### Declaration
 ```solidity

@@ -1,7 +1,7 @@
 # BEEFYCommitmentScheme
 
 
-
+Beefy commitment scheme
 
 
 ## Contents
@@ -29,7 +29,7 @@
 ## Functions
 
 ### hash
-No description
+Return hash of commitment
 
 
 #### Declaration
@@ -44,7 +44,7 @@ No modifiers
 
 
 ### hash
-No description
+Return hash of payload
 
 
 #### Declaration

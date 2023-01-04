@@ -75,8 +75,7 @@
 //                                Authority set
 // ```
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 import "../../utils/Bytes.sol";
 import "../../utils/ECDSA.sol";
@@ -89,33 +88,33 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
     using Bytes for bytes;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    // Finalized BSC checkpoint
+    /// @notice Finalized BSC checkpoint
     StoredBlockHeader public finalized_checkpoint;
-    // Finalized BSC authorities
+    /// @notice Finalized BSC authorities
     EnumerableSet.AddressSet private _finalized_authorities;
 
-    // Chaind ID
+    /// @notice Chaind ID
     uint64 public immutable CHAIN_ID;
-    // Block period
+    /// @notice Block period
     uint64 public immutable PERIOD;
 
-    // Minimum gas limit
+    /// @notice Minimum gas limit
     uint64 constant private MIN_GAS_LIMIT = 5000;
-    // Maximum gas limit
+    /// @notice Maximum gas limit
     uint64 constant private MAX_GAS_LIMIT = 0x7fffffffffffffff;
-    // Epoch length
+    /// @notice Epoch length
     uint256 constant private EPOCH = 200;
-    // Difficulty for NOTURN block
+    /// @notice Difficulty for NOTURN block
     uint256 constant private DIFF_NOTURN = 1;
-    // Difficulty for INTURN block
+    /// @notice Difficulty for INTURN block
     uint256 constant private DIFF_INTURN = 2;
-    // Fixed number of extra-data prefix bytes reserved for signer vanity
+    /// @notice Fixed number of extra-data prefix bytes reserved for signer vanity
     uint256 constant private VANITY_LENGTH = 32;
-    // Address length
+    /// @notice Address length
     uint256 constant private ADDRESS_LENGTH = 20;
-    // Fixed number of extra-data suffix bytes reserved for signer signature
+    /// @notice Fixed number of extra-data suffix bytes reserved for signer signature
     uint256 constant private SIGNATURE_LENGTH = 65;
-    // Keccak of RLP encoding of empty list
+    /// @notice Keccak of RLP encoding of empty list
     bytes32 constant private KECCAK_EMPTY_LIST_RLP = 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347;
 
     event FinalizedHeaderImported(StoredBlockHeader finalized_header, address[] signers);
@@ -171,7 +170,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
         return _finalized_authorities.values();
     }
 
-    /// Import finalized checkpoint
+    /// @dev Import finalized checkpoint
     /// @notice len(headers) == N/2 + 1, headers[0] == finalized_checkpoint
     /// the first group headers that relayer submitted should exactly follow the initial
     /// checkpoint eg. the initial header number is x, the first call of this extrinsic
@@ -198,7 +197,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
         _finalized_authorities.remove(signer0);
 
         // check already have `N/2` valid headers signed by different authority separately
-        for (uint i = 1; i < headers.length; i++) {
+        for (uint i = 1; i < headers.length; ) {
             contextless_checks(headers[i]);
             // check parent
             contextual_checks(headers[i], headers[i-1]);
@@ -207,6 +206,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
             address signerN = _recover_creator(headers[i]);
             require(_finalized_authorities.contains(signerN), "!signerN");
             _finalized_authorities.remove(signerN);
+            unchecked { ++i; }
         }
 
         // clean old finalized_authorities
@@ -235,15 +235,17 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
     // Clean finalized authority set
     function _clean_finalized_authority_set() private {
         address[] memory v = _finalized_authorities.values();
-        for (uint i = 0; i < v.length; i++) {
+        for (uint i = 0; i < v.length; ) {
             _finalized_authorities.remove(v[i]);
+            unchecked { ++i; }
         }
     }
 
     // Save new finalized authority set to storage
     function _finalize_authority_set(address[] memory authorities) private {
-        for (uint i = 0; i < authorities.length; i++) {
+        for (uint i = 0; i < authorities.length; ) {
             _finalized_authorities.add(authorities[i]);
+            unchecked { ++i; }
         }
     }
 
@@ -280,7 +282,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
         // check extra-data contains vanity, validators and signature
         require(header.extra_data.length > VANITY_LENGTH, "!vanity");
 
-        uint validator_bytes_len = _sub(header.extra_data.length, VANITY_LENGTH + SIGNATURE_LENGTH);
+        uint validator_bytes_len = header.extra_data.length - (VANITY_LENGTH + SIGNATURE_LENGTH);
         // ensure extra-data contains a validator list on checkpoint, but none otherwise
         bool is_checkpoint = header.number % EPOCH == 0;
         if (is_checkpoint) {
@@ -302,7 +304,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
 
         // ensure block's timestamp isn't too close to it's parent
         // and header. timestamp is greater than parents'
-        require(header.timestamp >= _add(parent.timestamp, PERIOD), "!timestamp");
+        require(header.timestamp >= parent.timestamp + PERIOD, "!timestamp");
     }
 
     // Recover block creator from signature
@@ -346,7 +348,7 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
         bytes32 r;
         bytes32 s;
         uint8 v;
-        assembly {
+        assembly ("memory-safe") {
             r := mload(add(signature, 0x20))
             s := mload(add(signature, 0x40))
             v := byte(0, mload(add(signature, 0x60)))
@@ -370,22 +372,16 @@ contract BSCLightClient is BinanceSmartChain, ILightClient {
         require(signers_raw.length % ADDRESS_LENGTH == 0, "!signers");
         uint256 num_signers = signers_raw.length / ADDRESS_LENGTH;
         address[] memory signers = new address[](num_signers);
-        for (uint i = 0; i < num_signers; i++) {
+        for (uint i = 0; i < num_signers; ) {
             signers[i] = bytesToAddress(signers_raw.substr(i * ADDRESS_LENGTH, ADDRESS_LENGTH));
+            unchecked { ++i; }
         }
         return signers;
     }
 
     function bytesToAddress(bytes memory bys) internal pure returns (address addr) {
-        assembly {
+        assembly ("memory-safe") {
           addr := mload(add(bys,20))
         }
-    }
-
-    function _add(uint x, uint y) internal pure returns (uint z) {
-        require((z = x + y) >= x);
-    }
-    function _sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x);
     }
 }

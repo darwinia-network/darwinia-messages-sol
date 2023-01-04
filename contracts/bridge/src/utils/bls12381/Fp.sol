@@ -15,8 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 import "../Bytes.sol";
 
@@ -54,8 +53,10 @@ library FP {
     }
 
     function add(Fp memory x, Fp memory y) internal pure returns (Fp memory z) {
-        z.b = x.b + y.b;
-        z.a = x.a + y.a + (z.b >= x.b && x.b >= y.b ? 0 : 1);
+        unchecked {
+            z.b = x.b + y.b;
+            z.a = x.a + y.a + (z.b >= x.b && x.b >= y.b ? 0 : 1);
+        }
     }
 
     function serialize(Fp memory x) internal pure returns (bytes memory) {
@@ -74,10 +75,11 @@ library FP {
         input[7] = q().b;
         uint[2] memory output;
 
-        assembly {
+        assembly ("memory-safe") {
             if iszero(staticcall(sub(gas(), 2000), BIG_MOD_EXP, input, 256, output, 64)) {
-                returndatacopy(0, 0, returndatasize())
-                revert(0, returndatasize())
+                let p := mload(0x40)
+                returndatacopy(p, 0, returndatasize())
+                revert(p, returndatasize())
             }
         }
         return Fp(output[0], output[1]);

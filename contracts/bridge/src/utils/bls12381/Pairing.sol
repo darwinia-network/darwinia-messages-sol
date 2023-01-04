@@ -15,8 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 import "./G1.sol";
 import "./G2.sol";
@@ -60,10 +59,11 @@ library Pairing {
         input[23] = s.y.c1.b;
         uint[1] memory output;
 
-        assembly {
+        assembly ("memory-safe") {
             if iszero(staticcall(161000, PAIRING, input, 768, output, 32)) {
-                returndatacopy(0, 0, returndatasize())
-                revert(0, returndatasize())
+                let pt := mload(0x40)
+                returndatacopy(pt, 0, returndatasize())
+                revert(pt, returndatasize())
             }
         }
 

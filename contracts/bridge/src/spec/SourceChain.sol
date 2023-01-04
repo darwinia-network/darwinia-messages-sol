@@ -15,11 +15,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
+/// @title SourceChain
+/// @notice Source chain specification
 contract SourceChain {
-    /// The MessagePayload is the structure of RPC which should be delivery to target chain
+    /// @notice The MessagePayload is the structure of RPC which should be delivery to target chain
     /// @param source The source contract address which send the message
     /// @param target The targe contract address which receive the message
     /// @param encoded The calldata which encoded by ABI Encoding
@@ -29,41 +30,47 @@ contract SourceChain {
         bytes encoded; /*(abi.encodePacked(SELECTOR, PARAMS))*/
     }
 
-    /// Message key (unique message identifier) as it is stored in the storage.
+    /// @notice Message key (unique message identifier) as it is stored in the storage.
+    /// @param this_chain_pos This chain position
+    /// @param this_lane_pos Position of the message this lane.
+    /// @param bridged_chain_pos Bridged chain position
+    /// @param bridged_lane_pos Position of the message bridged lane.
+    /// @param nonce Nonce of the message.
     struct MessageKey {
-        // This chain position
         uint32 this_chain_pos;
-        // Position of the message this lane.
         uint32 this_lane_pos;
-        // Bridged chain position
         uint32 bridged_chain_pos;
-        // Position of the message bridged lane.
         uint32 bridged_lane_pos;
-        // Nonce of the message.
         uint64 nonce;
     }
 
+    /// @notice Message storage representation
+    /// @param encoded_key Encoded message key
+    /// @param payload_hash Hash of payload
     struct MessageStorage {
         uint256 encoded_key;
         bytes32 payload_hash;
     }
 
-    /// Message as it is stored in the storage.
+    /// @notice Message as it is stored in the storage.
+    /// @param encoded_key Encoded message key.
+    /// @param payload Message payload.
     struct Message {
-        // Encoded message key.
         uint256 encoded_key;
-        // Message payload.
         MessagePayload payload;
     }
 
-    /// Outbound lane data.
+    /// @notice Outbound lane data.
+    /// @param latest_received_nonce Nonce of the latest message, received by bridged chain.
+    /// @param messages Messages sent through this lane.
     struct OutboundLaneData {
-        // Nonce of the latest message, received by bridged chain.
         uint64 latest_received_nonce;
-        // Messages sent through this lane.
         Message[] messages;
     }
 
+    /// @notice Outbound lane data storage representation
+    /// @param latest_received_nonce Nonce of the latest message, received by bridged chain.
+    /// @param messages Messages storage representation
     struct OutboundLaneDataStorage {
         uint64 latest_received_nonce;
         MessageStorage[] messages;
@@ -94,6 +101,7 @@ contract SourceChain {
     /// )
     bytes32 internal constant MESSAGEPAYLOAD_TYPEHASH = 0x582ffe1da2ae6da425fa2c8a2c423012be36b65787f7994d78362f66e4f84101;
 
+    /// @notice Hash of OutboundLaneData
     function hash(OutboundLaneData memory data)
         internal
         pure
@@ -108,6 +116,7 @@ contract SourceChain {
         );
     }
 
+    /// @notice Hash of OutboundLaneDataStorage
     function hash(OutboundLaneDataStorage memory data)
         internal
         pure
@@ -122,6 +131,7 @@ contract SourceChain {
         );
     }
 
+    /// @notice Hash of MessageStorage
     function hash(MessageStorage[] memory msgs)
         internal
         pure
@@ -129,7 +139,7 @@ contract SourceChain {
     {
         uint msgsLength = msgs.length;
         bytes memory encoded = abi.encode(msgsLength);
-        for (uint256 i = 0; i < msgsLength; i ++) {
+        for (uint256 i = 0; i < msgsLength; ) {
             MessageStorage memory message = msgs[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -139,10 +149,12 @@ contract SourceChain {
                     message.payload_hash
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
 
+    /// @notice Hash of Message[]
     function hash(Message[] memory msgs)
         internal
         pure
@@ -150,7 +162,7 @@ contract SourceChain {
     {
         uint msgsLength = msgs.length;
         bytes memory encoded = abi.encode(msgsLength);
-        for (uint256 i = 0; i < msgsLength; i ++) {
+        for (uint256 i = 0; i < msgsLength; ) {
             Message memory message = msgs[i];
             encoded = abi.encodePacked(
                 encoded,
@@ -160,10 +172,12 @@ contract SourceChain {
                     hash(message.payload)
                 )
             );
+            unchecked { ++i; }
         }
         return keccak256(encoded);
     }
 
+    /// @notice Hash of Message
     function hash(Message memory message)
         internal
         pure
@@ -178,6 +192,7 @@ contract SourceChain {
         );
     }
 
+    /// @notice Hash of MessagePayload
     function hash(MessagePayload memory payload)
         internal
         pure
@@ -193,6 +208,9 @@ contract SourceChain {
         );
     }
 
+    /// @notice Decode message key
+    /// @param encoded Encoded message key
+    /// @return key Decoded message key
     function decodeMessageKey(uint256 encoded) internal pure returns (MessageKey memory key) {
         key.this_chain_pos = uint32(encoded >> 160);
         key.this_lane_pos = uint32(encoded >> 128);

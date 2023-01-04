@@ -15,16 +15,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
 import "../test.sol";
 import "../../message/InboundLaneVerifier.sol";
 import "../mock/MockLightClient.sol";
 
 contract InboundLaneVerifierTest is DSTest {
-    uint32 constant internal THIS_CHAIN_POS = 0;
+    uint32 constant internal THIS_CHAIN_POS = 1;
     uint32 constant internal THIS_IN_LANE_POS = 1;
-    uint32 constant internal BRIDGED_CHAIN_POS = 1;
+    uint32 constant internal BRIDGED_CHAIN_POS = 0;
     uint32 constant internal BRIDGED_OUT_LANE_POS = 0;
 
     MockLightClient public lightclient;
@@ -50,6 +50,10 @@ contract InboundLaneVerifierTest is DSTest {
     }
 
     function test_encode_message_key() public {
-        assertEq(verifier.encodeMessageKey(1), uint256(0x0000000000000000000000010000000000000000000000010000000000000001));
+        assertEq(verifier.encodeMessageKey(1), uint256(0x0000000000000000000000000000000000000001000000010000000000000001));
+    }
+
+    function test_lane_id() public {
+        assertEq(verifier.getLaneId(), uint256(0x0000000000000000000000010000000100000000000000000000000000000000));
     }
 }

@@ -15,14 +15,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 contract MockLightClient {
     function verify_messages_proof(
         bytes32,
-        uint32,
-        uint32,
+        uint,
         bytes calldata
     ) external pure returns (bool) {
         return true;
@@ -30,8 +28,7 @@ contract MockLightClient {
 
     function verify_messages_delivery_proof(
         bytes32,
-        uint32,
-        uint32,
+        uint,
         bytes calldata
     ) external pure returns (bool) {
         return true;

@@ -81,6 +81,8 @@ OutboundLane=$(deploy OutboundLane \
   $bridged_chain_pos \
   $bridged_in_lane_pos 1 0 0)
 
+outlaneid=$(seth call $OutboundLane "getLaneId()(uint)")
+
 InboundLane=$(deploy InboundLane \
   $DarwiniaMessageVerifier \
   $this_chain_pos \
@@ -88,8 +90,10 @@ InboundLane=$(deploy InboundLane \
   $bridged_chain_pos \
   $bridged_out_lane_pos 0 0)
 
+inlaneid=$(seth call $InboundLane "getLaneId()(uint)")
+
 seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1 --chain goerli
 
 EthereumStorageVerifier=$(jq -r ".[\"$NETWORK_NAME\"].EthereumStorageVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
-(set -x; seth send -F $ETH_FROM $EthereumStorageVerifier "registry(uint32,uint32,address,uint32,address)" \
-  $bridged_chain_pos $this_out_lane_pos $OutboundLane $this_in_lane_pos $InboundLane --rpc-url https://pangoro-rpc.darwinia.network)
+(set -x; seth send -F $ETH_FROM $EthereumStorageVerifier "registry(uint,address,uint,address)" \
+  $outlaneid $OutboundLane $inlaneid $InboundLane --rpc-url https://pangoro-rpc.darwinia.network)

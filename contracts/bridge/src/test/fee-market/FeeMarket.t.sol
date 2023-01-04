@@ -15,16 +15,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 import "../test.sol";
+import "../hevm.sol";
 import "../../interfaces/IFeeMarket.sol";
 import "../../fee-market/FeeMarket.sol";
-
-interface Hevm {
-    function warp(uint) external;
-}
 
 contract FeeMarketTest is DSTest {
     uint256 constant internal COLLATERAL_PERORDER = 1 ether;

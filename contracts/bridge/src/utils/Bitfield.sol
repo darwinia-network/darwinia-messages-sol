@@ -2,7 +2,7 @@
 //
 // Inspired: https://github.com/Snowfork/snowbridge/blob/main/core/packages/contracts/contracts/utils/Bitfield.sol
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.17;
 
 import "./Bits.sol";
 
@@ -50,17 +50,19 @@ contract Bitfield {
             "invalid length"
         );
 
-        uint256 prime = BIG_PRIME[seed%20];
-        uint256 begin = seed % 256;
-        uint256 found = 0;
+        unchecked {
+            uint256 prime = BIG_PRIME[seed%20];
+            uint256 begin = seed % 256;
+            uint256 found = 0;
 
-        for (uint256 i = 0; found < n; ++i) {
-            uint8 index = uint8((prime * (begin + i)) % length);
+            for (uint256 i = 0; found < n; ++i) {
+                uint8 index = uint8((prime * (begin + i)) % length);
 
-            // require randomly seclected bit to be set in prior
-            if ((prior >> index) & 1 == 1) {
-                bitfield = set(bitfield, index);
-                found++;
+                // require randomly seclected bit to be set in prior
+                if ((prior >> index) & 1 == 1) {
+                    bitfield = set(bitfield, index);
+                    found++;
+                }
             }
         }
 
@@ -73,8 +75,9 @@ contract Bitfield {
         returns (uint256 bitfield)
     {
         uint256 length = bitsToSet.length;
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length; ) {
             bitfield = set(bitfield, bitsToSet[i]);
+            unchecked { ++i; }
         }
 
         return bitfield;
@@ -84,14 +87,16 @@ contract Bitfield {
     /// The alogrithm below is implemented after https://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation.
     /// Further improvements are possible, see the article above.
     function countSetBits(uint256 x) internal pure returns (uint256) {
-        x = (x & M1) + ((x >> 1) & M1); //put count of each  2 bits into those  2 bits
-        x = (x & M2) + ((x >> 2) & M2); //put count of each  4 bits into those  4 bits
-        x = (x & M4) + ((x >> 4) & M4); //put count of each  8 bits into those  8 bits
-        x = (x & M8) + ((x >> 8) & M8); //put count of each 16 bits into those 16 bits
-        x = (x & M16) + ((x >> 16) & M16); //put count of each 32 bits into those 32 bits
-        x = (x & M32) + ((x >> 32) & M32); //put count of each 64 bits into those 64 bits
-        x = (x & M64) + ((x >> 64) & M64); //put count of each 128 bits into those 128 bits
-        x = (x & M128) + ((x >> 128) & M128); //put count of each 256 bits into those 256 bits
+        unchecked {
+            x = (x & M1) + ((x >> 1) & M1); //put count of each  2 bits into those  2 bits
+            x = (x & M2) + ((x >> 2) & M2); //put count of each  4 bits into those  4 bits
+            x = (x & M4) + ((x >> 4) & M4); //put count of each  8 bits into those  8 bits
+            x = (x & M8) + ((x >> 8) & M8); //put count of each 16 bits into those 16 bits
+            x = (x & M16) + ((x >> 16) & M16); //put count of each 32 bits into those 32 bits
+            x = (x & M32) + ((x >> 32) & M32); //put count of each 64 bits into those 64 bits
+            x = (x & M64) + ((x >> 64) & M64); //put count of each 128 bits into those 128 bits
+            x = (x & M128) + ((x >> 128) & M128); //put count of each 256 bits into those 256 bits
+        }
         return x;
     }
 

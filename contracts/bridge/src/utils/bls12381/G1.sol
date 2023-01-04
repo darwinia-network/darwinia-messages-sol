@@ -15,8 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 import "./Fp.sol";
 import "../Bytes.sol";
@@ -72,10 +71,11 @@ library G1 {
         input[7] = q.y.b;
         uint[4] memory output;
 
-        assembly {
+        assembly ("memory-safe") {
             if iszero(staticcall(600, G1_ADD, input, 256, output, 128)) {
-                 returndatacopy(0, 0, returndatasize())
-                 revert(0, returndatasize())
+                let pt := mload(0x40)
+                returndatacopy(pt, 0, returndatasize())
+                revert(pt, returndatasize())
             }
         }
 
@@ -91,10 +91,11 @@ library G1 {
         input[4] = scalar;
         uint[4] memory output;
 
-        assembly {
+        assembly ("memory-safe") {
             if iszero(staticcall(12000, G1_MUL, input, 160, output, 128)) {
-                returndatacopy(0, 0, returndatasize())
-                revert(0, returndatasize())
+                let pt := mload(0x40)
+                returndatacopy(pt, 0, returndatasize())
+                revert(pt, returndatasize())
             }
         }
 
@@ -107,10 +108,11 @@ library G1 {
         input[1] = f.b;
         uint[4] memory output;
 
-        assembly {
+        assembly ("memory-safe") {
             if iszero(staticcall(5500, MAP_FP_TO_G1, input, 64, output, 128)) {
-                returndatacopy(0, 0, returndatasize())
-                revert(0, returndatasize())
+                let p := mload(0x40)
+                returndatacopy(p, 0, returndatasize())
+                revert(p, returndatasize())
             }
         }
 

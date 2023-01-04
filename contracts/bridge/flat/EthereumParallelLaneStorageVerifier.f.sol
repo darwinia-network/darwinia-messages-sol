@@ -1,7 +1,6 @@
 // hevm: flattened sources of src/truth/eth/EthereumParallelLaneStorageVerifier.sol
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.7.6;
-pragma abicoder v2;
+pragma solidity =0.8.17;
 
 ////// src/interfaces/ILightClient.sol
 // This file is part of Darwinia.
@@ -20,10 +19,16 @@ pragma abicoder v2;
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
+/// @title ILane
+/// @notice A interface for light client
 interface ILightClient {
+    /// @notice Return the merkle root of light client
+    /// @return merkle root
     function merkle_root() external view returns (bytes32);
+    /// @notice Return the block number of light client
+    /// @return block number
     function block_number() external view returns (uint256);
 }
 
@@ -44,13 +49,157 @@ interface ILightClient {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
+/// @notice Chain message position
 enum ChainMessagePosition {
     Darwinia,
     ETH,
     BSC
+}
+
+////// src/utils/Memory.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.8.17; */
+
+library Memory {
+
+    uint internal constant WORD_SIZE = 32;
+
+    // Compares the 'len' bytes starting at address 'addr' in memory with the 'len'
+    // bytes starting at 'addr2'.
+    // Returns 'true' if the bytes are the same, otherwise 'false'.
+    function equals(uint addr, uint addr2, uint len) internal pure returns (bool equal) {
+        assembly {
+            equal := eq(keccak256(addr, len), keccak256(addr2, len))
+        }
+    }
+
+    // Compares the 'len' bytes starting at address 'addr' in memory with the bytes stored in
+    // 'bts'. It is allowed to set 'len' to a lower value then 'bts.length', in which case only
+    // the first 'len' bytes will be compared.
+    // Requires that 'bts.length >= len'
+    function equals(uint addr, uint len, bytes memory bts) internal pure returns (bool equal) {
+        require(bts.length >= len);
+        uint addr2;
+        assembly {
+            addr2 := add(bts, /*BYTES_HEADER_SIZE*/32)
+        }
+        return equals(addr, addr2, len);
+    }
+
+    // Returns a memory pointer to the data portion of the provided bytes array.
+    function dataPtr(bytes memory bts) internal pure returns (uint addr) {
+        assembly {
+            addr := add(bts, /*BYTES_HEADER_SIZE*/32)
+        }
+    }
+
+    // Creates a 'bytes memory' variable from the memory address 'addr', with the
+    // length 'len'. The function will allocate new memory for the bytes array, and
+    // the 'len bytes starting at 'addr' will be copied into that new memory.
+    function toBytes(uint addr, uint len) internal pure returns (bytes memory bts) {
+        bts = new bytes(len);
+        uint btsptr;
+        assembly {
+            btsptr := add(bts, /*BYTES_HEADER_SIZE*/32)
+        }
+        copy(addr, btsptr, len);
+    }
+
+    // Copies 'self' into a new 'bytes memory'.
+    // Returns the newly created 'bytes memory'
+    // The returned bytes will be of length '32'.
+    function toBytes(bytes32 self) internal pure returns (bytes memory bts) {
+        bts = new bytes(32);
+        assembly {
+            mstore(add(bts, /*BYTES_HEADER_SIZE*/32), self)
+        }
+    }
+
+    // Allocates 'numBytes' bytes in memory. This will prevent the Solidity compiler
+    // from using this area of memory. It will also initialize the area by setting
+    // each byte to '0'.
+    function allocate(uint numBytes) internal pure returns (uint addr) {
+        // Take the current value of the free memory pointer, and update.
+        assembly ("memory-safe") {
+            addr := mload(/*FREE_MEM_PTR*/0x40)
+            mstore(/*FREE_MEM_PTR*/0x40, add(addr, numBytes))
+        }
+        uint words = (numBytes + WORD_SIZE - 1) / WORD_SIZE;
+        for (uint i = 0; i < words; i++) {
+            assembly ("memory-safe") {
+                mstore(add(addr, mul(i, /*WORD_SIZE*/32)), 0)
+            }
+        }
+    }
+
+    // Copy 'len' bytes from memory address 'src', to address 'dest'.
+    // This function does not check the or destination, it only copies
+    // the bytes.
+    function copy(uint src, uint dest, uint len) internal pure {
+        // Mostly based on Solidity's copy_memory_to_memory:
+        // https://github.com/ethereum/solidity/blob/34dd30d71b4da730488be72ff6af7083cf2a91f6/libsolidity/codegen/YulUtilFunctions.cpp#L102-L114
+        assembly {
+            let i := 0
+            for {
+
+            } lt(i, len) {
+                i := add(i, 32)
+            } {
+                mstore(add(dest, i), mload(add(src, i)))
+            }
+
+            if gt(i, len) {
+                mstore(add(dest, len), 0)
+            }
+        }
+    }
+
+    // Returns a memory pointer to the provided bytes array.
+    function ptr(bytes memory bts) internal pure returns (uint addr) {
+        assembly ("memory-safe") {
+            addr := bts
+        }
+    }
+
+    // This function does the same as 'dataPtr(bytes memory)', but will also return the
+    // length of the provided bytes array.
+    function fromBytes(bytes memory bts) internal pure returns (uint addr, uint len) {
+        len = bts.length;
+        assembly {
+            addr := add(bts, /*BYTES_HEADER_SIZE*/32)
+        }
+    }
+
+    // Get the word stored at memory address 'addr' as a 'uint'.
+    function toUint(uint addr) internal pure returns (uint n) {
+        assembly {
+            n := mload(addr)
+        }
+    }
+
+    // Get the word stored at memory address 'addr' as a 'bytes32'.
+    function toBytes32(uint addr) internal pure returns (bytes32 bts) {
+        assembly {
+            bts := mload(addr)
+        }
+    }
 }
 
 ////// src/utils/rlp/RLPDecode.sol
@@ -70,49 +219,66 @@ enum ChainMessagePosition {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
+
+/* import "../Memory.sol"; */
 
 /**
- * @title RLDecode
- * @dev Adapted from "RLPDecode" by Hamdi Allam (hamdi.allam97@gmail.com).
+ * @custom:attribution https://github.com/hamdiallam/Solidity-RLP
+ * @title RLPReader
+ * @notice RLPReader is a library for parsing RLP-encoded byte arrays into Solidity types. Adapted
+ *         from Solidity-RLP (https://github.com/hamdiallam/Solidity-RLP) by Hamdi Allam with
+ *         various tweaks to improve readability.
  */
 library RLPDecode {
-    /*************
-     * Constants *
-     *************/
+    /**
+     * Custom pointer type to avoid confusion between pointers and uint256s.
+     */
+    type MemoryPointer is uint256;
 
-    uint256 internal constant MAX_LIST_LENGTH = 32;
-
-    /*********
-     * Enums *
-     *********/
-
+    /**
+     * @notice RLP item types.
+     *
+     * @custom:value DATA_ITEM Represents an RLP data item (NOT a list).
+     * @custom:value LIST_ITEM Represents an RLP list item.
+     */
     enum RLPItemType {
         DATA_ITEM,
         LIST_ITEM
     }
 
-    /***********
-     * Structs *
-     ***********/
-
+    /**
+     * @notice Struct representing an RLP item.
+     *
+     * @custom:field length Length of the RLP item.
+     * @custom:field ptr    Pointer to the RLP item in memory.
+     */
     struct RLPItem {
         uint256 length;
-        uint256 ptr;
+        MemoryPointer ptr;
     }
 
-    /**********************
-     * Internal Functions *
-     **********************/
+    /**
+     * @notice Max list length that this library will accept.
+     */
+    uint256 internal constant MAX_LIST_LENGTH = 32;
 
     /**
-     * Converts bytes to a reference to memory position and length.
+     * @notice Converts bytes to a reference to memory position and length.
+     *
      * @param _in Input bytes to convert.
+     *
      * @return Output memory reference.
      */
     function toRLPItem(bytes memory _in) internal pure returns (RLPItem memory) {
-        uint256 ptr;
-        assembly {
+        // Empty arrays are not RLP items.
+        require(
+            _in.length > 0,
+            "RLPReader: length of an RLP item must be greater than zero to be decodable"
+        );
+
+        MemoryPointer ptr;
+        assembly ("memory-safe") {
             ptr := add(_in, 32)
         }
 
@@ -120,14 +286,24 @@ library RLPDecode {
     }
 
     /**
-     * Reads an RLP list value into a list of RLP items.
+     * @notice Reads an RLP list value into a list of RLP items.
+     *
      * @param _in RLP list value.
+     *
      * @return Decoded RLP list items.
      */
     function readList(RLPItem memory _in) internal pure returns (RLPItem[] memory) {
-        (uint256 listOffset, , RLPItemType itemType) = _decodeLength(_in);
+        (uint256 listOffset, uint256 listLength, RLPItemType itemType) = _decodeLength(_in);
 
-        require(itemType == RLPItemType.LIST_ITEM, "Invalid RLP list value.");
+        require(
+            itemType == RLPItemType.LIST_ITEM,
+            "RLPReader: decoded item type for list is not a list item"
+        );
+
+        require(
+            listOffset + listLength == _in.length,
+            "RLPReader: list item has an invalid data remainder"
+        );
 
         // Solidity in-memory arrays can't be increased in size, but *can* be decreased in size by
         // writing to the length. Since we can't know the number of RLP items without looping over
@@ -138,20 +314,26 @@ library RLPDecode {
         uint256 itemCount = 0;
         uint256 offset = listOffset;
         while (offset < _in.length) {
-            require(itemCount < MAX_LIST_LENGTH, "Provided RLP list exceeds max list length.");
-
             (uint256 itemOffset, uint256 itemLength, ) = _decodeLength(
-                RLPItem({ length: _in.length - offset, ptr: _in.ptr + offset })
+                RLPItem({
+                    length: _in.length - offset,
+                    ptr: MemoryPointer.wrap(MemoryPointer.unwrap(_in.ptr) + offset)
+                })
             );
 
-            out[itemCount] = RLPItem({ length: itemLength + itemOffset, ptr: _in.ptr + offset });
+            // We don't need to check itemCount < out.length explicitly because Solidity already
+            // handles this check on our behalf, we'd just be wasting gas.
+            out[itemCount] = RLPItem({
+                length: itemLength + itemOffset,
+                ptr: MemoryPointer.wrap(MemoryPointer.unwrap(_in.ptr) + offset)
+            });
 
             itemCount += 1;
             offset += itemOffset + itemLength;
         }
 
         // Decrease the array size to match the actual item count.
-        assembly {
+        assembly ("memory-safe") {
             mstore(out, itemCount)
         }
 
@@ -159,8 +341,10 @@ library RLPDecode {
     }
 
     /**
-     * Reads an RLP list value into a list of RLP items.
+     * @notice Reads an RLP list value into a list of RLP items.
+     *
      * @param _in RLP list value.
+     *
      * @return Decoded RLP list items.
      */
     function readList(bytes memory _in) internal pure returns (RLPItem[] memory) {
@@ -168,25 +352,48 @@ library RLPDecode {
     }
 
     /**
-     * Reads an RLP bytes value into bytes.
+     * @notice Reads an RLP bytes value into bytes.
+     *
      * @param _in RLP bytes value.
+     *
      * @return Decoded bytes.
      */
     function readBytes(RLPItem memory _in) internal pure returns (bytes memory) {
         (uint256 itemOffset, uint256 itemLength, RLPItemType itemType) = _decodeLength(_in);
 
-        require(itemType == RLPItemType.DATA_ITEM, "Invalid RLP bytes value.");
+        require(
+            itemType == RLPItemType.DATA_ITEM,
+            "RLPReader: decoded item type for bytes is not a data item"
+        );
+
+        require(
+            _in.length == itemOffset + itemLength,
+            "RLPReader: bytes value contains an invalid remainder"
+        );
 
         return _copy(_in.ptr, itemOffset, itemLength);
     }
 
     /**
-     * Reads an RLP bytes value into bytes.
+     * @notice Reads an RLP bytes value into bytes.
+     *
      * @param _in RLP bytes value.
+     *
      * @return Decoded bytes.
      */
     function readBytes(bytes memory _in) internal pure returns (bytes memory) {
         return readBytes(toRLPItem(_in));
+    }
+
+    /**
+     * @notice Reads the raw bytes of an RLP item.
+     *
+     * @param _in RLP item to read.
+     *
+     * @return Raw RLP bytes.
+     */
+    function readRawBytes(RLPItem memory _in) internal pure returns (bytes memory) {
+        return _copy(_in.ptr, 0, _in.length);
     }
 
     /**
@@ -219,9 +426,9 @@ library RLPDecode {
 
         require(itemType == RLPItemType.DATA_ITEM, "Invalid RLP bytes32 value.");
 
-        uint256 ptr = _in.ptr + itemOffset;
+        uint256 ptr = MemoryPointer.unwrap(_in.ptr) + itemOffset;
         bytes32 out;
-        assembly {
+        assembly ("memory-safe") {
             out := mload(ptr)
 
             // Shift the bytes over to match the item size.
@@ -261,73 +468,10 @@ library RLPDecode {
     }
 
     /**
-     * Reads an RLP bool value into a bool.
-     * @param _in RLP bool value.
-     * @return Decoded bool.
-     */
-    function readBool(RLPItem memory _in) internal pure returns (bool) {
-        require(_in.length == 1, "Invalid RLP boolean value.");
-
-        uint256 ptr = _in.ptr;
-        uint256 out;
-        assembly {
-            out := byte(0, mload(ptr))
-        }
-
-        require(out == 0 || out == 1, "RLPDecode: Invalid RLP boolean value, must be 0 or 1");
-
-        return out != 0;
-    }
-
-    /**
-     * Reads an RLP bool value into a bool.
-     * @param _in RLP bool value.
-     * @return Decoded bool.
-     */
-    function readBool(bytes memory _in) internal pure returns (bool) {
-        return readBool(toRLPItem(_in));
-    }
-
-    /**
-     * Reads an RLP address value into a address.
-     * @param _in RLP address value.
-     * @return Decoded address.
-     */
-    function readAddress(RLPItem memory _in) internal pure returns (address) {
-        if (_in.length == 1) {
-            return address(0);
-        }
-
-        require(_in.length == 21, "Invalid RLP address value.");
-
-        return address(uint160(readUint256(_in)));
-    }
-
-    /**
-     * Reads an RLP address value into a address.
-     * @param _in RLP address value.
-     * @return Decoded address.
-     */
-    function readAddress(bytes memory _in) internal pure returns (address) {
-        return readAddress(toRLPItem(_in));
-    }
-
-    /**
-     * Reads the raw bytes of an RLP item.
-     * @param _in RLP item to read.
-     * @return Raw RLP bytes.
-     */
-    function readRawBytes(RLPItem memory _in) internal pure returns (bytes memory) {
-        return _copy(_in);
-    }
-
-    /*********************
-     * Private Functions *
-     *********************/
-
-    /**
-     * Decodes the length of an RLP item.
+     * @notice Decodes the length of an RLP item.
+     *
      * @param _in RLP item to decode.
+     *
      * @return Offset of the encoded data.
      * @return Length of the encoded data.
      * @return RLP item type (LIST_ITEM or DATA_ITEM).
@@ -341,17 +485,22 @@ library RLPDecode {
             RLPItemType
         )
     {
-        require(_in.length > 0, "RLP item cannot be null.");
+        // Short-circuit if there's nothing to decode, note that we perform this check when
+        // the user creates an RLP item via toRLPItem, but it's always possible for them to bypass
+        // that function and create an RLP item directly. So we need to check this anyway.
+        require(
+            _in.length > 0,
+            "RLPReader: length of an RLP item must be greater than zero to be decodable"
+        );
 
-        uint256 ptr = _in.ptr;
+        MemoryPointer ptr = _in.ptr;
         uint256 prefix;
-        assembly {
+        assembly ("memory-safe") {
             prefix := byte(0, mload(ptr))
         }
 
         if (prefix <= 0x7f) {
             // Single byte.
-
             return (0, 1, RLPItemType.DATA_ITEM);
         } else if (prefix <= 0xb7) {
             // Short string.
@@ -359,22 +508,55 @@ library RLPDecode {
             // slither-disable-next-line variable-scope
             uint256 strLen = prefix - 0x80;
 
-            require(_in.length > strLen, "Invalid RLP short string.");
+            require(
+                _in.length > strLen,
+                "RLPReader: length of content must be greater than string length (short string)"
+            );
+
+            bytes1 firstByteOfContent;
+            assembly ("memory-safe") {
+                firstByteOfContent := and(mload(add(ptr, 1)), shl(248, 0xff))
+            }
+
+            require(
+                strLen != 1 || firstByteOfContent >= 0x80,
+                "RLPReader: invalid prefix, single byte < 0x80 are not prefixed (short string)"
+            );
 
             return (1, strLen, RLPItemType.DATA_ITEM);
         } else if (prefix <= 0xbf) {
             // Long string.
             uint256 lenOfStrLen = prefix - 0xb7;
 
-            require(_in.length > lenOfStrLen, "Invalid RLP long string length.");
+            require(
+                _in.length > lenOfStrLen,
+                "RLPReader: length of content must be > than length of string length (long string)"
+            );
 
-            uint256 strLen;
-            assembly {
-                // Pick out the string length.
-                strLen := div(mload(add(ptr, 1)), exp(256, sub(32, lenOfStrLen)))
+            bytes1 firstByteOfContent;
+            assembly ("memory-safe") {
+                firstByteOfContent := and(mload(add(ptr, 1)), shl(248, 0xff))
             }
 
-            require(_in.length > lenOfStrLen + strLen, "Invalid RLP long string.");
+            require(
+                firstByteOfContent != 0x00,
+                "RLPReader: length of content must not have any leading zeros (long string)"
+            );
+
+            uint256 strLen;
+            assembly ("memory-safe") {
+                strLen := shr(sub(256, mul(8, lenOfStrLen)), mload(add(ptr, 1)))
+            }
+
+            require(
+                strLen > 55,
+                "RLPReader: length of content must be greater than 55 bytes (long string)"
+            );
+
+            require(
+                _in.length > lenOfStrLen + strLen,
+                "RLPReader: length of content must be greater than total length (long string)"
+            );
 
             return (1 + lenOfStrLen, strLen, RLPItemType.DATA_ITEM);
         } else if (prefix <= 0xf7) {
@@ -382,76 +564,75 @@ library RLPDecode {
             // slither-disable-next-line variable-scope
             uint256 listLen = prefix - 0xc0;
 
-            require(_in.length > listLen, "Invalid RLP short list.");
+            require(
+                _in.length > listLen,
+                "RLPReader: length of content must be greater than list length (short list)"
+            );
 
             return (1, listLen, RLPItemType.LIST_ITEM);
         } else {
             // Long list.
             uint256 lenOfListLen = prefix - 0xf7;
 
-            require(_in.length > lenOfListLen, "Invalid RLP long list length.");
+            require(
+                _in.length > lenOfListLen,
+                "RLPReader: length of content must be > than length of list length (long list)"
+            );
 
-            uint256 listLen;
-            assembly {
-                // Pick out the list length.
-                listLen := div(mload(add(ptr, 1)), exp(256, sub(32, lenOfListLen)))
+            bytes1 firstByteOfContent;
+            assembly ("memory-safe") {
+                firstByteOfContent := and(mload(add(ptr, 1)), shl(248, 0xff))
             }
 
-            require(_in.length > lenOfListLen + listLen, "Invalid RLP long list.");
+            require(
+                firstByteOfContent != 0x00,
+                "RLPReader: length of content must not have any leading zeros (long list)"
+            );
+
+            uint256 listLen;
+            assembly ("memory-safe") {
+                listLen := shr(sub(256, mul(8, lenOfListLen)), mload(add(ptr, 1)))
+            }
+
+            require(
+                listLen > 55,
+                "RLPReader: length of content must be greater than 55 bytes (long list)"
+            );
+
+            require(
+                _in.length > lenOfListLen + listLen,
+                "RLPReader: length of content must be greater than total length (long list)"
+            );
 
             return (1 + lenOfListLen, listLen, RLPItemType.LIST_ITEM);
         }
     }
 
     /**
-     * Copies the bytes from a memory location.
-     * @param _src Pointer to the location to read from.
+     * @notice Copies the bytes from a memory location.
+     *
+     * @param _src    Pointer to the location to read from.
      * @param _offset Offset to start reading from.
      * @param _length Number of bytes to read.
+     *
      * @return Copied bytes.
      */
     function _copy(
-        uint256 _src,
+        MemoryPointer _src,
         uint256 _offset,
         uint256 _length
     ) private pure returns (bytes memory) {
         bytes memory out = new bytes(_length);
-        if (out.length == 0) {
+        if (_length == 0) {
             return out;
         }
 
-        uint256 src = _src + _offset;
-        uint256 dest;
-        assembly {
-            dest := add(out, 32)
-        }
+        uint256 src = MemoryPointer.unwrap(_src) + _offset;
+        uint256 desc;
+        (desc,) = Memory.fromBytes(out);
+        Memory.copy(src, desc, _length);
 
-        // Copy over as many complete words as we can.
-        for (uint256 i = 0; i < _length / 32; i++) {
-            assembly {
-                mstore(dest, mload(src))
-            }
-
-            src += 32;
-            dest += 32;
-        }
-
-        // Pick out the remaining bytes.
-        uint256 mask = 256**(32 - (_length % 32)) - 1;
-
-        assembly {
-            mstore(dest, or(and(mload(src), not(mask)), and(mload(dest), mask)))
-        }
         return out;
-    }
-
-    /**
-     * Copies an RLP item into bytes.
-     * @param _in RLP item to copy.
-     * @return Copied bytes.
-     */
-    function _copy(RLPItem memory _in) private pure returns (bytes memory) {
-        return _copy(_in.ptr, 0, _in.length);
     }
 }
 
@@ -472,13 +653,20 @@ library RLPDecode {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "../utils/rlp/RLPDecode.sol"; */
 
+/// @title State
+/// @notice State specification
 library State {
     using RLPDecode for RLPDecode.RLPItem;
 
+    /// @notice EVMAccount state object
+    /// @param nonce Nonce of account
+    /// @param balance balance of account
+    /// @param storage_root Storage root of account
+    /// @param code_hash Code hash of account
     struct EVMAccount {
         uint256 nonce;
         uint256 balance;
@@ -486,6 +674,9 @@ library State {
         bytes32 code_hash;
     }
 
+    /// @notice Convert data input to EVMAccount
+    /// @param data RLP data of EVMAccount
+    /// @return EVMAccount object
     function toEVMAccount(bytes memory data) internal pure returns (EVMAccount memory) {
         RLPDecode.RLPItem[] memory account = RLPDecode.readList(data);
 
@@ -499,7 +690,7 @@ library State {
     }
 }
 
-////// src/utils/BytesUtils.sol
+////// src/utils/Bytes.sol
 // This file is part of Darwinia.
 // Copyright (C) 2018-2022 Darwinia Network
 //
@@ -516,131 +707,157 @@ library State {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
-/**
- * @title BytesUtils
- */
-library BytesUtils {
-    /**********************
-     * Internal Functions *
-     **********************/
+/* import {Memory} from "./Memory.sol"; */
 
-    function slice(
-        bytes memory _bytes,
-        uint256 _start,
-        uint256 _length
+library Bytes {
+    uint256 private constant BYTES_HEADER_SIZE = 32;
+
+    // Checks if two `bytes memory` variables are equal. This is done using hashing,
+    // which is much more gas efficient then comparing each byte individually.
+    // Equality means that:
+    //  - 'self.length == other.length'
+    //  - For 'n' in '[0, self.length)', 'self[n] == other[n]'
+    function equals(bytes memory self, bytes memory other) internal pure returns (bool equal) {
+        if (self.length != other.length) {
+            return false;
+        }
+        uint addr;
+        uint addr2;
+        assembly ("memory-safe") {
+            addr := add(self, /*BYTES_HEADER_SIZE*/32)
+            addr2 := add(other, /*BYTES_HEADER_SIZE*/32)
+        }
+        equal = Memory.equals(addr, addr2, self.length);
+    }
+
+    // Copies a section of 'self' into a new array, starting at the provided 'startIndex'.
+    // Returns the new copy.
+    // Requires that 'startIndex <= self.length'
+    // The length of the substring is: 'self.length - startIndex'
+    function substr(bytes memory self, uint256 startIndex)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        require(startIndex <= self.length);
+        uint256 len = self.length - startIndex;
+        uint256 addr = Memory.dataPtr(self);
+        return Memory.toBytes(addr + startIndex, len);
+    }
+
+    // Copies 'len' bytes from 'self' into a new array, starting at the provided 'startIndex'.
+    // Returns the new copy.
+    // Requires that:
+    //  - 'startIndex + len <= self.length'
+    // The length of the substring is: 'len'
+    function substr(
+        bytes memory self,
+        uint256 startIndex,
+        uint256 len
     ) internal pure returns (bytes memory) {
-        require(_length + 31 >= _length, "slice_overflow");
-        require(_start + _length >= _start, "slice_overflow");
-        require(_bytes.length >= _start + _length, "slice_outOfBounds");
+        require(startIndex + len <= self.length);
+        if (len == 0) {
+            return new bytes(0);
+        }
+        uint256 addr = Memory.dataPtr(self);
+        return Memory.toBytes(addr + startIndex, len);
+    }
 
-        bytes memory tempBytes;
+    // Combines 'self' and 'other' into a single array.
+    // Returns the concatenated arrays:
+    //  [self[0], self[1], ... , self[self.length - 1], other[0], other[1], ... , other[other.length - 1]]
+    // The length of the new array is 'self.length + other.length'
+    function concat(bytes memory self, bytes memory other)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        bytes memory ret = new bytes(self.length + other.length);
+        uint256 src;
+        uint256 srcLen;
+        (src, srcLen) = Memory.fromBytes(self);
+        uint256 src2;
+        uint256 src2Len;
+        (src2, src2Len) = Memory.fromBytes(other);
+        uint256 dest;
+        (dest, ) = Memory.fromBytes(ret);
+        uint256 dest2 = dest + srcLen;
+        Memory.copy(src, dest, srcLen);
+        Memory.copy(src2, dest2, src2Len);
+        return ret;
+    }
 
-        assembly {
-            switch iszero(_length)
-            case 0 {
-                // Get a location of some free memory and store it in tempBytes as
-                // Solidity does for memory variables.
-                tempBytes := mload(0x40)
+    function slice_to_uint(bytes memory self, uint start, uint end) internal pure returns (uint r) {
+        uint len = end - start;
+        require(0 <= len && len <= 32, "!slice");
 
-                // The first word of the slice result is potentially a partial
-                // word read from the original array. To read it, we calculate
-                // the length of that partial word and start copying that many
-                // bytes into the array. The first word we copy will start with
-                // data we don't care about, but the last `lengthmod` bytes will
-                // land at the beginning of the contents of the new array. When
-                // we're done copying, we overwrite the full first word with
-                // the actual length of the slice.
-                let lengthmod := and(_length, 31)
-
-                // The multiplication in the next line is necessary
-                // because when slicing multiples of 32 bytes (lengthmod == 0)
-                // the following copy loop was copying the origin's length
-                // and then ending prematurely not copying everything it should.
-                let mc := add(add(tempBytes, lengthmod), mul(0x20, iszero(lengthmod)))
-                let end := add(mc, _length)
-
-                for {
-                    // The multiplication in the next line has the same exact purpose
-                    // as the one above.
-                    let cc := add(add(add(_bytes, lengthmod), mul(0x20, iszero(lengthmod))), _start)
-                } lt(mc, end) {
-                    mc := add(mc, 0x20)
-                    cc := add(cc, 0x20)
-                } {
-                    mstore(mc, mload(cc))
-                }
-
-                mstore(tempBytes, _length)
-
-                //update free-memory pointer
-                //allocating the array padded to 32 bytes like the compiler does now
-                mstore(0x40, and(add(mc, 31), not(31)))
-            }
-            //if we want a zero-length slice let's just return a zero-length array
-            default {
-                tempBytes := mload(0x40)
-
-                //zero out the 32 bytes slice we are about to return
-                //we need to do it because Solidity does not garbage collect
-                mstore(tempBytes, 0)
-
-                mstore(0x40, add(tempBytes, 0x20))
-            }
+        assembly ("memory-safe") {
+            r := mload(add(add(self, 0x20), start))
         }
 
-        return tempBytes;
+        return r >> (256 - len * 8);
     }
 
-    function slice(bytes memory _bytes, uint256 _start) internal pure returns (bytes memory) {
-        if (_start >= _bytes.length) {
-            return bytes("");
-        }
-
-        return slice(_bytes, _start, _bytes.length - _start);
+    /// alias of substr
+    function slice(
+        bytes memory self,
+        uint256 startIndex,
+        uint256 len
+    ) internal pure returns (bytes memory) {
+        return substr(self, startIndex, len);
     }
 
-    function toBytes32(bytes memory _bytes) internal pure returns (bytes32) {
-        if (_bytes.length < 32) {
-            bytes32 ret;
-            assembly {
-                ret := mload(add(_bytes, 32))
-            }
-            return ret;
-        }
-
-        return abi.decode(_bytes, (bytes32)); // will truncate if input length > 32 bytes
+    /// alias of substr
+    function slice(bytes memory self, uint256 startIndex) internal pure returns (bytes memory) {
+        return substr(self, startIndex);
     }
+}
 
-    function toUint256(bytes memory _bytes) internal pure returns (uint256) {
-        return uint256(toBytes32(_bytes));
-    }
+////// src/utils/trie/Nibble.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+/* pragma solidity 0.8.17; */
+
+library Nibble {
+    /// @notice Converts a byte array into a nibble array by splitting each byte into two nibbles.
+    ///         Resulting nibble array will be exactly twice as long as the input byte array.
+    //
+    /// @param _bytes Input byte array to convert.
+    //
+    /// @return Resulting nibble array.
     function toNibbles(bytes memory _bytes) internal pure returns (bytes memory) {
-        bytes memory nibbles = new bytes(_bytes.length * 2);
+        uint256 bytesLength = _bytes.length;
+        bytes memory nibbles = new bytes(bytesLength * 2);
+        bytes1 b;
 
-        for (uint256 i = 0; i < _bytes.length; i++) {
-            nibbles[i * 2] = _bytes[i] >> 4;
-            nibbles[i * 2 + 1] = bytes1(uint8(_bytes[i]) % 16);
+        for (uint256 i = 0; i < bytesLength; ) {
+            b = _bytes[i];
+            nibbles[i * 2] = b >> 4;
+            nibbles[i * 2 + 1] = b & 0x0f;
+            unchecked {
+                ++i;
+            }
         }
 
         return nibbles;
     }
 
-    function fromNibbles(bytes memory _bytes) internal pure returns (bytes memory) {
-        bytes memory ret = new bytes(_bytes.length / 2);
-
-        for (uint256 i = 0; i < ret.length; i++) {
-            ret[i] = (_bytes[i * 2] << 4) | (_bytes[i * 2 + 1]);
-        }
-
-        return ret;
-    }
-
-    function equal(bytes memory _bytes, bytes memory _other) internal pure returns (bool) {
-        return keccak256(_bytes) == keccak256(_other);
-    }
 }
 
 ////// src/utils/trie/MerkleTrie.sol
@@ -660,306 +877,292 @@ library BytesUtils {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
-/* Library Imports */
-/* import "../BytesUtils.sol"; */
-/* import "../rlp/RLPDecode.sol"; */
+/* import { Bytes } from "../Bytes.sol"; */
+/* import { Nibble } from "./Nibble.sol"; */
+/* import { RLPDecode } from "../rlp/RLPDecode.sol"; */
 
 /**
  * @title MerkleTrie
+ * @notice MerkleTrie is a small library for verifying standard Ethereum Merkle-Patricia trie
+ *         inclusion proofs. By default, this library assumes a hexary trie. One can change the
+ *         trie radix constant to support other trie radixes.
  */
 library MerkleTrie {
-    /*******************
-     * Data Structures *
-     *******************/
-
-    enum NodeType {
-        BranchNode,
-        ExtensionNode,
-        LeafNode
-    }
-
+    /**
+     * @notice Struct representing a node in the trie.
+     *
+     * @custom:field encoded The RLP-encoded node.
+     * @custom:field decoded The RLP-decoded node.
+     */
     struct TrieNode {
         bytes encoded;
         RLPDecode.RLPItem[] decoded;
     }
 
-    /**********************
-     * Contract Constants *
-     **********************/
-
-    // TREE_RADIX determines the number of elements per branch node.
-    uint256 constant TREE_RADIX = 16;
-    // Branch nodes have TREE_RADIX elements plus an additional `value` slot.
-    uint256 constant BRANCH_NODE_LENGTH = TREE_RADIX + 1;
-    // Leaf nodes and extension nodes always have two elements, a `path` and a `value`.
-    uint256 constant LEAF_OR_EXTENSION_NODE_LENGTH = 2;
-
-    // Prefixes are prepended to the `path` within a leaf or extension node and
-    // allow us to differentiate between the two node types. `ODD` or `EVEN` is
-    // determined by the number of nibbles within the unprefixed `path`. If the
-    // number of nibbles if even, we need to insert an extra padding nibble so
-    // the resulting prefixed `path` has an even number of nibbles.
-    uint8 constant PREFIX_EXTENSION_EVEN = 0;
-    uint8 constant PREFIX_EXTENSION_ODD = 1;
-    uint8 constant PREFIX_LEAF_EVEN = 2;
-    uint8 constant PREFIX_LEAF_ODD = 3;
-
-    // Just a utility constant. RLP represents `NULL` as 0x80.
-    bytes1 constant RLP_NULL = bytes1(0x80);
-
-    /**********************
-     * Internal Functions *
-     **********************/
+    /**
+     * @notice Determines the number of elements per branch node.
+     */
+    uint256 internal constant TREE_RADIX = 16;
 
     /**
-     * @notice Verifies a proof that a given key/value pair is present in the
-     * Merkle trie.
-     * @param _key Key of the node to search for, as a hex string.
+     * @notice Branch nodes have TREE_RADIX elements and one value element.
+     */
+    uint256 internal constant BRANCH_NODE_LENGTH = TREE_RADIX + 1;
+
+    /**
+     * @notice Leaf nodes and extension nodes have two elements, a `path` and a `value`.
+     */
+    uint256 internal constant LEAF_OR_EXTENSION_NODE_LENGTH = 2;
+
+    /**
+     * @notice Prefix for even-nibbled extension node paths.
+     */
+    uint8 internal constant PREFIX_EXTENSION_EVEN = 0;
+
+    /**
+     * @notice Prefix for odd-nibbled extension node paths.
+     */
+    uint8 internal constant PREFIX_EXTENSION_ODD = 1;
+
+    /**
+     * @notice Prefix for even-nibbled leaf node paths.
+     */
+    uint8 internal constant PREFIX_LEAF_EVEN = 2;
+
+    /**
+     * @notice Prefix for odd-nibbled leaf node paths.
+     */
+    uint8 internal constant PREFIX_LEAF_ODD = 3;
+
+    /**
+     * @notice Verifies a proof that a given key/value pair is present in the trie.
+     *
+     * @param _key   Key of the node to search for, as a hex string.
      * @param _value Value of the node to search for, as a hex string.
-     * @param _proof Merkle trie inclusion proof for the desired node. Unlike
-     * traditional Merkle trees, this proof is executed top-down and consists
-     * of a list of RLP-encoded nodes that make a path down to the target node.
-     * @param _root Known root of the Merkle trie. Used to verify that the
-     * included proof is correctly constructed.
-     * @return _verified `true` if the k/v pair exists in the trie, `false` otherwise.
+     * @param _proof Merkle trie inclusion proof for the desired node. Unlike traditional Merkle
+     *               trees, this proof is executed top-down and consists of a list of RLP-encoded
+     *               nodes that make a path down to the target node.
+     * @param _root  Known root of the Merkle trie. Used to verify that the included proof is
+     *               correctly constructed.
+     *
+     * @return Whether or not the proof is valid.
      */
     function verifyInclusionProof(
         bytes memory _key,
         bytes memory _value,
-        bytes memory _proof,
+        bytes[] memory _proof,
         bytes32 _root
-    ) internal pure returns (bool _verified) {
-        (bool exists, bytes memory value) = get(_key, _proof, _root);
-
-        return (exists && BytesUtils.equal(_value, value));
+    ) internal pure returns (bool) {
+        return Bytes.equals(_value, get(_key, _proof, _root));
     }
 
     /**
      * @notice Retrieves the value associated with a given key.
-     * @param _key Key to search for, as hex bytes.
+     *
+     * @param _key   Key to search for, as hex bytes.
      * @param _proof Merkle trie inclusion proof for the key.
-     * @param _root Known root of the Merkle trie.
-     * @return _exists Whether or not the key exists.
-     * @return _value Value of the key if it exists.
+     * @param _root  Known root of the Merkle trie.
+     *
+     * @return Value of the key if it exists.
      */
     function get(
         bytes memory _key,
-        bytes memory _proof,
+        bytes[] memory _proof,
         bytes32 _root
-    ) internal pure returns (bool _exists, bytes memory _value) {
+    ) internal pure returns (bytes memory) {
+        require(_key.length > 0, "MerkleTrie: empty key");
+
         TrieNode[] memory proof = _parseProof(_proof);
-        (uint256 pathLength, bytes memory keyRemainder, bool isFinalNode) = _walkNodePath(
-            proof,
-            _key,
-            _root
-        );
-
-        bool exists = keyRemainder.length == 0;
-
-        require(exists || isFinalNode, "Provided proof is invalid.");
-
-        bytes memory value = exists ? _getNodeValue(proof[pathLength - 1]) : bytes("");
-
-        return (exists, value);
-    }
-
-    /*********************
-     * Private Functions *
-     *********************/
-
-    /**
-     * @notice Walks through a proof using a provided key.
-     * @param _proof Inclusion proof to walk through.
-     * @param _key Key to use for the walk.
-     * @param _root Known root of the trie.
-     * @return _pathLength Length of the final path
-     * @return _keyRemainder Portion of the key remaining after the walk.
-     * @return _isFinalNode Whether or not we've hit a dead end.
-     */
-    function _walkNodePath(
-        TrieNode[] memory _proof,
-        bytes memory _key,
-        bytes32 _root
-    )
-        private
-        pure
-        returns (
-            uint256 _pathLength,
-            bytes memory _keyRemainder,
-            bool _isFinalNode
-        )
-    {
-        uint256 pathLength = 0;
-        bytes memory key = BytesUtils.toNibbles(_key);
-
-        bytes32 currentNodeID = _root;
+        bytes memory key = Nibble.toNibbles(_key);
+        bytes memory currentNodeID = abi.encodePacked(_root);
         uint256 currentKeyIndex = 0;
-        uint256 currentKeyIncrement = 0;
-        TrieNode memory currentNode;
 
         // Proof is top-down, so we start at the first element (root).
-        for (uint256 i = 0; i < _proof.length; i++) {
-            currentNode = _proof[i];
-            currentKeyIndex += currentKeyIncrement;
+        for (uint256 i = 0; i < proof.length; i++) {
+            TrieNode memory currentNode = proof[i];
 
-            // Keep track of the proof elements we actually need.
-            // It's expensive to resize arrays, so this simply reduces gas costs.
-            pathLength += 1;
+            // Key index should never exceed total key length or we'll be out of bounds.
+            require(
+                currentKeyIndex <= key.length,
+                "MerkleTrie: key index exceeds total key length"
+            );
 
             if (currentKeyIndex == 0) {
                 // First proof element is always the root node.
-                require(keccak256(currentNode.encoded) == currentNodeID, "Invalid root hash");
+                require(
+                    Bytes.equals(abi.encodePacked(keccak256(currentNode.encoded)), currentNodeID),
+                    "MerkleTrie: invalid root hash"
+                );
             } else if (currentNode.encoded.length >= 32) {
                 // Nodes 32 bytes or larger are hashed inside branch nodes.
                 require(
-                    keccak256(currentNode.encoded) == currentNodeID,
-                    "Invalid large internal hash"
+                    Bytes.equals(abi.encodePacked(keccak256(currentNode.encoded)), currentNodeID),
+                    "MerkleTrie: invalid large internal hash"
                 );
             } else {
-                // Nodes smaller than 31 bytes aren't hashed.
+                // Nodes smaller than 32 bytes aren't hashed.
                 require(
-                    BytesUtils.toBytes32(currentNode.encoded) == currentNodeID,
-                    "Invalid internal node hash"
+                    Bytes.equals(currentNode.encoded, currentNodeID),
+                    "MerkleTrie: invalid internal node hash"
                 );
             }
 
             if (currentNode.decoded.length == BRANCH_NODE_LENGTH) {
                 if (currentKeyIndex == key.length) {
-                    // We've hit the end of the key
-                    // meaning the value should be within this branch node.
-                    break;
+                    // Value is the last element of the decoded list (for branch nodes). There's
+                    // some ambiguity in the Merkle trie specification because bytes(0) is a
+                    // valid value to place into the trie, but for branch nodes bytes(0) can exist
+                    // even when the value wasn't explicitly placed there. Geth treats a value of
+                    // bytes(0) as "key does not exist" and so we do the same.
+                    bytes memory value = RLPDecode.readBytes(currentNode.decoded[TREE_RADIX]);
+                    require(
+                        value.length > 0,
+                        "MerkleTrie: value length must be greater than zero (branch)"
+                    );
+
+                    // Extra proof elements are not allowed.
+                    require(
+                        i == proof.length - 1,
+                        "MerkleTrie: value node must be last node in proof (branch)"
+                    );
+
+                    return value;
                 } else {
                     // We're not at the end of the key yet.
                     // Figure out what the next node ID should be and continue.
                     uint8 branchKey = uint8(key[currentKeyIndex]);
                     RLPDecode.RLPItem memory nextNode = currentNode.decoded[branchKey];
                     currentNodeID = _getNodeID(nextNode);
-                    currentKeyIncrement = 1;
-                    continue;
+                    currentKeyIndex += 1;
                 }
             } else if (currentNode.decoded.length == LEAF_OR_EXTENSION_NODE_LENGTH) {
                 bytes memory path = _getNodePath(currentNode);
                 uint8 prefix = uint8(path[0]);
                 uint8 offset = 2 - (prefix % 2);
-                bytes memory pathRemainder = BytesUtils.slice(path, offset);
-                bytes memory keyRemainder = BytesUtils.slice(key, currentKeyIndex);
+                bytes memory pathRemainder = Bytes.slice(path, offset);
+                bytes memory keyRemainder = Bytes.slice(key, currentKeyIndex);
                 uint256 sharedNibbleLength = _getSharedNibbleLength(pathRemainder, keyRemainder);
 
-                if (prefix == PREFIX_LEAF_EVEN || prefix == PREFIX_LEAF_ODD) {
-                    if (
-                        pathRemainder.length == sharedNibbleLength &&
-                        keyRemainder.length == sharedNibbleLength
-                    ) {
-                        // The key within this leaf matches our key exactly.
-                        // Increment the key index to reflect that we have no remainder.
-                        currentKeyIndex += sharedNibbleLength;
-                    }
+                // Whether this is a leaf node or an extension node, the path remainder MUST be a
+                // prefix of the key remainder (or be equal to the key remainder) or the proof is
+                // considered invalid.
+                require(
+                    pathRemainder.length == sharedNibbleLength,
+                    "MerkleTrie: path remainder must share all nibbles with key"
+                );
 
-                    // We've hit a leaf node, so our next node should be NULL.
-                    currentNodeID = bytes32(RLP_NULL);
-                    break;
+                if (prefix == PREFIX_LEAF_EVEN || prefix == PREFIX_LEAF_ODD) {
+                    // Prefix of 2 or 3 means this is a leaf node. For the leaf node to be valid,
+                    // the key remainder must be exactly equal to the path remainder. We already
+                    // did the necessary byte comparison, so it's more efficient here to check that
+                    // the key remainder length equals the shared nibble length, which implies
+                    // equality with the path remainder (since we already did the same check with
+                    // the path remainder and the shared nibble length).
+                    require(
+                        keyRemainder.length == sharedNibbleLength,
+                        "MerkleTrie: key remainder must be identical to path remainder"
+                    );
+
+                    // Our Merkle Trie is designed specifically for the purposes of the Ethereum
+                    // state trie. Empty values are not allowed in the state trie, so we can safely
+                    // say that if the value is empty, the key should not exist and the proof is
+                    // invalid.
+                    bytes memory value = RLPDecode.readBytes(currentNode.decoded[1]);
+                    require(
+                        value.length > 0,
+                        "MerkleTrie: value length must be greater than zero (leaf)"
+                    );
+
+                    // Extra proof elements are not allowed.
+                    require(
+                        i == proof.length - 1,
+                        "MerkleTrie: value node must be last node in proof (leaf)"
+                    );
+
+                    return value;
                 } else if (prefix == PREFIX_EXTENSION_EVEN || prefix == PREFIX_EXTENSION_ODD) {
-                    if (sharedNibbleLength != pathRemainder.length) {
-                        // Our extension node is not identical to the remainder.
-                        // We've hit the end of this path
-                        // updates will need to modify this extension.
-                        currentNodeID = bytes32(RLP_NULL);
-                        break;
-                    } else {
-                        // Our extension shares some nibbles.
-                        // Carry on to the next node.
-                        currentNodeID = _getNodeID(currentNode.decoded[1]);
-                        currentKeyIncrement = sharedNibbleLength;
-                        continue;
-                    }
+                    // Prefix of 0 or 1 means this is an extension node. We move onto the next node
+                    // in the proof and increment the key index by the length of the path remainder
+                    // which is equal to the shared nibble length.
+                    currentNodeID = _getNodeID(currentNode.decoded[1]);
+                    currentKeyIndex += sharedNibbleLength;
                 } else {
-                    revert("Received a node with an unknown prefix");
+                    revert("MerkleTrie: received a node with an unknown prefix");
                 }
             } else {
-                revert("Received an unparseable node.");
+                revert("MerkleTrie: received an unparseable node");
             }
         }
 
-        // If our node ID is NULL, then we're at a dead end.
-        bool isFinalNode = currentNodeID == bytes32(RLP_NULL);
-        return (pathLength, BytesUtils.slice(key, currentKeyIndex), isFinalNode);
+        revert("MerkleTrie: ran out of proof elements");
     }
 
     /**
-     * @notice Parses an RLP-encoded proof into something more useful.
-     * @param _proof RLP-encoded proof to parse.
-     * @return _parsed Proof parsed into easily accessible structs.
+     * @notice Parses an array of proof elements into a new array that contains both the original
+     *         encoded element and the RLP-decoded element.
+     *
+     * @param _proof Array of proof elements to parse.
+     *
+     * @return Proof parsed into easily accessible structs.
      */
-    function _parseProof(bytes memory _proof) private pure returns (TrieNode[] memory _parsed) {
-        RLPDecode.RLPItem[] memory nodes = RLPDecode.readList(_proof);
-        TrieNode[] memory proof = new TrieNode[](nodes.length);
-
-        for (uint256 i = 0; i < nodes.length; i++) {
-            bytes memory encoded = RLPDecode.readBytes(nodes[i]);
-            proof[i] = TrieNode({ encoded: encoded, decoded: RLPDecode.readList(encoded) });
+    function _parseProof(bytes[] memory _proof) private pure returns (TrieNode[] memory) {
+        uint256 length = _proof.length;
+        TrieNode[] memory proof = new TrieNode[](length);
+        for (uint256 i = 0; i < length; ) {
+            proof[i] = TrieNode({ encoded: _proof[i], decoded: RLPDecode.readList(_proof[i]) });
+            unchecked {
+                ++i;
+            }
         }
-
         return proof;
     }
 
     /**
-     * @notice Picks out the ID for a node. Node ID is referred to as the
-     * "hash" within the specification, but nodes < 32 bytes are not actually
-     * hashed.
+     * @notice Picks out the ID for a node. Node ID is referred to as the "hash" within the
+     *         specification, but nodes < 32 bytes are not actually hashed.
+     *
      * @param _node Node to pull an ID for.
-     * @return _nodeID ID for the node, depending on the size of its contents.
+     *
+     * @return ID for the node, depending on the size of its contents.
      */
-    function _getNodeID(RLPDecode.RLPItem memory _node) private pure returns (bytes32 _nodeID) {
-        bytes memory nodeID;
-
-        if (_node.length < 32) {
-            // Nodes smaller than 32 bytes are RLP encoded.
-            nodeID = RLPDecode.readRawBytes(_node);
-        } else {
-            // Nodes 32 bytes or larger are hashed.
-            nodeID = RLPDecode.readBytes(_node);
-        }
-
-        return BytesUtils.toBytes32(nodeID);
+    function _getNodeID(RLPDecode.RLPItem memory _node) private pure returns (bytes memory) {
+        return _node.length < 32 ? RLPDecode.readRawBytes(_node) : RLPDecode.readBytes(_node);
     }
 
     /**
      * @notice Gets the path for a leaf or extension node.
+     *
      * @param _node Node to get a path for.
-     * @return _path Node path, converted to an array of nibbles.
+     *
+     * @return Node path, converted to an array of nibbles.
      */
-    function _getNodePath(TrieNode memory _node) private pure returns (bytes memory _path) {
-        return BytesUtils.toNibbles(RLPDecode.readBytes(_node.decoded[0]));
+    function _getNodePath(TrieNode memory _node) private pure returns (bytes memory) {
+        return Nibble.toNibbles(RLPDecode.readBytes(_node.decoded[0]));
     }
 
     /**
-     * @notice Gets the path for a node.
-     * @param _node Node to get a value for.
-     * @return _value Node value, as hex bytes.
-     */
-    function _getNodeValue(TrieNode memory _node) private pure returns (bytes memory _value) {
-        return RLPDecode.readBytes(_node.decoded[_node.decoded.length - 1]);
-    }
-
-    /**
-     * @notice Utility; determines the number of nibbles shared between two
-     * nibble arrays.
+     * @notice Utility; determines the number of nibbles shared between two nibble arrays.
+     *
      * @param _a First nibble array.
      * @param _b Second nibble array.
-     * @return _shared Number of shared nibbles.
+     *
+     * @return Number of shared nibbles.
      */
     function _getSharedNibbleLength(bytes memory _a, bytes memory _b)
         private
         pure
-        returns (uint256 _shared)
+        returns (uint256)
     {
-        uint256 i = 0;
-        while (_a.length > i && _b.length > i && _a[i] == _b[i]) {
-            i++;
+        uint256 shared;
+        uint256 max = (_a.length < _b.length) ? _a.length : _b.length;
+        for (; shared < max && _a[shared] == _b[shared]; ) {
+            unchecked {
+                ++shared;
+            }
         }
-        return i;
+        return shared;
     }
 }
 
@@ -980,68 +1183,65 @@ library MerkleTrie {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
-/* Library Imports */
-/* import "./MerkleTrie.sol"; */
+/* import { MerkleTrie } from "./MerkleTrie.sol"; */
 
 /**
  * @title SecureMerkleTrie
+ * @notice SecureMerkleTrie is a thin wrapper around the MerkleTrie library that hashes the input
+ *         keys. Ethereum's state trie hashes input keys before storing them.
  */
 library SecureMerkleTrie {
-    /**********************
-     * Internal Functions *
-     **********************/
-
     /**
-     * @notice Verifies a proof that a given key/value pair is present in the
-     * Merkle trie.
-     * @param _key Key of the node to search for, as a hex string.
+     * @notice Verifies a proof that a given key/value pair is present in the Merkle trie.
+     *
+     * @param _key   Key of the node to search for, as a hex string.
      * @param _value Value of the node to search for, as a hex string.
-     * @param _proof Merkle trie inclusion proof for the desired node. Unlike
-     * traditional Merkle trees, this proof is executed top-down and consists
-     * of a list of RLP-encoded nodes that make a path down to the target node.
-     * @param _root Known root of the Merkle trie. Used to verify that the
-     * included proof is correctly constructed.
-     * @return _verified `true` if the k/v pair exists in the trie, `false` otherwise.
+     * @param _proof Merkle trie inclusion proof for the desired node. Unlike traditional Merkle
+     *               trees, this proof is executed top-down and consists of a list of RLP-encoded
+     *               nodes that make a path down to the target node.
+     * @param _root  Known root of the Merkle trie. Used to verify that the included proof is
+     *               correctly constructed.
+     *
+     * @return Whether or not the proof is valid.
      */
     function verifyInclusionProof(
         bytes memory _key,
         bytes memory _value,
-        bytes memory _proof,
+        bytes[] memory _proof,
         bytes32 _root
-    ) internal pure returns (bool _verified) {
+    ) internal pure returns (bool) {
         bytes memory key = _getSecureKey(_key);
         return MerkleTrie.verifyInclusionProof(key, _value, _proof, _root);
     }
 
     /**
      * @notice Retrieves the value associated with a given key.
-     * @param _key Key to search for, as hex bytes.
+     *
+     * @param _key   Key to search for, as hex bytes.
      * @param _proof Merkle trie inclusion proof for the key.
-     * @param _root Known root of the Merkle trie.
-     * @return _exists Whether or not the key exists.
-     * @return _value Value of the key if it exists.
+     * @param _root  Known root of the Merkle trie.
+     *
+     * @return Value of the key if it exists.
      */
     function get(
         bytes memory _key,
-        bytes memory _proof,
+        bytes[] memory _proof,
         bytes32 _root
-    ) internal pure returns (bool _exists, bytes memory _value) {
+    ) internal pure returns (bytes memory) {
         bytes memory key = _getSecureKey(_key);
         return MerkleTrie.get(key, _proof, _root);
     }
 
-    /*********************
-     * Private Functions *
-     *********************/
-
     /**
-     * Computes the secure counterpart to a key.
-     * @param _key Key to get a secure key from.
-     * @return _secureKey Secure version of the key.
+     * @notice Computes the hashed version of the input key.
+     *
+     * @param _key Key to hash.
+     *
+     * @return Hashed version of the key.
      */
-    function _getSecureKey(bytes memory _key) private pure returns (bytes memory _secureKey) {
+    function _getSecureKey(bytes memory _key) private pure returns (bytes memory) {
         return abi.encodePacked(keccak256(_key));
     }
 }
@@ -1063,54 +1263,67 @@ library SecureMerkleTrie {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
+/* pragma solidity 0.8.17; */
 
 /* import "./State.sol"; */
 /* import "../utils/rlp/RLPDecode.sol"; */
 /* import "../utils/trie/SecureMerkleTrie.sol"; */
 
+/// @title StorageProof
+/// @notice Storage proof specification
 library StorageProof {
     using State for bytes;
     using RLPDecode for bytes;
     using RLPDecode for RLPDecode.RLPItem;
 
+    /// @notice Verify single storage proof
+    /// @param root State root
+    /// @param account Account address to be prove
+    /// @param account_proof Merkle trie inclusion proof for the account
+    /// @param storage_key Storage key to be prove
+    /// @param storage_proof Merkle trie inclusion proof for storage key
+    /// @return value of the key if it exists
     function verify_single_storage_proof(
         bytes32 root,
         address account,
-        bytes memory account_proof,
+        bytes[] memory account_proof,
         bytes32 storage_key,
-        bytes memory storage_proof
+        bytes[] memory storage_proof
     ) internal pure returns (bytes memory value) {
         bytes memory account_hash = abi.encodePacked(account);
-        (bool exists, bytes memory data) = SecureMerkleTrie.get(
+        bytes memory data = SecureMerkleTrie.get(
             account_hash,
             account_proof,
             root
         );
-        require(exists, "!account_proof");
         State.EVMAccount memory acc = data.toEVMAccount();
         bytes memory storage_key_hash = abi.encodePacked(storage_key);
-        (exists, value) = SecureMerkleTrie.get(
+        value = SecureMerkleTrie.get(
             storage_key_hash,
             storage_proof,
             acc.storage_root
         );
-        if (exists) {
-            value = value.toRLPItem().readBytes();
-        }
+        value = value.toRLPItem().readBytes();
     }
 
+    /// @notice Verify multi storage proof
+    /// @param root State root
+    /// @param account Account address to be prove
+    /// @param account_proof Merkle trie inclusion proof for the account
+    /// @param storage_keys Multi storage key to be prove
+    /// @param storage_proofs Merkle trie inclusion multi proof for storage keys
+    /// @return values of the keys if it exists
     function verify_multi_storage_proof(
         bytes32 root,
         address account,
-        bytes memory account_proof,
+        bytes[] memory account_proof,
         bytes32[] memory storage_keys,
-        bytes[] memory storage_proofs
+        bytes[][] memory storage_proofs
     ) internal pure returns (bytes[] memory values) {
         uint key_size = storage_keys.length;
         require(key_size == storage_proofs.length, "!storage_proof_len");
         values = new bytes[](key_size);
-        for (uint i = 0; i < key_size; i++) {
+        for (uint i = 0; i < key_size; ) {
             values[i] = verify_single_storage_proof(
                 root,
                 account,
@@ -1118,6 +1331,7 @@ library StorageProof {
                 storage_keys[i],
                 storage_proofs[i]
             );
+            unchecked { ++i; }
         }
     }
 }
@@ -1139,8 +1353,7 @@ library StorageProof {
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-/* pragma solidity 0.7.6; */
-/* pragma abicoder v2; */
+/* pragma solidity 0.8.17; */
 
 /* import "../../spec/StorageProof.sol"; */
 /* import "../../spec/ChainMessagePosition.sol"; */
@@ -1148,8 +1361,8 @@ library StorageProof {
 
 contract EthereumParallelLaneStorageVerifier {
     struct Proof {
-        bytes accountProof;
-        bytes laneRootProof;
+        bytes[] accountProof;
+        bytes[] laneRootProof;
     }
 
     // bridged_chain_pos ++ bridged_lane_pos
@@ -1208,7 +1421,7 @@ contract EthereumParallelLaneStorageVerifier {
             return 0;
         }
         require(len <= 32, "!len");
-        assembly {
+        assembly ("memory-safe") {
             data := div(mload(add(bts, 32)), exp(256, sub(32, len)))
         }
     }

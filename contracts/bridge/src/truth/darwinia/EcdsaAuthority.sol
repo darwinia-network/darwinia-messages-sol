@@ -15,8 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.7.6;
-pragma abicoder v2;
+pragma solidity 0.8.17;
 
 import "../../utils/ECDSA.sol";
 
@@ -88,6 +87,7 @@ contract EcdsaAuthority {
             require(relayers[r] == false, "duplicate");
             relayers[r] = true;
             emit AddedRelayer(r);
+            unchecked { ++i; }
         }
         count = _relayers.length;
         threshold = _threshold;

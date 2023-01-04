@@ -17,10 +17,18 @@ jobs:
         working-directory: contracts/bridge
     steps:
       - uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.3
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+
+      - name: Install test-case-generator
+        run: make fuzz
 
       - name: test
         run: forge test
