@@ -80,14 +80,15 @@ interface IBLS {
 }
 
 contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
-    // Beacon block header that is finalized
+    /// @dev Beacon block header that is finalized
     BeaconBlockHeader public finalized_header;
-    // Sync committees corresponding to the header
-    // sync_committee_perid => sync_committee_root
+    /// @dev Sync committees corresponding to the header
+    /// sync_committee_perid => sync_committee_root
     mapping (uint64 => bytes32) public sync_committee_roots;
 
-    // address(0x0800)
+    /// @dev bls12-381 precompile address(0x0800)
     address private immutable BLS_PRECOMPILE;
+    /// @dev Beacon chain genesis validators root
     bytes32 public immutable GENESIS_VALIDATORS_ROOT;
     // A bellatrix beacon state has 25 fields, with a depth of 5.
     // | field                               | gindex | depth |
@@ -121,11 +122,13 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         GENESIS_VALIDATORS_ROOT = _genesis_validators_root;
     }
 
+    /// @dev Return beacon light client finalized header's body root
+    /// @return body root
     function body_root() public view returns (bytes32) {
         return finalized_header.body_root;
     }
 
-    // follow beacon api: /beacon/light_client/updates/?start_period={period}&count={count}
+    /// @dev follow beacon api: /beacon/light_client/updates/?start_period={period}&count={count}
     function import_next_sync_committee(
         FinalizedHeaderUpdate calldata header_update,
         SyncCommitteePeriodUpdate calldata sc_update
@@ -161,8 +164,9 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
             emit FinalizedHeaderImported(header_update.finalized_header);
         }
 
+        bytes32 next_sync_committee_root = hash_tree_root(sc_update.next_sync_committee);
         require(verify_next_sync_committee(
-                sc_update.next_sync_committee,
+                next_sync_committee_root,
                 sc_update.next_sync_committee_branch,
                 header_update.attested_header.state_root),
                 "!next_sync_committee"
@@ -170,12 +174,11 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
 
         uint64 next_period = signature_period + 1;
         require(sync_committee_roots[next_period] == bytes32(0), "imported");
-        bytes32 next_sync_committee_root = hash_tree_root(sc_update.next_sync_committee);
         sync_committee_roots[next_period] = next_sync_committee_root;
         emit NextSyncCommitteeImported(next_period, next_sync_committee_root);
     }
 
-    // follow beacon api: /eth/v1/beacon/light_client/finality_update/
+    /// @dev follow beacon api: /eth/v1/beacon/light_client/finality_update/
     function import_finalized_header(FinalizedHeaderUpdate calldata update) external {
         require(is_supermajority(update.sync_aggregate.sync_committee_bits), "!supermajor");
         require(update.signature_slot > update.attested_header.slot &&
@@ -240,7 +243,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
     function verify_finalized_header(
         BeaconBlockHeader calldata header,
         bytes32[] calldata finality_branch,
-        bytes32 attested_header_root
+        bytes32 attested_header_state_root
     ) internal pure returns (bool) {
         require(finality_branch.length == FINALIZED_CHECKPOINT_ROOT_DEPTH, "!finality_branch");
         bytes32 header_root = hash_tree_root(header);
@@ -249,17 +252,16 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
             finality_branch,
             FINALIZED_CHECKPOINT_ROOT_DEPTH,
             FINALIZED_CHECKPOINT_ROOT_INDEX,
-            attested_header_root
+            attested_header_state_root
         );
     }
 
     function verify_next_sync_committee(
-        SyncCommittee calldata next_sync_committee,
+        bytes32 next_sync_committee_root,
         bytes32[] calldata next_sync_committee_branch,
         bytes32 header_state_root
     ) internal pure returns (bool) {
         require(next_sync_committee_branch.length == NEXT_SYNC_COMMITTEE_DEPTH, "!next_sync_committee_branch");
-        bytes32 next_sync_committee_root = hash_tree_root(next_sync_committee);
         return is_valid_merkle_branch(
             next_sync_committee_root,
             next_sync_committee_branch,

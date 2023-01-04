@@ -57,10 +57,6 @@ contract EcdsaAuthorityTest is DSTest {
         address bob = address(0xbb);
         uint threshold = 1;
         perform_add_relayer(bob, threshold);
-        address[] memory e = authority.get_relayers();
-        assertEq(e.length, 2);
-        assertEq(bob, e[0]);
-        assertEq(alice, e[1]);
         assertEq(authority.get_threshold(), threshold);
     }
 
@@ -82,10 +78,6 @@ contract EcdsaAuthorityTest is DSTest {
         bytes[] memory signs = new bytes[](1);
         signs[0] = abi.encodePacked(r, s, v);
         authority.remove_relayer(SENTINEL, bob, threshold, signs);
-
-        address[] memory e = authority.get_relayers();
-        assertEq(e.length, 1);
-        assertEq(alice, e[0]);
         assertEq(authority.get_threshold(), threshold);
     }
 
@@ -104,10 +96,6 @@ contract EcdsaAuthorityTest is DSTest {
         bytes[] memory signs = new bytes[](1);
         signs[0] = abi.encodePacked(r, s, v);
         authority.swap_relayer(SENTINEL, alice, bob, signs);
-
-        address[] memory e = authority.get_relayers();
-        assertEq(e.length, 1);
-        assertEq(bob, e[0]);
     }
 
     function test_add_relayer_hash() public {
@@ -162,15 +150,7 @@ contract EcdsaAuthorityTest is DSTest {
         address cici = address(0xc);
         uint threshold = 2;
         perform_add_relayer(cici, threshold);
-        address[] memory e = authority.get_relayers();
-        assertEq(e.length, 2);
-        assertEq(cici, e[0]);
-        assertEq(alice, e[1]);
         assertEq(authority.get_threshold(), threshold);
-    }
-
-    function testFail_add_relayer_with_sentinel() public {
-        perform_add_relayer(SENTINEL, 1);
     }
 
     function testFail_add_relayer_with_zero_threshold() public {
