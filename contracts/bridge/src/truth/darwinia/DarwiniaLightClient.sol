@@ -14,6 +14,9 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+//
+// Inspired: https://github.com/paritytech/grandpa-bridge-gadget/blob/master/docs/beefy.md
+//           https://github.com/Snowfork/snowbridge/blob/main/core/packages/contracts/contracts/BeefyClient.sol
 
 pragma solidity 0.7.6;
 pragma abicoder v2;
