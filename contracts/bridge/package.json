@@ -43,11 +43,9 @@
     "shx": "^0.3.3",
     "solc-0.8": "npm:solc@^0.8.17",
     "solhint": "^3.3.6",
-    "solidity-docgen": "^0.5.16"
-  },
-  "dependencies": {
-    "@ethersproject/abi": "^5.7.0",
+    "solidity-docgen": "^0.5.16",
     "circomlib": "^2.0.5",
-    "snarkjs": "^0.5.0"
+    "snarkjs": "^0.5.0",
+    "@ethersproject/abi": "^5.7.0"
   }
 }

@@ -1,7 +1,7 @@
 pragma circom 2.0.3;
 
-include "../../node_modules/circomlib/circuits/bitify.circom";
-include "../../node_modules/circomlib/circuits/binsum.circom";
+include "../node_modules/circomlib/circuits/bitify.circom";
+include "../node_modules/circomlib/circuits/binsum.circom";
 include "./simple_serialize.circom";
 include "./pubkey_poseidon.circom";
 
