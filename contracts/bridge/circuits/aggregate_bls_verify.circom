@@ -1,8 +1,8 @@
 pragma circom 2.0.3;
 
-include "../circom-pairing/bls_signature.circom";
-include "../circom-pairing/curve.circom";
-include "../circom-pairing/bls12_381_func.circom";
+include "./circom-pairing/bls_signature.circom";
+include "./circom-pairing/curve.circom";
+include "./circom-pairing/bls12_381_func.circom";
 include "./sha256_bytes.circom";
 
 

@@ -1,4 +1,7 @@
 node_modules
 out
+build
 .env
 *.py[cod]
+*.ptau
+*.log

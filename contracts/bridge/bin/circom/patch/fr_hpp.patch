@@ -1,0 +1,5 @@
+7a8,11
+> #ifdef __APPLE__
+> #include <sys/types.h> // typedef unsigned int uint;
+> #endif // __APPLE__
+>

@@ -2,6 +2,7 @@
 .PHONY: build test clean doc lint estimate size e2e audit flatten
 .PHONY: deploy deploy-mainnet deploy-rinkeby verify check-api-key
 .PHONY: local-testnet migrate-local
+.PHONY: build-circom
 # include .env file and export its env vars
 # (-include to ignore error if it does not exist)
 -include .env
@@ -51,4 +52,7 @@ stats       :; @./bin/stats.sh $(mode)
 
 # Local testnet starter
 local-testnet :; @./bin/start-services.sh
+
+# circom
+build-circom :; @./bin/build.sh $(circom)
 
