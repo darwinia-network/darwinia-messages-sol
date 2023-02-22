@@ -38,7 +38,8 @@
         "SnowswapPair/Crab-xRing": "0xF157c9393255Db1728bC6483c3545Ca8a1655a0F"
     },
     "45": {
-        "HelixDaoMultisig": "0x43d6711EB86C852Ec1E04af55C52a0dd51b2C743"
+        "HelixDaoMultisig": "0x43d6711EB86C852Ec1E04af55C52a0dd51b2C743",
+        "Create2": "0xF09FE18d3f4b4345b47c098C8B8Fba7743418aA4"
     },
     "46": {
         "HelixDaoMultisig": "0xBd1a110ec476b4775c43905000288881367B1a88",
