@@ -6,7 +6,7 @@ set -e
 export ETH_RPC_URL=http://g1.dev.darwinia.network:10000
 export ETH_FROM=0x0f14341A7f464320319025540E8Fe48Ad0fe5aec
 
-WALLET=0x26972D581a81D38e51F71Df1a47e710dcf439143
+WALLET=0x76D3546D8a085743e5eC5b3Dd2d8D3dD2C38103F
 
 seth call $WALLET "getOwners()(address[])"
 seth call $WALLET "required()(uint)"
