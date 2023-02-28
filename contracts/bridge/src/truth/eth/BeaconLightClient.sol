@@ -105,7 +105,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
     bytes4 constant private DOMAIN_SYNC_COMMITTEE            = 0x07000000;
 
     event FinalizedHeaderImported(BeaconBlockHeader finalized_header);
-    event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed next_sync_committee_root);
+    event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed sync_committee_root);
 
     constructor(
         address _bls,
@@ -147,7 +147,10 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
 
         uint64 finalized_period = compute_sync_committee_period(header_update.finalized_header.slot);
         uint64 signature_period = compute_sync_committee_period(header_update.signature_slot);
-        require(signature_period == finalized_period, "!period");
+        uint64 attested_period = compute_sync_committee_period(header_update.attested_header.slot);
+        require(signature_period == finalized_period &&
+                finalized_period == attested_period,
+                "!period");
 
         bytes32 singature_sync_committee_root = sync_committee_roots[signature_period];
         require(singature_sync_committee_root != bytes32(0), "!missing");
@@ -240,7 +243,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         bytes memory message = abi.encodePacked(signing_root);
         bytes memory signature = sync_aggregate.sync_committee_signature;
         require(signature.length == BLSSIGNATURE_LENGTH, "!signature");
-        return fast_aggregate_verify(participant_pubkeys, message, signature);
+        return IBLS(BLS_PRECOMPILE).fast_aggregate_verify(pubkeys, message, signature);
     }
 
     function verify_finalized_header(
@@ -276,30 +279,6 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
 
     function is_supermajority(bytes32[2] calldata sync_committee_bits) internal pure returns (bool) {
         return sum(sync_committee_bits) * 3 >= SYNC_COMMITTEE_SIZE * 2;
-    }
-
-    function fast_aggregate_verify(bytes[] memory pubkeys, bytes memory message, bytes memory signature) internal view returns (bool valid) {
-        bytes memory input = abi.encodeWithSelector(
-            IBLS.fast_aggregate_verify.selector,
-            pubkeys,
-            message,
-            signature
-        );
-        (bool ok, bytes memory out) = BLS_PRECOMPILE.staticcall(input);
-        if (ok) {
-            if (out.length == 32) {
-                valid = abi.decode(out, (bool));
-            }
-        } else {
-            if (out.length > 0) {
-                assembly ("memory-safe") {
-                    let returndata_size := mload(out)
-                    revert(add(32, out), returndata_size)
-                }
-            } else {
-                revert("!verify");
-            }
-        }
     }
 
     function compute_sync_committee_period(uint64 slot) internal pure returns (uint64) {
