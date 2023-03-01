@@ -243,7 +243,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         bytes memory message = abi.encodePacked(signing_root);
         bytes memory signature = sync_aggregate.sync_committee_signature;
         require(signature.length == BLSSIGNATURE_LENGTH, "!signature");
-        return IBLS(BLS_PRECOMPILE).fast_aggregate_verify(pubkeys, message, signature);
+        return IBLS(BLS_PRECOMPILE).fast_aggregate_verify(participant_pubkeys, message, signature);
     }
 
     function verify_finalized_header(
