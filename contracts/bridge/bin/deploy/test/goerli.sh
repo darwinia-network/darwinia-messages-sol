@@ -60,8 +60,8 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
 #   $BEEFY_VALIDATOR_SET_LEN \
 #   $BEEFY_VALIDATOR_SET_ROOT)
 
-# seth keccak "45Pangoro::ecdsa-authority"
-DOMAIN_SEPARATOR=0x38a6d9f96ef6e79768010f6caabfe09abc43e49792d5c787ef0d4fc802855947
+# seth keccak "45Pangoro2::ecdsa-authority"
+DOMAIN_SEPARATOR=0x6516caa5e629f7c38609c9a51c87c41bcae861829b3c6d4e540f727ede06fa51
 relayers=[0x68898db1012808808c903f390909c52d9f706749]
 threshold=1
 nonce=0
@@ -73,7 +73,7 @@ POSALightClient=$(deploy POSALightClient $DOMAIN_SEPARATOR \
 
 DarwiniaMessageVerifier=$(deploy DarwiniaMessageVerifier $POSALightClient)
 
-OutboundLane=$(deploy OutboundLane \
+SerialOutboundLane=$(deploy SerialOutboundLane \
   $DarwiniaMessageVerifier \
   $FeeMarketProxy \
   $this_chain_pos \
@@ -81,19 +81,19 @@ OutboundLane=$(deploy OutboundLane \
   $bridged_chain_pos \
   $bridged_in_lane_pos 1 0 0)
 
-outlaneid=$(seth call $OutboundLane "getLaneId()(uint)")
+outlaneid=$(seth call $SerialOutboundLane "getLaneId()(uint)")
 
-InboundLane=$(deploy InboundLane \
+SerialInboundLane=$(deploy SerialInboundLane \
   $DarwiniaMessageVerifier \
   $this_chain_pos \
   $this_in_lane_pos \
   $bridged_chain_pos \
   $bridged_out_lane_pos 0 0)
 
-inlaneid=$(seth call $InboundLane "getLaneId()(uint)")
+inlaneid=$(seth call $SerialInboundLane "getLaneId()(uint)")
 
-seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $OutboundLane 1 --chain goerli
+seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain goerli
 
-EthereumStorageVerifier=$(jq -r ".[\"$NETWORK_NAME\"].EthereumStorageVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
-(set -x; seth send -F $ETH_FROM $EthereumStorageVerifier "registry(uint,address,uint,address)" \
-  $outlaneid $OutboundLane $inlaneid $InboundLane --rpc-url https://pangoro-rpc.darwinia.network)
+EthereumSerialLaneVerifier=$(jq -r ".[\"$NETWORK_NAME\"].EthereumSerialLaneVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
+(set -x; seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
+  $outlaneid $SerialOutboundLane $inlaneid $SerialInboundLane --rpc-url https://pangoro-rpc.darwinia.network)

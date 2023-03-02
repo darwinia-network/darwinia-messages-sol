@@ -61,6 +61,3 @@ contract_size() {
 	length=$(echo "$BYTECODE" | wc -m)
 	echo $(($length / 2))
 }
-
-estimate_gas $contract
-
