@@ -3,6 +3,8 @@
 pragma solidity =0.8.17;
 
 ////// src/proxy/transparent/Context.sol
+//
+// OpenZeppelin Contracts (v3.4.2-solc-0.7) (utils/Context.sol)
 
 /* pragma solidity 0.8.17; */
 
@@ -27,6 +29,8 @@ abstract contract Context {
 }
 
 ////// src/proxy/transparent/Ownable.sol
+//
+// OpenZeppelin Contracts (v3.4.2-solc-0.7) (access/Ownable.sol)
 
 /* pragma solidity 0.8.17; */
 
@@ -110,6 +114,8 @@ abstract contract Ownable is Context {
 }
 
 ////// src/proxy/transparent/Address.sol
+//
+// OpenZeppelin Contracts (v3.4.2-solc-0.7) (utils/Address.sol)
 
 /* pragma solidity 0.8.17; */
 
@@ -354,6 +360,8 @@ library Address {
 }
 
 ////// src/proxy/transparent/Proxy.sol
+//
+// OpenZeppelin Contracts (v3.4.2-solc-0.7) (proxy/Proxy.sol)
 
 /* pragma solidity 0.8.17; */
 
@@ -440,6 +448,8 @@ abstract contract Proxy {
 }
 
 ////// src/proxy/transparent/UpgradeableProxy.sol
+//
+// OpenZeppelin Contracts (v3.4.2-solc-0.7) (proxy/UpgradeableProxy.sol)
 
 /* pragma solidity 0.8.17; */
 
@@ -519,6 +529,15 @@ contract UpgradeableProxy is Proxy {
 }
 
 ////// src/proxy/transparent/TransparentUpgradeableProxy.sol
+//
+// OpenZeppelin Contracts (v3.4.2-solc-0.7) (proxy/TransparentUpgradeableProxy.sol)
+//
+// Discussion: https://github.com/OpenZeppelin/openzeppelin-contracts/issues/2638
+// Inspired:   https://github.com/wighawag/hardhat-deploy/blob/4d5b527e07a4742cf97f9648a6e1d2795edbfd22/solc_0.7/proxy/OptimizedTransparentUpgradeableProxy.sol
+// Diff:
+// * Make admin immutable
+// * Remove `changeAdmin(address)` function
+// * Remove `AdminChanged(address,address)` event
 
 /* pragma solidity 0.8.17; */
 
@@ -648,6 +667,8 @@ contract TransparentUpgradeableProxy is UpgradeableProxy {
 }
 
 ////// src/proxy/transparent/ProxyAdmin.sol
+//
+// OpenZeppelin Contracts (v3.4.2-solc-0.7) (proxy/ProxyAdmin.sol)
 
 /* pragma solidity 0.8.17; */
 

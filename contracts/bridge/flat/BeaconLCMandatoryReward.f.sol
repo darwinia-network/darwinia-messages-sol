@@ -1,5 +1,5 @@
 // hevm: flattened sources of src/truth/eth/BeaconLCMandatoryReward.sol
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: GPL-3.0 AND Apache-2.0
 pragma solidity =0.8.17;
 
 ////// src/utils/Math.sol
@@ -38,10 +38,6 @@ contract Math {
             a <<= 1;
             pow++;
         }
-    }
-
-    function _max(uint x, uint y) internal pure returns (uint z) {
-        return x >= y ? x : y;
     }
 }
 
@@ -122,21 +118,8 @@ contract MerkleProof is Math {
 }
 
 ////// src/utils/ScaleCodec.sol
-// This file is part of Darwinia.
-// Copyright (C) 2018-2022 Darwinia Network
 //
-// Darwinia is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Darwinia is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+// Inspired: https://github.com/Snowfork/snowbridge/blob/main/core/packages/contracts/contracts/ScaleCodec.sol
 
 /* pragma solidity 0.8.17; */
 

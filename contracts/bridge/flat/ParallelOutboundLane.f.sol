@@ -326,7 +326,7 @@ contract SourceChain {
 ////// src/utils/imt/IncrementalMerkleTree.sol
 /* pragma solidity 0.8.17; */
 
-/// code source from https://github.com/nomad-xyz/monorepo/blob/main/packages/contracts-core/contracts/libs/Merkle.sol
+// Inspired: https://github.com/nomad-xyz/monorepo/blob/main/packages/contracts-core/contracts/libs/Merkle.sol
 
 /// @title IncrementalMerkleTree
 /// @author Illusory Systems Inc.

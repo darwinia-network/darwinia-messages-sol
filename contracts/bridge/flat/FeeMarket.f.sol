@@ -45,6 +45,8 @@ interface IFeeMarket {
 }
 
 ////// src/proxy/transparent/Address.sol
+//
+// OpenZeppelin Contracts (v3.4.2-solc-0.7) (utils/Address.sol)
 
 /* pragma solidity 0.8.17; */
 
@@ -290,7 +292,7 @@ library Address {
 
 ////// src/proxy/Initializable.sol
 //
-// OpenZeppelin Contracts (last updated v4.7.0) (proxy/utils/Initializable.sol)
+// OpenZeppelin Contracts (v4.7.0) (proxy/utils/Initializable.sol)
 
 /* pragma solidity 0.8.17; */
 
