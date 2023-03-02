@@ -8,6 +8,10 @@ const INFURA_KEY = process.env.INFURA_KEY
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY
 const MORALIS_KEY = process.env.MORALIS_KEY
 
+const PRIV1 = process.env.PRIV1
+const PRIV2 = process.env.PRIV2
+const PRIV3 = process.env.PRIV3
+
 let evm_eth_addresses, evm_bsc_addresses, dvm_addresses, evm_endpoint, dvm_endpoint, sub_endpoint
 let ns_eth, ns_bsc, ns_dvm
 if (target == 'local') {
@@ -46,18 +50,15 @@ if (target == 'local') {
   ns_dvm = 'pangoro'
 }
 
-const addr1 = "0x3DFe30fb7b46b99e234Ed0F725B5304257F78992"
-const addr2 = "0xB3c5310Dcf15A852b81d428b8B6D5Fb684300DF9"
-const addr3 = "0xf4F07AAe298E149b902993B4300caB06D655f430"
+const addr1 = ethers.utils.computeAddress(PRIV1)
+const addr2 = ethers.utils.computeAddress(PRIV2)
+const addr3 = ethers.utils.computeAddress(PRIV3)
 const addrs = [addr1, addr2, addr3]
 
-const priv1 = "d2f4e4eaf19bc75ebb1d8d9f7399fbb554ce92c5c2cb04610651db9860b080b3"
-const priv2 = "9438704f5bd45bbcfc59e6989db378112db0c070e703249b32f0f298b753313e"
-const priv3 = "482e54d8bb063ffa1f39a66f48235eac0e13988bede00be37728c7eafb762b32"
 const wallets = [
-  new ethers.Wallet(priv1),
-  new ethers.Wallet(priv2),
-  new ethers.Wallet(priv3),
+  new ethers.Wallet(PRIV1),
+  new ethers.Wallet(PRIV2),
+  new ethers.Wallet(PRIV3),
 ]
 
 const sub_fees = [

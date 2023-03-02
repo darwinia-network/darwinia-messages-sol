@@ -6,7 +6,7 @@ set -e
 # export ETH_GAS_PRICE=10000000000
 # . $(dirname $0)/deploy/test/pangoro-0.sh
 # . $(dirname $0)/deploy/test/pangoro-1.sh
-export ETH_GAS_PRICE=2000000000
+# export ETH_GAS_PRICE=120000000000
 . $(dirname $0)/deploy/test/goerli.sh
 # export ETH_GAS_PRICE=10000000000
 # . $(dirname $0)/deploy/test/bsctest.sh
