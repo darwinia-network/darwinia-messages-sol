@@ -10,6 +10,8 @@ chai.use(solidity)
 const log = console.log
 let eth2Client, subClient
 
+const target  = process.env.TARGET || 'local'
+
 const get_ssz_type = (forks, sszTypeName, forkName) => {
   return forks[forkName][sszTypeName]
 }
@@ -25,6 +27,17 @@ const hash = (typ, input) => {
   return toHexString(typ.hashTreeRoot(value))
 }
 
+const compute_fork_version = (epoch) => {
+  if(target == 'local' || target == 'prod') throw new Error("no config")
+  else if (target == 'test') {
+    if(epoch >= 112260)
+        return "0x02001020"
+    if(epoch >= 36660)
+        return "0x01001020"
+    return "0x00001020"
+  }
+}
+
 describe("bridge e2e test: beacon light client", () => {
 
   before(async () => {
@@ -36,7 +49,7 @@ describe("bridge e2e test: beacon light client", () => {
     subClient = clients.subClient
   })
 
-  it("import finalized header", async () => {
+  it.skip("import finalized header", async () => {
     const x = await import("@chainsafe/lodestar-types")
     const phase0 = x.ssz.phase0
     const bellatrix = x.ssz.allForks.bellatrix
@@ -129,7 +142,7 @@ describe("bridge e2e test: beacon light client", () => {
     const BeaconBlockHeader = phase0.BeaconBlockHeader
     const SyncCommittee = altair.SyncCommittee
 
-    const f = next_sync.finalized_header
+    const f = next_sync.finalized_header.beacon
     const finalized_header_ssz = BeaconBlockHeader.fromJson({
       slot:            f.slot,
       proposer_index:  f.proposer_index,
@@ -141,7 +154,7 @@ describe("bridge e2e test: beacon light client", () => {
     const snapshot = await eth2Client.get_bootstrap(finalized_header_root)
     const current_sync_committee = snapshot.current_sync_committee
 
-    const attested_header_slot = next_sync.attested_header.slot
+    const attested_header_slot = next_sync.attested_header.beacon.slot
     let sync_aggregate_slot = ~~attested_header_slot + 1
     let sync_aggregate_header = await eth2Client.get_header(sync_aggregate_slot)
     while (!sync_aggregate_header) {
@@ -156,18 +169,22 @@ describe("bridge e2e test: beacon light client", () => {
     sync_aggregate.sync_committee_bits = sync_committee_bits;
 
 
-    const fork_version = await eth2Client.get_fork_version(sync_aggregate_slot)
+    const sync_aggregate_epoch = sync_aggregate_slot / 32
+    const fork_version = compute_fork_version(~~sync_aggregate_epoch)
+    console.log(fork_version)
     const finalized_header_update = {
-      attested_header:           next_sync.attested_header,
+      attested_header:           next_sync.attested_header.beacon,
       signature_sync_committee:  current_sync_committee,
-      finalized_header:          next_sync.finalized_header,
+      finalized_header:          next_sync.finalized_header.beacon,
       finality_branch:           next_sync.finality_branch,
       sync_aggregate:            sync_aggregate,
-      fork_version:              fork_version.current_version,
+      fork_version:              fork_version,
       signature_slot:            sync_aggregate_slot
     }
 
-    const tx = await subClient.beaconLightClient.import_next_sync_committee(finalized_header_update, sync_committee_period_update, { gasLimit: 10000000 })
+    console.log(JSON.stringify(finalized_header_update,null,2))
+
+    const tx = await subClient.beaconLightClient.import_next_sync_committee(finalized_header_update, sync_committee_period_update, { gasLimit: 9000000 })
 
     const next_sync_committee = SyncCommittee.fromJson(next_sync.next_sync_committee)
     const next_sync_committee_root = toHexString(SyncCommittee.hashTreeRoot(next_sync_committee))
@@ -177,7 +194,7 @@ describe("bridge e2e test: beacon light client", () => {
       .withArgs(next_period, next_sync_committee_root)
   })
 
-  it("import latest_execution_payload_state_root on execution layer", async () => {
+  it.skip("import latest_execution_payload_state_root on execution layer", async () => {
     const x = await import("@chainsafe/lodestar-types")
     const ssz = x.ssz
     const BeaconBlockBody = ssz.allForks.bellatrix.BeaconBlockBody

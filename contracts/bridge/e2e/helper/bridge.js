@@ -196,7 +196,6 @@ class Bridge {
     let finalized_header = finality_update.finalized_header.beacon
     const period = Number(finalized_header.slot) / 32 / 256
     const sync_change = await this.eth2Client.get_sync_committee_period_update(~~period - 1, 1)
-    console.log(sync_change)
     const next_sync = sync_change[0].data
     const current_sync_committee = next_sync.next_sync_committee
 
@@ -225,13 +224,15 @@ class Bridge {
       signature_slot: sync_aggregate_slot
     }
 
-    const tx = await this.subClient.beaconLightClient.import_finalized_header(finalized_header_update,
-      {
-        gasPrice: 1000000000,
-        gasLimit: 5000000
-      })
+    console.log(JSON.stringify(finalized_header_update, null, 2))
 
-    console.log(tx.hash)
+    // const tx = await this.subClient.beaconLightClient.import_finalized_header(finalized_header_update,
+    //   {
+    //     gasPrice: 1000000000,
+    //     gasLimit: 5000000
+    //   })
+
+    // console.log(tx.hash)
     // const new_finalized_header = await this.subClient.beaconLightClient.finalized_header()
   }
 
