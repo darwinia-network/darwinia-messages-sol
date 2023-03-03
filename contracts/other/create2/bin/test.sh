@@ -2,8 +2,7 @@
 
 set -e
 
-# export SETH_CHAIN=pangoro
-export ETH_RPC_URL=http://g1.dev.darwinia.network:10000
+export SETH_CHAIN=pangoro
 export ETH_FROM=0x0f14341A7f464320319025540E8Fe48Ad0fe5aec
 
 WALLET=0x76D3546D8a085743e5eC5b3Dd2d8D3dD2C38103F
