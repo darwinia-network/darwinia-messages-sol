@@ -43,7 +43,8 @@ if (target == 'local') {
   evm_bsc_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
   dvm_endpoint = "https://pangoro-rpc.darwinia.network"
   sub_endpoint = "wss://pangoro-rpc.darwinia.network"
-  beacon_endpoint = "http://unstable.prater.beacon-api.nimbus.team"
+  // beacon_endpoint = "http://unstable.prater.beacon-api.nimbus.team"
+  beacon_endpoint = "https://lodestar-goerli.chainsafe.io"
 
   ns_eth = 'goerli'
   ns_bsc = 'bsctest'
@@ -57,9 +58,6 @@ const wallets = [
 ]
 
 const addrs = wallets.map((w) => w.address)
-
-console.log(addrs)
-
 
 const sub_fees = [
   ethers.utils.parseEther("10"),

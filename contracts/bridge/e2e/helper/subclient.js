@@ -29,7 +29,7 @@ class SubClient {
     this.bob = this.keyring.addFromUri('//Bob', { name: 'Bob' });
 
     const ChainMessageCommitter = await artifacts.readArtifact("ChainMessageCommitter");
-    this.chainMessageCommitter = new ethers.Contract(addresses.ChainMessageCommitterProxy, ChainMessageCommitter.abi, this.provider)
+    this.chainMessageCommitter = new ethers.Contract(addresses.ChainMessageCommitter, ChainMessageCommitter.abi, this.provider)
 
     const LaneMessageCommitter = await artifacts.readArtifact("LaneMessageCommitter");
     this.ethLaneMessageCommitter = new ethers.Contract(addresses[ns_eth].LaneMessageCommitter, LaneMessageCommitter.abi, this.provider)

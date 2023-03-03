@@ -13,23 +13,23 @@ class EvmClient {
     this.feeMarket = new ethers.Contract(addresses[ns].FeeMarketProxy, FeeMarket.abi, this.provider)
 
     const OutboundLane = await artifacts.readArtifact("SerialOutboundLane")
-    const outbound = new ethers.Contract(addresses[ns].OutboundLane, OutboundLane.abi,  this.provider)
+    const outbound = new ethers.Contract(addresses[ns].SerialOutboundLane, OutboundLane.abi,  this.provider)
 
-    const ParallelOutboundLane = await artifacts.readArtifact("ParallelOutboundLane")
-    const parallel_outbound = new ethers.Contract(addresses[ns].ParallelOutboundLane, ParallelOutboundLane.abi,  this.provider)
+    // const ParallelOutboundLane = await artifacts.readArtifact("ParallelOutboundLane")
+    // const parallel_outbound = new ethers.Contract(addresses[ns].ParallelOutboundLane, ParallelOutboundLane.abi,  this.provider)
 
     const InboundLane = await artifacts.readArtifact("SerialInboundLane")
-    const inbound = new ethers.Contract(addresses[ns].InboundLane, InboundLane.abi, this.provider)
+    const inbound = new ethers.Contract(addresses[ns].SerialInboundLane, InboundLane.abi, this.provider)
 
-    const ParallelInboundLane = await artifacts.readArtifact("ParallelInboundLane")
-    const parallel_inbound = new ethers.Contract(addresses[ns].ParallelInboundLane, ParallelInboundLane.abi, this.provider)
+    // const ParallelInboundLane = await artifacts.readArtifact("ParallelInboundLane")
+    // const parallel_inbound = new ethers.Contract(addresses[ns].ParallelInboundLane, ParallelInboundLane.abi, this.provider)
 
     this.signer = wallets[0].connect(this.provider)
     this.outbound = outbound.connect(this.signer)
     this.inbound = inbound.connect(this.signer)
 
-    this.parallel_outbound = parallel_outbound.connect(this.signer)
-    this.parallel_inbound = parallel_inbound.connect(this.signer)
+    // this.parallel_outbound = parallel_outbound.connect(this.signer)
+    // this.parallel_inbound = parallel_inbound.connect(this.signer)
 
     this.wallets = wallets
     this.fees = fees

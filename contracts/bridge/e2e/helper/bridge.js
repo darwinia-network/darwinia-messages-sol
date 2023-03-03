@@ -176,15 +176,15 @@ class Bridge {
   }
 
   async enroll_relayer() {
-    await this.eth.enroll_relayer()
-    await this.bsc.enroll_relayer()
+    // await this.eth.enroll_relayer()
+    // await this.bsc.enroll_relayer()
     await this.sub.eth.enroll_relayer()
-    await this.sub.bsc.enroll_relayer()
+    // await this.sub.bsc.enroll_relayer()
   }
 
   async deposit() {
     await this.eth.deposit()
-    await this.sub.deposit()
+    await this.bsc.deposit()
     await this.sub.eth.deposit()
     await this.sub.bsc.deposit()
   }
@@ -192,10 +192,11 @@ class Bridge {
   async relay_eth_header() {
     const old_finalized_header = await this.subClient.beaconLightClient.finalized_header()
     const finality_update = await this.eth2Client.get_finality_update()
-    let attested_header = finality_update.attested_header
-    let finalized_header = finality_update.finalized_header
+    let attested_header = finality_update.attested_header.beacon
+    let finalized_header = finality_update.finalized_header.beacon
     const period = Number(finalized_header.slot) / 32 / 256
     const sync_change = await this.eth2Client.get_sync_committee_period_update(~~period - 1, 1)
+    console.log(sync_change)
     const next_sync = sync_change[0].data
     const current_sync_committee = next_sync.next_sync_committee
 

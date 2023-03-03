@@ -56,7 +56,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
     bridge = clients.bridge
 
     eth_signer = ethClient.get_signer(0)
-    bsc_signer = bscClient.get_signer(0)
+    // bsc_signer = bscClient.get_signer(0)
     source = eth_signer.address
   })
 
@@ -85,7 +85,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
       )
   })
 
-  it.skip("1.1", async function () {
+  it("1.1", async function () {
     await bridge.relay_eth_header()
   })
 
