@@ -184,7 +184,12 @@ describe("bridge e2e test: beacon light client", () => {
 
     console.log(JSON.stringify(finalized_header_update,null,2))
 
-    const tx = await subClient.beaconLightClient.import_next_sync_committee(finalized_header_update, sync_committee_period_update, { gasLimit: 9000000 })
+    const tx = await subClient.beaconLightClient.import_next_sync_committee(finalized_header_update, sync_committee_period_update, { 
+      gasLimit: 9000000,
+      gasPrice: 1000000000,
+    })
+
+    console.log(tx)
 
     const next_sync_committee = SyncCommittee.fromJson(next_sync.next_sync_committee)
     const next_sync_committee_root = toHexString(SyncCommittee.hashTreeRoot(next_sync_committee))
