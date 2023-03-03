@@ -50,16 +50,16 @@ if (target == 'local') {
   ns_dvm = 'pangoro'
 }
 
-const addr1 = ethers.utils.computeAddress(PRIV1)
-const addr2 = ethers.utils.computeAddress(PRIV2)
-const addr3 = ethers.utils.computeAddress(PRIV3)
-const addrs = [addr1, addr2, addr3]
-
 const wallets = [
   new ethers.Wallet(PRIV1),
   new ethers.Wallet(PRIV2),
   new ethers.Wallet(PRIV3),
 ]
+
+const addrs = wallets.map((w) => w.address)
+
+console.log(addrs)
+
 
 const sub_fees = [
   ethers.utils.parseEther("10"),
