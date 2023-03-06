@@ -61,7 +61,8 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
 #   $BEEFY_VALIDATOR_SET_ROOT)
 
 # seth keccak "45Pangoro2::ecdsa-authority"
-DOMAIN_SEPARATOR=0x6516caa5e629f7c38609c9a51c87c41bcae861829b3c6d4e540f727ede06fa51
+# seth keccak "45Pangoro2 Local::ecdsa-authority"
+DOMAIN_SEPARATOR=0xed37ce1852ec7fd30cc2d899542b171b4e279216477795f32baae8594284e7a4
 relayers=[0x68898db1012808808c903f390909c52d9f706749]
 threshold=1
 nonce=0
@@ -95,5 +96,8 @@ inlaneid=$(seth call $SerialInboundLane "getLaneId()(uint)")
 seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain goerli
 
 EthereumSerialLaneVerifier=$(jq -r ".[\"$NETWORK_NAME\"].EthereumSerialLaneVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
+# (set -x; seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
+#   $outlaneid $SerialOutboundLane $inlaneid $SerialInboundLane --rpc-url https://pangoro-rpc.darwinia.network)
+
 (set -x; seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
-  $outlaneid $SerialOutboundLane $inlaneid $SerialInboundLane --rpc-url https://pangoro-rpc.darwinia.network)
+  $outlaneid $SerialOutboundLane $inlaneid $SerialInboundLane --rpc-url http://34.142.158.86:8888)
