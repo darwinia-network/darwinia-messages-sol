@@ -3,7 +3,8 @@ const abi = require('ethereumjs-abi');
 
 const typedData = {
     types: {
-        DOMAIN_SEPARATOR: '38a6d9f96ef6e79768010f6caabfe09abc43e49792d5c787ef0d4fc802855947',
+
+        DOMAIN_SEPARATOR: '6516caa5e629f7c38609c9a51c87c41bcae861829b3c6d4e540f727ede06fa51',
         COMMIT_TYPEHASH: 'aca824a0c4edb3b2c17f33fea9cb21b33c7ee16c8e634c36b3bf851c9de7a223',
         Commitment: [
             { name: 'block_number', type: 'uint32' },
@@ -69,7 +70,9 @@ function encodeData(primaryType, data) {
 }
 
 function structHash(primaryType, data) {
-    return ethUtil.keccak256(encodeData(primaryType, data));
+    let a = ethUtil.keccak256(encodeData(primaryType, data))
+    console.log(a.toString('hex'))
+    return a;
 }
 
 function signHash(message) {
