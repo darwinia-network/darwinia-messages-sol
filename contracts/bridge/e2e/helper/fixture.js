@@ -35,14 +35,16 @@ if (target == 'local') {
 } else if (target == 'test') {
   evm_eth_addresses = require("../../bin/addr/test/goerli.json")
   evm_bsc_addresses = require("../../bin/addr/test/bsctest.json")
-  dvm_addresses = require("../../bin/addr/test/pangoro.json")
+  dvm_addresses = require("../../bin/addr/test/pangolin.json")
 
   evm_eth_endpoint = `https://eth-goerli.g.alchemy.com/v2/${ALCHEMY_KEY}`
   // evm_eth_endpoint = "http://127.0.0.1:8545"
   // evm_bsc_endpoint = `https://speedy-nodes-nyc.moralis.io/${MORALIS_KEY}/bsc/testnet/archive`
   evm_bsc_endpoint = "https://data-seed-prebsc-1-s1.binance.org:8545"
-  dvm_endpoint = "https://pangoro-rpc.darwinia.network"
-  sub_endpoint = "wss://pangoro-rpc.darwinia.network"
+  // dvm_endpoint = "https://pangoro-rpc.darwinia.network"
+  dvm_endpoint = "http://192.168.132.159:9933"
+  sub_endpoint = "ws://192.168.132.159:9944"
+  // sub_endpoint = "wss://pangoro-rpc.darwinia.network"
   // beacon_endpoint = "http://unstable.prater.beacon-api.nimbus.team"
   beacon_endpoint = "https://lodestar-goerli.chainsafe.io"
 
