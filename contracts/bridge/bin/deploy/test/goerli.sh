@@ -15,10 +15,10 @@ echo "ETH_FROM: ${ETH_FROM}"
 
 BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
 
-export TARGET_CHAIN=pangoro
+export TARGET_CHAIN=pangolin
 
 
-# goerli to pangoro bridge config
+# goerli to pangolin bridge config
 this_chain_pos=1
 this_out_lane_pos=0
 this_in_lane_pos=1
@@ -47,7 +47,7 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
   $data)
 
 # # darwinia beefy light client config
-# # Pangoro
+# # pangolin
 # NETWORK=0x50616e676f726f00000000000000000000000000000000000000000000000000
 # BEEFY_SLASH_VALUT=$ETH_FROM
 # BEEFY_VALIDATOR_SET_ID=0
@@ -60,9 +60,8 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
 #   $BEEFY_VALIDATOR_SET_LEN \
 #   $BEEFY_VALIDATOR_SET_ROOT)
 
-# seth keccak "45Pangoro2::ecdsa-authority"
-# seth keccak "45Pangoro2 Local::ecdsa-authority"
-DOMAIN_SEPARATOR=0xed37ce1852ec7fd30cc2d899542b171b4e279216477795f32baae8594284e7a4
+# seth keccak "43Panolin2::ecdsa-authority"
+DOMAIN_SEPARATOR=0x828d0c30582a9df33638daf9675d1b681b3a6e2957ecbbe987db6124d89dab26
 relayers=[0x68898db1012808808c903f390909c52d9f706749]
 threshold=1
 nonce=0

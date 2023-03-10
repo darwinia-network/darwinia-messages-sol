@@ -4,10 +4,10 @@ set -e
 
 # 0
 # export ETH_GAS_PRICE=10000000000
-# . $(dirname $0)/deploy/test/pangoro-0.sh
-# . $(dirname $0)/deploy/test/pangoro-1.sh
+. $(dirname $0)/deploy/test/pangolin-0.sh
+. $(dirname $0)/deploy/test/panoglin-1.sh
 # export ETH_GAS_PRICE=120000000000
-. $(dirname $0)/deploy/test/goerli.sh
+# . $(dirname $0)/deploy/test/goerli.sh
 # export ETH_GAS_PRICE=10000000000
 # . $(dirname $0)/deploy/test/bsctest.sh
 
