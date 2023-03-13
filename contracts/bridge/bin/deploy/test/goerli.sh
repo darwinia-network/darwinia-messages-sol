@@ -60,8 +60,8 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
 #   $BEEFY_VALIDATOR_SET_LEN \
 #   $BEEFY_VALIDATOR_SET_ROOT)
 
-# seth keccak "43Panolin2::ecdsa-authority"
-DOMAIN_SEPARATOR=0x828d0c30582a9df33638daf9675d1b681b3a6e2957ecbbe987db6124d89dab26
+# seth keccak "43Pangolin2::ecdsa-authority"
+DOMAIN_SEPARATOR=0x6117c6f8095b57b263a3fdc240d7791acda820e78ec3f950a4deadfaeff0e9b2
 relayers=[0x68898db1012808808c903f390909c52d9f706749]
 threshold=1
 nonce=0
