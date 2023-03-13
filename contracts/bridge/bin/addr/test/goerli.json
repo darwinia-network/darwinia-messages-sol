@@ -1,2 +1,12 @@
 {
+  "DEPLOYER": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
+  "BridgeProxyAdmin": "0x405adBB719249009e813f71EB2EE82a80FaBd2a4",
+  "pangolin": {
+    "SimpleFeeMarket": "0xC7Da398e0D57A14bc02c78caf5312Ff29F59ba00",
+    "FeeMarketProxy": "0xA10D0C6e04845A5e998d1936249A30563c553417",
+    "POSALightClient": "0x4cd2D8291B0009d6f4f38b2ae6Ac0B7735Ca0E35",
+    "DarwiniaMessageVerifier": "0x827ABd28b276E6fA2AF82EC003744b96c2e4D391",
+    "SerialOutboundLane": "0x5fB3E544f46FFc8ce1bB0e2803Fdb8C5536cFfB7",
+    "SerialInboundLane": "0x88657f143470819f9e1CC978A41c2d5182Eff7cc"
+  }
 }
