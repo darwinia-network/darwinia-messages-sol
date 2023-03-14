@@ -12,20 +12,30 @@ contract EthereumEndpoint {
     address public constant DARWINIA_ENDPOINT = 0x5a10ca57e07133AA5132eF29BA1EBf0096a302B0;
 
     // execute `target`.`call` on astar.
-    function executeOnAstar(address target, bytes memory call) payable external {
+    function executeOnAstar(address astarTarget, bytes memory astarCall, uint256 gasLimitOfAstarCall) payable external {
         executeOnDarwinia(
             // darwinia target contract.
             DARWINIA_ENDPOINT,
             // darwinia calldata to be executed.
-            buildCallOfDarwinia(target, call)
+            buildCallOfDarwinia(astarTarget, astarCall, gasLimitOfAstarCall)
         );
     }
 
     /////////////////////////////////////////////
     // INTERNAL FUNCTIONS
     /////////////////////////////////////////////
-    function buildCallOfDarwinia(address target, bytes memory callOfAstar) internal pure returns (bytes memory){
-        return abi.encodeWithSignature("executeOnAstar(address,bytes)", target, callOfAstar);
+    function buildCallOfDarwinia(
+        address astarTarget, 
+        bytes memory astarCall, 
+        uint256 gasLimitOfAstarCall
+    ) internal pure returns (bytes memory)
+    {
+        return abi.encodeWithSignature(
+            "executeOnAstar(address,bytes,uint256)", 
+            astarTarget, 
+            astarCall, 
+            gasLimitOfAstarCall
+        );
     }
     
     // execute `target`.`call` on darwinia.
