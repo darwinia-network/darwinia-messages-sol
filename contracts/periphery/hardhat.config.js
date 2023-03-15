@@ -84,7 +84,7 @@ module.exports = {
       gasPrice: 53100000000
     },
     pangolin: {
-      url: 'https://pangolin-rpc.darwinia.network',
+      url: 'http://g2.dev.darwinia.network:8888',
       network_id: "43",
       accounts: [PRIVATE_KEY],
       gas: 3_000_000,
