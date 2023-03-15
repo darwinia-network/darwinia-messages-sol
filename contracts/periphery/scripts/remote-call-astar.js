@@ -32,7 +32,7 @@ async function main() {
     const tx = await endpoint.dispatchOnParachain(
         "0x591f",
         "0x0a070c313233",
-        0
+        6000000000
     )
 
     console.log((await tx.wait()).transactionHash)
