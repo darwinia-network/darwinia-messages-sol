@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export ETH_RPC_URL=http://192.168.132.159:9933
+export ETH_RPC_URL=https://pangolin-rpc.darwinia.network
 
 # beacon light client config
 BLS_PRECOMPILE=0x0000000000000000000000000000000000000800

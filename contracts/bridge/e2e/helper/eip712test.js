@@ -1,8 +1,8 @@
 const { signHash } = require('./eip712')
 
 message = {
-  "block_number": 4900,
-  "message_root": "0xc19bb9951026bddb8aac800b900e8f26e4ba01ac31e1447070ce57ac5e1f9a5d",
+  "block_number": 10580,
+  "message_root": "0x56223be3175f9a12197c701ea64c9d7ae73d686fdf6129c85840a592e5e66d12",
   "nonce": 0
 }
 
