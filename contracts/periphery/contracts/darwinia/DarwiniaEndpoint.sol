@@ -9,8 +9,8 @@ import "./DarwiniaLib.sol";
 
 contract DarwiniaEndpoint {
     address public constant DISPATCH = 0x0000000000000000000000000000000000000401;
-    bytes2 public immutable transactThroughSignedCallIndex = 0x2d06;
-    bytes2 public immutable darwiniaParaId = 0xf91f;
+    bytes2 public immutable send = 0x2100;
+    bytes2 public immutable fromParachain = 0xe520;
 
     function dispatchOnParachain(bytes2 paraId, bytes memory dispatchCall, uint64 weight) external {
         transactThroughSigned(
@@ -24,17 +24,19 @@ contract DarwiniaEndpoint {
     // INTERNAL FUNCTIONS
     /////////////////////////////////////////////
     function transactThroughSigned(
-        bytes2 paraId,
+        bytes2 toParachain,
         bytes memory call,
         uint64 weight
     ) internal {
         (bool success, bytes memory data) = DISPATCH.call(
-            DarwiniaLib.buildCall_TransactThroughSigned(
-                transactThroughSignedCallIndex, // callIndex
-                paraId, // astar paraid
-                darwiniaParaId, // dariwnia paraid
-                hex"", // call
-                0 // weight TODO: fix
+            abi.encodePacked(
+                send, // call index
+                hex"00010100", toParachain, // dest: V2(01, X1(Parachain(ParaId)))
+                DarwiniaLib.xcmTransactOnParachain( // xcm
+                    fromParachain,
+                    call,
+                    weight //  TODO: fix
+                )
             )
         );
 

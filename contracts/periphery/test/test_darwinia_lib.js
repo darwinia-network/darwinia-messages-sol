@@ -15,6 +15,6 @@ describe('TestDarwiniaLib', function (accounts) {
     });
 
     it('testBuildCallTransactThroughSigned', async() => {
-        await test.testBuildCallTransactThroughSigned();
+        await test.testXcmTransactOnParachain();
     })
 });
