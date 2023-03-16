@@ -10,52 +10,27 @@ library DarwiniaLib {
         bytes memory call, 
         uint64 weight
     ) internal pure returns (bytes memory) {
-        // 02(                                            // XcmVersion::V2(Vec<Instruction>)
-        //   [                                            // 0c: len
-        //
-        //     00(                                        // Instruction::WithdrawAsset(Vec<MultiAsset>)
-        //       [                                        // 04: len 
-        //         {                                      // MultiAsset
-        //           id: 00(                              // AssetId::Concrete(MultiLocation)
-        //             {                                  // MultiLocation
-        //               parents: 01,
-        //               interior: 02(                    // Junctions::X2(Junction, Junction)
-        //                 00(2105),                      // Junction::Parachain(CompactU32)
-        //                 04(5)                          // Junction::PalletInstance(u8)
-        //               )
-        //             }
-        //           ), 
-        //           fun: 00(130000e8890423c78a)        // Fungibility::Fungible(u128)
-        //         }
-        //       ]
-        //     ),
-        //
-        //     13(                                        // Instruction::BuyExecution(fees: MultiAsset, weightLimit: WeightLimit)
-        //       {
-        //         fees: {
-        //           id: 00(
+        // xcm_version: 2
+        // instructions:
+        //   - type: withdraw_asset
+        //     assets:
+        //       - &ring
+        //         id:
+        //           concrete:
         //             parents: 01,
-        //             interior: 02(
-        //               00(2105),
-        //               04(5)
-        //             )
-        //           ),
-        //           fun: 00(10000000000000000000)
-        //         },
-        //         weightLimit: 00                        // WeightLimit::Unlimited
-        //       }
-        //     )
-        //
-        //     06(                                        // Instruction::Transact(originType, requireWeightAtMost, call)
-        //       {
-        //         originType: 01,
-        //         requireWeightAtMost: 0700bca06501,     // 6000000000: Compact<u64>
-        //         call: 18 0a070c313233                  // Bytes
-        //       }
-        //     )
-        //
-        //   ]
-        // )
+        //             interior:
+        //               X2:
+        //                 - parachain: 2105
+        //                 - pallet_instance: 5
+        //         fun:
+        //           fungible: '0x130000e8890423c78a'
+        //   - type: buy_execution
+        //     fees: *ring
+        //     weight_limit: unlimited
+        //   - type: transact
+        //     origin_type: 1
+        //     require_weight_at_most: '0x0700bca06501'
+        //     call: '0x240a070c313233'
         return abi.encodePacked(
             // XcmVersion, Instruction Length
             hex"020c",
