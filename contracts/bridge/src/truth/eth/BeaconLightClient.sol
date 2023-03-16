@@ -129,6 +129,12 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         return finalized_header.body_root;
     }
 
+    /// @dev Return beacon light client finalized header's slot
+    /// @return slot
+    function slot() public view returns (uint64) {
+        return finalized_header.slot;
+    }
+
     /// @dev follow beacon api: /beacon/light_client/updates/?start_period={period}&count={count}
     function import_next_sync_committee(
         FinalizedHeaderUpdate calldata header_update,
