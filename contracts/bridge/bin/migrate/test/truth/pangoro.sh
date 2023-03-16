@@ -40,6 +40,7 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $CURRENT_SYNC_COMMITTEE_HASH \
   $GENESIS_VALIDATORS_ROOT)
 
+CAPELLA_FORK_EPOCH=162304
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient $CAPELLA_FORK_EPOCH)
 
 EthereumSerialLaneVerifier=$(load_saddr "EthereumSerialLaneVerifier")
