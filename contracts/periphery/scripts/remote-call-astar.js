@@ -21,12 +21,15 @@ async function main() {
     // console.log((await tx.wait()).transactionHash)
 
     // 2. darwinia
+    // const DarwiniaEndpoint = await hre.ethers.getContractFactory("DarwiniaEndpoint");
+    // const endpoint = await DarwiniaEndpoint.deploy();
+    // await endpoint.deployed();
+
     const DarwiniaEndpoint = await hre.ethers.getContractFactory("DarwiniaEndpoint");
-    const endpoint = await DarwiniaEndpoint.deploy();
-    await endpoint.deployed();
+    const endpoint = DarwiniaEndpoint.attach("0x775E23BCc9B5e8bBB62257e1737CED5dC7732268");
 
     console.log(
-        `Darwinia endpoint deployed: ${endpoint.address}`
+        `Darwinia endpoint address: ${endpoint.address}`
     );
 
     const tx = await endpoint.dispatchOnParachain(
