@@ -13,7 +13,7 @@ export DAPP_TEST_FFI=1
 
 # Optimize your contracts before deploying to reduce runtime execution costs.
 # Check out the docs to learn more: https://docs.soliditylang.org/en/v0.8.9/using-the-compiler.html#optimizer-options
-export DAPP_SKIP_BUILD=1
+export DAPP_SKIP_BUILD=
 export DAPP_BUILD_OPTIMIZE=1
 export DAPP_BUILD_OPTIMIZE_RUNS=999999
 
