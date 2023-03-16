@@ -392,7 +392,7 @@ contract BeaconChain is MerkleProof {
         bytes32 body_root;
     }
 
-    /// @notice Beacon block body
+    /// @notice Beacon block body in Bellatrix
     /// @param randao_reveal Randao reveal
     /// @param eth1_data Eth1 data vote
     /// @param graffiti Arbitrary data
@@ -403,7 +403,7 @@ contract BeaconChain is MerkleProof {
     /// @param voluntary_exits Voluntary exits
     /// @param sync_aggregate Sync aggregate
     /// @param execution_payload Execution payload [New in Bellatrix]
-    struct BeaconBlockBody {
+    struct BeaconBlockBodyBellatrix {
         bytes32 randao_reveal;
         bytes32 eth1_data;
         bytes32 graffiti;
@@ -413,10 +413,36 @@ contract BeaconChain is MerkleProof {
         bytes32 deposits;
         bytes32 voluntary_exits;
         bytes32 sync_aggregate;
-        ExecutionPayload execution_payload;
+        ExecutionPayloadBellatrix execution_payload;
     }
 
-    /// @notice Execution payload, execution block header fields
+    /// @notice Beacon block body in Capella
+    /// @param randao_reveal Randao reveal
+    /// @param eth1_data Eth1 data vote
+    /// @param graffiti Arbitrary data
+    /// @param proposer_slashings Proposer slashings
+    /// @param attester_slashings Attester slashings
+    /// @param attestations Attestations
+    /// @param deposits Deposits
+    /// @param voluntary_exits Voluntary exits
+    /// @param sync_aggregate Sync aggregate
+    /// @param execution_payload Execution payload
+    /// @param bls_to_execution_changes Capella operations [New in Capella]
+    struct BeaconBlockBodyCapella {
+        bytes32 randao_reveal;
+        bytes32 eth1_data;
+        bytes32 graffiti;
+        bytes32 proposer_slashings;
+        bytes32 attester_slashings;
+        bytes32 attestations;
+        bytes32 deposits;
+        bytes32 voluntary_exits;
+        bytes32 sync_aggregate;
+        ExecutionPayloadCapella execution_payload;
+        bytes32 bls_to_execution_changes;
+    }
+
+    /// @notice Execution payload in Bellatrix
     /// @param parent_hash Parent hash
     /// @param fee_recipient Beneficiary
     /// @param state_root State root
@@ -431,7 +457,7 @@ contract BeaconChain is MerkleProof {
     /// @param base_fee_per_gas Base fee per gas
     /// @param block_hash Hash of execution block
     /// @param transactions Transactions
-    struct ExecutionPayload {
+    struct ExecutionPayloadBellatrix {
         bytes32 parent_hash;
         address fee_recipient;
         bytes32 state_root;
@@ -446,6 +472,40 @@ contract BeaconChain is MerkleProof {
         uint256 base_fee_per_gas;
         bytes32 block_hash;
         bytes32 transactions;
+    }
+
+    /// @notice Execution payload in Capella
+    /// @param parent_hash Parent hash
+    /// @param fee_recipient Beneficiary
+    /// @param state_root State root
+    /// @param receipts_root Receipts root
+    /// @param logs_bloom Logs bloom
+    /// @param prev_randao Difficulty
+    /// @param block_number Number
+    /// @param gas_limit Gas limit
+    /// @param gas_used Gas used
+    /// @param timestamp Timestamp
+    /// @param extra_data Extra data
+    /// @param base_fee_per_gas Base fee per gas
+    /// @param block_hash Hash of execution block
+    /// @param transactions_root Root of transactions
+    /// @param withdrawals_root Root of withdrawals [New in Capella]
+    struct ExecutionPayloadCapella {
+        bytes32 parent_hash;
+        address fee_recipient;
+        bytes32 state_root;
+        bytes32 receipts_root;
+        bytes32 logs_bloom;
+        bytes32 prev_randao;
+        uint64 block_number;
+        uint64 gas_limit;
+        uint64 gas_used;
+        uint64 timestamp;
+        bytes32 extra_data;
+        uint256 base_fee_per_gas;
+        bytes32 block_hash;
+        bytes32 transactions_root;
+        bytes32 withdrawals_root;
     }
 
     /// @notice Return the signing root for the corresponding signing data.
@@ -510,8 +570,8 @@ contract BeaconChain is MerkleProof {
         return merkle_root(leaves);
     }
 
-    /// @notice Return hash tree root of beacon block body
-    function hash_tree_root(BeaconBlockBody memory beacon_block_body) internal pure returns (bytes32) {
+    /// @notice Return hash tree root of beacon block body in Bellatrix
+    function hash_tree_root(BeaconBlockBodyBellatrix memory beacon_block_body) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](10);
         leaves[0] = beacon_block_body.randao_reveal;
         leaves[1] = beacon_block_body.eth1_data;
@@ -526,8 +586,25 @@ contract BeaconChain is MerkleProof {
         return merkle_root(leaves);
     }
 
-    /// @notice Return hash tree root of execution payload
-    function hash_tree_root(ExecutionPayload memory execution_payload) internal pure returns (bytes32) {
+    /// @notice Return hash tree root of beacon block body in Capella
+    function hash_tree_root(BeaconBlockBodyCapella memory beacon_block_body) internal pure returns (bytes32) {
+        bytes32[] memory leaves = new bytes32[](11);
+        leaves[0]  = beacon_block_body.randao_reveal;
+        leaves[1]  = beacon_block_body.eth1_data;
+        leaves[2]  = beacon_block_body.graffiti;
+        leaves[3]  = beacon_block_body.proposer_slashings;
+        leaves[4]  = beacon_block_body.attester_slashings;
+        leaves[5]  = beacon_block_body.attestations;
+        leaves[6]  = beacon_block_body.deposits;
+        leaves[7]  = beacon_block_body.voluntary_exits;
+        leaves[8]  = beacon_block_body.sync_aggregate;
+        leaves[9]  = hash_tree_root(beacon_block_body.execution_payload);
+        leaves[10] = beacon_block_body.bls_to_execution_changes;
+        return merkle_root(leaves);
+    }
+
+    /// @notice Return hash tree root of execution payload in Bellatrix
+    function hash_tree_root(ExecutionPayloadBellatrix memory execution_payload) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](14);
         leaves[0]  = execution_payload.parent_hash;
         leaves[1]  = bytes32(bytes20(execution_payload.fee_recipient));
@@ -543,6 +620,27 @@ contract BeaconChain is MerkleProof {
         leaves[11] = to_little_endian_256(execution_payload.base_fee_per_gas);
         leaves[12] = execution_payload.block_hash;
         leaves[13] = execution_payload.transactions;
+        return merkle_root(leaves);
+    }
+
+    /// @notice Return hash tree root of execution payload in Capella
+    function hash_tree_root(ExecutionPayloadCapella memory execution_payload) internal pure returns (bytes32) {
+        bytes32[] memory leaves = new bytes32[](15);
+        leaves[0]  = execution_payload.parent_hash;
+        leaves[1]  = bytes32(bytes20(execution_payload.fee_recipient));
+        leaves[2]  = execution_payload.state_root;
+        leaves[3]  = execution_payload.receipts_root;
+        leaves[4]  = execution_payload.logs_bloom;
+        leaves[5]  = execution_payload.prev_randao;
+        leaves[6]  = bytes32(to_little_endian_64(execution_payload.block_number));
+        leaves[7]  = bytes32(to_little_endian_64(execution_payload.gas_limit));
+        leaves[8]  = bytes32(to_little_endian_64(execution_payload.gas_used));
+        leaves[9]  = bytes32(to_little_endian_64(execution_payload.timestamp));
+        leaves[10] = execution_payload.extra_data;
+        leaves[11] = to_little_endian_256(execution_payload.base_fee_per_gas);
+        leaves[12] = execution_payload.block_hash;
+        leaves[13] = execution_payload.transactions_root;
+        leaves[14] = execution_payload.withdrawals_root;
         return merkle_root(leaves);
     }
 
@@ -608,6 +706,7 @@ enum ChainMessagePosition {
 
 interface IConsensusLayer {
     function body_root() external view returns (bytes32);
+    function slot() external view returns (uint64);
 }
 
 contract ExecutionLayer is BeaconChain, ILightClient {
@@ -617,11 +716,15 @@ contract ExecutionLayer is BeaconChain, ILightClient {
     uint256 private latest_execution_payload_block_number;
     /// @dev consensus layer
     address public immutable CONSENSUS_LAYER;
+    uint64 public immutable CAPELLA_FORK_EPOCH;
+
+    uint64 constant private SLOTS_PER_EPOCH = 32;
 
     event LatestExecutionPayloadImported(uint256 block_number, bytes32 state_root);
 
-    constructor(address consensus_layer) {
+    constructor(address consensus_layer, uint64 capella_fork_epoch) {
         CONSENSUS_LAYER = consensus_layer;
+        CAPELLA_FORK_EPOCH = capella_fork_epoch;
     }
 
     /// @dev Return latest execution payload state root
@@ -636,8 +739,27 @@ contract ExecutionLayer is BeaconChain, ILightClient {
         return latest_execution_payload_block_number;
     }
 
+    function is_capella() public view returns (bool) {
+        uint64 slot = IConsensusLayer(CONSENSUS_LAYER).slot();
+        uint64 epoch = slot / SLOTS_PER_EPOCH;
+        return epoch >= CAPELLA_FORK_EPOCH;
+    }
+
     /// @dev follow beacon api: /eth/v2/beacon/blocks/{block_id}
-    function import_latest_execution_payload_state_root(BeaconBlockBody calldata body) external {
+    function import_block_body_bellatrix(BeaconBlockBodyBellatrix calldata body) external {
+        require(!is_capella(), "!bellatrix");
+        bytes32 state_root = body.execution_payload.state_root;
+        uint256 new_block_number = body.execution_payload.block_number;
+        require(new_block_number > latest_execution_payload_block_number, "!new");
+        require(hash_tree_root(body) == IConsensusLayer(CONSENSUS_LAYER).body_root(), "!body");
+        latest_execution_payload_state_root = state_root;
+        latest_execution_payload_block_number = new_block_number;
+        emit LatestExecutionPayloadImported(new_block_number, state_root);
+    }
+
+    /// @dev follow beacon api: /eth/v2/beacon/blocks/{block_id}
+    function import_block_body_capella(BeaconBlockBodyCapella calldata body) external {
+        require(is_capella(), "!capella");
         bytes32 state_root = body.execution_payload.state_root;
         uint256 new_block_number = body.execution_payload.block_number;
         require(new_block_number > latest_execution_payload_block_number, "!new");
