@@ -31,6 +31,8 @@ contract BeaconLightClientMainnetTest is DSTest, BeaconLightClientUpdate, Bitfie
     bytes32 constant GENESIS_VALIDATORS_ROOT = 0x4b363db94e286120d76eb905340fdd4e54bfe9f06bf33ff6cf5ad27f511bfe95;
     bytes32 constant LATEST_EXECUTION_PAYLOAD_STATE_ROOT = 0xc22665bddd71c249eff6dea84255918cc4d0537ecceaa9348419231a64259beb;
 
+    uint64 constant CAPELLA_FORK_EPOCH = 18446744073709551615;
+
     BeaconLightClient lightclient;
     ExecutionLayer executionlayer;
     MockBLS bls;
@@ -48,7 +50,7 @@ contract BeaconLightClientMainnetTest is DSTest, BeaconLightClientUpdate, Bitfie
             CURRENT_SYNC_COMMITTEE_ROOT,
             GENESIS_VALIDATORS_ROOT
         );
-        executionlayer = new ExecutionLayer(address(lightclient));
+        executionlayer = new ExecutionLayer(address(lightclient), CAPELLA_FORK_EPOCH);
         self = address(this);
     }
 
@@ -69,8 +71,8 @@ contract BeaconLightClientMainnetTest is DSTest, BeaconLightClientUpdate, Bitfie
 
     function test_import_latest_execution_payload_state_root() public {
         process_import_finalized_header();
-        BeaconBlockBody memory body = build_beacon_block_body();
-        executionlayer.import_latest_execution_payload_state_root(body);
+        BeaconBlockBodyBellatrix memory body = build_beacon_block_body();
+        executionlayer.import_block_body_bellatrix(body);
         assertEq(executionlayer.merkle_root(), LATEST_EXECUTION_PAYLOAD_STATE_ROOT);
     }
 
@@ -86,12 +88,12 @@ contract BeaconLightClientMainnetTest is DSTest, BeaconLightClientUpdate, Bitfie
     }
 
     function test_hash_body() public {
-        BeaconBlockBody memory body = build_beacon_block_body();
+        BeaconBlockBodyBellatrix memory body = build_beacon_block_body();
         assertEq(hash_tree_root(body), 0x319c41b0a25994b5ef50d5beee9afb860bd12637b4018c03f4537f6ad5879be7);
     }
 
     function test_hash_execution_payload() public {
-        ExecutionPayload memory payload = build_execution_payload();
+        ExecutionPayloadBellatrix memory payload = build_execution_payload();
         assertEq(hash_tree_root(payload), 0x7dca0ead2432d173e500e04c2089681bc06abc66c91b5b5e4c15d04a7f278810);
     }
 
@@ -205,8 +207,8 @@ contract BeaconLightClientMainnetTest is DSTest, BeaconLightClientUpdate, Bitfie
         return next_sync_committee_branch;
     }
 
-    function build_execution_payload() internal pure returns (ExecutionPayload memory) {
-        return ExecutionPayload({
+    function build_execution_payload() internal pure returns (ExecutionPayloadBellatrix memory) {
+        return ExecutionPayloadBellatrix({
                  parent_hash:      0x9e6f788b61580956fb9d4e1cbe914a1c8972178ad0759a95dd0110d1932dc429,
                  fee_recipient:    0xDAFEA492D9c6733ae3d56b7Ed1ADB60692c98Bc5,
                  state_root:       LATEST_EXECUTION_PAYLOAD_STATE_ROOT,
@@ -224,8 +226,8 @@ contract BeaconLightClientMainnetTest is DSTest, BeaconLightClientUpdate, Bitfie
              });
     }
 
-    function build_beacon_block_body() internal pure returns (BeaconBlockBody memory) {
-        return BeaconBlockBody({
+    function build_beacon_block_body() internal pure returns (BeaconBlockBodyBellatrix memory) {
+        return BeaconBlockBodyBellatrix({
              randao_reveal:      0x3d28b5038113b792eaa5e9b17add40d7669134d215e380a0156af66b23c8cc99,
              eth1_data:          0x7a56e61cac5142dd133ef066cd295cd7f049ac7b4a8f62639ef8eec84260d754,
              graffiti:           0x626c6f636b736361706500000000000000000000000000000000000000000000,

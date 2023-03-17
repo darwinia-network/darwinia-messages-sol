@@ -23,6 +23,7 @@ import "../../interfaces/ILightClient.sol";
 
 interface IConsensusLayer {
     function body_root() external view returns (bytes32);
+    function slot() external view returns (uint64);
 }
 
 contract ExecutionLayer is BeaconChain, ILightClient {
@@ -32,11 +33,15 @@ contract ExecutionLayer is BeaconChain, ILightClient {
     uint256 private latest_execution_payload_block_number;
     /// @dev consensus layer
     address public immutable CONSENSUS_LAYER;
+    uint64 public immutable CAPELLA_FORK_EPOCH;
+
+    uint64 constant private SLOTS_PER_EPOCH = 32;
 
     event LatestExecutionPayloadImported(uint256 block_number, bytes32 state_root);
 
-    constructor(address consensus_layer) {
+    constructor(address consensus_layer, uint64 capella_fork_epoch) {
         CONSENSUS_LAYER = consensus_layer;
+        CAPELLA_FORK_EPOCH = capella_fork_epoch;
     }
 
     /// @dev Return latest execution payload state root
@@ -51,8 +56,27 @@ contract ExecutionLayer is BeaconChain, ILightClient {
         return latest_execution_payload_block_number;
     }
 
+    function is_capella() public view returns (bool) {
+        uint64 slot = IConsensusLayer(CONSENSUS_LAYER).slot();
+        uint64 epoch = slot / SLOTS_PER_EPOCH;
+        return epoch >= CAPELLA_FORK_EPOCH;
+    }
+
     /// @dev follow beacon api: /eth/v2/beacon/blocks/{block_id}
-    function import_latest_execution_payload_state_root(BeaconBlockBody calldata body) external {
+    function import_block_body_bellatrix(BeaconBlockBodyBellatrix calldata body) external {
+        require(!is_capella(), "!bellatrix");
+        bytes32 state_root = body.execution_payload.state_root;
+        uint256 new_block_number = body.execution_payload.block_number;
+        require(new_block_number > latest_execution_payload_block_number, "!new");
+        require(hash_tree_root(body) == IConsensusLayer(CONSENSUS_LAYER).body_root(), "!body");
+        latest_execution_payload_state_root = state_root;
+        latest_execution_payload_block_number = new_block_number;
+        emit LatestExecutionPayloadImported(new_block_number, state_root);
+    }
+
+    /// @dev follow beacon api: /eth/v2/beacon/blocks/{block_id}
+    function import_block_body_capella(BeaconBlockBodyCapella calldata body) external {
+        require(is_capella(), "!capella");
         bytes32 state_root = body.execution_payload.state_root;
         uint256 new_block_number = body.execution_payload.block_number;
         require(new_block_number > latest_execution_payload_block_number, "!new");

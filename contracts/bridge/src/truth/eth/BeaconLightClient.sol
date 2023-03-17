@@ -129,6 +129,12 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         return finalized_header.body_root;
     }
 
+    /// @dev Return beacon light client finalized header's slot
+    /// @return slot
+    function slot() public view returns (uint64) {
+        return finalized_header.slot;
+    }
+
     /// @dev follow beacon api: /beacon/light_client/updates/?start_period={period}&count={count}
     function import_next_sync_committee(
         FinalizedHeaderUpdate calldata header_update,
@@ -302,8 +308,8 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         }
     }
 
-    function compute_sync_committee_period(uint64 slot) internal pure returns (uint64) {
-        return slot / SLOTS_PER_EPOCH / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
+    function compute_sync_committee_period(uint64 slot_) internal pure returns (uint64) {
+        return slot_ / SLOTS_PER_EPOCH / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
     }
 
     function sum(bytes32[2] memory x) internal pure returns (uint256) {
