@@ -40,7 +40,8 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, ERC
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
-    // only contract owner could transfer/mint SBT
+    // Only contract owner could transfer/mint SBT
+    // Error message is not friendly
     function _isApprovedOrOwner(address spender, uint256) internal view override returns (bool) {
         return spender == owner();
     }
