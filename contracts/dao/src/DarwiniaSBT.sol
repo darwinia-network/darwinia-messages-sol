@@ -39,7 +39,9 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnab
         _;
     }
 
-    constructor(address dao) ERC721("Darwinia DAO Profile", "DDP") {
+    constructor(address dao) ERC721("", "") {
+        _name = "Darwinia DAO Profile";
+        _symbol = "DDP";
         wards[dao] = 1;
         _transferOwnership(dao);
     }
