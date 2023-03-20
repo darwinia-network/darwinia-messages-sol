@@ -9,10 +9,16 @@ import "@openzeppelin/contracts@4.8.2/access/Ownable.sol";
 import "@openzeppelin/contracts@4.8.2/utils/Counters.sol";
 import "./IERC5192.sol";
 
-/// @dev Implementation of https://eips.ethereum.org/EIPS/eip-5192[ERC5192]
+/// @dev Implementation of https://eips.ethereum.org/EIPS/eip-5192[ERC5192] Minimal Soulbound NFTs
+/// and https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard including the Metadata extension
+/// Specification:
+/// 1. SBT tokens are non-transferable.
+/// 2. Assume at extreme condition (lost private key), community multisig (contract owner) can transfer the token to the new wallet.
+/// 3. SBT Tokens are sequentially minted starting at 0 (e.g. 0, 1, 2, 3..).
+/// 4. The maximum token id cannot exceed 2**256 - 1 (max value of uint256).
+/// 5. Metadata and image are pinned to ipfs.
+/// 6. Token metadata are changeable by contract owner.
 /// @custom:security-contact security@darwinia.network
-/// Spec:
-/// 1. 
 contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, Ownable, IERC5192 {
     using Counters for Counters.Counter;
 
