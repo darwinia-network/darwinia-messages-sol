@@ -22,7 +22,9 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, ERC
         _;
     }
 
-    constructor(address dao) ERC721("Darwinia DAO Profile", "DDP") {}
+    constructor(address dao) ERC721("Darwinia DAO Profile", "DDP") {
+        wards[_msgSender()] = 1;
+    }
 
     function safeMint(address to, string memory uri) public auth {
         uint256 tokenId = _tokenIdCounter.current();
