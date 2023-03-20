@@ -1,3 +1,5 @@
+// Verified by Darwinia Network
+
 // hevm: flattened sources of src/DarwiniaSBT.sol
 // SPDX-License-Identifier: MIT AND CC0-1.0
 pragma solidity =0.8.17 >=0.8.0 <0.9.0 >=0.8.1 <0.9.0;
@@ -1924,7 +1926,9 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnab
         _;
     }
 
-    constructor(address dao) ERC721("Darwinia DAO Profile", "DDP") {
+    constructor(address dao) ERC721("", "") {
+        _name = "Darwinia DAO Profile";
+        _symbol = "DDP";
         wards[dao] = 1;
         _transferOwnership(dao);
     }
@@ -2009,4 +2013,3 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnab
         return interfaceId == type(IERC5192).interfaceId || super.supportsInterface(interfaceId);
     }
 }
-
