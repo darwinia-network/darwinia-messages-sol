@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts@4.8.2/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts@4.8.2/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts@4.8.2/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts@4.8.2/access/Ownable.sol";
+import "@openzeppelin/contracts@4.8.2/token/ERC721/extensions/ERC721Burnable.sol";
+import "@openzeppelin/contracts@4.8.2/utils/Counters.sol";
 
 /// @custom:security-contact security@darwinia.network
 contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, ERC721Burnable {
@@ -22,7 +22,7 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, ERC
         _;
     }
 
-    constructor(address dao) ERC721("Darwinia DAO Profile", "DDP") {
+    constructor() ERC721("Darwinia DAO Profile", "DDP") {
         wards[_msgSender()] = 1;
     }
 
@@ -41,7 +41,7 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, ERC
     }
 
     // only contract owner could transfer/mint SBT
-    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view override returns (bool) {
+    function _isApprovedOrOwner(address spender, uint256) internal view override returns (bool) {
         return spender == owner();
     }
 
