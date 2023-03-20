@@ -1,0 +1,24 @@
+{
+  "name": "Darwinia DAO Profile #0",
+  "description": "Friendly OpenSea Creature that enjoys long swims in the ocean.",
+  "image": "ipfs://....",
+  "external_url": "https://....",
+  "attributes": [
+    {
+      "trait_type": "Version",
+      "value": "0"
+    },
+    {
+      "trait_type": "Nickname",
+      "value": "..."
+    },
+    {
+      "trait_type": "Role",
+      "value": "..."
+    },
+    {
+      "trait_type": "Saying",
+      "value": "..."
+    }
+  ]
+}
