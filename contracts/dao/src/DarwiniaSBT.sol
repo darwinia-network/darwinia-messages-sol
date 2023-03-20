@@ -74,7 +74,16 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnab
 
     // Only contract owner could transfer/burn SBT
     function _isApprovedOrOwner(address spender, uint256) internal view override returns (bool) {
-        if(spender != owner()) revert ErrLocked;
+        if(spender != owner()) revert ErrLocked();
+        return true;
+    }
+
+    function approve(address, uint256) public pure override(IERC721, ERC721) {
+        revert ErrLocked();
+    }
+
+    function setApprovalForAll(address, bool) public pure override(IERC721, ERC721) {
+        revert ErrLocked();
     }
 
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
