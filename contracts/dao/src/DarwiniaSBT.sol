@@ -7,16 +7,22 @@ import "@openzeppelin/contracts@4.8.2/token/ERC721/extensions/ERC721Enumerable.s
 import "@openzeppelin/contracts@4.8.2/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts@4.8.2/access/Ownable.sol";
 import "@openzeppelin/contracts@4.8.2/utils/Counters.sol";
+import "./IERC5192.sol";
 
+/// @dev Implementation of https://eips.ethereum.org/EIPS/eip-5192[ERC5192]
 /// @custom:security-contact security@darwinia.network
 /// Spec:
 /// 1. 
-contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, Ownable {
+contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, Ownable, IERC5192 {
     using Counters for Counters.Counter;
+
+    error ErrLocked();
 
     string private _name;
     string private _symbol;
     Counters.Counter private _tokenIdCounter;
+
+    bool private constant LOCKED = true;
 
     // --- Auth ---
     mapping (address => uint) public wards;
@@ -36,6 +42,7 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnab
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
+        emit Locked(tokenId);
     }
 
     function setTokenURI(uint256 tokenId, string memory uri) public onlyOwner {
@@ -88,12 +95,17 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnab
         return super.tokenURI(tokenId);
     }
 
+    function locked(uint256 tokenId) external view returns (bool) {
+        _requireMinted(tokenId);
+        return LOCKED;
+    }
+
     function supportsInterface(bytes4 interfaceId)
         public
         view
         override(ERC721, ERC721Enumerable)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return interfaceId == type(IERC5192).interfaceId || super.supportsInterface(interfaceId);
     }
 }
