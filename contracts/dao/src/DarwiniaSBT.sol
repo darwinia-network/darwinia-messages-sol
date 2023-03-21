@@ -87,12 +87,14 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnab
         return true;
     }
 
-    function approve(address, uint256) public pure override(IERC721, ERC721) {
+    function approve(address to, uint256 tokenId) public override(IERC721, ERC721) {
         revert ErrLocked();
+        super.approve(to, tokenId);
     }
 
-    function setApprovalForAll(address, bool) public pure override(IERC721, ERC721) {
+    function setApprovalForAll(address operator, bool approved) public override(IERC721, ERC721) {
         revert ErrLocked();
+        super.setApprovalForAll(operator, approved);
     }
 
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
