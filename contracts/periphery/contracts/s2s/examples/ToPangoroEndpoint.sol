@@ -15,32 +15,18 @@ contract ToPangoroEndpoint is MessageEndpoint(0x726f6c69, 0x726f6c69) {
         remoteSmartChainId = 45;
     }
 
-    function _canBeExecuted(address, bytes calldata)
-        internal
-        pure
-        override
-        returns (bool)
-    {
+    function _canBeExecuted(
+        address,
+        bytes calldata
+    ) internal pure override returns (bool) {
         return true;
     }
 
-    function setRemoteEndpoint(bytes4 _remoteChainId, address _remoteEndpoint)
-        external
-    {
+    function setRemoteEndpoint(
+        bytes4 _remoteChainId,
+        address _remoteEndpoint
+    ) external {
         _setRemoteEndpoint(_remoteChainId, _remoteEndpoint);
-    }
-
-    function remoteDispatch(
-        uint32 pangoroSpecVersion,
-        bytes memory pangoroCallEncoded,
-        uint64 pangoroCallWeight
-    ) external payable returns (uint256) {
-        return
-            _remoteDispatch(
-                pangoroSpecVersion,
-                pangoroCallEncoded,
-                pangoroCallWeight
-            );
     }
 
     function remoteExecute(
@@ -68,15 +54,15 @@ contract ToPangoroEndpoint is MessageEndpoint(0x726f6c69, 0x726f6c69) {
         _setSendMessageCallIndex(_sendMessageCallIndex);
     }
 
-    function setStorageKeyForMarketFee(bytes32 _storageKeyForMarketFee)
-        external
-    {
+    function setStorageKeyForMarketFee(
+        bytes32 _storageKeyForMarketFee
+    ) external {
         _setStorageKeyForMarketFee(_storageKeyForMarketFee);
     }
 
-    function setStorageKeyForLatestNonce(bytes32 _storageKeyForLatestNonce)
-        external
-    {
+    function setStorageKeyForLatestNonce(
+        bytes32 _storageKeyForLatestNonce
+    ) external {
         _setStorageKeyForLatestNonce(_storageKeyForLatestNonce);
     }
 

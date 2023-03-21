@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-// On Pangolin
+// On Pangoro
 contract Callee {
     uint256 public sum;
 
