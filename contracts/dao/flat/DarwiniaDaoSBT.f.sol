@@ -1,3 +1,5 @@
+// Verified by Darwinia Network
+
 // hevm: flattened sources of src/DarwiniaDaoSBT.sol
 // SPDX-License-Identifier: MIT AND CC0-1.0
 pragma solidity =0.8.17 >=0.8.0 <0.9.0 >=0.8.1 <0.9.0;
@@ -1996,4 +1998,3 @@ contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Bur
         return interfaceId == type(IERC5192).interfaceId || super.supportsInterface(interfaceId);
     }
 }
-
