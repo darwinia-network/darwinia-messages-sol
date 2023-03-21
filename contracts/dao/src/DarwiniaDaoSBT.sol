@@ -26,7 +26,8 @@ contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Bur
     error ErrLocked();
 
     Counters.Counter private _tokenIdCounter;
-    string private _base;
+    string private _contractURI;
+    string private _base_uri;
 
     bool private constant LOCKED = true;
 
@@ -44,8 +45,8 @@ contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Bur
         _transferOwnership(dao);
     }
 
-    function setBaseURI(string calldata newBase) external auth {
-        _base = newBase;
+    function setBaseURI(string calldata newBaseURI) external auth {
+        _base_uri = newBaseURI;
         uint256 toTokenId = totalSupply() - 1;
         emit BatchMetadataUpdate(0, toTokenId);
     }
@@ -58,6 +59,14 @@ contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Bur
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
         emit Locked(tokenId);
+    }
+
+    function contractURI() public view returns (string memory) {
+        return _contractURI;
+    }
+
+    function setContractURI(string calldata newContractURI) external onlyOwner {
+        _contractURI = newContractURI;
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
@@ -88,7 +97,7 @@ contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Bur
     }
 
     function _baseURI() internal view override returns (string memory) {
-        return _base;
+        return _base_uri;
     }
 
     function tokenURI(uint256 tokenId)
