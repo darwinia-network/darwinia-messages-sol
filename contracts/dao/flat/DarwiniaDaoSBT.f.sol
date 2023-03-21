@@ -1,5 +1,3 @@
-// Verified by Darwinia Network
-
 // hevm: flattened sources of src/DarwiniaDaoSBT.sol
 // SPDX-License-Identifier: MIT AND CC0-1.0
 pragma solidity =0.8.17 >=0.8.0 <0.9.0 >=0.8.1 <0.9.0;
@@ -1864,6 +1862,22 @@ library Counters {
     }
 }
 
+////// src/IERC4906.sol
+/* pragma solidity ^0.8.0; */
+
+/// @title EIP-721 Metadata Update Extension
+interface IERC4906 {
+    /// @dev This event emits when the metadata of a token is changed.
+    /// So that the third-party platforms such as NFT market could
+    /// timely update the images and related attributes of the NFT.
+    event MetadataUpdate(uint256 _tokenId);
+
+    /// @dev This event emits when the metadata of a range of tokens is changed.
+    /// So that the third-party platforms such as NFT market could
+    /// timely update the images and related attributes of the NFTs.
+    event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
+}
+
 ////// src/IERC5192.sol
 /* pragma solidity ^0.8.0; */
 
@@ -1894,6 +1908,7 @@ interface IERC5192 {
 /* import "@openzeppelin/contracts@4.8.2/token/ERC721/extensions/ERC721URIStorage.sol"; */
 /* import "@openzeppelin/contracts@4.8.2/access/Ownable.sol"; */
 /* import "@openzeppelin/contracts@4.8.2/utils/Counters.sol"; */
+/* import "./IERC4906.sol"; */
 /* import "./IERC5192.sol"; */
 
 /// @dev Implementation of https://eips.ethereum.org/EIPS/eip-5192[ERC5192] Minimal Soulbound NFTs
@@ -1906,7 +1921,7 @@ interface IERC5192 {
 /// 5. Metadata and image are pinned to ipfs.
 /// 6. Token uri metadata are changeable by contract owner.
 /// @custom:security-contact security@darwinia.network
-contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, Ownable, IERC5192 {
+contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, Ownable, IERC4906, IERC5192 {
     using Counters for Counters.Counter;
 
     error ErrLocked();
@@ -1932,6 +1947,8 @@ contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Bur
 
     function setBaseURI(string calldata newBase) external auth {
         _base = newBase;
+        uint256 toTokenId = totalSupply() - 1;
+        emit BatchMetadataUpdate(0, toTokenId);
     }
 
     // uid: bytes32
@@ -1995,6 +2012,9 @@ contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Bur
         override(ERC721, ERC721Enumerable)
         returns (bool)
     {
-        return interfaceId == type(IERC5192).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(IERC4906).interfaceId ||
+               interfaceId == type(IERC5192).interfaceId ||
+               super.supportsInterface(interfaceId);
     }
 }
+

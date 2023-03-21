@@ -7,6 +7,7 @@ import "@openzeppelin/contracts@4.8.2/token/ERC721/extensions/ERC721Enumerable.s
 import "@openzeppelin/contracts@4.8.2/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts@4.8.2/access/Ownable.sol";
 import "@openzeppelin/contracts@4.8.2/utils/Counters.sol";
+import "./IERC4906.sol";
 import "./IERC5192.sol";
 
 /// @dev Implementation of https://eips.ethereum.org/EIPS/eip-5192[ERC5192] Minimal Soulbound NFTs
@@ -19,7 +20,7 @@ import "./IERC5192.sol";
 /// 5. Metadata and image are pinned to ipfs.
 /// 6. Token uri metadata are changeable by contract owner.
 /// @custom:security-contact security@darwinia.network
-contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, Ownable, IERC5192 {
+contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, Ownable, IERC4906, IERC5192 {
     using Counters for Counters.Counter;
 
     error ErrLocked();
@@ -45,6 +46,8 @@ contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Bur
 
     function setBaseURI(string calldata newBase) external auth {
         _base = newBase;
+        uint256 toTokenId = totalSupply() - 1;
+        emit BatchMetadataUpdate(0, toTokenId);
     }
 
     // uid: bytes32
@@ -108,6 +111,8 @@ contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Bur
         override(ERC721, ERC721Enumerable)
         returns (bool)
     {
-        return interfaceId == type(IERC5192).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(IERC4906).interfaceId ||
+               interfaceId == type(IERC5192).interfaceId ||
+               super.supportsInterface(interfaceId);
     }
 }
