@@ -13,13 +13,22 @@ import "./DarwiniaLib.sol";
 contract DarwiniaEndpoint is ICrossChainFilter {
     address public constant DISPATCH =
         0x0000000000000000000000000000000000000401;
-    bytes2 public immutable send = 0x2100;
-    bytes2 public immutable fromParachain = 0xe520;
+    bytes2 public immutable SEND_CALL_INDEX;
+    bytes2 public immutable FROM_PARACHAIN;
+    address public immutable TO_ETHEREUM_OUTBOUND_LANE;
+    address public immutable TO_ETHEREUM_FEE_MARKET;
 
-    address public constant TO_ETHEREUM_OUTBOUND_LANE =
-        0xbA6c0608f68fA12600382Cd4D964DF9f090AA5B5;
-    address public constant TO_ETHEREUM_FEE_MARKET =
-        0x3553b673A47E66482b6eCFAE5bfc090Cc7eeEd27;
+    constructor(
+        bytes2 _sendCallIndex,
+        bytes2 _fromParachain,
+        address _toEthereumOutboundLane,
+        address _toEthereumFeeMarket
+    ) {
+        SEND_CALL_INDEX = _sendCallIndex;
+        FROM_PARACHAIN = _fromParachain;
+        TO_ETHEREUM_OUTBOUND_LANE = _toEthereumOutboundLane;
+        TO_ETHEREUM_FEE_MARKET = _toEthereumFeeMarket;
+    }
 
     function dispatchOnParachain(
         bytes2 paraId,
@@ -59,13 +68,13 @@ contract DarwiniaEndpoint is ICrossChainFilter {
         (bool success, bytes memory data) = DISPATCH.call(
             abi.encodePacked(
                 // call index
-                send,
+                SEND_CALL_INDEX,
                 // dest: V2(01, X1(Parachain(ParaId)))
                 hex"00010100",
                 toParachain,
                 // message
                 DarwiniaLib.xcmTransactOnParachain(
-                    fromParachain,
+                    FROM_PARACHAIN,
                     call,
                     weight //  TODO: fix
                 )

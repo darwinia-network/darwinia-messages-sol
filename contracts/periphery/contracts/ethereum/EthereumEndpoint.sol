@@ -6,13 +6,19 @@ import "../interfaces/IOutboundLane.sol";
 import "../interfaces/IFeeMarket.sol";
 
 contract EthereumEndpoint {
-    address public constant TO_DARWINIA_OUTBOUND_LANE =
-        0x5a10ca57e07133AA5132eF29BA1EBf0096a302B0;
-    address public constant TO_DARWINIA_FEE_MARKET =
-        0xA10D0C6e04845A5e998d1936249A30563c553417;
+    address public immutable TO_DARWINIA_OUTBOUND_LANE;
+    address public immutable TO_DARWINIA_FEE_MARKET;
+    address public immutable DARWINIA_ENDPOINT;
 
-    address public constant DARWINIA_ENDPOINT =
-        0x5a10ca57e07133AA5132eF29BA1EBf0096a302B0;
+    constructor(
+        address _toDarwiniaOutboundLane,
+        address _toDarwiniaFeeMarket,
+        address _darwiniaEndpoint
+    ) {
+        TO_DARWINIA_OUTBOUND_LANE = _toDarwiniaOutboundLane;
+        TO_DARWINIA_FEE_MARKET = _toDarwiniaFeeMarket;
+        DARWINIA_ENDPOINT = _darwiniaEndpoint;
+    }
 
     // Ethereum > Darwinia > Parachain
     // dispatch a call on parachain
