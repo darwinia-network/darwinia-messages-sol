@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require('hardhat-abi-exporter');
 require("hardhat-gas-reporter");
+require("hardhat-change-network");
 
 require('dotenv').config({ path: '../../.env' })
 
@@ -84,7 +85,7 @@ module.exports = {
       gasPrice: 53100000000
     },
     pangolin: {
-      url: 'http://g2.dev.darwinia.network:8888',
+      url: 'https://pangolin-rpc.darwinia.network',
       network_id: "43",
       accounts: [PRIVATE_KEY],
       gas: 3_000_000,

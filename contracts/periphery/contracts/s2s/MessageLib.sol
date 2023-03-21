@@ -10,7 +10,7 @@ import "./interfaces/IStateStorage.sol";
 import "./types/CommonTypes.sol";
 import "./types/PalletBridgeMessages.sol";
 
-library SmartChainXLib {
+library MessageLib {
     bytes public constant ACCOUNT_DERIVATION_PREFIX =
         "pallet-bridge/account-derivation/account";
 
@@ -24,7 +24,7 @@ library SmartChainXLib {
         bytes memory _message
     ) internal {
         // the fee precision in the contracts is 18, but on chain is 9, transform the fee amount.
-        uint256 feeOfPalletPrecision = _deliveryAndDispatchFee / (10**9);
+        uint256 feeOfPalletPrecision = _deliveryAndDispatchFee / (10 ** 9);
 
         // encode send_message call
         PalletBridgeMessages.SendMessageCall
@@ -94,7 +94,7 @@ library SmartChainXLib {
         CommonTypes.Relayer memory relayer = CommonTypes.getLastRelayerFromVec(
             data
         );
-        return relayer.fee * 10**9;
+        return relayer.fee * 10 ** 9;
     }
 
     // Get the latest nonce from state storage
@@ -126,11 +126,10 @@ library SmartChainXLib {
         return outboundLaneData.latestGeneratedNonce;
     }
 
-    function deriveAccountId(bytes4 _srcChainId, bytes32 _accountId)
-        internal
-        view
-        returns (bytes32)
-    {
+    function deriveAccountId(
+        bytes4 _srcChainId,
+        bytes32 _accountId
+    ) internal view returns (bytes32) {
         bytes memory data = abi.encodePacked(
             bytes1(0xa0), // compact length of ACCOUNT_DERIVATION_PREFIX
             ACCOUNT_DERIVATION_PREFIX,
@@ -171,7 +170,7 @@ library SmartChainXLib {
     }
 
     // derive an address from remote sender address (sender on the source chain).
-    //   
+    //
     // H160          =>          AccountId32        =>        derived AccountId32       =>       H160
     //   |------ e2s addr mapping ----||---- crosschain derive -------||---- s2e addr mapping -----|
     //   |-------- on source ---------||------------------------ on target ------------------------|
