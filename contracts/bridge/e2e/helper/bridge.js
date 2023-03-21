@@ -74,7 +74,6 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
   const laneMessageProof = await get_storage_proof(client, addr, keys, block_number)
   const proof = {
     "accountProof": laneIdProof.accountProof,
-    "laneIDProof": laneIdProof.storageProof[0].proof,
     "laneNonceProof": laneNonceProof.storageProof[0].proof,
     "laneMessagesProof": laneMessageProof.storageProof.map((p) => p.proof),
   }
