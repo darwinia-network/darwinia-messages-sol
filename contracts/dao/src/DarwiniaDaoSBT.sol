@@ -17,16 +17,15 @@ import "./IERC5192.sol";
 /// 3. SBT Tokens are sequentially minted starting at 0 (e.g. 0, 1, 2, 3..).
 /// 4. The maximum token id cannot exceed 2**256 - 1 (max value of uint256).
 /// 5. Metadata and image are pinned to ipfs.
-/// 6. Token metadata are changeable by contract owner.
+/// 6. Token uri metadata are changeable by contract owner.
 /// @custom:security-contact security@darwinia.network
-contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, Ownable, IERC5192 {
+contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, Ownable, IERC5192 {
     using Counters for Counters.Counter;
 
     error ErrLocked();
 
-    string private _name;
-    string private _symbol;
     Counters.Counter private _tokenIdCounter;
+    string private _base;
 
     bool private constant LOCKED = true;
 
@@ -35,43 +34,27 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnab
     function rely(address guy) external onlyOwner { wards[guy] = 1; }
     function deny(address guy) external onlyOwner { wards[guy] = 0; }
     modifier auth {
-        require(wards[msg.sender] == 1, "DDP/not-authorized");
+        require(wards[_msgSender()] == 1, "DDP/not-authorized");
         _;
     }
 
-    constructor(address dao) ERC721("", "") {
-        _name = "Darwinia DAO Profile";
-        _symbol = "DDP";
+    constructor(address dao) ERC721("Darwinia DAO Profile", "DDP") {
         wards[dao] = 1;
         _transferOwnership(dao);
     }
 
+    function setBaseURI(string calldata newBase) external auth {
+        _base = newBase;
+    }
+
+    // uid: bytes32
+    // ipfs://dir_cid/{uri=uid}
     function safeMint(address to, string memory uri) public auth {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
         emit Locked(tokenId);
-    }
-
-    function setTokenURI(uint256 tokenId, string memory uri) public onlyOwner {
-        _setTokenURI(tokenId, uri);
-    }
-
-    function name() public view override returns (string memory) {
-        return _name;
-    }
-
-    function symbol() public view override returns (string memory) {
-        return _symbol;
-    }
-
-    function setName(string calldata newName) external onlyOwner {
-        _name = newName;
-    }
-
-    function setSymbol(string calldata newSymbol) external onlyOwner {
-        _symbol = newSymbol;
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
@@ -101,8 +84,8 @@ contract DarwiniaSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnab
         super._burn(tokenId);
     }
 
-    function _baseURI() internal pure override returns (string memory) {
-        return "ipfs://";
+    function _baseURI() internal view override returns (string memory) {
+        return _base;
     }
 
     function tokenURI(uint256 tokenId)
