@@ -23,16 +23,13 @@ library MessageLib {
         uint256 _deliveryAndDispatchFee,
         bytes memory _message
     ) internal {
-        // the fee precision in the contracts is 18, but on chain is 9, transform the fee amount.
-        uint256 feeOfPalletPrecision = _deliveryAndDispatchFee / (10 ** 9);
-
         // encode send_message call
         PalletBridgeMessages.SendMessageCall
             memory sendMessageCall = PalletBridgeMessages.SendMessageCall(
                 _callIndex,
                 _laneId,
                 _message,
-                uint128(feeOfPalletPrecision)
+                uint128(_deliveryAndDispatchFee)
             );
 
         bytes memory sendMessageCallEncoded = PalletBridgeMessages
@@ -59,7 +56,7 @@ library MessageLib {
         CommonTypes.EnumItemWithAccountId memory origin = CommonTypes
             .EnumItemWithAccountId(
                 2, // CallOrigin::SourceAccount
-                AccountId.deriveSubstrateAddress(address(this)) // UserApp contract address
+                address(this) // UserApp contract address
             );
 
         // enum DispatchFeePayment
@@ -72,7 +69,8 @@ library MessageLib {
             CommonTypes.encodeMessage(
                 CommonTypes.Message(
                     _specVersion,
-                    _weight,
+                    0,
+                    0,
                     origin,
                     dispatchFeePayment,
                     _call
@@ -84,7 +82,7 @@ library MessageLib {
     function marketFee(
         address _srcStoragePrecompileAddress,
         bytes32 _storageKey
-    ) internal view returns (uint256) {
+    ) internal view returns (uint128) {
         bytes memory data = getStateStorage(
             _srcStoragePrecompileAddress,
             abi.encodePacked(_storageKey),
@@ -94,7 +92,7 @@ library MessageLib {
         CommonTypes.Relayer memory relayer = CommonTypes.getLastRelayerFromVec(
             data
         );
-        return relayer.fee * 10 ** 9;
+        return relayer.fee;
     }
 
     // Get the latest nonce from state storage
@@ -156,12 +154,15 @@ library MessageLib {
         }
     }
 
+    event DispatchCall(bytes);
+
     // dispatch pallet dispatch-call
     function dispatch(
         address _srcDispatchPrecompileAddress,
         bytes memory _callEncoded,
         string memory _errMsg
     ) internal {
+        emit DispatchCall(_callEncoded);
         // Dispatch the call
         (bool success, bytes memory data) = _srcDispatchPrecompileAddress.call(
             _callEncoded
@@ -169,19 +170,7 @@ library MessageLib {
         revertIfFailed(success, data, _errMsg);
     }
 
-    // derive an address from remote sender address (sender on the source chain).
-    //
-    // H160          =>          AccountId32        =>        derived AccountId32       =>       H160
-    //   |------ e2s addr mapping ----||---- crosschain derive -------||---- s2e addr mapping -----|
-    //   |-------- on source ---------||------------------------ on target ------------------------|
-    //
-    // e2s addr mapping: `EVM H160 address` mapping to `Substrate AccountId32 address`.
-    // s2e addr mapping: `Substrate AccountId32 address` mapping to `EVM H160 address`.
-    // https://github.com/darwinia-network/darwinia/wiki/Darwinia-Address-Format-Overview
-    //
-    // crosschain derive: generate the address on the target chain based on the address of the source chain.
-    // https://github.com/darwinia-network/darwinia-messages-substrate/blob/c3f10155a2650850ffa8998e5f98617e1aded55a/primitives/runtime/src/lib.rs#L107
-    function deriveSenderFromRemote(
+    function deriveSender(
         bytes4 _srcChainId,
         address _srcMessageSender
     ) internal view returns (address) {
