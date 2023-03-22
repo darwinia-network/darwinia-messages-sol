@@ -20,7 +20,7 @@ import "./IERC5192.sol";
 /// 5. Metadata and image are pinned to ipfs.
 /// 6. Token uri metadata are changeable by contract owner.
 /// @custom:security-contact security@darwinia.network
-contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, Ownable, IERC4906, IERC5192 {
+contract DarwiniaCommunityDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, Ownable, IERC4906, IERC5192 {
     using Counters for Counters.Counter;
 
     error ErrLocked();
@@ -40,7 +40,7 @@ contract DarwiniaDaoSBT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Bur
         _;
     }
 
-    constructor(address dao) ERC721("Darwinia DAO Profile", "DDP") {
+    constructor(address dao) ERC721("Darwinia Community DAO Profile", "DCDP") {
         wards[dao] = 1;
         _transferOwnership(dao);
     }
