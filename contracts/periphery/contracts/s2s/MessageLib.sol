@@ -16,6 +16,7 @@ library MessageLib {
 
     // Send message over lane by calling the `send_message` dispatch call on
     // the source chain which is identified by the `callIndex` param.
+    // Note: `XxxMessages`.`send_message`, the origin must equals to the origin in the message
     function sendMessage(
         address _srcDispatchPrecompileAddress,
         bytes2 _callIndex,
@@ -156,7 +157,7 @@ library MessageLib {
 
     event DispatchCall(bytes);
 
-    // dispatch pallet dispatch-call
+    // Dispatch pallet dispatch-call
     function dispatch(
         address _srcDispatchPrecompileAddress,
         bytes memory _callEncoded,

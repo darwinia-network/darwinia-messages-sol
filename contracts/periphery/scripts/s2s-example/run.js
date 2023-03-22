@@ -3,14 +3,18 @@ const hre = require("hardhat");
 
 // Dapp `Caller` on Pangolin will call `Callee` on Pangoro
 async function main() {
+    const callerAddress = process.argv[2];
+    const calleeAddress = process.argv[3];
     const Caller = await hre.ethers.getContractFactory("Caller");
-    const caller = Caller.attach("0xA78aBD4CDAbCAf1A3Ae3F9105195E2c05810EE6E");
+    const caller = Caller.attach(callerAddress);
 
-    const calleeAddress = "0xf6B8A7C7B82E3Bb3551393931d71987908bF486f";
+    const PangolinEndpoint = await hre.ethers.getContractFactory("PangolinEndpoint");
+    const pangolinEndpoint = PangolinEndpoint.attach(await caller.endpointAddress());
+    const fee = pangolinEndpoint.fee();
     const tx = await caller.remoteAdd(
         calleeAddress,
         {
-            value: hre.ethers.utils.parseEther("0.1")
+            value: fee
         }
     )
     console.log(`tx: ${(await tx.wait()).transactionHash}`)
