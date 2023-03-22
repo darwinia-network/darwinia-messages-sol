@@ -46,7 +46,7 @@ abstract contract MessageEndpoint {
     ///////////////////////////////
     // Outbound
     ///////////////////////////////
-    function fee() public view returns (uint256) {
+    function fee() public view returns (uint128) {
         return MessageLib.marketFee(STORAGE_ADDRESS, storageKeyForMarketFee);
     }
 
@@ -88,6 +88,7 @@ abstract contract MessageEndpoint {
         bytes memory callEncoded = PalletEthereum.encodeMessageTransactCall(
             call
         );
+
         uint64 weight = uint64(gasLimit * REMOTE_WEIGHT_PER_GAS);
 
         return _remoteDispatch(tgtSpecVersion, callEncoded, weight);
@@ -122,6 +123,10 @@ abstract contract MessageEndpoint {
         );
 
         return encodeMessageId(OUTBOUND_LANE_ID, nonce);
+    }
+
+    function _dispatch(bytes memory call) public {
+        MessageLib.dispatch(DISPATCH_ADDRESS, call, "!dispatch");
     }
 
     ///////////////////////////////
@@ -201,7 +206,7 @@ abstract contract MessageEndpoint {
         address _remoteEndpoint
     ) internal {
         remoteEndpoint = _remoteEndpoint;
-        derivedMessageSender = MessageLib.deriveSenderFromRemote(
+        derivedMessageSender = MessageLib.deriveSender(
             _remoteChainId,
             _remoteEndpoint
         );
