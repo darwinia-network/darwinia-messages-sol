@@ -10,26 +10,28 @@ import "../s2s/types/PalletEthereumXcm.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "./DarwiniaLib.sol";
 
-contract DarwiniaEndpoint is ICrossChainFilter {
+abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
     address public constant DISPATCH =
         0x0000000000000000000000000000000000000401;
     bytes2 public immutable SEND_CALL_INDEX;
-    bytes2 public immutable FROM_PARACHAIN;
+    bytes2 public immutable DARWINIA_PARAID;
     address public immutable TO_ETHEREUM_OUTBOUND_LANE;
     address public immutable TO_ETHEREUM_FEE_MARKET;
 
     constructor(
         bytes2 _sendCallIndex,
-        bytes2 _fromParachain,
+        bytes2 _darwiniaParaId,
         address _toEthereumOutboundLane,
         address _toEthereumFeeMarket
     ) {
         SEND_CALL_INDEX = _sendCallIndex;
-        FROM_PARACHAIN = _fromParachain;
+        DARWINIA_PARAID = _darwiniaParaId;
         TO_ETHEREUM_OUTBOUND_LANE = _toEthereumOutboundLane;
         TO_ETHEREUM_FEE_MARKET = _toEthereumFeeMarket;
     }
 
+    // Call by ethereum dapp.
+    // ethereum > darwinia > parachain
     function dispatchOnParachain(
         bytes2 paraId,
         bytes memory dispatchCall,
@@ -38,6 +40,8 @@ contract DarwiniaEndpoint is ICrossChainFilter {
         transactThroughSigned(paraId, dispatchCall, weight);
     }
 
+    // Call by parachain dapp.
+    // parachain > darwinia > ethereum
     function executeOnEthereum(
         address target,
         bytes memory call
@@ -46,15 +50,6 @@ contract DarwiniaEndpoint is ICrossChainFilter {
             IOutboundLane(TO_ETHEREUM_OUTBOUND_LANE).send_message{
                 value: IFeeMarket(TO_ETHEREUM_FEE_MARKET).market_fee()
             }(target, call);
-    }
-
-    function cross_chain_filter(
-        uint32 bridgedChainPosition,
-        uint32 bridgedLanePosition,
-        address sourceAccount,
-        bytes calldata payload
-    ) external view returns (bool) {
-        return true;
     }
 
     /////////////////////////////////////////////
@@ -74,7 +69,7 @@ contract DarwiniaEndpoint is ICrossChainFilter {
                 toParachain,
                 // message
                 DarwiniaLib.xcmTransactOnParachain(
-                    FROM_PARACHAIN,
+                    DARWINIA_PARAID,
                     call,
                     weight //  TODO: fix
                 )

@@ -4,26 +4,22 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IOutboundLane.sol";
 import "../interfaces/IFeeMarket.sol";
+import "../interfaces/ICrossChainFilter.sol";
 
-contract EthereumEndpoint {
+abstract contract AbstractEthereumEndpoint is ICrossChainFilter {
     address public immutable TO_DARWINIA_OUTBOUND_LANE;
     address public immutable TO_DARWINIA_FEE_MARKET;
-    address public immutable DARWINIA_ENDPOINT;
+    address public darwiniaEndpoint;
 
-    constructor(
-        address _toDarwiniaOutboundLane,
-        address _toDarwiniaFeeMarket,
-        address _darwiniaEndpoint
-    ) {
+    constructor(address _toDarwiniaOutboundLane, address _toDarwiniaFeeMarket) {
         TO_DARWINIA_OUTBOUND_LANE = _toDarwiniaOutboundLane;
         TO_DARWINIA_FEE_MARKET = _toDarwiniaFeeMarket;
-        DARWINIA_ENDPOINT = _darwiniaEndpoint;
     }
 
-    // Ethereum > Darwinia > Parachain
-    // dispatch a call on parachain
+    // A helper function to call a dispatch_call on ethereum
+    // ethereum > darwinia > parachain
     //
-    // On Ethereum:
+    // Payment flow on ethereum:
     //   ENDUSER pay to DAPP,
     //      then DAPP pay to ENDPOINT,
     //        then ENDPOINT pay to OUTBOUNDLANE,
@@ -34,7 +30,7 @@ contract EthereumEndpoint {
         uint64 weight
     ) external payable returns (uint64 nonce) {
         return
-            executeOnDarwinia(
+            remoteExecute(
                 abi.encodeWithSignature(
                     "dispatchOnParachain(bytes2,bytes,uint64)",
                     paraId,
@@ -44,13 +40,18 @@ contract EthereumEndpoint {
             );
     }
 
-    // Ethereum > Darwinia
-    function executeOnDarwinia(
+    // Execute a darwinia endpoint function.
+    // ethereum > darwinia
+    function remoteExecute(
         bytes memory call
     ) public payable returns (uint64 nonce) {
         return
             IOutboundLane(TO_DARWINIA_OUTBOUND_LANE).send_message{
                 value: IFeeMarket(TO_DARWINIA_FEE_MARKET).market_fee()
-            }(DARWINIA_ENDPOINT, call);
+            }(darwiniaEndpoint, call);
+    }
+
+    function _setDarwiniaEndpoint(address _darwiniaEndpoint) internal {
+        darwiniaEndpoint = _darwiniaEndpoint;
     }
 }

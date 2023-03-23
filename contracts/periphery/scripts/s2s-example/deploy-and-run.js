@@ -6,7 +6,6 @@ async function main() {
     ////////////////////////////////////////
     // Deploy
     ////////////////////////////////////////
-
     // PANGORO
     // -------------
     hre.changeNetwork("pangoro");

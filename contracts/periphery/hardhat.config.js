@@ -5,9 +5,9 @@ require("hardhat-change-network");
 
 require('dotenv').config({ path: '../../.env' })
 
-const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL           || process.env.ALCHEMY_MAINNET_RPC_URL                                  || "https://mainnet.infura.io"
-const GOERLI_RPC_URL  = process.env.GOERLI_RPC_URL            || "https://goerli.infura.io"
-const PRIVATE_KEY     = process.env.PRIVATE_KEY               || "0x99b3c12287537e38c90a9219d4cb074a89a16e9cdb20bf85728ebd97c343e342"
+const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL || process.env.ALCHEMY_MAINNET_RPC_URL || "https://mainnet.infura.io"
+const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL || "https://goerli.infura.io"
+const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x99b3c12287537e38c90a9219d4cb074a89a16e9cdb20bf85728ebd97c343e342"
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -86,6 +86,13 @@ module.exports = {
     },
     pangolin: {
       url: 'https://pangolin-rpc.darwinia.network',
+      network_id: "43",
+      accounts: [PRIVATE_KEY],
+      gas: 3_000_000,
+      gasPrice: 63100000000
+    },
+    pangolinDev: {
+      url: 'http://g2.dev.darwinia.network:8888',
       network_id: "43",
       accounts: [PRIVATE_KEY],
       gas: 3_000_000,
