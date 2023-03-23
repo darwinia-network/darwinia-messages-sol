@@ -9,8 +9,8 @@ contract Pangolin2Endpoint is
     AbstractDarwiniaEndpoint(
         0x2100,
         0xe520,
-        0xbA6c0608f68fA12600382Cd4D964DF9f090AA5B5,
-        0x3553b673A47E66482b6eCFAE5bfc090Cc7eeEd27
+        0xd3686C9a2Ff3Fa3dc24E2ab157f58B2d567A295e,
+        0xE233a0E201219f792B878517e840903B8d62B9d3
     )
 {
     function cross_chain_filter(

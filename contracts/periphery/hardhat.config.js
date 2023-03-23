@@ -103,13 +103,12 @@ module.exports = {
       network_id: "44",
       accounts: [PRIVATE_KEY],
       gas: 3_000_000,
-      gasPrice: 53100000000
+      gasPrice: 53_100_000_000
     },
     goerli: {
       url: GOERLI_RPC_URL,
       network_id: "*",
       accounts: [PRIVATE_KEY],
-      gasPrice: 30 * 10 ** 9,
       timeout: 100000
     },
     mainnet: {

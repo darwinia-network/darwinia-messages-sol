@@ -8,7 +8,7 @@
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
     "clean": "shx rm -rf cache artifacts abi",
-    "flatten": "npx hardhat flatten"
+    "flatten": "npx hardhat flat"
   },
   "author": "Darwinia dev",
   "license": "MIT",

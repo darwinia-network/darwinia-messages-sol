@@ -14,10 +14,15 @@ contract DarwiniaLibTest is DSTest {
 
     function testXcmTransactOnParachain() public {
         bytes memory data = DarwiniaLib.xcmTransactOnParachain(
-            0xe520, // from
+            0xe520, // from parachain id, crab paraId: 0xe520 == 2105
             hex"0a070c313233", // call
-            6000000000 // weight
+            5000000000, // call weight
+            20000000000000000000 // fungible
         );
-        assertEq0(data, hex"020c000400010200e520040500130000e8890423c78a1300010200e520040500130000e8890423c78a0006010700bca06501180a070c313233");
+        console.logBytes(data);
+        assertEq0(
+            data,
+            hex"020c000400010200e520040500170000d01309468e15011300010200e520040500170000d01309468e15010006010700f2052a01180a070c313233"
+        );
     }
 }

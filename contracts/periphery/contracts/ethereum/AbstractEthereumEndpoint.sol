@@ -16,28 +16,8 @@ abstract contract AbstractEthereumEndpoint is ICrossChainFilter {
         TO_DARWINIA_FEE_MARKET = _toDarwiniaFeeMarket;
     }
 
-    // A helper function to call a dispatch_call on ethereum
-    // ethereum > darwinia > parachain
-    //
-    // Payment flow on ethereum:
-    //   ENDUSER pay to DAPP,
-    //      then DAPP pay to ENDPOINT,
-    //        then ENDPOINT pay to OUTBOUNDLANE,
-    //          then OUTBOUNDLANE pay to RELAYER
-    function dispatchOnParachain(
-        bytes2 paraId,
-        bytes memory paraCall,
-        uint64 weight
-    ) external payable returns (uint64 nonce) {
-        return
-            remoteExecute(
-                abi.encodeWithSignature(
-                    "dispatchOnParachain(bytes2,bytes,uint64)",
-                    paraId,
-                    paraCall,
-                    weight
-                )
-            );
+    function fee() public view returns (uint256) {
+        return IFeeMarket(TO_DARWINIA_FEE_MARKET).market_fee();
     }
 
     // Execute a darwinia endpoint function.
@@ -47,8 +27,28 @@ abstract contract AbstractEthereumEndpoint is ICrossChainFilter {
     ) public payable returns (uint64 nonce) {
         return
             IOutboundLane(TO_DARWINIA_OUTBOUND_LANE).send_message{
-                value: IFeeMarket(TO_DARWINIA_FEE_MARKET).market_fee()
+                value: msg.value
             }(darwiniaEndpoint, call);
+    }
+
+    // A helper to call a dispatch_call on ethereum
+    // ethereum > darwinia > parachain
+    function xcmTransactOnParachain(
+        bytes2 paraId,
+        bytes memory paraCall,
+        uint64 weight,
+        uint128 fungible
+    ) external payable returns (uint64 nonce) {
+        return
+            remoteExecute(
+                abi.encodeWithSignature(
+                    "xcmTransactOnParachain(bytes2,bytes,uint64,uint128)",
+                    paraId,
+                    paraCall,
+                    weight,
+                    fungible
+                )
+            );
     }
 
     function _setDarwiniaEndpoint(address _darwiniaEndpoint) internal {

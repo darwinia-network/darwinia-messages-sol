@@ -30,18 +30,8 @@ abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
         TO_ETHEREUM_FEE_MARKET = _toEthereumFeeMarket;
     }
 
-    // Call by ethereum dapp.
-    // ethereum > darwinia > parachain
-    function dispatchOnParachain(
-        bytes2 paraId,
-        bytes memory dispatchCall,
-        uint64 weight
-    ) external {
-        transactThroughSigned(paraId, dispatchCall, weight);
-    }
-
     // Call by parachain dapp.
-    // parachain > darwinia > ethereum
+    // Used in `parachain > darwinia > ethereum`
     function executeOnEthereum(
         address target,
         bytes memory call
@@ -52,26 +42,27 @@ abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
             }(target, call);
     }
 
-    /////////////////////////////////////////////
-    // INTERNAL FUNCTIONS
-    /////////////////////////////////////////////
-    function transactThroughSigned(
+    // Call by ethereum dapp.
+    // Used in `ethereum > darwinia > parachain`
+    function xcmTransactOnParachain(
         bytes2 toParachain,
         bytes memory call,
-        uint64 weight
-    ) internal {
+        uint64 weight,
+        uint128 fungible
+    ) external {
         (bool success, bytes memory data) = DISPATCH.call(
             abi.encodePacked(
-                // call index
+                // call index of `polkadotXcm.send`
                 SEND_CALL_INDEX,
                 // dest: V2(01, X1(Parachain(ParaId)))
                 hex"00010100",
                 toParachain,
                 // message
-                DarwiniaLib.xcmTransactOnParachain(
+                DarwiniaLib.buildXcmTransactMessage(
                     DARWINIA_PARAID,
                     call,
-                    weight //  TODO: fix
+                    weight,
+                    fungible
                 )
             )
         );

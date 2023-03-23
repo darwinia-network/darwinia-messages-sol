@@ -4,7 +4,7 @@ async function main() {
     ////////////////////////////////////////
     // Deploy
     ////////////////////////////////////////
-    // PANGOLIN
+    // PANGOLIN ENDPOINT
     // -------------
     hre.changeNetwork("pangolinDev");
     const Pangolin2Endpoint = await hre.ethers.getContractFactory("Pangolin2Endpoint");
@@ -14,29 +14,39 @@ async function main() {
         `Pangolin Endpoint: ${pangolin2Endpoint.address}`
     );
 
-    // GOERLI
+    // GOERLI ENDPOINT
     // -------------
     hre.changeNetwork("goerli");
     const GoerliEndpoint = await hre.ethers.getContractFactory("GoerliEndpoint");
-    const goerliEndpoint = await GoerliEndpoint.deploy(
-        "0x5a10ca57e07133AA5132eF29BA1EBf0096a302B0",
-        "0xA10D0C6e04845A5e998d1936249A30563c553417"
-    );
+    const goerliEndpoint = await GoerliEndpoint.deploy();
     await goerliEndpoint.deployed();
     console.log(
         `Goerli Endpoint: ${goerliEndpoint.address}`
     );
     await goerliEndpoint.setDarwiniaEndpoint(pangolin2Endpoint.address);
+    console.log(
+        `GoerliEndpoint knowns Pangolin2Endpoint.`
+    );
+
+    // Caller2
+    const Caller2 = await hre.ethers.getContractFactory("Caller2");
+    const caller2 = await Caller2.deploy(goerliEndpoint.address);
+    await caller2.deployed();
+    console.log(
+        `Caller: ${caller2.address}`
+    );
 
     ////////////////////////////////////////
     // Run
-    //////////////////////////////////////// 
-    const tx = await goerliEndpoint.dispatchOnParachain(
+    ////////////////////////////////////////
+    const fee = await goerliEndpoint.fee();
+    const tx = await caller2.remoteAdd(
         "0x591f", // dest paraid
         "0x0a070c313233", // calldata
-        6000000000, // weight
+        5000000000, // weight
+        20000000000000000000, // fungible
         {
-            value: hre.ethers.utils.parseEther("1") // should >= marketFee ?
+            value: fee // market fee to pangolin
         }
     )
 
