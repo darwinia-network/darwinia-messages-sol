@@ -11,7 +11,7 @@ contract PangolinEndpoint is MessageEndpoint(0x726f6c69, 0x726f6c69) {
         storageKeyForLatestNonce = 0xc9b76e645ba80b6ca47619d64cb5e58d96c246acb9b55077390e3ca723a0ca1f;
         storageKeyForLastDeliveredNonce = 0xc9b76e645ba80b6ca47619d64cb5e58de5f83cf83f2127eb47afdc35d6e43fab;
         sendMessageCallIndex = 0x2903;
-        remoteMessageTransactCallIndex = 0x2400;
+        remoteMessageTransactCallIndex = 0x2600;
         remoteSmartChainId = 45;
     }
 

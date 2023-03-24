@@ -70,7 +70,7 @@ library MessageLib {
             CommonTypes.encodeMessage(
                 CommonTypes.Message(
                     _specVersion,
-                    0,
+                    _weight,
                     0,
                     origin,
                     dispatchFeePayment,
