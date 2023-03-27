@@ -287,8 +287,8 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         return sum(sync_committee_bits) * 3 >= SYNC_COMMITTEE_SIZE * 2;
     }
 
-    function compute_sync_committee_period(uint64 slot) internal pure returns (uint64) {
-        return slot / SLOTS_PER_EPOCH / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
+    function compute_sync_committee_period(uint64 slot_) internal pure returns (uint64) {
+        return slot_ / SLOTS_PER_EPOCH / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
     }
 
     function sum(bytes32[2] memory x) internal pure returns (uint256) {
