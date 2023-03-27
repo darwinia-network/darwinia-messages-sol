@@ -48,8 +48,8 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
 
     address public immutable FEE_MARKET;
 
-    uint256 private constant MAX_CALLDATA_LENGTH       = 2048;
-    uint64  private constant MAX_PENDING_MESSAGES      = 20;
+    uint256 private constant MAX_CALLDATA_LENGTH       = 4096;
+    uint64  private constant MAX_PENDING_MESSAGES      = 10;
     uint64  private constant MAX_PRUNE_MESSAGES_ATONCE = 5;
 
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);

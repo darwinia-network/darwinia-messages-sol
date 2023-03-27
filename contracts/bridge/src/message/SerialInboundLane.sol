@@ -62,9 +62,9 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     uint256 internal locked;
 
     /// @dev Gas used per message needs to be less than `MAX_GAS_PER_MESSAGE` wei
-    uint256 private constant MAX_GAS_PER_MESSAGE = 240000;
+    uint256 private constant MAX_GAS_PER_MESSAGE = 600000;
     /// @dev Gas buffer for executing `send_message` tx
-    uint256 private constant GAS_BUFFER = 10000;
+    uint256 private constant GAS_BUFFER = 20000;
     /// @dev This parameter must lesser than 256
     /// Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
     /// message has been delivered, but either confirmations haven't been delivered back to the
@@ -76,7 +76,7 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// This value also represents maximal number of messages in single delivery transaction.
     /// Transaction that is declaring more messages than this value, will be rejected. Even if
     /// these messages are from different lanes.
-    uint256 private constant MAX_UNCONFIRMED_MESSAGES = 20;
+    uint256 private constant MAX_UNCONFIRMED_MESSAGES = 10;
 
     /// @dev Notifies an observer that the message has dispatched
     /// @param nonce The message nonce
