@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "../MessageEndpoint.sol";
 
 // On Pangolin, to Pangoro
-contract PangolinEndpoint is MessageEndpoint(0x726f6c69, 0x726f6c69) {
+contract PangolinEndpoint is MessageEndpoint(0, 0x726f6c69, 0x726f6c69) {
     constructor() {
         storageKeyForMarketFee = 0x7621b367d09b75f6876b13089ee0ded52edb70953213f33a6ef6b8a5e3ffcab2;
         storageKeyForLatestNonce = 0xc9b76e645ba80b6ca47619d64cb5e58d96c246acb9b55077390e3ca723a0ca1f;
