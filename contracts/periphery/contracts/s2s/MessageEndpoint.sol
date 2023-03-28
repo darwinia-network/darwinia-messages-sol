@@ -32,13 +32,15 @@ abstract contract MessageEndpoint {
     // lane ids
     bytes4 public immutable OUTBOUND_LANE_ID;
     bytes4 public immutable INBOUND_LANE_ID;
+    uint16 public immutable VERSION;
     // precompile addresses
     address public constant STORAGE_ADDRESS =
         0x0000000000000000000000000000000000000400;
     address public constant DISPATCH_ADDRESS =
         0x0000000000000000000000000000000000000401;
 
-    constructor(bytes4 outboundLaneId, bytes4 inboundLaneId) {
+    constructor(uint16 version, bytes4 outboundLaneId, bytes4 inboundLaneId) {
+        VERSION = version;
         OUTBOUND_LANE_ID = outboundLaneId;
         INBOUND_LANE_ID = inboundLaneId;
     }
@@ -184,7 +186,9 @@ abstract contract MessageEndpoint {
     ///////////////////////////////
     function decodeMessageId(
         uint256 messageId
-    ) public pure returns (bytes4, uint64) {
+    ) public view returns (bytes4, uint64) {
+        uint16 version = uint16(messageId >> 240);
+        require(version == VERSION, "MessageEndpoint: Invalid Version");
         return (
             bytes4(uint32(messageId >> 64)),
             uint64(messageId & 0xffffffffffffffff)
@@ -194,8 +198,8 @@ abstract contract MessageEndpoint {
     function encodeMessageId(
         bytes4 laneId,
         uint64 nonce
-    ) public pure returns (uint256) {
-        return (uint256(uint32(laneId)) << 64) + uint256(nonce);
+    ) public view returns (uint256) {
+        return (uint256(uint32(laneId)) << 64) + (uint256(VERSION) << 240) + uint256(nonce);
     }
 
     ///////////////////////////////
