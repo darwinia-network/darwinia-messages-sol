@@ -43,7 +43,7 @@ abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
     function executeOnEthereum(
         address target,
         bytes memory call
-    ) external returns (uint64 nonce) {
+    ) external payable returns (uint64 nonce) {
         return
             IOutboundLane(TO_ETHEREUM_OUTBOUND_LANE).send_message{
                 value: IFeeMarket(TO_ETHEREUM_FEE_MARKET).market_fee()
