@@ -17,7 +17,7 @@ async function remoteDispatchOnParachain(caller2Address) {
     // Get market fee
     const GoerliEndpoint = await hre.ethers.getContractFactory("GoerliEndpoint");
     const goerliEndpoint = GoerliEndpoint.attach(await caller2.endpointAddress());
-    const fee = await goerliEndpoint.fee();
+    const fee = await goerliEndpoint.fee() * 2;
 
     // dispatchOnParachain
     const tx = await caller2.dispatchOnParachain(

@@ -35,6 +35,10 @@ abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
         TO_ETHEREUM_FEE_MARKET = _toEthereumFeeMarket;
     }
 
+    function fee() public view returns (uint256) {
+        return IFeeMarket(TO_ETHEREUM_FEE_MARKET).market_fee();
+    }
+
     //////////////////////////
     // To Ethereum
     //////////////////////////
@@ -44,9 +48,17 @@ abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
         address target,
         bytes memory call
     ) external payable returns (uint64 nonce) {
+        uint256 paid = msg.value;
+        uint256 marketFee = fee();
+        require(paid >= marketFee, "the fee is not enough");
+        if (paid > marketFee) {
+            // refund
+            payable(msg.sender).transfer(paid - marketFee);
+        }
+
         return
             IOutboundLane(TO_ETHEREUM_OUTBOUND_LANE).send_message{
-                value: IFeeMarket(TO_ETHEREUM_FEE_MARKET).market_fee()
+                value: marketFee
             }(target, call);
     }
 

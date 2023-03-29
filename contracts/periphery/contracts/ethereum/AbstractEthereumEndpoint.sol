@@ -28,9 +28,17 @@ abstract contract AbstractEthereumEndpoint {
         address remoteContractAddress,
         bytes memory call
     ) public payable returns (uint64 nonce) {
+        uint256 paid = msg.value;
+        uint256 marketFee = fee();
+        require(paid >= marketFee, "the fee is not enough");
+        if (paid > marketFee) {
+            // refund fee to DAPP
+            payable(msg.sender).transfer(paid - marketFee);
+        }
+
         return
             IOutboundLane(TO_DARWINIA_OUTBOUND_LANE).send_message{
-                value: msg.value
+                value: marketFee
             }(remoteContractAddress, call);
     }
 
@@ -58,8 +66,8 @@ abstract contract AbstractEthereumEndpoint {
     //
     // Payment flow on ethereum:
     //   `ENDUSER` pay to `DAPP`,
-    //      then `DAPP` pay to `ENDPOINT`,
-    //        then `ENDPOINT` pay to `OUTBOUNDLANE`,
+    //      then `DAPP` pay to `DAPP ENDPOINT`,
+    //        then `DAPP ENDPOINT` pay to `OUTBOUNDLANE`,
     //          then `OUTBOUNDLANE` pay to `RELAYER`
     function dispatchOnParachain(
         bytes2 paraId,
