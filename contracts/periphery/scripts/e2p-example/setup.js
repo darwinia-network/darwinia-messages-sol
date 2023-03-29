@@ -1,9 +1,6 @@
 const hre = require("hardhat");
 
 async function main() {
-    ////////////////////////////////////////
-    // Deploy
-    ////////////////////////////////////////
     // PANGOLIN ENDPOINT
     // -------------
     hre.changeNetwork("pangolinDev");
@@ -11,7 +8,15 @@ async function main() {
     const pangolin2Endpoint = await Pangolin2Endpoint.deploy();
     await pangolin2Endpoint.deployed();
     console.log(
-        `Pangolin Endpoint: ${pangolin2Endpoint.address}`
+        `Pangolin2Endpoint: ${pangolin2Endpoint.address}`
+    );
+
+    // Deploy `Callee`
+    const Callee2 = await hre.ethers.getContractFactory("Callee2");
+    const callee2 = await Callee2.deploy();
+    await callee2.deployed();
+    console.log(
+        `Callee2: ${callee2.address}`
     );
 
     // GOERLI ENDPOINT
@@ -23,7 +28,9 @@ async function main() {
     console.log(
         `Goerli Endpoint: ${goerliEndpoint.address}`
     );
-    await goerliEndpoint.setDarwiniaEndpoint(pangolin2Endpoint.address);
+
+    //
+    await goerliEndpoint.setRemoteEndpoint(pangolin2Endpoint.address);
     console.log(
         `GoerliEndpoint knowns Pangolin2Endpoint.`
     );
@@ -35,22 +42,6 @@ async function main() {
     console.log(
         `Caller: ${caller2.address}`
     );
-
-    ////////////////////////////////////////
-    // Run
-    ////////////////////////////////////////
-    const fee = await goerliEndpoint.fee();
-    const tx = await caller2.remoteAdd(
-        "0x591f", // dest paraid
-        "0x0a070c313233", // calldata
-        5000000000, // weight
-        20000000000000000000, // fungible
-        {
-            value: fee // market fee to pangolin
-        }
-    )
-
-    console.log((await tx.wait()).transactionHash)
 }
 
 // We recommend this pattern to be able to use async/await everywhere

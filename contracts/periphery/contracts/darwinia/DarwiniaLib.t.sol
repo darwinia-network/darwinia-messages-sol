@@ -14,7 +14,7 @@ contract DarwiniaLibTest is DSTest {
 
     function testXcmTransactOnParachain() public {
         bytes memory data = DarwiniaLib.buildXcmTransactMessage(
-            0xe520, // from parachain id, crab paraId: 0xe520 == 2105
+            0xe520, // from parachain id, crab and pangolin paraId: 0xe520 == 2105
             hex"0a070c313233", // call
             5000000000, // call weight
             20000000000000000000 // fungible

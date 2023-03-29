@@ -7,8 +7,8 @@ import "../interfaces/ICrossChainFilter.sol";
 
 contract GoerliEndpoint is
     AbstractEthereumEndpoint(
-        0xB0322e02b9b7bD67cB071E408f73C34980D21A23,
-        0xF72361096f11d7E4e45046d7a83726b1A9107D5E
+        0x12225Fa4a20b13ccA0773E1D5f08BbC91f16f927, // outboundlane
+        0x527560d6a509ddE7828D598BF31Fc67DA50c8093 // fee market
     )
 {
     function cross_chain_filter(
@@ -20,7 +20,8 @@ contract GoerliEndpoint is
         return true;
     }
 
-    function setDarwiniaEndpoint(address _darwiniaEndpoint) external {
-        _setDarwiniaEndpoint(_darwiniaEndpoint);
+    // Set darwinia endpoint as its remote endpoint.
+    function setRemoteEndpoint(address _darwiniaEndpoint) external {
+        _setRemoteEndpoint(_darwiniaEndpoint);
     }
 }

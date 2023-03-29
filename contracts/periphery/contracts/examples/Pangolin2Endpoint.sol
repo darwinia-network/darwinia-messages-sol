@@ -7,10 +7,10 @@ import "../interfaces/ICrossChainFilter.sol";
 
 contract Pangolin2Endpoint is
     AbstractDarwiniaEndpoint(
-        0x2100,
-        0xe520,
-        0xd3686C9a2Ff3Fa3dc24E2ab157f58B2d567A295e,
-        0xE233a0E201219f792B878517e840903B8d62B9d3
+        0x2100, // _sendCallIndex
+        0xe520, // _darwiniaParaId
+        0x721F10bdE716FF44F596Afa2E8726aF197e6218E, // _toEthereumOutboundLane
+        0x9FbA8f0a0Bd6CbcB6283c042edc6b20894Be09c8 // _toEthereumFeeMarket
     )
 {
     function cross_chain_filter(

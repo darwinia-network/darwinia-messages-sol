@@ -6,10 +6,12 @@ import "../interfaces/IOutboundLane.sol";
 import "../interfaces/IFeeMarket.sol";
 import "../interfaces/ICrossChainFilter.sol";
 
-abstract contract AbstractEthereumEndpoint is ICrossChainFilter {
+abstract contract AbstractEthereumEndpoint {
     address public immutable TO_DARWINIA_OUTBOUND_LANE;
     address public immutable TO_DARWINIA_FEE_MARKET;
-    address public darwiniaEndpoint;
+    address public remoteEndpoint;
+
+    event DispatchCall(bytes call);
 
     constructor(address _toDarwiniaOutboundLane, address _toDarwiniaFeeMarket) {
         TO_DARWINIA_OUTBOUND_LANE = _toDarwiniaOutboundLane;
@@ -20,38 +22,56 @@ abstract contract AbstractEthereumEndpoint is ICrossChainFilter {
         return IFeeMarket(TO_DARWINIA_FEE_MARKET).market_fee();
     }
 
-    // Execute a darwinia endpoint function.
+    // Execute a darwinia remoteContract's function.
     // ethereum > darwinia
-    function remoteExecute(
+    function executeOnRemote(
+        address remoteContractAddress,
         bytes memory call
     ) public payable returns (uint64 nonce) {
         return
             IOutboundLane(TO_DARWINIA_OUTBOUND_LANE).send_message{
                 value: msg.value
-            }(darwiniaEndpoint, call);
+            }(remoteContractAddress, call);
     }
 
-    // A helper to call a dispatch_call on ethereum
+    // Execute a darwinia endpoint function.
+    // ethereum > darwinia
+    function executeOnRemoteEndpoint(
+        bytes memory call
+    ) public payable returns (uint64 nonce) {
+        return executeOnRemote(remoteEndpoint, call);
+    }
+
+    // ethereum > darwinia(substrate)
+    function dispatchOnRemote(
+        bytes memory dispatchCall
+    ) external payable returns (uint64 nonce) {
+        bytes memory call = abi.encodeWithSignature(
+            "dispatch(bytes)",
+            dispatchCall
+        );
+        emit DispatchCall(call);
+        return executeOnRemoteEndpoint(call);
+    }
+
     // ethereum > darwinia > parachain
-    function xcmTransactOnParachain(
+    function dispatchOnParachain(
         bytes2 paraId,
         bytes memory paraCall,
         uint64 weight,
         uint128 fungible
     ) external payable returns (uint64 nonce) {
-        return
-            remoteExecute(
-                abi.encodeWithSignature(
-                    "xcmTransactOnParachain(bytes2,bytes,uint64,uint128)",
-                    paraId,
-                    paraCall,
-                    weight,
-                    fungible
-                )
-            );
+        bytes memory call = abi.encodeWithSignature(
+            "xcmTransactOnParachain(bytes2,bytes,uint64,uint128)",
+            paraId,
+            paraCall,
+            weight,
+            fungible
+        );
+        return executeOnRemoteEndpoint(call);
     }
 
-    function _setDarwiniaEndpoint(address _darwiniaEndpoint) internal {
-        darwiniaEndpoint = _darwiniaEndpoint;
+    function _setRemoteEndpoint(address _remoteEndpoint) internal {
+        remoteEndpoint = _remoteEndpoint;
     }
 }

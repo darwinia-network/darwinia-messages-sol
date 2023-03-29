@@ -10,6 +10,9 @@ import "../s2s/types/PalletEthereumXcm.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "./DarwiniaLib.sol";
 
+// Relayer call InboundLane
+//   InboundLane call xcmTransactOnParachain
+//     xcmTransactOnParaChain dispatch polkadotXcm.send
 abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
     address public constant DISPATCH =
         0x0000000000000000000000000000000000000401;
@@ -17,6 +20,8 @@ abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
     bytes2 public immutable DARWINIA_PARAID;
     address public immutable TO_ETHEREUM_OUTBOUND_LANE;
     address public immutable TO_ETHEREUM_FEE_MARKET;
+
+    event Dispatched(bytes call);
 
     constructor(
         bytes2 _sendCallIndex,
@@ -30,6 +35,9 @@ abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
         TO_ETHEREUM_FEE_MARKET = _toEthereumFeeMarket;
     }
 
+    //////////////////////////
+    // To Ethereum
+    //////////////////////////
     // Call by parachain dapp.
     // Used in `parachain > darwinia > ethereum`
     function executeOnEthereum(
@@ -42,6 +50,9 @@ abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
             }(target, call);
     }
 
+    //////////////////////////
+    // To Parachain
+    //////////////////////////
     // Call by ethereum dapp.
     // Used in `ethereum > darwinia > parachain`
     function xcmTransactOnParachain(
@@ -50,22 +61,29 @@ abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
         uint64 weight,
         uint128 fungible
     ) external {
-        (bool success, bytes memory data) = DISPATCH.call(
-            abi.encodePacked(
-                // call index of `polkadotXcm.send`
-                SEND_CALL_INDEX,
-                // dest: V2(01, X1(Parachain(ParaId)))
-                hex"00010100",
-                toParachain,
-                // message
-                DarwiniaLib.buildXcmTransactMessage(
-                    DARWINIA_PARAID,
-                    call,
-                    weight,
-                    fungible
-                )
-            )
+        bytes memory message = DarwiniaLib.buildXcmTransactMessage(
+            DARWINIA_PARAID,
+            call,
+            weight,
+            fungible
         );
+
+        bytes memory polkadotXcmSendCall = abi.encodePacked(
+            // call index of `polkadotXcm.send`
+            SEND_CALL_INDEX,
+            // dest: V2(01, X1(Parachain(ParaId)))
+            hex"00010100",
+            toParachain,
+            message
+        );
+
+        dispatch(polkadotXcmSendCall);
+    }
+
+    // Call by ethereum dapp.
+    // Used in `ethereum > darwinia`
+    function dispatch(bytes memory call) public {
+        (bool success, bytes memory data) = DISPATCH.call(call);
 
         if (!success) {
             if (data.length > 0) {
@@ -77,5 +95,7 @@ abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
                 revert("!dispatch");
             }
         }
+
+        emit Dispatched(call);
     }
 }

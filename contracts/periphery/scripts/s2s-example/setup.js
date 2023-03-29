@@ -1,12 +1,7 @@
 const hre = require("hardhat");
 
-// Deploy, then, 
-// Dapp `Caller` on Pangolin will call `Callee` on Pangoro
+// Deploy and connect endpoint on Pangolin and Pangoro
 async function main() {
-    ////////////////////////////////////////
-    // Deploy
-    ////////////////////////////////////////
-
     // PANGOLIN
     // -------------
     hre.changeNetwork("pangolin");
@@ -62,19 +57,6 @@ async function main() {
     console.log(
         `PangolinEndpoint knowns PangoroEndpoint.`
     );
-
-    ////////////////////////////////////////
-    // Remote call
-    ////////////////////////////////////////
-    const fee = await pangolinEndpoint.fee();
-    const tx = await caller.remoteAdd(
-        callee.address,
-        {
-            value: fee
-        }
-    )
-
-    console.log(`tx: ${(await tx.wait()).transactionHash}`)
 }
 
 main().catch((error) => {
