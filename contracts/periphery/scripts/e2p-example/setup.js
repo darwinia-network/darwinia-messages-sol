@@ -11,14 +11,6 @@ async function main() {
         `Pangolin2Endpoint: ${pangolin2Endpoint.address}`
     );
 
-    // Deploy `Callee`
-    const Callee2 = await hre.ethers.getContractFactory("Callee2");
-    const callee2 = await Callee2.deploy();
-    await callee2.deployed();
-    console.log(
-        `Callee2: ${callee2.address}`
-    );
-
     // GOERLI ENDPOINT
     // -------------
     hre.changeNetwork("goerli");
@@ -29,18 +21,16 @@ async function main() {
         `Goerli Endpoint: ${goerliEndpoint.address}`
     );
 
-    //
+    // Make GoerliEndpoint known Pangolin2Endpoint
     await goerliEndpoint.setRemoteEndpoint(pangolin2Endpoint.address);
-    console.log(
-        `GoerliEndpoint knowns Pangolin2Endpoint.`
-    );
 
-    // Caller2
+    // DAPP
+    // -------------
     const Caller2 = await hre.ethers.getContractFactory("Caller2");
     const caller2 = await Caller2.deploy(goerliEndpoint.address);
     await caller2.deployed();
     console.log(
-        `Caller: ${caller2.address}`
+        `Caller2: ${caller2.address}`
     );
 }
 

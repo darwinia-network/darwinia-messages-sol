@@ -11,13 +11,16 @@ async function remoteDispatchOnParachain(caller2Address) {
     const caller2 = Caller2.attach(caller2Address);
 
     console.log(
-        `Goerli Endpoint: ${await caller2.endpointAddress()}`
+        `GoerliEndpoint: ${await caller2.endpointAddress()}`
     );
 
     // Get market fee
     const GoerliEndpoint = await hre.ethers.getContractFactory("GoerliEndpoint");
     const goerliEndpoint = GoerliEndpoint.attach(await caller2.endpointAddress());
-    const fee = await goerliEndpoint.fee() * 2;
+    const fee = (await goerliEndpoint.fee()) * 2;
+    console.log(
+        `End user will pay: ${fee} wei`
+    );
 
     // dispatchOnParachain
     const tx = await caller2.dispatchOnParachain(

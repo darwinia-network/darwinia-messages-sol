@@ -24,6 +24,8 @@ contract Caller2 {
         endpointAddress = _endpointAddress;
     }
 
+    receive() external payable {}
+
     // Remote dispatch substrate dispatch call
     function remoteRemarkWithEvent() external payable returns (uint64 nonce) {
         nonce = GoerliEndpoint(endpointAddress).dispatchOnRemote{
