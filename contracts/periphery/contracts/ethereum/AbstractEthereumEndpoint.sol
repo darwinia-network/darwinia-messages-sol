@@ -55,6 +55,12 @@ abstract contract AbstractEthereumEndpoint {
     }
 
     // ethereum > darwinia > parachain
+    //
+    // Payment flow on ethereum:
+    //   `ENDUSER` pay to `DAPP`,
+    //      then `DAPP` pay to `ENDPOINT`,
+    //        then `ENDPOINT` pay to `OUTBOUNDLANE`,
+    //          then `OUTBOUNDLANE` pay to `RELAYER`
     function dispatchOnParachain(
         bytes2 paraId,
         bytes memory paraCall,

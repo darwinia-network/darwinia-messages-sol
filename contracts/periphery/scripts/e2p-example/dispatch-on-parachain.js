@@ -1,11 +1,7 @@
 const hre = require("hardhat");
 
-const utils = require("./utils.js")
-
-// Dapp `Caller` on Pangolin will call  n Pangoro
 async function main() {
     const caller2Address = process.argv[2];
-    const pangolin2EndpointAddress = process.argv[3];
     await remoteDispatchOnParachain(caller2Address);
 }
 
