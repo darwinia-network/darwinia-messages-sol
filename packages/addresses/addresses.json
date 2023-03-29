@@ -22,7 +22,7 @@
     },
     "44": {
         "Claims": "0xA561c8F6AC9eCb31e0793fBe2CCEc136a7e4bE84",
-        "Create2": "0x227c3e01071C2429766dDec2267A613e32DD463e",
+        "Create2": "0xa735f64fBc8124FdfD8d7f2EC2F29d36f77a37A6",
         "WCRAB": "0x2d2b97ea380b0185e9fdf8271d1afb5d2bf18329",
         "WCKTON": "0x159933C635570D5042723359fbD1619dFe83D3f3",
         "WCKTONMigrator": "0xD5f4940704Eb4cE5e4b51877d49B58A3e93531b6",
@@ -41,7 +41,7 @@
     },
     "45": {
         "HelixDaoMultisig": "0x43d6711EB86C852Ec1E04af55C52a0dd51b2C743",
-        "Create2": "0x6c25E0c1f57d7E78d7eB8D350f11204137EF71bE"
+        "Create2": "0x53633b74843890a5b5BDd3C20D0eed873F4Ac6D3"
     },
     "46": {
         "HelixDaoMultisig": "0xBd1a110ec476b4775c43905000288881367B1a88",
