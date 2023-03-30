@@ -1,13 +1,11 @@
-const hre = require("hardhat");
-
 async function main() {
     const caller2Address = process.argv[2];
     await remoteDispatchOnParachain(caller2Address);
 }
 
 async function remoteDispatchOnParachain(caller2Address) {
-    hre.changeNetwork("goerli");
-    const Caller2 = await hre.ethers.getContractFactory("Caller2");
+    changeNetwork("goerli");
+    const Caller2 = await ethers.getContractFactory("Caller2");
     const caller2 = Caller2.attach(caller2Address);
 
     console.log(
@@ -15,7 +13,7 @@ async function remoteDispatchOnParachain(caller2Address) {
     );
 
     // Get market fee
-    const GoerliEndpoint = await hre.ethers.getContractFactory("GoerliEndpoint");
+    const GoerliEndpoint = await ethers.getContractFactory("GoerliEndpoint");
     const goerliEndpoint = GoerliEndpoint.attach(await caller2.endpointAddress());
     const fee = (await goerliEndpoint.fee()) * 2;
     console.log(
