@@ -1,6 +1,6 @@
 {
   "name": "@darwinia/contracts-periphery",
-  "version": "v2.1.0-pre3",
+  "version": "v2.1.0-pre4",
   "description": "Peripheral smart contracts for interacting with message protocal.",
   "main": "index.js",
   "repository": "https://github.com/darwinia-network/darwinia-bridge-sol.git",
