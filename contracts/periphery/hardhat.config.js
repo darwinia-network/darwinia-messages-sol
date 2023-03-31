@@ -96,7 +96,7 @@ module.exports = {
       network_id: "43",
       accounts: [PRIVATE_KEY],
       gas: 3_000_000,
-      gasPrice: 63100000000
+      gasPrice: 24577574328864
     },
     crab: {
       url: 'https://crab-rpc.darwinia.network',
