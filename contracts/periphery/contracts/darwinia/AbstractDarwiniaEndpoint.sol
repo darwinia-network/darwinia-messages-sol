@@ -53,6 +53,10 @@ abstract contract AbstractDarwiniaEndpoint is ICrossChainFilter {
         uint256 paid = msg.value;
         uint256 marketFee = fee();
         require(paid >= marketFee, "the fee is not enough");
+        if (paid > marketFee) {
+            // refund fee to DAPP.
+            payable(msg.sender).transfer(paid - marketFee);
+        }
 
         uint64 nonce = IOutboundLane(TO_ETHEREUM_OUTBOUND_LANE).send_message{
             value: marketFee

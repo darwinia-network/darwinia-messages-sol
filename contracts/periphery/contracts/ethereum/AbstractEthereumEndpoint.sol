@@ -33,11 +33,7 @@ abstract contract AbstractEthereumEndpoint {
         require(paid >= marketFee, "!fee");
         if (paid > marketFee) {
             // refund fee to DAPP.
-            // why use `call`? https://solidity-by-example.org/sending-ether/
-            (bool sent, bytes memory data) = payable(msg.sender).call{
-                value: paid - marketFee
-            }("");
-            require(sent, "!refund");
+            payable(msg.sender).transfer(paid - marketFee);
         }
 
         return
