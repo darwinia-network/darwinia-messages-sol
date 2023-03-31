@@ -86,3 +86,4 @@ TODO.md
 
 # Gas reporter
 gasReporterOutput*.json
+contracts/periphery/abi
