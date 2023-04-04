@@ -100,4 +100,4 @@ EthereumSerialLaneVerifier=$(jq -r ".[\"$NETWORK_NAME\"].EthereumSerialLaneVerif
 #   $outlaneid $SerialOutboundLane $inlaneid $SerialInboundLane --rpc-url https://pangoro-rpc.darwinia.network)
 
 (set -x; seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
-  $outlaneid $SerialOutboundLane $inlaneid $SerialInboundLane --rpc-url https://pangilin-rpc.darwinia.network)
+  $outlaneid $SerialOutboundLane $inlaneid $SerialInboundLane --rpc-url https://pangolin-rpc.darwinia.network)
