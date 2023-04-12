@@ -13,9 +13,13 @@ In this guide, you would deply your own multisignature wallet by [Gnosis MultiSi
 
 ## Deploy a new multi-sign wallet
 1. Click `Add` on the right side of Wallet.
+
 ![step1](./assets/step1.png)
+
 2. Click `Create new wallet` and `Next`.
+
 ![step2](./assets/step2.png)
+
 3. Enter `Name`, `Required confirmations`, `Daily limit (ETH)` and the addresses of the owners and then `Deploy`:
 * Name : Wallet name.
 * Required confirmations : The number of approvals needed from the owners of the multisignature wallet.
@@ -23,18 +27,25 @@ In this guide, you would deply your own multisignature wallet by [Gnosis MultiSi
 * ADD: These are the owner addresses acting as a signatory for changes to the wallet, notably withdrawals, confirmation changes, daily limits, and ownership changes.
 
 ![step3](./assets/step3.png)
+
 4. Click `Send Transaction` to deploy MultiSig Wallet but it will need Ether to pay gas fee. You should be greeted with a `Deployment transaction was sent` message on the top right corner.
+
 ![step4](./assets/step4.png)
+
 5. Click `Confirm` in MetaMask popup.
+
 ![step5](./assets/step5.png)
+
 
 That didn’t take long. Once the transaction was confirmed, we can see the wallet showing up on the Wallets tab. Please check whether your transaction is successful if wallet did not show up.
 
 ## Interact with root contract to call dispatch precompile
 1. Click `Name` of wallet enter to the wallet detail page.
+
 ![step1](./assets/1.png)
 
 2. Click `Add` on the right side of MultiSig transactions.
+
 ![step2](./assets/2.png)
 
 3. Enter `Destination`, `Amount (ETH)`, `ABI string`, `Method` and then `Send multisig transaction`:
@@ -45,10 +56,13 @@ That didn’t take long. Once the transaction was confirmed, we can see the wall
   - data: the scalec encoded dispatch call data.
 
 ![step3](./assets/3.png)
+
 4. Click `Send Transaction` to create multisig transaction.
+
 ![step4](./assets/4.png)
 
 5. Click `Confirm` in MetaMask popup.
+
 ![step5](./assets/5.png)
 
 6. The second owner click `Confirm` under `Confirmations` and then click `Send transaction`. 
