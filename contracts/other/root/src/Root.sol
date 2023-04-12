@@ -8,9 +8,9 @@ contract Root is Ownable2Step {
     // @dev dispatch precompile address(0x0401)
     address public immutable DISPATCH_PRECOMPILE;
 
-    constructor(address sudo, address dispatch) {
+    constructor(address sudo, address dispatchPrecompile) {
         _transferOwnership(sudo);
-        DISPATCH_PRECOMPILE = dispatch;
+        DISPATCH_PRECOMPILE = dispatchPrecompile;
     }
 
     function dispatch(bytes calldata data) external payable returns (bytes memory) {
@@ -18,7 +18,7 @@ contract Root is Ownable2Step {
     }
 
     function execute(address target, bytes calldata data) public payable onlyOwner returns (bytes memory) {
-        (bool ok bytes memory out) = target.call{value: msg.value}(data);
+        (bool ok, bytes memory out) = target.call{value: msg.value}(data);
         if (ok) {
             return out;
         } else {
