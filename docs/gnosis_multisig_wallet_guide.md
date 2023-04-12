@@ -65,7 +65,7 @@ That didn’t take long. Once the transaction was confirmed, we can see the wall
 
 ![step5](./assets/5.png)
 
-6. The second owner click `Confirm` under `Confirmations` and then click `Send transaction`. 
+6. The second owner click `Confirm` under `Confirmations` and then click `Send transaction`.   
 
 P.S You could click `Revoke Confirmation` to revoke the confirmed transaction. `Revoke confirmation` is only shown by owner who invoke transaction.
 
@@ -75,5 +75,5 @@ P.S You could click `Revoke Confirmation` to revoke the confirmed transaction. `
 
 9. All users who sign the transaction will be listed under Confirmations When transaction is confirmed.
 
-10. When all required owners confirm the multisig transaction. the transaction will be executed.
+10. When all required owners confirm the multisig transaction. the transaction will be executed.  
 P.S If all required owners confimed the multisig transaction. but the transaction executed status is false. any owner could click `execute` to re-execute the multisig transaction.
