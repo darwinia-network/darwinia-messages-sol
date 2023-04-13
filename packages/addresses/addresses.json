@@ -22,6 +22,7 @@
         "WormholeDaoMultisig": "0xc8C1680B18D432732D07c044669915726fAF67D0"
     },
     "44": {
+        "Root": "0xb8e7e4b496df6bb3B71703CE98ff6f3412a5F9EA",
         "Claims": "0xA561c8F6AC9eCb31e0793fBe2CCEc136a7e4bE84",
         "Create2": "0x227c3e01071C2429766dDec2267A613e32DD463e",
         "WCRAB": "0x2d2b97ea380b0185e9fdf8271d1afb5d2bf18329",
