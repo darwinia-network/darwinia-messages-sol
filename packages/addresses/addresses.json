@@ -6,13 +6,15 @@
         "GringottsBankProxy": "0x649fdf6ee483a96e020b889571e93700fbd82d88",
         "RelayProxy": "0x5cde5Aafeb8E06Ce9e4F94c2406d3B6CB7098E49",
         "TokenIssuingProxy": "0x5f44dd8e59f56aa04fe54e95cc690560ae706b18",
-        "Claims": "0x15fC591601044351868b13a5B629c170Bf3F30A0"
+        "Claims": "0x15fC591601044351868b13a5B629c170Bf3F30A0",
+        "DarwiniaDaoGnosis": "0x195741BC761B25A89fc7798087652f97f29B306a"
     },
     "3": {
         "ring": "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
         "kton": "0x1994100c58753793D52c6f457f189aa3ce9cEe94"
     },
     "43": {
+        "Root": "0x9Cd2ee66aF50398A36aAfd461AA7AdC01962E0Ae",
         "WCRAB": "0xc52287b259b2431ba0f61BC7EBD0eD793B0b7044",
         "WCKTON": "0x8809f9b3ACEF1dA309f49b5Ab97A4C0faA64E6Ae",
         "WCKTONMigrator": "0xE3F90f6Fe7c70b1F8cBEbc3477048d4F32E61f07",
@@ -20,7 +22,9 @@
         "WormholeDaoMultisig": "0xc8C1680B18D432732D07c044669915726fAF67D0"
     },
     "44": {
+        "Root": "0xb8e7e4b496df6bb3B71703CE98ff6f3412a5F9EA",
         "Claims": "0xA561c8F6AC9eCb31e0793fBe2CCEc136a7e4bE84",
+        "Create2": "0x227c3e01071C2429766dDec2267A613e32DD463e",
         "WCRAB": "0x2d2b97ea380b0185e9fdf8271d1afb5d2bf18329",
         "WCKTON": "0x159933C635570D5042723359fbD1619dFe83D3f3",
         "WCKTONMigrator": "0xD5f4940704Eb4cE5e4b51877d49B58A3e93531b6",
@@ -38,10 +42,12 @@
         "SnowswapPair/Crab-xRing": "0xF157c9393255Db1728bC6483c3545Ca8a1655a0F"
     },
     "45": {
-        "HelixDaoMultisig": "0x43d6711EB86C852Ec1E04af55C52a0dd51b2C743"
+        "HelixDaoMultisig": "0x43d6711EB86C852Ec1E04af55C52a0dd51b2C743",
+        "Create2": "0x6c25E0c1f57d7E78d7eB8D350f11204137EF71bE"
     },
     "46": {
         "HelixDaoMultisig": "0xBd1a110ec476b4775c43905000288881367B1a88",
+        "HelixDaoMultisigPayroll": "0x394607dAC12ea8C6095D68E3a7E5c9d40Cf0df9A",
         "HelixDaoTimeLock": "0xA546F42BeB3DEa617b0F3Ca6995C7Df5dfCaD29D",
         "WRING": "0xE7578598Aac020abFB918f33A20faD5B71d670b4"
     }
