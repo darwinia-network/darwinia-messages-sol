@@ -40,7 +40,7 @@ abstract contract LaneIdentity {
 
     constructor(uint256 _laneId) {
         assembly ("memory-safe") {
-            sstore(0, _laneId)
+            sstore(slot0.slot, _laneId)
         }
     }
 
@@ -54,7 +54,7 @@ abstract contract LaneIdentity {
        );
     }
 
-    function getLaneId() external view returns (uint256 id) {
+    function getLaneId() public view returns (uint256 id) {
         assembly ("memory-safe") {
           id := sload(slot0.slot)
         }

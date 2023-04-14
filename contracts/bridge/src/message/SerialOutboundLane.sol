@@ -47,9 +47,9 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
     mapping(uint64 => bytes32) public messages;
 
     address public immutable FEE_MARKET;
+    uint64  public immutable MAX_PENDING_MESSAGES;
+    uint64  public immutable MAX_CALLDATA_LENGTH;
 
-    uint256 private constant MAX_CALLDATA_LENGTH       = 4096;
-    uint64  private constant MAX_PENDING_MESSAGES      = 10;
     uint64  private constant MAX_PRUNE_MESSAGES_ATONCE = 5;
 
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
@@ -74,20 +74,27 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
     /// @param _oldest_unpruned_nonce The oldest_unpruned_nonce of outbound lane
     /// @param _latest_received_nonce The latest_received_nonce of outbound lane
     /// @param _latest_generated_nonce The latest_generated_nonce of outbound lane
+    /// @param _max_pending_messages The max pending messages of outbound lane
+    /// @param _max_calldata_length The max calldata length per message of outbound lane
     constructor(
         address _verifier,
         address _feeMarket,
         uint256 _laneId,
         uint64 _oldest_unpruned_nonce,
         uint64 _latest_received_nonce,
-        uint64 _latest_generated_nonce
+        uint64 _latest_generated_nonce,
+        uint64 _max_pending_messages,
+        uint64 _max_calldata_length
     ) OutboundLaneVerifier(_verifier, _laneId) {
+        require(_max_pending_messages > MAX_PRUNE_MESSAGES_ATONCE, "!MAX_PENDING_MESSAGES");
         outboundLaneNonce = OutboundLaneNonce(
             _latest_received_nonce,
             _latest_generated_nonce,
             _oldest_unpruned_nonce
         );
         FEE_MARKET = _feeMarket;
+        MAX_PENDING_MESSAGES = _max_pending_messages;
+        MAX_CALLDATA_LENGTH = _max_calldata_length;
     }
 
     /// @dev Send message over lane.

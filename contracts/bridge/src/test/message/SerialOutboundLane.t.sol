@@ -31,6 +31,8 @@ contract SerialOutboundLaneTest is DSTest, SourceChain, TargetChain {
     uint32 constant internal THIS_OUT_LANE_POS = 0;
     uint32 constant internal BRIDGED_CHAIN_POS = 1;
     uint32 constant internal BRIDGED_IN_LANE_POS = 1;
+    uint64 constant internal MAX_PENDING_MESSAGES = 20;
+    uint64 constant internal MAX_CALLDATA_LENGTH = 2048;
 
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     MockLightClient public lightclient;
@@ -52,7 +54,9 @@ contract SerialOutboundLaneTest is DSTest, SourceChain, TargetChain {
             lane_id,
             1,
             0,
-            0
+            0,
+            MAX_PENDING_MESSAGES,
+            MAX_CALLDATA_LENGTH
         );
         app = new NormalApp(address(outlane));
         self = address(this);

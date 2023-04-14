@@ -61,10 +61,6 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     mapping(uint64 => UnrewardedRelayer) public relayers;
     uint256 internal locked;
 
-    /// @dev Gas used per message needs to be less than `MAX_GAS_PER_MESSAGE` wei
-    uint256 private constant MAX_GAS_PER_MESSAGE = 600000;
-    /// @dev Gas buffer for executing `send_message` tx
-    uint256 private constant GAS_BUFFER = 20000;
     /// @dev This parameter must lesser than 256
     /// Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
     /// message has been delivered, but either confirmations haven't been delivered back to the
@@ -76,7 +72,12 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// This value also represents maximal number of messages in single delivery transaction.
     /// Transaction that is declaring more messages than this value, will be rejected. Even if
     /// these messages are from different lanes.
-    uint256 private constant MAX_UNCONFIRMED_MESSAGES = 10;
+    uint64 public immutable MAX_UNCONFIRMED_MESSAGES;
+    /// @dev Gas used per message needs to be less than `MAX_GAS_PER_MESSAGE` wei
+    uint256 public immutable MAX_GAS_PER_MESSAGE;
+
+    /// @dev Gas buffer for executing `send_message` tx
+    uint256 private constant GAS_BUFFER = 20000;
 
     /// @dev Notifies an observer that the message has dispatched
     /// @param nonce The message nonce
@@ -118,11 +119,15 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// @param _laneId The identify of the inbound lane
     /// @param _last_confirmed_nonce The last_confirmed_nonce of inbound lane
     /// @param _last_delivered_nonce The last_delivered_nonce of inbound lane
+    /// @param _max_unconfirmed_messages The max unconfirmed messages of inbound lane
+    /// @param _max_gas_per_message The max gas limit per message of inbound lane
     constructor(
         address _verifier,
         uint256 _laneId,
         uint64 _last_confirmed_nonce,
-        uint64 _last_delivered_nonce
+        uint64 _last_delivered_nonce,
+        uint64 _max_unconfirmed_messages,
+        uint64 _max_gas_per_message
     ) InboundLaneVerifier(_verifier, _laneId) {
         inboundLaneNonce = InboundLaneNonce(
             _last_confirmed_nonce,
@@ -130,6 +135,8 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             1,
             0
         );
+        MAX_UNCONFIRMED_MESSAGES = _max_unconfirmed_messages;
+        MAX_GAS_PER_MESSAGE = _max_gas_per_message;
     }
 
     /// Receive messages proof from bridged chain.
