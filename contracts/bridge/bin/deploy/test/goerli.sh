@@ -25,6 +25,10 @@ this_in_lane_pos=1
 bridged_chain_pos=0
 bridged_in_lane_pos=1
 bridged_out_lane_pos=0
+outlane_id=$(gen_lane_id "$bridged_in_lane_pos" "$bridged_chain_pos" "$this_out_lane_pos" "$this_chain_pos")
+inlane_id=$(gen_lane_id "$bridged_out_lane_pos" "$bridged_chain_pos" "$this_in_lane_pos" "$this_chain_pos")
+outlane_id=$(seth --to-uint256 $outlane_id)
+inlane_id=$(seth --to-uint256 $inlane_id)
 
 # fee market config
 COLLATERAL_PERORDER=$(seth --to-wei 0.0001 ether)
@@ -60,9 +64,9 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
 #   $BEEFY_VALIDATOR_SET_LEN \
 #   $BEEFY_VALIDATOR_SET_ROOT)
 
-# chain_id=0x2b00000000000000 (43.to_le_bytes)
+# chain_id=$(seth --to-uint64 43) (43.to_be_bytes)
 # seth keccak "${chain_id}Pangolin2::ecdsa-authority"
-DOMAIN_SEPARATOR=0x3ff39d86ddb79bcc3a96c6e5b963f70e0e9f5849135e47584ce3fcae3ebbfac4
+DOMAIN_SEPARATOR=0xe97c73e46305f3bca2279f002665725cd29e465c6624e83a135f7b2e6b1a8134
 relayers=[0x68898db1012808808c903f390909c52d9f706749]
 threshold=1
 nonce=0
@@ -77,27 +81,21 @@ DarwiniaMessageVerifier=$(deploy DarwiniaMessageVerifier $POSALightClient)
 SerialOutboundLane=$(deploy SerialOutboundLane \
   $DarwiniaMessageVerifier \
   $FeeMarketProxy \
-  $this_chain_pos \
-  $this_out_lane_pos \
-  $bridged_chain_pos \
-  $bridged_in_lane_pos 1 0 0)
+  $outlane_id \
+  1 0 0)
 
-outlaneid=$(seth call $SerialOutboundLane "getLaneId()(uint)")
-
+MAX_GAS_PER_MESSAGE=240000
 SerialInboundLane=$(deploy SerialInboundLane \
   $DarwiniaMessageVerifier \
-  $this_chain_pos \
-  $this_in_lane_pos \
-  $bridged_chain_pos \
-  $bridged_out_lane_pos 0 0)
-
-inlaneid=$(seth call $SerialInboundLane "getLaneId()(uint)")
+  $inlane_id \
+  0 0 \
+  $MAX_GAS_PER_MESSAGE)
 
 seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain goerli
 
 EthereumSerialLaneVerifier=$(jq -r ".[\"$NETWORK_NAME\"].EthereumSerialLaneVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
 # (set -x; seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
-#   $outlaneid $SerialOutboundLane $inlaneid $SerialInboundLane --rpc-url https://pangoro-rpc.darwinia.network)
+#   $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane --rpc-url https://pangoro-rpc.darwinia.network)
 
 (set -x; seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
-  $outlaneid $SerialOutboundLane $inlaneid $SerialInboundLane --rpc-url https://pangolin-rpc.darwinia.network)
+  $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane --rpc-url https://pangolin-rpc.darwinia.network)

@@ -21,6 +21,10 @@ this_in_lane_pos=1
 bridged_chain_pos=1
 bridged_in_lane_pos=1
 bridged_out_lane_pos=0
+outlane_id=$(gen_lane_id "$bridged_in_lane_pos" "$bridged_chain_pos" "$this_out_lane_pos" "$this_chain_pos")
+inlane_id=$(gen_lane_id "$bridged_out_lane_pos" "$bridged_chain_pos" "$this_in_lane_pos" "$this_chain_pos")
+outlane_id=$(seth --to-uint256 $outlane_id)
+inlane_id=$(seth --to-uint256 $inlane_id)
 
 # fee market config
 FEEMARKET_VAULT=$ETH_FROM
@@ -79,17 +83,15 @@ EthereumSerialLaneVerifier=$(deploy EthereumSerialLaneVerifier $ExecutionLayer)
 SerialOutboundLane=$(deploy SerialOutboundLane \
   $EthereumSerialLaneVerifier \
   $FeeMarketProxy \
-  $this_chain_pos \
-  $this_out_lane_pos \
-  $bridged_chain_pos \
-  $bridged_in_lane_pos 1 0 0)
+  $outlane_id \
+  1 0 0)
 
+MAX_GAS_PER_MESSAGE=600000
 SerialInboundLane=$(deploy SerialInboundLane \
   $EthereumSerialLaneVerifier \
-  $this_chain_pos \
-  $this_in_lane_pos \
-  $bridged_chain_pos \
-  $bridged_out_lane_pos 0 0)
+  $inlane_id \
+  0 0 \
+  $MAX_GAS_PER_MESSAGE)
 
 LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
 seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $SerialOutboundLane $SerialInboundLane

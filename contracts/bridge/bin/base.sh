@@ -106,3 +106,14 @@ save_contract() {
   fi
 	printf %s "$result" >"$ADDRESSES_FILE"
 }
+
+gen_lane_id() {
+  python3 -c "print(
+    hex(
+      ($1 << 64) +
+      ($2 << 96) +
+      ($3 << 128) +
+      ($4 << 160)
+    )
+  )"
+}
