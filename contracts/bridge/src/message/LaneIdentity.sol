@@ -26,6 +26,8 @@ abstract contract LaneIdentity {
     Slot0 internal slot0;
 
     struct Slot0 {
+        // nonce place holder
+        uint64 nonce_placeholder;
         // Bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
         uint32 bridged_lane_pos;
         // Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
@@ -36,16 +38,10 @@ abstract contract LaneIdentity {
         uint32 this_chain_pos;
     }
 
-    constructor(
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) {
-        slot0.this_chain_pos = _thisChainPosition;
-        slot0.this_lane_pos = _thisLanePosition;
-        slot0.bridged_chain_pos = _bridgedChainPosition;
-        slot0.bridged_lane_pos = _bridgedLanePosition;
+    constructor(uint256 _laneId) {
+        assembly ("memory-safe") {
+            sstore(0, _laneId)
+        }
     }
 
     function getLaneInfo() external view returns (uint32,uint32,uint32,uint32) {
@@ -62,6 +58,5 @@ abstract contract LaneIdentity {
         assembly ("memory-safe") {
           id := sload(slot0.slot)
         }
-        return id << 64;
     }
 }

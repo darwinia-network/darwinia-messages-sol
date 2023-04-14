@@ -32,13 +32,11 @@ contract InboundLaneVerifierTest is DSTest {
 
     function setUp() public {
         lightclient = new MockLightClient();
-        verifier = new InboundLaneVerifier(
-            address(lightclient),
-            THIS_CHAIN_POS,
-            THIS_IN_LANE_POS,
-            BRIDGED_CHAIN_POS,
-            BRIDGED_OUT_LANE_POS
-        );
+        uint256 lane_id = (uint(BRIDGED_OUT_LANE_POS) << 64)
+                        + (uint(BRIDGED_CHAIN_POS) << 96)
+                        + (uint(THIS_IN_LANE_POS) << 128)
+                        + (uint(THIS_CHAIN_POS) << 160);
+        verifier = new InboundLaneVerifier(address(lightclient), lane_id);
     }
 
     function test_contructor_args() public {

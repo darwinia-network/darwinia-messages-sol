@@ -39,12 +39,13 @@ contract SerialInboundLandTest is DSTest, SourceChain, TargetChain {
 
     function setUp() public {
         lightclient = new MockLightClient();
+        uint256 lane_id = (uint(BRIDGED_OUT_LANE_POS) << 64)
+                        + (uint(BRIDGED_CHAIN_POS) << 96)
+                        + (uint(THIS_IN_LANE_POS) << 128)
+                        + (uint(THIS_CHAIN_POS) << 160);
         inlane = new SerialInboundLane(
             address(lightclient),
-            THIS_CHAIN_POS,
-            THIS_IN_LANE_POS,
-            BRIDGED_CHAIN_POS,
-            BRIDGED_OUT_LANE_POS,
+            lane_id,
             0,
             0
         );

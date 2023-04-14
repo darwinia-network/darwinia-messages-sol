@@ -46,22 +46,9 @@ contract ParallelOutboundLane is IOutboundLane, LaneIdentity, SourceChain {
 
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
 
-    /// @dev Deploys the OutboundLane contract
-    /// @param _thisChainPosition The thisChainPosition of outbound lane
-    /// @param _thisLanePosition The lanePosition of this outbound lane
-    /// @param _bridgedChainPosition The bridgedChainPosition of outbound lane
-    /// @param _bridgedLanePosition The lanePosition of target inbound lane
-    constructor(
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) LaneIdentity (
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {
+    /// @dev Deploys the ParallelOutboundLane contract
+    /// @param _laneId The laneId of target outbound lane
+    constructor(uint256 _laneId) LaneIdentity (_laneId) {
         // init with empty tree
         root = 0x27ae5ba08d7291c96c8cbddcc148bf48a6d68c7974b94356f53754ef6171d757;
     }

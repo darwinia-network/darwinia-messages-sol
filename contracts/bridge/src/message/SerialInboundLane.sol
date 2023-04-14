@@ -113,29 +113,17 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         locked = 0;
     }
 
-    /// @dev Deploys the InboundLane contract
+    /// @dev Deploys the SerialInboundLane contract
     /// @param _verifier The contract address of on-chain verifier
-    /// @param _thisChainPosition The thisChainPosition of inbound lane
-    /// @param _thisLanePosition The lanePosition of this inbound lane
-    /// @param _bridgedChainPosition The bridgedChainPosition of inbound lane
-    /// @param _bridgedLanePosition The lanePosition of target outbound lane
+    /// @param _laneId The identify of the inbound lane
     /// @param _last_confirmed_nonce The last_confirmed_nonce of inbound lane
     /// @param _last_delivered_nonce The last_delivered_nonce of inbound lane
     constructor(
         address _verifier,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition,
+        uint256 _laneId,
         uint64 _last_confirmed_nonce,
         uint64 _last_delivered_nonce
-    ) InboundLaneVerifier(
-        _verifier,
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {
+    ) InboundLaneVerifier(_verifier, _laneId) {
         inboundLaneNonce = InboundLaneNonce(
             _last_confirmed_nonce,
             _last_delivered_nonce,
