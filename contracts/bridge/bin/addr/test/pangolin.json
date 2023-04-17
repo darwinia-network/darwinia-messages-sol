@@ -1,5 +1,16 @@
 {
-  "DEPLOYER": "0x7aE77149ed38c5dD313e9069d790Ce7085caf0A6",
-  "BridgeProxyAdmin": "",
-  "ChainMessageCommitter": ""
+  "DEPLOYER": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
+  "BridgeProxyAdmin": "0x23c8c73D150c74b5ee7061ABF69AF69DDC5369EC",
+  "ChainMessageCommitter": "0xF2b2FBF84173E2F295278Fa454f6304907886000",
+  "goerli": {
+    "FeeMarket": "0xe6315A3825506E9E5c8Eba802beE23d184485Fbc",
+    "FeeMarketProxy": "0x43d6711EB86C852Ec1E04af55C52a0dd51b2C743",
+    "BeaconLightClient": "0x1fC9EBbf098585a26E284fB6DA58BB9390D7Fe0B",
+    "ExecutionLayer": "0xD4ee42040F7a6fA05760c8D268ACf6177c7ba3f3",
+    "BeaconLCMandatoryReward": "0x1b587abB9a5c2108FB8d10cA0ab5905B95e0B649",
+    "EthereumSerialLaneVerifier": "0x757E868d4494C94620dA35a8956A1122b2b7af30",
+    "SerialOutboundLane": "0xcF2A32c182A73D93fBa0C5e515e3C5ec7944a471",
+    "SerialInboundLane": "0x12224D83884009782F8F25fa709B33DEA6ad0fE7",
+    "LaneMessageCommitter": "0xe05c0dC8d0f1F5280f2792A07E7eEead4927884d"
+  }
 }
