@@ -5,10 +5,11 @@ set -e
 unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
+unset SETH_CHAIN
 export NETWORK_NAME=pangoro
 export TARGET_CHAIN=goerli
+export SETH_CHAIN=goerli
 # export ETH_RPC_URL=https://pangoro-rpc.darwinia.network
-export ETH_RPC_URL=http://35.247.165.91:9933
 
 . $(dirname $0)/base.sh
 

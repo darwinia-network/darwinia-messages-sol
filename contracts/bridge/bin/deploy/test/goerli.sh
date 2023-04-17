@@ -5,8 +5,10 @@ set -e
 unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
+unset SETH_CHAIN
 export NETWORK_NAME=goerli
-export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
+export SETH_CHAIN=goerli
+# export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
 
 echo "ETH_FROM: ${ETH_FROM}"
 

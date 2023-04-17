@@ -5,9 +5,11 @@ set -e
 unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
+unset SETH_CHAIN
 export NETWORK_NAME=pangolin
 export TARGET_CHAIN=goerli
-export ETH_RPC_URL=https://pangolin-rpc.darwinia.network
+export SETH_CHAIN=pangolin
+# export ETH_RPC_URL=https://pangolin-rpc.darwinia.network
 
 echo "ETH_FROM: ${ETH_FROM}"
 
@@ -71,7 +73,6 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $GENESIS_VALIDATORS_ROOT)
 
 CAPELLA_FORK_EPOCH=162304
-
 ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient $CAPELLA_FORK_EPOCH)
 
 # import mandatory block reward
