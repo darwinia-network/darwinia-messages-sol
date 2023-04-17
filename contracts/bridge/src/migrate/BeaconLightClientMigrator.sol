@@ -18,7 +18,6 @@
 pragma solidity 0.8.17;
 
 import "../truth/eth/BeaconLightClient.sol";
-import "../truth/eth/ExecutionLayer.sol";
 
 
 interface IEthereumStorageVerifier {
@@ -28,7 +27,6 @@ interface IEthereumStorageVerifier {
 
 contract BeaconLightClientMigrator {
     BeaconLightClient public new_beacon_lc;
-    ExecutionLayer public new_execution_layer;
 
     address public immutable HELIX_DAO;
     address public immutable OLD_BEACON_LC;
@@ -76,10 +74,8 @@ contract BeaconLightClientMigrator {
             current_sync_committee_hash,
             GENESIS_VALIDATORS_ROOT
         );
-        // new ExecutionLayer
-        new_execution_layer = new ExecutionLayer(address(new_beacon_lc));
         // change light client
-        IEthereumStorageVerifier(ETHEREUM_STORAGE_VERIFIER).changeLightClient(address(new_execution_layer));
+        IEthereumStorageVerifier(ETHEREUM_STORAGE_VERIFIER).changeLightClient(address(new_beacon_lc));
 
         returnSetter();
     }
