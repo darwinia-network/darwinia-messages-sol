@@ -31,8 +31,6 @@ contract BeaconLightClientMainnetTest is DSTest, BeaconLightClientUpdate, Bitfie
     bytes32 constant GENESIS_VALIDATORS_ROOT = 0x4b363db94e286120d76eb905340fdd4e54bfe9f06bf33ff6cf5ad27f511bfe95;
     bytes32 constant LATEST_EXECUTION_PAYLOAD_STATE_ROOT = 0xc22665bddd71c249eff6dea84255918cc4d0537ecceaa9348419231a64259beb;
 
-    uint64 constant CAPELLA_FORK_EPOCH = 18446744073709551615;
-
     BeaconLightClient lightclient;
     ExecutionLayer executionlayer;
     MockBLS bls;
@@ -50,7 +48,7 @@ contract BeaconLightClientMainnetTest is DSTest, BeaconLightClientUpdate, Bitfie
             CURRENT_SYNC_COMMITTEE_ROOT,
             GENESIS_VALIDATORS_ROOT
         );
-        executionlayer = new ExecutionLayer(address(lightclient), CAPELLA_FORK_EPOCH);
+        executionlayer = new ExecutionLayer(address(lightclient));
         self = address(this);
     }
 

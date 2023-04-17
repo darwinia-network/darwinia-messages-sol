@@ -23,66 +23,49 @@ import "../../interfaces/ILightClient.sol";
 
 interface IConsensusLayer {
     function body_root() external view returns (bytes32);
-    function slot() external view returns (uint64);
 }
 
 contract ExecutionLayer is BeaconChain, ILightClient {
     /// @dev latest execution payload's state root of beacon chain state root
-    bytes32 private latest_execution_payload_state_root;
+    bytes32 private state_root;
     /// @dev latest execution payload's block number of beacon chain state root
-    uint256 private latest_execution_payload_block_number;
+    uint256 public block_number;
     /// @dev consensus layer
     address public immutable CONSENSUS_LAYER;
-    uint64 public immutable CAPELLA_FORK_EPOCH;
 
-    uint64 constant private SLOTS_PER_EPOCH = 32;
+    uint64 constant private EXECUTION_PAYLOAD_INDEX = 25;
+    uint64 constant private EXECUTION_PAYLOAD_DEPTH = 4;
 
-    event LatestExecutionPayloadImported(uint256 block_number, bytes32 state_root);
+    event LatestStateRootImported(uint256 block_number, bytes32 state_root);
 
-    constructor(address consensus_layer, uint64 capella_fork_epoch) {
+    constructor(address consensus_layer) {
         CONSENSUS_LAYER = consensus_layer;
-        CAPELLA_FORK_EPOCH = capella_fork_epoch;
     }
 
     /// @dev Return latest execution payload state root
     /// @return merkle root
     function merkle_root() public view override returns (bytes32) {
-        return latest_execution_payload_state_root;
-    }
-
-    /// @dev Return latest execution payload block number
-    /// @return block number
-    function block_number() public view override returns (uint256) {
-        return latest_execution_payload_block_number;
-    }
-
-    function is_capella() public view returns (bool) {
-        uint64 slot = IConsensusLayer(CONSENSUS_LAYER).slot();
-        uint64 epoch = slot / SLOTS_PER_EPOCH;
-        return epoch >= CAPELLA_FORK_EPOCH;
+        return state_root;
     }
 
     /// @dev follow beacon api: /eth/v2/beacon/blocks/{block_id}
-    function import_block_body_bellatrix(BeaconBlockBodyBellatrix calldata body) external {
-        require(!is_capella(), "!bellatrix");
-        bytes32 state_root = body.execution_payload.state_root;
-        uint256 new_block_number = body.execution_payload.block_number;
-        require(new_block_number > latest_execution_payload_block_number, "!new");
-        require(hash_tree_root(body) == IConsensusLayer(CONSENSUS_LAYER).body_root(), "!body");
-        latest_execution_payload_state_root = state_root;
-        latest_execution_payload_block_number = new_block_number;
-        emit LatestExecutionPayloadImported(new_block_number, state_root);
-    }
+    function import_state_root(ExecutionPayloadHeaderCapella calldata header, bytes32[] calldata execution_branch) external {
+        bytes32 state_root_ = header.state_root;
+        uint256 block_number_ = header.block_number;
+        require(block_number_ > block_number, "!new");
 
-    /// @dev follow beacon api: /eth/v2/beacon/blocks/{block_id}
-    function import_block_body_capella(BeaconBlockBodyCapella calldata body) external {
-        require(is_capella(), "!capella");
-        bytes32 state_root = body.execution_payload.state_root;
-        uint256 new_block_number = body.execution_payload.block_number;
-        require(new_block_number > latest_execution_payload_block_number, "!new");
-        require(hash_tree_root(body) == IConsensusLayer(CONSENSUS_LAYER).body_root(), "!body");
-        latest_execution_payload_state_root = state_root;
-        latest_execution_payload_block_number = new_block_number;
-        emit LatestExecutionPayloadImported(new_block_number, state_root);
+        require(execution_branch.length == EXECUTION_PAYLOAD_DEPTH, "!execution_branch");
+        require(is_valid_merkle_branch(
+            hash_tree_root(header),
+            execution_branch,
+            EXECUTION_PAYLOAD_DEPTH,
+            EXECUTION_PAYLOAD_INDEX,
+            IConsensusLayer(CONSENSUS_LAYER).body_root()),
+            "!execution_payload_header"
+       );
+
+        state_root = state_root_;
+        block_number = block_number_;
+        emit LatestStateRootImported(block_number_, state_root_);
     }
 }

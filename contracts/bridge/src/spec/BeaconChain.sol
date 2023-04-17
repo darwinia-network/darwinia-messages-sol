@@ -92,32 +92,6 @@ contract BeaconChain is MerkleProof {
         ExecutionPayloadBellatrix execution_payload;
     }
 
-    /// @notice Beacon block body in Capella
-    /// @param randao_reveal Randao reveal
-    /// @param eth1_data Eth1 data vote
-    /// @param graffiti Arbitrary data
-    /// @param proposer_slashings Proposer slashings
-    /// @param attester_slashings Attester slashings
-    /// @param attestations Attestations
-    /// @param deposits Deposits
-    /// @param voluntary_exits Voluntary exits
-    /// @param sync_aggregate Sync aggregate
-    /// @param execution_payload Execution payload
-    /// @param bls_to_execution_changes Capella operations [New in Capella]
-    struct BeaconBlockBodyCapella {
-        bytes32 randao_reveal;
-        bytes32 eth1_data;
-        bytes32 graffiti;
-        bytes32 proposer_slashings;
-        bytes32 attester_slashings;
-        bytes32 attestations;
-        bytes32 deposits;
-        bytes32 voluntary_exits;
-        bytes32 sync_aggregate;
-        ExecutionPayloadCapella execution_payload;
-        bytes32 bls_to_execution_changes;
-    }
-
     /// @notice Execution payload in Bellatrix
     /// @param parent_hash Parent hash
     /// @param fee_recipient Beneficiary
@@ -150,7 +124,7 @@ contract BeaconChain is MerkleProof {
         bytes32 transactions;
     }
 
-    /// @notice Execution payload in Capella
+    /// @notice Execution payload header in Capella
     /// @param parent_hash Parent hash
     /// @param fee_recipient Beneficiary
     /// @param state_root State root
@@ -166,7 +140,7 @@ contract BeaconChain is MerkleProof {
     /// @param block_hash Hash of execution block
     /// @param transactions_root Root of transactions
     /// @param withdrawals_root Root of withdrawals [New in Capella]
-    struct ExecutionPayloadCapella {
+    struct ExecutionPayloadHeaderCapella {
         bytes32 parent_hash;
         address fee_recipient;
         bytes32 state_root;
@@ -262,23 +236,6 @@ contract BeaconChain is MerkleProof {
         return merkle_root(leaves);
     }
 
-    /// @notice Return hash tree root of beacon block body in Capella
-    function hash_tree_root(BeaconBlockBodyCapella memory beacon_block_body) internal pure returns (bytes32) {
-        bytes32[] memory leaves = new bytes32[](11);
-        leaves[0]  = beacon_block_body.randao_reveal;
-        leaves[1]  = beacon_block_body.eth1_data;
-        leaves[2]  = beacon_block_body.graffiti;
-        leaves[3]  = beacon_block_body.proposer_slashings;
-        leaves[4]  = beacon_block_body.attester_slashings;
-        leaves[5]  = beacon_block_body.attestations;
-        leaves[6]  = beacon_block_body.deposits;
-        leaves[7]  = beacon_block_body.voluntary_exits;
-        leaves[8]  = beacon_block_body.sync_aggregate;
-        leaves[9]  = hash_tree_root(beacon_block_body.execution_payload);
-        leaves[10] = beacon_block_body.bls_to_execution_changes;
-        return merkle_root(leaves);
-    }
-
     /// @notice Return hash tree root of execution payload in Bellatrix
     function hash_tree_root(ExecutionPayloadBellatrix memory execution_payload) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](14);
@@ -300,7 +257,7 @@ contract BeaconChain is MerkleProof {
     }
 
     /// @notice Return hash tree root of execution payload in Capella
-    function hash_tree_root(ExecutionPayloadCapella memory execution_payload) internal pure returns (bytes32) {
+    function hash_tree_root(ExecutionPayloadHeaderCapella memory execution_payload) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](15);
         leaves[0]  = execution_payload.parent_hash;
         leaves[1]  = bytes32(bytes20(execution_payload.fee_recipient));

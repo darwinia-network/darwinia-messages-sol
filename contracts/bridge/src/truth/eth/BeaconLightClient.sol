@@ -81,8 +81,12 @@ interface IBLS {
 }
 
 contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
-    /// @dev Beacon block header that is finalized
-    BeaconBlockHeader public finalized_header;
+    /// @dev Finalized beacon block header
+    BeaconBlockHeader public finalized_header_slot;
+    /// @dev Finalized execution payload header block_number corresponding to `beacon.body_root` [New in Capella]
+    uint64 public finalized_execution_payload_header_block_number;
+    /// @dev Finalized execution payload header state_root corresponding to `beacon.body_root` [New in Capella]
+    bytes32 private finalized_execution_payload_header_state_root;
     /// @dev Sync committees corresponding to the header
     /// sync_committee_perid => sync_committee_root
     mapping (uint64 => bytes32) public sync_committee_roots;
@@ -164,7 +168,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
                 header_update.signature_sync_committee,
                 header_update.fork_version,
                 header_update.attested_header),
-               "!sign");
+                "!sign");
 
         if (header_update.finalized_header.slot > finalized_header.slot) {
             finalized_header = header_update.finalized_header;
@@ -202,7 +206,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         uint64 signature_period = compute_sync_committee_period(update.signature_slot);
         require(signature_period == finalized_period ||
                 signature_period == finalized_period + 1,
-               "!signature_period");
+                "!signature_period");
         bytes32 singature_sync_committee_root = sync_committee_roots[signature_period];
 
         require(singature_sync_committee_root != bytes32(0), "!missing");
@@ -213,7 +217,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
                 update.signature_sync_committee,
                 update.fork_version,
                 update.attested_header),
-               "!sign");
+                "!sign");
 
         require(update.finalized_header.slot > finalized_header.slot, "!new");
         finalized_header = update.finalized_header;
@@ -246,7 +250,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         bytes memory message = abi.encodePacked(signing_root);
         bytes memory signature = sync_aggregate.sync_committee_signature;
         require(signature.length == BLSSIGNATURE_LENGTH, "!signature");
-        return fast_aggregate_verify(participant_pubkeys, message, signature);
+        return IBLS(BLS_PRECOMPILE).fast_aggregate_verify(participant_pubkeys, message, signature);
     }
 
     function verify_finalized_header(
@@ -282,30 +286,6 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
 
     function is_supermajority(bytes32[2] calldata sync_committee_bits) internal pure returns (bool) {
         return sum(sync_committee_bits) * 3 >= SYNC_COMMITTEE_SIZE * 2;
-    }
-
-    function fast_aggregate_verify(bytes[] memory pubkeys, bytes memory message, bytes memory signature) internal view returns (bool valid) {
-        bytes memory input = abi.encodeWithSelector(
-            IBLS.fast_aggregate_verify.selector,
-            pubkeys,
-            message,
-            signature
-        );
-        (bool ok, bytes memory out) = BLS_PRECOMPILE.staticcall(input);
-        if (ok) {
-            if (out.length == 32) {
-                valid = abi.decode(out, (bool));
-            }
-        } else {
-            if (out.length > 0) {
-                assembly ("memory-safe") {
-                    let returndata_size := mload(out)
-                    revert(add(32, out), returndata_size)
-                }
-            } else {
-                revert("!verify");
-            }
-        }
     }
 
     function compute_sync_committee_period(uint64 slot_) internal pure returns (uint64) {
