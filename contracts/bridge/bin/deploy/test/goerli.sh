@@ -5,10 +5,8 @@ set -e
 unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
-unset SETH_CHAIN
 export NETWORK_NAME=goerli
-export SETH_CHAIN=goerli
-# export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
+export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
 
 echo "ETH_FROM: ${ETH_FROM}"
 
@@ -97,7 +95,7 @@ seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutbou
 
 EthereumSerialLaneVerifier=$(jq -r ".[\"$NETWORK_NAME\"].EthereumSerialLaneVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
 # (set -x; seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
-#   $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane --rpc-url https://pangoro-rpc.darwinia.network)
+#   $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane --rpc-url https://pangolin-rpc.darwinia.network)
 
 (set -x; seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
   $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane --rpc-url https://pangolin-rpc.darwinia.network)
