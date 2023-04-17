@@ -148,6 +148,8 @@ abstract contract LaneIdentity {
     Slot0 internal slot0;
 
     struct Slot0 {
+        // nonce place holder
+        uint64 nonce_placeholder;
         // Bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
         uint32 bridged_lane_pos;
         // Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
@@ -158,16 +160,10 @@ abstract contract LaneIdentity {
         uint32 this_chain_pos;
     }
 
-    constructor(
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) {
-        slot0.this_chain_pos = _thisChainPosition;
-        slot0.this_lane_pos = _thisLanePosition;
-        slot0.bridged_chain_pos = _bridgedChainPosition;
-        slot0.bridged_lane_pos = _bridgedLanePosition;
+    constructor(uint256 _laneId) {
+        assembly ("memory-safe") {
+            sstore(slot0.slot, _laneId)
+        }
     }
 
     function getLaneInfo() external view returns (uint32,uint32,uint32,uint32) {
@@ -180,11 +176,10 @@ abstract contract LaneIdentity {
        );
     }
 
-    function getLaneId() external view returns (uint256 id) {
+    function getLaneId() public view returns (uint256 id) {
         assembly ("memory-safe") {
           id := sload(slot0.slot)
         }
-        return id << 64;
     }
 }
 
@@ -216,18 +211,7 @@ contract OutboundLaneVerifier is LaneIdentity {
     /// @dev The contract address of on-chain verifier
     IVerifier public immutable VERIFIER;
 
-    constructor(
-        address _verifier,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) LaneIdentity(
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {
+    constructor(address _verifier, uint256 _laneId) LaneIdentity(_laneId) {
         VERIFIER = IVerifier(_verifier);
     }
 
@@ -262,12 +246,8 @@ contract OutboundLaneVerifier is LaneIdentity {
     // [20..24) bytes ---- BridgedLanePosition
     // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
     function encodeMessageKey(uint64 nonce) public view override returns (uint256) {
-        Slot0 memory _slot0 = slot0;
-        return (uint256(_slot0.this_chain_pos) << 160) +
-                (uint256(_slot0.this_lane_pos) << 128) +
-                (uint256(_slot0.bridged_chain_pos) << 96) +
-                (uint256(_slot0.bridged_lane_pos) << 64) +
-                uint256(nonce);
+        uint256 laneId = getLaneId();
+        return laneId + nonce;
     }
 }
 
@@ -690,8 +670,8 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
 
     address public immutable FEE_MARKET;
 
-    uint256 private constant MAX_CALLDATA_LENGTH       = 4096;
-    uint64  private constant MAX_PENDING_MESSAGES      = 10;
+    uint64  private constant MAX_CALLDATA_LENGTH       = 2048;
+    uint64  private constant MAX_PENDING_MESSAGES      = 20;
     uint64  private constant MAX_PRUNE_MESSAGES_ATONCE = 5;
 
     event MessageAccepted(uint64 indexed nonce, address source, address target, bytes encoded);
@@ -709,32 +689,21 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
         uint64 oldest_unpruned_nonce;
     }
 
-    /// @dev Deploys the OutboundLane contract
+    /// @dev Deploys the SerialOutboundLane contract
     /// @param _verifier The contract address of on-chain verifier
-    /// @param _thisChainPosition The thisChainPosition of outbound lane
-    /// @param _thisLanePosition The lanePosition of this outbound lane
-    /// @param _bridgedChainPosition The bridgedChainPosition of outbound lane
-    /// @param _bridgedLanePosition The lanePosition of target inbound lane
+    /// @param _feeMarket The fee market of the outbound lane
+    /// @param _laneId The identify of the outbound lane
     /// @param _oldest_unpruned_nonce The oldest_unpruned_nonce of outbound lane
     /// @param _latest_received_nonce The latest_received_nonce of outbound lane
     /// @param _latest_generated_nonce The latest_generated_nonce of outbound lane
     constructor(
         address _verifier,
         address _feeMarket,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition,
+        uint256 _laneId,
         uint64 _oldest_unpruned_nonce,
         uint64 _latest_received_nonce,
         uint64 _latest_generated_nonce
-    ) OutboundLaneVerifier(
-        _verifier,
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {
+    ) OutboundLaneVerifier(_verifier, _laneId) {
         outboundLaneNonce = OutboundLaneNonce(
             _latest_received_nonce,
             _latest_generated_nonce,

@@ -108,6 +108,8 @@ abstract contract LaneIdentity {
     Slot0 internal slot0;
 
     struct Slot0 {
+        // nonce place holder
+        uint64 nonce_placeholder;
         // Bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
         uint32 bridged_lane_pos;
         // Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
@@ -118,16 +120,10 @@ abstract contract LaneIdentity {
         uint32 this_chain_pos;
     }
 
-    constructor(
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) {
-        slot0.this_chain_pos = _thisChainPosition;
-        slot0.this_lane_pos = _thisLanePosition;
-        slot0.bridged_chain_pos = _bridgedChainPosition;
-        slot0.bridged_lane_pos = _bridgedLanePosition;
+    constructor(uint256 _laneId) {
+        assembly ("memory-safe") {
+            sstore(slot0.slot, _laneId)
+        }
     }
 
     function getLaneInfo() external view returns (uint32,uint32,uint32,uint32) {
@@ -140,11 +136,10 @@ abstract contract LaneIdentity {
        );
     }
 
-    function getLaneId() external view returns (uint256 id) {
+    function getLaneId() public view returns (uint256 id) {
         assembly ("memory-safe") {
           id := sload(slot0.slot)
         }
-        return id << 64;
     }
 }
 
@@ -176,18 +171,7 @@ contract InboundLaneVerifier is LaneIdentity {
     /// @dev The contract address of on-chain verifier
     IVerifier public immutable VERIFIER;
 
-    constructor(
-        address _verifier,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) LaneIdentity(
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {
+    constructor(address _verifier, uint256 _laneId) LaneIdentity(_laneId) {
         VERIFIER = IVerifier(_verifier);
     }
 
@@ -841,25 +825,10 @@ contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
 
     event RetryFailedMessage(uint64 indexed nonce , bool dispatch_result);
 
-    /// @dev Deploys the InboundLane contract
+    /// @dev Deploys the ParallelInboundLane contract
     /// @param _verifier The contract address of on-chain verifier
-    /// @param _thisChainPosition The thisChainPosition of inbound lane
-    /// @param _thisLanePosition The lanePosition of this inbound lane
-    /// @param _bridgedChainPosition The bridgedChainPosition of inbound lane
-    /// @param _bridgedLanePosition The lanePosition of target outbound lane
-    constructor(
-        address _verifier,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) InboundLaneVerifier(
-        _verifier,
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {}
+    /// @param _laneId The laneId of inbound lane
+    constructor(address _verifier, uint256 _laneId) InboundLaneVerifier(_verifier, _laneId) {}
 
     /// Receive messages proof from bridged chain.
     function receive_message(
