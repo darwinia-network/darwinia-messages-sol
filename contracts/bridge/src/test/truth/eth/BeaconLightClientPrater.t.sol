@@ -1,250 +1,309 @@
-//// This file is part of Darwinia.
-//// Copyright (C) 2018-2022 Darwinia Network
-//// SPDX-License-Identifier: GPL-3.0
-////
-//// Darwinia is free software: you can redistribute it and/or modify
-//// it under the terms of the GNU General Public License as published by
-//// the Free Software Foundation, either version 3 of the License, or
-//// (at your option) any later version.
-////
-//// Darwinia is distributed in the hope that it will be useful,
-//// but WITHOUT ANY WARRANTY; without even the implied warranty of
-//// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-//// GNU General Public License for more details.
-////
-//// You should have received a copy of the GNU General Public License
-//// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-//pragma solidity 0.8.17;
+pragma solidity 0.8.17;
 
-//import "../../test.sol";
-//import "../../mock/MockBLS.sol";
-//import "../../../utils/Bitfield.sol";
-//import "../../spec/SyncCommittee.t.sol";
-//import "../../../spec/BeaconLightClientUpdate.sol";
-//import "../../../truth/eth/BeaconLightClient.sol";
+import "../../test.sol";
+import "../../mock/MockBLS.sol";
+import "../../../utils/Bitfield.sol";
+import "../../spec/SyncCommittee.t.sol";
+import "../../../spec/BeaconLightClientUpdate.sol";
+import "../../../truth/eth/BeaconLightClient.sol";
 
 
-//contract BeaconLightClientPraterTest is DSTest, BeaconLightClientUpdate, Bitfield, SyncCommitteePreset {
-//    bytes32 constant CURRENT_SYNC_COMMITTEE_ROOT = 0xa36ba14c9ad227f9785a6b9ffd52d3b1f40a3fbd73e7445e18f70cac121612b4;
-//    bytes32 constant GENESIS_VALIDATORS_ROOT = 0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb;
-//    bytes32 constant LATEST_EXECUTION_PAYLOAD_STATE_ROOT = 0xba2cb8f2d80e266a1e69845b10224430f4667f3da4273174c9b243a8661e91fe;
+contract BeaconLightClientPraterTest is DSTest, BeaconLightClientUpdate, Bitfield, SyncCommitteePreset {
+    bytes32 constant CURRENT_SYNC_COMMITTEE_ROOT = 0x4bcc8065b1462577a9971110aaa3ea5630ce3e6bc0ecb53e54777ce7d4a5e816;
+    bytes32 constant GENESIS_VALIDATORS_ROOT = 0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb;
 
-//    BeaconLightClient lightclient;
-//    MockBLS bls;
-//    address self;
+    BeaconLightClient lightclient;
+    MockBLS bls;
+    address self;
+    function setUp() public {
+        bls = new MockBLS();
+        lightclient = new BeaconLightClient(
+            address(bls),
+            5431296,
+            156599,
+            0x6e6eb69b692ab61b4848c7d7ead6397b897a0544a4d90684e72026e1d3433efa,
+            0xc04c27ea01b7e07136e0a9b697ff0fdcd6d88aad5f262953bf23e4586ae8104c,
+            0x75f47fc8313ca967e1e81372b57309703b92d1f7e449fa8c1aa29106134c38d6,
+            CURRENT_SYNC_COMMITTEE_ROOT,
+            GENESIS_VALIDATORS_ROOT
+        );
+        self = address(this);
+    }
 
-//    function setUp() public {
-//        bls = new MockBLS();
-//        lightclient = new BeaconLightClient(
-//            address(bls),
-//            4063328,
-//            353355,
-//            0x964a8c23cedbb4f2a44749e317ed2612b02eee158bea49e629fcbf8852f523d1,
-//            0xc98b933323521f9cbf5318e8ca0d3737db76811a9232b35de9587763bd8ea05a,
-//            0xe59b964884eb33a1cce0b2507da841651ac61be559c7020f57d61fb212ce3e57,
-//            CURRENT_SYNC_COMMITTEE_ROOT,
-//            GENESIS_VALIDATORS_ROOT
-//        );
-//        self = address(this);
-//    }
+    function test_constructor_args() public {}
 
-//    function test_constructor_args() public {}
+    function test_import_next_sync_committee() public {
+        FinalizedHeaderUpdate memory header_update = build_header_update();
+        process_import_next_committee(header_update);
+        bytes32 stored_next_sync_committee_root = lightclient.sync_committee_roots(header_update.finalized_header.beacon.slot/32/256 + 1);
+        assertEq(hash_tree_root(sync_committee_case3()), stored_next_sync_committee_root);
+        assert_finalized_header(header_update.finalized_header.beacon);
+        assert_exection_payload(header_update.finalized_header.execution);
+    }
 
-//    function test_import_next_sync_committee() public {
-//        FinalizedHeaderUpdate memory header_update = build_header_update();
-//        bytes32[] memory next_sync_committee_branch = build_next_sync_committee_branch();
-//        SyncCommitteePeriodUpdate memory sc_update = SyncCommitteePeriodUpdate({
-//            next_sync_committee: sync_committee_case3(),
-//            next_sync_committee_branch: next_sync_committee_branch
-//        });
-//        lightclient.import_next_sync_committee(header_update, sc_update);
-//        bytes32 stored_next_sync_committee_root = lightclient.sync_committee_roots(497);
-//        assertEq(hash_tree_root(sync_committee_case3()), stored_next_sync_committee_root);
-//        assert_finalized_header();
-//    }
+    function test_import_finalized_header() public {
+        FinalizedHeaderUpdate memory update = build_header_update1();
+        lightclient.import_finalized_header(update);
+        assert_finalized_header(update.finalized_header.beacon);
+        assert_exection_payload(update.finalized_header.execution);
+    }
 
-//    function test_import_latest_execution_payload_state_root() public {
-//        process_import_finalized_header();
-//        BeaconBlockBodyBellatrix memory body = build_beacon_block_body();
-//        assertEq(lightclient.merkle_root(), LATEST_EXECUTION_PAYLOAD_STATE_ROOT);
-//    }
+    function test_hash_execution_payload() public {
+        FinalizedHeaderUpdate memory update = build_header_update();
+        assertEq(hash_tree_root(update.finalized_header.execution), 0xd14091c659bef13f4f0c95aef5f1aebc46fc22caf4a87cb6a7174a32577d4b0c);
+    }
 
-//    function test_import_finalized_header() public {
-//        process_import_finalized_header();
-//        BeaconBlockHeader memory finalized_header = build_finalized_header1();
-//        (uint64 slot, uint64 proposer_index, bytes32 parent_root, bytes32 state_root, bytes32 body_root) = lightclient.finalized_header();
-//        assertEq(uint(slot), finalized_header.slot);
-//        assertEq(uint(proposer_index), finalized_header.proposer_index);
-//        assertEq(parent_root, finalized_header.parent_root);
-//        assertEq(state_root, finalized_header.state_root);
-//        assertEq(body_root, finalized_header.body_root);
-//    }
+    function assert_finalized_header(BeaconBlockHeader memory finalized_header) internal {
+        (uint64 slot, uint64 proposer_index, bytes32 parent_root, bytes32 state_root, bytes32 body_root) = lightclient.finalized_header();
+        assertEq(uint(slot), finalized_header.slot);
+        assertEq(uint(proposer_index), finalized_header.proposer_index);
+        assertEq(parent_root, finalized_header.parent_root);
+        assertEq(state_root, finalized_header.state_root);
+        assertEq(body_root, finalized_header.body_root);
+    }
 
-//    function test_hash_body() public {
-//        BeaconBlockBodyBellatrix memory body = build_beacon_block_body();
-//        assertEq(hash_tree_root(body), 0xe683ebcb97b578a72f9c30533a8fdf046a9473408fd3bde3c68f56308eddb922);
-//    }
+    function assert_exection_payload(ExecutionPayloadHeader memory header) internal {
+        uint256 block_number = lightclient.block_number();
+        bytes32 merkle_root  = lightclient.merkle_root();
+        assertEq(block_number, header.block_number);
+        assertEq(merkle_root, header.state_root);
+    }
 
-//    function test_hash_execution_payload() public {
-//        ExecutionPayloadBellatrix memory payload = build_execution_payload();
-//        assertEq(hash_tree_root(payload), 0xd14091c659bef13f4f0c95aef5f1aebc46fc22caf4a87cb6a7174a32577d4b0c);
-//    }
+    function process_import_next_committee(FinalizedHeaderUpdate memory header_update) internal {
+        SyncCommitteePeriodUpdate memory sc_update = SyncCommitteePeriodUpdate({
+            next_sync_committee: sync_committee_case3(),
+            next_sync_committee_branch: build_next_sync_committee_branch()
+        });
+        lightclient.import_next_sync_committee(header_update, sc_update);
+    }
 
-//    function assert_finalized_header() public {
-//        BeaconBlockHeader memory finalized_header = build_finalized_header();
-//        (uint64 slot, uint64 proposer_index, bytes32 parent_root, bytes32 state_root, bytes32 body_root) = lightclient.finalized_header();
-//        assertEq(uint(slot), finalized_header.slot);
-//        assertEq(uint(proposer_index), finalized_header.proposer_index);
-//        assertEq(parent_root, finalized_header.parent_root);
-//        assertEq(state_root, finalized_header.state_root);
-//        assertEq(body_root, finalized_header.body_root);
-//    }
+    function build_header_update1() internal pure returns (FinalizedHeaderUpdate memory) {
+        bytes32[] memory finality_branch = new bytes32[](6);
+        finality_branch[0] = 0x62f0010000000000000000000000000000000000000000000000000000000000;
+        finality_branch[1] = 0x841c29464b336fb030eb99ed756f87c4ab777422ba9e172ce014bb9b8e7ec5b6;
+        finality_branch[2] = 0xf5d713060e8a77425c6e350a7cda34e5b488c606deb3c873fd490dfc83c76ac5;
+        finality_branch[3] = 0x7d6eef9d12048dcb660df3914cc0dc44decbd7693d40856f9004a87937e00798;
+        finality_branch[4] = 0x91c80b14baaebb58d591fd3a5edad7b7f0972bc5ba1055c9d11f5ebb888cb0ee;
+        finality_branch[5] = 0x4e328a0c4b7276c0307542e2e6785ba7a8043226e9ee05328c26eeca41e52590;
 
-//    function process_import_finalized_header() public {
-//        bytes32[] memory finality_branch = new bytes32[](6);
-//        finality_branch[0] = 0x62f0010000000000000000000000000000000000000000000000000000000000;
-//        finality_branch[1] = 0x841c29464b336fb030eb99ed756f87c4ab777422ba9e172ce014bb9b8e7ec5b6;
-//        finality_branch[2] = 0xf5d713060e8a77425c6e350a7cda34e5b488c606deb3c873fd490dfc83c76ac5;
-//        finality_branch[3] = 0x7d6eef9d12048dcb660df3914cc0dc44decbd7693d40856f9004a87937e00798;
-//        finality_branch[4] = 0x91c80b14baaebb58d591fd3a5edad7b7f0972bc5ba1055c9d11f5ebb888cb0ee;
-//        finality_branch[5] = 0x4e328a0c4b7276c0307542e2e6785ba7a8043226e9ee05328c26eeca41e52590;
 
-//        FinalizedHeaderUpdate memory update = FinalizedHeaderUpdate({
-//            attested_header: BeaconBlockHeader({
-//                slot:           4066456,
-//                proposer_index: 169206,
-//                parent_root:    0x7123b887d02b692697999f03a445d815a8e4b950bce4db51fe5c25dbc164f685,
-//                state_root:     0xa88cab25b5d93ddfb41c4173ef976cc9a1f44071fa42c27954ba64ffa81f2aaf,
-//                body_root:      0x8a1a19e175acae182f3f7531b14402cb45d8c12038d8940e9eb9ad6b98f27f04
-//            }),
-//            signature_sync_committee: sync_committee_case2(),
-//            finalized_header: build_finalized_header1(),
-//            finality_branch: finality_branch,
-//            sync_aggregate: SyncAggregate({
-//                sync_committee_bits:[
-//                    bytes32(0x7ffeefbfffbf7bffbfe726feff6ffdfeef37f9dfa7b41fdd3fbfeffdffbe63f6),
-//                    bytes32(0xedffbfdf7fffdffbeb9ddfdfcfbefff97ff4e8ffef7d3ff759deff27fbbab7ff)
-//                ],
-//                sync_committee_signature: hex'8d51de130ba2af6dc637d7054807f62399ca085659b8f9d2c3a05f7400f4e43b213733f1b683f3b5000bf7c808e27f7c0771b2da1beefd004654f66a7c98ca3e462c2d980893d9cbed15f6e41396803565d0ad7013270b47c67535f48505bba3'
-//            }),
-//            fork_version: 0x02001020,
-//            signature_slot: 4066457
-//        });
-//        lightclient.import_finalized_header(update);
-//    }
+        bytes32[] memory execution_branch1 = new bytes32[](4);
+        execution_branch1[0] = 0xa10ef314b7cc705ac9d4460afd24ff7e5aa23391edafd1a81277a227954cb806;
+        execution_branch1[1] = 0x336488033fe5f3ef4ccc12af07b9370b92e553e35ecb4a337a1b1c0e4afe1e0e;
+        execution_branch1[2] = 0xdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71;
+        execution_branch1[3] = 0x99e8db97877ee912a4c7707d6112e6e75a9891094bdbc4d600a16a9b89518009;
 
-//    function build_header_update() internal pure returns (FinalizedHeaderUpdate memory) {
-//        return FinalizedHeaderUpdate({
-//            attested_header: BeaconBlockHeader({
-//                slot:           4063408,
-//                proposer_index: 178217,
-//                parent_root:    0x35adec31291c4e4e66d259f82e9c4a1063eff0c3f4fbfbdca70629c6e039fc53,
-//                state_root:     0x3b63548ca2fcbb6175651811185fe3c06b1f2529cb758e9049b69e02717dedc9,
-//                body_root:      0x8b1a74cef69937da01bb80c89a5263964ba5cee844f4abd49142446e84290bfb
-//            }),
-//            signature_sync_committee: sync_committee_case2(),
-//            finalized_header: build_finalized_header(),
-//            finality_branch: build_finality_branch(),
-//            sync_aggregate: SyncAggregate({
-//                sync_committee_bits:[
-//                    bytes32(0x7ffeefbfffbf7bffbff72efeff6ffdfeef37f9dfa7b41fdd3fbfeffdfffe67f6),
-//                    bytes32(0xfdffbfdf7ffffffbebbfdfdfcfbefffb7ff4e8ffef7dbff759deff27fbbab7ff)
-//                ],
-//                sync_committee_signature: hex'b4c2bade45ff0c4699c325fef661a8bc19b2704cb10f83c18b034702a6c9a6307abf36a1fa96850fae2947e6fcaeea5c11bbed1a29c6b7c1a4a30c6abe1d9ba9a0910ac45806306219b70b0650494dc04677551505af59c779db06860c30a3b1'
-//            }),
-//            fork_version: 0x02001020,
-//            signature_slot: 4063410
-//        });
-//    }
+        bytes32[] memory execution_branch2 = new bytes32[](4);
+        execution_branch2[0] = 0xe0cb19607540d626b2b717a7b89c3cdf099de40eb2b8e756d2c4bca790684bee;
+        execution_branch2[1] = 0x336488033fe5f3ef4ccc12af07b9370b92e553e35ecb4a337a1b1c0e4afe1e0e;
+        execution_branch2[2] = 0xdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71;
+        execution_branch2[3] = 0x7eec4dce927f43e5a29b78c73a4e2dce5074ed4d6cba52173b580bb0ebca4c1e;
 
-//    function build_finalized_header() internal pure returns (BeaconBlockHeader memory) {
-//        BeaconBlockHeader memory finalized_header = BeaconBlockHeader({
-//                slot:           4063328,
-//                proposer_index: 353355,
-//                parent_root:    0x964a8c23cedbb4f2a44749e317ed2612b02eee158bea49e629fcbf8852f523d1,
-//                state_root:     0xc98b933323521f9cbf5318e8ca0d3737db76811a9232b35de9587763bd8ea05a,
-//                body_root:      0xe59b964884eb33a1cce0b2507da841651ac61be559c7020f57d61fb212ce3e57
-//        });
-//        return finalized_header;
-//    }
+        return FinalizedHeaderUpdate({
+            attested_header: LightClientHeader({
+                beacon: BeaconBlockHeader({
+                    slot:           5440166,
+                    proposer_index: 115029,
+                    parent_root:    0x13d9895650cefc00a52670fdc259fae8cf015d7eed24dcc4561dfb8d1e2f1096,
+                    state_root:     0xf37cd1b2781a0439313b945c0c0255bf0cbe1fb679291def9c7e6eec5e96137a,
+                    body_root:      0xb1dd8c95c71aac722f45530d6a1ddd19d49d9d554b50d1483e8aff7dd31f8029
+                }),
+                execution: ExecutionPayloadHeader({
+                    parent_hash: 0x1c7c232c74366c8965617f58a1e81f8db361bbe87c8a1303737e0a13f9f6b351,
+                    fee_recipient: 0xc6e2459991BfE27cca6d86722F35da23A1E4Cb97,
+                    state_root: 0x4e8abf07cc78d0bb34e9e95d7e5495fe48f027b2984818d41395b3badd5461c2,
+                    receipts_root: 0xb5efc8df4ef6204945769bb44aaed7f74e2dc0683874fdf95d45f769f4d6aa92,
+                    logs_bloom: 0x270f4a87bf8de936d1a3964469cde44744432abcc84018d5bb5b96c10e88deee,
+                    prev_randao: 0x903921ba16aad9da2d3dfdc161677c404c9327f0e187b5e4bea29c84b4d320e8,
+                    block_number: 8848430,
+                    gas_limit: 30000000,
+                    gas_used: 15731735,
+                    timestamp: 1681789992,
+                    extra_data: 0x9707609c8f681aee747c8df1ac99cca57c4bd1f65d018d372ddf32a1e592daf5,
+                    base_fee_per_gas: 390525,
+                    block_hash: 0x1abc533e26518f9a05822d53ca72d6d15e599e50261069a3b4b0b995ce5b5a5b,
+                    transactions_root: 0x16ee264ba4fc1789909e5bab1f457a47b7096dac7a6adc6104993cc113b174f8,
+                    withdrawals_root: 0x9d8919556e8c3596f9dafaac262d097ad5be68920431ef8b46cb899884cbb396
+                }),
+                execution_branch: execution_branch1
+            }),
+            signature_sync_committee: sync_committee_case3(),
+            finalized_header: LightClientHeader({
+                beacon: BeaconBlockHeader({
+                    slot:           5440064,
+                    proposer_index: 241257,
+                    parent_root:    0xdad993b039710f83fac114075bd3e4cd5308620c61bf6ec1e0fa384b967e35f6,
+                    state_root:     0x7422093c63f32c9b0bd918bd855e0a6bea8cea2d30b283d57d9e4ea1749617f4,
+                    body_root:      0x72c9d90f7bbb0895915d13f740c83f863acc1e58f8011ff9926d528a60f301f2
+                }),
+                execution: ExecutionPayloadHeader({
+                    parent_hash: 0xb70f920bdfc867ebf0e1fe3b13965434f37113b88657cde176221807c9c229e2,
+                    fee_recipient: 0x35ae1a321f54746004D8Ea72eBEe9d32785be4A0,
+                    state_root: 0xe591381a351918930c454ba570024fac15090341968b91551b3776f276671cf2,
+                    receipts_root: 0xe8d17ad354afcd1e6b49aa16628f8bdbca3f13e7ef38ca4f267063ab3dc7121c,
+                    logs_bloom: 0x91eb00b99022498b7357f7358c7b56e47cb0d560a7987d107a929fa8a059495d,
+                    prev_randao: 0x42473c4b84a99f5d086093e4a0e3edbd69237490525b9c76c21792195107d419,
+                    block_number: 8848355,
+                    gas_limit: 30000000,
+                    gas_used: 16388925,
+                    timestamp: 1681788768,
+                    extra_data: 0xd6c887f9b24c560597973c180ce5dd9f72153e092b08758e7da1471f360840c3,
+                    base_fee_per_gas: 160845,
+                    block_hash: 0xbe58b48696fea3a792ff3a5250e04f882625eadb235c9fcc356173c85d7f321a,
+                    transactions_root: 0xe274d951b5071afa814e31d79c71be74e41fecdf8523c4aafa551cb9adc9013c,
+                    withdrawals_root: 0xfb130ffc1441372cf29b4be3ab1150d62ff97695dac9999038bd40de4113ce18
+                }),
+                execution_branch: execution_branch2
+            }),
+            finality_branch: build_finality_branch(),
+            sync_aggregate: SyncAggregate({
+                sync_committee_bits:[
+                    bytes32(0x07ddaffedf9ee77a5fe8febbffbffbefbb7ffffff71d36feb6f4ef7557fffcff),
+                    bytes32(0xdbeb6df6feffafeac967e53efb99dffccbfff5fbbe6d765f594cffbdf3f7fbff)
+                ],
+                sync_committee_signature: hex'95948e93847f00ab4bc47892b8250049393a782bf51c6f0f8219cd0dd4793640e7ba972f5ea0179ada9bf3248e97a68219c1a968b4859a86e576dbd66faaa4c2d48427ed67ff26c579adea5bae5173da293e9d7a301b633aae3382140d380a29'
+            }),
+            fork_version: 0x03001020,
+            signature_slot: 5440167
+        });
+    }
 
-//    function build_finalized_header1() internal pure returns (BeaconBlockHeader memory) {
-//        BeaconBlockHeader memory finalized_header = BeaconBlockHeader({
-//                slot:           4066368,
-//                proposer_index: 233371,
-//                parent_root:    0xc6e822d978ee3cf1f811389fc087e9020fc9aebb3be250579601cf57661d9d95,
-//                state_root:     0x145bf800cbd72dffb76cb3c8a45586c0632053d10af4c6163446c12d937c41b8,
-//                body_root:      0xe683ebcb97b578a72f9c30533a8fdf046a9473408fd3bde3c68f56308eddb922
-//            });
-//        return finalized_header;
-//    }
+    function build_execution_branch0() internal pure returns (bytes32[] memory) {
+        bytes32[] memory execution_branch = new bytes32[](4);
+        execution_branch[0] = 0x258a1fac1fd0f9c313c7533c2ab456aa4dd55f4d05447d95fc5a2f6f0930b4ea;
+        execution_branch[1] = 0x336488033fe5f3ef4ccc12af07b9370b92e553e35ecb4a337a1b1c0e4afe1e0e;
+        execution_branch[2] = 0xdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71;
+        execution_branch[3] = 0xb06dccb3a8eba043bb0b230b26d92a6276f925d551c4f0b8d47282ccaeb52561;
+        return execution_branch;
+    }
 
-//    function build_finality_branch() internal pure returns (bytes32[] memory) {
-//        bytes32[] memory finality_branch = new bytes32[](6);
-//        finality_branch[0] = 0x03f0010000000000000000000000000000000000000000000000000000000000;
-//        finality_branch[1] = 0x20138281596673b75e115e00b445b078aceeb926d13de9ca847d862cb2564c1f;
-//        finality_branch[2] = 0xf5d713060e8a77425c6e350a7cda34e5b488c606deb3c873fd490dfc83c76ac5;
-//        finality_branch[3] = 0x6ecd6cbd81977588b8b788f51670363c4980dfb24358bba02cddbd672eddf455;
-//        finality_branch[4] = 0x52e3cf69b61aad545e242e2ef8a78df16127d59472d728d86401731350538ce6;
-//        finality_branch[5] = 0xa318f6d6418032efae3e4a269d72d04c291153b67b2390216087974cc5d3ca50;
-//        return finality_branch;
-//    }
+    function build_execution_branch1() internal pure returns (bytes32[] memory) {
+        bytes32[] memory execution_branch = new bytes32[](4);
+        execution_branch[0] = 0xbd2bf9939680435cac3c990592eab5707274f907aa5cf4d51d0b629ec6dff5a3;
+        execution_branch[1] = 0x336488033fe5f3ef4ccc12af07b9370b92e553e35ecb4a337a1b1c0e4afe1e0e;
+        execution_branch[2] = 0xdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71;
+        execution_branch[3] = 0xb850949b485c4e4748756c52b963c2d94419159aeb733b784ac5ddfb4cfca658;
+        return execution_branch;
+    }
 
-//    function build_next_sync_committee_branch() internal pure returns (bytes32[] memory) {
-//        bytes32[] memory next_sync_committee_branch = new bytes32[](5);
-//        // root next_sync_committee in attested_header
-//        next_sync_committee_branch[0] = 0xa36ba14c9ad227f9785a6b9ffd52d3b1f40a3fbd73e7445e18f70cac121612b4;
-//        next_sync_committee_branch[1] = 0x9820907666e8cdfa916cb110286263c0191cc8a71c59b3d16ffef8cbbb4b83b0;
-//        next_sync_committee_branch[2] = 0x6ecd6cbd81977588b8b788f51670363c4980dfb24358bba02cddbd672eddf455;
-//        next_sync_committee_branch[3] = 0x52e3cf69b61aad545e242e2ef8a78df16127d59472d728d86401731350538ce6;
-//        next_sync_committee_branch[4] = 0xa318f6d6418032efae3e4a269d72d04c291153b67b2390216087974cc5d3ca50;
-//        return next_sync_committee_branch;
-//    }
+    function build_finality_branch() internal pure returns (bytes32[] memory) {
+        bytes32[] memory finality_branch = new bytes32[](6);
+        finality_branch[0] = 0x2b97020000000000000000000000000000000000000000000000000000000000;
+        finality_branch[1] = 0x68094b86a4b1aa388d4fa35f1d6f9f9641ee81d066f8302f6622868896ca872d;
+        finality_branch[2] = 0xfa8d3416b207fd3d5afd29ea16361f95736a5edcc62d550c40c7915e3d811c13;
+        finality_branch[3] = 0xe7fcbef3ebfe4659c1e2cbe04a0877e23c2cd1cdcc16d308815a87f179cf62bb;
+        finality_branch[4] = 0x543002c6926c9e101079f4fb0ee36b71d79d45d82e7635d7f01c0b36184bf77a;
+        finality_branch[5] = 0x316c8f1be6eb127ab8ee55ad99ae855b45d1c07fe5451f9e2054cac30b57892a;
+        return finality_branch;
+    }
 
-//    function build_execution_payload() internal pure returns (ExecutionPayloadBellatrix memory) {
-//        return ExecutionPayloadBellatrix({
-//                 parent_hash:      0xbb762440415eda896064e4e8f9fcd1b74adbe4586726530acecd9b2106b0e688,
-//                 fee_recipient:    0x8dC847Af872947Ac18d5d63fA646EB65d4D99560,
-//                 state_root:       LATEST_EXECUTION_PAYLOAD_STATE_ROOT,
-//                 receipts_root:    0xef5f362b0f09407472505e9d0b7961980886397c011e377e8797db3b2cb6fdfd,
-//                 logs_bloom:       0x5a9e641747cd201c31d5d7111b08bc78f7e7b05665c25dea0175e002899a3f62,
-//                 prev_randao:      0xb126ec433144f3bdacc15ab6adf9805aa69841cbc9da30b2397d65db57094c3a,
-//                 block_number:     7738371,
-//                 gas_limit:        30000000,
-//                 gas_used:         29887283,
-//                 timestamp:        1665304416,
-//                 extra_data:       0x6c1af7064d349ef5be90d2e1a75c07f5f784e925bcda1f7a32e8003a6f7427a9,
-//                 base_fee_per_gas: 55,
-//                 block_hash:       0xe0f467253ab0ca0cbcf2d60e19fe9d9672eb547e5ef99b5fee7e7fbad3a109c8,
-//                 transactions:     0x000c92092b4515fc77f506734bdd78ff3b7413655284674e92ffbebc1ee853a8
-//             });
-//    }
+    function build_header_update() internal pure returns (FinalizedHeaderUpdate memory) {
+        return FinalizedHeaderUpdate({
+            attested_header: LightClientHeader({
+                beacon: BeaconBlockHeader({
+                    slot:           5432749,
+                    proposer_index: 373898,
+                    parent_root:    0x6a5a5275ef4d170c40aaf9d4b89b376cdf5f44697af34b93499e2011ac281ca2,
+                    state_root:     0x4464f0ef276888bc833419c1769e86244086363f56cb787da034c4f26453d7ab,
+                    body_root:      0x681c106424c75044b06479b2b7871a8010a656961c0bf3379143e620cfad1883
+                }),
+                execution: ExecutionPayloadHeader({
+                    parent_hash:       0xe723261fb685257b39a7dc7b506e473e08962ea5afc886669d1c55d199a86059,
+                    fee_recipient:     0x2d1A0d741443eD1d52547D6bf6b04Ee4743f095B,
+                    state_root:        0x560e16b22b69cf061c5d00aef0876ab171739deec5cfed6e11a284d5a159f4d1,
+                    receipts_root:     0x73e9731825d5f76b2e75cde90a782adb14c30e04c6bc507f56b21804f2631aec,
+                    logs_bloom:        0xe1d0ffb956f140e248a3281e893f96c196b2c341afd739a16eabf61ae1bbc69a,
+                    prev_randao:       0x038bcd65322bfde62e459a2151127680c5e8c9d5f3a718eaa338ddcb49cf18cf,
+                    block_number:      8842880,
+                    gas_limit:         30000000,
+                    gas_used:          29964667,
+                    timestamp:         1681700988,
+                    extra_data:        0xebd940a554baa1963cd1d00e6f94ccdd85fa52c8092d207b7d566de6a840834d,
+                    base_fee_per_gas:  7449434,
+                    block_hash:        0x96bdb0ac6829f04cb9086cf52e21f46fae83ab74aca8e371313847cc7211123e,
+                    transactions_root: 0x6fc65bbcbb33bfc4360ea847265cc12afea01ff18c482b1cdb59205b9673d18a,
+                    withdrawals_root:  0x72edce17766e27da0503f770876a4b417ec4018287c8dcc63ce3cbce5dc56cd6
+                }),
+                execution_branch: build_execution_branch0()
+            }),
+            signature_sync_committee: sync_committee_case2(),
+            finalized_header: LightClientHeader({
+                beacon: BeaconBlockHeader({
+                    slot:           5432672,
+                    proposer_index: 191656,
+                    parent_root:    0x54ea52e2c0b82585c5d26ba29ea44ec90d9ab3772ac9b514ee4eb72fefcdf197,
+                    state_root:     0x0f698888156f9dc4fbd96b41b87f3aed6d024b87dd22b5cac3d30b1ea999e143,
+                    body_root:      0x6ad2ecabf6517db01f0616ab52fb0563a0f22f46112393e16a9fe4b4259b57bc
+                }),
+                execution: ExecutionPayloadHeader({
+                    parent_hash: 0xd2672a40e8056953012165c9a1d2a1861699af6f9d0a036085bb1c6fdb3693af,
+                    fee_recipient: 0x455E5AA18469bC6ccEF49594645666C587A3a71B,
+                    state_root: 0x046a96b74460971ed01a7321548b768a5f6064cc8cb1c5f89c3e73eba50f9801,
+                    receipts_root: 0x8f3dafa2e2176a7bf6bb9a12a91d4719b591522d68e5348d45cba4b3dbe01e03,
+                    logs_bloom: 0x9c127be96aa7ba288f5d8c755971040a413b90773dac019470d7c21d4beae344,
+                    prev_randao: 0x6cd18c9764a62748ee6031788641bb51b1090f635c1e9f65ad6e206446b63518,
+                    block_number: 8842824,
+                    gas_limit: 30000000,
+                    gas_used: 19067818,
+                    timestamp: 1681700064,
+                    extra_data: 0xebd940a554baa1963cd1d00e6f94ccdd85fa52c8092d207b7d566de6a840834d,
+                    base_fee_per_gas: 5107685,
+                    block_hash: 0x863fe062e91555c36a327e51dae6df9f1f9f7dd5b44b1109aba207f6cb532cec,
+                    transactions_root: 0xc56e3aa9fa79fa84ab37394d35d30bb6e5acbb5be01741dd2df33d4f4ac4cbce,
+                    withdrawals_root: 0xdcf466ef233630fa7f29b09309ca7413e4c6c3f8b1a7d34d64de03503c64203e
+                }),
+                execution_branch: build_execution_branch1()
+            }),
+            finality_branch: build_finality_branch(),
+            sync_aggregate: SyncAggregate({
+                sync_committee_bits:[
+                    bytes32(0xbf6fbfffffdfaecf0deeffff675ffefffdffedfaffeff7bfafd7babf73f6fdff),
+                    bytes32(0xffdffc77afbfb7ffef7bdff41df77afffcf9fff3ffff7db3bfeffbfbf5ff84fb)
+                ],
+                sync_committee_signature: hex'a78b70b91b93c5b6a37b359d3e3bef8b6c5bceefc5ae776e87cb736a80533e03ac65e7807c00a21d67a4224bf6139b05054a95338db8d09119f1b8c973acaefbe53ba599315125b1207d696b50376da73a17dd8cdbccf1aa3f002d8f347ec8f9'
+            }),
+            fork_version: 0x03001020,
+            signature_slot: 5432750
+        });
+    }
 
-//    function build_beacon_block_body() internal pure returns (BeaconBlockBodyBellatrix memory) {
-//        return BeaconBlockBodyBellatrix({
-//             randao_reveal:      0xc307895482d9d180bfcc36bb3c60c7491120f1e71e002c59a820763fd8a62844,
-//             eth1_data:          0xe432e8cebdf0704e8ee73b79adc843d7a1841e0895ecf5beac8097e30579ad07,
-//             graffiti:           0x0000000000000000000000000000000000000000000000000000000000000000,
-//             proposer_slashings: 0x792930bbd5baac43bcc798ee49aa8185ef76bb3b44ba62b91d86ae569e4bb535,
-//             attester_slashings: 0x7a0501f5957bdf9cb3a8ff4966f02265f968658b7a9c62642cba1165e86642f5,
-//             attestations:       0xb7c162f3f51293b0ed700997585a8d3832cf44e14fdd450c6e1033b29e17651a,
-//             deposits:           0x792930bbd5baac43bcc798ee49aa8185ef76bb3b44ba62b91d86ae569e4bb535,
-//             voluntary_exits:    0x792930bbd5baac43bcc798ee49aa8185ef76bb3b44ba62b91d86ae569e4bb535,
-//             sync_aggregate:     0x2241a02ad04b01b7c6dfeb3d601c02bae83317e7e1085321ddfd8b42a5ddb6f9,
-//             execution_payload:  build_execution_payload()
-//        });
-//    }
+    function build_next_sync_committee_branch() internal pure returns (bytes32[] memory) {
+        bytes32[] memory next_sync_committee_branch = new bytes32[](5);
+        // root next_sync_committee in attested_header
+        next_sync_committee_branch[0] = 0x4bcc8065b1462577a9971110aaa3ea5630ce3e6bc0ecb53e54777ce7d4a5e816;
+        next_sync_committee_branch[1] = 0x5f2640be1ce4b023d2ba9217849dd782a2c81650b2667a634993c83b9e47c51b;
+        next_sync_committee_branch[2] = 0xe7fcbef3ebfe4659c1e2cbe04a0877e23c2cd1cdcc16d308815a87f179cf62bb;
+        next_sync_committee_branch[3] = 0x543002c6926c9e101079f4fb0ee36b71d79d45d82e7635d7f01c0b36184bf77a;
+        next_sync_committee_branch[4] = 0x316c8f1be6eb127ab8ee55ad99ae855b45d1c07fe5451f9e2054cac30b57892a;
+        return next_sync_committee_branch;
+    }
 
-//    function sum(bytes32[2] memory x) internal pure returns (uint256) {
-//        return countSetBits(uint(x[0])) + countSetBits(uint(x[1]));
-//    }
+    function sum(bytes32[2] memory x) internal pure returns (uint256) {
+        return countSetBits(uint(x[0])) + countSetBits(uint(x[1]));
+    }
 
-//    function test_sum_sync_committee_bits() public {
-//        bytes32[2] memory sync_committee_bits = [
-//            bytes32(0x7ffeefbfffbf7bffbff72efeff6ffdfeef37f9dfa7b41fdd3fbfeffdfffe67f6),
-//            bytes32(0xfdffbfdf7ffffffbebbfdfdfcfbefffb7ff4e8ffef7dbff759deff27fbbab7ff)
-//        ];
-//        assertEq(sum(sync_committee_bits), 420);
-//    }
-//}
+    function test_sum_sync_committee_bits() public {
+        bytes32[2] memory sync_committee_bits = [
+            bytes32(0x7ffeefbfffbf7bffbff72efeff6ffdfeef37f9dfa7b41fdd3fbfeffdfffe67f6),
+            bytes32(0xfdffbfdf7ffffffbebbfdfdfcfbefffb7ff4e8ffef7dbff759deff27fbbab7ff)
+        ];
+        assertEq(sum(sync_committee_bits), 420);
+    }
+}
