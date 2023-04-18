@@ -132,12 +132,6 @@ contract BeaconLightClient is ILightClient, BeaconLightClientUpdate, Bitfield {
         GENESIS_VALIDATORS_ROOT = _genesis_validators_root;
     }
 
-    /// @dev Return beacon light client finalized header's body root
-    /// @return body root
-    function body_root() public view returns (bytes32) {
-        return finalized_header.body_root;
-    }
-
     /// @dev Return beacon light client finalized header's slot
     /// @return slot
     function slot() public view returns (uint64) {
