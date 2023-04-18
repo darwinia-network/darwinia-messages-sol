@@ -59,6 +59,8 @@ contract BeaconLightClientPraterTest is DSTest, BeaconLightClientUpdate, Bitfiel
     }
 
     function test_import_finalized_header() public {
+        FinalizedHeaderUpdate memory header_update = build_header_update();
+        process_import_next_committee(header_update);
         FinalizedHeaderUpdate memory update = build_header_update1();
         lightclient.import_finalized_header(update);
         assert_finalized_header(update.finalized_header.beacon);
@@ -67,7 +69,7 @@ contract BeaconLightClientPraterTest is DSTest, BeaconLightClientUpdate, Bitfiel
 
     function test_hash_execution_payload() public {
         FinalizedHeaderUpdate memory update = build_header_update();
-        assertEq(hash_tree_root(update.finalized_header.execution), 0xd14091c659bef13f4f0c95aef5f1aebc46fc22caf4a87cb6a7174a32577d4b0c);
+        assertEq(hash_tree_root(update.finalized_header.execution), 0x323b362b45977b46b6059b49ccbf2be1bdf57c119b0f1ec0efc9cb79a8532cb6);
     }
 
     function assert_finalized_header(BeaconBlockHeader memory finalized_header) internal {
@@ -96,13 +98,12 @@ contract BeaconLightClientPraterTest is DSTest, BeaconLightClientUpdate, Bitfiel
 
     function build_header_update1() internal pure returns (FinalizedHeaderUpdate memory) {
         bytes32[] memory finality_branch = new bytes32[](6);
-        finality_branch[0] = 0x62f0010000000000000000000000000000000000000000000000000000000000;
-        finality_branch[1] = 0x841c29464b336fb030eb99ed756f87c4ab777422ba9e172ce014bb9b8e7ec5b6;
-        finality_branch[2] = 0xf5d713060e8a77425c6e350a7cda34e5b488c606deb3c873fd490dfc83c76ac5;
-        finality_branch[3] = 0x7d6eef9d12048dcb660df3914cc0dc44decbd7693d40856f9004a87937e00798;
-        finality_branch[4] = 0x91c80b14baaebb58d591fd3a5edad7b7f0972bc5ba1055c9d11f5ebb888cb0ee;
-        finality_branch[5] = 0x4e328a0c4b7276c0307542e2e6785ba7a8043226e9ee05328c26eeca41e52590;
-
+        finality_branch[0] = 0x1298020000000000000000000000000000000000000000000000000000000000;
+        finality_branch[1] = 0x71dc60eb4c834f6d6da05e3519fb30b7dad8200392096c08a73d7aae83f61932;
+        finality_branch[2] = 0xd3b91174c0c90b13701df2a76bb382c6eae3e1f4f5ebf056a79d7c4550a0ce36;
+        finality_branch[3] = 0x72cfa3a45568d4320651f616476738b20c2316ec0704c9aa70423769f3287735;
+        finality_branch[4] = 0x12893a548d8e89d289169e6fe15ed4e112e6e6e777855750257b6a3af5ae7620;
+        finality_branch[5] = 0x71c3adfd5bf78fe20b5d41a358f48af60788d93ba04cb44921e527f8a43cf18b;
 
         bytes32[] memory execution_branch1 = new bytes32[](4);
         execution_branch1[0] = 0xa10ef314b7cc705ac9d4460afd24ff7e5aa23391edafd1a81277a227954cb806;
@@ -172,7 +173,7 @@ contract BeaconLightClientPraterTest is DSTest, BeaconLightClientUpdate, Bitfiel
                 }),
                 execution_branch: execution_branch2
             }),
-            finality_branch: build_finality_branch(),
+            finality_branch: finality_branch,
             sync_aggregate: SyncAggregate({
                 sync_committee_bits:[
                     bytes32(0x07ddaffedf9ee77a5fe8febbffbffbefbb7ffffff71d36feb6f4ef7557fffcff),
