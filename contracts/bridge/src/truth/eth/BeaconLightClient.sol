@@ -161,9 +161,10 @@ contract BeaconLightClient is ILightClient, BeaconLightClientUpdate, Bitfield {
                 "!skip");
         verify_light_client_header(header_update);
 
+        uint64 attested_period = compute_sync_committee_period(header_update.attested_header.beacon.slot);
         uint64 finalized_period = compute_sync_committee_period(header_update.finalized_header.beacon.slot);
         uint64 signature_period = compute_sync_committee_period(header_update.signature_slot);
-        require(signature_period == finalized_period, "!period");
+        require(signature_period == finalized_period && signature_period == attested_period, "!period");
 
         bytes32 singature_sync_committee_root = sync_committee_roots[signature_period];
         require(singature_sync_committee_root != bytes32(0), "!missing");
