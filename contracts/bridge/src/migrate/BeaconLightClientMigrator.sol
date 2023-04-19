@@ -18,7 +18,6 @@
 pragma solidity 0.8.17;
 
 import "../truth/eth/BeaconLightClient.sol";
-import "../truth/eth/ExecutionLayer.sol";
 
 
 interface IEthereumStorageVerifier {
@@ -28,29 +27,25 @@ interface IEthereumStorageVerifier {
 
 contract BeaconLightClientMigrator {
     BeaconLightClient public new_beacon_lc;
-    ExecutionLayer public new_execution_layer;
 
     address public immutable HELIX_DAO;
     address public immutable OLD_BEACON_LC;
     address public immutable ETHEREUM_STORAGE_VERIFIER;
     address public immutable BLS_PRECOMPILE;
     bytes32 public immutable GENESIS_VALIDATORS_ROOT;
-    uint64 public immutable CAPELLA_FORK_EPOCH;
 
     constructor(
         address helix_dao,
         address old_lc,
         address verifier,
         address bls,
-        bytes32 genesis_validators_root,
-        uint64  capella_for_epoch
+        bytes32 genesis_validators_root
     ) {
         HELIX_DAO = helix_dao;
         OLD_BEACON_LC = old_lc;
         ETHEREUM_STORAGE_VERIFIER = verifier;
         BLS_PRECOMPILE = bls;
         GENESIS_VALIDATORS_ROOT = genesis_validators_root;
-        CAPELLA_FORK_EPOCH = capella_for_epoch;
     }
 
     function migrate() public {
@@ -79,10 +74,8 @@ contract BeaconLightClientMigrator {
             current_sync_committee_hash,
             GENESIS_VALIDATORS_ROOT
         );
-        // new ExecutionLayer
-        new_execution_layer = new ExecutionLayer(address(new_beacon_lc), CAPELLA_FORK_EPOCH);
         // change light client
-        IEthereumStorageVerifier(ETHEREUM_STORAGE_VERIFIER).changeLightClient(address(new_execution_layer));
+        IEthereumStorageVerifier(ETHEREUM_STORAGE_VERIFIER).changeLightClient(address(new_beacon_lc));
 
         returnSetter();
     }
