@@ -1,4 +1,4 @@
-const { toHexString } = require('@chainsafe/ssz')
+const { toHexString, ListCompositeType, ByteVectorType, ByteListType } = require('@chainsafe/ssz')
 
 const LANE_IDENTIFY_SLOT="0x0000000000000000000000000000000000000000000000000000000000000000"
 const LANE_NONCE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000001"
@@ -124,6 +124,16 @@ const hash = (typ, input) => {
   return toHexString(typ.hashTreeRoot(value))
 }
 
+const convert_logs_bloom(input) => {
+    const LogsBloom = new ByteVectorType(256)
+    return hash(LogsBloom, input)
+}
+
+const convert_extra_data(input) => {
+    const ExtraData = new ByteListType(32)
+    return hash(ExtraData, input)
+}
+
 const fetch_old_msgs = (from) => {
   if (from == 'eth') {
     const msg0 = {
@@ -181,5 +191,6 @@ module.exports = {
   generate_message_proof,
   fetch_old_msgs,
   compute_fork_version,
-  hash
+  convert_logs_bloom,
+  convert_extra_data,
 }

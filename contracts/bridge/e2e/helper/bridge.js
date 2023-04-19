@@ -1,4 +1,3 @@
-const { ListCompositeType, ByteVectorType, ByteListType } = require('@chainsafe/ssz')
 const { BigNumber } = require("ethers")
 const { IncrementalMerkleTree } = require("./imt")
 const { messageHash } = require('./msg')
@@ -14,7 +13,8 @@ const {
   build_finalized_header_update,
   fetch_old_msgs,
   compute_fork_version,
-  hash
+  convert_logs_bloom,
+  convert_extra_data,
 } = require('./utils')
 
 /**
@@ -61,16 +61,13 @@ class Bridge {
     sync_committee_bits.push('0x' + sync_aggregate.sync_committee_bits.slice(66))
     sync_aggregate.sync_committee_bits = sync_committee_bits;
 
-    const LogsBloom = new ByteVectorType(256)
-    const ExtraData = new ByteListType(32)
-
     const attested_execution = finality_update.attested_header.execution
-    attested_execution.logs_bloom = hash(LogsBloom, attested_execution.logs_bloom)
-    attested_execution.extra_data = hash(ExtraData, attested_execution.extra_data)
+    attested_execution.logs_bloom = convert_logs_bloom(attested_execution.logs_bloom)
+    attested_execution.extra_data = convert_extra_data(attested_execution.extra_data)
 
     const finalized_execution = finality_update.finalized_header.execution
-    finalized_execution.logs_bloom = hash(LogsBloom, finalized_execution.logs_bloom)
-    finalized_execution.extra_data = hash(ExtraData, finalized_execution.extra_data)
+    finalized_execution.logs_bloom = convert_logs_bloom(finalized_execution.logs_bloom)
+    finalized_execution.extra_data = convert_extra_data(finalized_execution.extra_data)
 
     const finalized_header_update = {
       attested_header:           {
