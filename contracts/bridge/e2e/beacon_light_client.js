@@ -59,7 +59,11 @@ describe("bridge e2e test: beacon light client", () => {
     await expect(tx)
       .to.emit(subClient.eth.lightclient, "FinalizedHeaderImported")
       .withArgs(
-        finalized_header_update.finalized_header.beacon
+        finalized_header_update.finalized_header.beacon.slot,
+        finalized_header_update.finalized_header.beacon.proposer_index,
+        finalized_header_update.finalized_header.beacon.parent_root,
+        finalized_header_update.finalized_header.beacon.state_root,
+        finalized_header_update.finalized_header.beacon.body_root,
       )
 
     await expect(tx)
