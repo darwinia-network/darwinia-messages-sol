@@ -362,89 +362,18 @@ contract BeaconChain is MerkleProof {
         bytes32 body_root;
     }
 
-    /// @notice Beacon block body in Bellatrix
-    /// @param randao_reveal Randao reveal
-    /// @param eth1_data Eth1 data vote
-    /// @param graffiti Arbitrary data
-    /// @param proposer_slashings Proposer slashings
-    /// @param attester_slashings Attester slashings
-    /// @param attestations Attestations
-    /// @param deposits Deposits
-    /// @param voluntary_exits Voluntary exits
-    /// @param sync_aggregate Sync aggregate
-    /// @param execution_payload Execution payload [New in Bellatrix]
-    struct BeaconBlockBodyBellatrix {
-        bytes32 randao_reveal;
-        bytes32 eth1_data;
-        bytes32 graffiti;
-        bytes32 proposer_slashings;
-        bytes32 attester_slashings;
-        bytes32 attestations;
-        bytes32 deposits;
-        bytes32 voluntary_exits;
-        bytes32 sync_aggregate;
-        ExecutionPayloadBellatrix execution_payload;
+
+    /// @notice Light client header
+    /// @param beacon Beacon block header
+    /// @param execution Execution payload header corresponding to `beacon.body_root` [New in Capella]
+    /// @param execution_branch Execution payload header proof corresponding to `beacon.body_root` [New in Capella]
+    struct LightClientHeader {
+        BeaconBlockHeader beacon;
+        ExecutionPayloadHeader execution;
+        bytes32[] execution_branch;
     }
 
-    /// @notice Beacon block body in Capella
-    /// @param randao_reveal Randao reveal
-    /// @param eth1_data Eth1 data vote
-    /// @param graffiti Arbitrary data
-    /// @param proposer_slashings Proposer slashings
-    /// @param attester_slashings Attester slashings
-    /// @param attestations Attestations
-    /// @param deposits Deposits
-    /// @param voluntary_exits Voluntary exits
-    /// @param sync_aggregate Sync aggregate
-    /// @param execution_payload Execution payload
-    /// @param bls_to_execution_changes Capella operations [New in Capella]
-    struct BeaconBlockBodyCapella {
-        bytes32 randao_reveal;
-        bytes32 eth1_data;
-        bytes32 graffiti;
-        bytes32 proposer_slashings;
-        bytes32 attester_slashings;
-        bytes32 attestations;
-        bytes32 deposits;
-        bytes32 voluntary_exits;
-        bytes32 sync_aggregate;
-        ExecutionPayloadCapella execution_payload;
-        bytes32 bls_to_execution_changes;
-    }
-
-    /// @notice Execution payload in Bellatrix
-    /// @param parent_hash Parent hash
-    /// @param fee_recipient Beneficiary
-    /// @param state_root State root
-    /// @param receipts_root Receipts root
-    /// @param logs_bloom Logs bloom
-    /// @param prev_randao Difficulty
-    /// @param block_number Number
-    /// @param gas_limit Gas limit
-    /// @param gas_used Gas used
-    /// @param timestamp Timestamp
-    /// @param extra_data Extra data
-    /// @param base_fee_per_gas Base fee per gas
-    /// @param block_hash Hash of execution block
-    /// @param transactions Transactions
-    struct ExecutionPayloadBellatrix {
-        bytes32 parent_hash;
-        address fee_recipient;
-        bytes32 state_root;
-        bytes32 receipts_root;
-        bytes32 logs_bloom;
-        bytes32 prev_randao;
-        uint64 block_number;
-        uint64 gas_limit;
-        uint64 gas_used;
-        uint64 timestamp;
-        bytes32 extra_data;
-        uint256 base_fee_per_gas;
-        bytes32 block_hash;
-        bytes32 transactions;
-    }
-
-    /// @notice Execution payload in Capella
+    /// @notice Execution payload header in Capella
     /// @param parent_hash Parent hash
     /// @param fee_recipient Beneficiary
     /// @param state_root State root
@@ -460,7 +389,7 @@ contract BeaconChain is MerkleProof {
     /// @param block_hash Hash of execution block
     /// @param transactions_root Root of transactions
     /// @param withdrawals_root Root of withdrawals [New in Capella]
-    struct ExecutionPayloadCapella {
+    struct ExecutionPayloadHeader {
         bytes32 parent_hash;
         address fee_recipient;
         bytes32 state_root;
@@ -540,61 +469,8 @@ contract BeaconChain is MerkleProof {
         return merkle_root(leaves);
     }
 
-    /// @notice Return hash tree root of beacon block body in Bellatrix
-    function hash_tree_root(BeaconBlockBodyBellatrix memory beacon_block_body) internal pure returns (bytes32) {
-        bytes32[] memory leaves = new bytes32[](10);
-        leaves[0] = beacon_block_body.randao_reveal;
-        leaves[1] = beacon_block_body.eth1_data;
-        leaves[2] = beacon_block_body.graffiti;
-        leaves[3] = beacon_block_body.proposer_slashings;
-        leaves[4] = beacon_block_body.attester_slashings;
-        leaves[5] = beacon_block_body.attestations;
-        leaves[6] = beacon_block_body.deposits;
-        leaves[7] = beacon_block_body.voluntary_exits;
-        leaves[8] = beacon_block_body.sync_aggregate;
-        leaves[9] = hash_tree_root(beacon_block_body.execution_payload);
-        return merkle_root(leaves);
-    }
-
-    /// @notice Return hash tree root of beacon block body in Capella
-    function hash_tree_root(BeaconBlockBodyCapella memory beacon_block_body) internal pure returns (bytes32) {
-        bytes32[] memory leaves = new bytes32[](11);
-        leaves[0]  = beacon_block_body.randao_reveal;
-        leaves[1]  = beacon_block_body.eth1_data;
-        leaves[2]  = beacon_block_body.graffiti;
-        leaves[3]  = beacon_block_body.proposer_slashings;
-        leaves[4]  = beacon_block_body.attester_slashings;
-        leaves[5]  = beacon_block_body.attestations;
-        leaves[6]  = beacon_block_body.deposits;
-        leaves[7]  = beacon_block_body.voluntary_exits;
-        leaves[8]  = beacon_block_body.sync_aggregate;
-        leaves[9]  = hash_tree_root(beacon_block_body.execution_payload);
-        leaves[10] = beacon_block_body.bls_to_execution_changes;
-        return merkle_root(leaves);
-    }
-
-    /// @notice Return hash tree root of execution payload in Bellatrix
-    function hash_tree_root(ExecutionPayloadBellatrix memory execution_payload) internal pure returns (bytes32) {
-        bytes32[] memory leaves = new bytes32[](14);
-        leaves[0]  = execution_payload.parent_hash;
-        leaves[1]  = bytes32(bytes20(execution_payload.fee_recipient));
-        leaves[2]  = execution_payload.state_root;
-        leaves[3]  = execution_payload.receipts_root;
-        leaves[4]  = execution_payload.logs_bloom;
-        leaves[5]  = execution_payload.prev_randao;
-        leaves[6]  = bytes32(to_little_endian_64(execution_payload.block_number));
-        leaves[7]  = bytes32(to_little_endian_64(execution_payload.gas_limit));
-        leaves[8]  = bytes32(to_little_endian_64(execution_payload.gas_used));
-        leaves[9]  = bytes32(to_little_endian_64(execution_payload.timestamp));
-        leaves[10] = execution_payload.extra_data;
-        leaves[11] = to_little_endian_256(execution_payload.base_fee_per_gas);
-        leaves[12] = execution_payload.block_hash;
-        leaves[13] = execution_payload.transactions;
-        return merkle_root(leaves);
-    }
-
     /// @notice Return hash tree root of execution payload in Capella
-    function hash_tree_root(ExecutionPayloadCapella memory execution_payload) internal pure returns (bytes32) {
+    function hash_tree_root(ExecutionPayloadHeader memory execution_payload) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](15);
         leaves[0]  = execution_payload.parent_hash;
         leaves[1]  = bytes32(bytes20(execution_payload.fee_recipient));
@@ -661,14 +537,14 @@ contract BeaconLightClientUpdate is BeaconChain {
     /// @param attested_header Header attested to by the sync committee
     /// @param signature_sync_committee  Sync committee corresponding to sign attested header
     /// @param finalized_header The finalized beacon block header
-    /// @param finality_branch Finalized header corresponding to `attested_header.state_root`
+    /// @param finality_branch Finalized header proof corresponding to `attested_header.state_root`
     /// @param sync_aggregate Sync committee aggregate signature
     /// @param fork_version Fork version for the aggregate signature
     /// @param signature_slot Slot at which the aggregate signature was created (untrusted)
     struct FinalizedHeaderUpdate {
-        BeaconBlockHeader attested_header;
+        LightClientHeader attested_header;
         SyncCommittee signature_sync_committee;
-        BeaconBlockHeader finalized_header;
+        LightClientHeader finalized_header;
         bytes32[] finality_branch;
         SyncAggregate sync_aggregate;
         bytes4 fork_version;

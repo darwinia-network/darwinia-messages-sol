@@ -2,6 +2,36 @@
 // SPDX-License-Identifier: GPL-3.0 AND Apache-2.0 AND MIT
 pragma solidity =0.8.17;
 
+////// src/interfaces/ILightClient.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.8.17; */
+
+/// @title ILane
+/// @notice A interface for light client
+interface ILightClient {
+    /// @notice Return the merkle root of light client
+    /// @return merkle root
+    function merkle_root() external view returns (bytes32);
+    /// @notice Return the block number of light client
+    /// @return block number
+    function block_number() external view returns (uint256);
+}
+
 ////// src/utils/Math.sol
 // This file is part of Darwinia.
 // Copyright (C) 2018-2022 Darwinia Network
@@ -362,89 +392,18 @@ contract BeaconChain is MerkleProof {
         bytes32 body_root;
     }
 
-    /// @notice Beacon block body in Bellatrix
-    /// @param randao_reveal Randao reveal
-    /// @param eth1_data Eth1 data vote
-    /// @param graffiti Arbitrary data
-    /// @param proposer_slashings Proposer slashings
-    /// @param attester_slashings Attester slashings
-    /// @param attestations Attestations
-    /// @param deposits Deposits
-    /// @param voluntary_exits Voluntary exits
-    /// @param sync_aggregate Sync aggregate
-    /// @param execution_payload Execution payload [New in Bellatrix]
-    struct BeaconBlockBodyBellatrix {
-        bytes32 randao_reveal;
-        bytes32 eth1_data;
-        bytes32 graffiti;
-        bytes32 proposer_slashings;
-        bytes32 attester_slashings;
-        bytes32 attestations;
-        bytes32 deposits;
-        bytes32 voluntary_exits;
-        bytes32 sync_aggregate;
-        ExecutionPayloadBellatrix execution_payload;
+
+    /// @notice Light client header
+    /// @param beacon Beacon block header
+    /// @param execution Execution payload header corresponding to `beacon.body_root` [New in Capella]
+    /// @param execution_branch Execution payload header proof corresponding to `beacon.body_root` [New in Capella]
+    struct LightClientHeader {
+        BeaconBlockHeader beacon;
+        ExecutionPayloadHeader execution;
+        bytes32[] execution_branch;
     }
 
-    /// @notice Beacon block body in Capella
-    /// @param randao_reveal Randao reveal
-    /// @param eth1_data Eth1 data vote
-    /// @param graffiti Arbitrary data
-    /// @param proposer_slashings Proposer slashings
-    /// @param attester_slashings Attester slashings
-    /// @param attestations Attestations
-    /// @param deposits Deposits
-    /// @param voluntary_exits Voluntary exits
-    /// @param sync_aggregate Sync aggregate
-    /// @param execution_payload Execution payload
-    /// @param bls_to_execution_changes Capella operations [New in Capella]
-    struct BeaconBlockBodyCapella {
-        bytes32 randao_reveal;
-        bytes32 eth1_data;
-        bytes32 graffiti;
-        bytes32 proposer_slashings;
-        bytes32 attester_slashings;
-        bytes32 attestations;
-        bytes32 deposits;
-        bytes32 voluntary_exits;
-        bytes32 sync_aggregate;
-        ExecutionPayloadCapella execution_payload;
-        bytes32 bls_to_execution_changes;
-    }
-
-    /// @notice Execution payload in Bellatrix
-    /// @param parent_hash Parent hash
-    /// @param fee_recipient Beneficiary
-    /// @param state_root State root
-    /// @param receipts_root Receipts root
-    /// @param logs_bloom Logs bloom
-    /// @param prev_randao Difficulty
-    /// @param block_number Number
-    /// @param gas_limit Gas limit
-    /// @param gas_used Gas used
-    /// @param timestamp Timestamp
-    /// @param extra_data Extra data
-    /// @param base_fee_per_gas Base fee per gas
-    /// @param block_hash Hash of execution block
-    /// @param transactions Transactions
-    struct ExecutionPayloadBellatrix {
-        bytes32 parent_hash;
-        address fee_recipient;
-        bytes32 state_root;
-        bytes32 receipts_root;
-        bytes32 logs_bloom;
-        bytes32 prev_randao;
-        uint64 block_number;
-        uint64 gas_limit;
-        uint64 gas_used;
-        uint64 timestamp;
-        bytes32 extra_data;
-        uint256 base_fee_per_gas;
-        bytes32 block_hash;
-        bytes32 transactions;
-    }
-
-    /// @notice Execution payload in Capella
+    /// @notice Execution payload header in Capella
     /// @param parent_hash Parent hash
     /// @param fee_recipient Beneficiary
     /// @param state_root State root
@@ -460,7 +419,7 @@ contract BeaconChain is MerkleProof {
     /// @param block_hash Hash of execution block
     /// @param transactions_root Root of transactions
     /// @param withdrawals_root Root of withdrawals [New in Capella]
-    struct ExecutionPayloadCapella {
+    struct ExecutionPayloadHeader {
         bytes32 parent_hash;
         address fee_recipient;
         bytes32 state_root;
@@ -540,61 +499,8 @@ contract BeaconChain is MerkleProof {
         return merkle_root(leaves);
     }
 
-    /// @notice Return hash tree root of beacon block body in Bellatrix
-    function hash_tree_root(BeaconBlockBodyBellatrix memory beacon_block_body) internal pure returns (bytes32) {
-        bytes32[] memory leaves = new bytes32[](10);
-        leaves[0] = beacon_block_body.randao_reveal;
-        leaves[1] = beacon_block_body.eth1_data;
-        leaves[2] = beacon_block_body.graffiti;
-        leaves[3] = beacon_block_body.proposer_slashings;
-        leaves[4] = beacon_block_body.attester_slashings;
-        leaves[5] = beacon_block_body.attestations;
-        leaves[6] = beacon_block_body.deposits;
-        leaves[7] = beacon_block_body.voluntary_exits;
-        leaves[8] = beacon_block_body.sync_aggregate;
-        leaves[9] = hash_tree_root(beacon_block_body.execution_payload);
-        return merkle_root(leaves);
-    }
-
-    /// @notice Return hash tree root of beacon block body in Capella
-    function hash_tree_root(BeaconBlockBodyCapella memory beacon_block_body) internal pure returns (bytes32) {
-        bytes32[] memory leaves = new bytes32[](11);
-        leaves[0]  = beacon_block_body.randao_reveal;
-        leaves[1]  = beacon_block_body.eth1_data;
-        leaves[2]  = beacon_block_body.graffiti;
-        leaves[3]  = beacon_block_body.proposer_slashings;
-        leaves[4]  = beacon_block_body.attester_slashings;
-        leaves[5]  = beacon_block_body.attestations;
-        leaves[6]  = beacon_block_body.deposits;
-        leaves[7]  = beacon_block_body.voluntary_exits;
-        leaves[8]  = beacon_block_body.sync_aggregate;
-        leaves[9]  = hash_tree_root(beacon_block_body.execution_payload);
-        leaves[10] = beacon_block_body.bls_to_execution_changes;
-        return merkle_root(leaves);
-    }
-
-    /// @notice Return hash tree root of execution payload in Bellatrix
-    function hash_tree_root(ExecutionPayloadBellatrix memory execution_payload) internal pure returns (bytes32) {
-        bytes32[] memory leaves = new bytes32[](14);
-        leaves[0]  = execution_payload.parent_hash;
-        leaves[1]  = bytes32(bytes20(execution_payload.fee_recipient));
-        leaves[2]  = execution_payload.state_root;
-        leaves[3]  = execution_payload.receipts_root;
-        leaves[4]  = execution_payload.logs_bloom;
-        leaves[5]  = execution_payload.prev_randao;
-        leaves[6]  = bytes32(to_little_endian_64(execution_payload.block_number));
-        leaves[7]  = bytes32(to_little_endian_64(execution_payload.gas_limit));
-        leaves[8]  = bytes32(to_little_endian_64(execution_payload.gas_used));
-        leaves[9]  = bytes32(to_little_endian_64(execution_payload.timestamp));
-        leaves[10] = execution_payload.extra_data;
-        leaves[11] = to_little_endian_256(execution_payload.base_fee_per_gas);
-        leaves[12] = execution_payload.block_hash;
-        leaves[13] = execution_payload.transactions;
-        return merkle_root(leaves);
-    }
-
     /// @notice Return hash tree root of execution payload in Capella
-    function hash_tree_root(ExecutionPayloadCapella memory execution_payload) internal pure returns (bytes32) {
+    function hash_tree_root(ExecutionPayloadHeader memory execution_payload) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](15);
         leaves[0]  = execution_payload.parent_hash;
         leaves[1]  = bytes32(bytes20(execution_payload.fee_recipient));
@@ -661,14 +567,14 @@ contract BeaconLightClientUpdate is BeaconChain {
     /// @param attested_header Header attested to by the sync committee
     /// @param signature_sync_committee  Sync committee corresponding to sign attested header
     /// @param finalized_header The finalized beacon block header
-    /// @param finality_branch Finalized header corresponding to `attested_header.state_root`
+    /// @param finality_branch Finalized header proof corresponding to `attested_header.state_root`
     /// @param sync_aggregate Sync committee aggregate signature
     /// @param fork_version Fork version for the aggregate signature
     /// @param signature_slot Slot at which the aggregate signature was created (untrusted)
     struct FinalizedHeaderUpdate {
-        BeaconBlockHeader attested_header;
+        LightClientHeader attested_header;
         SyncCommittee signature_sync_committee;
-        BeaconBlockHeader finalized_header;
+        LightClientHeader finalized_header;
         bytes32[] finality_branch;
         SyncAggregate sync_aggregate;
         bytes4 fork_version;
@@ -1021,6 +927,7 @@ contract Bitfield {
 
 /* pragma solidity 0.8.17; */
 
+/* import "../../interfaces/ILightClient.sol"; */
 /* import "../../utils/Bitfield.sol"; */
 /* import "../../spec/BeaconLightClientUpdate.sol"; */
 
@@ -1032,9 +939,13 @@ interface IBLS {
     ) external pure returns (bool);
 }
 
-contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
-    /// @dev Beacon block header that is finalized
+contract BeaconLightClient is ILightClient, BeaconLightClientUpdate, Bitfield {
+    /// @dev Finalized beacon block header
     BeaconBlockHeader public finalized_header;
+    /// @dev Finalized execution payload header block_number corresponding to `beacon.body_root` [New in Capella]
+    uint256 private finalized_execution_payload_header_block_number;
+    /// @dev Finalized execution payload header state_root corresponding to `beacon.body_root` [New in Capella]
+    bytes32 private finalized_execution_payload_header_state_root;
     /// @dev Sync committees corresponding to the header
     /// sync_committee_perid => sync_committee_root
     mapping (uint64 => bytes32) public sync_committee_roots;
@@ -1046,8 +957,11 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
     // A bellatrix beacon state has 25 fields, with a depth of 5.
     // | field                               | gindex | depth |
     // | ----------------------------------- | ------ | ----- |
+    // | execution_payload                   | 25     | 4     |
     // | next_sync_committee                 | 55     | 5     |
     // | finalized_checkpoint_root           | 105    | 6     |
+    uint64 constant private EXECUTION_PAYLOAD_INDEX          = 25;
+    uint64 constant private EXECUTION_PAYLOAD_DEPTH          = 4;
     uint64 constant private NEXT_SYNC_COMMITTEE_INDEX        = 55;
     uint64 constant private NEXT_SYNC_COMMITTEE_DEPTH        = 5;
     uint64 constant private FINALIZED_CHECKPOINT_ROOT_INDEX  = 105;
@@ -1058,6 +972,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
 
     event FinalizedHeaderImported(BeaconBlockHeader finalized_header);
     event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed sync_committee_root);
+    event FinalizedExecutionPayloadHeaderImported(uint256 block_number, bytes32 state_root);
 
     constructor(
         address _bls,
@@ -1075,16 +990,22 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         GENESIS_VALIDATORS_ROOT = _genesis_validators_root;
     }
 
-    /// @dev Return beacon light client finalized header's body root
-    /// @return body root
-    function body_root() public view returns (bytes32) {
-        return finalized_header.body_root;
-    }
-
     /// @dev Return beacon light client finalized header's slot
     /// @return slot
     function slot() public view returns (uint64) {
         return finalized_header.slot;
+    }
+
+    /// @dev Return execution payload block number
+    /// @return block number
+    function block_number() public view override returns (uint256) {
+        return finalized_execution_payload_header_block_number;
+    }
+
+    /// @dev Return execution payload state root
+    /// @return merkle root
+    function merkle_root() public view override returns (bytes32) {
+        return finalized_execution_payload_header_state_root;
     }
 
     /// @dev follow beacon api: /beacon/light_client/updates/?start_period={period}&count={count}
@@ -1093,19 +1014,14 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         SyncCommitteePeriodUpdate calldata sc_update
     ) external {
         require(is_supermajority(header_update.sync_aggregate.sync_committee_bits), "!supermajor");
-        require(header_update.signature_slot > header_update.attested_header.slot &&
-                header_update.attested_header.slot >= header_update.finalized_header.slot,
+        require(header_update.signature_slot > header_update.attested_header.beacon.slot &&
+                header_update.attested_header.beacon.slot >= header_update.finalized_header.beacon.slot,
                 "!skip");
-        require(verify_finalized_header(
-                header_update.finalized_header,
-                header_update.finality_branch,
-                header_update.attested_header.state_root),
-                "!finalized_header"
-        );
+        verify_light_client_header(header_update);
 
-        uint64 finalized_period = compute_sync_committee_period(header_update.finalized_header.slot);
+        uint64 attested_period = compute_sync_committee_period(header_update.attested_header.beacon.slot);
+        uint64 finalized_period = compute_sync_committee_period(header_update.finalized_header.beacon.slot);
         uint64 signature_period = compute_sync_committee_period(header_update.signature_slot);
-        uint64 attested_period = compute_sync_committee_period(header_update.attested_header.slot);
         require(signature_period == finalized_period &&
                 finalized_period == attested_period,
                 "!period");
@@ -1118,19 +1034,18 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
                 header_update.sync_aggregate,
                 header_update.signature_sync_committee,
                 header_update.fork_version,
-                header_update.attested_header),
-               "!sign");
+                header_update.attested_header.beacon),
+                "!sign");
 
-        if (header_update.finalized_header.slot > finalized_header.slot) {
-            finalized_header = header_update.finalized_header;
-            emit FinalizedHeaderImported(header_update.finalized_header);
+        if (header_update.finalized_header.beacon.slot > finalized_header.slot) {
+            apply_light_client_update(header_update);
         }
 
         bytes32 next_sync_committee_root = hash_tree_root(sc_update.next_sync_committee);
         require(verify_next_sync_committee(
                 next_sync_committee_root,
                 sc_update.next_sync_committee_branch,
-                header_update.attested_header.state_root),
+                header_update.attested_header.beacon.state_root),
                 "!next_sync_committee"
         );
 
@@ -1143,21 +1058,16 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
     /// @dev follow beacon api: /eth/v1/beacon/light_client/finality_update/
     function import_finalized_header(FinalizedHeaderUpdate calldata update) external {
         require(is_supermajority(update.sync_aggregate.sync_committee_bits), "!supermajor");
-        require(update.signature_slot > update.attested_header.slot &&
-                update.attested_header.slot >= update.finalized_header.slot,
+        require(update.signature_slot > update.attested_header.beacon.slot &&
+                update.attested_header.beacon.slot >= update.finalized_header.beacon.slot,
                 "!skip");
-        require(verify_finalized_header(
-                update.finalized_header,
-                update.finality_branch,
-                update.attested_header.state_root),
-                "!finalized_header"
-        );
+        verify_light_client_header(update);
 
         uint64 finalized_period = compute_sync_committee_period(finalized_header.slot);
         uint64 signature_period = compute_sync_committee_period(update.signature_slot);
         require(signature_period == finalized_period ||
                 signature_period == finalized_period + 1,
-               "!signature_period");
+                "!signature_period");
         bytes32 singature_sync_committee_root = sync_committee_roots[signature_period];
 
         require(singature_sync_committee_root != bytes32(0), "!missing");
@@ -1167,12 +1077,11 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
                 update.sync_aggregate,
                 update.signature_sync_committee,
                 update.fork_version,
-                update.attested_header),
-               "!sign");
+                update.attested_header.beacon),
+                "!sign");
 
-        require(update.finalized_header.slot > finalized_header.slot, "!new");
-        finalized_header = update.finalized_header;
-        emit FinalizedHeaderImported(update.finalized_header);
+        require(update.finalized_header.beacon.slot > finalized_header.slot, "!new");
+        apply_light_client_update(update);
     }
 
     function verify_signed_header(
@@ -1204,19 +1113,65 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         return IBLS(BLS_PRECOMPILE).fast_aggregate_verify(participant_pubkeys, message, signature);
     }
 
+    function apply_light_client_update(FinalizedHeaderUpdate calldata update) internal {
+        finalized_header = update.finalized_header.beacon;
+        finalized_execution_payload_header_block_number = update.finalized_header.execution.block_number;
+        finalized_execution_payload_header_state_root = update.finalized_header.execution.state_root;
+        emit FinalizedHeaderImported(update.finalized_header.beacon);
+        emit FinalizedExecutionPayloadHeaderImported(
+            update.finalized_header.execution.block_number
+            , update.finalized_header.execution.state_root
+        );
+    }
+
+    function verify_light_client_header(FinalizedHeaderUpdate calldata update) internal pure {
+        require(verify_finalized_header(
+                update.finalized_header.beacon,
+                update.finality_branch,
+                update.attested_header.beacon.state_root),
+                "!finalized_header"
+        );
+        require(verify_execution_payload(
+                update.attested_header.execution,
+                update.attested_header.execution_branch,
+                update.attested_header.beacon.body_root),
+                "!attested_header_execution"
+        );
+        require(verify_execution_payload(
+                update.finalized_header.execution,
+                update.finalized_header.execution_branch,
+                update.finalized_header.beacon.body_root),
+                "!finalized_header_execution"
+        );
+    }
+
     function verify_finalized_header(
         BeaconBlockHeader calldata header,
         bytes32[] calldata finality_branch,
         bytes32 attested_header_state_root
     ) internal pure returns (bool) {
         require(finality_branch.length == FINALIZED_CHECKPOINT_ROOT_DEPTH, "!finality_branch");
-        bytes32 header_root = hash_tree_root(header);
         return is_valid_merkle_branch(
-            header_root,
+            hash_tree_root(header),
             finality_branch,
             FINALIZED_CHECKPOINT_ROOT_DEPTH,
             FINALIZED_CHECKPOINT_ROOT_INDEX,
             attested_header_state_root
+        );
+    }
+
+    function verify_execution_payload(
+        ExecutionPayloadHeader calldata header,
+        bytes32[] calldata execution_branch,
+        bytes32 beacon_header_body_root
+    ) internal pure returns (bool) {
+        require(execution_branch.length == EXECUTION_PAYLOAD_DEPTH, "!execution_branch");
+        return is_valid_merkle_branch(
+            hash_tree_root(header),
+            execution_branch,
+            EXECUTION_PAYLOAD_DEPTH,
+            EXECUTION_PAYLOAD_INDEX,
+            beacon_header_body_root
         );
     }
 
