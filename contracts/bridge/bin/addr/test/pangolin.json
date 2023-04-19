@@ -5,8 +5,7 @@
   "goerli": {
     "FeeMarket": "0xe6315A3825506E9E5c8Eba802beE23d184485Fbc",
     "FeeMarketProxy": "0x43d6711EB86C852Ec1E04af55C52a0dd51b2C743",
-    "BeaconLightClient": "0x1fC9EBbf098585a26E284fB6DA58BB9390D7Fe0B",
-    "ExecutionLayer": "0xD4ee42040F7a6fA05760c8D268ACf6177c7ba3f3",
+    "BeaconLightClient": "0x3ebe977795DBc623AFE693fF5c18082f1dD18d71",
     "BeaconLCMandatoryReward": "0x1b587abB9a5c2108FB8d10cA0ab5905B95e0B649",
     "EthereumSerialLaneVerifier": "0x757E868d4494C94620dA35a8956A1122b2b7af30",
     "SerialOutboundLane": "0xcF2A32c182A73D93fBa0C5e515e3C5ec7944a471",
