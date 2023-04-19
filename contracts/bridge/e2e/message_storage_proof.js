@@ -10,9 +10,9 @@ const log = console.log
 const LANE_IDENTIFY_SLOT="0x0000000000000000000000000000000000000000000000000000000000000000"
 const LANE_NONCE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000001"
 const LANE_MESSAGE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000002"
-const eth_overrides = { value: ethers.utils.parseEther("0.0001"), gasPrice: 1000000000 }
+const eth_overrides = { value: ethers.utils.parseEther("0.0001"), gasPrice: 60000000000 }
 const bsc_overrides = { value: ethers.utils.parseEther("0.01"), gasPrice: 10000000000 }
-const sub_overrides = { value: ethers.utils.parseEther("30"), gasPrice: 1000000000 }
+const sub_overrides = { value: ethers.utils.parseEther("10"), gasPrice: 2000000000000 }
 let ethClient, subClient, bridge
 let eth_signer, bsc_signer, source
 const target = "0x0000000000000000000000000000000000000000"
@@ -85,15 +85,11 @@ describe("bridge e2e test: verify message/storage proof", () => {
       )
   })
 
-  it("1.1", async function () {
+  it.skip("1.1", async function () {
     await bridge.relay_eth_header()
   })
 
-  it.skip("1.2", async function () {
-    await bridge.relay_eth_execution_payload()
-  })
-
-  it.skip("1.3", async function () {
+  it("1.3", async function () {
     const nonce = await ethClient.outbound.outboundLaneNonce()
     const begin = nonce.latest_received_nonce.add(1)
     const end = nonce.latest_generated_nonce
@@ -245,10 +241,6 @@ describe("bridge e2e test: verify message/storage proof", () => {
 
   it.skip("8.1", async function () {
     await bridge.relay_eth_header()
-  })
-
-  it.skip("8.2", async function () {
-    await bridge.relay_eth_execution_payload()
   })
 
   it.skip("9", async function () {

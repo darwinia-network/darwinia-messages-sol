@@ -124,12 +124,12 @@ const hash = (typ, input) => {
   return toHexString(typ.hashTreeRoot(value))
 }
 
-const convert_logs_bloom(input) => {
+const convert_logs_bloom = (input) => {
     const LogsBloom = new ByteVectorType(256)
     return hash(LogsBloom, input)
 }
 
-const convert_extra_data(input) => {
+const convert_extra_data = (input) => {
     const ExtraData = new ByteListType(32)
     return hash(ExtraData, input)
 }
