@@ -4,7 +4,6 @@ set -e
 
 export NETWORK_NAME=goerli
 export TARGET_CHAIN=pangolin
-export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
 
 # export DAPP_VERBOSE=1
 
