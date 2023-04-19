@@ -12,6 +12,7 @@
           {
             "this_lane_pos": 1,
             "bridged_lane_pos": 0,
+            "max_gas_per_message": 240000,
             "type": "serail_in"
           },
           {
@@ -38,7 +39,7 @@
     "duty_ratio": 30
   },
   "DarwiniaLightClient": {
-    "domain_separator": "0x38a6d9f96ef6e79768010f6caabfe09abc43e49792d5c787ef0d4fc802855947",
+    "domain_separator": "0xe97c73e46305f3bca2279f002665725cd29e465c6624e83a135f7b2e6b1a8134",
     "relayers": "[0x68898db1012808808c903f390909c52d9f706749]",
     "threshold": 1,
     "nonce": 0

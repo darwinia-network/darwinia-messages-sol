@@ -6,7 +6,7 @@ estimate_gas() {
 	NAME=$1
 	ARGS=${@:2}
 	# select the filename and the contract in it
-	PATTERN=".contracts[\"$SRC_DIT/$NAME.sol\"].$NAME"
+	PATTERN=".contracts[\"$SRC_DIR/$NAME.sol\"].$NAME"
 
 	# get the constructor's signature
 	ABI=$(jq -r "$PATTERN.abi" $OUT_DIR/dapp.sol.json)
@@ -54,7 +54,7 @@ contract_size() {
 	NAME=$1
 	ARGS=${@:2}
 	# select the filename and the contract in it
-	PATTERN=".contracts[\"$SRC_DIT/$NAME.sol\"].$NAME"
+	PATTERN=".contracts[\"$SRC_DIR/$NAME.sol\"].$NAME"
 
 	# get the bytecode from the compiled file
 	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
