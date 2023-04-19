@@ -213,32 +213,24 @@ class Bridge {
     const old_finalized_header = await this.sub.eth.lightclient.finalized_header()
     const old_period = old_finalized_header.slot.div(32).div(256)
 
+    const finality_update = await this.eth2.get_finality_update()
+    const finalized_header = finality_update.finalized_header.beacon
     const finalized_header_ssz = BeaconBlockHeader.fromJson({
-      slot:            old_finalized_header.slot.toNumber(),
-      proposer_index:  old_finalized_header.proposer_index.toNumber(),
-      parent_root:     old_finalized_header.parent_root,
-      state_root:      old_finalized_header.state_root,
-      body_root:       old_finalized_header.body_root
+      slot:            finalized_header.slot,
+      proposer_index:  finalized_header.proposer_index,
+      parent_root:     finalized_header.parent_root,
+      state_root:      finalized_header.state_root,
+      body_root:       finalized_header.body_root
     })
 
     const finalized_header_root = toHexString(BeaconBlockHeader.hashTreeRoot(finalized_header_ssz))
-
     const snapshot = await this.eth2.get_bootstrap(finalized_header_root)
     const current_sync_committee = snapshot.current_sync_committee
 
-    const finality_update = await this.eth2.get_finality_update()
     const attested_header_slot = finality_update.attested_header.beacon.slot
     if (~~finality_update.finalized_header.beacon.slot == ~~old_finalized_header.slot) throw new Error("!new")
 
-    let sync_aggregate_slot = ~~attested_header_slot + 1
-    let sync_aggregate_header = await this.eth2.get_header(sync_aggregate_slot)
-    while (!sync_aggregate_header) {
-      sync_aggregate_slot = sync_aggregate_slot + 1
-      sync_aggregate_header = await this.eth2.get_header(sync_aggregate_slot)
-    }
-
-    const new_period = sync_aggregate_slot / 32 / 256
-    if(~~new_period != ~~old_period) throw new Error("!committee synced")
+    let signature_slot = finality_update.signature_slot
 
     let sync_aggregate = finality_update.sync_aggregate
     let sync_committee_bits = []
@@ -246,10 +238,9 @@ class Bridge {
     sync_committee_bits.push('0x' + sync_aggregate.sync_committee_bits.slice(66))
     sync_aggregate.sync_committee_bits = sync_committee_bits;
 
-    const finalized_header = finality_update.finalized_header
     const finality_branch = finality_update.finality_branch
 
-    const sync_aggregate_epoch = sync_aggregate_slot / 32
+    const sync_aggregate_epoch = signature_slot / 32
     const fork_version = compute_fork_version(~~sync_aggregate_epoch)
 
     const LogsBloom = new ByteVectorType(256)
@@ -278,19 +269,103 @@ class Bridge {
       finality_branch:           finality_branch,
       sync_aggregate:            sync_aggregate,
       fork_version:              fork_version,
-      signature_slot:            sync_aggregate_slot
+      signature_slot:            signature_slot
     }
     console.log(JSON.stringify(finalized_header_update,null,2))
 
-    // gasLimit: 10000000,
-    // gasPrice: 1300000000
-    const tx = await this.sub.eth.lightclient.import_finalized_header(finalized_header_update)
+    const tx = await this.sub.eth.lightclient.import_finalized_header(finalized_header_update, {
+      gasLimit: 16000000,
+      gasPrice: 2000000000000,
+    })
     return [tx, finalized_header_update]
   }
 
+  async blc_import_next_sync_committee(start_period) {
+    let s = await this.sub.eth.lightclient.sync_committee_roots(start_period + 1)
+    if (s != "0x0000000000000000000000000000000000000000000000000000000000000000") return [null,null]
+
+    const sync_change = await this.eth2.get_sync_committee_period_update(start_period, 1)
+    const next_sync = sync_change[0].data
+    const sync_committee_period_update = {
+      next_sync_committee: next_sync.next_sync_committee,
+      next_sync_committee_branch: next_sync.next_sync_committee_branch
+    }
+
+    const x = await import("@chainsafe/lodestar-types")
+    const phase0 = x.ssz.phase0
+    const altair = x.ssz.altair
+    const BeaconBlockHeader = phase0.BeaconBlockHeader
+    const SyncCommittee = altair.SyncCommittee
+
+    const f = next_sync.finalized_header.beacon
+    const finalized_header_ssz = BeaconBlockHeader.fromJson({
+      slot:            f.slot,
+      proposer_index:  f.proposer_index,
+      parent_root:     f.parent_root,
+      state_root:      f.state_root,
+      body_root:       f.body_root
+    })
+    const finalized_header_root = toHexString(BeaconBlockHeader.hashTreeRoot(finalized_header_ssz))
+    const snapshot = await this.eth2.get_bootstrap(finalized_header_root)
+    const current_sync_committee = snapshot.current_sync_committee
+
+    const attested_header_slot = next_sync.attested_header.beacon.slot
+    let signature_slot = next_sync.signature_slot
+
+    let sync_aggregate = next_sync.sync_aggregate
+    let sync_committee_bits = []
+    sync_committee_bits.push(sync_aggregate.sync_committee_bits.slice(0, 66))
+    sync_committee_bits.push('0x' + sync_aggregate.sync_committee_bits.slice(66))
+    sync_aggregate.sync_committee_bits = sync_committee_bits;
+
+    const fork_version = compute_fork_version(~~(signature_slot / 32))
+
+    const LogsBloom = new ByteVectorType(256)
+    const ExtraData = new ByteListType(32)
+
+    const attested_execution = next_sync.attested_header.execution
+    attested_execution.logs_bloom = hash(LogsBloom, attested_execution.logs_bloom)
+    attested_execution.extra_data = hash(ExtraData, attested_execution.extra_data)
+
+    const finalized_execution = next_sync.finalized_header.execution
+    finalized_execution.logs_bloom = hash(LogsBloom, finalized_execution.logs_bloom)
+    finalized_execution.extra_data = hash(ExtraData, finalized_execution.extra_data)
+
+    const finalized_header_update = {
+      attested_header:           {
+        beacon:                  next_sync.attested_header.beacon,
+        execution:               attested_execution,
+        execution_branch:        next_sync.attested_header.execution_branch
+      },
+      signature_sync_committee:  current_sync_committee,
+      finalized_header:          {
+        beacon:                  next_sync.finalized_header.beacon,
+        execution:               finalized_execution,
+        execution_branch:        next_sync.finalized_header.execution_branch
+      },
+      finality_branch:           next_sync.finality_branch,
+      sync_aggregate:            sync_aggregate,
+      fork_version:              fork_version,
+      signature_slot:            signature_slot
+    }
+    console.log(JSON.stringify(finalized_header_update,null,2))
+
+    const tx = await this.sub.eth.lightclient.import_next_sync_committee(finalized_header_update, sync_committee_period_update, {
+      gasLimit: 16000000,
+      gasPrice: 2000000000000,
+    })
+    return [tx, sync_committee_period_update]
+  }
+
+  async blc_import_sync_committees(start_period, count) {
+    for (let i = 0; i < count; i++) {
+      this.blc_import_next_sync_committee(start_period+count, 1)
+    }
+  }
+
   async relay_eth_header() {
-    const old_finalized_header = await this.subClient.beaconLightClient.finalized_header()
-    const finality_update = await this.eth2Client.get_finality_update()
+    const old_finalized_header = await this.sub.eth.lightclient.finalized_header()
+    const finality_update = await this.eth2.get_finality_update()
     let attested_header = finality_update.attested_header.beacon
     let finalized_header = finality_update.finalized_header.beacon
     const old_period = ~~old_finalized_header.slot.div(32).div(256)
@@ -298,48 +373,9 @@ class Bridge {
     if (old_period == now_period) {
       await this.blc_import_finalized_header()
     } else {
-      await this.blc_import_next_sync_committee(old_period, now_period - old_period)
+      await this.blc_import_sync_committees(old_period, now_period - old_period)
+      await this.blc_import_finalized_header()
     }
-
-    const sync_change = await this.eth2Client.get_sync_committee_period_update(now_period - 1, 1)
-    const next_sync = sync_change[0].data
-    const current_sync_committee = next_sync.next_sync_committee
-
-    let sync_aggregate_slot = Number(attested_header.slot) + 1
-    let sync_aggregate_header = await this.eth2Client.get_header(sync_aggregate_slot)
-    while (!sync_aggregate_header) {
-      sync_aggregate_slot = Number(sync_aggregate_slot) + 1
-      sync_aggregate_header = await this.eth2Client.get_header(sync_aggregate_slot)
-    }
-
-    const fork_version = await this.eth2Client.get_fork_version(sync_aggregate_slot)
-
-    let sync_aggregate = finality_update.sync_aggregate
-    let sync_committee_bits = []
-    sync_committee_bits.push(sync_aggregate.sync_committee_bits.slice(0, 66))
-    sync_committee_bits.push('0x' + sync_aggregate.sync_committee_bits.slice(66))
-    sync_aggregate.sync_committee_bits = sync_committee_bits;
-
-    const finalized_header_update = {
-      attested_header: attested_header,
-      signature_sync_committee: current_sync_committee,
-      finalized_header: finalized_header,
-      finality_branch: finality_update.finality_branch,
-      sync_aggregate: sync_aggregate,
-      fork_version: fork_version.current_version,
-      signature_slot: sync_aggregate_slot
-    }
-
-    console.log(JSON.stringify(finalized_header_update, null, 2))
-
-    // const tx = await this.subClient.beaconLightClient.import_finalized_header(finalized_header_update,
-    //   {
-    //     gasPrice: 1000000000,
-    //     gasLimit: 5000000
-    //   })
-
-    // console.log(tx.hash)
-    // const new_finalized_header = await this.subClient.beaconLightClient.finalized_header()
   }
 
   async relay_eth_execution_payload() {
@@ -349,7 +385,7 @@ class Bridge {
 
     const finalized_header = await this.subClient.beaconLightClient.finalized_header()
 
-    const block = await this.eth2Client.get_beacon_block(finalized_header.slot)
+    const block = await this.eth2.get_beacon_block(finalized_header.slot)
     const b = block.body
     const p = b.execution_payload
 
@@ -522,7 +558,7 @@ class Bridge {
   async finality_block_number(from) {
     if (from == 'eth') {
       const finalized_header = await this.sub.beaconLightClient.finalized_header()
-      const finality_block = await this.eth2Client.get_beacon_block(finalized_header.slot)
+      const finality_block = await this.eth2.get_beacon_block(finalized_header.slot)
       return finality_block.body.execution_payload.block_number
     } else if (from == 'bsc') {
       const finalized_header = await this.subClient.bscLightClient.finalized_checkpoint()
