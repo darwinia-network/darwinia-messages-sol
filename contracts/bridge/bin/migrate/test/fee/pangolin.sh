@@ -12,18 +12,6 @@ export SETH_CHAIN=pangolin
 
 . $(dirname $0)/base.sh
 
-load_saddr() {
-  jq -r ".[\"$TARGET_CHAIN\"].\"$1\"" "$PWD/bin/addr/$MODE/$NETWORK_NAME.json"
-}
-
-load_staddr() {
-  jq -r ".\"$1\"" "$PWD/bin/addr/$MODE/$NETWORK_NAME.json"
-}
-
-load_taddr() {
-  jq -r ".[\"$NETWORK_NAME\"].\"$1\"" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json"
-}
-
 BridgeProxyAdmin=$(load_staddr "BridgeProxyAdmin")
 FeeMarketProxy=$(load_saddr "FeeMarketProxy")
 

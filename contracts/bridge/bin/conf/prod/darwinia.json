@@ -47,12 +47,12 @@
     "this_chain_pos": 0
   },
   "FeeMarket": {
-    "vault": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
-    "collateral_perorder": "10000000000000000000",
+    "vault": "0xBd1a110ec476b4775c43905000288881367B1a88",
+    "collateral_perorder": "6000000000000000000000",
     "assigned_relayers_number": "1",
     "slash_time": "10800",
     "relay_time": "10800",
-    "price_ratio": "999900",
+    "price_ratio": "999000",
     "duty_ratio": "20"
   },
   "LightClient": {

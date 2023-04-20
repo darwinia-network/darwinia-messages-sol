@@ -2,13 +2,11 @@
 
 set -e
 
+unset SOURCE_CHAIN
 unset TARGET_CHAIN
-unset NETWORK_NAME
-unset SETH_CHAIN
 unset ETH_RPC_URL
-export NETWORK_NAME=${from:?"!from"}
+export SOURCE_CHAIN=${from:?"!from"}
 export TARGET_CHAIN=${to:?"!to"}
-export SETH_CHAIN=${from}
 
 echo "ETH_FROM: ${ETH_FROM}"
 
@@ -36,10 +34,13 @@ outlane_id=$(seth --to-uint256 $outlane_id)
 inlane_id=$(seth --to-uint256 $inlane_id)
 
 # fee market config
+# https://etherscan.io/chart/gasprice
+# 300000 wei * 100 gwei = 0.03 ether or 6000 RING
 COLLATERAL_PERORDER=$(load_conf ".FeeMarket.collateral_perorder")
 SLASH_TIME=$(load_conf ".FeeMarket.slash_time")
 RELAY_TIME=$(load_conf ".FeeMarket.relay_time")
-# 300 : 0.01
+# price 2000 : 0.01
+# 1000 : 999000
 PRICE_RATIO=$(load_conf ".FeeMarket.price_ratio")
 DUTY_RATIO=$(load_conf ".FeeMarket.duty_ratio")
 
@@ -69,8 +70,8 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
 #   $BEEFY_VALIDATOR_SET_LEN \
 #   $BEEFY_VALIDATOR_SET_ROOT)
 
-# chain_id=$(seth --to-uint64 43) (43.to_be_bytes)
-# seth keccak "${chain_id}Pangolin2::ecdsa-authority"
+# chain_id=$(seth --to-uint64 46) (46.to_be_bytes)
+# seth keccak "${chain_id}Darwinia2::ecdsa-authority"
 DOMAIN_SEPARATOR=$(load_conf ".LightClient.domain_separator")
 relayers=$(load_conf ".LightClient.relayers")
 threshold=$(load_conf ".LightClient.threshold")
@@ -95,9 +96,9 @@ SerialInboundLane=$(deploy SerialInboundLane \
   0 0 \
   $max_gas_per_message)
 
-seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $NETWORK_NAME
+seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN
 
-EthereumSerialLaneVerifier=$(jq -r ".[\"$NETWORK_NAME\"].EthereumSerialLaneVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
+EthereumSerialLaneVerifier=$(jq -r ".[\"$SOURCE_CHAIN\"].EthereumSerialLaneVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
 
 seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
   $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane --chain $TARGET_CHAIN

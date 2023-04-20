@@ -10,4 +10,4 @@ Chain1=goerli
 . $(dirname $0)/deploy/darwinia.sh)
 
 (from=$Chain1 to=$Chain0
-. $(dirname $0)/deploy/test/goerli.sh)
+. $(dirname $0)/deploy/ethereum.sh)

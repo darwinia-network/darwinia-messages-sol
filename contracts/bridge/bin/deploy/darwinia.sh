@@ -2,13 +2,11 @@
 
 set -e
 
+unset SOURCE_CHAIN
 unset TARGET_CHAIN
-unset NETWORK_NAME
-unset SETH_CHAIN
 unset ETH_RPC_URL
-export NETWORK_NAME=${from:?"!from"}
+export SOURCE_CHAIN=${from:?"!from"}
 export TARGET_CHAIN=${to:?"!to"}
-export SETH_CHAIN=${from}
 
 echo "ETH_FROM: ${ETH_FROM}"
 
@@ -101,7 +99,7 @@ SerialInboundLane=$(deploy SerialInboundLane \
   $max_gas_per_message)
 
 LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
-seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $SerialOutboundLane $SerialInboundLane --chain $NETWORK_NAME
-seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter --chain $NETWORK_NAME
+seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $SerialOutboundLane $SerialInboundLane --chain $SOURCE_CHAIN
+seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter --chain $SOURCE_CHAIN
 
-seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $NETWORK_NAME
+seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN

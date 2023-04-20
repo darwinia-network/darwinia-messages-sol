@@ -2,11 +2,12 @@
 
 set -e
 
-if [[ -z ${INFURA_KEY} ]]; then
-	echo "INFURA_KEY not found, please set it and re-run the last command."
-	exit 1
-fi
-# export ETH_GAS_PRICE=1300000000
-# . $(dirname $0)/deploy/prod/darwinia.sh
-# export ETH_GAS_PRICE=2000000000
-. $(dirname $0)/deploy/prod/ethlive.sh
+Chain0=darwinia
+Chain1=ethereum
+
+# 0
+(from=$Chain0 to=$Chain1 \
+. $(dirname $0)/deploy/darwinia.sh)
+
+(from=$Chain1 to=$Chain0
+. $(dirname $0)/deploy/ethereum.sh)
