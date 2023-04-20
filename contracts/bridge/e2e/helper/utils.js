@@ -74,7 +74,7 @@ const generate_storage_proof = async (client, begin, end, block_number) => {
     "laneMessagesProof": laneMessageProof.storageProof.map((p) => p.proof),
   }
   return ethers.utils.defaultAbiCoder.encode([
-    "tuple(bytes[] accountProof, bytes[] laneIDProof, bytes[] laneNonceProof, bytes[][] laneMessagesProof)"
+    "tuple(bytes[] accountProof, bytes[] laneNonceProof, bytes[][] laneMessagesProof)"
     ], [ proof ])
 }
 

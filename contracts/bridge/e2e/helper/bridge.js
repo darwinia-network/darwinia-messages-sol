@@ -33,7 +33,7 @@ class Bridge {
   }
 
   async enroll_relayer() {
-    // await this.eth.enroll_relayer()
+    await this.eth.enroll_relayer()
     // await this.bsc.enroll_relayer()
     await this.sub.eth.enroll_relayer()
     // await this.sub.bsc.enroll_relayer()
