@@ -147,11 +147,6 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         uint delivery_size
     ) external nonReentrant {
         _verify_messages_proof(hash(outboundLaneData), messagesProof);
-        // Require there is enough gas to play all messages
-        require(
-            gasleft() >= outboundLaneData.messages.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
-            "!gas"
-        );
         _receive_state_update(outboundLaneData.latest_received_nonce);
         _receive_message(outboundLaneData.messages, delivery_size);
     }

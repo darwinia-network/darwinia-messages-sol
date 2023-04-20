@@ -61,7 +61,7 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
 
 # beacon light client config
 BLS_PRECOMPILE=$(load_conf ".LightClient.bls_precompile")
-SLOT=$(load_conf "LightClient.slot")
+SLOT=$(load_conf ".LightClient.slot")
 PROPOSER_INDEX=$(load_conf ".LightClient.proposer_index")
 PARENT_ROOT=$(load_conf ".LightClient.parent_root")
 STATE_ROOT=$(load_conf ".LightClient.state_root")
@@ -80,10 +80,10 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $GENESIS_VALIDATORS_ROOT)
 
 # import mandatory block reward
-reward=$(load_conf ".LightClient.mandatory_reward")
-BeaconLCMandatoryReward=$(deploy BeaconLCMandatoryReward $BeaconLightClient $reward)
+# reward=$(load_conf ".LightClient.mandatory_reward")
+# BeaconLCMandatoryReward=$(deploy BeaconLCMandatoryReward $BeaconLightClient $reward)
 
-EthereumSerialLaneVerifier=$(deploy EthereumSerialLaneVerifier $ExecutionLayer)
+EthereumSerialLaneVerifier=$(deploy EthereumSerialLaneVerifier $BeaconLightClient)
 
 SerialOutboundLane=$(deploy SerialOutboundLane \
   $EthereumSerialLaneVerifier \
