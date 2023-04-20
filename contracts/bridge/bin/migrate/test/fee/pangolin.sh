@@ -2,13 +2,11 @@
 
 set -e
 
+unset SOURCE_CHAIN
 unset TARGET_CHAIN
-unset NETWORK_NAME
 unset ETH_RPC_URL
-unset SETH_CHAIN
-export NETWORK_NAME=pangolin
+export SOURCE_CHAIN=pangolin
 export TARGET_CHAIN=goerli
-export SETH_CHAIN=pangolin
 
 . $(dirname $0)/base.sh
 
