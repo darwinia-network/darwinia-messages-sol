@@ -60,7 +60,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
     source = eth_signer.address
   })
 
-  it.skip("enroll", async () => {
+  it("enroll", async () => {
     await bridge.enroll_relayer()
   })
 
@@ -89,7 +89,7 @@ describe("bridge e2e test: verify message/storage proof", () => {
     await bridge.relay_eth_header()
   })
 
-  it("1.3", async function () {
+  it.skip("1.3", async function () {
     const nonce = await ethClient.outbound.outboundLaneNonce()
     const begin = nonce.latest_received_nonce.add(1)
     const end = nonce.latest_generated_nonce

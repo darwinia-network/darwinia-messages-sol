@@ -6,7 +6,6 @@ unset SOURCE_CHAIN
 unset TARGET_CHAIN
 unset ETH_RPC_URL
 export SOURCE_CHAIN=${from:?"!from"}
-export TARGET_CHAIN=${to:?"!to"}
 
 echo "ETH_FROM: ${ETH_FROM}"
 
@@ -16,6 +15,8 @@ echo "ETH_FROM: ${ETH_FROM}"
 BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
 
 ChainMessageCommitter=$(deploy ChainMessageCommitter)
+
+export TARGET_CHAIN=${to:?"!to"}
 
 # darwinia to eth2.0 bridge config
 # this_chain_pos=0
