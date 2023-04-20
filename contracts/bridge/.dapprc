@@ -6,6 +6,7 @@ export DAPP_EVM_VERSION=london
 export DAPP_JSON=out/dapp.sol.json
 
 export DAPP_SOLC_VERSION=0.8.17
+export DAPP_SOLC=/nix/store/ywqbzx3y85y533x4phzkacpcr31rxy0r-solc-static-0.8.17
 # If you're getting an "invalid character at offset" error, comment this out.
 export DAPP_LINK_TEST_LIBRARIES=0
 export DAPP_TEST_SMTTIMEOUT=500000
