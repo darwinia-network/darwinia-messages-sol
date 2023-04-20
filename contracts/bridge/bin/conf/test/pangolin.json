@@ -13,7 +13,7 @@
           {
             "this_lane_pos": 1,
             "bridged_lane_pos": 0,
-            "max_gas_per_message": 600000,
+            "max_gas_per_message": "600000",
             "type": "serial_in"
           },
           {
@@ -48,22 +48,22 @@
   },
   "FeeMarket": {
     "vault": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
-    "collateral_perorder": 10000000000000000000,
-    "assigned_relayers_number": 3,
-    "slash_time": 10800,
-    "relay_time": 10800,
-    "price_ratio": 999900,
-    "duty_ratio": 20
+    "collateral_perorder": "10000000000000000000",
+    "assigned_relayers_number": "3",
+    "slash_time": "10800",
+    "relay_time": "10800",
+    "price_ratio": "999900",
+    "duty_ratio": "20"
   },
   "LightClient": {
     "bls_precompile": "0x0000000000000000000000000000000000000800",
-    "slot": 5433408,
-    "proposer_index": 338940,
+    "slot": "5433408",
+    "proposer_index": "338940",
     "parent_root": "0xf7c0374ad89d9a28f6708bd7b02af59a7a2ed2463a4ef191aa55cdf6cf8001b2",
     "state_root": "0x9840d388c38172332553e9445e7fd64185aba5212026d22dce5efccf41d5663d",
     "body_root": "0x4b6cc5f729ae6a9d57f6b912d655467627ce4d057f10a1d0a8ad5f68c5c1a2e9",
     "current_sync_committee_hash": "0x4bcc8065b1462577a9971110aaa3ea5630ce3e6bc0ecb53e54777ce7d4a5e816",
     "genesis_validators_root": "0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb",
-    "mandatory_reward": 30000000000000000000
+    "mandatory_reward": "30000000000000000000"
   }
 }

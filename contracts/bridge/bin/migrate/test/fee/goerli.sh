@@ -5,9 +5,10 @@ set -e
 unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
+unset SETH_CHAIN
 export NETWORK_NAME=goerli
-export TARGET_CHAIN=pangoro
-export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
+export TARGET_CHAIN=pangolin
+export SETH_CHAIN=goerli
 
 . $(dirname $0)/base.sh
 
@@ -27,12 +28,12 @@ BridgeProxyAdmin=$(load_staddr "BridgeProxyAdmin")
 FeeMarketProxy=$(load_saddr "FeeMarketProxy")
 
 # fee market config
-COLLATERAL_PERORDER=$(seth --to-wei 0.0001 ether)
-SLASH_TIME=10800
-RELAY_TIME=10800
+COLLATERAL_PERORDER=$(load_conf ".FeeMarket.collateral_perorder")
+SLASH_TIME=$(load_conf ".FeeMarket.slash_time")
+RELAY_TIME=$(load_conf ".FeeMarket.relay_time")
 # 300 : 0.01
-PRICE_RATIO=1000
-DUTY_RATIO=30
+PRICE_RATIO=$(load_conf ".FeeMarket.price_ratio")
+DUTY_RATIO=$(load_conf ".FeeMarket.duty_ratio")
 
 SimpleFeeMarket=$(deploy SimpleFeeMarket \
   $COLLATERAL_PERORDER \

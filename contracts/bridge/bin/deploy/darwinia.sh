@@ -38,7 +38,6 @@ outlane_id=$(seth --to-uint256 $outlane_id)
 inlane_id=$(seth --to-uint256 $inlane_id)
 
 # fee market config
-# 300 : 0.01
 FEEMARKET_VAULT=$(load_conf ".FeeMarket.vault")
 COLLATERAL_PERORDER=$(load_conf ".FeeMarket.collateral_perorder")
 ASSIGNED_RELAYERS_NUMBER=$(load_conf ".FeeMarket.assigned_relayers_number")
@@ -63,14 +62,14 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
   $data)
 
 # beacon light client config
-BLS_PRECOMPILE=$(load_conf "LightClient.bls_precompile")
+BLS_PRECOMPILE=$(load_conf ".LightClient.bls_precompile")
 SLOT=$(load_conf "LightClient.slot")
-PROPOSER_INDEX=$(load_conf "LightClient.proposer_index")
-PARENT_ROOT=$(load_conf "LightClient.parent_root")
-STATE_ROOT=$(load_conf "LightClient.state_root")
-BODY_ROOT=$(load_conf "LightClient.body_root")
-CURRENT_SYNC_COMMITTEE_HASH=$(load_conf "LightClient.current_sync_committee_hash")
-GENESIS_VALIDATORS_ROOT=$(load_conf "LightClient.genesis_validators_root")
+PROPOSER_INDEX=$(load_conf ".LightClient.proposer_index")
+PARENT_ROOT=$(load_conf ".LightClient.parent_root")
+STATE_ROOT=$(load_conf ".LightClient.state_root")
+BODY_ROOT=$(load_conf ".LightClient.body_root")
+CURRENT_SYNC_COMMITTEE_HASH=$(load_conf ".LightClient.current_sync_committee_hash")
+GENESIS_VALIDATORS_ROOT=$(load_conf ".LightClient.genesis_validators_root")
 
 BeaconLightClient=$(deploy BeaconLightClient \
   $BLS_PRECOMPILE \
@@ -83,7 +82,7 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $GENESIS_VALIDATORS_ROOT)
 
 # import mandatory block reward
-reward=$(load_conf "LightClient.mandatory_reward")
+reward=$(load_conf ".LightClient.mandatory_reward")
 BeaconLCMandatoryReward=$(deploy BeaconLCMandatoryReward $BeaconLightClient $reward)
 
 EthereumSerialLaneVerifier=$(deploy EthereumSerialLaneVerifier $ExecutionLayer)

@@ -741,10 +741,12 @@ contract FeeMarket is Initializable, IFeeMarket {
     }
 
     // Prune relayers which have not enough collateral
-    function prune(address prev, address cur) public {
+    function prune(address prev, address cur) public returns (bool) {
         if (lockedOf[cur] == 0 && balanceOf[cur] < COLLATERAL_PER_ORDER) {
             _delist(prev, cur);
+            return true;
         }
+        return false;
     }
 
     // Move your position in the fee-market orderbook
@@ -790,10 +792,15 @@ contract FeeMarket is Initializable, IFeeMarket {
                 array[index] = cur;
                 unchecked { index++; }
                 prev = cur;
+                cur = relayers[prev];
             } else {
-                prune(prev, cur);
+                if (prune(prev, cur)) {
+                    cur = relayers[prev];
+                } else {
+                    prev = cur;
+                    cur = relayers[prev];
+                }
             }
-            cur = relayers[prev];
         }
         require(index == ASSIGNED_RELAYERS_NUMBER, "!assigned");
         return array;

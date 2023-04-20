@@ -2,4 +2,5 @@
 
 set -eo pipefail
 
-. $(dirname $0)/migrate/test/truth/pangoro.sh
+. $(dirname $0)/migrate/test/fee/goerli.sh
+. $(dirname $0)/migrate/test/fee/pangolin.sh

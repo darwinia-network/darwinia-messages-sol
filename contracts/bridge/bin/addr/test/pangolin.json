@@ -3,7 +3,7 @@
   "BridgeProxyAdmin": "0x23c8c73D150c74b5ee7061ABF69AF69DDC5369EC",
   "ChainMessageCommitter": "0xF2b2FBF84173E2F295278Fa454f6304907886000",
   "goerli": {
-    "FeeMarket": "0xe6315A3825506E9E5c8Eba802beE23d184485Fbc",
+    "FeeMarket": "0x8098D7E7bb049Ac1853D6DcCbc2538e646080834",
     "FeeMarketProxy": "0x43d6711EB86C852Ec1E04af55C52a0dd51b2C743",
     "BeaconLightClient": "0x3ebe977795DBc623AFE693fF5c18082f1dD18d71",
     "BeaconLCMandatoryReward": "0x1b587abB9a5c2108FB8d10cA0ab5905B95e0B649",

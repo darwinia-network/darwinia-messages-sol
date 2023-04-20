@@ -5,10 +5,10 @@ set -e
 unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
-export NETWORK_NAME=pangoro
+unset SETH_CHAIN
+export NETWORK_NAME=pangolin
 export TARGET_CHAIN=goerli
-# export ETH_RPC_URL=https://pangoro-rpc.darwinia.network
-export ETH_RPC_URL=http://35.247.165.91:9933
+export SETH_CHAIN=pangolin
 
 . $(dirname $0)/base.sh
 
@@ -28,14 +28,14 @@ BridgeProxyAdmin=$(load_staddr "BridgeProxyAdmin")
 FeeMarketProxy=$(load_saddr "FeeMarketProxy")
 
 # fee market config
-FEEMARKET_VAULT=$ETH_FROM
-COLLATERAL_PERORDER=$(seth --to-wei 10 ether)
-ASSIGNED_RELAYERS_NUMBER=1
-SLASH_TIME=10800
-RELAY_TIME=10800
+FEEMARKET_VAULT=$(load_conf ".FeeMarket.vault")
+COLLATERAL_PERORDER=$(load_conf ".FeeMarket.collateral_perorder")
+ASSIGNED_RELAYERS_NUMBER=$(load_conf ".FeeMarket.assigned_relayers_number")
+SLASH_TIME=$(load_conf ".FeeMarket.slash_time")
+RELAY_TIME=$(load_conf ".FeeMarket.relay_time")
 # 0.01 : 2000
-PRICE_RATIO=999000
-DUTY_RATIO=20
+PRICE_RATIO=$(load_conf ".FeeMarket.price_ratio")
+DUTY_RATIO=$(load_conf ".FeeMarket.duty_ratio")
 
 FeeMarket=$(deploy FeeMarket \
   $FEEMARKET_VAULT \

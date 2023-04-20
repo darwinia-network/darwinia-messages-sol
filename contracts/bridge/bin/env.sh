@@ -9,9 +9,7 @@ network_name=${NETWORK_NAME?}
 ADDRESSES_FILE="${root_dir}/bin/addr/${mode}/${network_name}.json"
 CONFIG_FILE="${root_dir}/bin/conf/${mode}/${network_name}.json"
 OUT_DIR=$root_dir/out
-SRC_DIR=${DAPP_SRC-src}
-
-ETH_RPC_URL=${ETH_RPC_URL:-http://localhost:8545}
+SRC_DIR=${DAPP_SRC-flat}
 
 # ensure ETH_FROM is set and give a meaningful error message
 if [[ -z ${ETH_FROM} ]]; then
