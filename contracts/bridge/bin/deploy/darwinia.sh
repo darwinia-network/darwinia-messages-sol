@@ -4,15 +4,20 @@ set -e
 
 unset TARGET_CHAIN
 unset NETWORK_NAME
+unset SETH_CHAIN
 unset ETH_RPC_URL
-export NETWORK_NAME=pangolin
-export TARGET_CHAIN=goerli
-export ETH_RPC_URL=https://pangolin-rpc.darwinia.network
+export NETWORK_NAME=${from:?"!from"}
+export TARGET_CHAIN=${to:?"!to"}
+export SETH_CHAIN=${from}
 
 echo "ETH_FROM: ${ETH_FROM}"
 
-. $(dirname $0)/base.sh
-load_addresses
+# import the deployment helpers
+. $(dirname $0)/common.sh
+
+BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
+
+ChainMessageCommitter=$(deploy ChainMessageCommitter)
 
 # darwinia to eth2.0 bridge config
 # this_chain_pos=0
@@ -97,7 +102,7 @@ SerialInboundLane=$(deploy SerialInboundLane \
   $max_gas_per_message)
 
 LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
-seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $SerialOutboundLane $SerialInboundLane
-seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
+seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $SerialOutboundLane $SerialInboundLane --chain $NETWORK_NAME
+seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter --chain $NETWORK_NAME
 
-seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1
+seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $NETWORK_NAME

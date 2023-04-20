@@ -8,7 +8,7 @@ set -eo pipefail
 . $(dirname $0)/vrf.sh
 . $(dirname $0)/eta-gas.sh
 
-# Call as `ETH_FROM=0x... ETH_RPC_URL=<url> deploy ContractName arg1 arg2 arg3`
+# Call as `ETH_FROM=0x... SETH_CHAIN=<chain> deploy ContractName arg1 arg2 arg3`
 # (or omit the env vars if you have already set them)
 deploy() {
   NAME=$1
@@ -29,10 +29,10 @@ deploy() {
   BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
 
   # estimate gas
-  GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
+  GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --chain "$SETH_CHAIN" --from "$ETH_FROM")
 
   # deploy
-  ADDRESS=$(dapp create "$NAME" $ARGS -- --gas "$GAS" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
+  ADDRESS=$(dapp create "$NAME" $ARGS -- --gas "$GAS" --chain "$SETH_CHAIN" --from "$ETH_FROM")
 
   # save the addrs to the json
   # TODO: It'd be nice if we could evolve this into a minimal versioning system
@@ -48,8 +48,8 @@ upgrade() {
   local admin; admin=$1
   local newImp; newImp=$2
   local proxy; proxy=$3
-  seth send "$admin" "upgrade(address,address)" "$proxy" "$newImp" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM"
-  if test $(seth call "$admin" "getProxyImplementation(address)(address)" "$proxy" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM") != "$newImp"; then
+  seth send "$admin" "upgrade(address,address)" "$proxy" "$newImp" --chain "$SETH_CHAIN" --from "$ETH_FROM"
+  if test $(seth call "$admin" "getProxyImplementation(address)(address)" "$proxy" --chain "$SETH_CHAIN" --from "$ETH_FROM") != "$newImp"; then
     (log "check migration failed."; exit 1;)
   fi
   log "migration finished."
@@ -77,10 +77,10 @@ deploy_v2() {
   BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
 
   # estimate gas
-  GAS=$(seth estimate --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" --rpc-url "$ETH_RPC_URL")
+  GAS=$(seth estimate --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" --chain "$SETH_CHAIN")
 
   # deploy
-  ADDRESS=$(set -x; seth send --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" -- --gas "$GAS" --rpc-url "$ETH_RPC_URL")
+  ADDRESS=$(set -x; seth send --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" -- --gas "$GAS" --chain "$SETH_CHAIN")
 
   # save the addrs to the json
   # TODO: It'd be nice if we could evolve this into a minimal versioning system

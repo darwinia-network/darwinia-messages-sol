@@ -4,9 +4,11 @@ set -e
 
 unset TARGET_CHAIN
 unset NETWORK_NAME
+unset SETH_CHAIN
 unset ETH_RPC_URL
-export NETWORK_NAME=goerli
-export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
+export NETWORK_NAME=${from:?"!from"}
+export TARGET_CHAIN=${to:?"!to"}
+export SETH_CHAIN=${from}
 
 echo "ETH_FROM: ${ETH_FROM}"
 
@@ -14,9 +16,6 @@ echo "ETH_FROM: ${ETH_FROM}"
 . $(dirname $0)/common.sh
 
 BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
-
-export TARGET_CHAIN=pangolin
-
 
 # goerli to pangolin bridge config
 # this_chain_pos=1
@@ -96,9 +95,9 @@ SerialInboundLane=$(deploy SerialInboundLane \
   0 0 \
   $max_gas_per_message)
 
-seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain goerli
+seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $NETWORK_NAME
 
 EthereumSerialLaneVerifier=$(jq -r ".[\"$NETWORK_NAME\"].EthereumSerialLaneVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
 
-(set -x; seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
-  $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane --rpc-url https://pangolin-rpc.darwinia.network)
+seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
+  $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane --chain $TARGET_CHAIN

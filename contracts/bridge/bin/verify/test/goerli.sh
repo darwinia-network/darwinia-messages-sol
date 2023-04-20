@@ -25,10 +25,10 @@ FeeMarketProxy=$(load_saddr "FeeMarketProxy")
 data=$(seth calldata "initialize()")
 verify FeeMarketProxy $FeeMarketProxy $SimpleFeeMarket $BridgeProxyAdmin $data
 
-DOMAIN_SEPARATOR=$(load_conf ".DarwiniaLightClient.domain_separator")
-relayers=$(load_conf ".DarwiniaLightClient.relayers")
-threshold=$(load_conf ".DarwiniaLightClient.threshold")
-nonce=$(load_conf ".DarwiniaLightClient.nonce")
+DOMAIN_SEPARATOR=$(load_conf ".LightClient.domain_separator")
+relayers=$(load_conf ".LightClient.relayers")
+threshold=$(load_conf ".LightClient.threshold")
+nonce=$(load_conf ".LightClient.nonce")
 POSALightClient=$(load_saddr "POSALightClient")
 verify POSALightClient $POSALightClient $DOMAIN_SEPARATOR \
   $relayers $threshold $nonce
