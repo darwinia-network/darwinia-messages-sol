@@ -40,6 +40,7 @@ audit       :; @./bin/audit.sh
 flatten     :; @./bin/flatten.sh
 estimate    :; @./bin/estimate-gas.sh ${contract}
 size        :; @./bin/contract-size.sh ${contract}
+e2e-test    :; @./bin/test.sh
 gen-smt     :; export DAPP_SMTCHECKER=1 && dapp mk-standard-json | jq '.settings.modelChecker += {"contracts": {"src/test/utils/Math.p.sol": ["MathPropertyTest"]}, "invariants": ["contract"]}' &> smt.json
 
 # Deployment helpers
