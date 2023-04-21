@@ -17,7 +17,7 @@ async function main() {
   const GoerliEndpoint = await hre.ethers.getContractFactory("GoerliEndpoint");
   const goerliEndpoint = await GoerliEndpoint.deploy();
   await goerliEndpoint.deployed();
-  console.log(`Goerli Endpoint: ${goerliEndpoint.address}`);
+  console.log(`GoerliEndpoint: ${goerliEndpoint.address}`);
 
   // Make GoerliEndpoint known Pangolin2Endpoint
   await goerliEndpoint.setRemoteEndpoint(pangolin2Endpoint.address);
