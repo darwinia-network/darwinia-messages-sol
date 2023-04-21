@@ -31,10 +31,12 @@
 pragma solidity 0.8.17;
 
 import "../interfaces/ICrossChainFilter.sol";
+import "../interfaces/IMessageGateway.sol";
 import "./InboundLaneVerifier.sol";
 import "../spec/SourceChain.sol";
 import "../spec/TargetChain.sol";
 import "../utils/call/ExcessivelySafeCall.sol";
+
 
 /// @title SerialInboundLane
 /// @notice The inbound lane is the message layer of the bridge, Everything about incoming messages receival
@@ -79,10 +81,10 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// @dev Gas buffer for executing `send_message` tx
     uint256 private constant GAS_BUFFER = 20000;
 
-    /// @dev Notifies an observer that the message has dispatched
+    /// @dev Notifies an observer that the message has received
     /// @param nonce The message nonce
-    /// @param result The message result
-    event MessageDispatched(uint64 nonce, bool result);
+    /// @param result The receive result
+    event MessageReceived(uint64 nonce, bool result);
 
     /// @dev ID of the next message, which is incremented in strict order
     /// @notice When upgrading the lane, this value must be synchronized
@@ -245,9 +247,9 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
             // if there are more unconfirmed messages than we may accept, reject this message
             require(next - inboundLaneNonce.last_confirmed_nonce <= MAX_UNCONFIRMED_MESSAGES, "TooManyUnconfirmedMessages");
 
-            // then, dispatch message
-            bool dispatch_result = _dispatch(message_payload);
-            emit MessageDispatched(key.nonce, dispatch_result);
+            // then, receive message
+            bool receive_result = _receive(message);
+            emit MessageReceived(key.nonce, receive_result);
 
             // update inbound lane nonce storage
             inboundLaneNonce.last_delivered_nonce = next;
@@ -268,49 +270,16 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         }
     }
 
-    /// @dev dispatch the cross chain message
-    /// @param payload payload of the dispatch message
-    /// @return dispatch_result the dispatch call result
-    /// - Return True:
-    ///   1. filter return True and dispatch call successfully
-    /// - Return False:
-    ///   1. filter return False
-    ///   2. filter return True and dispatch call failed
-    function _dispatch(MessagePayload memory payload) private returns (bool dispatch_result) {
-        Slot0 memory _slot0 = slot0;
-        bytes memory filterCallData = abi.encodeWithSelector(
-            ICrossChainFilter.cross_chain_filter.selector,
-            _slot0.bridged_chain_pos,
-            _slot0.bridged_lane_pos,
-            payload.source,
-            payload.encoded
-        );
-        if (_filter(payload.target, filterCallData)) {
-            // Deliver the message to the target
-            (dispatch_result,) = payload.target.excessivelySafeCall(
-                MAX_GAS_PER_MESSAGE,
-                0,
-                payload.encoded
-            );
-        }
-    }
-
-    /// @dev filter the cross chain message
-    /// @dev The app layer must implement the interface `ICrossChainFilter`
-    /// to verify the source sender and payload of source chain messages.
-    /// @param target target of the dispatch message
-    /// @param encoded encoded calldata of the dispatch message
-    /// @return canCall the filter static call result, Return True only when target contract
-    /// implement the `ICrossChainFilter` interface with return data is True.
-    function _filter(address target, bytes memory encoded) private view returns (bool canCall) {
-        (bool ok, bytes memory result) = target.excessivelySafeStaticCall(
-            GAS_BUFFER,
+    function _receive(Message memory message) private returns (bool receive_result) {
+        bytes memory receiveCall = abi.encodeWithSelector(IMessageGateway.receive_message.selector, message);
+        (bool ok, bytes memory out) = message.payload.target.excessivelySafeCall(
+            MAX_GAS_PER_MESSAGE,
             32,
-            encoded
+            receiveCall
         );
         if (ok) {
-            if (result.length == 32) {
-                canCall = abi.decode(result, (bool));
+            if (out.length == 32) {
+                receive_result = abi.decode(out, (bool));
             }
         }
     }
