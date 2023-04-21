@@ -9,8 +9,8 @@ contract Pangolin2Endpoint is
     AbstractDarwiniaEndpoint(
         0x2100, // _sendCallIndex
         0xe520, // _darwiniaParaId
-        0xcF2A32c182A73D93fBa0C5e515e3C5ec7944a471, // _toEthereumOutboundLane
-        0x43d6711EB86C852Ec1E04af55C52a0dd51b2C743 // _toEthereumFeeMarket
+        0xAbd165DE531d26c229F9E43747a8d683eAD54C6c, // _toEthereumOutboundLane
+        0x4DBdC9767F03dd078B5a1FC05053Dd0C071Cc005 // _toEthereumFeeMarket
     )
 {
     function cross_chain_filter(

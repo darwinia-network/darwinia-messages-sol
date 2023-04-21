@@ -7,8 +7,8 @@ import "../interfaces/ICrossChainFilter.sol";
 
 contract GoerliEndpoint is
     AbstractEthereumEndpoint(
-        0x21D4A3c5390D098073598d30FD49d32F9d9E355E, // outboundlane
-        0xecB07f26F2E7028A7090cF6419116A9D11c36054 // fee market
+        0x9B5010d562dDF969fbb85bC72222919B699b5F54, // outboundlane
+        0x6c73B30a48Bb633DC353ed406384F73dcACcA5C3 // fee market
     )
 {
     function cross_chain_filter(
