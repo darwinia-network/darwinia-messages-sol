@@ -5,30 +5,45 @@ pragma solidity ^0.8.0;
 import "../interfaces/IOutboundLane.sol";
 import "../interfaces/IFeeMarket.sol";
 import "../interfaces/ICrossChainFilter.sol";
+import "../interfaces/IMessageGateway.sol";
 import "../interfaces/IMessageReceiver.sol";
 
-contract EthereumMessageEndpoint is ICrossChainFilter {
-    address public immutable REMOTE_ENDPOINT;
-    address public immutable OUTBOUND_LANE;
-    address public immutable FEE_MARKET;
+contract MessageGateway is IMessageGateway, ICrossChainFilter {
+    address creator;
+    address public remoteGateway;
+    address public outboundLane;
+    address public feeMarket;
 
     event FailedMessage(address from, address to, bytes message, string reason);
 
-    constructor(
-        address _remoteEndpoint,
-        address _outboundLane,
-        address _feeMarket
-    ) {
-        REMOTE_ENDPOINT = _remoteEndpoint;
-        OUTBOUND_LANE = _outboundLane;
-        FEE_MARKET = _feeMarket;
+    constructor(address _outboundLane, address _feeMarket) {
+        outboundLane = _outboundLane;
+        feeMarket = _feeMarket;
+        creator = msg.sender;
+    }
+
+    modifier onlyCreator() {
+        require(msg.sender == creator);
+        _;
+    }
+
+    function setRemoteGateway(address _remoteGateway) external onlyCreator {
+        remoteGateway = _remoteGateway;
+    }
+
+    function setFeeMarket(address _feeMarket) external onlyCreator {
+        feeMarket = _feeMarket;
+    }
+
+    function setOutboundLane(address _outboundLane) external onlyCreator {
+        outboundLane = _outboundLane;
     }
 
     ////////////////////////////////////////////////////
     // To Remote
     ////////////////////////////////////////////////////
     function fee() public view returns (uint256) {
-        return IFeeMarket(FEE_MARKET).market_fee();
+        return IFeeMarket(feeMarket).market_fee();
     }
 
     function send(
@@ -45,16 +60,16 @@ contract EthereumMessageEndpoint is ICrossChainFilter {
             payable(msg.sender).transfer(paid - marketFee);
         }
 
-        // remote call `recv(from,to,message)` on REMOTE_ENDPOINT
+        // remote call `recv(from,to,message)` on remoteGateway
         bytes memory receiveCall = abi.encodeWithSignature(
-            "recv(address,address,bytes)", // this is the function of REMOTE_ENDPOINT.
+            "recv(address,address,bytes)", // this is the function of remoteGateway.
             address(msg.sender), // from, or this?
             to,
             message
         );
         return
-            IOutboundLane(OUTBOUND_LANE).send_message{value: marketFee}(
-                REMOTE_ENDPOINT,
+            IOutboundLane(outboundLane).send_message{value: marketFee}(
+                remoteGateway,
                 receiveCall
             );
     }
