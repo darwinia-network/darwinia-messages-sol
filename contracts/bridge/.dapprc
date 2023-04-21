@@ -5,8 +5,6 @@ export DAPP_OUT=out
 export DAPP_EVM_VERSION=london
 export DAPP_JSON=out/dapp.sol.json
 
-# export DAPP_SOLC_VERSION=0.8.17
-export DAPP_SOLC=/nix/store/ywqbzx3y85y533x4phzkacpcr31rxy0r-solc-static-0.8.17
 # If you're getting an "invalid character at offset" error, comment this out.
 export DAPP_LINK_TEST_LIBRARIES=0
 export DAPP_TEST_SMTTIMEOUT=500000
@@ -20,11 +18,13 @@ export DAPP_BUILD_OPTIMIZE_RUNS=999999
 
 if [ "$CI" = "true" ]
 then
+  export DAPP_SOLC_VERSION=0.8.17
   export DAPP_STANDARD_JSON=smt.json
   export DAPP_TEST_FUZZ_RUNS=10000
   export DAPP_TEST_MAX_ITERATIONS=6
   export DAPP_TEST_VERBOSITY=0
 else
+  export DAPP_SOLC=/nix/store/ywqbzx3y85y533x4phzkacpcr31rxy0r-solc-static-0.8.17
   export DAPP_TEST_FUZZ_RUNS=100
   export DAPP_TEST_MAX_ITERATIONS=3
   export DAPP_TEST_VERBOSITY=3
