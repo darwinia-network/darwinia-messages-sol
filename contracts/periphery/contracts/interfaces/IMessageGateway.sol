@@ -17,9 +17,11 @@
 
 pragma solidity ^0.8.0;
 
-interface IMessageSender {
+interface IMessageGateway {
     function send(
         address to,
         bytes memory message
     ) external payable returns (uint64 nonce);
+
+    function recv(address from, address to, bytes memory message) external;
 }

@@ -2,17 +2,17 @@
 
 pragma solidity ^0.8.0;
 
-import "../interfaces/IMessageSender.sol";
+import "../interfaces/IMessageGateway.sol";
 
 contract GoerliDapp {
-    IMessageSender public messageSender;
+    address public gatewayAddress;
 
-    constructor(address _messageSender) {
-        messageSender = IMessageSender(_messageSender);
+    constructor(address _gatewayAddress) {
+        gatewayAddress = _gatewayAddress;
     }
 
-    function remoteAddOn(address pangolinDapp, uint256 value) external payable {
+    function remoteAdd(address pangolinDapp, uint256 value) external payable {
         bytes memory message = abi.encode(value);
-        messageSender.send(pangolinDapp, message);
+        IMessageGateway(gatewayAddress).send(pangolinDapp, message);
     }
 }
