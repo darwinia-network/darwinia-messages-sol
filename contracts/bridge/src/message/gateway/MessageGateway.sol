@@ -22,10 +22,9 @@ import "../../interfaces/IOutboundLane.sol";
 import "../../spec/SourceChain.sol";
 
 contract MessageGateway is SourceChain {
-    address public dao;
-    address public xMessageGateway;
-    address public outboundLane;
-    address public inboundLane;
+    address public immutable XMESSAGEGATEWAY;
+    address public immutable OUTBOUNDLANE;
+    address public immutable INBOUNDLANE;
 
     struct GatewayMessage {
         address caller;
@@ -35,39 +34,19 @@ contract MessageGateway is SourceChain {
 
     event MessageDispatched(uint64 nonce, bool result);
 
-    modifier onlyDao {
-        require(dao == msg.sender, "!dao");
-        _;
-    }
-
-    modifier onlyOutboundLane {
-        require(outboundLane == msg.sender, "!outboundLane");
+    modifier onlyInboundLane {
+        require(INBOUNDLANE == msg.sender, "!inboundLane");
         _;
     }
 
     constructor(
-        address _dao,
         address _xMessageGateway,
         address _outboundLane,
         address _inboundLane
     ) {
-        dao = _dao;
-        xMessageGateway = _xMessageGateway;
-        outboundLane = _outboundLane;
-        inboundLane = _inboundLane;
-    }
-
-    function setDao(address _dao) external onlyDao {
-        dao = _dao;
-    }
-
-    function setXMessageGateway(address _xMessageGateway) external onlyDao {
-        xMessageGateway = _xMessageGateway;
-    }
-
-    function setLanes(address _outboundLane, address _inboundLane) external onlyDao {
-        outboundLane = _outboundLane;
-        inboundLane = _inboundLane;
+        XMESSAGEGATEWAY = _xMessageGateway;
+        OUTBOUNDLANE = _outboundLane;
+        INBOUNDLANE = _inboundLane;
     }
 
     function send_message(address target, bytes calldata encoded) external payable returns (uint64) {
@@ -76,10 +55,10 @@ contract MessageGateway is SourceChain {
             callee: target,
             appData: encoded
         });
-        return IOutboundLane(outboundLane).send_message(xMessageGateway, abi.encode(gateway_message));
+        return IOutboundLane(OUTBOUNDLANE).send_message(XMESSAGEGATEWAY, abi.encode(gateway_message));
     }
 
-    function receive_message(Message calldata message) external onlyOutboundLane returns (bool) {
+    function receive_message(Message calldata message) external onlyInboundLane returns (bool) {
         _dispatch(message);
         return true;
     }
@@ -95,7 +74,7 @@ contract MessageGateway is SourceChain {
     function _dispatch(Message memory message) private returns (bool dispatch_result) {
         MessageKey memory key = decodeMessageKey(message.encoded_key);
         MessagePayload memory payload = message.payload;
-        require(xMessageGateway == payload.source, "!source");
+        require(XMESSAGEGATEWAY == payload.source, "!source");
         require(address(this) == payload.target, "!targe");
         GatewayMessage memory gateway_message = abi.decode(payload.encoded, (GatewayMessage));
         bool ok = ICrossChainFilter(gateway_message.callee).cross_chain_filter(
