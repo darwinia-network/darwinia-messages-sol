@@ -8,30 +8,8 @@ async function main() {
   const GoerliDapp = await hre.ethers.getContractFactory("GoerliDapp");
   const goerliDapp = GoerliDapp.attach(goerliDappAddress);
 
-  // Get goerli endpoint
-  const MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
-  const gatewayAddress = await goerliDapp.gatewayAddress();
-  console.log(`goerliGateway: ${gatewayAddress}`);
-  const goerliGateway = MessageGateway.attach(gatewayAddress);
-
-  // Get market fee from goerli endpoint
-  let fee;
-  try {
-    fee = await goerliGateway.fee();
-    console.log(`Market fee: ${fee} wei`);
-  } catch (e) {
-    console.log(e);
-    return;
-  }
-
-  // // Check pangolin endpoint has enough balance
-  // const pangolinEndpointAddress = await goerliEndpoint.REMOTE_ENDPOINT();
-  // hre.changeNetwork("pangolin");
-  // const balance = await hre.ethers.provider.getBalance(pangolinEndpointAddress);
-  // console.log(`Balance of PangolinEndpoint: ${balance} wei`);
-
   // Run
-  hre.changeNetwork("goerli");
+  const fee = 1_000_000_000_000;
   const tx = await goerliDapp.remoteAdd(pangolinDappAddress, 2, {
     value: fee,
   });
