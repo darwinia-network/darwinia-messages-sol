@@ -5,85 +5,44 @@ pragma solidity ^0.8.0;
 import "./interfaces/IFeeMarket.sol";
 import "./interfaces/IMessageGateway.sol";
 import "./interfaces/IMessageReceiver.sol";
-import "./interfaces/IMessageSendingService.sol";
-
+import "./interfaces/AbstractMessageAdapter.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MessageGateway is IMessageGateway {
     address creator;
-    address public messageSendingService;
-    address public messageReceivingService;
-
-    event FailedMessage(address from, address to, bytes message, string reason);
+    // TODO: mapping to support multiple adapters.
+    address public adapterAddress;
 
     constructor() {
         creator = msg.sender;
     }
 
+    // TODO: more pratical permission control.
     modifier onlyCreator() {
         require(msg.sender == creator);
         _;
     }
 
-    function setRemoteGateway(address _remoteGateway) external onlyCreator {
-        remoteGateway = _remoteGateway;
+    function setAdapterAddress(address _adapterAddress) external onlyCreator {
+        adapterAddress = _adapterAddress;
     }
 
-    function setFeeMarket(address _feeMarket) external onlyCreator {
-        feeMarket = _feeMarket;
-    }
-
-    function setOutboundLane(address _outboundLane) external onlyCreator {
-        outboundLane = _outboundLane;
-    }
-
-    function setMessagingService(
-        address _messageSendingService,
-        address _messageReceivingService
-    ) external onlyCreator {
-        messageSendingService = _messageSendingService;
-        messageReceivingService = _messageReceivingService;
-    }
-
-    ////////////////////////////////////////////////////
-    // To Remote
-    ////////////////////////////////////////////////////
-    // User Dapp will call this function.
     function send(
         address remoteDappAddress,
         bytes memory message
     ) external payable returns (uint64 nonce) {
+        AbstractMessageAdapter adapter = AbstractMessageAdapter(adapterAddress);
+
         uint256 paid = msg.value;
-        uint256 marketFee = IMessageSendingService(messageSendingService)
-            .estimateFee();
-        require(paid >= marketFee, "!fee");
+        uint256 estimateFee = adapter.estimateFee();
+        require(paid >= estimateFee, "!fee");
 
         // refund fee to caller if paid too much.
-        if (paid > marketFee) {
+        if (paid > estimateFee) {
             // refund fee to caller.
-            payable(msg.sender).transfer(paid - marketFee);
+            payable(msg.sender).transfer(paid - estimateFee);
         }
 
-        IMessageSendingService(messageSendingService).send(
-            messageReceivingService,
-            remoteDappAddress,
-            message
-        );
-    }
-
-    ////////////////////////////////////////////////////
-    // From Remote
-    ////////////////////////////////////////////////////
-    function recv(address from, address to, bytes memory message) external {
-        // this will catch all errors from user's receive function.
-        try IMessageReceiver(to).recv(from, message) {
-            // call user's receive function successfully.
-        } catch Error(string memory reason) {
-            // call user's receive function failed by uncaught error.
-            // store the message and error for the user to do something like retry.
-            emit FailedMessage(from, to, message, reason);
-        } catch (bytes memory lowLevelData) {
-            emit FailedMessage(from, to, message, string(lowLevelData));
-        }
+        adapter.send(msg.sender, remoteDappAddress, message);
     }
 }
