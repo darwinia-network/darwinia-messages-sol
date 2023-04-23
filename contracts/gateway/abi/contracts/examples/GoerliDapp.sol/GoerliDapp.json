@@ -26,6 +26,11 @@
   {
     "inputs": [
       {
+        "internalType": "uint16",
+        "name": "adapterId",
+        "type": "uint16"
+      },
+      {
         "internalType": "address",
         "name": "pangolinDapp",
         "type": "address"

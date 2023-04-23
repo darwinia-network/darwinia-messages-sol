@@ -45,25 +45,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint16",
-        "name": "",
-        "type": "uint16"
-      }
-    ],
-    "name": "adapterAddresses",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "owner",
     "outputs": [
@@ -90,68 +71,8 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint16",
-        "name": "_adapterId",
-        "type": "uint16"
-      }
-    ],
-    "name": "removeAdapterAddress",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint16",
-        "name": "adapterId",
-        "type": "uint16"
-      },
-      {
-        "internalType": "address",
-        "name": "remoteDappAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "message",
-        "type": "bytes"
-      }
-    ],
-    "name": "send",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint16",
-        "name": "_adapterId",
-        "type": "uint16"
-      },
-      {
-        "internalType": "address",
-        "name": "_adapterAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setAdapterAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
