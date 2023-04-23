@@ -16,6 +16,9 @@ contract GoerliDapp {
         uint256 value
     ) external payable returns (uint256) {
         bytes memory message = abi.encode(value);
-        IMessageGateway(gatewayAddress).send(pangolinDapp, message);
+        IMessageGateway(gatewayAddress).send{value: msg.value}(
+            pangolinDapp,
+            message
+        );
     }
 }
