@@ -21,5 +21,5 @@ interface IMessageGateway {
     function send(
         address remoteDappAddress,
         bytes memory message
-    ) external payable returns (uint64 nonce);
+    ) external payable returns (uint256 nonce);
 }

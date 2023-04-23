@@ -30,7 +30,7 @@ contract MessageGateway is IMessageGateway {
     function send(
         address remoteDappAddress,
         bytes memory message
-    ) external payable returns (uint64 nonce) {
+    ) external payable returns (uint256) {
         AbstractMessageAdapter adapter = AbstractMessageAdapter(adapterAddress);
 
         uint256 paid = msg.value;
@@ -39,10 +39,14 @@ contract MessageGateway is IMessageGateway {
 
         // refund fee to caller if paid too much.
         if (paid > estimateFee) {
-            // refund fee to caller.
             payable(msg.sender).transfer(paid - estimateFee);
         }
 
-        adapter.send(msg.sender, remoteDappAddress, message);
+        return
+            adapter.send{value: estimateFee}(
+                msg.sender,
+                remoteDappAddress,
+                message
+            );
     }
 }
