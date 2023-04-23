@@ -1,0 +1,36 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "bridgedChainPosition",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "bridgedLanePosition",
+        "type": "uint32"
+      },
+      {
+        "internalType": "address",
+        "name": "sourceAccount",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "payload",
+        "type": "bytes"
+      }
+    ],
+    "name": "cross_chain_filter",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
