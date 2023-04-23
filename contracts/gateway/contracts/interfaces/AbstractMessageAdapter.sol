@@ -5,9 +5,18 @@ pragma solidity ^0.8.0;
 import "./IMessageReceiver.sol";
 
 abstract contract AbstractMessageAdapter {
+    address public immutable remoteAdapterAddress;
+
+    constructor(address _remoteAdapterAddress) {
+        remoteAdapterAddress = _remoteAdapterAddress;
+    }
+
     function estimateFee() external view virtual returns (uint256);
 
-    function remoteExecuteRecvCall(bytes memory recvCallData) internal virtual;
+    function remoteExecute(
+        address remoteAddress,
+        bytes memory callData
+    ) internal virtual;
 
     function send(
         address _localDappAddress,
@@ -22,7 +31,7 @@ abstract contract AbstractMessageAdapter {
             _message
         );
 
-        remoteExecuteRecvCall(recvCall);
+        remoteExecute(remoteAdapterAddress, recvCall);
     }
 
     event FailedMessage(address from, address to, bytes message, string reason);

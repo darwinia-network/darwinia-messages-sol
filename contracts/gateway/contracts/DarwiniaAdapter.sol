@@ -8,26 +8,25 @@ import "./interfaces/ICrossChainFilter.sol";
 import "./interfaces/AbstractMessageAdapter.sol";
 
 contract DarwiniaAdapter is AbstractMessageAdapter, ICrossChainFilter {
-    address public outboundLane;
-    address public feeMarket;
-    address public remoteDarwiniaAdapterAddress;
+    address public immutable outboundLane;
+    address public immutable feeMarket;
 
     constructor(
+        address _remoteAdapterAddress,
         address _outboundLane,
-        address _feeMarket,
-        address _remoteDarwiniaAdapterAddress
-    ) {
+        address _feeMarket
+    ) AbstractMessageAdapter(_remoteAdapterAddress) {
         outboundLane = _outboundLane;
         feeMarket = _feeMarket;
-        remoteDarwiniaAdapterAddress = _remoteDarwiniaAdapterAddress;
     }
 
-    function remoteExecuteRecvCall(
-        bytes memory recvCallData
+    function remoteExecute(
+        address remoteAddress,
+        bytes memory callData
     ) internal override {
         IOutboundLane(outboundLane).send_message{value: msg.value}(
-            remoteDarwiniaAdapterAddress,
-            recvCallData
+            remoteAddress,
+            callData
         );
     }
 
