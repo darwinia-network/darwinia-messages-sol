@@ -40,14 +40,24 @@ load_addresses() {
 }
 
 load_saddr() {
-  jq -r ".[\"$TARGET_CHAIN\"].\"$1\"" "$PWD/bin/addr/$MODE/$NETWORK_NAME.json"
+  jq -r ".[\"$TARGET_CHAIN\"].\"$1\"" "$PWD/bin/addr/$MODE/$SOURCE_CHAIN.json"
 }
 
 load_staddr() {
-  jq -r ".\"$1\"" "$PWD/bin/addr/$MODE/$NETWORK_NAME.json"
+  jq -r ".\"$1\"" "$PWD/bin/addr/$MODE/$SOURCE_CHAIN.json"
 }
 
 load_taddr() {
-  jq -r ".[\"$NETWORK_NAME\"].\"$1\"" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json"
+  jq -r ".[\"$SOURCE_CHAIN\"].\"$1\"" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json"
 }
 
+gen_lane_id() {
+  python3 -c "print(
+    hex(
+      ($1 << 64) +
+      ($2 << 96) +
+      ($3 << 128) +
+      ($4 << 160)
+    )
+  )"
+}

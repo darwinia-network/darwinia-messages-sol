@@ -1,14 +1,12 @@
 {
   "DEPLOYER": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
-  "BridgeProxyAdmin": "0x6425B93531BEc68e9d5A78C2Faea3257026fA384",
-  "pangoro": {
-    "SimpleFeeMarket": "0x04d5408ee390D42755E5a456495566698015a94D",
-    "FeeMarketProxy": "0xdb5E16A6E25ABF29dbe26e701D1DDCad03180E92",
-    "POSALightClient": "0xef8ef3A1705f42e7FC1e06809940ec5942F5bB98",
-    "DarwiniaMessageVerifier": "0xa7E9dC6aBe0EfcdaBB8ED0471De0c56013066c20",
-    "OutboundLane": "0x449337BBe404CaE0bA82f3451661AF7481f37aaC",
-    "InboundLane": "0xBEF08069FD1F43CB48Afd436D73F1a59019B87D7",
-    "ParallelOutboundLane": "0xedD0683d354b2d2c209Ac8c574ef88E85bdBEa70",
-    "ParallelInboundLane": "0x86cD0E947341Ef91ef6a1D0382ECC62e49686b57"
+  "BridgeProxyAdmin": "0x23530fc6BD493707a5048CC11ff144f20e11B3D7",
+  "pangolin": {
+    "SimpleFeeMarket": "0x06E8d10d0Ccca9bD6f983d66A9185fdCBd2F664E",
+    "FeeMarketProxy": "0x6c73B30a48Bb633DC353ed406384F73dcACcA5C3",
+    "POSALightClient": "0x66aB6f080b37Df0a99687A0bBB65A798bC1067C1",
+    "DarwiniaMessageVerifier": "0x7b8B7308A488f17B89C3EDfa7C89a24B1FfEFc25",
+    "SerialOutboundLane": "0x9B5010d562dDF969fbb85bC72222919B699b5F54",
+    "SerialInboundLane": "0x0F6e081B1054c59559Cf162e82503F3f560cA4AF"
   }
 }

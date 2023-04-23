@@ -22,13 +22,24 @@ import "../../spec/ChainMessagePosition.sol";
 import "../../interfaces/ILightClient.sol";
 
 contract EthereumSerialLaneVerifier is SerialLaneStorageVerifier {
-    address public immutable LIGHT_CLIENT;
+    address public LIGHT_CLIENT;
+    bool public changable;
 
     constructor(address lightclient) SerialLaneStorageVerifier(uint32(ChainMessagePosition.ETH), 1, 2) {
         LIGHT_CLIENT = lightclient;
+        changable = true;
     }
 
     function state_root() public view override returns (bytes32) {
         return ILightClient(LIGHT_CLIENT).merkle_root();
+    }
+
+    function unchangable() onlySetter external {
+        changable = false;
+    }
+
+    function changeLightClient(address new_lc) onlySetter external {
+        require(changable == true, "!changable");
+        LIGHT_CLIENT = new_lc;
     }
 }

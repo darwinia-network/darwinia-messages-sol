@@ -271,10 +271,12 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
     }
 
     // Prune relayers which have not enough collateral
-    function prune(address prev, address cur) public {
+    function prune(address prev, address cur) public returns (bool) {
         if (lockedOf[cur] == 0 && balanceOf[cur] < COLLATERAL_PER_ORDER) {
             _delist(prev, cur);
+            return true;
         }
+        return false;
     }
 
     // Move your position in the fee-market orderbook
@@ -316,8 +318,12 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
                 top = cur;
                 break;
             } else {
-                prune(prev, cur);
-                cur = relayers[prev];
+                if (prune(prev, cur)) {
+                    cur = relayers[prev];
+                } else {
+                    prev = cur;
+                    cur = relayers[prev];
+                }
             }
         }
     }

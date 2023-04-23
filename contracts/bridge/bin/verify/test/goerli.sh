@@ -2,9 +2,9 @@
 
 set -e
 
-export NETWORK_NAME=goerli
-export TARGET_CHAIN=pangoro
-export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
+export SOURCE_CHAIN=goerli
+export TARGET_CHAIN=pangolin
+export SETH_CHAIN=goerli
 
 # export DAPP_VERBOSE=1
 
@@ -17,30 +17,24 @@ COLLATERAL_PERORDER=$(load_conf ".FeeMarket.collateral_perorder")
 SLASH_TIME=$(load_conf ".FeeMarket.slash_time")
 RELAY_TIME=$(load_conf ".FeeMarket.relay_time")
 PRICE_RATIO=$(load_conf ".FeeMarket.price_ratio")
+DUTY_RATIO=$(load_conf ".FeeMarket.duty_ratio")
 SimpleFeeMarket=$(load_saddr "SimpleFeeMarket")
-verify SimpleFeeMarket $SimpleFeeMarket $COLLATERAL_PERORDER $SLASH_TIME $RELAY_TIME $PRICE_RATIO
+verify SimpleFeeMarket $SimpleFeeMarket $COLLATERAL_PERORDER $SLASH_TIME $RELAY_TIME $PRICE_RATIO $DUTY_RATIO
 
 FeeMarketProxy=$(load_saddr "FeeMarketProxy")
 data=$(seth calldata "initialize()")
 verify FeeMarketProxy $FeeMarketProxy $SimpleFeeMarket $BridgeProxyAdmin $data
 
-DOMAIN_SEPARATOR=$(load_conf ".DarwiniaLightClient.domain_separator")
+DOMAIN_SEPARATOR=$(load_conf ".LightClient.domain_separator")
+relayers=$(load_conf ".LightClient.relayers")
+threshold=$(load_conf ".LightClient.threshold")
+nonce=$(load_conf ".LightClient.nonce")
 POSALightClient=$(load_saddr "POSALightClient")
-verify POSALightClient $POSALightClient $DOMAIN_SEPARATOR
-
-relayers=$(load_conf ".DarwiniaLightClient.relayers")
-threshold=$(load_conf ".DarwiniaLightClient.threshold")
-nonce=$(load_conf ".DarwiniaLightClient.nonce")
-sig="initialize(address[],uint256,uint256)"
-data=$(seth calldata $sig \
-  $relayers \
-  $threshold \
-  $nonce)
-DarwiniaLightClientProxy=$(load_saddr "DarwiniaLightClientProxy")
-verify DarwiniaLightClientProxy $DarwiniaLightClientProxy $POSALightClient $BridgeProxyAdmin $data
+verify POSALightClient $POSALightClient $DOMAIN_SEPARATOR \
+  $relayers $threshold $nonce
 
 DarwiniaMessageVerifier=$(load_saddr "DarwiniaMessageVerifier")
-verify DarwiniaMessageVerifier $DarwiniaMessageVerifier $DarwiniaLightClientProxy
+verify DarwiniaMessageVerifier $DarwiniaMessageVerifier $POSALightClient
 
 # goerli to pangoro bridge config
 this_chain_pos=$(load_conf ".Chain.this_chain_pos")
@@ -49,18 +43,17 @@ this_out_lane_pos=$(load_conf ".Chain.Lanes[0].lanes[0].this_lane_pos")
 bridged_in_lane_pos=$(load_conf ".Chain.Lanes[0].lanes[0].bridged_lane_pos")
 this_in_lane_pos=$(load_conf ".Chain.Lanes[0].lanes[1].this_lane_pos")
 bridged_out_lane_pos=$(load_conf ".Chain.Lanes[0].lanes[1].bridged_lane_pos")
+outlane_id=$(gen_lane_id "$bridged_in_lane_pos" "$bridged_chain_pos" "$this_out_lane_pos" "$this_chain_pos")
+inlane_id=$(gen_lane_id "$bridged_out_lane_pos" "$bridged_chain_pos" "$this_in_lane_pos" "$this_chain_pos")
+outlane_id=$(seth --to-uint256 $outlane_id)
+inlane_id=$(seth --to-uint256 $inlane_id)
 
-OutboundLane=$(load_saddr "OutboundLane")
-verify OutboundLane $OutboundLane $DarwiniaMessageVerifier \
+SerialOutboundLane=$(load_saddr "SerialOutboundLane")
+verify SerialOutboundLane $SerialOutboundLane $DarwiniaMessageVerifier \
   $FeeMarketProxy \
-  $this_chain_pos \
-  $this_out_lane_pos \
-  $bridged_chain_pos \
-  $bridged_in_lane_pos 1 0 0
+  $outlane_id 1 0 0
 
-InboundLane=$(load_saddr "InboundLane")
-verify InboundLane $InboundLane $DarwiniaMessageVerifier \
-  $this_chain_pos \
-  $this_in_lane_pos \
-  $bridged_chain_pos \
-  $bridged_out_lane_pos 0 0
+max_gas_per_message=$(load_conf ".Chain.Lanes[0].lanes[1].max_gas_per_message")
+SerialInboundLane=$(load_saddr "SerialInboundLane")
+verify SerialInboundLane $SerialInboundLane $DarwiniaMessageVerifier \
+  $inlane_id 0 0 $max_gas_per_message

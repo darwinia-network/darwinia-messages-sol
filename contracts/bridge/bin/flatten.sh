@@ -23,5 +23,4 @@ hevm flatten --source-file src/truth/darwinia/POSALightClient.sol               
 hevm flatten --source-file src/truth/eth/BeaconLightClient.sol                   --json-file out/dapp.sol.json > flat/BeaconLightClient.f.sol
 hevm flatten --source-file src/truth/eth/EthereumSerialLaneVerifier.sol          --json-file out/dapp.sol.json > flat/EthereumSerialLaneVerifier.f.sol
 hevm flatten --source-file src/truth/eth/EthereumParallelLaneStorageVerifier.sol --json-file out/dapp.sol.json > flat/EthereumParallelLaneStorageVerifier.f.sol
-hevm flatten --source-file src/truth/eth/ExecutionLayer.sol                      --json-file out/dapp.sol.json > flat/ExecutionLayer.f.sol
 hevm flatten --source-file src/truth/eth/BeaconLCMandatoryReward.sol             --json-file out/dapp.sol.json > flat/BeaconLCMandatoryReward.f.sol

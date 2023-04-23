@@ -61,7 +61,7 @@ const receive_messages_proof = async (nonce) => {
     const from = (await inbound.inboundLaneNonce()).last_delivered_nonce.toNumber()
     const size = nonce - from
     const tx = await inbound.connect(addr2).receive_messages_proof(data, "0x", data.messages.length, {
-      gasLimit: 10000000
+      gasLimit: 15000000
     })
     for (let i = 0; i<size; i++) {
       await expect(tx)

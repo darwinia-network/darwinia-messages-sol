@@ -26,18 +26,7 @@ contract OutboundLaneVerifier is LaneIdentity {
     /// @dev The contract address of on-chain verifier
     IVerifier public immutable VERIFIER;
 
-    constructor(
-        address _verifier,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) LaneIdentity(
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {
+    constructor(address _verifier, uint256 _laneId) LaneIdentity(_laneId) {
         VERIFIER = IVerifier(_verifier);
     }
 
@@ -72,11 +61,7 @@ contract OutboundLaneVerifier is LaneIdentity {
     // [20..24) bytes ---- BridgedLanePosition
     // [24..32) bytes ---- Nonce, max of nonce is `uint64(-1)`
     function encodeMessageKey(uint64 nonce) public view override returns (uint256) {
-        Slot0 memory _slot0 = slot0;
-        return (uint256(_slot0.this_chain_pos) << 160) +
-                (uint256(_slot0.this_lane_pos) << 128) +
-                (uint256(_slot0.bridged_chain_pos) << 96) +
-                (uint256(_slot0.bridged_lane_pos) << 64) +
-                uint256(nonce);
+        uint256 laneId = getLaneId();
+        return laneId + nonce;
     }
 }

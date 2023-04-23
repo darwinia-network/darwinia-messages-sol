@@ -2,37 +2,24 @@
 
 set -e
 
+unset SOURCE_CHAIN
 unset TARGET_CHAIN
-unset NETWORK_NAME
 unset ETH_RPC_URL
-export NETWORK_NAME=goerli
-export TARGET_CHAIN=pangoro
-export ETH_RPC_URL=https://rpc.ankr.com/eth_goerli
+export SOURCE_CHAIN=goerli
+export TARGET_CHAIN=pangolin
 
 . $(dirname $0)/base.sh
-
-load_saddr() {
-  jq -r ".[\"$TARGET_CHAIN\"].\"$1\"" "$PWD/bin/addr/$MODE/$NETWORK_NAME.json"
-}
-
-load_staddr() {
-  jq -r ".\"$1\"" "$PWD/bin/addr/$MODE/$NETWORK_NAME.json"
-}
-
-load_taddr() {
-  jq -r ".[\"$NETWORK_NAME\"].\"$1\"" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json"
-}
 
 BridgeProxyAdmin=$(load_staddr "BridgeProxyAdmin")
 FeeMarketProxy=$(load_saddr "FeeMarketProxy")
 
 # fee market config
-COLLATERAL_PERORDER=$(seth --to-wei 0.0001 ether)
-SLASH_TIME=10800
-RELAY_TIME=10800
+COLLATERAL_PERORDER=$(load_conf ".FeeMarket.collateral_perorder")
+SLASH_TIME=$(load_conf ".FeeMarket.slash_time")
+RELAY_TIME=$(load_conf ".FeeMarket.relay_time")
 # 300 : 0.01
-PRICE_RATIO=1000
-DUTY_RATIO=30
+PRICE_RATIO=$(load_conf ".FeeMarket.price_ratio")
+DUTY_RATIO=$(load_conf ".FeeMarket.duty_ratio")
 
 SimpleFeeMarket=$(deploy SimpleFeeMarket \
   $COLLATERAL_PERORDER \

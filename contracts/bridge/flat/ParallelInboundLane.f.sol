@@ -108,6 +108,8 @@ abstract contract LaneIdentity {
     Slot0 internal slot0;
 
     struct Slot0 {
+        // nonce place holder
+        uint64 nonce_placeholder;
         // Bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
         uint32 bridged_lane_pos;
         // Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
@@ -118,16 +120,10 @@ abstract contract LaneIdentity {
         uint32 this_chain_pos;
     }
 
-    constructor(
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) {
-        slot0.this_chain_pos = _thisChainPosition;
-        slot0.this_lane_pos = _thisLanePosition;
-        slot0.bridged_chain_pos = _bridgedChainPosition;
-        slot0.bridged_lane_pos = _bridgedLanePosition;
+    constructor(uint256 _laneId) {
+        assembly ("memory-safe") {
+            sstore(slot0.slot, _laneId)
+        }
     }
 
     function getLaneInfo() external view returns (uint32,uint32,uint32,uint32) {
@@ -140,11 +136,10 @@ abstract contract LaneIdentity {
        );
     }
 
-    function getLaneId() external view returns (uint256 id) {
+    function getLaneId() public view returns (uint256 id) {
         assembly ("memory-safe") {
           id := sload(slot0.slot)
         }
-        return id << 64;
     }
 }
 
@@ -176,18 +171,7 @@ contract InboundLaneVerifier is LaneIdentity {
     /// @dev The contract address of on-chain verifier
     IVerifier public immutable VERIFIER;
 
-    constructor(
-        address _verifier,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) LaneIdentity(
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {
+    constructor(address _verifier, uint256 _laneId) LaneIdentity(_laneId) {
         VERIFIER = IVerifier(_verifier);
     }
 
@@ -451,7 +435,7 @@ contract SourceChain {
 ////// src/utils/call/ExcessivelySafeCall.sol
 /* pragma solidity 0.8.17; */
 
-/// code source from: https://github.com/LayerZero-Labs/solidity-examples/blob/main/contracts/util/ExcessivelySafeCall.sol
+// Inspired: https://github.com/LayerZero-Labs/solidity-examples/blob/main/contracts/util/ExcessivelySafeCall.sol
 
 library ExcessivelySafeCall {
     uint256 constant LOW_28_MASK =
@@ -585,7 +569,7 @@ library ExcessivelySafeCall {
 ////// src/utils/imt/IncrementalMerkleTree.sol
 /* pragma solidity 0.8.17; */
 
-/// code source from https://github.com/nomad-xyz/monorepo/blob/main/packages/contracts-core/contracts/libs/Merkle.sol
+// Inspired: https://github.com/nomad-xyz/monorepo/blob/main/packages/contracts-core/contracts/libs/Merkle.sol
 
 /// @title IncrementalMerkleTree
 /// @author Illusory Systems Inc.
@@ -830,32 +814,21 @@ library IncrementalMerkleTree {
 contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
     using ExcessivelySafeCall for address;
 
-    /// @dev message nonce => dispatch result
-    mapping(uint => bool) public dones;
+    /// nonce => is_message_dispathed
+    mapping(uint64 => bool) public dones;
+    /// nonce => failed message
+    mapping(uint64 => bytes32) public fails;
 
     /// @dev Notifies an observer that the message has dispatched
     /// @param nonce The message nonce
-    event MessageDispatched(uint64 nonce);
+    event MessageDispatched(uint64 indexed nonce, bool dispatch_result);
 
-    /// @dev Deploys the InboundLane contract
+    event RetryFailedMessage(uint64 indexed nonce , bool dispatch_result);
+
+    /// @dev Deploys the ParallelInboundLane contract
     /// @param _verifier The contract address of on-chain verifier
-    /// @param _thisChainPosition The thisChainPosition of inbound lane
-    /// @param _thisLanePosition The lanePosition of this inbound lane
-    /// @param _bridgedChainPosition The bridgedChainPosition of inbound lane
-    /// @param _bridgedLanePosition The lanePosition of target outbound lane
-    constructor(
-        address _verifier,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) InboundLaneVerifier(
-        _verifier,
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {}
+    /// @param _laneId The laneId of inbound lane
+    constructor(address _verifier, uint256 _laneId) InboundLaneVerifier(_verifier, _laneId) {}
 
     /// Receive messages proof from bridged chain.
     function receive_message(
@@ -866,6 +839,17 @@ contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
     ) external {
         _verify_messages_proof(outlane_data_hash, lane_proof);
         _receive_message(message, outlane_data_hash, message_proof);
+    }
+
+    /// Retry failed message
+    function retry_failed_message(Message calldata message) external returns (bool dispatch_result) {
+        MessageKey memory key = decodeMessageKey(message.encoded_key);
+        require(fails[key.nonce] == hash(message), "InvalidFailedMessage");
+        dispatch_result = _dispatch(message.payload);
+        if (dispatch_result) {
+            delete fails[key.nonce];
+        }
+        emit RetryFailedMessage(key.nonce, dispatch_result);
     }
 
     function _verify_message(
@@ -903,11 +887,11 @@ contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
         MessagePayload memory message_payload = message.payload;
         // then, dispatch message
         bool dispatch_result = _dispatch(message_payload);
-        // only success dispatched message could pass, dapp could retry revert message
-        require(dispatch_result == true, "DispatchFailed");
-        emit MessageDispatched(key.nonce);
+        if (!dispatch_result) {
+            fails[key.nonce] = hash(message);
+        }
+        emit MessageDispatched(key.nonce, dispatch_result);
     }
-
     /// @dev dispatch the cross chain message
     /// @param payload payload of the dispatch message
     /// @return dispatch_result the dispatch call result

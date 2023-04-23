@@ -108,6 +108,8 @@ abstract contract LaneIdentity {
     Slot0 internal slot0;
 
     struct Slot0 {
+        // nonce place holder
+        uint64 nonce_placeholder;
         // Bridged lane position of the leaf in the `lane_message_merkle_tree`, index starting with 0
         uint32 bridged_lane_pos;
         // Bridged chain position of the leaf in the `chain_message_merkle_tree`, index starting with 0
@@ -118,16 +120,10 @@ abstract contract LaneIdentity {
         uint32 this_chain_pos;
     }
 
-    constructor(
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) {
-        slot0.this_chain_pos = _thisChainPosition;
-        slot0.this_lane_pos = _thisLanePosition;
-        slot0.bridged_chain_pos = _bridgedChainPosition;
-        slot0.bridged_lane_pos = _bridgedLanePosition;
+    constructor(uint256 _laneId) {
+        assembly ("memory-safe") {
+            sstore(slot0.slot, _laneId)
+        }
     }
 
     function getLaneInfo() external view returns (uint32,uint32,uint32,uint32) {
@@ -140,11 +136,10 @@ abstract contract LaneIdentity {
        );
     }
 
-    function getLaneId() external view returns (uint256 id) {
+    function getLaneId() public view returns (uint256 id) {
         assembly ("memory-safe") {
           id := sload(slot0.slot)
         }
-        return id << 64;
     }
 }
 
@@ -176,18 +171,7 @@ contract InboundLaneVerifier is LaneIdentity {
     /// @dev The contract address of on-chain verifier
     IVerifier public immutable VERIFIER;
 
-    constructor(
-        address _verifier,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) LaneIdentity(
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {
+    constructor(address _verifier, uint256 _laneId) LaneIdentity(_laneId) {
         VERIFIER = IVerifier(_verifier);
     }
 
@@ -598,7 +582,7 @@ contract TargetChain {
 ////// src/utils/call/ExcessivelySafeCall.sol
 /* pragma solidity 0.8.17; */
 
-/// code source from: https://github.com/LayerZero-Labs/solidity-examples/blob/main/contracts/util/ExcessivelySafeCall.sol
+// Inspired: https://github.com/LayerZero-Labs/solidity-examples/blob/main/contracts/util/ExcessivelySafeCall.sol
 
 library ExcessivelySafeCall {
     uint256 constant LOW_28_MASK =
@@ -793,9 +777,8 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     uint256 internal locked;
 
     /// @dev Gas used per message needs to be less than `MAX_GAS_PER_MESSAGE` wei
-    uint256 private constant MAX_GAS_PER_MESSAGE = 240000;
-    /// @dev Gas buffer for executing `send_message` tx
-    uint256 private constant GAS_BUFFER = 10000;
+    uint256 public immutable MAX_GAS_PER_MESSAGE;
+
     /// @dev This parameter must lesser than 256
     /// Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
     /// message has been delivered, but either confirmations haven't been delivered back to the
@@ -807,7 +790,9 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// This value also represents maximal number of messages in single delivery transaction.
     /// Transaction that is declaring more messages than this value, will be rejected. Even if
     /// these messages are from different lanes.
-    uint256 private constant MAX_UNCONFIRMED_MESSAGES = 20;
+    uint64 private constant MAX_UNCONFIRMED_MESSAGES = 20;
+    /// @dev Gas buffer for executing `send_message` tx
+    uint256 private constant GAS_BUFFER = 20000;
 
     /// @dev Notifies an observer that the message has dispatched
     /// @param nonce The message nonce
@@ -844,35 +829,26 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         locked = 0;
     }
 
-    /// @dev Deploys the InboundLane contract
+    /// @dev Deploys the SerialInboundLane contract
     /// @param _verifier The contract address of on-chain verifier
-    /// @param _thisChainPosition The thisChainPosition of inbound lane
-    /// @param _thisLanePosition The lanePosition of this inbound lane
-    /// @param _bridgedChainPosition The bridgedChainPosition of inbound lane
-    /// @param _bridgedLanePosition The lanePosition of target outbound lane
+    /// @param _laneId The identify of the inbound lane
     /// @param _last_confirmed_nonce The last_confirmed_nonce of inbound lane
     /// @param _last_delivered_nonce The last_delivered_nonce of inbound lane
+    /// @param _max_gas_per_message The max gas limit per message of inbound lane
     constructor(
         address _verifier,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition,
+        uint256 _laneId,
         uint64 _last_confirmed_nonce,
-        uint64 _last_delivered_nonce
-    ) InboundLaneVerifier(
-        _verifier,
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {
+        uint64 _last_delivered_nonce,
+        uint64 _max_gas_per_message
+    ) InboundLaneVerifier(_verifier, _laneId) {
         inboundLaneNonce = InboundLaneNonce(
             _last_confirmed_nonce,
             _last_delivered_nonce,
             1,
             0
         );
+        MAX_GAS_PER_MESSAGE = _max_gas_per_message;
     }
 
     /// Receive messages proof from bridged chain.
@@ -886,11 +862,6 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         uint delivery_size
     ) external nonReentrant {
         _verify_messages_proof(hash(outboundLaneData), messagesProof);
-        // Require there is enough gas to play all messages
-        require(
-            gasleft() >= outboundLaneData.messages.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
-            "!gas"
-        );
         _receive_state_update(outboundLaneData.latest_received_nonce);
         _receive_message(outboundLaneData.messages, delivery_size);
     }

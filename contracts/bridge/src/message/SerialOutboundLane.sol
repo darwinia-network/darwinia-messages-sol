@@ -48,7 +48,7 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
 
     address public immutable FEE_MARKET;
 
-    uint256 private constant MAX_CALLDATA_LENGTH       = 2048;
+    uint64  private constant MAX_CALLDATA_LENGTH       = 2048;
     uint64  private constant MAX_PENDING_MESSAGES      = 20;
     uint64  private constant MAX_PRUNE_MESSAGES_ATONCE = 5;
 
@@ -67,32 +67,21 @@ contract SerialOutboundLane is IOutboundLane, OutboundLaneVerifier, TargetChain,
         uint64 oldest_unpruned_nonce;
     }
 
-    /// @dev Deploys the OutboundLane contract
+    /// @dev Deploys the SerialOutboundLane contract
     /// @param _verifier The contract address of on-chain verifier
-    /// @param _thisChainPosition The thisChainPosition of outbound lane
-    /// @param _thisLanePosition The lanePosition of this outbound lane
-    /// @param _bridgedChainPosition The bridgedChainPosition of outbound lane
-    /// @param _bridgedLanePosition The lanePosition of target inbound lane
+    /// @param _feeMarket The fee market of the outbound lane
+    /// @param _laneId The identify of the outbound lane
     /// @param _oldest_unpruned_nonce The oldest_unpruned_nonce of outbound lane
     /// @param _latest_received_nonce The latest_received_nonce of outbound lane
     /// @param _latest_generated_nonce The latest_generated_nonce of outbound lane
     constructor(
         address _verifier,
         address _feeMarket,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition,
+        uint256 _laneId,
         uint64 _oldest_unpruned_nonce,
         uint64 _latest_received_nonce,
         uint64 _latest_generated_nonce
-    ) OutboundLaneVerifier(
-        _verifier,
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {
+    ) OutboundLaneVerifier(_verifier, _laneId) {
         outboundLaneNonce = OutboundLaneNonce(
             _latest_received_nonce,
             _latest_generated_nonce,

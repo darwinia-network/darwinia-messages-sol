@@ -27,18 +27,21 @@ SOLC_VERSION := ${SOLC_VERSION-0_8_17}
 solc:; nix profile install -f https://github.com/dapphub/dapptools/archive/master.tar.gz solc-static-versions.solc_${SOLC_VERSION}
 
 # Build & test
-build    :; dapp build
-flat     :; dapp flat
-test     :; dapp test --ffi # enable if you need the `ffi` cheat code on HEVM
-clean    :; dapp clean
-lint     :; yarn run lint
-doc      :; yarn run docs
-cov      :; @./bin/coverage.sh
-audit    :; @./bin/audit.sh
-flatten  :; @./bin/flatten.sh
-estimate :; @./bin/estimate-gas.sh ${contract}
-size     :; @./bin/contract-size.sh ${contract}
-gen-smt  :; export DAPP_SMTCHECKER=1 && dapp mk-standard-json | jq '.settings.modelChecker += {"contracts": {"src/test/utils/Math.p.sol": ["MathPropertyTest"]}, "invariants": ["contract"]}' &> smt.json
+build       :; dapp build
+forge-build :; forge build
+test        :; dapp test --ffi # enable if you need the `ffi` cheat code on HEVM
+forge-test  :; forge test --ffi
+flat        :; dapp flat
+clean       :; dapp clean
+lint        :; yarn run lint
+doc         :; yarn run docs
+cov         :; @./bin/coverage.sh
+audit       :; @./bin/audit.sh
+flatten     :; @./bin/flatten.sh
+estimate    :; @./bin/estimate-gas.sh ${contract}
+size        :; @./bin/contract-size.sh ${contract}
+e2e-test    :; @./bin/test.sh
+gen-smt     :; export DAPP_SMTCHECKER=1 && dapp mk-standard-json | jq '.settings.modelChecker += {"contracts": {"src/test/utils/Math.p.sol": ["MathPropertyTest"]}, "invariants": ["contract"]}' &> smt.json
 
 # Deployment helpers
 deploy      :; @./bin/deploy.sh $(mode)

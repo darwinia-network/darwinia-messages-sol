@@ -10,11 +10,11 @@ verify() {
   ARGS=${@:3}
 
 	# find file path
-	CONTRACT_PATH=$(find ./$SRC_DIT -name $NAME.f.sol)
+	CONTRACT_PATH=$(find ./$SRC_DIR -name $NAME.f.sol)
 	CONTRACT_PATH=${CONTRACT_PATH:2}
 	CONTRACT_PATH=$CONTRACT_PATH:$NAME
 
-  cmd="dapp --use solc:$DAPP_SOLC_VERSION verify-contract"
+  cmd="dapp verify-contract"
 
   (set -x; $cmd $CONTRACT_PATH $ADDR $ARGS)
 }

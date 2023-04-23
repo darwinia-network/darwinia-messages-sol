@@ -45,6 +45,8 @@ interface IFeeMarket {
 }
 
 ////// src/proxy/transparent/Address.sol
+//
+// OpenZeppelin Contracts (v3.4.2-solc-0.7) (utils/Address.sol)
 
 /* pragma solidity 0.8.17; */
 
@@ -290,7 +292,7 @@ library Address {
 
 ////// src/proxy/Initializable.sol
 //
-// OpenZeppelin Contracts (last updated v4.7.0) (proxy/utils/Initializable.sol)
+// OpenZeppelin Contracts (v4.7.0) (proxy/utils/Initializable.sol)
 
 /* pragma solidity 0.8.17; */
 
@@ -713,10 +715,12 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
     }
 
     // Prune relayers which have not enough collateral
-    function prune(address prev, address cur) public {
+    function prune(address prev, address cur) public returns (bool) {
         if (lockedOf[cur] == 0 && balanceOf[cur] < COLLATERAL_PER_ORDER) {
             _delist(prev, cur);
+            return true;
         }
+        return false;
     }
 
     // Move your position in the fee-market orderbook
@@ -758,8 +762,12 @@ contract SimpleFeeMarket is Initializable, IFeeMarket {
                 top = cur;
                 break;
             } else {
-                prune(prev, cur);
-                cur = relayers[prev];
+                if (prune(prev, cur)) {
+                    cur = relayers[prev];
+                } else {
+                    prev = cur;
+                    cur = relayers[prev];
+                }
             }
         }
     }

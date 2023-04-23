@@ -5,13 +5,11 @@ set -eo pipefail
 # All contracts are output to `bin/addr/{chain}/addresses.json` by default
 mode=${MODE?}
 root_dir=$(realpath .)
-network_name=${NETWORK_NAME?}
+network_name=${SOURCE_CHAIN?}
 ADDRESSES_FILE="${root_dir}/bin/addr/${mode}/${network_name}.json"
 CONFIG_FILE="${root_dir}/bin/conf/${mode}/${network_name}.json"
 OUT_DIR=$root_dir/out
-SRC_DIT=${DAPP_SRC-flat}
-
-ETH_RPC_URL=${ETH_RPC_URL:-http://localhost:8545}
+SRC_DIR=${DAPP_SRC-flat}
 
 # ensure ETH_FROM is set and give a meaningful error message
 if [[ -z ${ETH_FROM} ]]; then

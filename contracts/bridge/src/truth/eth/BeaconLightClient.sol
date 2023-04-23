@@ -113,8 +113,8 @@ contract BeaconLightClient is ILightClient, BeaconLightClientUpdate, Bitfield {
     bytes4 constant private DOMAIN_SYNC_COMMITTEE            = 0x07000000;
 
     event FinalizedHeaderImported(BeaconBlockHeader finalized_header);
+    event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed sync_committee_root);
     event FinalizedExecutionPayloadHeaderImported(uint256 block_number, bytes32 state_root);
-    event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed next_sync_committee_root);
 
     constructor(
         address _bls,
@@ -164,7 +164,9 @@ contract BeaconLightClient is ILightClient, BeaconLightClientUpdate, Bitfield {
         uint64 attested_period = compute_sync_committee_period(header_update.attested_header.beacon.slot);
         uint64 finalized_period = compute_sync_committee_period(header_update.finalized_header.beacon.slot);
         uint64 signature_period = compute_sync_committee_period(header_update.signature_slot);
-        require(signature_period == finalized_period && signature_period == attested_period, "!period");
+        require(signature_period == finalized_period &&
+                finalized_period == attested_period,
+                "!period");
 
         bytes32 singature_sync_committee_root = sync_committee_roots[signature_period];
         require(singature_sync_committee_root != bytes32(0), "!missing");

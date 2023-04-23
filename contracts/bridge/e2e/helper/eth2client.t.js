@@ -16,14 +16,15 @@ const log = console.log;
 
   const finality_update = await eth2Client.get_finality_update()
   log(finality_update)
-  const block = await eth2Client.get_beacon_block(finality_update.finalized_header.slot)
-  // log(block)
-  const period = ~~(Number(finality_update.attested_header.slot) / 32 / 256)
+  const block = await eth2Client.get_beacon_block(finality_update.finalized_header.beacon.slot)
+  log(block)
+  const period = ~~(Number(finality_update.attested_header.beacon.slot) / 32 / 256)
   log('period:', period)
   const sync_period = await eth2Client.get_sync_committee_period_update(period, 1)
   const sync = sync_period[0]
   log(JSON.stringify(sync, null, 2))
   let finalized_header = await eth2Client.get_header(sync.finalized_header.slot)
+  log(finalized_header)
   const bootstrap = await eth2Client.get_bootstrap(finalized_header.root)
   log(JSON.stringify(bootstrap, null, 2))
 

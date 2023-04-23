@@ -2,20 +2,12 @@
 
 set -e
 
-# 0
-# export ETH_GAS_PRICE=10000000000
-# . $(dirname $0)/deploy/test/pangoro.sh
-# export ETH_GAS_PRICE=2000000000
-# . $(dirname $0)/deploy/test/goerli.sh
-# export ETH_GAS_PRICE=10000000000
-# . $(dirname $0)/deploy/test/bsctest.sh
+Chain0=pangolin
+Chain1=goerli
 
-# 10
-export ETH_GAS_PRICE=10000000000
-. $(dirname $0)/deploy/test/pangoro-10.sh
-export ETH_GAS_PRICE=2000000000
-. $(dirname $0)/deploy/test/goerli-10.sh
-export ETH_GAS_PRICE=10000000000
-. $(dirname $0)/deploy/test/pangoro-11.sh
-export ETH_GAS_PRICE=2000000000
-. $(dirname $0)/deploy/test/goerli-11.sh
+# 0
+(from=$Chain0 to=$Chain1 \
+. $(dirname $0)/deploy/darwinia.sh)
+
+(from=$Chain1 to=$Chain0
+. $(dirname $0)/deploy/ethereum.sh)

@@ -119,16 +119,16 @@ describe("verify message relay tests", () => {
     const LaneMessageCommitter = await ethers.getContractFactory("LaneMessageCommitter")
 
     targetLightClient = await MockBSCLightClient.deploy(LANE_COMMITMENT_POSITION)
-    sourceOutbound = await OutboundLane.deploy(targetLightClient.address, feeMarket.address, sourceChainPos, sourceOutLanePos, targetChainPos, targetInLanePos, 1, 0, 0)
-    sourceInbound = await InboundLane.deploy(targetLightClient.address, sourceChainPos, sourceInLanePos, targetChainPos, targetOutLanePos, 0, 0)
+    sourceOutbound = await OutboundLane.deploy(targetLightClient.address, feeMarket.address, "0x0000000000000000000000000000000000000001000000010000000000000000", 1, 0, 0)
+    sourceInbound = await InboundLane.deploy(targetLightClient.address, "0x0000000000000000000000000000000100000001000000000000000000000000", 0, 0, 600000)
     darwiniaLaneCommitter0 = await LaneMessageCommitter.deploy(sourceChainPos, targetChainPos)
     await darwiniaLaneCommitter0.registry(sourceOutbound.address, sourceInbound.address)
     darwiniaChainCommitter = await ChainMessageCommitter.deploy()
     await darwiniaChainCommitter.registry(darwiniaLaneCommitter0.address)
 
     sourceLightClient = await MockDarwiniaLightClient.deploy()
-    targetOutbound = await OutboundLane.deploy(sourceLightClient.address, feeMarket.address, targetChainPos, targetOutLanePos, sourceChainPos, sourceInLanePos, 1, 0, 0)
-    targetInbound = await InboundLane.deploy(sourceLightClient.address, targetChainPos, targetInLanePos, sourceChainPos, sourceOutLanePos, 0, 0)
+    targetOutbound = await OutboundLane.deploy(sourceLightClient.address, feeMarket.address, "0x0000000000000000000000010000000000000000000000010000000000000000", 1, 0, 0)
+    targetInbound = await InboundLane.deploy(sourceLightClient.address, "0x0000000000000000000000010000000100000000000000000000000000000000", 0, 0, 200000)
 
     await targetLightClient.setBound(targetOutbound.getLaneId(), targetOutbound.address, targetInbound.getLaneId(), targetInbound.address)
 

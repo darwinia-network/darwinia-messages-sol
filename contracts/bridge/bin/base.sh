@@ -8,14 +8,14 @@ set -eo pipefail
 . $(dirname $0)/vrf.sh
 . $(dirname $0)/eta-gas.sh
 
-# Call as `ETH_FROM=0x... ETH_RPC_URL=<url> deploy ContractName arg1 arg2 arg3`
+# Call as `ETH_FROM=0x... SOURCE_CHAIN=<chain> deploy ContractName arg1 arg2 arg3`
 # (or omit the env vars if you have already set them)
 deploy() {
   NAME=$1
   ARGS=${@:2}
 
 	# find file path
-	CONTRACT_PATH=$(find ./$SRC_DIT -name $NAME.f.sol)
+	CONTRACT_PATH=$(find ./$SRC_DIR -name $NAME.f.sol)
 	CONTRACT_PATH=${CONTRACT_PATH:2}
 
   # select the filename and the contract in it
@@ -29,10 +29,10 @@ deploy() {
   BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
 
   # estimate gas
-  GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
+  GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --chain "$SOURCE_CHAIN" --from "$ETH_FROM")
 
   # deploy
-  ADDRESS=$(dapp create "$NAME" $ARGS -- --gas "$GAS" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM")
+  ADDRESS=$(dapp create "$NAME" $ARGS -- --gas "$GAS" --chain "$SOURCE_CHAIN" --from "$ETH_FROM")
 
   # save the addrs to the json
   # TODO: It'd be nice if we could evolve this into a minimal versioning system
@@ -48,8 +48,8 @@ upgrade() {
   local admin; admin=$1
   local newImp; newImp=$2
   local proxy; proxy=$3
-  seth send "$admin" "upgrade(address,address)" "$proxy" "$newImp" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM"
-  if test $(seth call "$admin" "getProxyImplementation(address)(address)" "$proxy" --rpc-url "$ETH_RPC_URL" --from "$ETH_FROM") != "$newImp"; then
+  seth send "$admin" "upgrade(address,address)" "$proxy" "$newImp" --chain "$SOURCE_CHAIN" --from "$ETH_FROM"
+  if test $(seth call "$admin" "getProxyImplementation(address)(address)" "$proxy" --chain "$SOURCE_CHAIN" --from "$ETH_FROM") != "$newImp"; then
     (log "check migration failed."; exit 1;)
   fi
   log "migration finished."
@@ -60,7 +60,7 @@ deploy_v2() {
   ARGS=${@:2}
 
   # find file path
-  CONTRACT_PATH=$(find ./$SRC_DIT -name $NAME.f.sol)
+  CONTRACT_PATH=$(find ./$SRC_DIR -name $NAME.f.sol)
   CONTRACT_PATH=${CONTRACT_PATH:2}
 
   # select the filename and the contract in it
@@ -77,10 +77,10 @@ deploy_v2() {
   BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
 
   # estimate gas
-  GAS=$(seth estimate --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" --rpc-url "$ETH_RPC_URL")
+  GAS=$(seth estimate --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" --chain "$SOURCE_CHAIN")
 
   # deploy
-  ADDRESS=$(set -x; seth send --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" -- --gas "$GAS" --rpc-url "$ETH_RPC_URL")
+  ADDRESS=$(set -x; seth send --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" -- --gas "$GAS" --chain "$SOURCE_CHAIN")
 
   # save the addrs to the json
   # TODO: It'd be nice if we could evolve this into a minimal versioning system
@@ -105,4 +105,15 @@ save_contract() {
       result=$(cat "$ADDRESSES_FILE" | jq -r ".\"$TARGET_CHAIN\" += {\"$1\": \"$2\" }")
   fi
 	printf %s "$result" >"$ADDRESSES_FILE"
+}
+
+gen_lane_id() {
+  python3 -c "print(
+    hex(
+      ($1 << 64) +
+      ($2 << 96) +
+      ($3 << 128) +
+      ($4 << 160)
+    )
+  )"
 }
