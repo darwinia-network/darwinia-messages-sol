@@ -19,6 +19,7 @@ pragma solidity ^0.8.0;
 
 interface IMessageGateway {
     function send(
+        uint16 adapterId,
         address remoteDappAddress,
         bytes memory message
     ) external payable returns (uint256 nonce);

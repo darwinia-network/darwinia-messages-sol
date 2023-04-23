@@ -11,9 +11,13 @@ contract GoerliDapp {
         gatewayAddress = _gatewayAddress;
     }
 
-    function remoteAdd(address pangolinDapp) external payable {
+    function remoteAdd(
+        uint16 adapterId,
+        address pangolinDapp
+    ) external payable {
         bytes memory message = abi.encode(uint256(2));
         IMessageGateway(gatewayAddress).send{value: msg.value}(
+            adapterId,
             pangolinDapp,
             message
         );

@@ -6,31 +6,28 @@ import "./interfaces/IFeeMarket.sol";
 import "./interfaces/IMessageGateway.sol";
 import "./interfaces/IMessageReceiver.sol";
 import "./interfaces/AbstractMessageAdapter.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-contract MessageGateway is IMessageGateway {
-    address creator;
-    // TODO: mapping to support multiple adapters.
-    address public adapterAddress;
+contract MessageGateway is IMessageGateway, Ownable2Step {
+    mapping(uint16 => address) public adapterAddresses;
 
-    constructor() {
-        creator = msg.sender;
+    function setAdapterAddress(
+        uint16 _adapterId,
+        address _adapterAddress
+    ) external onlyOwner {
+        adapterAddresses[_adapterId] = _adapterAddress;
     }
 
-    // TODO: more pratical permission control.
-    modifier onlyCreator() {
-        require(msg.sender == creator);
-        _;
-    }
-
-    function setAdapterAddress(address _adapterAddress) external onlyCreator {
-        adapterAddress = _adapterAddress;
+    function removeAdapterAddress(uint16 _adapterId) external onlyOwner {
+        delete adapterAddresses[_adapterId];
     }
 
     function send(
+        uint16 adapterId,
         address remoteDappAddress,
         bytes memory message
     ) external payable returns (uint256) {
+        address adapterAddress = adapterAddresses[adapterId];
         AbstractMessageAdapter adapter = AbstractMessageAdapter(adapterAddress);
 
         uint256 paid = msg.value;

@@ -27,6 +27,9 @@ abstract contract AbstractMessageAdapter {
             _message
         );
 
+        // check remote adapter address is set.
+        require(remoteAdapterAddress != address(0), "!remote adapter");
+
         return remoteExecute(remoteAdapterAddress, recvCall);
     }
 

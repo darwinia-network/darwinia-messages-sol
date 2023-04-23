@@ -6,26 +6,24 @@ import "./interfaces/IOutboundLane.sol";
 import "./interfaces/IFeeMarket.sol";
 import "./interfaces/ICrossChainFilter.sol";
 import "./interfaces/AbstractMessageAdapter.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-contract DarwiniaAdapter is AbstractMessageAdapter, ICrossChainFilter {
-    address creator;
+contract DarwiniaAdapter is
+    AbstractMessageAdapter,
+    ICrossChainFilter,
+    Ownable2Step
+{
     address public immutable outboundLane;
     address public immutable feeMarket;
 
     constructor(address _outboundLane, address _feeMarket) {
-        creator = msg.sender;
         outboundLane = _outboundLane;
         feeMarket = _feeMarket;
     }
 
-    modifier onlyCreator() {
-        require(msg.sender == creator);
-        _;
-    }
-
     function setRemoteAdapterAddress(
         address _remoteAdapterAddress
-    ) external onlyCreator {
+    ) external onlyOwner {
         remoteAdapterAddress = _remoteAdapterAddress;
     }
 
@@ -43,13 +41,16 @@ contract DarwiniaAdapter is AbstractMessageAdapter, ICrossChainFilter {
         return IFeeMarket(feeMarket).market_fee();
     }
 
-    // TODO: implement this function
     function cross_chain_filter(
         uint32 bridgedChainPosition,
         uint32 bridgedLanePosition,
         address sourceAccount,
         bytes calldata payload
     ) external view returns (bool) {
-        return true;
+        // check remote adapter address is set.
+        // this check is not necessary, but it can provide an more understandable err.
+        require(remoteAdapterAddress != address(0), "!remote adapter");
+
+        return sourceAccount == remoteAdapterAddress;
     }
 }

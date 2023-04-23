@@ -2,6 +2,11 @@
   {
     "inputs": [
       {
+        "internalType": "uint16",
+        "name": "adapterId",
+        "type": "uint16"
+      },
+      {
         "internalType": "address",
         "name": "remoteDappAddress",
         "type": "address"
