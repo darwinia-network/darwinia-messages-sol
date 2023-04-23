@@ -10,9 +10,9 @@ export SOURCE_CHAIN=${from:?"!from"}
 echo "ETH_FROM: ${ETH_FROM}"
 
 # import the deployment helpers
-. $(dirname $0)/common.sh
+. $(dirname $0)/base.sh
 
-BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
+BridgeProxyAdmin=$(load_staddr "BridgeProxyAdmin")
 
 ChainMessageCommitter=$(deploy ChainMessageCommitter)
 

@@ -11,3 +11,6 @@ Chain1=ethereum
 
 (from=$Chain1 to=$Chain0
 . $(dirname $0)/deploy/ethereum.sh)
+
+# auth
+(. $(dirname $0)/deploy/prod/auth.sh)

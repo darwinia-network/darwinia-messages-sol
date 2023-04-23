@@ -10,9 +10,9 @@ export SOURCE_CHAIN=${from:?"!from"}
 echo "ETH_FROM: ${ETH_FROM}"
 
 # import the deployment helpers
-. $(dirname $0)/common.sh
+. $(dirname $0)/base.sh
 
-BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
+BridgeProxyAdmin=$(load_staddr "BridgeProxyAdmin")
 
 export TARGET_CHAIN=${to:?"!to"}
 
@@ -99,7 +99,6 @@ SerialInboundLane=$(deploy SerialInboundLane \
 
 seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN
 
-EthereumSerialLaneVerifier=$(jq -r ".[\"$SOURCE_CHAIN\"].EthereumSerialLaneVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
-
+EthereumSerialLaneVerifier=$(load_taddr "EthereumSerialLaneVerifier")
 seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
   $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane --chain $TARGET_CHAIN
