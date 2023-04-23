@@ -11,3 +11,10 @@ Chain1=goerli
 
 (from=$Chain1 to=$Chain0
 . $(dirname $0)/deploy/ethereum.sh)
+
+#1
+(from=$Chain0 to=$Chain1 \
+. $(dirname $0)/deploy/darwinia-1.sh)
+
+(from=$Chain1 to=$Chain0
+. $(dirname $0)/deploy/ethereum-1.sh)
