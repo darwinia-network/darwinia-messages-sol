@@ -8,16 +8,25 @@ import "./interfaces/ICrossChainFilter.sol";
 import "./interfaces/AbstractMessageAdapter.sol";
 
 contract DarwiniaAdapter is AbstractMessageAdapter, ICrossChainFilter {
+    address creator;
     address public immutable outboundLane;
     address public immutable feeMarket;
 
-    constructor(
-        address _remoteAdapterAddress,
-        address _outboundLane,
-        address _feeMarket
-    ) AbstractMessageAdapter(_remoteAdapterAddress) {
+    constructor(address _outboundLane, address _feeMarket) {
+        creator = msg.sender;
         outboundLane = _outboundLane;
         feeMarket = _feeMarket;
+    }
+
+    modifier onlyCreator() {
+        require(msg.sender == creator);
+        _;
+    }
+
+    function setRemoteAdapterAddress(
+        address _remoteAdapterAddress
+    ) external onlyCreator {
+        remoteAdapterAddress = _remoteAdapterAddress;
     }
 
     function remoteExecute(
