@@ -3,11 +3,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_remoteAdapterAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
         "name": "_outboundLane",
         "type": "address"
       },
@@ -181,6 +176,19 @@
     "name": "send",
     "outputs": [],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_remoteAdapterAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setRemoteAdapterAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]

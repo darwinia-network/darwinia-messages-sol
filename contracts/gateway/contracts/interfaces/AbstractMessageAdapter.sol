@@ -5,11 +5,7 @@ pragma solidity ^0.8.0;
 import "./IMessageReceiver.sol";
 
 abstract contract AbstractMessageAdapter {
-    address public immutable remoteAdapterAddress;
-
-    constructor(address _remoteAdapterAddress) {
-        remoteAdapterAddress = _remoteAdapterAddress;
-    }
+    address public remoteAdapterAddress;
 
     function estimateFee() external view virtual returns (uint256);
 
