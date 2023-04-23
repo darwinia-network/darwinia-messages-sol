@@ -32,7 +32,7 @@ contract DarwiniaAdapter is AbstractMessageAdapter, ICrossChainFilter {
     function remoteExecute(
         address remoteAddress,
         bytes memory callData
-    ) internal override {
+    ) internal override returns (uint256) {
         IOutboundLane(outboundLane).send_message{value: msg.value}(
             remoteAddress,
             callData
@@ -43,6 +43,7 @@ contract DarwiniaAdapter is AbstractMessageAdapter, ICrossChainFilter {
         return IFeeMarket(feeMarket).market_fee();
     }
 
+    // TODO: implement this function
     function cross_chain_filter(
         uint32 bridgedChainPosition,
         uint32 bridgedLanePosition,

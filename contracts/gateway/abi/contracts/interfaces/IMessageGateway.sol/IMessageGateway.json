@@ -15,9 +15,9 @@
     "name": "send",
     "outputs": [
       {
-        "internalType": "uint64",
+        "internalType": "uint256",
         "name": "nonce",
-        "type": "uint64"
+        "type": "uint256"
       }
     ],
     "stateMutability": "payable",

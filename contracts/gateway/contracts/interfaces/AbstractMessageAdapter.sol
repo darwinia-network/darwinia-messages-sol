@@ -12,13 +12,13 @@ abstract contract AbstractMessageAdapter {
     function remoteExecute(
         address remoteAddress,
         bytes memory callData
-    ) internal virtual;
+    ) internal virtual returns (uint256);
 
     function send(
         address _localDappAddress,
         address _remoteDappAddress,
         bytes calldata _message
-    ) external payable {
+    ) external payable returns (uint256) {
         // remote call `recv(from,to,message)`
         bytes memory recvCall = abi.encodeWithSignature(
             "recv(address,address,bytes)",
@@ -27,7 +27,7 @@ abstract contract AbstractMessageAdapter {
             _message
         );
 
-        remoteExecute(remoteAdapterAddress, recvCall);
+        return remoteExecute(remoteAdapterAddress, recvCall);
     }
 
     event FailedMessage(address from, address to, bytes message, string reason);
