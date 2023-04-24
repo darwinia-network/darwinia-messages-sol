@@ -7,6 +7,10 @@ import "./IMessageReceiver.sol";
 abstract contract AbstractMessageAdapter {
     address public remoteAdapterAddress;
 
+    function setRemoteAdapterAddress(
+        address _remoteAdapterAddress
+    ) external virtual;
+
     function estimateFee() external view virtual returns (uint256);
 
     function remoteExecute(
