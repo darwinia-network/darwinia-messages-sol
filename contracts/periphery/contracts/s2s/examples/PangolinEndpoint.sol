@@ -29,21 +29,6 @@ contract PangolinEndpoint is MessageEndpoint(0, 0x726f6c69, 0x726f6c69) {
         _setRemoteEndpoint(_remoteChainId, _remoteEndpoint);
     }
 
-    function remoteExecute(
-        uint32 pangoroSpecVersion,
-        address callReceiver,
-        bytes calldata callPayload,
-        uint256 gasLimit
-    ) external payable override returns (uint256) {
-        return
-            _remoteExecute(
-                pangoroSpecVersion,
-                callReceiver,
-                callPayload,
-                gasLimit
-            );
-    }
-
     function setRemoteMessageTransactCallIndex(
         bytes2 _remoteMessageTransactCallIndex
     ) external {

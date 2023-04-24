@@ -29,21 +29,6 @@ contract CrabEndpoint is MessageEndpoint(0, 0x64616362, 0x64616362) {
         _setRemoteEndpoint(_remoteChainId, _remoteEndpoint);
     }
 
-    function remoteExecute(
-        uint32 pangoroSpecVersion,
-        address callReceiver,
-        bytes calldata callPayload,
-        uint256 gasLimit
-    ) external payable override returns (uint256) {
-        return
-            _remoteExecute(
-                pangoroSpecVersion,
-                callReceiver,
-                callPayload,
-                gasLimit
-            );
-    }
-
     function setRemoteMessageTransactCallIndex(
         bytes2 _remoteMessageTransactCallIndex
     ) external {

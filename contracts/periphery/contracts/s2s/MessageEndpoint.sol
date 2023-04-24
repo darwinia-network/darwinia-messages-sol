@@ -48,12 +48,20 @@ abstract contract MessageEndpoint {
     ///////////////////////////////
     // Outbound
     ///////////////////////////////
+    /// Remote call the `execute` function of the target chain.
+    ///
+    /// @param specVersion The spec version of the target chain.
+    /// @param callReceiver The receiver of the call.
+    /// @param callPayload The payload of the call.
+    /// @param gasLimit It is for `execute(callReceiver, callPayload)` call.
     function remoteExecute(
-        uint32 pangolinSpecVersion,
+        uint32 specVersion,
         address callReceiver,
         bytes calldata callPayload,
         uint256 gasLimit
-    ) external payable virtual returns (uint256);
+    ) external payable returns (uint256) {
+        return _remoteExecute(specVersion, callReceiver, callPayload, gasLimit);
+    }
 
     function fee() public view returns (uint128) {
         return MessageLib.marketFee(STORAGE_ADDRESS, storageKeyForMarketFee);
