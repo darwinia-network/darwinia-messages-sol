@@ -15,6 +15,9 @@ contract MessageGateway is IMessageGateway, Ownable2Step {
         uint16 _adapterId,
         address _adapterAddress
     ) external onlyOwner {
+        // check adapter id is not used.
+        require(adapterAddresses[_adapterId] == address(0), "!adapterId");
+
         adapterAddresses[_adapterId] = _adapterAddress;
     }
 
