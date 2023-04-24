@@ -9,7 +9,7 @@ async function main() {
   const pangolinGateway = await MessageGateway.attach(pangolinGatewayAddress);
 
   const tx = await pangolinGateway.setAdapterAddress(
-    0,
+    3, // IMPORTANT!!! This needs to be +1 if the adapter is changed.
     s2sPangolinAdapterAddress
   );
   console.log(`tx: ${(await tx.wait()).transactionHash}`);

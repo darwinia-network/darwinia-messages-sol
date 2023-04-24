@@ -3,12 +3,12 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/AbstractMessageAdapter.sol";
-import "@darwinia/contracts-periphery/contracts/s2s/MessageEndpoint.sol";
+import "@darwinia/contracts-periphery/contracts/s2s/interfaces/IMessageEndpoint.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 contract DarwiniaS2sAdapter is AbstractMessageAdapter, Ownable2Step {
     address public immutable endpointAddress;
-    uint32 public specVersion;
+    uint32 public specVersion = 6021;
     uint256 public gasLimit = 3_000_000;
 
     constructor(address _endpointAddress) {
@@ -37,7 +37,7 @@ contract DarwiniaS2sAdapter is AbstractMessageAdapter, Ownable2Step {
         require(specVersion != 0, "!specVersion");
 
         return
-            MessageEndpoint(endpointAddress).remoteExecute{value: msg.value}(
+            IMessageEndpoint(endpointAddress).remoteExecute{value: msg.value}(
                 specVersion,
                 remoteAddress,
                 callData,
@@ -46,6 +46,6 @@ contract DarwiniaS2sAdapter is AbstractMessageAdapter, Ownable2Step {
     }
 
     function estimateFee() external view override returns (uint256) {
-        return MessageEndpoint(endpointAddress).fee();
+        return IMessageEndpoint(endpointAddress).fee();
     }
 }

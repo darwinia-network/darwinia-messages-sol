@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
-// s2sPangolinAdapter: 0xEE174FD525A1540d1cCf3fDadfeD172764b4913F
-// s2sPangoroAdapter: 0x6F9f7DCAc28F3382a17c11b53Bb11F20479754b1
+// s2sPangolinAdapter: 0x719596B4e6F0865a2919647A1731a1435dFcda5f
+// s2sPangoroAdapter: 0x046163b94B4c43D030f4661635A5abF5f3130261
 async function main() {
   // PANGOLIN Adapter
   hre.changeNetwork("pangolin");
@@ -9,7 +9,7 @@ async function main() {
     "DarwiniaS2sAdapter"
   );
   const s2sPangolinAdapter = await S2sPangolinAdapter.deploy(
-    "0x347d0Cd647A2b4B70000072295A6e35C54B6CCf0"
+    "0xE8C0d3dF83a07892F912a71927F4740B8e0e04ab"
   );
   await s2sPangolinAdapter.deployed();
   console.log(`s2sPangolinAdapter: ${s2sPangolinAdapter.address}`);
@@ -20,7 +20,7 @@ async function main() {
     "DarwiniaS2sAdapter"
   );
   const s2sPangoroAdapter = await S2sPangoroAdapter.deploy(
-    "0x8EFBE3B3F40ca4f7cDb2B6D07E8D055DEb956ea2"
+    "0x23E31167E3D46D64327fdd6e783FE5391427B728"
   );
   await s2sPangoroAdapter.deployed();
   console.log(`s2sPangoroAdapter: ${s2sPangoroAdapter.address}`);
