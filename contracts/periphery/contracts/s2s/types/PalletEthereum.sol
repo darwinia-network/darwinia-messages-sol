@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0;
+pragma solidity ^0.8.0;
 
 import "@darwinia/contracts-utils/contracts/Bytes.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
@@ -120,7 +120,7 @@ library PalletEthereum {
             _gasPrice,
             _gasLimit,
             PalletEthereum.EnumItemTransactionActionWithAddress(
-                0, // enum index
+                0,
                 _to
             ),
             _value,

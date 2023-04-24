@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0;
+pragma solidity ^0.8.0;
 
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "./CommonTypes.sol";
 
 library PalletBridgeMessages {
     struct SendMessageCall {
-        bytes2 callIndex;
-        bytes4 lineId;
+        bytes2 callIndex; // pallet index and call func index
+        bytes4 laneId;
         bytes message;
         uint128 deliveryAndDispatchFee;
     }
@@ -21,7 +21,7 @@ library PalletBridgeMessages {
         return
             abi.encodePacked(
                 _call.callIndex,
-                _call.lineId,
+                _call.laneId,
                 _call.message,
                 ScaleCodec.encode128(_call.deliveryAndDispatchFee)
             );

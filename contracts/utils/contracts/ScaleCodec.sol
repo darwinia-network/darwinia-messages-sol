@@ -4,7 +4,7 @@ pragma solidity >=0.6.0;
 import { Bytes } from "./Bytes.sol";
 
 library ScaleCodec {
-    // Decodes a SCALE encoded uint256 by converting bytes (bid endian) to little endian format
+    // Decodes a SCALE encoded uint256 by converting bytes (big endian) to little endian format
     function decodeUint256(bytes memory data) internal pure returns (uint256) {
         uint256 number;
         for (uint256 i = data.length; i > 0; i--) {
@@ -13,16 +13,27 @@ library ScaleCodec {
         return number;
     }
 
+    function decodeUint128(bytes memory data) internal pure returns (uint128) {
+        require(data.length >= 16, "Bad data");
+        bytes memory reversed = Bytes.reverse(data);
+        return uint128(Bytes.toBytes16(reversed, 0));
+    }
+
+    function decodeUint64(bytes memory data) internal pure returns (uint64) {
+        require(data.length >= 8, "Bad data");
+        bytes memory reversed = Bytes.reverse(data);
+        return uint64(Bytes.toBytes8(reversed, 0));
+    }
+
     // Decodes a SCALE encoded compact unsigned integer
     function decodeUintCompact(bytes memory data)
         internal 
         pure
-        returns (uint256 v, uint8 m)
+        returns (uint256 value, uint8 mode)
     {
         uint8 b = readByteAtIndex(data, 0); // read the first byte
-        uint8 mode = b & 3; // bitwise operation
+        mode = b & 3; // bitwise operation
 
-        uint256 value;
         if (mode == 0) {
             // [0, 63]
             value = b >> 2; // right shift to remove mode bits
@@ -55,7 +66,6 @@ library ScaleCodec {
         } else {
             revert("Code should be unreachable");
         }
-        return (value, mode);
     }
 
     // The biggest compact supported uint is 2 ** 536 - 1. 
@@ -67,7 +77,7 @@ library ScaleCodec {
             return abi.encodePacked(reverse16(uint16(((v << 2) + 1))));
         } else if ( v < 2 ** 30 ) {
             return abi.encodePacked(reverse32(uint32(((v << 2) + 2))));
-        } else {
+        } else { // 0b11, The upper six bits are the number of bytes following, plus four
             bytes memory valueBytes = 
                 Bytes.removeEndingZero(abi.encodePacked(reverse256(v)));
 

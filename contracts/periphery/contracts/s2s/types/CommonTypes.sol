@@ -1,34 +1,20 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0;
+pragma solidity ^0.8.0;
 
 import "@darwinia/contracts-utils/contracts/Bytes.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 import "hardhat/console.sol";
 
 library CommonTypes {
-    function decodeUint128(bytes memory _data) internal pure returns (uint128) {
-        require(_data.length >= 16, "The data is not enough");
-        bytes memory reversed = Bytes.reverse(_data);
-        return uint128(Bytes.toBytes16(reversed, 0));
-    }
-
-    function decodeUint64(bytes memory _data) internal pure returns (uint64) {
-        require(_data.length >= 8, "The data is not enough");
-        bytes memory reversed = Bytes.reverse(_data);
-        return uint64(Bytes.toBytes8(reversed, 0));
-    }
-
     struct EnumItemWithAccountId {
         uint8 index;
-        bytes32 accountId;
+        address accountId;
     }
 
-    function encodeEnumItemWithAccountId(EnumItemWithAccountId memory _item)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function encodeEnumItemWithAccountId(
+        EnumItemWithAccountId memory _item
+    ) internal pure returns (bytes memory) {
         return abi.encodePacked(_item.index, _item.accountId);
     }
 
@@ -36,11 +22,9 @@ library CommonTypes {
         uint8 index;
     }
 
-    function encodeEnumItemWithNull(EnumItemWithNull memory _item)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function encodeEnumItemWithNull(
+        EnumItemWithNull memory _item
+    ) internal pure returns (bytes memory) {
         return abi.encodePacked(_item.index);
     }
 
@@ -49,25 +33,26 @@ library CommonTypes {
     ////////////////////////////////////
     function ceilDivide(uint a, uint b) internal pure returns (uint) {
         if (a % b == 0) {
-            return uint(a) / b;
+            return a / b;
         } else {
-            return uint(a) / b + 1;
+            return a / b + 1;
         }
     }
 
+    // bits: bit amount used, 1: true, 0: false
+    // bytesLength: bytes used by bits
+    // result: the bytes
     struct BitVecU8 {
         uint bits;
         bytes result;
         uint bytesLength;
     }
 
-    function decodeBitVecU8(bytes memory _data)
-        internal
-        pure
-        returns (BitVecU8 memory)
-    {
+    function decodeBitVecU8(
+        bytes memory _data
+    ) internal pure returns (BitVecU8 memory) {
         (uint256 bits, uint8 mode) = ScaleCodec.decodeUintCompact(_data);
-        uint prefixLength = uint8(2**mode);
+        uint prefixLength = uint8(2 ** mode);
         uint bytesLength = ceilDivide(bits, 8);
         require(
             _data.length >= prefixLength + bytesLength,
@@ -85,33 +70,31 @@ library CommonTypes {
     // Relayer
     ////////////////////////////////////
     struct Relayer {
-        bytes32 id;
+        bytes20 id;
         uint128 collateral;
         uint128 fee;
     }
 
-    // 64 bytes
-    function decodeRelayer(bytes memory _data)
-        internal
-        pure
-        returns (Relayer memory)
-    {
-        require(_data.length >= 64, "The data is not enough to decode Relayer");
+    // 52 bytes
+    function decodeRelayer(
+        bytes memory _data
+    ) internal pure returns (Relayer memory) {
+        require(_data.length >= 52, "The data is not enough to decode Relayer");
 
-        bytes32 id = Bytes.toBytes32(Bytes.substr(_data, 0, 32));
+        bytes20 id = bytes20(Bytes.substr(_data, 0, 20));
 
-        uint128 collateral = decodeUint128(Bytes.substr(_data, 32, 16));
+        uint128 collateral = ScaleCodec.decodeUint128(
+            Bytes.substr(_data, 20, 16)
+        );
 
-        uint128 fee = decodeUint128(Bytes.substr(_data, 48, 16));
+        uint128 fee = ScaleCodec.decodeUint128(Bytes.substr(_data, 36, 16));
 
         return Relayer(id, collateral, fee);
     }
 
-    function getLastRelayerFromVec(bytes memory _data)
-        internal
-        pure
-        returns (Relayer memory)
-    {
+    function getLastRelayerFromVec(
+        bytes memory _data
+    ) internal pure returns (Relayer memory) {
         // Option::None
         require(_data.length > 0, "No relayers");
 
@@ -122,15 +105,15 @@ library CommonTypes {
         );
         require(relayersCount > 0, "No relayers");
         require(mode < 3, "Wrong compact mode"); // Now, mode 3 is not supported yet
-        uint8 lengthOfPrefixBytes = uint8(2**mode);
+        uint8 lengthOfPrefixBytes = uint8(2 ** mode);
         require(
-            _data.length >= lengthOfPrefixBytes + relayersCount * 64,
+            _data.length >= lengthOfPrefixBytes + relayersCount * 52,
             "No enough data"
         );
 
         // get the bytes of the last Relayer, then decode
         Relayer memory relayer = decodeRelayer(
-            Bytes.substr(_data, lengthOfPrefixBytes + 64 * (relayersCount - 1))
+            Bytes.substr(_data, lengthOfPrefixBytes + 52 * (relayersCount - 1))
         );
         return relayer;
     }
@@ -145,19 +128,23 @@ library CommonTypes {
     }
 
     // 24 bytes
-    function decodeOutboundLaneData(bytes memory _data)
-        internal
-        pure
-        returns (OutboundLaneData memory)
-    {
+    function decodeOutboundLaneData(
+        bytes memory _data
+    ) internal pure returns (OutboundLaneData memory) {
         require(
             _data.length >= 24,
             "The data is not enough to decode OutboundLaneData"
         );
 
-        uint64 oldestUnprunedNonce = decodeUint64(Bytes.substr(_data, 0, 8));
-        uint64 latestReceivedNonce = decodeUint64(Bytes.substr(_data, 8, 8));
-        uint64 latestGeneratedNonce = decodeUint64(Bytes.substr(_data, 16, 8));
+        uint64 oldestUnprunedNonce = ScaleCodec.decodeUint64(
+            Bytes.substr(_data, 0, 8)
+        );
+        uint64 latestReceivedNonce = ScaleCodec.decodeUint64(
+            Bytes.substr(_data, 8, 8)
+        );
+        uint64 latestGeneratedNonce = ScaleCodec.decodeUint64(
+            Bytes.substr(_data, 16, 8)
+        );
 
         return
             OutboundLaneData(
@@ -176,13 +163,11 @@ library CommonTypes {
         BitVecU8 dispatchResults;
     }
 
-    function decodeDeliveredMessages(bytes memory _data)
-        internal
-        pure
-        returns (DeliveredMessages memory)
-    {
-        uint64 begin = decodeUint64(Bytes.substr(_data, 0, 8));
-        uint64 end = decodeUint64(Bytes.substr(_data, 8, 8));
+    function decodeDeliveredMessages(
+        bytes memory _data
+    ) internal pure returns (DeliveredMessages memory) {
+        uint64 begin = ScaleCodec.decodeUint64(Bytes.substr(_data, 0, 8));
+        uint64 end = ScaleCodec.decodeUint64(Bytes.substr(_data, 8, 8));
         BitVecU8 memory dispatchResults = decodeBitVecU8(
             Bytes.substr(_data, 16)
         );
@@ -204,11 +189,9 @@ library CommonTypes {
         DeliveredMessages messages;
     }
 
-    function decodeUnrewardedRelayer(bytes memory _data)
-        internal
-        pure
-        returns (UnrewardedRelayer memory)
-    {
+    function decodeUnrewardedRelayer(
+        bytes memory _data
+    ) internal pure returns (UnrewardedRelayer memory) {
         bytes32 relayer = Bytes.toBytes32(Bytes.substr(_data, 0, 32));
         DeliveredMessages memory messages = decodeDeliveredMessages(
             Bytes.substr(_data, 32)
@@ -238,16 +221,14 @@ library CommonTypes {
         uint64 lastConfirmedNonce;
     }
 
-    function decodeInboundLaneData(bytes memory _data)
-        internal
-        pure
-        returns (InboundLaneData memory)
-    {
+    function decodeInboundLaneData(
+        bytes memory _data
+    ) internal pure returns (InboundLaneData memory) {
         (uint256 numberOfRelayers, uint8 mode) = ScaleCodec.decodeUintCompact(
             _data
         );
         require(mode < 3, "Wrong compact mode"); // Now, mode 3 is not supported yet
-        uint consumedLength = uint8(2**mode);
+        uint consumedLength = uint8(2 ** mode);
 
         InboundLaneData memory result = InboundLaneData(
             new UnrewardedRelayer[](numberOfRelayers),
@@ -266,18 +247,16 @@ library CommonTypes {
         }
 
         // decode lastConfirmedNonce
-        result.lastConfirmedNonce = decodeUint64(
+        result.lastConfirmedNonce = ScaleCodec.decodeUint64(
             Bytes.substr(_data, consumedLength)
         );
 
         return result;
     }
 
-    function getLastDeliveredNonceFromInboundLaneData(bytes memory _data)
-        internal
-        pure
-        returns (uint64)
-    {
+    function getLastDeliveredNonceFromInboundLaneData(
+        bytes memory _data
+    ) internal pure returns (uint64) {
         InboundLaneData memory inboundLaneData = decodeInboundLaneData(_data);
         if (inboundLaneData.relayers.length == 0) {
             return inboundLaneData.lastConfirmedNonce;
@@ -294,23 +273,27 @@ library CommonTypes {
     ////////////////////////////////////
     struct Message {
         uint32 specVersion;
-        uint64 weight;
+        uint64 weightRefTime;
+        uint64 weightProofSize;
         EnumItemWithAccountId origin;
         EnumItemWithNull dispatchFeePayment;
         bytes call;
     }
 
-    function encodeMessage(Message memory _message)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function encodeMessage(
+        Message memory _message
+    ) internal pure returns (bytes memory) {
         return
             abi.encodePacked(
                 ScaleCodec.encode32(_message.specVersion),
-                ScaleCodec.encode64(_message.weight),
-                encodeEnumItemWithAccountId(_message.origin),
-                encodeEnumItemWithNull(_message.dispatchFeePayment),
+                // weight
+                ScaleCodec.encodeUintCompact(_message.weightRefTime),
+                ScaleCodec.encodeUintCompact(_message.weightProofSize),
+                // origin
+                _message.origin.index,
+                _message.origin.accountId,
+                // dispatchFeePayment
+                _message.dispatchFeePayment.index,
                 ScaleCodec.encodeBytes(_message.call)
             );
     }

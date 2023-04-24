@@ -36,6 +36,7 @@ contract ScaleCodecTest is DSTest {
 
     function testEncodeUintCompact_Big() public {
         assertCompactEq(1073741824, hex"0300000040");
+        
     }
 
 }

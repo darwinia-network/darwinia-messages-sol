@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0;
+pragma solidity ^0.8.0;
 
 import "../../ds-test/test.sol";
 import "./CommonTypes.sol";
@@ -14,11 +14,11 @@ contract CommonTypesTest is DSTest {
 
     function testGetLastRelayerFromVec() public {
         bytes
-            memory data = hex"0cf41d3260d736f5b3db8a6351766e97619ea35972546a5f850bbf0b27764abe030010a5d4e8000000000000000000000000d6117e030000000000000000000000d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d00743ba40b000000000000000000000000d6117e030000000000000000000000a09c083ca783d2f2621ae7e2ee8d285c8cf103303f309b031521967db57bda140098f73e5d010000000000000000000000c817a8040000000000000000000000";
+            memory data = hex"0c0b001c95e86d64c1ad6e43944c568a6c31b538870000907b984f02ca30000000000000000000dcce86b42ad00000000000000000f24ff3a9cf04c71dbc94d0b566f7a27b94566cac0000907b984f02ca300000000000000000009814440dab2108000000000000001678a973ae9750d25c126cdbce891bb8cfacd5200000907b984f02ca300000000000000000009814440dab210800000000000000";
         CommonTypes.Relayer memory relayer = CommonTypes.getLastRelayerFromVec(
             data
         );
-        assertTrue(relayer.fee == 20000000000);
+        assertTrue(relayer.fee == 150000000000000000000);
     }
 
     function testDecodeOutboundLaneData() public {
@@ -102,7 +102,10 @@ contract CommonTypesTest is DSTest {
             inboundLaneData0.relayers[0].messages.dispatchResults.bits,
             128
         );
-        assertEq(inboundLaneData0.relayers[0].relayer, 0x7d8165c3628e175ccf2f3ffff318761fd9c04afe801dba109358acdf33fdae39);
+        assertEq(
+            inboundLaneData0.relayers[0].relayer,
+            0x7d8165c3628e175ccf2f3ffff318761fd9c04afe801dba109358acdf33fdae39
+        );
         assertEq(inboundLaneData0.lastConfirmedNonce, 128);
 
         // multiple relayers, single message per relayer
@@ -112,11 +115,17 @@ contract CommonTypesTest is DSTest {
         CommonTypes.InboundLaneData memory inboundLaneData1 = CommonTypes
             .decodeInboundLaneData(data1);
         assertEq(inboundLaneData1.relayers.length, 128);
-        for(uint i=0;i<inboundLaneData1.relayers.length;i++) {
-            assertEq(inboundLaneData1.relayers[i].messages.dispatchResults.bits, 1);
-            assertEq(inboundLaneData1.relayers[i].relayer, 0x7d8165c3628e175ccf2f3ffff318761fd9c04afe801dba109358acdf33fdae39);
+        for (uint i = 0; i < inboundLaneData1.relayers.length; i++) {
+            assertEq(
+                inboundLaneData1.relayers[i].messages.dispatchResults.bits,
+                1
+            );
+            assertEq(
+                inboundLaneData1.relayers[i].relayer,
+                0x7d8165c3628e175ccf2f3ffff318761fd9c04afe801dba109358acdf33fdae39
+            );
         }
-        
+
         assertEq(inboundLaneData1.lastConfirmedNonce, 128);
 
         // several messages per relayer
@@ -126,9 +135,15 @@ contract CommonTypesTest is DSTest {
         CommonTypes.InboundLaneData memory inboundLaneData2 = CommonTypes
             .decodeInboundLaneData(data2);
         assertEq(inboundLaneData2.relayers.length, 13);
-        for(uint i=0;i<inboundLaneData2.relayers.length;i++) {
-            assertEq(inboundLaneData2.relayers[i].messages.dispatchResults.bits, 9);
-            assertEq(inboundLaneData2.relayers[i].relayer, 0x7d8165c3628e175ccf2f3ffff318761fd9c04afe801dba109358acdf33fdae39);
+        for (uint i = 0; i < inboundLaneData2.relayers.length; i++) {
+            assertEq(
+                inboundLaneData2.relayers[i].messages.dispatchResults.bits,
+                9
+            );
+            assertEq(
+                inboundLaneData2.relayers[i].relayer,
+                0x7d8165c3628e175ccf2f3ffff318761fd9c04afe801dba109358acdf33fdae39
+            );
         }
         assertEq(inboundLaneData2.lastConfirmedNonce, 128);
     }
