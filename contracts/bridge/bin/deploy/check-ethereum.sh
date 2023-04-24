@@ -165,5 +165,5 @@ done
 # check EthereumSerialLaneVerifier
 ETHEREUMSERIALLANEVERIFIER_LANES_OUT=$(seth call "$EthereumSerialLaneVerifier" 'lanes(uint)(address)' $OUTLANE_ID --chain $TARGET_CHAIN)
 ETHEREUMSERIALLANEVERIFIER_LANES_IN=$(seth call "$EthereumSerialLaneVerifier" 'lanes(uint)(address)' $INLANE_ID --chain $TARGET_CHAIN)
-chech  "ETHEREUMSERIALLANEVERIFIER_LANES_OUT"  "SerialOutboundLane"
-chech  "ETHEREUMSERIALLANEVERIFIER_LANES_IN"   "SerialInboundLane"
+check  "ETHEREUMSERIALLANEVERIFIER_LANES_OUT"  "SerialOutboundLane"
+check  "ETHEREUMSERIALLANEVERIFIER_LANES_IN"   "SerialInboundLane"
