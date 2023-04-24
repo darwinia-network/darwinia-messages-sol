@@ -100,7 +100,7 @@ SerialInboundLane=$(deploy SerialInboundLane \
   $max_gas_per_message)
 
 LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
-SETH_CHAIN=$SOURCE_CHAIN send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $SerialOutboundLane $SerialInboundLane
-SETH_CHAIN=$SOURCE_CHAIN send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter
+SETH_CHAIN=$SOURCE_CHAIN send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $SerialOutboundLane $SerialInboundLane --chain $SOURCE_CHAIN
+SETH_CHAIN=$SOURCE_CHAIN send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter --chain $SOURCE_CHAIN
 
-SETH_CHAIN=$SOURCE_CHAIN send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1
+SETH_CHAIN=$SOURCE_CHAIN send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN

@@ -25,7 +25,7 @@ send() {
 # Call as `ETH_FROM=0x... SOURCE_CHAIN=<chain> deploy ContractName arg1 arg2 arg3`
 # (or omit the env vars if you have already set them)
 deploy() {
-  set -ex
+  set -e
 
   NAME=$1
   ARGS=${@:2}
@@ -48,17 +48,19 @@ deploy() {
   ETH_NONCE=$(nonce "$SOURCE_CHAIN")
 
   # estimate gas
-  GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --chain "$SOURCE_CHAIN" --from "$ETH_FROM")
+  # GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --chain "$SOURCE_CHAIN" --from "$ETH_FROM")
+  GAS=6000000
 
   # deploy
   if [[ $SETH_ASYNC = yes ]]; then
     TX=$(ETH_NONCE="$ETH_NONCE" dapp create "$NAME" $ARGS -- --gas "$GAS" --chain "$SOURCE_CHAIN" --from "$ETH_FROM")
+    log "$NAME txhash:" $TX
     ADDRESS=$(dapp address "$ETH_FROM" "$ETH_NONCE")
-
   else
     ADDRESS=$(ETH_NONCE="$ETH_NONCE" dapp create "$NAME" $ARGS -- --gas "$GAS" --chain "$SOURCE_CHAIN" --from "$ETH_FROM")
   fi
 
+  # increase nonce
   inc "$SOURCE_CHAIN"
 
   # save the addrs to the json
@@ -66,7 +68,7 @@ deploy() {
   # e.g. via commit / chainid etc.
   save_contract "$NAME" "$ADDRESS"
 
-  log "$NAME deployed at" $ADDRESS
+  log "$NAME deployed at:" $ADDRESS
 
   echo "$ADDRESS"
 }
@@ -75,7 +77,12 @@ upgrade() {
   local admin; admin=$1
   local newImp; newImp=$2
   local proxy; proxy=$3
+
+  # get nonce
+  ETH_NONCE=$(nonce "$SOURCE_CHAIN")
   seth send "$admin" "upgrade(address,address)" "$proxy" "$newImp" --chain "$SOURCE_CHAIN" --from "$ETH_FROM"
+  # increase nonce
+  inc "$SOURCE_CHAIN"
   if test $(seth call "$admin" "getProxyImplementation(address)(address)" "$proxy" --chain "$SOURCE_CHAIN" --from "$ETH_FROM") != "$newImp"; then
     (log "check migration failed."; exit 1;)
   fi
@@ -112,11 +119,13 @@ deploy_v2() {
   # deploy
   if [[ $SETH_ASYNC = yes ]]; then
     TX=$(set -x; seth send --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" -- --gas "$GAS" --chain "$SOURCE_CHAIN" --nonce "$ETH_NONCE")
+    log "$NAME txhash:" $TX
     ADDRESS=$(dapp address "$ETH_FROM" "$ETH_NONCE")
   else
     ADDRESS=$(set -x; seth send --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" -- --gas "$GAS" --chain "$SOURCE_CHAIN" --nonce "$ETH_NONCE")
   fi
 
+  # increase nonce
   inc "$SOURCE_CHAIN"
 
   # save the addrs to the json
@@ -124,7 +133,7 @@ deploy_v2() {
   # e.g. via commit / chainid etc.
   save_contract "$NAME" "$ADDRESS"
 
-  log "$NAME deployed at" $ADDRESS
+  log "$NAME deployed at:" $ADDRESS
 
   echo "$ADDRESS"
 }

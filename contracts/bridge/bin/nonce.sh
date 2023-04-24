@@ -54,4 +54,5 @@ inc() {
   fi
   n=$(cat "$file")
   echo $((n + 1)) > "$file"
+  echo ""
 }

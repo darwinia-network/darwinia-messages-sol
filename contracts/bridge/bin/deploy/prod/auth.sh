@@ -22,9 +22,9 @@ EthereumSerialLaneVerifier=$(load_saddr "EthereumSerialLaneVerifier")
 SOURCE_FeeMarketProxy=$(load_saddr "FeeMarketProxy")
 TARGET_FeeMarketProxy=$(load_taddr "FeeMarketProxy")
 
-SETH_CHAIN=$SOURCE_CHAIN send -F $SOURCE_ETH_FROM $ChainMessageCommitter      "changeSetter(address)" $SOURCE_DAO
-SETH_CHAIN=$SOURCE_CHAIN send -F $SOURCE_ETH_FROM $LaneMessageCommitter       "changeSetter(address)" $SOURCE_DAO
-SETH_CHAIN=$SOURCE_CHAIN send -F $SOURCE_ETH_FROM $EthereumSerialLaneVerifier "changeSetter(address)" $SOURCE_DAO
-SETH_CHAIN=$SOURCE_CHAIN send -F $SOURCE_ETH_FROM $SOURCE_FeeMarketProxy      "setSetter(address)"    $SOURCE_DAO
+SETH_CHAIN=$SOURCE_CHAIN send -F $SOURCE_ETH_FROM $ChainMessageCommitter      "changeSetter(address)" $SOURCE_DAO --chain $SOURCE_CHAIN
+SETH_CHAIN=$SOURCE_CHAIN send -F $SOURCE_ETH_FROM $LaneMessageCommitter       "changeSetter(address)" $SOURCE_DAO --chain $SOURCE_CHAIN
+SETH_CHAIN=$SOURCE_CHAIN send -F $SOURCE_ETH_FROM $EthereumSerialLaneVerifier "changeSetter(address)" $SOURCE_DAO --chain $SOURCE_CHAIN
+SETH_CHAIN=$SOURCE_CHAIN send -F $SOURCE_ETH_FROM $SOURCE_FeeMarketProxy      "setSetter(address)"    $SOURCE_DAO --chain $SOURCE_CHAIN
 
-SETH_CHAIN=$TARGET_CHAIN send -F $TARGET_ETH_FROM $TARGET_FeeMarketProxy      "setSetter(address)"    $TARGET_DAO
+SETH_CHAIN=$TARGET_CHAIN send -F $TARGET_ETH_FROM $TARGET_FeeMarketProxy      "setSetter(address)"    $TARGET_DAO --chain $TARGET_CHAIN
