@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import "./interfaces/IOutboundLane.sol";
-import "./interfaces/IFeeMarket.sol";
-import "./interfaces/ICrossChainFilter.sol";
-import "./interfaces/AbstractMessageAdapter.sol";
+import "../interfaces/IOutboundLane.sol";
+import "../interfaces/IFeeMarket.sol";
+import "../interfaces/ICrossChainFilter.sol";
+import "../interfaces/AbstractMessageAdapter.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 contract DarwiniaAdapter is
@@ -23,7 +23,7 @@ contract DarwiniaAdapter is
 
     function setRemoteAdapterAddress(
         address _remoteAdapterAddress
-    ) external onlyOwner {
+    ) external override onlyOwner {
         remoteAdapterAddress = _remoteAdapterAddress;
     }
 
