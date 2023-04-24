@@ -12,6 +12,8 @@ export DAO=${dao?}
 
 # load_addresses
 # load_addresses $ADDRESSES_FILE $TARGET_CHAIN
+#
+echo "=== Darwinia Checker ==="
 
 BridgeProxyAdmin=$(load_staddr "BridgeProxyAdmin")
 ChainMessageCommitter=$(load_staddr "ChainMessageCommitter")
@@ -34,27 +36,27 @@ check_setter  "FeeMarketProxy"              "DAO"
 
 # config check
 # fee market config
-FEEMARKET_VAULT=$(load_conf ".FeeMarket.vault")
-FEEMARKET_COLLATERAL_PERORDER=$(load_conf ".FeeMarket.collateral_perorder")
-FEEMARKET_ASSIGNED_RELAYERS_NUMBER=$(load_conf ".FeeMarket.assigned_relayers_number")
-FEEMARKET_SLASH_TIME=$(load_conf ".FeeMarket.slash_time")
-FEEMARKET_RELAY_TIME=$(load_conf ".FeeMarket.relay_time")
-FEEMARKET_PRICE_RATIO=$(load_conf ".FeeMarket.price_ratio")
-FEEMARKET_DUTY_RATIO=$(load_conf ".FeeMarket.duty_ratio")
-VAULT=$(seth call "$FeeMarketProxy" 'VAULT()(address)' --chain $SOURCE_CHAIN)
-SLASH_TIME=$(seth call "$FeeMarketProxy" 'SLASH_TIME()(uint)' --chain $SOURCE_CHAIN)
-RELAY_TIME=$(seth call "$FeeMarketProxy" 'RELAY_TIME()(uint)' --chain $SOURCE_CHAIN)
-ASSIGNED_RELAYERS_NUMBER=$(seth call "$FeeMarketProxy" 'ASSIGNED_RELAYERS_NUMBER()(uint)' --chain $SOURCE_CHAIN)
-PRICE_RATIO_NUMERATOR=$(seth call "$FeeMarketProxy" 'PRICE_RATIO_NUMERATOR()(uint)' --chain $SOURCE_CHAIN)
-COLLATERAL_PER_ORDER=$(seth call "$FeeMarketProxy" 'COLLATERAL_PER_ORDER()(uint)' --chain $SOURCE_CHAIN)
-DUTY_REWARD_RATIO=$(seth call "$FeeMarketProxy" 'DUTY_REWARD_RATIO()(uint)' --chain $SOURCE_CHAIN)
+VAULT=$(load_conf ".FeeMarket.vault")
+COLLATERAL_PER_ORDER=$(load_conf ".FeeMarket.collateral_perorder")
+ASSIGNED_RELAYERS_NUMBER=$(load_conf ".FeeMarket.assigned_relayers_number")
+SLASH_TIME=$(load_conf ".FeeMarket.slash_time")
+RELAY_TIME=$(load_conf ".FeeMarket.relay_time")
+PRICE_RATIO_NUMERATOR=$(load_conf ".FeeMarket.price_ratio")
+DUTY_REWARD_RATIO=$(load_conf ".FeeMarket.duty_ratio")
+FEEMARKET_VAULT=$(seth call "$FeeMarketProxy" 'VAULT()(address)' --chain $SOURCE_CHAIN)
+FEEMARKET_SLASH_TIME=$(seth call "$FeeMarketProxy" 'SLASH_TIME()(uint)' --chain $SOURCE_CHAIN)
+FEEMARKET_RELAY_TIME=$(seth call "$FeeMarketProxy" 'RELAY_TIME()(uint)' --chain $SOURCE_CHAIN)
+FEEMARKET_ASSIGNED_RELAYERS_NUMBER=$(seth call "$FeeMarketProxy" 'ASSIGNED_RELAYERS_NUMBER()(uint)' --chain $SOURCE_CHAIN)
+FEEMARKET_PRICE_RATIO_NUMERATOR=$(seth call "$FeeMarketProxy" 'PRICE_RATIO_NUMERATOR()(uint)' --chain $SOURCE_CHAIN)
+FEEMARKET_COLLATERAL_PER_ORDER=$(seth call "$FeeMarketProxy" 'COLLATERAL_PER_ORDER()(uint)' --chain $SOURCE_CHAIN)
+FEEMARKET_DUTY_REWARD_RATIO=$(seth call "$FeeMarketProxy" 'DUTY_REWARD_RATIO()(uint)' --chain $SOURCE_CHAIN)
 check  "FEEMARKET_VAULT"                     "VAULT"
 check  "FEEMARKET_SLASH_TIME"                "SLASH_TIME"
 check  "FEEMARKET_RELAY_TIME"                "RELAY_TIME"
 check  "FEEMARKET_ASSIGNED_RELAYERS_NUMBER"  "ASSIGNED_RELAYERS_NUMBER"
 check  "FEEMARKET_PRICE_RATIO_NUMERATOR"     "PRICE_RATIO_NUMERATOR"
 check  "FEEMARKET_COLLATERAL_PER_ORDER"      "COLLATERAL_PER_ORDER"
-check  "DUTY_REWARD_RATIO"                   "DUTY_REWARD_RATIO"
+check  "FEEMARKET_DUTY_REWARD_RATIO"         "DUTY_REWARD_RATIO"
 
 # check darwinia to eth2.0 bridge config
 THIS_CHAIN_POS=$(load_conf ".Chain.this_chain_pos")
