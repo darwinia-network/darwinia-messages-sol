@@ -41,7 +41,7 @@ async function estimateFee(goerliDapp) {
   const MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
   const goerliGateway = MessageGateway.attach(gatewayAddress);
 
-  const goerliAdapterAddress = goerliGateway.adapterAddress();
+  const goerliAdapterAddress = await goerliGateway.adapterAddresses(0);
   const GoerliAdapter = await hre.ethers.getContractFactory("DarwiniaAdapter");
   const goerliAdapter = GoerliAdapter.attach(goerliAdapterAddress);
 
