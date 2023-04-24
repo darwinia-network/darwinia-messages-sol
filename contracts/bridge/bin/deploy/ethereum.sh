@@ -97,8 +97,8 @@ SerialInboundLane=$(deploy SerialInboundLane \
   0 0 \
   $max_gas_per_message)
 
-send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN
+SETH_CHAIN=$SOURCE_CHAIN send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1
 
 EthereumSerialLaneVerifier=$(load_taddr "EthereumSerialLaneVerifier")
-send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
-  $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane --chain $TARGET_CHAIN
+SETH_CHAIN=$TARGET_CHAIN send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
+  $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane

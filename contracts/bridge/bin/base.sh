@@ -8,30 +8,24 @@ set -eo pipefail
 . $(dirname $0)/vrf.sh
 . $(dirname $0)/eta-gas.sh
 
-export NONCE_TMP_FILE
-clean() {
-  test -f "$NONCE_TMP_FILE" && rm "$NONCE_TMP_FILE"
-}
-if [[ -z "$NONCE_TMP_FILE" && -n "$ETH_FROM" ]]; then
-  nonce=$(seth nonce "$ETH_FROM")
-  NONCE_TMP_FILE=$(mktemp)
-  echo "$nonce" > "$NONCE_TMP_FILE"
-  trap clean EXIT
-fi
-
 send() {
-    set -e
-    echo "seth send $*"
-    ETH_NONCE=$(cat "$NONCE_TMP_FILE")
+  set -e
+  echo "seth send $*"
+
+  ETH_NONCE=$(nonce "$SETH_CHAIN")
+  if [[ $SETH_ASYNC = yes ]]; then
     ETH_NONCE="$ETH_NONCE" seth send "$@"
-    echo $((ETH_NONCE + 1)) > "$NONCE_TMP_FILE"
-    echo ""
+  else
+    seth send "$@"
+  fi
+  inc "$SOURCE_CHAIN"
+  echo ""
 }
 
 # Call as `ETH_FROM=0x... SOURCE_CHAIN=<chain> deploy ContractName arg1 arg2 arg3`
 # (or omit the env vars if you have already set them)
 deploy() {
-  set -e
+  set -ex
 
   NAME=$1
   ARGS=${@:2}
@@ -51,20 +45,21 @@ deploy() {
   BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
 
   # get nonce
-  ETH_NONCE=$(cat "$NONCE_TMP_FILE")
+  ETH_NONCE=$(nonce "$SOURCE_CHAIN")
 
   # estimate gas
-  GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --chain "$SOURCE_CHAIN" --from "$ETH_FROM" --nonce "$ETH_NONCE")
+  GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --chain "$SOURCE_CHAIN" --from "$ETH_FROM")
 
   # deploy
   if [[ $SETH_ASYNC = yes ]]; then
     TX=$(ETH_NONCE="$ETH_NONCE" dapp create "$NAME" $ARGS -- --gas "$GAS" --chain "$SOURCE_CHAIN" --from "$ETH_FROM")
     ADDRESS=$(dapp address "$ETH_FROM" "$ETH_NONCE")
+
   else
     ADDRESS=$(ETH_NONCE="$ETH_NONCE" dapp create "$NAME" $ARGS -- --gas "$GAS" --chain "$SOURCE_CHAIN" --from "$ETH_FROM")
   fi
-  echo $((ETH_NONCE + 1)) > "$NONCE_TMP_FILE"
 
+  inc "$SOURCE_CHAIN"
 
   # save the addrs to the json
   # TODO: It'd be nice if we could evolve this into a minimal versioning system
@@ -109,7 +104,7 @@ deploy_v2() {
   BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" $OUT_DIR/dapp.sol.json)
 
   # get nonce
-  ETH_NONCE=$(cat "$NONCE_TMP_FILE")
+  ETH_NONCE=$(nonce "$SOURCE_CHAIN")
 
   # estimate gas
   GAS=$(seth estimate --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" --chain "$SOURCE_CHAIN" --nonce "$ETH_NONCE")
@@ -121,7 +116,8 @@ deploy_v2() {
   else
     ADDRESS=$(set -x; seth send --from "$ETH_FROM" --create "$BYTECODE" "$FUNCSIG$ARGS" -- --gas "$GAS" --chain "$SOURCE_CHAIN" --nonce "$ETH_NONCE")
   fi
-  echo $((ETH_NONCE + 1)) > "$NONCE_TMP_FILE"
+
+  inc "$SOURCE_CHAIN"
 
   # save the addrs to the json
   # TODO: It'd be nice if we could evolve this into a minimal versioning system

@@ -2,8 +2,10 @@
 
 set -eo pipefail
 
-Chain0=darwinia
-Chain1=ethereum
+export Chain0=darwinia
+export Chain1=ethereum
+
+. $(dirname $0)/nonce.sh
 
 # 0
 (from=$Chain0 to=$Chain1 \
