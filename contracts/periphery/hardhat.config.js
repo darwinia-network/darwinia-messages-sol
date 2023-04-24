@@ -103,14 +103,14 @@ module.exports = {
       network_id: "45",
       accounts: [PRIVATE_KEY],
       gas: 3_000_000,
-      gasPrice: 53100000000,
+      gasPrice: 2457757432886,
     },
     pangolin: {
       url: "https://pangolin-rpc.darwinia.network",
       network_id: "43",
       accounts: [PRIVATE_KEY],
       gas: 3_000_000,
-      gasPrice: 24577574328864,
+      gasPrice: 2457757432886,
     },
     pangolinDev: {
       url: "http://g2.dev.darwinia.network:8888",

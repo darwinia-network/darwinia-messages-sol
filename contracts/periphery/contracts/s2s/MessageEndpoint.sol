@@ -4,11 +4,12 @@ pragma solidity ^0.8.0;
 
 import "./MessageLib.sol";
 import "./types/PalletEthereum.sol";
+import "./interfaces/IMessageEndpoint.sol";
 
 // srcDapp > endpoint[outboundLaneId] > substrate.send_message
 // ->
 // substrate.message_transact > remoteEndpoint[inboundLaneId] > TgtDapp.function
-abstract contract MessageEndpoint {
+abstract contract MessageEndpoint is IMessageEndpoint {
     // REMOTE
     address public remoteEndpoint;
     // message sender derived from remoteEndpoint
@@ -63,7 +64,7 @@ abstract contract MessageEndpoint {
         return _remoteExecute(specVersion, callReceiver, callPayload, gasLimit);
     }
 
-    function fee() public view returns (uint128) {
+    function fee() external view returns (uint128) {
         return MessageLib.marketFee(STORAGE_ADDRESS, storageKeyForMarketFee);
     }
 

@@ -1,6 +1,10 @@
 const hre = require("hardhat");
 
 // Deploy and connect endpoint on Pangolin and Pangoro
+// Pangolin Endpoint: 0xE8C0d3dF83a07892F912a71927F4740B8e0e04ab
+// Caller: 0x1b519efB794630610EAdC1cF6e7598313514bad1
+// Pangoro Endpoint: 0x23E31167E3D46D64327fdd6e783FE5391427B728
+// Callee: 0xC41B6B0d46B430838dBBc1c84eeC196C657912Db
 async function main() {
   // PANGOLIN
   // -------------
