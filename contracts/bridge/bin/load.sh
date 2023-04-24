@@ -21,6 +21,8 @@ load_conf() {
 }
 
 load_addresses() {
+  set -ex
+
   path=${ADDRESSES_FILE:-$1}
   if [[ ! -e "$path" ]]; then
     echo "Addresses file not found: $path not found"
