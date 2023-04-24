@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eo pipefail
 
 Chain0=pangolin
 Chain1=goerli
@@ -9,5 +9,5 @@ Chain1=goerli
 (from=$Chain0 to=$Chain1 \
 . $(dirname $0)/deploy/darwinia.sh)
 
-(from=$Chain1 to=$Chain0
-. $(dirname $0)/deploy/ethereum.sh)
+# (from=$Chain1 to=$Chain0
+# . $(dirname $0)/deploy/ethereum.sh)

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eo pipefail
 
 unset SOURCE_CHAIN
 unset TARGET_CHAIN
@@ -100,7 +100,7 @@ SerialInboundLane=$(deploy SerialInboundLane \
   $max_gas_per_message)
 
 LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
-seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $SerialOutboundLane $SerialInboundLane --chain $SOURCE_CHAIN
-seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter --chain $SOURCE_CHAIN
+send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $SerialOutboundLane $SerialInboundLane --chain $SOURCE_CHAIN
+send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter --chain $SOURCE_CHAIN
 
-seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN
+send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN

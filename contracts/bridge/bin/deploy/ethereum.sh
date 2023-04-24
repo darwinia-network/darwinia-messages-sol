@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eo pipefail
 
 unset SOURCE_CHAIN
 unset TARGET_CHAIN
@@ -97,8 +97,8 @@ SerialInboundLane=$(deploy SerialInboundLane \
   0 0 \
   $max_gas_per_message)
 
-seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN
+send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN
 
 EthereumSerialLaneVerifier=$(load_taddr "EthereumSerialLaneVerifier")
-seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
+send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
   $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane --chain $TARGET_CHAIN
