@@ -1,39 +1,67 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
-import "./SmartChainXLib.sol";
+import "./MessageLib.sol";
 import "./types/PalletEthereum.sol";
 
+// srcDapp > endpoint[outboundLaneId] > substrate.send_message
+// ->
+// substrate.message_transact > remoteEndpoint[inboundLaneId] > TgtDapp.function
 abstract contract MessageEndpoint {
+    // REMOTE
     address public remoteEndpoint;
-    // lane ids
-    bytes4 public outboundLaneId;
-    bytes4 public inboundLaneId;
-    // precompile addresses
-    address public storageAddress;
-    address public dispatchAddress;
+    // message sender derived from remoteEndpoint
+    address public derivedMessageSender;
+    // call indices
+    bytes2 public remoteMessageTransactCallIndex;
+    // remote smart chain id
+    uint64 public remoteSmartChainId;
+
+    // 1 gas ~= 40_000 weight
+    uint64 public constant REMOTE_WEIGHT_PER_GAS = 40_000;
+
+    // LOCAL
     // storage keys
     bytes32 public storageKeyForMarketFee;
     bytes32 public storageKeyForLatestNonce;
     bytes32 public storageKeyForLastDeliveredNonce;
     // call indices
     bytes2 public sendMessageCallIndex;
-    bytes2 public remoteMessageTransactCallIndex;
-    // remote smart chain id
-    uint64 public remoteSmartChainId;
-    // message sender derived from remoteEndpoint
-    address public derivedMessageSender;
-    // 1 gas ~= 40_000 weight
-    uint64 public remoteWeightPerGas = 40_000;
+
+    // lane ids
+    bytes4 public immutable OUTBOUND_LANE_ID;
+    bytes4 public immutable INBOUND_LANE_ID;
+    uint16 public immutable VERSION;
+    // precompile addresses
+    address public constant STORAGE_ADDRESS =
+        0x0000000000000000000000000000000000000400;
+    address public constant DISPATCH_ADDRESS =
+        0x0000000000000000000000000000000000000401;
+
+    constructor(uint16 version, bytes4 outboundLaneId, bytes4 inboundLaneId) {
+        VERSION = version;
+        OUTBOUND_LANE_ID = outboundLaneId;
+        INBOUND_LANE_ID = inboundLaneId;
+    }
 
     ///////////////////////////////
     // Outbound
     ///////////////////////////////
-    function fee() public view returns (uint256) {
-        return SmartChainXLib.marketFee(storageAddress, storageKeyForMarketFee);
+    function remoteExecute(
+        uint32 pangolinSpecVersion,
+        address callReceiver,
+        bytes calldata callPayload,
+        uint256 gasLimit
+    ) external payable virtual returns (uint256);
+
+    function fee() public view returns (uint128) {
+        return MessageLib.marketFee(STORAGE_ADDRESS, storageKeyForMarketFee);
     }
 
+    // srcDapp > endpoint[outboundLaneId] > substrate.send_message
+    // ->
+    // substrate.message_transact(input) > remoteEndpoint[inboundLaneId] > TgtDapp.function
     function _remoteExecute(
         uint32 tgtSpecVersion,
         address callReceiver,
@@ -69,7 +97,8 @@ abstract contract MessageEndpoint {
         bytes memory callEncoded = PalletEthereum.encodeMessageTransactCall(
             call
         );
-        uint64 weight = uint64(gasLimit * remoteWeightPerGas);
+
+        uint64 weight = uint64(gasLimit * REMOTE_WEIGHT_PER_GAS);
 
         return _remoteDispatch(tgtSpecVersion, callEncoded, weight);
     }
@@ -80,29 +109,33 @@ abstract contract MessageEndpoint {
         uint64 tgtCallWeight
     ) internal returns (uint256) {
         // Build the encoded message to be sent
-        bytes memory message = SmartChainXLib.buildMessage(
+        bytes memory message = MessageLib.buildMessage(
             tgtSpecVersion,
             tgtCallWeight,
             tgtCallEncoded
         );
 
         // Send the message
-        SmartChainXLib.sendMessage(
-            dispatchAddress,
+        MessageLib.sendMessage(
+            DISPATCH_ADDRESS,
             sendMessageCallIndex,
-            outboundLaneId,
+            OUTBOUND_LANE_ID,
             msg.value,
             message
         );
 
         // Get nonce from storage
-        uint64 nonce = SmartChainXLib.latestNonce(
-            storageAddress,
+        uint64 nonce = MessageLib.latestNonce(
+            STORAGE_ADDRESS,
             storageKeyForLatestNonce,
-            outboundLaneId
+            OUTBOUND_LANE_ID
         );
 
-        return encodeMessageId(outboundLaneId, nonce);
+        return encodeMessageId(OUTBOUND_LANE_ID, nonce);
+    }
+
+    function _dispatch(bytes memory call) public {
+        MessageLib.dispatch(DISPATCH_ADDRESS, call, "!dispatch");
     }
 
     ///////////////////////////////
@@ -116,41 +149,39 @@ abstract contract MessageEndpoint {
         _;
     }
 
-    function execute(address callReceiver, bytes calldata callPayload)
-        external
-        onlyMessageSender
-    {
+    function execute(
+        address callReceiver,
+        bytes calldata callPayload
+    ) external onlyMessageSender {
         if (_canBeExecuted(callReceiver, callPayload)) {
             (bool success, ) = callReceiver.call(callPayload);
             require(success, "MessageEndpoint: Call execution failed");
         } else {
             revert("MessageEndpoint: Unapproved call");
         }
-        
     }
 
     // Check if the call can be executed
-    function _canBeExecuted(address callReceiver, bytes calldata callPayload)
-        internal
-        view
-        virtual
-        returns (bool);
+    function _canBeExecuted(
+        address callReceiver,
+        bytes calldata callPayload
+    ) internal view virtual returns (bool);
 
     // Get the last delivered inbound message id
     function lastDeliveredMessageId() public view returns (uint256) {
-        uint64 nonce = SmartChainXLib.lastDeliveredNonce(
-            storageAddress,
+        uint64 nonce = MessageLib.lastDeliveredNonce(
+            STORAGE_ADDRESS,
             storageKeyForLastDeliveredNonce,
-            inboundLaneId
+            INBOUND_LANE_ID
         );
-        return encodeMessageId(inboundLaneId, nonce);
+        return encodeMessageId(INBOUND_LANE_ID, nonce);
     }
 
     // Check if an inbound message has been delivered
     function isMessageDelivered(uint256 messageId) public view returns (bool) {
         (bytes4 laneId, uint64 nonce) = decodeMessageId(messageId);
-        uint64 lastNonce = SmartChainXLib.lastDeliveredNonce(
-            storageAddress,
+        uint64 lastNonce = MessageLib.lastDeliveredNonce(
+            STORAGE_ADDRESS,
             storageKeyForLastDeliveredNonce,
             laneId
         );
@@ -160,40 +191,39 @@ abstract contract MessageEndpoint {
     ///////////////////////////////
     // Common functions
     ///////////////////////////////
-    function decodeMessageId(uint256 messageId)
-        public
-        pure
-        returns (bytes4, uint64)
-    {
+    function decodeMessageId(
+        uint256 messageId
+    ) public view returns (bytes4, uint64) {
+        uint16 version = uint16(messageId >> 240);
+        require(version == VERSION, "MessageEndpoint: Invalid Version");
         return (
             bytes4(uint32(messageId >> 64)),
             uint64(messageId & 0xffffffffffffffff)
         );
     }
 
-    function encodeMessageId(bytes4 laneId, uint64 nonce)
-        public
-        pure
-        returns (uint256)
-    {
-        return (uint256(uint32(laneId)) << 64) + uint256(nonce);
+    function encodeMessageId(
+        bytes4 laneId,
+        uint64 nonce
+    ) public view returns (uint256) {
+        return
+            (uint256(uint32(laneId)) << 64) +
+            (uint256(VERSION) << 240) +
+            uint256(nonce);
     }
 
     ///////////////////////////////
     // Setters
     ///////////////////////////////
-    function _setRemoteEndpoint(bytes4 _remoteChainId, address _remoteEndpoint)
-        internal
-    {
+    function _setRemoteEndpoint(
+        bytes4 _remoteChainId,
+        address _remoteEndpoint
+    ) internal {
         remoteEndpoint = _remoteEndpoint;
-        derivedMessageSender = SmartChainXLib.deriveSenderFromRemote(
+        derivedMessageSender = MessageLib.deriveSender(
             _remoteChainId,
             _remoteEndpoint
         );
-    }
-
-    function _setOutboundLaneId(bytes4 _outboundLaneId) internal {
-        outboundLaneId = _outboundLaneId;
     }
 
     function _setRemoteMessageTransactCallIndex(
@@ -202,36 +232,20 @@ abstract contract MessageEndpoint {
         remoteMessageTransactCallIndex = _remoteMessageTransactCallIndex;
     }
 
-    function _setStorageAddress(address _storageAddress) internal {
-        storageAddress = _storageAddress;
-    }
-
-    function _setDispatchAddress(address _dispatchAddress) internal {
-        dispatchAddress = _dispatchAddress;
-    }
-
     function _setSendMessageCallIndex(bytes2 _sendMessageCallIndex) internal {
         sendMessageCallIndex = _sendMessageCallIndex;
     }
 
-    function _setStorageKeyForMarketFee(bytes32 _storageKeyForMarketFee)
-        internal
-    {
+    function _setStorageKeyForMarketFee(
+        bytes32 _storageKeyForMarketFee
+    ) internal {
         storageKeyForMarketFee = _storageKeyForMarketFee;
     }
 
-    function _setStorageKeyForLatestNonce(bytes32 _storageKeyForLatestNonce)
-        internal
-    {
+    function _setStorageKeyForLatestNonce(
+        bytes32 _storageKeyForLatestNonce
+    ) internal {
         storageKeyForLatestNonce = _storageKeyForLatestNonce;
-    }
-
-    function _setRemoteWeightPerGas(uint64 _remoteWeightPerGas) internal {
-        remoteWeightPerGas = _remoteWeightPerGas;
-    }
-
-    function _setInboundLaneId(bytes4 _inboundLaneId) internal {
-        inboundLaneId = _inboundLaneId;
     }
 
     function _setRemoteSmartChainId(uint64 _remoteSmartChainId) internal {

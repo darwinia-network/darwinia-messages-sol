@@ -192,7 +192,7 @@ library Blake2b {
         // FIXME: support incomplete blocks (zero pad them)
         uint input_length = data.length;
         if (input_length == 0 || (input_length % 128) != 0) {
-            data = concat(data, new bytes(128 - (input_length % 128)));
+            data = abi.encodePacked(data, new bytes(128 - (input_length % 128)));
         }
         assert((data.length % 128) == 0);
         update_loop(instance, data, input_length, true);
@@ -202,7 +202,12 @@ library Blake2b {
 
         bytes memory state = instance.state;
         output = new bytes(instance.out_len);
-        if(instance.out_len == 32) {
+        if (instance.out_len == 16) {
+            assembly {
+                mstore(add(output,16), mload(add(state, 20)))
+                mstore(output, 16)
+            }
+        } else if(instance.out_len == 32) {
             assembly {
                 mstore(add(output, 32), mload(add(state, 36)))
             }

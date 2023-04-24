@@ -1,25 +1,22 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0;
+pragma solidity ^0.8.0;
 
 import "@darwinia/contracts-utils/contracts/AccountId.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
-import "@darwinia/contracts-utils/contracts/Bytes.sol";
 import "@darwinia/contracts-utils/contracts/Hash.sol";
 
 import "./interfaces/IStateStorage.sol";
 import "./types/CommonTypes.sol";
 import "./types/PalletBridgeMessages.sol";
-import "./types/PalletEthereum.sol";
 
-library SmartChainXLib {
-    bytes public constant account_derivation_prefix =
+library MessageLib {
+    bytes public constant ACCOUNT_DERIVATION_PREFIX =
         "pallet-bridge/account-derivation/account";
-
-    event DispatchResult(bool success, bytes result);
 
     // Send message over lane by calling the `send_message` dispatch call on
     // the source chain which is identified by the `callIndex` param.
+    // Note: `XxxMessages`.`send_message`, the origin must equals to the origin in the message
     function sendMessage(
         address _srcDispatchPrecompileAddress,
         bytes2 _callIndex,
@@ -27,16 +24,13 @@ library SmartChainXLib {
         uint256 _deliveryAndDispatchFee,
         bytes memory _message
     ) internal {
-        // the fee precision in the contracts is 18, but on chain is 9, transform the fee amount.
-        uint256 feeOfPalletPrecision = _deliveryAndDispatchFee / (10**9);
-
         // encode send_message call
         PalletBridgeMessages.SendMessageCall
             memory sendMessageCall = PalletBridgeMessages.SendMessageCall(
                 _callIndex,
                 _laneId,
                 _message,
-                uint128(feeOfPalletPrecision)
+                uint128(_deliveryAndDispatchFee)
             );
 
         bytes memory sendMessageCallEncoded = PalletBridgeMessages
@@ -56,20 +50,28 @@ library SmartChainXLib {
         uint64 _weight,
         bytes memory _call
     ) internal view returns (bytes memory) {
+        // enum CallOrigin
+        //   0: SourceRoot
+        //   1: TargetAccount
+        //   2: SourceAccount
         CommonTypes.EnumItemWithAccountId memory origin = CommonTypes
             .EnumItemWithAccountId(
-                2, // index in enum
-                AccountId.fromAddress(address(this)) // UserApp contract address
+                2, // CallOrigin::SourceAccount
+                address(this) // UserApp contract address
             );
 
+        // enum DispatchFeePayment
+        //   0: AtSourceChain
+        //   1: AtTargetChain
         CommonTypes.EnumItemWithNull memory dispatchFeePayment = CommonTypes
-            .EnumItemWithNull(0);
+            .EnumItemWithNull(0); // DispatchFeePayment::AtSourceChain
 
         return
             CommonTypes.encodeMessage(
                 CommonTypes.Message(
                     _specVersion,
                     _weight,
+                    0,
                     origin,
                     dispatchFeePayment,
                     _call
@@ -81,7 +83,7 @@ library SmartChainXLib {
     function marketFee(
         address _srcStoragePrecompileAddress,
         bytes32 _storageKey
-    ) internal view returns (uint256) {
+    ) internal view returns (uint128) {
         bytes memory data = getStateStorage(
             _srcStoragePrecompileAddress,
             abi.encodePacked(_storageKey),
@@ -91,7 +93,7 @@ library SmartChainXLib {
         CommonTypes.Relayer memory relayer = CommonTypes.getLastRelayerFromVec(
             data
         );
-        return relayer.fee * 10**9;
+        return relayer.fee;
     }
 
     // Get the latest nonce from state storage
@@ -123,17 +125,13 @@ library SmartChainXLib {
         return outboundLaneData.latestGeneratedNonce;
     }
 
-    function deriveAccountId(bytes4 _srcChainId, bytes32 _accountId)
-        internal
-        view
-        returns (bytes32)
-    {
-        bytes memory prefixLength = ScaleCodec.encodeUintCompact(
-            account_derivation_prefix.length
-        );
+    function deriveAccountId(
+        bytes4 _srcChainId,
+        bytes32 _accountId
+    ) internal view returns (bytes32) {
         bytes memory data = abi.encodePacked(
-            prefixLength,
-            account_derivation_prefix,
+            bytes1(0xa0), // compact length of ACCOUNT_DERIVATION_PREFIX
+            ACCOUNT_DERIVATION_PREFIX,
             _srcChainId,
             _accountId
         );
@@ -157,12 +155,15 @@ library SmartChainXLib {
         }
     }
 
-    // dispatch pallet dispatch-call
+    event DispatchCall(bytes);
+
+    // Dispatch pallet dispatch-call
     function dispatch(
         address _srcDispatchPrecompileAddress,
         bytes memory _callEncoded,
         string memory _errMsg
     ) internal {
+        emit DispatchCall(_callEncoded);
         // Dispatch the call
         (bool success, bytes memory data) = _srcDispatchPrecompileAddress.call(
             _callEncoded
@@ -170,19 +171,7 @@ library SmartChainXLib {
         revertIfFailed(success, data, _errMsg);
     }
 
-    // derive an address from remote sender address (sender on the source chain).
-    //   
-    // H160          =>          AccountId32        =>        derived AccountId32       =>       H160
-    //   |------ e2s addr mapping ----||---- crosschain derive -------||---- s2e addr mapping -----|
-    //   |-------- on source ---------||------------------------ on target ------------------------|
-    //
-    // e2s addr mapping: `EVM H160 address` mapping to `Substrate AccountId32 address`.
-    // s2e addr mapping: `Substrate AccountId32 address` mapping to `EVM H160 address`.
-    // https://github.com/darwinia-network/darwinia/wiki/Darwinia-Address-Format-Overview
-    //
-    // crosschain derive: generate the address on the target chain based on the address of the source chain.
-    // https://github.com/darwinia-network/darwinia-messages-substrate/blob/c3f10155a2650850ffa8998e5f98617e1aded55a/primitives/runtime/src/lib.rs#L107
-    function deriveSenderFromRemote(
+    function deriveSender(
         bytes4 _srcChainId,
         address _srcMessageSender
     ) internal view returns (address) {

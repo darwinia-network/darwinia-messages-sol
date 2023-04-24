@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
-// On Pangolin
+// On Pangoro
 contract Callee {
     uint256 public sum;
 
