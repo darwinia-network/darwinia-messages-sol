@@ -34,7 +34,7 @@ contract PangolinEndpoint is MessageEndpoint(0, 0x726f6c69, 0x726f6c69) {
         address callReceiver,
         bytes calldata callPayload,
         uint256 gasLimit
-    ) external payable returns (uint256) {
+    ) external payable override returns (uint256) {
         return
             _remoteExecute(
                 pangoroSpecVersion,
