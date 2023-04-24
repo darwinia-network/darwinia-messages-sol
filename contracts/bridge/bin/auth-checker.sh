@@ -14,6 +14,15 @@ notok() {
   printf '%b\n' "${RED}❌NOT OK${NC}"
 }
 
+check() {
+  printf "CFG: %s -> %s -> " "${1}" "${2}"
+  if [[ $(toLower "${!2}") == $(toLower "${!2}") ]]; then
+    ok
+  else
+    notok
+  fi
+}
+
 ADMIN_SLOT="0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103"
 check_admin() {
   local CHECK
