@@ -13,7 +13,7 @@ async function main() {
   console.log(`Market fee: ${fee} wei`);
 
   // Run
-  const tx = await goerliDapp.remoteAdd(pangolinDappAddress, {
+  const tx = await goerliDapp.remoteAdd(0, pangolinDappAddress, {
     value: fee,
   });
   console.log(
