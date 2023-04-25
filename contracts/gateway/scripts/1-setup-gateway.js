@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 
-//GoerliGateway: 0xfAaC4aC8537B7f19b03e6b0Ff1F2cbF65795f2c5
+//goerliGateway: 0x7Db5F281F99d12022b5809cB7A6A77B7946Ff492
 async function main() {
   // GOERLI GATEWAY
   hre.changeNetwork("goerli");
