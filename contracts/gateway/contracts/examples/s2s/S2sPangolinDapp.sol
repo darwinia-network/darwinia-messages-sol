@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.17;
 
 import "../../interfaces/IMessageGateway.sol";
 
@@ -13,7 +13,8 @@ contract S2sPangolinDapp {
 
     function remoteAdd(address pangoroDapp) external payable {
         bytes memory message = abi.encode(uint256(2));
-        IMessageGateway(gatewayAddress).send{value: msg.value}(
+        IMessageGateway(gatewayAddress).mgSend{value: msg.value}(
+            1,
             pangoroDapp,
             message
         );

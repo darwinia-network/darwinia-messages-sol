@@ -1,65 +1,129 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.17;
 
-import "./interfaces/IFeeMarket.sol";
 import "./interfaces/IMessageGateway.sol";
 import "./interfaces/IMessageReceiver.sol";
-import "./interfaces/AbstractMessageAdapter.sol";
+import "./interfaces/AbstractMessageEndpoint.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 contract MessageGateway is IMessageGateway, Ownable2Step {
-    mapping(uint16 => address) public adapterAddresses;
-    uint16 public defaultAdapterId = 0;
+    mapping(uint16 => address) public endpoints;
+    mapping(address => uint16) public endpointIds;
+    uint16 public endpointCount;
+    address public defaultEndpoint;
+    uint16 public immutable chainId;
 
-    function addAdapter(
-        uint16 _adapterId,
-        address _adapterAddress
-    ) external onlyOwner {
-        // check adapter id is not used.
-        require(adapterAddresses[_adapterId] == address(0), "adapter exists");
+    event FailedMessage(address, uint16, address, bytes, string);
 
-        adapterAddresses[_adapterId] = _adapterAddress;
-        setDefaultAdapterId(_adapterId);
+    constructor(uint16 _chainId) {
+        chainId = _chainId;
     }
 
-    function setDefaultAdapterId(uint16 _adapterId) public onlyOwner {
-        // check adapter id exists.
-        require(
-            adapterAddresses[_adapterId] != address(0),
-            "adapter not exists"
-        );
+    function addEndpoint(address _endpointAddress) external onlyOwner {
+        uint16 endpointId = endpointCount == 0 ? 1 : endpointCount + 1;
+        endpoints[endpointId] = _endpointAddress;
+        endpointIds[_endpointAddress] = endpointId;
 
-        defaultAdapterId = _adapterId;
+        // set default endpoint immediately.
+        setDefaultEndpoint(_endpointAddress);
+
+        endpointCount++;
+    }
+
+    function setDefaultEndpoint(address _endpointAddress) public onlyOwner {
+        // check endpoint id exists.
+        require(endpointIds[_endpointAddress] != 0, "endpoint not exists");
+
+        defaultEndpoint = _endpointAddress;
     }
 
     function estimateFee() external view returns (uint256) {
-        address adapterAddress = adapterAddresses[defaultAdapterId];
-        AbstractMessageAdapter adapter = AbstractMessageAdapter(adapterAddress);
-        return adapter.estimateFee();
+        AbstractMessageEndpoint endpoint = AbstractMessageEndpoint(
+            defaultEndpoint
+        );
+        return endpoint.estimateFee();
     }
 
-    function send(
-        address remoteDappAddress,
-        bytes memory message
+    // called by Dapp.
+    function mgSend(
+        uint16 _toChainId,
+        address _toDappAddress,
+        bytes memory _message
     ) external payable returns (uint256) {
-        address adapterAddress = adapterAddresses[defaultAdapterId];
-        AbstractMessageAdapter adapter = AbstractMessageAdapter(adapterAddress);
+        AbstractMessageEndpoint endpoint = AbstractMessageEndpoint(
+            defaultEndpoint
+        );
+        uint256 fee = endpoint.estimateFee();
+
+        // TODO: add dapp registry.
 
         uint256 paid = msg.value;
-        uint256 estimatedFee = adapter.estimateFee();
-        require(paid >= estimatedFee, "!fee");
+        require(paid >= fee, "!fee");
 
         // refund fee to caller if paid too much.
-        if (paid > estimatedFee) {
-            payable(msg.sender).transfer(paid - estimatedFee);
+        if (paid > fee) {
+            payable(msg.sender).transfer(paid - fee);
         }
 
         return
-            adapter.send{value: estimatedFee}(
+            endpoint.epSend{value: fee}(
                 msg.sender,
-                remoteDappAddress,
-                message
+                _toChainId,
+                _toDappAddress,
+                _message
             );
+    }
+
+    // called by endpoint.
+    function mgRecv(
+        address _fromDappAddress,
+        uint16 _toChainId,
+        address _toDappAddress,
+        bytes memory _message
+    ) external {
+        if (_toChainId == chainId) {
+            // message arrived the destination
+            try
+                IMessageReceiver(_toDappAddress).recv(
+                    _fromDappAddress,
+                    _message
+                )
+            {
+                // call user's receive function successfully.
+            } catch Error(string memory reason) {
+                // call user's receive function failed by uncaught error.
+                // store the message and error for the user to do something like retry.
+                emit FailedMessage(
+                    _fromDappAddress,
+                    _toChainId,
+                    _toDappAddress,
+                    _message,
+                    reason
+                );
+            } catch (bytes memory lowLevelData) {
+                emit FailedMessage(
+                    _fromDappAddress,
+                    _toChainId,
+                    _toDappAddress,
+                    _message,
+                    string(lowLevelData)
+                );
+            }
+        } else {
+            // direct message to another chain, (routing)
+            AbstractMessageEndpoint endpoint = AbstractMessageEndpoint(
+                defaultEndpoint
+            );
+            uint256 fee = endpoint.estimateFee();
+
+            // TODO: add dapp setting
+            endpoint.epSend{value: fee}(
+                _fromDappAddress,
+                _toChainId,
+                _toDappAddress,
+                _message
+            );
+        }
     }
 }

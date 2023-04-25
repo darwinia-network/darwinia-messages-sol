@@ -5,22 +5,32 @@ async function main() {
   const pangoroEndpointAddress = "0x23E31167E3D46D64327fdd6e783FE5391427B728";
 
   ////////////////////////////////////
-  // Setup gateway
+  // Setup gateways
   ////////////////////////////////////
   hre.changeNetwork("pangolin");
-  console.log("Setting up gateway...");
+  console.log("Setting up pangolin gateway...");
   let MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
-  let pangolinGateway = await MessageGateway.deploy();
+  const pangolinChainId = 0;
+  let pangolinGateway = await MessageGateway.deploy(pangolinChainId);
   await pangolinGateway.deployed();
   const pangolinGatewayAddress = pangolinGateway.address;
   console.log(`  pangolinGateway: ${pangolinGatewayAddress}`);
 
+  hre.changeNetwork("pangoro");
+  console.log("Setting up pangoro gateway...");
+  MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
+  const pangoroChainId = 1;
+  let pangoroGateway = await MessageGateway.deploy(pangoroChainId);
+  await pangoroGateway.deployed();
+  const pangoroGatewayAddress = pangoroGateway.address;
+  console.log(`  pangoroGateway: ${pangoroGatewayAddress}`);
+
   ////////////////////////////////////
-  // Setup adapters
+  // Setup endpoints
   ////////////////////////////////////
-  console.log("Setting up adapters...");
-  const S2sPangolinAdapter = await hre.ethers.getContractFactory(
-    "DarwiniaS2sAdapter"
+  console.log("Setting up pangolin endpoint...");
+  const S2sPangolinEndpoint = await hre.ethers.getContractFactory(
+    "DarwiniaS2sEndpoint"
   );
   const s2sPangolinAdapter = await S2sPangolinAdapter.deploy(
     pangolinEndpointAddress

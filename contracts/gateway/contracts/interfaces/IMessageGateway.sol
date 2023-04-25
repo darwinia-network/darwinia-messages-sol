@@ -15,13 +15,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.17;
 
 interface IMessageGateway {
-    function send(
-        address remoteDappAddress,
-        bytes memory message
-    ) external payable returns (uint256 nonce);
+    function mgSend(
+        uint16 _toChainId,
+        address _toDappAddress,
+        bytes memory _message
+    ) external payable returns (uint256);
+
+    function mgRecv(
+        address _fromDappAddress,
+        uint16 _toChainId,
+        address _toDappAddress,
+        bytes memory _message
+    ) external;
 
     function estimateFee() external view returns (uint256);
 }

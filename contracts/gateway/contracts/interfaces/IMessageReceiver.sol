@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.17;
 
 interface IMessageReceiver {
     function recv(address _fromDappAddress, bytes calldata _message) external;
