@@ -13,7 +13,7 @@ async function main() {
   console.log(`Market fee: ${fee} wei`);
 
   // Run
-  const tx = await goerliDapp.remoteAdd(0, pangolinDappAddress, {
+  const tx = await goerliDapp.remoteAdd(pangolinDappAddress, {
     value: fee,
   });
   console.log(
@@ -41,11 +41,7 @@ async function estimateFee(goerliDapp) {
   const MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
   const goerliGateway = MessageGateway.attach(gatewayAddress);
 
-  const goerliAdapterAddress = await goerliGateway.adapterAddresses(0);
-  const GoerliAdapter = await hre.ethers.getContractFactory("DarwiniaAdapter");
-  const goerliAdapter = GoerliAdapter.attach(goerliAdapterAddress);
-
-  return await goerliAdapter.estimateFee();
+  return await goerliGateway.estimateFee();
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
-// pangolinAdapter: 0xcF7dC57e24cF3d2a31fC52f7ed9538959870Cf2A
-// goerliAdapter: 0xFCfDC5c65E21A9C1e2967e87e3894B1553b51753
+// pangolinAdapter: 0x05fDd0B601fBcba9320b84894c9801E1A3B6aA9A
+// goerliAdapter: 0xF7f0b8e1cb13EcEd4B49230c9edF81cB5F98913a
 async function main() {
   // PANGOLIN Adapter
   hre.changeNetwork("pangolin");

@@ -9,7 +9,7 @@ async function main() {
   const MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
   const goerliGateway = await MessageGateway.attach(goerliGatewayAddress);
 
-  const tx = await goerliGateway.setAdapterAddress(0, goerliAdapterAddress);
+  const tx = await goerliGateway.addAdapter(1, goerliAdapterAddress);
   console.log(
     `https://goerli.etherscan.io/tx/${(await tx.wait()).transactionHash}`
   );
