@@ -6,6 +6,7 @@ unset SOURCE_CHAIN
 unset TARGET_CHAIN
 unset ETH_RPC_URL
 export SOURCE_CHAIN=darwinia
+export TARGET_CHAIN=ethereum
 
 SOURCE_ETH_FROM=0x7aE77149ed38c5dD313e9069d790Ce7085caf0A6
 TARGET_ETH_FROM=0xa4FA5429544B225985F8438F2E013A9CCE7102f2
@@ -15,8 +16,6 @@ TARGET_DAO=0x4710573B853fDD3561cb4F60EC9394f0155d5105
 . $(dirname $0)/base.sh
 
 ChainMessageCommitter=$(load_staddr "ChainMessageCommitter")
-export TARGET_CHAIN=ethereum
-
 LaneMessageCommitter=$(load_saddr "LaneMessageCommitter")
 EthereumSerialLaneVerifier=$(load_saddr "EthereumSerialLaneVerifier")
 SOURCE_FeeMarketProxy=$(load_saddr "FeeMarketProxy")
