@@ -49,7 +49,7 @@ deploy() {
 
   # estimate gas
   # GAS=$(seth estimate --create "$BYTECODE" "$SIG" $ARGS --chain "$SOURCE_CHAIN" --from "$ETH_FROM")
-  GAS=2000000
+  GAS=6000000
 
   # deploy
   if [[ $SETH_ASYNC = yes ]]; then
