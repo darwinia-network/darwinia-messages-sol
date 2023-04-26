@@ -8,10 +8,11 @@ import "./interfaces/AbstractMessageEndpoint.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 contract MessageGateway is IMessageGateway, Ownable2Step {
+    // TODO: multiple endpoints for a chain.
+    // TODO: default endpoint for a chain.
+    // TODO: dapp registry. dapp config
+    // chainid => endpoint
     mapping(uint16 => address) public endpoints;
-    mapping(address => uint16) public endpointIds;
-    uint16 public endpointCount;
-    address public defaultEndpoint;
     uint16 public immutable chainId;
 
     event FailedMessage(address, uint16, address, bytes, string);
@@ -20,27 +21,19 @@ contract MessageGateway is IMessageGateway, Ownable2Step {
         chainId = _chainId;
     }
 
-    function addEndpoint(address _endpointAddress) external onlyOwner {
-        uint16 endpointId = endpointCount == 0 ? 1 : endpointCount + 1;
-        endpoints[endpointId] = _endpointAddress;
-        endpointIds[_endpointAddress] = endpointId;
-
-        // set default endpoint immediately.
-        setDefaultEndpoint(_endpointAddress);
-
-        endpointCount++;
+    function updateEndpoint(
+        uint16 _chainId,
+        address _endpointAddress
+    ) external onlyOwner {
+        endpoints[_chainId] = _endpointAddress;
     }
 
-    function setDefaultEndpoint(address _endpointAddress) public onlyOwner {
-        // check endpoint id exists.
-        require(endpointIds[_endpointAddress] != 0, "endpoint not exists");
+    function estimateFee(uint16 _toChainId) external view returns (uint256) {
+        address endpointAddress = endpoints[_toChainId];
+        require(endpointAddress != address(0), "endpoint not set");
 
-        defaultEndpoint = _endpointAddress;
-    }
-
-    function estimateFee() external view returns (uint256) {
         AbstractMessageEndpoint endpoint = AbstractMessageEndpoint(
-            defaultEndpoint
+            endpointAddress
         );
         return endpoint.estimateFee();
     }
@@ -51,8 +44,11 @@ contract MessageGateway is IMessageGateway, Ownable2Step {
         address _toDappAddress,
         bytes memory _message
     ) external payable returns (uint256) {
+        address endpointAddress = endpoints[_toChainId];
+        require(endpointAddress != address(0), "endpoint not set");
+
         AbstractMessageEndpoint endpoint = AbstractMessageEndpoint(
-            defaultEndpoint
+            endpointAddress
         );
         uint256 fee = endpoint.estimateFee();
 
@@ -112,8 +108,11 @@ contract MessageGateway is IMessageGateway, Ownable2Step {
             }
         } else {
             // direct message to another chain, (routing)
+            address endpointAddress = endpoints[_toChainId];
+            require(endpointAddress != address(0), "endpoint not set");
+
             AbstractMessageEndpoint endpoint = AbstractMessageEndpoint(
-                defaultEndpoint
+                endpointAddress
             );
             uint256 fee = endpoint.estimateFee();
 

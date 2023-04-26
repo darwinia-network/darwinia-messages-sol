@@ -4,10 +4,10 @@ const hre = require("hardhat");
 async function main() {
   // deploy router
   hre.changeNetwork("pangolin");
-  const PangolinRouterToParachain = await hre.ethers.getContractFactory(
-    "PangolinRouterToParachain"
+  const PangolinRouteToParachainDapp = await hre.ethers.getContractFactory(
+    "PangolinRouteToParachainDapp"
   );
-  const router = await PangolinRouterToParachain.deploy();
+  const router = await PangolinRouteToParachainDapp.deploy();
   await router.deployed();
   console.log(`router: ${router.address}`);
 }

@@ -3,13 +3,20 @@
 pragma solidity 0.8.17;
 
 import "../../interfaces/IMessageReceiver.sol";
+import "../../interfaces/IMessageGateway.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 
-contract PangolinRouterToParachain is IMessageReceiver {
+contract PangolinXcmDapp is IMessageReceiver {
     bytes2 public immutable PANGOLIN_PARAID = 0xe520;
     bytes2 public immutable SEND_CALL_INDEX = 0x2100;
     address public constant DISPATCH =
         0x0000000000000000000000000000000000000401;
+
+    address public gatewayAddress;
+
+    constructor(address _gatewayAddress) {
+        gatewayAddress = _gatewayAddress;
+    }
 
     // message:
     //  - paraId: bytes2 0x711f
@@ -119,5 +126,26 @@ contract PangolinRouterToParachain is IMessageReceiver {
                 ScaleCodec.encodeUintCompact(call.length),
                 call
             );
+    }
+
+    //////////////////////////
+    // To Ethereum
+    //////////////////////////
+    // Call by parachain dapp.
+    // Used in `parachain > darwinia > ethereum`
+    function executeOnEthereum(
+        address target, // address on Ethereum
+        bytes memory call
+    ) external payable returns (uint256 nonce) {
+        uint256 paid = msg.value;
+        IMessageGateway gateway = IMessageGateway(gatewayAddress);
+        uint256 marketFee = gateway.estimateFee(0);
+        require(paid >= marketFee, "the fee is not enough");
+        if (paid > marketFee) {
+            // refund fee to DAPP.
+            payable(msg.sender).transfer(paid - marketFee);
+        }
+
+        return gateway.mgSend{value: marketFee}(0, target, call);
     }
 }

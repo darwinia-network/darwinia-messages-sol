@@ -31,5 +31,5 @@ interface IMessageGateway {
         bytes memory _message
     ) external;
 
-    function estimateFee() external view returns (uint256);
+    function estimateFee(uint16 _toChainId) external view returns (uint256);
 }

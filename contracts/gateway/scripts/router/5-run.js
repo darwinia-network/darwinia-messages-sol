@@ -4,6 +4,7 @@ async function main() {
   const goerliGatewayAddress = process.argv[2];
   const routerAddress = process.argv[3];
 
+  const pangolinChainId = 1;
   // call router from gateway to redirect `call` to rocstar
   hre.changeNetwork("goerli");
   const MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
@@ -12,9 +13,14 @@ async function main() {
     ["bytes2", "bytes", "uint64", "uint128"],
     ["0x711f", "0x0007081234", "5000000000", "20000000000000000000"]
   );
-  const fee = await goerliGateway.estimateFee();
+  const fee = await goerliGateway.estimateFee(pangolinChainId);
   console.log(`fee: ${fee}`);
-  const tx = await goerliGateway.send(routerAddress, message, { value: fee });
+  const tx = await goerliGateway.mgSend(
+    pangolinChainId,
+    routerAddress,
+    message,
+    { value: fee }
+  );
   console.log(
     `https://goerli.etherscan.io/tx/${(await tx.wait()).transactionHash}`
   );
