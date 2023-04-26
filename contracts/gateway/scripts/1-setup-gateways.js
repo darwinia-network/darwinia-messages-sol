@@ -1,21 +1,20 @@
 const hre = require("hardhat");
 
-// goerliGateway: 0x62A24f47D5a4f654feB2D4a1CFC6082cd2D4bE6E
-// pangolinGateway: 0x512A739F0826b9fcD437601A3D364e08428d22C2
+// goerliGateway: 0x2174b56E451FCf324a948332f72D217e16B9f531
+// pangolinGateway: 0xACa20c8b5D34f734DB0B0DA019C17ABEbaD3D378
+// curl -fsS https://pangolin-rpc.darwinia.network -d '{"id":1,"jsonrpc":"2.0","method":"eth_call","params":[{"data":"0x7f18dc85","gas":"0x5b8d80","to":"0xACa20c8b5D34f734DB0B0DA019C17ABEbaD3D378"},"latest"]}' -H 'Content-Type: application/json'
 async function main() {
   console.log("Setting up gateways...");
 
   hre.changeNetwork("goerli");
   let MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
-  const goerliChainId = 0;
-  const goerliGateway = await MessageGateway.deploy(goerliChainId);
+  const goerliGateway = await MessageGateway.deploy();
   await goerliGateway.deployed();
   console.log(` goerliGateway: ${goerliGateway.address}`);
 
   hre.changeNetwork("pangolin");
   MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
-  const pangolinChainId = 1;
-  const pangolinGateway = await MessageGateway.deploy(pangolinChainId);
+  const pangolinGateway = await MessageGateway.deploy();
   await pangolinGateway.deployed();
   console.log(` pangolinGateway: ${pangolinGateway.address}`);
 }

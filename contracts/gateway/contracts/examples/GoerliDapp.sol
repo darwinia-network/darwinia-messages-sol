@@ -13,8 +13,7 @@ contract GoerliDapp {
 
     function remoteAdd(address pangolinDapp) external payable {
         bytes memory message = abi.encode(uint256(2));
-        IMessageGateway(gatewayAddress).mgSend{value: msg.value}(
-            1,
+        IMessageGateway(gatewayAddress).send{value: msg.value}(
             pangolinDapp,
             message
         );

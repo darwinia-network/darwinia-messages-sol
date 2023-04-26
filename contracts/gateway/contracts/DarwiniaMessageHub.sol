@@ -2,11 +2,11 @@
 
 pragma solidity 0.8.17;
 
-import "../../interfaces/IMessageReceiver.sol";
-import "../../interfaces/IMessageGateway.sol";
+import "./interfaces/IMessageReceiver.sol";
+import "./interfaces/IMessageGateway.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 
-contract PangolinXcmDapp is IMessageReceiver {
+contract DarwiniaMessageHub is IMessageReceiver {
     bytes2 public immutable PANGOLIN_PARAID = 0xe520;
     bytes2 public immutable SEND_CALL_INDEX = 0x2100;
     address public constant DISPATCH =
@@ -16,6 +16,10 @@ contract PangolinXcmDapp is IMessageReceiver {
 
     constructor(address _gatewayAddress) {
         gatewayAddress = _gatewayAddress;
+    }
+
+    function fee() external view returns (uint256) {
+        return IMessageGateway(gatewayAddress).estimateFee();
     }
 
     // message:
@@ -139,13 +143,13 @@ contract PangolinXcmDapp is IMessageReceiver {
     ) external payable returns (uint256 nonce) {
         uint256 paid = msg.value;
         IMessageGateway gateway = IMessageGateway(gatewayAddress);
-        uint256 marketFee = gateway.estimateFee(0);
+        uint256 marketFee = gateway.estimateFee();
         require(paid >= marketFee, "the fee is not enough");
         if (paid > marketFee) {
             // refund fee to DAPP.
             payable(msg.sender).transfer(paid - marketFee);
         }
 
-        return gateway.mgSend{value: marketFee}(0, target, call);
+        return gateway.send{value: marketFee}(target, call);
     }
 }

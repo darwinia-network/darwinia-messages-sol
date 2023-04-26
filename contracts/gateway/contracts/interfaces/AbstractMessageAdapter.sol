@@ -4,8 +4,8 @@ pragma solidity 0.8.17;
 
 import "./IMessageGateway.sol";
 
-// endpoint knows hot to send message to remote adapter.
-abstract contract AbstractMessageEndpoint {
+// adapter knows hot to send message to remote adapter.
+abstract contract AbstractMessageAdapter {
     IMessageGateway public immutable localGateway;
 
     constructor(address _localGatewayAddress) {
@@ -16,7 +16,7 @@ abstract contract AbstractMessageEndpoint {
 
     function estimateFee() external view virtual returns (uint256);
 
-    function getRemoteEndpointAddress() public virtual returns (address);
+    function getRemoteAdapterAddress() public virtual returns (address);
 
     function remoteExecute(
         address _remoteAddress,
@@ -26,7 +26,6 @@ abstract contract AbstractMessageEndpoint {
     // called by local gateway
     function epSend(
         address _fromDappAddress,
-        uint16 _toChainId,
         address _toDappAddress,
         bytes calldata _message
     ) external payable returns (uint256) {
@@ -35,37 +34,30 @@ abstract contract AbstractMessageEndpoint {
             msg.sender == address(localGateway),
             "not allowed to be called by others except local gateway"
         );
-        address remoteEndpointAddress = getRemoteEndpointAddress();
-        require(remoteEndpointAddress != address(0), "remote endpoint not set");
+        address remoteAdapterAddress = getRemoteAdapterAddress();
+        require(remoteAdapterAddress != address(0), "remote adapter not set");
 
         return
             remoteExecute(
-                // the remote endpoint
-                remoteEndpointAddress,
-                // the call to be executed on remote endpoint
+                // the remote adapter
+                remoteAdapterAddress,
+                // the call to be executed on remote adapter
                 abi.encodeWithSignature(
-                    "epRecv(address,uint16,address,bytes)",
+                    "epRecv(address,address,bytes)",
                     _fromDappAddress,
-                    _toChainId,
                     _toDappAddress,
                     _message
                 )
             );
     }
 
-    // called by remote endpoint through low level messaging contract
+    // called by remote adapter through low level messaging contract
     function epRecv(
         address _fromDappAddress,
-        uint16 _toChainId,
         address _toDappAddress,
         bytes memory _message
     ) external {
         // call local gateway to receive message
-        localGateway.mgRecv(
-            _fromDappAddress,
-            _toChainId,
-            _toDappAddress,
-            _message
-        );
+        localGateway.recv(_fromDappAddress, _toDappAddress, _message);
     }
 }

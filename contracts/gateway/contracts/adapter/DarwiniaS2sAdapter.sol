@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "../interfaces/AbstractMessageEndpoint.sol";
+import "../interfaces/AbstractMessageAdapter.sol";
+
 import "@darwinia/contracts-periphery/contracts/s2s/interfaces/IMessageEndpoint.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-contract DarwiniaS2sEndpoint is AbstractMessageEndpoint, Ownable2Step {
+contract DarwiniaS2sEndpoint is AbstractMessageAdapter, Ownable2Step {
     address public remoteEndpointAddress;
     address public immutable darwiniaEndpointAddress;
     uint32 public specVersion = 6021;
@@ -14,7 +15,7 @@ contract DarwiniaS2sEndpoint is AbstractMessageEndpoint, Ownable2Step {
     constructor(
         address gatewayAddress,
         address _darwiniaEndpointAddress
-    ) AbstractMessageEndpoint(gatewayAddress) {
+    ) AbstractMessageAdapter(gatewayAddress) {
         darwiniaEndpointAddress = _darwiniaEndpointAddress;
     }
 
@@ -32,7 +33,7 @@ contract DarwiniaS2sEndpoint is AbstractMessageEndpoint, Ownable2Step {
         gasLimit = _gasLimit;
     }
 
-    function getRemoteEndpointAddress() public override returns (address) {
+    function getRemoteAdapterAddress() public override returns (address) {
         return remoteEndpointAddress;
     }
 

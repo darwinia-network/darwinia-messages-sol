@@ -13,8 +13,7 @@ contract S2sPangolinDapp {
 
     function remoteAdd(address pangoroDapp) external payable {
         bytes memory message = abi.encode(uint256(2));
-        IMessageGateway(gatewayAddress).mgSend{value: msg.value}(
-            1,
+        IMessageGateway(gatewayAddress).send{value: msg.value}(
             pangoroDapp,
             message
         );

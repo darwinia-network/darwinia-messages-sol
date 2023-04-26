@@ -2,18 +2,18 @@
 
 pragma solidity 0.8.17;
 
-import "../interfaces/AbstractMessageEndpoint.sol";
+import "../interfaces/AbstractMessageAdapter.sol";
 import "@darwinia/contracts-bridge/src/interfaces/IOutboundLane.sol";
 import "@darwinia/contracts-bridge/src/interfaces/IFeeMarket.sol";
 import "@darwinia/contracts-bridge/src/interfaces/ICrossChainFilter.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-contract DarwiniaEndpoint is
-    AbstractMessageEndpoint,
+contract DarwiniaAdapter is
+    AbstractMessageAdapter,
     ICrossChainFilter,
     Ownable2Step
 {
-    address public remoteEndpointAddress;
+    address public remoteAdapterAddress;
     address public immutable outboundLane;
     address public immutable feeMarket;
 
@@ -21,22 +21,22 @@ contract DarwiniaEndpoint is
         address gatewayAddress,
         address _outboundLane,
         address _feeMarket
-    ) AbstractMessageEndpoint(gatewayAddress) {
+    ) AbstractMessageAdapter(gatewayAddress) {
         outboundLane = _outboundLane;
         feeMarket = _feeMarket;
     }
 
-    function setRemoteEndpointAddress(
-        address _remoteEndpointAddress
+    function setRemoteAdapterAddress(
+        address _remoteAdapterAddress
     ) external onlyOwner {
-        remoteEndpointAddress = _remoteEndpointAddress;
+        remoteAdapterAddress = _remoteAdapterAddress;
     }
 
     //////////////////////////////////////////
-    // override AbstractMessageEndpoint
+    // override AbstractMessageAdapter
     //////////////////////////////////////////
-    function getRemoteEndpointAddress() public override returns (address) {
-        return remoteEndpointAddress;
+    function getRemoteAdapterAddress() public override returns (address) {
+        return remoteAdapterAddress;
     }
 
     function remoteExecute(
@@ -64,8 +64,8 @@ contract DarwiniaEndpoint is
     ) external view returns (bool) {
         // check remote adapter address is set.
         // this check is not necessary, but it can provide an more understandable err.
-        require(remoteEndpointAddress != address(0), "!remote adapter");
+        require(remoteAdapterAddress != address(0), "!remote adapter");
 
-        return sourceAccount == remoteEndpointAddress;
+        return sourceAccount == remoteAdapterAddress;
     }
 }

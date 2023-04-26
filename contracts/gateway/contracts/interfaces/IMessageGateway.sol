@@ -18,18 +18,23 @@
 pragma solidity 0.8.17;
 
 interface IMessageGateway {
-    function mgSend(
-        uint16 _toChainId,
+    event FailedMessage(
+        address fromDappAddress,
+        address toDappAddress,
+        bytes message,
+        string reason
+    );
+
+    function send(
         address _toDappAddress,
         bytes memory _message
     ) external payable returns (uint256);
 
-    function mgRecv(
+    function recv(
         address _fromDappAddress,
-        uint16 _toChainId,
         address _toDappAddress,
         bytes memory _message
     ) external;
 
-    function estimateFee(uint16 _toChainId) external view returns (uint256);
+    function estimateFee() external view returns (uint256);
 }
