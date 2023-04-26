@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
-set -e
+set -eo pipefail
 
-export SOURCE_CHAIN=goerli
-export TARGET_CHAIN=pangolin
-export SETH_CHAIN=goerli
+unset SOURCE_CHAIN
+unset TARGET_CHAIN
+export SOURCE_CHAIN=${from:?"!from"}
+export TARGET_CHAIN=${to:?"!to"}
+export SETH_CHAIN=$SOURCE_CHAIN
 
 # export DAPP_VERBOSE=1
 
