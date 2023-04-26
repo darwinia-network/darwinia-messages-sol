@@ -149,14 +149,16 @@ RELAYERS=$(load_conf ".LightClient.relayers")
 relayers="$(parse_relayers $RELAYERS)"
 THRESHOLD=$(load_conf ".LightClient.threshold")
 NONCE=$(load_conf ".LightClient.nonce")
+POSALIGHTCLIENT_DOMAIN_SEPARATOR=$(seth call "$POSALightClient" 'domain_separator()(bytes32)' --chain $SOURCE_CHAIN)
 POSALIGHTCLIENT_BLOCK_NUMBER=$(seth call "$POSALightClient" 'block_number()(uint)' --chain $SOURCE_CHAIN)
 POSALIGHTCLIENT_MERKLE_ROOT=$(seth call "$POSALightClient" 'merkle_root()(bytes32)' --chain $SOURCE_CHAIN)
 POSALIGHTCLIENT_NONCE=$(seth call "$POSALightClient" 'nonce()(uint)' --chain $SOURCE_CHAIN)
 POSALIGHTCLIENT_THRESHOLD=$(seth call "$POSALightClient" 'get_threshold()(uint)' --chain $SOURCE_CHAIN)
-check  "POSALIGHTCLIENT_BLOCK_NUMBER"  "ZERO"
-check  "POSALIGHTCLIENT_MERKLE_ROOT"   "ZERO_HASH"
-check  "POSALIGHTCLIENT_THRESHOLD"     "THRESHOLD"
-check  "POSALIGHTCLIENT_NONCE"         "NONCE"
+check  "POSALIGHTCLIENT_DOMAIN_SEPARATOR" "DOMAIN_SEPARATOR"
+check  "POSALIGHTCLIENT_BLOCK_NUMBER"     "ZERO"
+check  "POSALIGHTCLIENT_MERKLE_ROOT"      "ZERO_HASH"
+check  "POSALIGHTCLIENT_THRESHOLD"        "THRESHOLD"
+check  "POSALIGHTCLIENT_NONCE"            "NONCE"
 for r in $relayers
 do
   check_is_relayer $r
