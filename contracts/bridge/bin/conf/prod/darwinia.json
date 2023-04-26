@@ -56,8 +56,6 @@
     "duty_ratio": "20"
   },
   "LightClient": {
-    "beacon": {
-    },
     "bls_precompile": "0x0000000000000000000000000000000000000800",
     "slot": "6299648",
     "proposer_index": "229152",

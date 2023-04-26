@@ -6,6 +6,7 @@ unset SOURCE_CHAIN
 unset TARGET_CHAIN
 unset ETH_RPC_URL
 export SOURCE_CHAIN=${from:?"!from"}
+export TARGET_CHAIN=${to:?"!to"}
 
 echo "ETH_FROM: ${ETH_FROM}"
 
@@ -13,8 +14,6 @@ echo "ETH_FROM: ${ETH_FROM}"
 . $(dirname $0)/base.sh
 
 BridgeProxyAdmin=$(load_staddr "BridgeProxyAdmin")
-
-export TARGET_CHAIN=${to:?"!to"}
 
 # goerli to pangolin bridge config
 # this_chain_pos=1
