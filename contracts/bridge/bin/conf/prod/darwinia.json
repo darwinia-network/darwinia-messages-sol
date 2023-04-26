@@ -56,14 +56,16 @@
     "duty_ratio": "20"
   },
   "LightClient": {
+    "beacon": {
+    },
     "bls_precompile": "0x0000000000000000000000000000000000000800",
-    "slot": "5433408",
-    "proposer_index": "338940",
-    "parent_root": "0xf7c0374ad89d9a28f6708bd7b02af59a7a2ed2463a4ef191aa55cdf6cf8001b2",
-    "state_root": "0x9840d388c38172332553e9445e7fd64185aba5212026d22dce5efccf41d5663d",
-    "body_root": "0x4b6cc5f729ae6a9d57f6b912d655467627ce4d057f10a1d0a8ad5f68c5c1a2e9",
-    "current_sync_committee_hash": "0x4bcc8065b1462577a9971110aaa3ea5630ce3e6bc0ecb53e54777ce7d4a5e816",
-    "genesis_validators_root": "0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb",
+    "slot": "6299648",
+    "proposer_index": "229152",
+    "parent_root": "0xa4c337a4cbf5a19d7f67afa9a7156793bf02c9b22f71652c9a38659a398b2827",
+    "state_root": "0xd7e39cafbab9f5c18365b98275e0d6002d3e6e7411798d7ac6facf8df54416a8",
+    "body_root": "0xeeddf25887ced12ed2683947455281f0caded03c4f27d65c9389819216029846",
+    "current_sync_committee_hash": "0xbb8d1db5911ea3336e5bb84a315cfdf3bc976450dd53839e4b750c41222f763c",
+    "genesis_validators_root": "0x4b363db94e286120d76eb905340fdd4e54bfe9f06bf33ff6cf5ad27f511bfe95",
     "mandatory_reward": "30000000000000000000"
   }
 }
