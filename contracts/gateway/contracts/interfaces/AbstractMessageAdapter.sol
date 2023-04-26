@@ -12,8 +12,6 @@ abstract contract AbstractMessageAdapter {
         localGateway = IMessageGateway(_localGatewayAddress);
     }
 
-    event FailedMessage(address from, address to, bytes message, string reason);
-
     function estimateFee() external view virtual returns (uint256);
 
     function getRemoteAdapterAddress() public virtual returns (address);

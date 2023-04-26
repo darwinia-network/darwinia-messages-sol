@@ -22,8 +22,11 @@ contract DarwiniaMessageHub is IMessageReceiver {
         return IMessageGateway(gatewayAddress).estimateFee();
     }
 
-    // message:
-    //  - paraId: bytes2 0x711f
+    //////////////////////////
+    // To Ethereum
+    //////////////////////////
+    // message format:
+    //  - paraId: bytes2
     //  - call: bytes
     //  - weight: uint64
     //  - fungible: uint128
@@ -137,19 +140,19 @@ contract DarwiniaMessageHub is IMessageReceiver {
     //////////////////////////
     // Call by parachain dapp.
     // Used in `parachain > darwinia > ethereum`
-    function executeOnEthereum(
-        address target, // address on Ethereum
-        bytes memory call
+    function send(
+        address _toDappAddress, // address on Ethereum
+        bytes calldata _message
     ) external payable returns (uint256 nonce) {
         uint256 paid = msg.value;
         IMessageGateway gateway = IMessageGateway(gatewayAddress);
-        uint256 marketFee = gateway.estimateFee();
-        require(paid >= marketFee, "the fee is not enough");
-        if (paid > marketFee) {
+        uint256 fee = gateway.estimateFee();
+        require(paid >= fee, "the fee is not enough");
+        if (paid > fee) {
             // refund fee to DAPP.
-            payable(msg.sender).transfer(paid - marketFee);
+            payable(msg.sender).transfer(paid - fee);
         }
 
-        return gateway.send{value: marketFee}(target, call);
+        return gateway.send{value: fee}(_toDappAddress, _message);
     }
 }

@@ -47,7 +47,7 @@ contract MessageGateway is IMessageGateway, Ownable2Step {
 
     event ReceivedMessage(address, address, bytes);
 
-    // called by endpoint.
+    // called by adapter.
     function recv(
         address _fromDappAddress,
         address _toDappAddress,
