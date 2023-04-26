@@ -47,7 +47,7 @@
     "this_chain_pos": 0
   },
   "FeeMarket": {
-    "vault": "0xBd1a110ec476b4775c43905000288881367B1a88",
+    "vault": "0xB29DA7C1b1514AB342afbE6AB915252Ad3f87E4d",
     "collateral_perorder": "6000000000000000000000",
     "assigned_relayers_number": "1",
     "slash_time": "10800",

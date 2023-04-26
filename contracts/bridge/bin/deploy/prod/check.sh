@@ -7,9 +7,9 @@ export Chain1=ethereum
 
 # 0
 (from=$Chain0 to=$Chain1 \
-  dao=0xBd1a110ec476b4775c43905000288881367B1a88 \
+  dao=0xB29DA7C1b1514AB342afbE6AB915252Ad3f87E4d \
 . $(dirname $0)/deploy/check-darwinia.sh)
 
 (from=$Chain1 to=$Chain0 \
-  dao=0x4710573B853fDD3561cb4F60EC9394f0155d5105 \
+  dao=0xFfD0a972E371B8cFE34b8C9176CE77C0fF8D43e1 \
 . $(dirname $0)/deploy/check-ethereum.sh)
