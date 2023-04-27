@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 
-// hub: 0x1F7E9D02cA0813A35b707f88440024Bf3baB5355
+// hub: 0x30Af3Ac3a7C74083c9F47E4d54722cEc760f4237
 async function main() {
   const pangolinGatewayAddress = process.argv[2];
 
@@ -9,7 +9,11 @@ async function main() {
   const DarwiniaMessageHub = await hre.ethers.getContractFactory(
     "DarwiniaMessageHub"
   );
-  const hub = await DarwiniaMessageHub.deploy(pangolinGatewayAddress);
+  const hub = await DarwiniaMessageHub.deploy(
+    "0xe520", // pangolin parachain id
+    "0x2100", // polkadotXcm.send call index
+    pangolinGatewayAddress
+  );
   await hub.deployed();
   console.log(`hub: ${hub.address}`);
 }
