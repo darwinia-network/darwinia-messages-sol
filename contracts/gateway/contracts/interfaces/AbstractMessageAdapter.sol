@@ -12,15 +12,29 @@ abstract contract AbstractMessageAdapter {
         localGateway = IMessageGateway(_localGatewayAddress);
     }
 
-    function estimateFee() external view virtual returns (uint256);
+    ////////////////////////////////////////
+    // Abstract functions
+    ////////////////////////////////////////
+    // For receiving
+    function allowedReceiving(
+        address _fromDappAddress,
+        address _toDappAddress,
+        bytes memory _message
+    ) internal virtual returns (bool);
 
-    function getRemoteAdapterAddress() public virtual returns (address);
-
+    // For sending
     function remoteExecute(
         address _remoteAddress,
         bytes memory _remoteCallData
     ) internal virtual returns (uint256);
 
+    function estimateFee() external view virtual returns (uint256);
+
+    function getRemoteAdapterAddress() public virtual returns (address);
+
+    ////////////////////////////////////////
+    // Public functions
+    ////////////////////////////////////////
     // called by local gateway
     function epSend(
         address _fromDappAddress,
@@ -55,6 +69,11 @@ abstract contract AbstractMessageAdapter {
         address _toDappAddress,
         bytes memory _message
     ) external {
+        require(
+            allowedReceiving(_fromDappAddress, _toDappAddress, _message),
+            "!allowedReceiving"
+        );
+
         // call local gateway to receive message
         localGateway.recv(_fromDappAddress, _toDappAddress, _message);
     }

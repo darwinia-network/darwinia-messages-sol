@@ -15,14 +15,17 @@ contract DarwiniaAdapter is
 {
     address public remoteAdapterAddress;
     address public immutable outboundLane;
+    address public immutable inboundLane;
     address public immutable feeMarket;
 
     constructor(
         address gatewayAddress,
         address _outboundLane,
+        address _inboundLane,
         address _feeMarket
     ) AbstractMessageAdapter(gatewayAddress) {
         outboundLane = _outboundLane;
+        inboundLane = _inboundLane;
         feeMarket = _feeMarket;
     }
 
@@ -35,22 +38,34 @@ contract DarwiniaAdapter is
     //////////////////////////////////////////
     // override AbstractMessageAdapter
     //////////////////////////////////////////
-    function getRemoteAdapterAddress() public override returns (address) {
+    function getRemoteAdapterAddress() public view override returns (address) {
         return remoteAdapterAddress;
-    }
-
-    function remoteExecute(
-        address _remoteAddress,
-        bytes memory _remoteCallData
-    ) internal override returns (uint256) {
-        IOutboundLane(outboundLane).send_message{value: msg.value}(
-            _remoteAddress,
-            _remoteCallData
-        );
     }
 
     function estimateFee() external view override returns (uint256) {
         return IFeeMarket(feeMarket).market_fee();
+    }
+
+    // For sending
+    function remoteExecute(
+        address _remoteAddress,
+        bytes memory _remoteCallData
+    ) internal override returns (uint256) {
+        return
+            IOutboundLane(outboundLane).send_message{value: msg.value}(
+                _remoteAddress,
+                _remoteCallData
+            );
+    }
+
+    // For receiving
+    function allowedReceiving(
+        address _fromDappAddress,
+        address _toDappAddress,
+        bytes memory _message
+    ) internal view override returns (bool) {
+        require(msg.sender == inboundLane, "!inboundLane");
+        return true;
     }
 
     //////////////////////////////////////////

@@ -53,4 +53,12 @@ contract DarwiniaS2sEndpoint is AbstractMessageAdapter, Ownable2Step {
     function estimateFee() external view override returns (uint256) {
         return IMessageEndpoint(darwiniaEndpointAddress).fee();
     }
+
+    function allowedReceiving(
+        address _fromDappAddress,
+        address _toDappAddress,
+        bytes memory _message
+    ) internal override returns (bool) {
+        return true;
+    }
 }
