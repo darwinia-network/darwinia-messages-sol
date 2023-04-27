@@ -7,50 +7,73 @@ import "./interfaces/IMessageGateway.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 
 contract DarwiniaMessageHub is IMessageReceiver {
-    bytes2 public immutable PANGOLIN_PARAID = 0xe520;
-    bytes2 public immutable SEND_CALL_INDEX = 0x2100;
+    bytes2 public immutable DARWINIA_PARAID;
+    bytes2 public immutable SEND_CALL_INDEX;
     address public constant DISPATCH =
         0x0000000000000000000000000000000000000401;
 
-    address public gatewayAddress;
+    address public immutable GATEWAY_ADDRESS;
 
-    constructor(address _gatewayAddress) {
-        gatewayAddress = _gatewayAddress;
+    constructor(
+        bytes2 _darwiniaParaId,
+        bytes2 _sendCallIndex,
+        address _gatewayAddress
+    ) {
+        DARWINIA_PARAID = _darwiniaParaId;
+        SEND_CALL_INDEX = _sendCallIndex;
+        GATEWAY_ADDRESS = _gatewayAddress;
     }
 
     function fee() external view returns (uint256) {
-        return IMessageGateway(gatewayAddress).estimateFee();
+        return IMessageGateway(GATEWAY_ADDRESS).estimateFee();
     }
 
     //////////////////////////
-    // To Ethereum
+    // To Parachain
     //////////////////////////
     // message format:
     //  - paraId: bytes2
     //  - call: bytes
-    //  - weight: uint64
+    //  - refTime: uint64
+    //  - proofSize: uint64
     //  - fungible: uint128
     function recv(address _fromDappAddress, bytes calldata _message) external {
         (
             bytes2 paraId,
             bytes memory call,
-            uint64 weight,
+            uint64 refTime,
+            uint64 proofSize,
             uint128 fungible
-        ) = abi.decode(_message, (bytes2, bytes, uint64, uint128));
+        ) = abi.decode(_message, (bytes2, bytes, uint64, uint64, uint128));
+        require(
+            msg.sender == GATEWAY_ADDRESS,
+            "DarwiniaMessageHub: only accept message from gateway"
+        );
 
-        transactOn(paraId, call, weight, fungible);
+        transactOnParachain(
+            paraId,
+            _fromDappAddress,
+            call,
+            refTime,
+            proofSize,
+            fungible
+        );
     }
 
-    function transactOn(
+    function transactOnParachain(
         bytes2 paraId,
+        address fromDappAddress,
         bytes memory call,
-        uint64 weight,
+        uint64 refTime,
+        uint64 proofSize,
         uint128 fungible
     ) internal {
         bytes memory message = buildXcmPayload(
-            PANGOLIN_PARAID,
+            DARWINIA_PARAID,
+            fromDappAddress,
             call,
-            weight,
+            refTime,
+            proofSize,
             fungible
         );
 
@@ -79,57 +102,39 @@ contract DarwiniaMessageHub is IMessageReceiver {
 
     function buildXcmPayload(
         bytes2 fromParachain,
+        address fromDappAddress,
         bytes memory call,
-        uint64 callWeight,
+        uint64 refTime,
+        uint64 proofSize,
         uint128 fungible
     ) internal pure returns (bytes memory) {
-        // xcm_version: 2
-        // instructions:
-        //
-        //   - instruction: withdraw_asset
-        //     assets:
-        //       - &ring
-        //         id:
-        //           concrete:
-        //             parents: 01,
-        //             interior:
-        //               X2:
-        //                 - parachain: #{fromParachain}
-        //                 - pallet_instance: 5
-        //         fun:
-        //           fungible: #{fungible}
-        //
-        //   - instruction: buy_execution
-        //     fees: *ring
-        //     weight_limit: unlimited
-        //
-        //   - instruction: transact
-        //     origin_type: 1
-        //     require_weight_at_most: #{callWeight}
-        //     call: #{call}
-        //
-        bytes memory funEncoded = ScaleCodec.encodeUintCompact(fungible);
+        bytes memory fungibleEncoded = ScaleCodec.encodeUintCompact(fungible);
         return
             abi.encodePacked(
                 // XcmVersion + Instruction Length
-                hex"020c",
+                hex"0310",
+                // DescendOrigin
+                // --------------------------
+                hex"0b010300",
+                fromDappAddress,
                 // WithdrawAsset
                 // --------------------------
                 hex"000400010200",
                 fromParachain,
                 hex"040500",
-                funEncoded,
+                fungibleEncoded,
                 // BuyExecution
                 // --------------------------
                 hex"1300010200",
                 fromParachain,
                 hex"040500",
-                funEncoded,
+                fungibleEncoded,
                 hex"00", // weight limit
                 // Transact
                 // --------------------------
                 hex"0601",
-                ScaleCodec.encodeUintCompact(callWeight),
+                ScaleCodec.encodeUintCompact(refTime),
+                ScaleCodec.encodeUintCompact(proofSize),
                 ScaleCodec.encodeUintCompact(call.length),
                 call
             );
@@ -138,21 +143,19 @@ contract DarwiniaMessageHub is IMessageReceiver {
     //////////////////////////
     // To Ethereum
     //////////////////////////
-    // Call by parachain dapp.
-    // Used in `parachain > darwinia > ethereum`
     function send(
         address _toDappAddress, // address on Ethereum
         bytes calldata _message
     ) external payable returns (uint256 nonce) {
         uint256 paid = msg.value;
-        IMessageGateway gateway = IMessageGateway(gatewayAddress);
-        uint256 fee = gateway.estimateFee();
-        require(paid >= fee, "the fee is not enough");
-        if (paid > fee) {
+        IMessageGateway gateway = IMessageGateway(GATEWAY_ADDRESS);
+        uint256 marketFee = gateway.estimateFee();
+        require(paid >= marketFee, "the fee is insufficient");
+        if (paid > marketFee) {
             // refund fee to DAPP.
-            payable(msg.sender).transfer(paid - fee);
+            payable(msg.sender).transfer(paid - marketFee);
         }
 
-        return gateway.send{value: fee}(_toDappAddress, _message);
+        return gateway.send{value: marketFee}(_toDappAddress, _message);
     }
 }

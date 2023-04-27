@@ -9,8 +9,8 @@ async function main() {
   const MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
   const goerliGateway = MessageGateway.attach(goerliGatewayAddress);
   const message = hre.ethers.utils.defaultAbiCoder.encode(
-    ["bytes2", "bytes", "uint64", "uint128"],
-    ["0x591f", "0x0007081234", "5000000000", "20000000000000000000"]
+    ["bytes2", "bytes", "uint64", "uint64", "uint128"],
+    ["0x591f", "0x0a070c313233", "5000000000", "65536", "20000000000000000000"]
   );
   const fee = await goerliGateway.estimateFee();
   console.log(`fee: ${fee}`);
