@@ -51,6 +51,7 @@ contract MessageGateway is IMessageGateway, Ownable2Step {
         address _toDappAddress,
         bytes memory _message
     ) external {
+        require(msg.sender == adapterAddress, "!adapter");
         try
             IMessageReceiver(_toDappAddress).recv(_fromDappAddress, _message)
         {} catch Error(string memory reason) {
