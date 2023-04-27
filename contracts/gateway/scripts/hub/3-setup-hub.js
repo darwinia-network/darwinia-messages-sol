@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 
-// hub: 0xB8537c5e9E8A01897A1F8f125d46bA9DDd87da66
+// hub: 0x1F7E9D02cA0813A35b707f88440024Bf3baB5355
 async function main() {
   const pangolinGatewayAddress = process.argv[2];
 

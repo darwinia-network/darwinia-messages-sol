@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
-// goerliAdapter: 0x2e997D5399644e612bf73b383d77EE9963bf659E
-// pangolinAdapter: 0xb07246294569711442bEf401a195fD01A06F1314
+// goerliAdapter: 0xf761709777A4aa1b71570524869B1876fEafCB2e
+// pangolinAdapter: 0x5B33B27765342c9c178Bf49c1Ef41DCA5bE9e26D
 async function main() {
   const goerliGatewayAddress = process.argv[2];
   const pangolinGatewayAddress = process.argv[3];

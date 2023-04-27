@@ -45,31 +45,29 @@ contract MessageGateway is IMessageGateway, Ownable2Step {
             endpoint.epSend{value: fee}(msg.sender, _toDappAddress, _message);
     }
 
-    event ReceivedMessage(address, address, bytes);
-
     // called by adapter.
     function recv(
         address _fromDappAddress,
         address _toDappAddress,
         bytes memory _message
     ) external {
-        try IMessageReceiver(_toDappAddress).recv(_fromDappAddress, _message) {
-            // call user's receive function successfully.
-        } catch Error(string memory reason) {
+        try
+            IMessageReceiver(_toDappAddress).recv(_fromDappAddress, _message)
+        {} catch Error(string memory reason) {
             // call user's receive function failed by uncaught error.
             // store the message and error for the user to do something like retry.
-            emit FailedMessage(
+            emit DappErrCatched(
                 _fromDappAddress,
                 _toDappAddress,
                 _message,
                 reason
             );
-        } catch (bytes memory lowLevelData) {
-            emit FailedMessage(
+        } catch (bytes memory reason) {
+            emit DappErrCatchedBytes(
                 _fromDappAddress,
                 _toDappAddress,
                 _message,
-                string(lowLevelData)
+                reason
             );
         }
     }

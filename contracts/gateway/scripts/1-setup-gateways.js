@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
-// goerliGateway: 0x2174b56E451FCf324a948332f72D217e16B9f531
-// pangolinGateway: 0xACa20c8b5D34f734DB0B0DA019C17ABEbaD3D378
+//  goerliGateway: 0xf8C32d68C60Af40dEDa3E36C7AB64958Ba188394
+//  pangolinGateway: 0x0b2230d4d9fC4b3e6D9194c3D4FFAf43a433bD62
 // curl -fsS https://pangolin-rpc.darwinia.network -d '{"id":1,"jsonrpc":"2.0","method":"eth_call","params":[{"data":"0x7f18dc85","gas":"0x5b8d80","to":"0xACa20c8b5D34f734DB0B0DA019C17ABEbaD3D378"},"latest"]}' -H 'Content-Type: application/json'
 async function main() {
   console.log("Setting up gateways...");

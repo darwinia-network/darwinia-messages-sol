@@ -18,11 +18,17 @@
 pragma solidity 0.8.17;
 
 interface IMessageGateway {
-    event FailedMessage(
-        address fromDappAddress,
-        address toDappAddress,
-        bytes message,
-        string reason
+    event DappErrCatched(
+        address _fromDappAddress,
+        address _toDappAddress,
+        bytes _message,
+        string _reason
+    );
+    event DappErrCatchedBytes(
+        address _fromDappAddress,
+        address _toDappAddress,
+        bytes _message,
+        bytes _data
     );
 
     function send(
