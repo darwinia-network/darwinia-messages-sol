@@ -18,8 +18,8 @@ abstract contract MessageEndpoint {
     // remote smart chain id
     uint64 public remoteSmartChainId;
 
-    // 1 gas ~= 40_000 weight
-    uint64 public constant REMOTE_WEIGHT_PER_GAS = 40_000;
+    // 1 gas ~= 18_750 weight
+    uint64 public constant REMOTE_WEIGHT_PER_GAS = 18_750;
 
     // LOCAL
     // storage keys
