@@ -79,7 +79,7 @@ contract EcdsaAuthority {
         require(_threshold <= _relayers.length, "!threshold");
         // There has to be at least one relayer.
         require(_threshold >= 1, "0");
-        for (uint256 i = 0; i < _relayers.length; i++) {
+        for (uint256 i = 0; i < _relayers.length; ) {
             // Relayer address cannot be null.
             address r = _relayers[i];
             require(r != address(0) && r != address(this), "!relayer");

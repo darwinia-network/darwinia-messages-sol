@@ -2,8 +2,8 @@
 
 set -eo pipefail
 
-export Chain0=pangolin
-export Chain1=goerli
+export Chain0=darwinia
+export Chain1=ethereum
 
 (from=$Chain0 to=$Chain1 \
 . $(dirname $0)/verify/darwinia.sh)

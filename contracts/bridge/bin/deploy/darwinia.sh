@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eo pipefail
 
 unset SOURCE_CHAIN
 unset TARGET_CHAIN
@@ -10,9 +10,9 @@ export SOURCE_CHAIN=${from:?"!from"}
 echo "ETH_FROM: ${ETH_FROM}"
 
 # import the deployment helpers
-. $(dirname $0)/common.sh
+. $(dirname $0)/base.sh
 
-BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
+BridgeProxyAdmin=$(load_staddr "BridgeProxyAdmin")
 
 ChainMessageCommitter=$(deploy ChainMessageCommitter)
 
@@ -100,7 +100,7 @@ SerialInboundLane=$(deploy SerialInboundLane \
   $max_gas_per_message)
 
 LaneMessageCommitter=$(deploy LaneMessageCommitter $this_chain_pos $bridged_chain_pos)
-seth send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $SerialOutboundLane $SerialInboundLane --chain $SOURCE_CHAIN
-seth send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter --chain $SOURCE_CHAIN
+SETH_CHAIN=$SOURCE_CHAIN send -F $ETH_FROM $LaneMessageCommitter "registry(address,address)" $SerialOutboundLane $SerialInboundLane --chain $SOURCE_CHAIN
+SETH_CHAIN=$SOURCE_CHAIN send -F $ETH_FROM $ChainMessageCommitter "registry(address)" $LaneMessageCommitter --chain $SOURCE_CHAIN
 
-seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN
+SETH_CHAIN=$SOURCE_CHAIN send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN

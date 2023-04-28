@@ -1,20 +1,19 @@
 #!/usr/bin/env bash
 
-set -e
+set -eo pipefail
 
 unset SOURCE_CHAIN
 unset TARGET_CHAIN
 unset ETH_RPC_URL
 export SOURCE_CHAIN=${from:?"!from"}
+export TARGET_CHAIN=${to:?"!to"}
 
 echo "ETH_FROM: ${ETH_FROM}"
 
 # import the deployment helpers
-. $(dirname $0)/common.sh
+. $(dirname $0)/base.sh
 
-BridgeProxyAdmin=$(deploy BridgeProxyAdmin)
-
-export TARGET_CHAIN=${to:?"!to"}
+BridgeProxyAdmin=$(load_staddr "BridgeProxyAdmin")
 
 # goerli to pangolin bridge config
 # this_chain_pos=1
@@ -97,9 +96,8 @@ SerialInboundLane=$(deploy SerialInboundLane \
   0 0 \
   $max_gas_per_message)
 
-seth send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN
+SETH_CHAIN=$SOURCE_CHAIN send -F $ETH_FROM $FeeMarketProxy "setOutbound(address,uint)" $SerialOutboundLane 1 --chain $SOURCE_CHAIN
 
-EthereumSerialLaneVerifier=$(jq -r ".[\"$SOURCE_CHAIN\"].EthereumSerialLaneVerifier" "$PWD/bin/addr/$MODE/$TARGET_CHAIN.json")
-
-seth send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
+EthereumSerialLaneVerifier=$(load_taddr "EthereumSerialLaneVerifier")
+SETH_CHAIN=$TARGET_CHAIN send -F $ETH_FROM $EthereumSerialLaneVerifier "registry(uint,address,uint,address)" \
   $outlane_id $SerialOutboundLane $inlane_id $SerialInboundLane --chain $TARGET_CHAIN

@@ -5,11 +5,11 @@ set -eo pipefail
 export Chain0=pangolin
 export Chain1=goerli
 
-. $(dirname $0)/nonce.sh
-
 # 0
 (from=$Chain0 to=$Chain1 \
-. $(dirname $0)/deploy/darwinia.sh)
+  dao=$ETH_FROM \
+. $(dirname $0)/deploy/check-darwinia.sh)
 
 (from=$Chain1 to=$Chain0 \
-. $(dirname $0)/deploy/ethereum.sh)
+  dao=$ETH_FROM \
+. $(dirname $0)/deploy/check-ethereum.sh)

@@ -51,6 +51,8 @@ migrate     :; @./bin/migrate.sh $(mode)
 verify      :; @./bin/verify.sh $(mode)
 # status
 stats       :; @./bin/stats.sh $(mode)
+# check
+check       :; @./bin/check.sh $(mode)
 
 # Local testnet starter
 local-testnet :; @./bin/start-services.sh

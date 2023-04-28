@@ -24,7 +24,7 @@ then
   export DAPP_TEST_MAX_ITERATIONS=6
   export DAPP_TEST_VERBOSITY=0
 else
-  export DAPP_SOLC=/nix/store/ywqbzx3y85y533x4phzkacpcr31rxy0r-solc-static-0.8.17
+  export DAPP_SOLC=/nix/store/ywqbzx3y85y533x4phzkacpcr31rxy0r-solc-static-0.8.17/bin/solc-0.8.17
   export DAPP_TEST_FUZZ_RUNS=100
   export DAPP_TEST_MAX_ITERATIONS=3
   export DAPP_TEST_VERBOSITY=3
