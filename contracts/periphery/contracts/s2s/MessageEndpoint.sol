@@ -48,13 +48,6 @@ abstract contract MessageEndpoint {
     ///////////////////////////////
     // Outbound
     ///////////////////////////////
-    function remoteExecute(
-        uint32 pangolinSpecVersion,
-        address callReceiver,
-        bytes calldata callPayload,
-        uint256 gasLimit
-    ) external payable virtual returns (uint256);
-
     function fee() public view returns (uint128) {
         return MessageLib.marketFee(STORAGE_ADDRESS, storageKeyForMarketFee);
     }

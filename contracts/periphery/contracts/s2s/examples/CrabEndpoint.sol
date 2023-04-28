@@ -34,7 +34,7 @@ contract CrabEndpoint is MessageEndpoint(0, 0x64616362, 0x64616362) {
         address callReceiver,
         bytes calldata callPayload,
         uint256 gasLimit
-    ) external payable override returns (uint256) {
+    ) external payable returns (uint256) {
         return
             _remoteExecute(
                 pangoroSpecVersion,
