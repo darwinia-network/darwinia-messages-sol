@@ -185,16 +185,16 @@ library CommonTypes {
     // UnrewardedRelayer
     ////////////////////////////////////
     struct UnrewardedRelayer {
-        bytes32 relayer;
+        address relayer;
         DeliveredMessages messages;
     }
 
     function decodeUnrewardedRelayer(
         bytes memory _data
     ) internal pure returns (UnrewardedRelayer memory) {
-        bytes32 relayer = Bytes.toBytes32(Bytes.substr(_data, 0, 32));
+        address relayer = toAddress(_data, 0);
         DeliveredMessages memory messages = decodeDeliveredMessages(
-            Bytes.substr(_data, 32)
+            Bytes.substr(_data, 20)
         );
 
         return UnrewardedRelayer(relayer, messages);
@@ -206,7 +206,24 @@ library CommonTypes {
         uint bytesLengthOfmessages = getBytesLengthOfDeliveredMessages(
             unrewardedRelayer.messages
         );
-        return 32 + bytesLengthOfmessages;
+        return 20 + bytesLengthOfmessages;
+    }
+
+    function toAddress(
+        bytes memory _bytes,
+        uint256 _start
+    ) internal pure returns (address) {
+        require(_bytes.length >= _start + 20, "toAddress_outOfBounds");
+        address tempAddress;
+
+        assembly {
+            tempAddress := div(
+                mload(add(add(_bytes, 0x20), _start)),
+                0x1000000000000000000000000
+            )
+        }
+
+        return tempAddress;
     }
 
     ////////////////////////////////////
