@@ -18,16 +18,19 @@ contract CommonTypesTest is DSTest {
         CommonTypes.Relayer memory relayer = CommonTypes.getLastRelayerFromVec(
             data
         );
-        // assertEq(relayer.id, 0x0b001c95E86D64C1Ad6e43944C568A6C31b53887);
+        assertEq(relayer.id, hex"0b001c95E86D64C1Ad6e43944C568A6C31b53887");
+        assertEq(relayer.collateral, 800000000000000000000);
         assertTrue(relayer.fee == 160000000000000000000);
     }
 
     function testDecodeOutboundLaneData() public {
         bytes
-            memory data = hex"010000000000000000000000000000000c00000000000000";
+            memory data = hex"040000000000000004000000000000000400000000000000";
         CommonTypes.OutboundLaneData memory outboundLaneData = CommonTypes
             .decodeOutboundLaneData(data);
-        assertTrue(outboundLaneData.latestGeneratedNonce == 12);
+        assertTrue(outboundLaneData.oldestUnprunedNonce == 4);
+        assertTrue(outboundLaneData.latestReceivedNonce == 4);
+        assertTrue(outboundLaneData.latestGeneratedNonce == 4);
     }
 
     // 1. One relayer
