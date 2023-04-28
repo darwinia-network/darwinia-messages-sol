@@ -11,7 +11,7 @@ contract CrabEndpoint is MessageEndpoint(0, 0x64616362, 0x64616362) {
         storageKeyForLatestNonce = 0xf1501030816118b9129255f5096aa9b296c246acb9b55077390e3ca723a0ca1f; // checked, bridgeDarwiniaMessages's outboundLanes storage key
         storageKeyForLastDeliveredNonce = 0xf1501030816118b9129255f5096aa9b2e5f83cf83f2127eb47afdc35d6e43fab; // checked, bridgeDarwiniaMessages's inboundLanes storage key
         sendMessageCallIndex = 0x2903; // checked
-        remoteMessageTransactCallIndex = 0x3001; // checked, the call index of darwinia's ethereum.messageTransact
+        remoteMessageTransactCallIndex = 0x2600; // checked, the call index of darwinia's ethereum.messageTransact
         remoteSmartChainId = 46; // checked, darwinia ethereum chain id
     }
 

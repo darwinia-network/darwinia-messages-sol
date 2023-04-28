@@ -7,10 +7,10 @@ import "../MessageEndpoint.sol";
 // 0x64616362(dacb) is the lane id of Darwinia <> Crab Message channel
 contract DarwiniaEndpoint is MessageEndpoint(0, 0x64616362, 0x64616362) {
     constructor() {
-        storageKeyForMarketFee = 0x190d00dd4103825c78f55e5b5dbf8bfe2edb70953213f33a6ef6b8a5e3ffcab2;
+        storageKeyForMarketFee = 0x94594b5e37f74ce096905956485f9a7d2edb70953213f33a6ef6b8a5e3ffcab2;
         storageKeyForLatestNonce = 0xf4e61b17ce395203fe0f3c53a0d3986096c246acb9b55077390e3ca723a0ca1f;
         storageKeyForLastDeliveredNonce = 0xf4e61b17ce395203fe0f3c53a0d39860e5f83cf83f2127eb47afdc35d6e43fab;
-        sendMessageCallIndex = 0x2c03;
+        sendMessageCallIndex = 0x2903;
         remoteMessageTransactCallIndex = 0x2600; // the call index of crab's messageTransact.messageTransact
         remoteSmartChainId = 44;
     }
