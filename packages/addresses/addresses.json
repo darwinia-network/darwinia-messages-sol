@@ -14,7 +14,6 @@
         "kton": "0x1994100c58753793D52c6f457f189aa3ce9cEe94"
     },
     "43": {
-        "Root": "0x9Cd2ee66aF50398A36aAfd461AA7AdC01962E0Ae",
         "WCRAB": "0xc52287b259b2431ba0f61BC7EBD0eD793B0b7044",
         "WCKTON": "0x8809f9b3ACEF1dA309f49b5Ab97A4C0faA64E6Ae",
         "WCKTONMigrator": "0xE3F90f6Fe7c70b1F8cBEbc3477048d4F32E61f07",
@@ -22,7 +21,6 @@
         "WormholeDaoMultisig": "0xc8C1680B18D432732D07c044669915726fAF67D0"
     },
     "44": {
-        "Root": "0xb8e7e4b496df6bb3B71703CE98ff6f3412a5F9EA",
         "Claims": "0xA561c8F6AC9eCb31e0793fBe2CCEc136a7e4bE84",
         "Create2": "0x227c3e01071C2429766dDec2267A613e32DD463e",
         "WCRAB": "0x2d2b97ea380b0185e9fdf8271d1afb5d2bf18329",
