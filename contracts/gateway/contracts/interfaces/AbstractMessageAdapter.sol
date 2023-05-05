@@ -36,7 +36,7 @@ abstract contract AbstractMessageAdapter {
     // Public functions
     ////////////////////////////////////////
     // called by local gateway
-    function epSend(
+    function send(
         address _fromDappAddress,
         address _toDappAddress,
         bytes calldata _message
@@ -55,7 +55,7 @@ abstract contract AbstractMessageAdapter {
                 remoteAdapterAddress,
                 // the call to be executed on remote adapter
                 abi.encodeWithSignature(
-                    "epRecv(address,address,bytes)",
+                    "recv(address,address,bytes)",
                     _fromDappAddress,
                     _toDappAddress,
                     _message
@@ -64,7 +64,7 @@ abstract contract AbstractMessageAdapter {
     }
 
     // called by remote adapter through low level messaging contract
-    function epRecv(
+    function recv(
         address _fromDappAddress,
         address _toDappAddress,
         bytes memory _message

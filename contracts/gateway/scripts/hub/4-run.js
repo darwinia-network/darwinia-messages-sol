@@ -1,5 +1,6 @@
 const hre = require("hardhat");
 
+// call rocstar from goerli
 async function main() {
   const goerliGatewayAddress = process.argv[2];
   const hubAddress = process.argv[3];
@@ -8,6 +9,13 @@ async function main() {
   hre.changeNetwork("goerli");
   const MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
   const goerliGateway = MessageGateway.attach(goerliGatewayAddress);
+
+  // message format:
+  //  - paraId: bytes2
+  //  - call: bytes
+  //  - refTime: uint64
+  //  - proofSize: uint64
+  //  - fungible: uint128
   const message = hre.ethers.utils.defaultAbiCoder.encode(
     ["bytes2", "bytes", "uint64", "uint64", "uint128"],
     ["0x591f", "0x0a070c313233", "5000000000", "65536", "5000000000000000000"]

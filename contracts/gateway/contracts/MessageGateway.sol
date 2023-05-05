@@ -15,10 +15,8 @@ contract MessageGateway is IMessageGateway, Ownable2Step {
     }
 
     function estimateFee() external view returns (uint256) {
-        AbstractMessageAdapter endpoint = AbstractMessageAdapter(
-            adapterAddress
-        );
-        return endpoint.estimateFee();
+        AbstractMessageAdapter adapter = AbstractMessageAdapter(adapterAddress);
+        return adapter.estimateFee();
     }
 
     // called by Dapp.
@@ -26,10 +24,8 @@ contract MessageGateway is IMessageGateway, Ownable2Step {
         address _toDappAddress,
         bytes memory _message
     ) external payable returns (uint256) {
-        AbstractMessageAdapter endpoint = AbstractMessageAdapter(
-            adapterAddress
-        );
-        uint256 fee = endpoint.estimateFee();
+        AbstractMessageAdapter adapter = AbstractMessageAdapter(adapterAddress);
+        uint256 fee = adapter.estimateFee();
 
         // TODO: add dapp registry.
 
@@ -41,8 +37,7 @@ contract MessageGateway is IMessageGateway, Ownable2Step {
             payable(msg.sender).transfer(paid - fee);
         }
 
-        return
-            endpoint.epSend{value: fee}(msg.sender, _toDappAddress, _message);
+        return adapter.send{value: fee}(msg.sender, _toDappAddress, _message);
     }
 
     // called by adapter.
