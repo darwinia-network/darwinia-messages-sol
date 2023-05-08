@@ -17,23 +17,19 @@
 
 pragma solidity 0.8.17;
 
-interface IMessageGateway {
-    event DappErrCatched(
+interface IMsgport {
+    event DappError(
         address _fromDappAddress,
         address _toDappAddress,
         bytes _message,
         string _reason
     );
-    event DappErrCatchedBytes(
-        address _fromDappAddress,
-        address _toDappAddress,
-        bytes _message,
-        bytes _data
-    );
 
     function send(
         address _toDappAddress,
-        bytes memory _message
+        bytes memory _messagePayload,
+        uint256 _executionGas, // 0 means using defaultExecutionGas,
+        uint256 _gasPrice
     ) external payable returns (uint256);
 
     function recv(
@@ -42,5 +38,10 @@ interface IMessageGateway {
         bytes memory _message
     ) external;
 
-    function estimateFee() external view returns (uint256);
+    function estimateFee(
+        address _fromDappAddress,
+        bytes memory _messagePayload,
+        uint256 _executionGas, // 0 means using defaultExecutionGas
+        uint256 _gasPrice
+    ) external view returns (uint256);
 }

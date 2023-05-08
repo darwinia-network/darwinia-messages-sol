@@ -3,7 +3,7 @@
 pragma solidity 0.8.17;
 
 import "./interfaces/IMessageReceiver.sol";
-import "./interfaces/IMessageGateway.sol";
+import "./interfaces/IMsgport.sol";
 import "@darwinia/contracts-utils/contracts/ScaleCodec.sol";
 
 contract DarwiniaMessageHub is IMessageReceiver {
@@ -12,20 +12,22 @@ contract DarwiniaMessageHub is IMessageReceiver {
     address public constant DISPATCH =
         0x0000000000000000000000000000000000000401;
 
-    address public immutable GATEWAY_ADDRESS;
+    address public immutable MSGPORT_ADDRESS;
 
     constructor(
         bytes2 _darwiniaParaId,
         bytes2 _sendCallIndex,
-        address _gatewayAddress
+        address _msgportAddress
     ) {
         DARWINIA_PARAID = _darwiniaParaId;
         SEND_CALL_INDEX = _sendCallIndex;
-        GATEWAY_ADDRESS = _gatewayAddress;
+        MSGPORT_ADDRESS = _msgportAddress;
     }
 
-    function fee() external view returns (uint256) {
-        return IMessageGateway(GATEWAY_ADDRESS).estimateFee();
+    function fee() public view returns (uint256) {
+        // because the underlying darwinia adapter depends on fee market, so we
+        // don't need to input real message and gas to estimate fee.
+        return IMsgport(MSGPORT_ADDRESS).estimateFee(msg.sender, hex"", 0, 0);
     }
 
     //////////////////////////
@@ -46,8 +48,8 @@ contract DarwiniaMessageHub is IMessageReceiver {
             uint128 fungible
         ) = abi.decode(_message, (bytes2, bytes, uint64, uint64, uint128));
         require(
-            msg.sender == GATEWAY_ADDRESS,
-            "DarwiniaMessageHub: only accept message from gateway"
+            msg.sender == MSGPORT_ADDRESS,
+            "DarwiniaMessageHub: only accept message from msgport"
         );
 
         transactOnParachain(
@@ -145,17 +147,23 @@ contract DarwiniaMessageHub is IMessageReceiver {
     //////////////////////////
     function send(
         address _toDappAddress, // address on Ethereum
-        bytes calldata _message
+        bytes calldata _messagePayload
     ) external payable returns (uint256 nonce) {
         uint256 paid = msg.value;
-        IMessageGateway gateway = IMessageGateway(GATEWAY_ADDRESS);
-        uint256 marketFee = gateway.estimateFee();
-        require(paid >= marketFee, "the fee is insufficient");
+
+        uint256 marketFee = fee();
+        require(paid >= marketFee, "!fee");
         if (paid > marketFee) {
-            // refund fee to DAPP.
+            // refund fee to Dapp.
             payable(msg.sender).transfer(paid - marketFee);
         }
 
-        return gateway.send{value: marketFee}(_toDappAddress, _message);
+        return
+            IMsgport(MSGPORT_ADDRESS).send{value: marketFee}(
+                _toDappAddress,
+                _messagePayload,
+                0,
+                0
+            );
     }
 }

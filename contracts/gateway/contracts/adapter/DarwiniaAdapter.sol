@@ -42,8 +42,18 @@ contract DarwiniaAdapter is
         return remoteAdapterAddress;
     }
 
-    function estimateFee() external view override returns (uint256) {
+    function getRelayFee(
+        address _fromDappAddress,
+        bytes memory _messagePayload
+    ) external view override returns (uint256) {
         return IFeeMarket(feeMarket).market_fee();
+    }
+
+    function getDeliveryGas(
+        address _fromDappAddress,
+        bytes memory _messagePayload
+    ) external view override returns (uint256) {
+        return 0;
     }
 
     // For sending
@@ -59,7 +69,7 @@ contract DarwiniaAdapter is
     }
 
     // For receiving
-    function allowedReceiving(
+    function permitted(
         address _fromDappAddress,
         address _toDappAddress,
         bytes memory _message

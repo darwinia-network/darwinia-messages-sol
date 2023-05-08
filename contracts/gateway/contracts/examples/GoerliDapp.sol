@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.17;
 
-import "../interfaces/IMessageGateway.sol";
+import "../interfaces/IMsgport.sol";
 
 contract GoerliDapp {
     address public gatewayAddress;
@@ -13,9 +13,11 @@ contract GoerliDapp {
 
     function remoteAdd(address pangolinDapp) external payable {
         bytes memory message = abi.encode(uint256(2));
-        IMessageGateway(gatewayAddress).send{value: msg.value}(
+        IMsgport(gatewayAddress).send{value: msg.value}(
             pangolinDapp,
-            message
+            message,
+            50_000,
+            2457757432886
         );
     }
 }
