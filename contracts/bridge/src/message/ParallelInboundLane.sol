@@ -52,25 +52,10 @@ contract ParallelInboundLane is InboundLaneVerifier, SourceChain {
 
     event RetryFailedMessage(uint64 indexed nonce , bool dispatch_result);
 
-    /// @dev Deploys the InboundLane contract
+    /// @dev Deploys the ParallelInboundLane contract
     /// @param _verifier The contract address of on-chain verifier
-    /// @param _thisChainPosition The thisChainPosition of inbound lane
-    /// @param _thisLanePosition The lanePosition of this inbound lane
-    /// @param _bridgedChainPosition The bridgedChainPosition of inbound lane
-    /// @param _bridgedLanePosition The lanePosition of target outbound lane
-    constructor(
-        address _verifier,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition
-    ) InboundLaneVerifier(
-        _verifier,
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {}
+    /// @param _laneId The laneId of inbound lane
+    constructor(address _verifier, uint256 _laneId) InboundLaneVerifier(_verifier, _laneId) {}
 
     /// Receive messages proof from bridged chain.
     function receive_message(

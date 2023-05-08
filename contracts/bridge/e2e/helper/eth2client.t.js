@@ -1,8 +1,8 @@
 const Eth2Client = require('./eth2client').Eth2Client
 // const beacon_endpoint = "http://127.0.0.1:5052"
 // const beacon_endpoint = "http://g2.dev.darwinia.network:9596"
-const beacon_endpoint = "https://lodestar-goerli.chainsafe.io"
-// const beacon_endpoint = "https://lodestar-mainnet-rpc.darwinia.network/"
+// const beacon_endpoint = "https://lodestar-goerli.chainsafe.io"
+const beacon_endpoint = "https://lodestar-mainnet.chainsafe.io"
 
 const eth2Client = new Eth2Client(beacon_endpoint);
 
@@ -16,14 +16,15 @@ const log = console.log;
 
   const finality_update = await eth2Client.get_finality_update()
   log(finality_update)
-  const block = await eth2Client.get_beacon_block(finality_update.finalized_header.slot)
-  // log(block)
-  const period = ~~(Number(finality_update.attested_header.slot) / 32 / 256)
+  const block = await eth2Client.get_beacon_block(finality_update.finalized_header.beacon.slot)
+  log(block)
+  const period = ~~(Number(finality_update.attested_header.beacon.slot) / 32 / 256)
   log('period:', period)
   const sync_period = await eth2Client.get_sync_committee_period_update(period, 1)
-  const sync = sync_period[0]
+  const sync = sync_period[0].data
   log(JSON.stringify(sync, null, 2))
-  let finalized_header = await eth2Client.get_header(sync.finalized_header.slot)
+  let finalized_header = await eth2Client.get_header(sync.finalized_header.beacon.slot)
+  log(finalized_header)
   const bootstrap = await eth2Client.get_bootstrap(finalized_header.root)
   log(JSON.stringify(bootstrap, null, 2))
 

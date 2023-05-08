@@ -5,10 +5,9 @@ set -e
 unset TARGET_CHAIN
 unset NETWORK_NAME
 unset ETH_RPC_URL
-export NETWORK_NAME=pangoro
+export NETWORK_NAME=pangolin
 export TARGET_CHAIN=goerli
-# export ETH_RPC_URL=https://pangoro-rpc.darwinia.network
-export ETH_RPC_URL=http://35.247.165.91:9933
+export ETH_RPC_URL=https://pangolin-rpc.darwinia.network
 
 . $(dirname $0)/base.sh
 
@@ -22,12 +21,12 @@ load_taddr() {
 
 # beacon light client config
 BLS_PRECOMPILE=0x0000000000000000000000000000000000000800
-SLOT=4058368
-PROPOSER_INDEX=1438
-PARENT_ROOT=0x0bc723434538646fa17c2007c7084ae87b5ab3fe42592a7410e625ac637f0650
-STATE_ROOT=0x7f357270e0f5fb4fe24d95ab25b7f236e0a63d6e1de344c0cbbc467473ce9b39
-BODY_ROOT=0x71f3029440652538f098eaeae1e605943537486a673dc37073691446c19ac8a8
-CURRENT_SYNC_COMMITTEE_HASH=0x2566080db27d495cd2e5268b08fb6995019276e10014ffdc5d1dff68cccdf47e
+SLOT=5433408
+PROPOSER_INDEX=338940
+PARENT_ROOT=0xf7c0374ad89d9a28f6708bd7b02af59a7a2ed2463a4ef191aa55cdf6cf8001b2
+STATE_ROOT=0x9840d388c38172332553e9445e7fd64185aba5212026d22dce5efccf41d5663d
+BODY_ROOT=0x4b6cc5f729ae6a9d57f6b912d655467627ce4d057f10a1d0a8ad5f68c5c1a2e9
+CURRENT_SYNC_COMMITTEE_HASH=0x4bcc8065b1462577a9971110aaa3ea5630ce3e6bc0ecb53e54777ce7d4a5e816
 GENESIS_VALIDATORS_ROOT=0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb
 
 BeaconLightClient=$(deploy BeaconLightClient \
@@ -40,8 +39,5 @@ BeaconLightClient=$(deploy BeaconLightClient \
   $CURRENT_SYNC_COMMITTEE_HASH \
   $GENESIS_VALIDATORS_ROOT)
 
-ExecutionLayer=$(deploy ExecutionLayer $BeaconLightClient)
-
-# EthereumStorageVerifier=$(load_saddr "EthereumStorageVerifier")
-
-# seth send -F $ETH_FROM $EthereumStorageVerifier "changeLightClient(address)" $ExecutionLayer
+# EthereumSerialLaneVerifier=$(load_saddr "EthereumSerialLaneVerifier")
+# seth send -F $ETH_FROM $EthereumSerialLaneVerifier "changeLightClient(address)" $BeaconLightClient

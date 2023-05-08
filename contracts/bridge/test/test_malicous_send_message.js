@@ -64,7 +64,7 @@ const receive_messages_proof = async (nonce) => {
     })
     relayer = relayer.connect(ethers.provider)
     const tx = await inbound.connect(relayer).receive_messages_proof(data, "0x", data.messages.length, {
-      gasLimit: 10000000
+      gasLimit: 15000000
     })
     for (let i = 0; i<size; i++) {
       await expect(tx)

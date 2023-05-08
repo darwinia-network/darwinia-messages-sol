@@ -42,13 +42,14 @@ contract SerialOutboundLaneTest is DSTest, SourceChain, TargetChain {
     function setUp() public {
         lightclient = new MockLightClient();
         market = new MockFeeMarket();
+        uint256 lane_id = (uint(BRIDGED_IN_LANE_POS) << 64)
+                        + (uint(BRIDGED_CHAIN_POS) << 96)
+                        + (uint(THIS_OUT_LANE_POS) << 128)
+                        + (uint(THIS_CHAIN_POS) << 160);
         outlane = new SerialOutboundLane(
             address(lightclient),
             address(market),
-            THIS_CHAIN_POS,
-            THIS_OUT_LANE_POS,
-            BRIDGED_CHAIN_POS,
-            BRIDGED_IN_LANE_POS,
+            lane_id,
             1,
             0,
             0

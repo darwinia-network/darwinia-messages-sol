@@ -34,12 +34,11 @@ contract ParallelOutboundLaneTest is DSTest, SourceChain {
     address public self;
 
     function setUp() public {
-        outlane = new ParallelOutboundLane(
-            THIS_CHAIN_POS,
-            THIS_OUT_LANE_POS,
-            BRIDGED_CHAIN_POS,
-            BRIDGED_IN_LANE_POS
-        );
+        uint256 lane_id = (uint(BRIDGED_IN_LANE_POS) << 64)
+                        + (uint(BRIDGED_CHAIN_POS) << 96)
+                        + (uint(THIS_OUT_LANE_POS) << 128)
+                        + (uint(THIS_CHAIN_POS) << 160);
+        outlane = new ParallelOutboundLane(lane_id);
         app = new NormalApp(address(outlane));
         self = address(this);
     }

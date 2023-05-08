@@ -62,9 +62,8 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     uint256 internal locked;
 
     /// @dev Gas used per message needs to be less than `MAX_GAS_PER_MESSAGE` wei
-    uint256 private constant MAX_GAS_PER_MESSAGE = 240000;
-    /// @dev Gas buffer for executing `send_message` tx
-    uint256 private constant GAS_BUFFER = 10000;
+    uint256 public immutable MAX_GAS_PER_MESSAGE;
+
     /// @dev This parameter must lesser than 256
     /// Maximal number of unconfirmed messages at inbound lane. Unconfirmed means that the
     /// message has been delivered, but either confirmations haven't been delivered back to the
@@ -76,7 +75,9 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
     /// This value also represents maximal number of messages in single delivery transaction.
     /// Transaction that is declaring more messages than this value, will be rejected. Even if
     /// these messages are from different lanes.
-    uint256 private constant MAX_UNCONFIRMED_MESSAGES = 20;
+    uint64 private constant MAX_UNCONFIRMED_MESSAGES = 20;
+    /// @dev Gas buffer for executing `send_message` tx
+    uint256 private constant GAS_BUFFER = 20000;
 
     /// @dev Notifies an observer that the message has dispatched
     /// @param nonce The message nonce
@@ -113,35 +114,26 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         locked = 0;
     }
 
-    /// @dev Deploys the InboundLane contract
+    /// @dev Deploys the SerialInboundLane contract
     /// @param _verifier The contract address of on-chain verifier
-    /// @param _thisChainPosition The thisChainPosition of inbound lane
-    /// @param _thisLanePosition The lanePosition of this inbound lane
-    /// @param _bridgedChainPosition The bridgedChainPosition of inbound lane
-    /// @param _bridgedLanePosition The lanePosition of target outbound lane
+    /// @param _laneId The identify of the inbound lane
     /// @param _last_confirmed_nonce The last_confirmed_nonce of inbound lane
     /// @param _last_delivered_nonce The last_delivered_nonce of inbound lane
+    /// @param _max_gas_per_message The max gas limit per message of inbound lane
     constructor(
         address _verifier,
-        uint32 _thisChainPosition,
-        uint32 _thisLanePosition,
-        uint32 _bridgedChainPosition,
-        uint32 _bridgedLanePosition,
+        uint256 _laneId,
         uint64 _last_confirmed_nonce,
-        uint64 _last_delivered_nonce
-    ) InboundLaneVerifier(
-        _verifier,
-        _thisChainPosition,
-        _thisLanePosition,
-        _bridgedChainPosition,
-        _bridgedLanePosition
-    ) {
+        uint64 _last_delivered_nonce,
+        uint64 _max_gas_per_message
+    ) InboundLaneVerifier(_verifier, _laneId) {
         inboundLaneNonce = InboundLaneNonce(
             _last_confirmed_nonce,
             _last_delivered_nonce,
             1,
             0
         );
+        MAX_GAS_PER_MESSAGE = _max_gas_per_message;
     }
 
     /// Receive messages proof from bridged chain.
@@ -155,11 +147,6 @@ contract SerialInboundLane is InboundLaneVerifier, SourceChain, TargetChain {
         uint delivery_size
     ) external nonReentrant {
         _verify_messages_proof(hash(outboundLaneData), messagesProof);
-        // Require there is enough gas to play all messages
-        require(
-            gasleft() >= outboundLaneData.messages.length * (MAX_GAS_PER_MESSAGE + GAS_BUFFER),
-            "!gas"
-        );
         _receive_state_update(outboundLaneData.latest_received_nonce);
         _receive_message(outboundLaneData.messages, delivery_size);
     }

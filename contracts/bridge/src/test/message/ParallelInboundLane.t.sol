@@ -36,13 +36,11 @@ contract ParallelInboundLandTest is DSTest, SourceChain {
 
     function setUp() public {
         lightclient = new MockLightClient();
-        inlane = new ParallelInboundLane(
-            address(lightclient),
-            THIS_CHAIN_POS,
-            THIS_IN_LANE_POS,
-            BRIDGED_CHAIN_POS,
-            BRIDGED_OUT_LANE_POS
-        );
+        uint256 lane_id = (uint(BRIDGED_OUT_LANE_POS) << 64)
+                        + (uint(BRIDGED_CHAIN_POS) << 96)
+                        + (uint(THIS_IN_LANE_POS) << 128)
+                        + (uint(THIS_CHAIN_POS) << 160);
+        inlane = new ParallelInboundLane(address(lightclient), lane_id);
         app = new NormalApp(address(0));
         self = address(this);
     }

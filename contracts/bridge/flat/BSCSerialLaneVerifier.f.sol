@@ -1,5 +1,5 @@
 // hevm: flattened sources of src/truth/bsc/BSCSerialLaneVerifier.sol
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: GPL-3.0 AND MIT
 pragma solidity =0.8.17;
 
 ////// src/interfaces/ILightClient.sol
@@ -326,21 +326,8 @@ contract SourceChain {
 }
 
 ////// src/utils/Memory.sol
-// This file is part of Darwinia.
-// Copyright (C) 2018-2022 Darwinia Network
 //
-// Darwinia is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Darwinia is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+// Inspired: https://github.com/ethereum/solidity-examples
 
 /* pragma solidity 0.8.17; */
 
@@ -470,21 +457,8 @@ library Memory {
 }
 
 ////// src/utils/rlp/RLPDecode.sol
-// This file is part of Darwinia.
-// Copyright (C) 2018-2022 Darwinia Network
 //
-// Darwinia is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Darwinia is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+// Inspired: https://github.com/ethereum-optimism/optimism/blob/develop/packages/contracts/contracts/libraries/rlp/Lib_RLPReader.sol
 
 /* pragma solidity 0.8.17; */
 
@@ -958,21 +932,8 @@ library State {
 }
 
 ////// src/utils/Bytes.sol
-// This file is part of Darwinia.
-// Copyright (C) 2018-2022 Darwinia Network
 //
-// Darwinia is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Darwinia is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+// Inspired: https://github.com/ethereum/solidity-examples
 
 /* pragma solidity 0.8.17; */
 
@@ -1128,21 +1089,8 @@ library Nibble {
 }
 
 ////// src/utils/trie/MerkleTrie.sol
-// This file is part of Darwinia.
-// Copyright (C) 2018-2022 Darwinia Network
 //
-// Darwinia is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Darwinia is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+// Inspired: https://github.com/ethereum-optimism/optimism/blob/develop/packages/contracts/contracts/libraries/trie/Lib_MerkleTrie.sol
 
 /* pragma solidity 0.8.17; */
 
@@ -1434,21 +1382,8 @@ library MerkleTrie {
 }
 
 ////// src/utils/trie/SecureMerkleTrie.sol
-// This file is part of Darwinia.
-// Copyright (C) 2018-2022 Darwinia Network
 //
-// Darwinia is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Darwinia is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+// Inspired: https://github.com/ethereum-optimism/optimism/blob/develop/packages/contracts/contracts/libraries/trie/Lib_SecureMerkleTrie.sol
 
 /* pragma solidity 0.8.17; */
 
@@ -1822,7 +1757,10 @@ abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetCha
         setter = msg.sender;
     }
 
+    /// Registry a pair of out lane and in lane, could not remove them
     function registry(uint256 outlaneId, address outbound, uint256 inlaneId, address inbound) external onlySetter {
+        require(lanes[outlaneId] == address(0), "!empty");
+        require(lanes[inlaneId] == address(0), "!empty");
         lanes[outlaneId] = outbound;
         lanes[inlaneId] = inbound;
         emit Registry(outlaneId, outbound, inlaneId, inbound);

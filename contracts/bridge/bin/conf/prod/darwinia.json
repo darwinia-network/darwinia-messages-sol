@@ -1,0 +1,69 @@
+{
+  "Chain": {
+    "Lanes": [
+      {},
+      {
+        "bridged_chain_pos": 1,
+        "lanes": [
+          {
+            "this_lane_pos": 0,
+            "bridged_lane_pos": 1,
+            "type": "serial_out"
+          },
+          {
+            "this_lane_pos": 1,
+            "bridged_lane_pos": 0,
+            "max_gas_per_message": "600000",
+            "type": "serial_in"
+          },
+          {
+            "this_lane_pos": 2,
+            "bridged_lane_pos": 3,
+            "type": "parallel_out"
+          },
+          {
+            "this_lane_pos": 3,
+            "bridged_lane_pos": 2,
+            "type": "parallel_in"
+          }
+        ]
+      },
+      {
+        "bridged_chain_pos": 2,
+        "lanes": [
+          {
+            "this_lane_pos": 0,
+            "bridged_lane_pos": 1,
+            "type": "serial_out"
+          },
+          {
+            "this_lane_pos": 1,
+            "bridged_lane_pos": 0,
+            "type": "serial_in"
+          }
+        ]
+      }
+    ],
+    "this_chain_pos": 0
+  },
+  "FeeMarket": {
+    "vault": "0xB29DA7C1b1514AB342afbE6AB915252Ad3f87E4d",
+    "collateral_perorder": "6000000000000000000000",
+    "assigned_relayers_number": "1",
+    "slash_time": "10800",
+    "relay_time": "10800",
+    "price_ratio": "999000",
+    "duty_ratio": "20"
+  },
+  "LightClient": {
+    "bls_precompile": "0x0000000000000000000000000000000000000800",
+    "slot": "6299648",
+    "proposer_index": "229152",
+    "parent_root": "0xa4c337a4cbf5a19d7f67afa9a7156793bf02c9b22f71652c9a38659a398b2827",
+    "state_root": "0xd7e39cafbab9f5c18365b98275e0d6002d3e6e7411798d7ac6facf8df54416a8",
+    "body_root": "0xeeddf25887ced12ed2683947455281f0caded03c4f27d65c9389819216029846",
+    "current_sync_committee_hash": "0xbb8d1db5911ea3336e5bb84a315cfdf3bc976450dd53839e4b750c41222f763c",
+    "genesis_validators_root": "0x4b363db94e286120d76eb905340fdd4e54bfe9f06bf33ff6cf5ad27f511bfe95",
+    "mandatory_reward": "30000000000000000000"
+  }
+}

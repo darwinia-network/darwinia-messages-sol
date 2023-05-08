@@ -34,14 +34,14 @@ contract BeaconLightClientUpdate is BeaconChain {
     /// @param attested_header Header attested to by the sync committee
     /// @param signature_sync_committee  Sync committee corresponding to sign attested header
     /// @param finalized_header The finalized beacon block header
-    /// @param finality_branch Finalized header corresponding to `attested_header.state_root`
+    /// @param finality_branch Finalized header proof corresponding to `attested_header.state_root`
     /// @param sync_aggregate Sync committee aggregate signature
     /// @param fork_version Fork version for the aggregate signature
     /// @param signature_slot Slot at which the aggregate signature was created (untrusted)
     struct FinalizedHeaderUpdate {
-        BeaconBlockHeader attested_header;
+        LightClientHeader attested_header;
         SyncCommittee signature_sync_committee;
-        BeaconBlockHeader finalized_header;
+        LightClientHeader finalized_header;
         bytes32[] finality_branch;
         SyncAggregate sync_aggregate;
         bytes4 fork_version;

@@ -1,165 +1,21 @@
-const { toHexString, ListCompositeType, ByteVectorType, ByteListType } = require('@chainsafe/ssz')
 const { BigNumber } = require("ethers")
 const { IncrementalMerkleTree } = require("./imt")
 const { messageHash } = require('./msg')
 const rlp = require("rlp")
-
-const LANE_IDENTIFY_SLOT="0x0000000000000000000000000000000000000000000000000000000000000000"
-const LANE_NONCE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000001"
-const LANE_MESSAGE_SLOT="0x0000000000000000000000000000000000000000000000000000000000000002"
-
-const LANE_ROOT_SLOT="0x0000000000000000000000000000000000000000000000000000000000000001"
-
-const get_storage_proof = async (client, addr, storageKeys, blockNumber = 'latest') => {
-  if (blockNumber != 'latest') {
-    blockNumber = "0x" + Number(blockNumber).toString(16)
-  }
-  return await client.provider.send("eth_getProof",
-    [
-      addr,
-      storageKeys,
-      blockNumber
-    ]
-  )
-}
-
-const build_message_keys = (front, end) => {
-  const keys = []
-  for (let index=front; index<=end; index++) {
-    const newKey = ethers.utils.concat([
-      ethers.utils.hexZeroPad(index, 32),
-      LANE_MESSAGE_SLOT
-    ])
-    keys.push(ethers.utils.keccak256(newKey))
-  }
-  return keys
-}
-
-const build_relayer_keys = (front, end) => {
-  const keys = []
-  for (let index=front; index<=end; index++) {
-    const newKey = ethers.utils.concat([
-      ethers.utils.hexZeroPad(index, 32),
-      LANE_MESSAGE_SLOT
-    ])
-    const key0 = ethers.utils.keccak256(newKey)
-    const key1 = BigNumber.from(key0).add(1).toHexString()
-    keys.push(key0)
-    keys.push(key1)
-  }
-  return keys
-}
-
-const generate_storage_delivery_proof = async (client, front, end, block_number) => {
-  const addr = client.inbound.address
-  const laneIDProof = await get_storage_proof(client, addr, [LANE_IDENTIFY_SLOT], block_number)
-  const laneNonceProof = await get_storage_proof(client, addr, [LANE_NONCE_SLOT], block_number)
-  const keys = build_relayer_keys(front, end)
-  const laneRelayersProof = await get_storage_proof(client, addr, keys, block_number)
-  const proof = {
-    "accountProof": laneIDProof.accountProof,
-    "laneNonceProof": laneNonceProof.storageProof[0].proof,
-    "laneRelayersProof": laneRelayersProof.storageProof.map((p) => p.proof),
-  }
-  return ethers.utils.defaultAbiCoder.encode([
-    "tuple(bytes[] accountProof, bytes[] laneNonceProof, bytes[][] laneRelayersProof)"
-    ], [ proof ])
-}
-
-const generate_storage_proof = async (client, begin, end, block_number) => {
-  const addr = client.outbound.address
-  const laneIdProof = await get_storage_proof(client, addr, [LANE_IDENTIFY_SLOT], block_number)
-  const laneNonceProof = await get_storage_proof(client, addr, [LANE_NONCE_SLOT], block_number)
-  const keys = build_message_keys(begin, end)
-  const laneMessageProof = await get_storage_proof(client, addr, keys, block_number)
-  const proof = {
-    "accountProof": laneIdProof.accountProof,
-    "laneIDProof": laneIdProof.storageProof[0].proof,
-    "laneNonceProof": laneNonceProof.storageProof[0].proof,
-    "laneMessagesProof": laneMessageProof.storageProof.map((p) => p.proof),
-  }
-  return ethers.utils.defaultAbiCoder.encode([
-    "tuple(bytes[] accountProof, bytes[] laneIDProof, bytes[] laneNonceProof, bytes[][] laneMessagesProof)"
-    ], [ proof ])
-}
-
-const generate_parallel_lane_storage_proof = async (client, block_number) => {
-  const addr = client.parallel_outbound.address
-  const laneRootProof = await get_storage_proof(client, addr, [LANE_ROOT_SLOT], block_number)
-  const proof = {
-    "accountProof": laneRootProof.accountProof,
-    "laneRootProof": laneRootProof.storageProof[0].proof
-  }
-  const p = ethers.utils.defaultAbiCoder.encode([
-    "tuple(bytes[] accountProof, bytes[] laneRootProof)"
-  ], [ proof ])
-  return {
-    proof: p,
-    root: laneRootProof.storageProof[0].value
-  }
-}
-
-const generate_message_proof = async (chain_committer, lane_committer, lane_pos, block_number) => {
-  const bridgedChainPos = await lane_committer.BRIDGED_CHAIN_POSITION()
-  const proof = await chain_committer.prove(bridgedChainPos, lane_pos, {
-    blockTag: block_number
-  })
-  return ethers.utils.defaultAbiCoder.encode([
-    "tuple(tuple(bytes32,bytes32[]),tuple(bytes32,bytes32[]))"
-    ], [
-      [
-        [proof.chainProof.root, proof.chainProof.proof],
-        [proof.laneProof.root, proof.laneProof.proof]
-      ]
-    ])
-}
-
-const get_ssz_type = (forks, sszTypeName, forkName) => {
-  return forks[forkName][sszTypeName]
-}
-
-const hash_tree_root = (forks, sszTypeName, forkName, input) => {
-  const type = get_ssz_type(forks, sszTypeName, forkName)
-  const value = type.fromJson(input)
-  return toHexString(type.hashTreeRoot(value))
-}
-
-const hash = (typ, input) => {
-  const value = typ.fromJson(input)
-  return toHexString(typ.hashTreeRoot(value))
-}
-
-const fetch_old_msgs = (from) => {
-  if (from == 'eth') {
-    const msg0 = {
-      encoded_key: "0x0000000000000000000000010000000200000000000000030000000000000000",
-      payload: {
-        source: '0x3DFe30fb7b46b99e234Ed0F725B5304257F78992',
-        target: '0x0000000000000000000000000000000000000000',
-        encoded: '0x'
-      }
-    }
-    const msg1 = {
-      encoded_key: "0x0000000000000000000000010000000200000000000000030000000000000001",
-      payload: {
-        source: '0x3DFe30fb7b46b99e234Ed0F725B5304257F78992',
-        target: '0x4DBdC9767F03dd078B5a1FC05053Dd0C071Cc005',
-        encoded: '0x'
-      }
-    }
-    return [messageHash(msg0), messageHash(msg1)]
-  } else {
-    const msg0 = {
-      encoded_key: "0x0000000000000000000000000000000200000001000000030000000000000000",
-      payload: {
-        source: '0x3DFe30fb7b46b99e234Ed0F725B5304257F78992',
-        target: '0xbB8Ac813748e57B6e8D2DfA7cB79b641bD0524c1',
-        encoded: '0x'
-      }
-    }
-    return []
-  }
-}
+const {
+  get_storage_proof,
+  build_message_keys,
+  build_relayer_keys,
+  generate_storage_delivery_proof,
+  generate_storage_proof,
+  generate_parallel_lane_storage_proof,
+  generate_message_proof,
+  build_finalized_header_update,
+  fetch_old_msgs,
+  compute_fork_version,
+  convert_logs_bloom,
+  convert_extra_data,
+} = require('./utils')
 
 /**
  * The Mock Bridge for testing
@@ -173,40 +29,31 @@ class Bridge {
     this.eth = ethClient
     this.bsc = bscClient
     this.sub = subClient
+    this.eth2 = eth2Client
   }
 
   async enroll_relayer() {
     await this.eth.enroll_relayer()
-    await this.bsc.enroll_relayer()
+    // await this.bsc.enroll_relayer()
     await this.sub.eth.enroll_relayer()
-    await this.sub.bsc.enroll_relayer()
+    // await this.sub.bsc.enroll_relayer()
   }
 
   async deposit() {
     await this.eth.deposit()
-    await this.sub.deposit()
+    await this.bsc.deposit()
     await this.sub.eth.deposit()
     await this.sub.bsc.deposit()
   }
 
-  async relay_eth_header() {
-    const old_finalized_header = await this.subClient.beaconLightClient.finalized_header()
-    const finality_update = await this.eth2Client.get_finality_update()
-    let attested_header = finality_update.attested_header
-    let finalized_header = finality_update.finalized_header
-    const period = Number(finalized_header.slot) / 32 / 256
-    const sync_change = await this.eth2Client.get_sync_committee_period_update(~~period - 1, 1)
-    const next_sync = sync_change[0].data
-    const current_sync_committee = next_sync.next_sync_committee
+  async build_finalized_header_update(finality_update) {
+    const finalized_header = finality_update.finalized_header.beacon
+    const finalized_header_root = await this.eth2.get_beacon_block_root(finalized_header.slot)
+    const current_sync_committee = (await this.eth2.get_bootstrap(finalized_header_root)).current_sync_committee
 
-    let sync_aggregate_slot = Number(attested_header.slot) + 1
-    let sync_aggregate_header = await this.eth2Client.get_header(sync_aggregate_slot)
-    while (!sync_aggregate_header) {
-      sync_aggregate_slot = Number(sync_aggregate_slot) + 1
-      sync_aggregate_header = await this.eth2Client.get_header(sync_aggregate_slot)
-    }
-
-    const fork_version = await this.eth2Client.get_fork_version(sync_aggregate_slot)
+    let signature_slot = finality_update.signature_slot
+    const sync_aggregate_epoch = signature_slot / 32
+    const fork_version = compute_fork_version(~~sync_aggregate_epoch)
 
     let sync_aggregate = finality_update.sync_aggregate
     let sync_committee_bits = []
@@ -214,82 +61,87 @@ class Bridge {
     sync_committee_bits.push('0x' + sync_aggregate.sync_committee_bits.slice(66))
     sync_aggregate.sync_committee_bits = sync_committee_bits;
 
+    const attested_execution = finality_update.attested_header.execution
+    attested_execution.logs_bloom = convert_logs_bloom(attested_execution.logs_bloom)
+    attested_execution.extra_data = convert_extra_data(attested_execution.extra_data)
+
+    const finalized_execution = finality_update.finalized_header.execution
+    finalized_execution.logs_bloom = convert_logs_bloom(finalized_execution.logs_bloom)
+    finalized_execution.extra_data = convert_extra_data(finalized_execution.extra_data)
+
     const finalized_header_update = {
-      attested_header: attested_header,
-      signature_sync_committee: current_sync_committee,
-      finalized_header: finalized_header,
-      finality_branch: finality_update.finality_branch,
-      sync_aggregate: sync_aggregate,
-      fork_version: fork_version.current_version,
-      signature_slot: sync_aggregate_slot
+      attested_header:           {
+        beacon:                  finality_update.attested_header.beacon,
+        execution:               attested_execution,
+        execution_branch:        finality_update.attested_header.execution_branch
+      },
+      signature_sync_committee:  current_sync_committee,
+      finalized_header:          {
+        beacon:                  finality_update.finalized_header.beacon,
+        execution:               finalized_execution,
+        execution_branch:        finality_update.finalized_header.execution_branch
+      },
+      finality_branch:           finality_update.finality_branch,
+      sync_aggregate:            sync_aggregate,
+      fork_version:              fork_version,
+      signature_slot:            signature_slot
     }
-
-    const tx = await this.subClient.beaconLightClient.import_finalized_header(finalized_header_update,
-      {
-        gasPrice: 1000000000,
-        gasLimit: 5000000
-      })
-
-    console.log(tx.hash)
-    // const new_finalized_header = await this.subClient.beaconLightClient.finalized_header()
+    console.log(JSON.stringify(finalized_header_update,null,2))
+    return finalized_header_update
   }
 
-  async relay_eth_execution_payload() {
-    const x = await import("@chainsafe/lodestar-types")
-    const ssz = x.ssz
-    const BeaconBlockBody = ssz.allForks.bellatrix.BeaconBlockBody
 
-    const finalized_header = await this.subClient.beaconLightClient.finalized_header()
+  async blc_import_finalized_header() {
+    const old_finalized_header = await this.sub.eth.lightclient.finalized_header()
+    const finality_update = await this.eth2.get_finality_update()
+    if (~~finality_update.finalized_header.beacon.slot == ~~old_finalized_header.slot) throw new Error("!new")
+    const finalized_header_update = await this.build_finalized_header_update(finality_update)
 
-    const block = await this.eth2Client.get_beacon_block(finalized_header.slot)
-    const b = block.body
-    const p = b.execution_payload
+    const tx = await this.sub.eth.lightclient.import_finalized_header(finalized_header_update, {
+      gasLimit: 16000000,
+      gasPrice: 2000000000000,
+    })
+    return [tx, finalized_header_update]
+  }
 
-    const ProposerSlashing = get_ssz_type(ssz, 'ProposerSlashing', 'phase0')
-    const ProposerSlashings = new ListCompositeType(ProposerSlashing, 16)
-    const AttesterSlashing = get_ssz_type(ssz, 'AttesterSlashing', 'phase0')
-    const AttesterSlashings = new ListCompositeType(AttesterSlashing, 2)
-    const Attestation = get_ssz_type(ssz, 'Attestation', 'phase0')
-    const Attestations = new ListCompositeType(Attestation, 128)
-    const Deposit = get_ssz_type(ssz, 'Deposit', 'phase0')
-    const Deposits = new ListCompositeType(Deposit, 16)
-    const SignedVoluntaryExit = get_ssz_type(ssz, 'SignedVoluntaryExit', 'phase0')
-    const SignedVoluntaryExits = new ListCompositeType(SignedVoluntaryExit, 16)
+  async blc_import_next_sync_committee(start_period) {
+    let s = await this.sub.eth.lightclient.sync_committee_roots(start_period + 1)
+    if (s != "0x0000000000000000000000000000000000000000000000000000000000000000") return [null,null]
 
-    const LogsBloom = new ByteVectorType(256)
-    const ExtraData = new ByteListType(32)
-
-    const body = {
-        randao_reveal:       hash_tree_root(x, 'BLSSignature', 'ssz', b.randao_reveal),
-        eth1_data:           hash_tree_root(ssz, 'Eth1Data', 'phase0', b.eth1_data),
-        graffiti:            b.graffiti,
-        proposer_slashings:  hash(ProposerSlashings, b.proposer_slashings),
-        attester_slashings:  hash(AttesterSlashings, b.attester_slashings),
-        attestations:        hash(Attestations, b.attestations),
-        deposits:            hash(Deposits, b.deposits),
-        voluntary_exits:     hash(SignedVoluntaryExits, b.voluntary_exits),
-        sync_aggregate:      hash_tree_root(ssz, 'SyncAggregate', 'altair', b.sync_aggregate),
-
-        execution_payload:   {
-          parent_hash:       p.parent_hash,
-          fee_recipient:     p.fee_recipient,
-          state_root:        p.state_root,
-          receipts_root:     p.receipts_root,
-          logs_bloom:        hash(LogsBloom, p.logs_bloom),
-          prev_randao:       p.prev_randao,
-          block_number:      p.block_number,
-          gas_limit:         p.gas_limit,
-          gas_used:          p.gas_used,
-          timestamp:         p.timestamp,
-          extra_data:        hash(ExtraData, p.extra_data),
-          base_fee_per_gas:  p.base_fee_per_gas,
-          block_hash:        p.block_hash,
-          transactions:      hash_tree_root(ssz, 'Transactions', 'bellatrix', p.transactions)
-        }
+    const sync_change = await this.eth2.get_sync_committee_period_update(start_period, 1)
+    const next_sync = sync_change[0].data
+    const finalized_header_update = await this.build_finalized_header_update(next_sync)
+    const sync_committee_period_update = {
+      next_sync_committee: next_sync.next_sync_committee,
+      next_sync_committee_branch: next_sync.next_sync_committee_branch
     }
 
-    const tx = await this.subClient.executionLayer.import_latest_execution_payload_state_root(body)
-    console.log(tx.hash)
+    const tx = await this.sub.eth.lightclient.import_next_sync_committee(finalized_header_update, sync_committee_period_update, {
+      gasLimit: 16000000,
+      gasPrice: 2000000000000,
+    })
+    return [tx, sync_committee_period_update]
+  }
+
+  async blc_import_sync_committees(start_period, count) {
+    for (let i = 0; i < count; i++) {
+      this.blc_import_next_sync_committee(start_period+count, 1)
+    }
+  }
+
+  async relay_eth_header() {
+    const old_finalized_header = await this.sub.eth.lightclient.finalized_header()
+    const finality_update = await this.eth2.get_finality_update()
+    let attested_header = finality_update.attested_header.beacon
+    let finalized_header = finality_update.finalized_header.beacon
+    const old_period = ~~old_finalized_header.slot.div(32).div(256)
+    const now_period = ~~(finalized_header.slot / 32 / 256)
+    if (old_period == now_period) {
+      await this.blc_import_finalized_header()
+    } else {
+      await this.blc_import_sync_committees(old_period, now_period - old_period)
+      await this.blc_import_finalized_header()
+    }
   }
 
   async relay_bsc_header() {
@@ -414,7 +266,7 @@ class Bridge {
   async finality_block_number(from) {
     if (from == 'eth') {
       const finalized_header = await this.sub.beaconLightClient.finalized_header()
-      const finality_block = await this.eth2Client.get_beacon_block(finalized_header.slot)
+      const finality_block = await this.eth2.get_beacon_block(finalized_header.slot)
       return finality_block.body.execution_payload.block_number
     } else if (from == 'bsc') {
       const finalized_header = await this.subClient.bscLightClient.finalized_checkpoint()

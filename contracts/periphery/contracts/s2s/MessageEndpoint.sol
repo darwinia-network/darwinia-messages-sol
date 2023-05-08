@@ -4,12 +4,11 @@ pragma solidity ^0.8.0;
 
 import "./MessageLib.sol";
 import "./types/PalletEthereum.sol";
-import "./interfaces/IMessageEndpoint.sol";
 
 // srcDapp > endpoint[outboundLaneId] > substrate.send_message
 // ->
 // substrate.message_transact > remoteEndpoint[inboundLaneId] > TgtDapp.function
-abstract contract MessageEndpoint is IMessageEndpoint {
+abstract contract MessageEndpoint {
     // REMOTE
     address public remoteEndpoint;
     // message sender derived from remoteEndpoint
@@ -19,8 +18,8 @@ abstract contract MessageEndpoint is IMessageEndpoint {
     // remote smart chain id
     uint64 public remoteSmartChainId;
 
-    // 1 gas ~= 40_000 weight
-    uint64 public constant REMOTE_WEIGHT_PER_GAS = 40_000;
+    // 1 gas ~= 18_750 weight
+    uint64 public constant REMOTE_WEIGHT_PER_GAS = 18_750;
 
     // LOCAL
     // storage keys
@@ -49,22 +48,7 @@ abstract contract MessageEndpoint is IMessageEndpoint {
     ///////////////////////////////
     // Outbound
     ///////////////////////////////
-    /// Remote call the `execute` function of the target chain.
-    ///
-    /// @param specVersion The spec version of the target chain.
-    /// @param callReceiver The receiver of the call.
-    /// @param callPayload The payload of the call.
-    /// @param gasLimit It is for `execute(callReceiver, callPayload)` call.
-    function remoteExecute(
-        uint32 specVersion,
-        address callReceiver,
-        bytes calldata callPayload,
-        uint256 gasLimit
-    ) external payable returns (uint256) {
-        return _remoteExecute(specVersion, callReceiver, callPayload, gasLimit);
-    }
-
-    function fee() external view returns (uint128) {
+    function fee() public view returns (uint128) {
         return MessageLib.marketFee(STORAGE_ADDRESS, storageKeyForMarketFee);
     }
 

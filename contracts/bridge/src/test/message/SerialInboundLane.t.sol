@@ -30,6 +30,7 @@ contract SerialInboundLandTest is DSTest, SourceChain, TargetChain {
     uint32 constant internal THIS_IN_LANE_POS = 1;
     uint32 constant internal BRIDGED_CHAIN_POS = 1;
     uint32 constant internal BRIDGED_OUT_LANE_POS = 0;
+    uint64 constant internal MAX_GAS_PER_MESSAGE = 240000;
 
     Hevm internal hevm = Hevm(HEVM_ADDRESS);
     MockLightClient public lightclient;
@@ -39,14 +40,16 @@ contract SerialInboundLandTest is DSTest, SourceChain, TargetChain {
 
     function setUp() public {
         lightclient = new MockLightClient();
+        uint256 lane_id = (uint(BRIDGED_OUT_LANE_POS) << 64)
+                        + (uint(BRIDGED_CHAIN_POS) << 96)
+                        + (uint(THIS_IN_LANE_POS) << 128)
+                        + (uint(THIS_CHAIN_POS) << 160);
         inlane = new SerialInboundLane(
             address(lightclient),
-            THIS_CHAIN_POS,
-            THIS_IN_LANE_POS,
-            BRIDGED_CHAIN_POS,
-            BRIDGED_OUT_LANE_POS,
+            lane_id,
             0,
-            0
+            0,
+            MAX_GAS_PER_MESSAGE
         );
         app = new NormalApp(address(0));
         self = address(this);

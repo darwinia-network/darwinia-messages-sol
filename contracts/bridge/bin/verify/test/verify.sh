@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
-set -e
+set -eo pipefail
 
-. $(dirname $0)/verify/test/pangoro.sh
-. $(dirname $0)/verify/test/goerli.sh
+export Chain0=pangolin
+export Chain1=goerli
+
+(from=$Chain0 to=$Chain1 \
+. $(dirname $0)/verify/darwinia.sh)
+
+(from=$Chain1 to=$Chain0 \
+. $(dirname $0)/verify/ethereum.sh)

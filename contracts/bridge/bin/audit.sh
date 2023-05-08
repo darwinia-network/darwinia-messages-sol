@@ -11,7 +11,6 @@ slither flat/ChainMessageCommitter.f.sol $FIXED_PARAMS       > audit/ChainMessag
 slither flat/ChainMessageCommitterProxy.f.sol $FIXED_PARAMS  > audit/ChainMessageCommitterProxy.md
 slither flat/DarwiniaMessageVerifier.f.sol $FIXED_PARAMS     > audit/DarwiniaMessageVerifier.md
 slither flat/EthereumStorageVerifier.f.sol $FIXED_PARAMS     > audit/EthereumStorageVerifier.md
-slither flat/ExecutionLayer.f.sol $FIXED_PARAMS              > audit/ExecutionLayer.md
 slither flat/FeeMarket.f.sol $FIXED_PARAMS                   > audit/FeeMarket.md
 slither flat/FeeMarketProxy.f.sol $FIXED_PARAMS              > audit/FeeMarketProxy.md
 slither flat/InboundLane.f.sol $FIXED_PARAMS                 > audit/InboundLane.md

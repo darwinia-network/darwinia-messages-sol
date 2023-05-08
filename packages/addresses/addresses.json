@@ -2,6 +2,7 @@
     "1": {
         "ring": "0x9469d013805bffb7d3debe5e7839237e535ec483",
         "kton": "0x9f284e1337a815fe77d2ff4ae46544645b20c5ff",
+        "MessageDaoMultisig": "0xFfD0a972E371B8cFE34b8C9176CE77C0fF8D43e1",
         "Issuing": "0xea7938985898af7fd945b03b7bc2e405e744e913",
         "GringottsBankProxy": "0x649fdf6ee483a96e020b889571e93700fbd82d88",
         "RelayProxy": "0x5cde5Aafeb8E06Ce9e4F94c2406d3B6CB7098E49",
@@ -44,6 +45,8 @@
         "Create2": "0x6c25E0c1f57d7E78d7eB8D350f11204137EF71bE"
     },
     "46": {
+        "Create2": "0xEE62B94230F6F8834Fb1E73152C7348e54d60521",
+        "MessageDaoMultisig": "0xB29DA7C1b1514AB342afbE6AB915252Ad3f87E4d",
         "HelixDaoMultisig": "0xBd1a110ec476b4775c43905000288881367B1a88",
         "HelixDaoMultisigPayroll": "0x394607dAC12ea8C6095D68E3a7E5c9d40Cf0df9A",
         "HelixDaoTimeLock": "0xA546F42BeB3DEa617b0F3Ca6995C7Df5dfCaD29D",

@@ -1,17 +1,14 @@
 {
-  "DEPLOYER": "0x7aE77149ed38c5dD313e9069d790Ce7085caf0A6",
+  "DEPLOYER": "0xa4FA5429544B225985F8438F2E013A9CCE7102f2",
   "BridgeProxyAdmin": "0x86c85A9bf5DEAfdeD40D9C70517883D95F50Df03",
-  "ChainMessageCommitter": "0xEf5425b3B0111297e7178BAA8E7483430Ddc69D0",
-  "ChainMessageCommitterProxy": "0xea7d0fE22AF25d9655f7AdDd6a59E37e84B3AB5F",
-  "ethlive": {
-    "FeeMarket": "0xD1182CddB414FfC00eF2Ce18299A1E12e1a552BE",
-    "FeeMarketProxy": "0xcA927Df15afb7629b79dA4713a871190315c7409",
-    "BeaconLightClient": "0xD2A37C4523542F2dFD7Cb792D2aeAd5c61C1bAAE",
-    "ExecutionLayer": "0xeC3c9B4d3674B3D03fdf20b082A3C2c669075990",
-    "BeaconLCMandatoryReward": "0xFB371c8B99ba0b239E66E0a66bB6296b00dCD09f",
-    "EthereumStorageVerifier": "0x1e0D6Ba9D7Ddd3f9bc121c51FA051E7826f12b9f",
-    "OutboundLane": "0xcA3749C8C3aF04278D596a3fBe461481B6aa1b01",
-    "InboundLane": "0xf1B8a9F8436800499DB8186f2da2fb3e78Ff7c2B",
-    "LaneMessageCommitter": "0x56746a8099a7e6D962802A23e01FeDdc1282cDAe"
+  "ChainMessageCommitter": "0x1829ee0c5E556D50cb4c11791777afd7fF00019a",
+  "ethereum": {
+    "FeeMarket": "0x171A87e3969fC82c8d25A0866316FCc6378B5c10",
+    "FeeMarketProxy": "0x9bd2F907B33E25126CD4e4342a75dE8F8eff76Bf",
+    "BeaconLightClient": "0x0b51a80A37dD1629FcE060BBec6D9fcDB7eFcCfd",
+    "EthereumSerialLaneVerifier": "0x1cBFc823cDC05488536A6CA5a6E6aa8883D279a1",
+    "SerialOutboundLane": "0x7e10D91862E7477C0FedE95D291f7101AE1Aec4d",
+    "SerialInboundLane": "0x1cE84Cc75847374Ae41B4c1070d5B42A06BB42E7",
+    "LaneMessageCommitter": "0xb1a9585B0739F6ad91d8647699420d7284B71C10"
   }
 }
