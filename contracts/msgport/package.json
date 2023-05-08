@@ -1,5 +1,5 @@
 {
-  "name": "@darwinia/contracts-gateway",
+  "name": "@darwinia/contracts-msgport",
   "version": "v2.1.0-beta.1",
   "description": "Peripheral smart contracts for interacting with message protocal.",
   "main": "index.js",
