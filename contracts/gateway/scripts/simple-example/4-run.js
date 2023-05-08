@@ -38,10 +38,10 @@ async function printResult(pangolinDappAddress) {
 
 async function estimateFee(goerliDapp) {
   const gatewayAddress = await goerliDapp.gatewayAddress();
-  const MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
-  const goerliGateway = MessageGateway.attach(gatewayAddress);
+  const DefaultMsgport = await hre.ethers.getContractFactory("DefaultMsgport");
+  const goerliMsgport = DefaultMsgport.attach(gatewayAddress);
 
-  return await goerliGateway.estimateFee();
+  return await goerliMsgport.estimateFee();
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

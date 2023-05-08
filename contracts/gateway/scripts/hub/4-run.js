@@ -2,13 +2,13 @@ const hre = require("hardhat");
 
 // call rocstar from goerli
 async function main() {
-  const goerliGatewayAddress = process.argv[2];
+  const goerliMsgportAddress = process.argv[2];
   const hubAddress = process.argv[3];
 
-  // call router from gateway to redirect `call` to rocstar
+  // call router from msgport to redirect `call` to rocstar
   hre.changeNetwork("goerli");
-  const MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
-  const goerliGateway = MessageGateway.attach(goerliGatewayAddress);
+  const DefaultMsgport = await hre.ethers.getContractFactory("DefaultMsgport");
+  const goerliMsgport = DefaultMsgport.attach(goerliMsgportAddress);
 
   // message format:
   //  - paraId: bytes2
@@ -20,9 +20,9 @@ async function main() {
     ["bytes2", "bytes", "uint64", "uint64", "uint128"],
     ["0x591f", "0x0a070c313233", "5000000000", "65536", "5000000000000000000"]
   );
-  const fee = await goerliGateway.estimateFee();
+  const fee = await goerliMsgport.estimateFee();
   console.log(`fee: ${fee}`);
-  const tx = await goerliGateway.send(hubAddress, message, { value: fee });
+  const tx = await goerliMsgport.send(hubAddress, message, { value: fee });
   console.log(
     `https://goerli.etherscan.io/tx/${(await tx.wait()).transactionHash}`
   );

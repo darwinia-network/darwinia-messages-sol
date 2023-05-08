@@ -40,10 +40,10 @@ async function printResult(pangoroDappAddress) {
 async function estimateFee(pangolinDapp, adapterId) {
   const gatewayAddress = await pangolinDapp.gatewayAddress();
   console.log(`gatewayAddress: ${gatewayAddress}`);
-  const MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
-  const gateway = MessageGateway.attach(gatewayAddress);
+  const DefaultMsgport = await hre.ethers.getContractFactory("DefaultMsgport");
+  const msgport = DefaultMsgport.attach(gatewayAddress);
 
-  const adapterAddress = await gateway.adapterAddresses(adapterId);
+  const adapterAddress = await msgport.adapterAddresses(adapterId);
   const DarwiniaS2sAdapter = await hre.ethers.getContractFactory(
     "DarwiniaS2sAdapter"
   );

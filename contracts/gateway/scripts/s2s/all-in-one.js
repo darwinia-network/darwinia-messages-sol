@@ -5,25 +5,25 @@ async function main() {
   const pangoroEndpointAddress = "0x23E31167E3D46D64327fdd6e783FE5391427B728";
 
   ////////////////////////////////////
-  // Setup gateways
+  // Setup msgports
   ////////////////////////////////////
   hre.changeNetwork("pangolin");
-  console.log("Setting up pangolin gateway...");
-  let MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
+  console.log("Setting up pangolin msgport...");
+  let DefaultMsgport = await hre.ethers.getContractFactory("DefaultMsgport");
   const pangolinChainId = 0;
-  let pangolinGateway = await MessageGateway.deploy(pangolinChainId);
-  await pangolinGateway.deployed();
-  const pangolinGatewayAddress = pangolinGateway.address;
-  console.log(`  pangolinGateway: ${pangolinGatewayAddress}`);
+  let pangolinMsgport = await DefaultMsgport.deploy(pangolinChainId);
+  await pangolinMsgport.deployed();
+  const pangolinMsgportAddress = pangolinMsgport.address;
+  console.log(`  pangolinMsgport: ${pangolinMsgportAddress}`);
 
   hre.changeNetwork("pangoro");
-  console.log("Setting up pangoro gateway...");
-  MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
+  console.log("Setting up pangoro msgport...");
+  DefaultMsgport = await hre.ethers.getContractFactory("DefaultMsgport");
   const pangoroChainId = 1;
-  let pangoroGateway = await MessageGateway.deploy(pangoroChainId);
-  await pangoroGateway.deployed();
-  const pangoroGatewayAddress = pangoroGateway.address;
-  console.log(`  pangoroGateway: ${pangoroGatewayAddress}`);
+  let pangoroMsgport = await DefaultMsgport.deploy(pangoroChainId);
+  await pangoroMsgport.deployed();
+  const pangoroMsgportAddress = pangoroMsgport.address;
+  console.log(`  pangoroMsgport: ${pangoroMsgportAddress}`);
 
   ////////////////////////////////////
   // Setup endpoints
@@ -55,19 +55,19 @@ async function main() {
   await s2sPangolinAdapter.setRemoteAdapterAddress(s2sPangoroAdapter.address);
 
   ////////////////////////////////////
-  // Add adapter to gateway
+  // Add adapter to msgport
   ////////////////////////////////////
-  console.log("Add pangolin adapter to pangolin gateway...");
-  MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
-  pangolinGateway = await MessageGateway.attach(pangolinGatewayAddress);
+  console.log("Add pangolin adapter to pangolin msgport...");
+  DefaultMsgport = await hre.ethers.getContractFactory("DefaultMsgport");
+  pangolinMsgport = await DefaultMsgport.attach(pangolinMsgportAddress);
 
   const adapterId = 3; // IMPORTANT!!! This needs to be +1 if the adapter is changed.
-  const tx = await pangolinGateway.setAdapterAddress(
+  const tx = await pangolinMsgport.setAdapterAddress(
     adapterId,
     s2sPangolinAdapterAddress
   );
   console.log(
-    `  pangolinGateway.setAdapterAddress tx: ${
+    `  pangolinMsgport.setAdapterAddress tx: ${
       (await tx.wait()).transactionHash
     }`
   );
@@ -78,7 +78,7 @@ async function main() {
   console.log("Setting up dapp...");
   // s2s Pangolin Dapp
   let S2sPangolinDapp = await hre.ethers.getContractFactory("S2sPangolinDapp");
-  let s2sPangolinDapp = await S2sPangolinDapp.deploy(pangolinGatewayAddress);
+  let s2sPangolinDapp = await S2sPangolinDapp.deploy(pangolinMsgportAddress);
   await s2sPangolinDapp.deployed();
   const pangolinDappAddress = s2sPangolinDapp.address;
   console.log(`  s2sPangolinDapp: ${pangolinDappAddress}`);
@@ -110,10 +110,10 @@ async function main() {
 
 async function estimateFee(pangolinDapp, adapterId) {
   const gatewayAddress = await pangolinDapp.gatewayAddress();
-  const MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
-  const gateway = MessageGateway.attach(gatewayAddress);
+  const DefaultMsgport = await hre.ethers.getContractFactory("DefaultMsgport");
+  const msgport = DefaultMsgport.attach(gatewayAddress);
 
-  const adapterAddress = await gateway.adapterAddresses(adapterId);
+  const adapterAddress = await msgport.adapterAddresses(adapterId);
   const DarwiniaS2sAdapter = await hre.ethers.getContractFactory(
     "DarwiniaS2sAdapter"
   );

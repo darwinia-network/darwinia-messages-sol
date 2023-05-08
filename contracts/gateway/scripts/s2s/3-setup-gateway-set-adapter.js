@@ -1,14 +1,14 @@
 const hre = require("hardhat");
 
 async function main() {
-  const pangolinGatewayAddress = process.argv[2];
+  const pangolinMsgportAddress = process.argv[2];
   const s2sPangolinAdapterAddress = process.argv[3];
 
   hre.changeNetwork("pangolin");
-  const MessageGateway = await hre.ethers.getContractFactory("MessageGateway");
-  const pangolinGateway = await MessageGateway.attach(pangolinGatewayAddress);
+  const DefaultMsgport = await hre.ethers.getContractFactory("DefaultMsgport");
+  const pangolinMsgport = await DefaultMsgport.attach(pangolinMsgportAddress);
 
-  const tx = await pangolinGateway.setAdapterAddress(
+  const tx = await pangolinMsgport.setAdapterAddress(
     3, // IMPORTANT!!! This needs to be +1 if the adapter is changed.
     s2sPangolinAdapterAddress
   );

@@ -3,14 +3,14 @@ const hre = require("hardhat");
 // s2sPangolinDapp: 0x74b673e8cb4894D926d5c7bD35B472f88E998468
 // s2sPangoroDapp: 0xa2E9301Cc669e7162FCd02cBEC9FDdb010B1dF8E
 async function main() {
-  const pangolinGatewayAddress = process.argv[2];
+  const pangolinMsgportAddress = process.argv[2];
 
   // s2s Pangolin Dapp
   hre.changeNetwork("pangolin");
   const S2sPangolinDapp = await hre.ethers.getContractFactory(
     "S2sPangolinDapp"
   );
-  const s2sPangolinDapp = await S2sPangolinDapp.deploy(pangolinGatewayAddress);
+  const s2sPangolinDapp = await S2sPangolinDapp.deploy(pangolinMsgportAddress);
   await s2sPangolinDapp.deployed();
   console.log(`s2sPangolinDapp: ${s2sPangolinDapp.address}`);
 
