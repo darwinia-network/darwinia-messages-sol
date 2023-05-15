@@ -1,0 +1,13 @@
+{
+  "ChainMessageCommitter": "0x5Ee6D2D75BA57d971372e46edcD3B53ECd542eab",
+  "goerli": {
+    "FeeMarket": "0xC8a75Fb87173f6b154885E7ec6d83A462d5B9690",
+    "FeeMarketProxy": "0x387059464B3321Afb59C531eF0dCF2969EC2da23",
+    "BeaconLightClient": "0x6aAC5D0E9263341a5408Bac8F3CBE6258bB03058",
+    "EthereumSerialLaneVerifier": "0x71b1d3dbB2389d6198Bf75052e71DbE8e9371B0a",
+    "SerialOutboundLane": "0x4435E99c467fD48E3a4eBE1514De1ca7eEEed610",
+    "SerialInboundLane": "0xe0E33336159125B69C5631Fb3edd2BF5aF731Fed",
+    "LaneMessageCommitter": "0x92B700B3bA93929a38AC7B068Be8c16cA49B2016"
+  },
+  "BridgeProxyAdmin": "0x2279C3A0848413b79a08938F1C8C00c17E5CC266"
+}

@@ -1,0 +1,69 @@
+{
+  "Chain": {
+    "Lanes": [
+      {},
+      {
+        "bridged_chain_pos": 1,
+        "lanes": [
+          {
+            "this_lane_pos": 0,
+            "bridged_lane_pos": 1,
+            "type": "serial_out"
+          },
+          {
+            "this_lane_pos": 1,
+            "bridged_lane_pos": 0,
+            "max_gas_per_message": "600000",
+            "type": "serial_in"
+          },
+          {
+            "this_lane_pos": 2,
+            "bridged_lane_pos": 3,
+            "type": "parallel_out"
+          },
+          {
+            "this_lane_pos": 3,
+            "bridged_lane_pos": 2,
+            "type": "parallel_in"
+          }
+        ]
+      },
+      {
+        "bridged_chain_pos": 2,
+        "lanes": [
+          {
+            "this_lane_pos": 0,
+            "bridged_lane_pos": 1,
+            "type": "serial_out"
+          },
+          {
+            "this_lane_pos": 1,
+            "bridged_lane_pos": 0,
+            "type": "serial_in"
+          }
+        ]
+      }
+    ],
+    "this_chain_pos": 0
+  },
+  "FeeMarket": {
+    "vault": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
+    "collateral_perorder": "10000000000000000000",
+    "assigned_relayers_number": "1",
+    "slash_time": "10800",
+    "relay_time": "10800",
+    "price_ratio": "999900",
+    "duty_ratio": "20"
+  },
+  "LightClient": {
+    "bls_precompile": "0x0000000000000000000000000000000000000800",
+    "slot": "5631360",
+    "proposer_index": "90301",
+    "parent_root": "0xf39a1acafdeb04747f1b8c0d68f1e854ba2e73162842d3318e75021d0c55d95a",
+    "state_root": "0xc2a7e3681a344fb390e10e02b4923c9b28e398707e5e8b2d8b3b9809299d2e13",
+    "body_root": "0x3d6dcd56f7d93ea5bd26b184682b7e89bfc4a844bfbe6abf0f28de180e81957b",
+    "current_sync_committee_hash": "0xb53f5590514e4abf31710c38d50d02a70a88f55cdb601e01cf713ab728754d75",
+    "genesis_validators_root": "0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb",
+    "mandatory_reward": "30000000000000000000"
+  }
+}
