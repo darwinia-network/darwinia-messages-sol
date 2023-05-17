@@ -1,0 +1,47 @@
+{
+  "Chain": {
+    "Lanes": [
+      {
+        "bridged_chain_pos": 0,
+        "lanes": [
+          {
+            "this_lane_pos": 0,
+            "bridged_lane_pos": 1,
+            "type": "serial_out"
+          },
+          {
+            "this_lane_pos": 1,
+            "bridged_lane_pos": 0,
+            "max_gas_per_message": "240000",
+            "type": "serail_in"
+          },
+          {
+            "this_lane_pos": 2,
+            "bridged_lane_pos": 3,
+            "type": "parallel_out"
+          },
+          {
+            "this_lane_pos": 3,
+            "bridged_lane_pos": 2,
+            "type": "parallel_in"
+          }
+        ]
+      },
+      {}
+    ],
+    "this_chain_pos": 1
+  },
+  "FeeMarket": {
+    "collateral_perorder": "100000000000000",
+    "slash_time": "86400",
+    "relay_time": "86400",
+    "price_ratio": "100",
+    "duty_ratio": "30"
+  },
+  "LightClient": {
+    "domain_separator": "0xed482737dd94fe93ad342da96db241e891be2949497902b792d563c5b78170d6",
+    "relayers": "[0x68898db1012808808c903f390909c52d9f706749]",
+    "threshold": "1",
+    "nonce": "0"
+  }
+}
