@@ -5,19 +5,15 @@
         "bridged_chain_pos": 0,
         "lanes": [
           {
-            "lanes": [
-              {
-                "this_lane_pos": 0,
-                "bridged_lane_pos": 1,
-                "type": "serial_out"
-              },
-              {
-                "this_lane_pos": 1,
-                "bridged_lane_pos": 0,
-                "max_gas_per_message": "240000",
-                "type": "serial_in"
-              }
-            ]
+            "this_lane_pos": 0,
+            "bridged_lane_pos": 1,
+            "type": "serial_out"
+          },
+          {
+            "this_lane_pos": 1,
+            "bridged_lane_pos": 0,
+            "max_gas_per_message": "240000",
+            "type": "serial_in"
           },
           {},
           {}

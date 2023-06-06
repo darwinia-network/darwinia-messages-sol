@@ -55,7 +55,7 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
   $data)
 
 # arbitrum oracle
-oracle=$(load_conf ".oracle.${TARGET_CHAIN}")
+oracle=$(load_conf ".Oracle.${TARGET_CHAIN}")
 
 ArbitrumFeedOracle=$(deploy ArbitrumFeedOracle $oracle)
 
@@ -69,7 +69,7 @@ SerialOutboundLane=$(deploy SerialOutboundLane \
 
 max_gas_per_message=$(load_conf ".Chain.Lanes[2].lanes[1].max_gas_per_message")
 SerialInboundLane=$(deploy SerialInboundLane \
-  $EthereumSerialLaneVerifier \
+  $ArbitrumSerialLaneVerifier \
   $inlane_id \
   0 0 \
   $max_gas_per_message)

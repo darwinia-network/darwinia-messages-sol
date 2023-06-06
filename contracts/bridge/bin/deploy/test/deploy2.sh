@@ -3,14 +3,14 @@
 set -eo pipefail
 
 export Chain0=pangolin
-export Chain2=arbitest
+export Chain1=arbitest
 
 . $(dirname $0)/nonce.sh
 
 # 0
-(from=$Chain0 to=$Chain2 \
-. $(dirname $0)/deploy/darwinia2.sh)
+# (from=$Chain0 to=$Chain1 \
+# . $(dirname $0)/deploy/darwinia2.sh)
 
 # 1
-(from=$Chain2 to=$Chain0 \
+(from=$Chain1 to=$Chain0 \
 . $(dirname $0)/deploy/arbitrum.sh)

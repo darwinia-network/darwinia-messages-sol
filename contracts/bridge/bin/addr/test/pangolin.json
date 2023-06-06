@@ -10,5 +10,14 @@
     "SerialOutboundLane": "0xAbd165DE531d26c229F9E43747a8d683eAD54C6c",
     "SerialInboundLane": "0xB59a893f5115c1Ca737E36365302550074C32023",
     "LaneMessageCommitter": "0x59EA974B74ec6A49338438bCc5d0388E294E4E20"
+  },
+  "arbitest": {
+    "FeeMarket": "0xbD3A9fC33180a3477aAA9991C057d5847A75E624",
+    "FeeMarketProxy": "0x7328014b704686cFC228BD6348b36e27cEecf2C8",
+    "ArbitrumFeedOracle": "0xe749F22cfa185d2d32613c1237218c6D357879a2",
+    "ArbitrumSerialLaneVerifier": "0x29d72Ea1004114bC43C1DC75e13FDD280125d2a5",
+    "SerialOutboundLane": "0x6DD383148036C597BE39426CB27A9d8C9e5E555E",
+    "SerialInboundLane": "0xEedEC732BD29A5dCEaC2A02A60B097B12051d4b3",
+    "LaneMessageCommitter": "0x0a90f05BDd04649d4D06BcDFEd4d3052738913D9"
   }
 }
