@@ -44,6 +44,10 @@ contract RequestOracle {
         _;
     }
 
+    constructor(address oracle_) {
+        oracle = IRequest(oracle_);
+    }
+
     function start_import(uint64 new_block_number) external {
         require(!is_oracle_requested(), "started");
         address relayer = msg.sender;

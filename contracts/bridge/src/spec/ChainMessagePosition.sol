@@ -20,6 +20,7 @@ pragma solidity 0.8.17;
 /// @notice Chain message position
 enum ChainMessagePosition {
     Darwinia,
-    ETH,
-    BSC
+    Ethereum,
+    Arbitrum,
+    Binance
 }

@@ -24,7 +24,7 @@ import "../../interfaces/ILightClient.sol";
 contract BSCSerialLaneVerifier is SerialLaneStorageVerifier {
     ILightClient public immutable LIGHT_CLIENT;
 
-    constructor(address lightclient) SerialLaneStorageVerifier(uint32(ChainMessagePosition.BSC), 1, 2) {
+    constructor(address lightclient) SerialLaneStorageVerifier(uint32(ChainMessagePosition.Binance), 1, 2) {
         LIGHT_CLIENT = ILightClient(lightclient);
     }
 

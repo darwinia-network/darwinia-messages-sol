@@ -39,6 +39,7 @@
           {
             "this_lane_pos": 1,
             "bridged_lane_pos": 0,
+            "max_gas_per_message": "600000",
             "type": "serial_in"
           }
         ]
@@ -48,12 +49,22 @@
   },
   "FeeMarket": {
     "vault": "0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
-    "collateral_perorder": "10000000000000000000",
-    "assigned_relayers_number": "1",
-    "slash_time": "10800",
-    "relay_time": "10800",
-    "price_ratio": "999900",
-    "duty_ratio": "20"
+    "goerli": {
+      "collateral_perorder": "10000000000000000000",
+      "assigned_relayers_number": "1",
+      "slash_time": "10800",
+      "relay_time": "10800",
+      "price_ratio": "999900",
+      "duty_ratio": "20"
+    },
+    "arbitest": {
+      "collateral_perorder": "10000000000000000000",
+      "assigned_relayers_number": "1",
+      "slash_time": "10800",
+      "relay_time": "10800",
+      "price_ratio": "999900",
+      "duty_ratio": "20"
+    }
   },
   "LightClient": {
     "bls_precompile": "0x0000000000000000000000000000000000000800",
@@ -65,5 +76,8 @@
     "current_sync_committee_hash": "0x4bcc8065b1462577a9971110aaa3ea5630ce3e6bc0ecb53e54777ce7d4a5e816",
     "genesis_validators_root": "0x043db0d9a83813551ee2f33450d23797757d430911a9320530ad8a0eabc43efb",
     "mandatory_reward": "30000000000000000000"
+  },
+  "Oracle":{
+    "arbitest": "0x0000000000000000000000000000000000000000"
   }
 }

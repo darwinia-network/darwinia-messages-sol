@@ -17,22 +17,29 @@
 
 pragma solidity 0.8.17;
 
-import "../../interfaces/IFeedOracle.sol";
+import "../common/SerialLaneStorageVerifier.sol";
+import "../../spec/ChainMessagePosition.sol";
+import "../../interfaces/ILightClient.sol";
 
-contract FeedOracle {
-    IFeedOracle public oracle;
+contract ArbitrumSerialLaneVerifier is SerialLaneStorageVerifier {
+    address public LIGHT_CLIENT;
+    bool public changable;
 
-    constructor(address oracle_) {
-        oracle = IFeed(oracle_);
+    constructor(address oracle) SerialLaneStorageVerifier(uint32(ChainMessagePosition.Arbitrum), 1, 2) {
+        LIGHT_CLIENT = oracle;
+        changable = true;
     }
 
-    function _latest_block_number() internal view returns (uint256) {
-        (uint256 block_number,) = oracle.latestAnswer();
-        return block_number;
+    function state_root() public view override returns (bytes32) {
+        return ILightClient(LIGHT_CLIENT).merkle_root();
     }
 
-    function _latest_state_root() internal view returns (bytes32) {
-        (,bytes32 state_root) = oracle.latestAnswer();
-        return state_root;
+    function unchangable() onlySetter external {
+        changable = false;
+    }
+
+    function changeLightClient(address new_lc) onlySetter external {
+        require(changable == true, "!changable");
+        LIGHT_CLIENT = new_lc;
     }
 }

@@ -2,14 +2,5 @@
 
 set -eo pipefail
 
-export Chain0=pangolin
-export Chain1=goerli
-
-. $(dirname $0)/nonce.sh
-
-# 0
-(from=$Chain0 to=$Chain1 \
-. $(dirname $0)/deploy/darwinia.sh)
-
-(from=$Chain1 to=$Chain0 \
-. $(dirname $0)/deploy/ethereum.sh)
+# . $(dirname $0)/deploy/test/deploy1.sh
+. $(dirname $0)/deploy/test/deploy2.sh

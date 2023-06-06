@@ -14,15 +14,32 @@
               {
                 "this_lane_pos": 1,
                 "bridged_lane_pos": 0,
+                "max_gas_per_message": "240000",
                 "type": "serial_in"
               }
             ]
           },
+          {},
           {}
         ]
       },
       {}
     ],
     "this_chain_pos": 2
+  },
+  "FeeMarket": {
+    "pangolin": {
+      "collateral_perorder": "100000000000000",
+      "slash_time": "86400",
+      "relay_time": "86400",
+      "price_ratio": "100",
+      "duty_ratio": "30"
+    }
+  },
+  "LightClient": {
+    "domain_separator": "0xe97c73e46305f3bca2279f002665725cd29e465c6624e83a135f7b2e6b1a8134",
+    "relayers": "[0x68898db1012808808c903f390909c52d9f706749]",
+    "threshold": "1",
+    "nonce": "5"
   }
 }
