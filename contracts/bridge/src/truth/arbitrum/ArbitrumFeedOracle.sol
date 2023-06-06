@@ -21,6 +21,8 @@ import "../../interfaces/ILightClient.sol";
 import "../common/FeedOracle.sol";
 
 contract ArbitrumFeedOracle is ILightClient, FeedOracle {
+    constructor(address oracle_) FeedOracle(oracle_) {}
+
     function block_number() public view override returns (uint256) {
         return _latest_block_number();
     }

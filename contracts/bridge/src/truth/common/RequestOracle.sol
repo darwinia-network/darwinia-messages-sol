@@ -45,7 +45,7 @@ contract RequestOracle {
     }
 
     constructor(address oracle_) {
-        oracle = IRequest(oracle_);
+        oracle = IRequestOracle(oracle_);
     }
 
     function start_import(uint64 new_block_number) external {

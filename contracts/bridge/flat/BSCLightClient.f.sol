@@ -487,8 +487,9 @@ contract BinanceSmartChain {
 /// @notice Chain message position
 enum ChainMessagePosition {
     Darwinia,
-    ETH,
-    BSC
+    Ethereum,
+    Arbitrum,
+    Binance
 }
 
 ////// src/utils/Bytes.sol

@@ -23,7 +23,7 @@ contract FeedOracle {
     IFeedOracle public oracle;
 
     constructor(address oracle_) {
-        oracle = IFeed(oracle_);
+        oracle = IFeedOracle(oracle_);
     }
 
     function _latest_block_number() internal view returns (uint256) {

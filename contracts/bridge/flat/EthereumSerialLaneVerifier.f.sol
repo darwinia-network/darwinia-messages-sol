@@ -99,8 +99,9 @@ interface IVerifier {
 /// @notice Chain message position
 enum ChainMessagePosition {
     Darwinia,
-    ETH,
-    BSC
+    Ethereum,
+    Arbitrum,
+    Binance
 }
 
 ////// src/spec/SourceChain.sol
@@ -1959,7 +1960,7 @@ contract EthereumSerialLaneVerifier is SerialLaneStorageVerifier {
     address public LIGHT_CLIENT;
     bool public changable;
 
-    constructor(address lightclient) SerialLaneStorageVerifier(uint32(ChainMessagePosition.ETH), 1, 2) {
+    constructor(address lightclient) SerialLaneStorageVerifier(uint32(ChainMessagePosition.Ethereum), 1, 2) {
         LIGHT_CLIENT = lightclient;
         changable = true;
     }

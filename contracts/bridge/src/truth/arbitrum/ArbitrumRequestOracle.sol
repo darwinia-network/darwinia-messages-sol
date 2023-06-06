@@ -21,6 +21,8 @@ import "../../interfaces/ILightClient.sol";
 import "../common/RequestOracle.sol";
 
 contract ArbitrumRequestOracle is ILightClient, RequestOracle {
+    constructor(address oracle_) RequestOracle(oracle_) {}
+
     function block_number() public view override returns (uint256) {
         return latest_block_number;
     }

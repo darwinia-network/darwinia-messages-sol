@@ -1,4 +1,4 @@
-// hevm: flattened sources of src/truth/eth/EthereumParallelLaneStorageVerifier.sol
+// hevm: flattened sources of src/truth/arbitrum/ArbitrumSerialLaneVerifier.sol
 // SPDX-License-Identifier: GPL-3.0 AND MIT
 pragma solidity =0.8.17;
 
@@ -32,6 +32,51 @@ interface ILightClient {
     function block_number() external view returns (uint256);
 }
 
+////// src/interfaces/IVerifier.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.8.17; */
+
+/// @title IVerifier
+/// @notice A interface for message layer to verify the correctness of the lane hash
+interface IVerifier {
+    /// @notice Verify outlane data hash using message/storage proof
+    /// @param outlane_data_hash The bridged outlane data hash to be verify
+    /// @param outlane_id The bridged outlen id
+    /// @param encoded_proof Message/storage abi-encoded proof
+    /// @return the verify result
+    function verify_messages_proof(
+        bytes32 outlane_data_hash,
+        uint256 outlane_id,
+        bytes calldata encoded_proof
+    ) external view returns (bool);
+
+    /// @notice Verify inlane data hash using message/storage proof
+    /// @param inlane_data_hash The bridged inlane data hash to be verify
+    /// @param inlane_id The bridged inlane id
+    /// @param encoded_proof Message/storage abi-encoded proof
+    /// @return the verify result
+    function verify_messages_delivery_proof(
+        bytes32 inlane_data_hash,
+        uint256 inlane_id,
+        bytes calldata encoded_proof
+    ) external view returns (bool);
+}
+
 ////// src/spec/ChainMessagePosition.sol
 // This file is part of Darwinia.
 // Copyright (C) 2018-2022 Darwinia Network
@@ -57,6 +102,228 @@ enum ChainMessagePosition {
     Ethereum,
     Arbitrum,
     Binance
+}
+
+////// src/spec/SourceChain.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.8.17; */
+
+/// @title SourceChain
+/// @notice Source chain specification
+contract SourceChain {
+    /// @notice The MessagePayload is the structure of RPC which should be delivery to target chain
+    /// @param source The source contract address which send the message
+    /// @param target The targe contract address which receive the message
+    /// @param encoded The calldata which encoded by ABI Encoding
+    struct MessagePayload {
+        address source;
+        address target;
+        bytes encoded; /*(abi.encodePacked(SELECTOR, PARAMS))*/
+    }
+
+    /// @notice Message key (unique message identifier) as it is stored in the storage.
+    /// @param this_chain_pos This chain position
+    /// @param this_lane_pos Position of the message this lane.
+    /// @param bridged_chain_pos Bridged chain position
+    /// @param bridged_lane_pos Position of the message bridged lane.
+    /// @param nonce Nonce of the message.
+    struct MessageKey {
+        uint32 this_chain_pos;
+        uint32 this_lane_pos;
+        uint32 bridged_chain_pos;
+        uint32 bridged_lane_pos;
+        uint64 nonce;
+    }
+
+    /// @notice Message storage representation
+    /// @param encoded_key Encoded message key
+    /// @param payload_hash Hash of payload
+    struct MessageStorage {
+        uint256 encoded_key;
+        bytes32 payload_hash;
+    }
+
+    /// @notice Message as it is stored in the storage.
+    /// @param encoded_key Encoded message key.
+    /// @param payload Message payload.
+    struct Message {
+        uint256 encoded_key;
+        MessagePayload payload;
+    }
+
+    /// @notice Outbound lane data.
+    /// @param latest_received_nonce Nonce of the latest message, received by bridged chain.
+    /// @param messages Messages sent through this lane.
+    struct OutboundLaneData {
+        uint64 latest_received_nonce;
+        Message[] messages;
+    }
+
+    /// @notice Outbound lane data storage representation
+    /// @param latest_received_nonce Nonce of the latest message, received by bridged chain.
+    /// @param messages Messages storage representation
+    struct OutboundLaneDataStorage {
+        uint64 latest_received_nonce;
+        MessageStorage[] messages;
+    }
+
+    /// @dev Hash of the OutboundLaneData Schema
+    /// keccak256(abi.encodePacked(
+    ///     "OutboundLaneData(uint256 latest_received_nonce,Message[] messages)",
+    ///     "Message(uint256 encoded_key,MessagePayload payload)",
+    ///     "MessagePayload(address source,address target,bytes32 encoded_hash)"
+    ///     )
+    /// )
+    bytes32 internal constant OUTBOUNDLANEDATA_TYPEHASH = 0x823237038687bee0f021baf36aa1a00c49bd4d430512b28fed96643d7f4404c6;
+
+
+    /// @dev Hash of the Message Schema
+    /// keccak256(abi.encodePacked(
+    ///     "Message(uint256 encoded_key,MessagePayload payload)",
+    ///     "MessagePayload(address source,address target,bytes32 encoded_hash)"
+    ///     )
+    /// )
+    bytes32 internal constant MESSAGE_TYPEHASH = 0xfc686c8227203ee2031e2c031380f840b8cea19f967c05fc398fdeb004e7bf8b;
+
+    /// @dev Hash of the MessagePayload Schema
+    /// keccak256(abi.encodePacked(
+    ///     "MessagePayload(address source,address target,bytes32 encoded_hash)"
+    ///     )
+    /// )
+    bytes32 internal constant MESSAGEPAYLOAD_TYPEHASH = 0x582ffe1da2ae6da425fa2c8a2c423012be36b65787f7994d78362f66e4f84101;
+
+    /// @notice Hash of OutboundLaneData
+    function hash(OutboundLaneData memory data)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(
+            abi.encode(
+                OUTBOUNDLANEDATA_TYPEHASH,
+                data.latest_received_nonce,
+                hash(data.messages)
+            )
+        );
+    }
+
+    /// @notice Hash of OutboundLaneDataStorage
+    function hash(OutboundLaneDataStorage memory data)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(
+            abi.encode(
+                OUTBOUNDLANEDATA_TYPEHASH,
+                data.latest_received_nonce,
+                hash(data.messages)
+            )
+        );
+    }
+
+    /// @notice Hash of MessageStorage
+    function hash(MessageStorage[] memory msgs)
+        internal
+        pure
+        returns (bytes32)
+    {
+        uint msgsLength = msgs.length;
+        bytes memory encoded = abi.encode(msgsLength);
+        for (uint256 i = 0; i < msgsLength; ) {
+            MessageStorage memory message = msgs[i];
+            encoded = abi.encodePacked(
+                encoded,
+                abi.encode(
+                    MESSAGE_TYPEHASH,
+                    message.encoded_key,
+                    message.payload_hash
+                )
+            );
+            unchecked { ++i; }
+        }
+        return keccak256(encoded);
+    }
+
+    /// @notice Hash of Message[]
+    function hash(Message[] memory msgs)
+        internal
+        pure
+        returns (bytes32)
+    {
+        uint msgsLength = msgs.length;
+        bytes memory encoded = abi.encode(msgsLength);
+        for (uint256 i = 0; i < msgsLength; ) {
+            Message memory message = msgs[i];
+            encoded = abi.encodePacked(
+                encoded,
+                abi.encode(
+                    MESSAGE_TYPEHASH,
+                    message.encoded_key,
+                    hash(message.payload)
+                )
+            );
+            unchecked { ++i; }
+        }
+        return keccak256(encoded);
+    }
+
+    /// @notice Hash of Message
+    function hash(Message memory message)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(
+            abi.encode(
+                MESSAGE_TYPEHASH,
+                message.encoded_key,
+                hash(message.payload)
+            )
+        );
+    }
+
+    /// @notice Hash of MessagePayload
+    function hash(MessagePayload memory payload)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(
+            abi.encode(
+                MESSAGEPAYLOAD_TYPEHASH,
+                payload.source,
+                payload.target,
+                keccak256(payload.encoded)
+            )
+        );
+    }
+
+    /// @notice Decode message key
+    /// @param encoded Encoded message key
+    /// @return key Decoded message key
+    function decodeMessageKey(uint256 encoded) internal pure returns (MessageKey memory key) {
+        key.this_chain_pos = uint32(encoded >> 160);
+        key.this_lane_pos = uint32(encoded >> 128);
+        key.bridged_chain_pos = uint32(encoded >> 96);
+        key.bridged_lane_pos = uint32(encoded >> 64);
+        key.nonce = uint64(encoded);
+    }
 }
 
 ////// src/utils/Memory.sol
@@ -1272,7 +1539,7 @@ library StorageProof {
     }
 }
 
-////// src/truth/eth/EthereumParallelLaneStorageVerifier.sol
+////// src/spec/TargetChain.sol
 // This file is part of Darwinia.
 // Copyright (C) 2018-2022 Darwinia Network
 //
@@ -1291,64 +1558,359 @@ library StorageProof {
 
 /* pragma solidity 0.8.17; */
 
-/* import "../../spec/StorageProof.sol"; */
-/* import "../../spec/ChainMessagePosition.sol"; */
-/* import "../../interfaces/ILightClient.sol"; */
-
-contract EthereumParallelLaneStorageVerifier {
-    struct Proof {
-        bytes[] accountProof;
-        bytes[] laneRootProof;
+/// @title TargetChain
+/// @notice Target chain specification
+contract TargetChain {
+    /// @notice Delivered messages with their dispatch result.
+    /// @param begin Nonce of the first message that has been delivered (inclusive).
+    /// @param end Nonce of the last message that has been delivered (inclusive).
+    struct DeliveredMessages {
+        uint64 begin;
+        uint64 end;
     }
 
-    // bridged_chain_pos ++ bridged_lane_pos
-    uint256 public immutable LINDEX;
-    uint256 public immutable LANE_ROOT_SLOT;
-    address public immutable LIGHT_CLIENT;
-    address public immutable PARALLEL_OUTLANE;
-
-    constructor(
-        uint256 lindex,
-        uint256 lane_root_slot,
-        address light_client,
-        address parallel_outlane
-    ) {
-        LINDEX = lindex;
-        LANE_ROOT_SLOT = lane_root_slot;
-        LIGHT_CLIENT = light_client;
-        PARALLEL_OUTLANE = parallel_outlane;
+    /// @notice Unrewarded relayer entry stored in the inbound lane data.
+    /// @dev This struct represents a continuous range of messages that have been delivered by the same
+    /// relayer and whose confirmations are still pending.
+    /// @param relayer Address of the relayer.
+    /// @param messages Messages range, delivered by this relayer.
+    struct UnrewardedRelayer {
+        address relayer;
+        DeliveredMessages messages;
     }
 
-    function state_root() public view returns (bytes32) {
-        return ILightClient(LIGHT_CLIENT).merkle_root();
+    /// @notice Inbound lane data
+    struct InboundLaneData {
+        // Identifiers of relayers and messages that they have delivered to this lane (ordered by
+        // message nonce).
+        //
+        // This serves as a helper storage item, to allow the source chain to easily pay rewards
+        // to the relayers who successfully delivered messages to the target chain (inbound lane).
+        //
+        // All nonces in this queue are in
+        // range: `(self.last_confirmed_nonce; self.last_delivered_nonce()]`.
+        //
+        // When a relayer sends a single message, both of begin and end nonce are the same.
+        // When relayer sends messages in a batch, the first arg is the lowest nonce, second arg the
+        // highest nonce. Multiple dispatches from the same relayer are allowed.
+        UnrewardedRelayer[] relayers;
+        // Nonce of the last message that
+        // a) has been delivered to the target (this) chain and
+        // b) the delivery has been confirmed on the source chain
+        //
+        // that the target chain knows of.
+        //
+        // This value is updated indirectly when an `OutboundLane` state of the source
+        // chain is received alongside with new messages delivery.
+        uint64 last_confirmed_nonce;
+        // Nonce of the latest received or has been delivered message to this inbound lane.
+        uint64 last_delivered_nonce;
     }
 
-    function verify_lindex(uint32 chain_pos, uint32 lane_pos) internal view returns (bool) {
-        return LINDEX == ((chain_pos << 32) + lane_pos);
-    }
+    /// @dev Hash of the InboundLaneData Schema
+    /// keccak256(abi.encodePacked(
+    ///     "InboundLaneData(UnrewardedRelayer[] relayers,uint64 last_confirmed_nonce,uint64 last_delivered_nonce)",
+    ///     "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
+    ///     "DeliveredMessages(uint64 begin,uint64 end)"
+    ///     )
+    /// )
+    bytes32 internal constant INBOUNDLANEDATA_TYPEHASH = 0xcf4a39e72acc9d64da0fc507104c55de6ee7e6e1a477d8700014bcb981f85106;
 
-    function verify_messages_proof(
-        bytes32 outlane_commitment,
-        uint32 chain_pos,
-        uint32 lane_pos,
-        bytes calldata encoded_proof
-    ) external view returns (bool) {
-        require(verify_lindex(chain_pos, lane_pos), "!lindex");
-        Proof memory proof = abi.decode(encoded_proof, (Proof));
+    /// @dev Hash of the UnrewardedRelayer Schema
+    /// keccak256(abi.encodePacked(
+    ///     "UnrewardedRelayer(address relayer,DeliveredMessages messages)",
+    ///     "DeliveredMessages(uint64 begin,uint64 end)"
+    ///     )
+    /// )
+    bytes32 internal constant UNREWARDEDRELAYER_TYPETASH = 0x6d8ba9a028be62615788b0b9200c2e575678c124d2db04ca91582405eba190a1;
 
-        // extract root storage value from proof
-        bytes32 root_storage = toBytes32(
-            StorageProof.verify_single_storage_proof(
-                state_root(),
-                PARALLEL_OUTLANE,
-                proof.accountProof,
-                bytes32(LANE_ROOT_SLOT),
-                proof.laneRootProof
+    /// @dev Hash of the DeliveredMessages Schema
+    /// keccak256(abi.encodePacked(
+    ///     "DeliveredMessages(uint64 begin,uint64 end)"
+    ///     )
+    /// )
+    bytes32 internal constant DELIVEREDMESSAGES_TYPETASH = 0x1984c1907b379883ef1736e0351d28f5b4b82026a854e28971d89eb48f32fbe2;
+
+    /// @notice Hash of InboundLaneData
+    function hash(InboundLaneData memory inboundLaneData)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(
+            abi.encode(
+                INBOUNDLANEDATA_TYPEHASH,
+                hash(inboundLaneData.relayers),
+                inboundLaneData.last_confirmed_nonce,
+                inboundLaneData.last_delivered_nonce
             )
         );
+    }
 
-        // check outlane_commitment correct
-        return outlane_commitment == root_storage;
+    /// @notice Hash of UnrewardedRelayer[]
+    function hash(UnrewardedRelayer[] memory relayers)
+        internal
+        pure
+        returns (bytes32)
+    {
+        uint relayersLength = relayers.length;
+        bytes memory encoded = abi.encode(relayersLength);
+        for (uint256 i = 0; i < relayersLength; ) {
+            UnrewardedRelayer memory r = relayers[i];
+            encoded = abi.encodePacked(
+                encoded,
+                abi.encode(
+                    UNREWARDEDRELAYER_TYPETASH,
+                    r.relayer,
+                    hash(r.messages)
+                )
+            );
+            unchecked { ++i; }
+        }
+        return keccak256(encoded);
+    }
+
+    /// @notice Hash of DeliveredMessages
+    function hash(DeliveredMessages memory messages)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(
+            abi.encode(
+                DELIVEREDMESSAGES_TYPETASH,
+                messages.begin,
+                messages.end
+            )
+        );
+    }
+}
+
+////// src/truth/common/SerialLaneStorageVerifier.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.8.17; */
+
+/* import "../../interfaces/IVerifier.sol"; */
+/* import "../../spec/SourceChain.sol"; */
+/* import "../../spec/TargetChain.sol"; */
+/* import "../../spec/StorageProof.sol"; */
+
+abstract contract SerialLaneStorageVerifier is IVerifier, SourceChain, TargetChain {
+    event Registry(
+        uint256 outlaneId,
+        address outlane,
+        uint256 inlaneId,
+        address inlane
+    );
+
+    struct ReceiveProof {
+        bytes[] accountProof;
+        bytes[] laneNonceProof;
+        bytes[][] laneMessagesProof;
+    }
+
+    struct DeliveryProof {
+        bytes[] accountProof;
+        bytes[] laneNonceProof;
+        bytes[][] laneRelayersProof;
+    }
+
+    uint256 public immutable THIS_CHAIN_POSITION;
+    uint256 public immutable LANE_NONCE_SLOT;
+    uint256 public immutable LANE_MESSAGE_SLOT;
+
+    // laneId => lanes
+    mapping(uint256 => address) public lanes;
+    address public setter;
+
+    modifier onlySetter {
+        require(msg.sender == setter, "forbidden");
+        _;
+    }
+
+    function changeSetter(address _setter) external onlySetter {
+        setter = _setter;
+    }
+
+    constructor(
+        uint32 this_chain_position,
+        uint256 lane_nonce_slot,
+        uint256 lane_message_slot
+    ) {
+        THIS_CHAIN_POSITION = this_chain_position;
+        LANE_NONCE_SLOT = lane_nonce_slot;
+        LANE_MESSAGE_SLOT = lane_message_slot;
+        setter = msg.sender;
+    }
+
+    /// Registry a pair of out lane and in lane, could not remove them
+    function registry(uint256 outlaneId, address outbound, uint256 inlaneId, address inbound) external onlySetter {
+        require(lanes[outlaneId] == address(0), "!empty");
+        require(lanes[inlaneId] == address(0), "!empty");
+        lanes[outlaneId] = outbound;
+        lanes[inlaneId] = inbound;
+        emit Registry(outlaneId, outbound, inlaneId, inbound);
+    }
+
+    function state_root() public view virtual returns (bytes32);
+
+    function verify_messages_proof(
+        bytes32 outlane_hash,
+        uint256 outlaneId,
+        bytes calldata encoded_proof
+    ) external view override returns (bool) {
+        address lane = lanes[outlaneId];
+        require(lane != address(0), "!outlane");
+        ReceiveProof memory proof = abi.decode(encoded_proof, (ReceiveProof));
+
+        uint identify_storage = outlaneId;
+
+        // extract nonce storage value from proof
+        uint nonce_storage = toUint(StorageProof.verify_single_storage_proof(
+            state_root(),
+            lane,
+            proof.accountProof,
+            bytes32(LANE_NONCE_SLOT),
+            proof.laneNonceProof
+        ));
+
+        OutboundLaneDataStorage memory lane_data = build_outlane(identify_storage, nonce_storage, lane, proof);
+        // check the lane_data_hash
+        return outlane_hash == hash(lane_data);
+    }
+
+    function build_outlane(uint identify_storage, uint nonce_storage, address lane, ReceiveProof memory proof) internal view returns (OutboundLaneDataStorage memory lane_data) {
+        // restruct the outlane data
+        uint64 latest_received_nonce = uint64(nonce_storage);
+        uint64 size = uint64(nonce_storage >> 64) - latest_received_nonce;
+        if (size > 0) {
+            // find all messages storage keys
+            bytes32[] memory storage_keys = build_message_keys(latest_received_nonce, size);
+
+            // extract messages storage value from proof
+            bytes[] memory values = StorageProof.verify_multi_storage_proof(
+                state_root(),
+                lane,
+                proof.accountProof,
+                storage_keys,
+                proof.laneMessagesProof
+            );
+
+            require(size == values.length, "!values_len");
+            MessageStorage[] memory messages = new MessageStorage[](size);
+            for (uint64 i=0; i < size; ) {
+               uint256 key = identify_storage + latest_received_nonce + 1 + i;
+               messages[i] = MessageStorage(key, toBytes32(values[i]));
+               unchecked { ++i; }
+            }
+            lane_data.messages = messages;
+        }
+        lane_data.latest_received_nonce = latest_received_nonce;
+    }
+
+    function build_message_keys(uint64 latest_received_nonce, uint64 size) internal view returns (bytes32[] memory) {
+        bytes32[] memory storage_keys = new bytes32[](size);
+        unchecked {
+            uint64 begin = latest_received_nonce + 1;
+            for (uint64 index=0; index < size;) {
+                storage_keys[index++] = bytes32(mapLocation(LANE_MESSAGE_SLOT, begin + index));
+            }
+        }
+        return storage_keys;
+    }
+
+    function verify_messages_delivery_proof(
+        bytes32 inlane_hash,
+        uint256 inlaneId,
+        bytes calldata encoded_proof
+    ) external view override returns (bool) {
+        address lane = lanes[inlaneId];
+        require(lane != address(0), "!inlane");
+        DeliveryProof memory proof = abi.decode(encoded_proof, (DeliveryProof));
+
+        // extract nonce storage value from proof
+        uint nonce_storage = toUint(StorageProof.verify_single_storage_proof(
+            state_root(),
+            lane,
+            proof.accountProof,
+            bytes32(LANE_NONCE_SLOT),
+            proof.laneNonceProof
+        ));
+
+        uint64 last_confirmed_nonce = uint64(nonce_storage);
+        uint64 last_delivered_nonce = uint64(nonce_storage >> 64);
+        uint64 front = uint64(nonce_storage >> 128);
+        uint64 back = uint64(nonce_storage >> 192);
+        uint64 size = back >= front ? back - front + 1 : 0;
+        // restruct the in lane data
+        InboundLaneData memory lane_data = build_inlane(size, front, last_confirmed_nonce, last_delivered_nonce, lane, proof);
+        // check the lane_data_hash
+        return inlane_hash == hash(lane_data);
+    }
+
+    function build_inlane(
+        uint64 size,
+        uint64 front,
+        uint64 last_confirmed_nonce,
+        uint64 last_delivered_nonce,
+        address lane,
+        DeliveryProof memory proof
+    ) internal view returns (InboundLaneData memory lane_data) {
+        // restruct the in lane data
+        if (size > 0) {
+            uint64 len = 2 * size;
+            // find all messages storage keys
+            bytes32[] memory storage_keys = new bytes32[](len);
+            unchecked {
+                for (uint64 index=0; index < len;) {
+                    uint256 relayersLocation = mapLocation(LANE_MESSAGE_SLOT, front + index/2);
+                    storage_keys[index++] = bytes32(relayersLocation);
+                    storage_keys[index++] = bytes32(relayersLocation + 1);
+                }
+            }
+
+            // extract messages storage value from proof
+            bytes[] memory values = StorageProof.verify_multi_storage_proof(
+                state_root(),
+                lane,
+                proof.accountProof,
+                storage_keys,
+                proof.laneRelayersProof
+            );
+
+            require(len == values.length, "!values_len");
+            UnrewardedRelayer[] memory unrewarded_relayers = new UnrewardedRelayer[](size);
+            unchecked {
+                for (uint64 i=0; i < size; i++) {
+                   uint slot2 = toUint(values[2*i+1]);
+                   unrewarded_relayers[i] = UnrewardedRelayer(
+                       address(uint160(toUint(values[2*i]))),
+                       DeliveredMessages(
+                           uint64(slot2),
+                           uint64(slot2 >> 64)
+                       )
+                   );
+                }
+            }
+            lane_data.relayers = unrewarded_relayers;
+        }
+        lane_data.last_confirmed_nonce = last_confirmed_nonce;
+        lane_data.last_delivered_nonce = last_delivered_nonce;
     }
 
     function toUint(bytes memory bts) internal pure returns (uint data) {
@@ -1364,6 +1926,56 @@ contract EthereumParallelLaneStorageVerifier {
 
     function toBytes32(bytes memory bts) internal pure returns (bytes32 data) {
         return bytes32(toUint(bts));
+    }
+
+    function mapLocation(uint256 slot, uint256 key) internal pure returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(key, slot)));
+    }
+}
+
+////// src/truth/arbitrum/ArbitrumSerialLaneVerifier.sol
+// This file is part of Darwinia.
+// Copyright (C) 2018-2022 Darwinia Network
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+/* pragma solidity 0.8.17; */
+
+/* import "../common/SerialLaneStorageVerifier.sol"; */
+/* import "../../spec/ChainMessagePosition.sol"; */
+/* import "../../interfaces/ILightClient.sol"; */
+
+contract ArbitrumSerialLaneVerifier is SerialLaneStorageVerifier {
+    address public LIGHT_CLIENT;
+    bool public changable;
+
+    constructor(address oracle) SerialLaneStorageVerifier(uint32(ChainMessagePosition.Arbitrum), 1, 2) {
+        LIGHT_CLIENT = oracle;
+        changable = true;
+    }
+
+    function state_root() public view override returns (bytes32) {
+        return ILightClient(LIGHT_CLIENT).merkle_root();
+    }
+
+    function unchangable() onlySetter external {
+        changable = false;
+    }
+
+    function changeLightClient(address new_lc) onlySetter external {
+        require(changable == true, "!changable");
+        LIGHT_CLIENT = new_lc;
     }
 }
 
