@@ -15,11 +15,11 @@ export SETH_CHAIN=$SOURCE_CHAIN
 BridgeProxyAdmin=$(load_staddr "BridgeProxyAdmin")
 verify BridgeProxyAdmin $BridgeProxyAdmin
 
-COLLATERAL_PERORDER=$(load_conf ".FeeMarket.collateral_perorder")
-SLASH_TIME=$(load_conf ".FeeMarket.slash_time")
-RELAY_TIME=$(load_conf ".FeeMarket.relay_time")
-PRICE_RATIO=$(load_conf ".FeeMarket.price_ratio")
-DUTY_RATIO=$(load_conf ".FeeMarket.duty_ratio")
+COLLATERAL_PERORDER=$(load_conf ".FeeMarket.${TARGET_CHAIN}.collateral_perorder")
+SLASH_TIME=$(load_conf ".FeeMarket.${TARGET_CHAIN}.slash_time")
+RELAY_TIME=$(load_conf ".FeeMarket.${TARGET_CHAIN}.relay_time")
+PRICE_RATIO=$(load_conf ".FeeMarket.${TARGET_CHAIN}.price_ratio")
+DUTY_RATIO=$(load_conf ".FeeMarket.${TARGET_CHAIN}.duty_ratio")
 SimpleFeeMarket=$(load_saddr "SimpleFeeMarket")
 verify SimpleFeeMarket $SimpleFeeMarket $COLLATERAL_PERORDER $SLASH_TIME $RELAY_TIME $PRICE_RATIO $DUTY_RATIO
 
