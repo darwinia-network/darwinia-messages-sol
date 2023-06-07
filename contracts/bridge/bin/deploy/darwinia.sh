@@ -38,13 +38,13 @@ inlane_id=$(seth --to-uint256 $inlane_id)
 
 # fee market config
 FEEMARKET_VAULT=$(load_conf ".FeeMarket.vault")
-COLLATERAL_PERORDER=$(load_conf ".FeeMarket.collateral_perorder")
-ASSIGNED_RELAYERS_NUMBER=$(load_conf ".FeeMarket.assigned_relayers_number")
-SLASH_TIME=$(load_conf ".FeeMarket.slash_time")
-RELAY_TIME=$(load_conf ".FeeMarket.relay_time")
+COLLATERAL_PERORDER=$(load_conf ".FeeMarket.${TARGET_CHAIN}.collateral_perorder")
+ASSIGNED_RELAYERS_NUMBER=$(load_conf ".FeeMarket.${TARGET_CHAIN}.assigned_relayers_number")
+SLASH_TIME=$(load_conf ".FeeMarket.${TARGET_CHAIN}.slash_time")
+RELAY_TIME=$(load_conf ".FeeMarket.${TARGET_CHAIN}.relay_time")
 # 0.01 : 2000
-PRICE_RATIO=$(load_conf ".FeeMarket.price_ratio")
-DUTY_RATIO=$(load_conf ".FeeMarket.duty_ratio")
+PRICE_RATIO=$(load_conf ".FeeMarket.${TARGET_CHAIN}.price_ratio")
+DUTY_RATIO=$(load_conf ".FeeMarket.${TARGET_CHAIN}.duty_ratio")
 
 FeeMarket=$(deploy FeeMarket \
   $FEEMARKET_VAULT \
