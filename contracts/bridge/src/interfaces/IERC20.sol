@@ -17,10 +17,11 @@
 
 pragma solidity 0.8.17;
 
-interface IRequestOracle {
-    function getLastRequestId() external view returns (uint64 requestId);
-    function getRequestFee() external view returns (address feeToken, uint256 requestFee);
-    function requestFinalizedHash() external payable returns (uint64 requestId);
-    function isRequestComplete(uint64 requestId) external view returns (bool isCompleted);
-    function dataOf(uint64 requestId) external view returns (uint256 blockNumber, bytes32 hash);
+interface IERC20 {
+    function transfer(address recipient, uint256 amount) external returns (bool);
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
 }

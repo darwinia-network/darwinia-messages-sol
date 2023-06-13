@@ -18,8 +18,11 @@
 pragma solidity 0.8.17;
 
 import "../../interfaces/IRequestOracle.sol";
+import "../../utils/TransferHelper.sol";
 
 contract RequestOracle {
+    using TransferHelper for address;
+
     event ImportStarted(uint64 indexed request_id);
     event ImportCancelled(uint64 indexed request_id);
     event ImportCompleted(uint64 indexed request_id);
@@ -35,7 +38,6 @@ contract RequestOracle {
     struct OracleRequest {
         uint64 id;
         uint64 at;
-        uint64 block_number;
     }
 
     modifier canCompleteRequest() {
@@ -48,12 +50,17 @@ contract RequestOracle {
         oracle = IRequestOracle(oracle_);
     }
 
-    function start_import(uint64 new_block_number) external {
+    function start_import() external returns (uint64 request_id) {
         require(!is_oracle_requested(), "started");
         address relayer = msg.sender;
-        require(new_block_number > latest_block_number, "!new");
-        uint64 request_id = oracle.requestHash(new_block_number);
-        requestOf[relayer] = OracleRequest(request_id, _current_time(), new_block_number);
+        (address feeToken, uint256 requestFee) = oracle.getRequestFee();
+        if (feeToken == address(0)) {
+            request_id = oracle.requestFinalizedHash{value: requestFee}();
+        } else {
+            feeToken.safeTransferFrom(relayer, address(oracle), requestFee);
+            request_id = oracle.requestFinalizedHash();
+        }
+        requestOf[relayer] = OracleRequest(request_id, _current_time());
         emit ImportStarted(request_id);
     }
 
@@ -69,11 +76,11 @@ contract RequestOracle {
         address relayer = msg.sender;
         OracleRequest memory request = requestOf[relayer];
         uint64 request_id = request.id;
-        bytes32 hash = oracle.hashOf(request_id);
-        if (request.block_number > latest_block_number) {
-            latest_block_number = request.block_number;
+        (uint256 block_number, bytes32 hash) = oracle.dataOf(request_id);
+        if (block_number > latest_block_number) {
+            latest_block_number = block_number;
             latest_state_root = hash;
-            emit StateRootImported(request.block_number, hash);
+            emit StateRootImported(block_number, hash);
         }
         delete requestOf[relayer];
         emit ImportCompleted(request_id);
