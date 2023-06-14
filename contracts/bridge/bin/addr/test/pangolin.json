@@ -14,12 +14,11 @@
   "arbitest": {
     "FeeMarket": "0xbD3A9fC33180a3477aAA9991C057d5847A75E624",
     "FeeMarketProxy": "0x7328014b704686cFC228BD6348b36e27cEecf2C8",
-    "ArbitrumFeedOracle": "0xe749F22cfa185d2d32613c1237218c6D357879a2",
     "ArbitrumSerialLaneVerifier": "0x29d72Ea1004114bC43C1DC75e13FDD280125d2a5",
     "SerialOutboundLane": "0x6DD383148036C597BE39426CB27A9d8C9e5E555E",
     "SerialInboundLane": "0xEedEC732BD29A5dCEaC2A02A60B097B12051d4b3",
     "LaneMessageCommitter": "0x0a90f05BDd04649d4D06BcDFEd4d3052738913D9",
-    "AirnodeRrpRequester": "0xaB2B14939e7D59C8F103b7635B85d2ceDC8a4d63",
-    "ArbitrumRequestOracle": "0x377037541305A86EaE83d16c15E2e612BB01e650"
+    "AirnodeRrpRequester": "0x4E020d3c6a387f3116F9Cf40C71936c7A44378B4",
+    "ArbitrumRequestOracle": "0x5fF1A917bd9FbECA39e6762E77DA1bAA89e7bbA7"
   }
 }

@@ -191,7 +191,7 @@ contract RequestOracle {
         TIMEOUT = timeout_;
     }
 
-    function startImport() external returns (uint64 request_id) {
+    function startImport() external payable returns (uint64 request_id) {
         require(!isOracleRequested(), "started");
         address relayer = msg.sender;
         (address feeToken, uint256 requestFee) = oracle.getRequestFee();

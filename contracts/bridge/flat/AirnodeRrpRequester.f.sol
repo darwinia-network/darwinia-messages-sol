@@ -132,7 +132,7 @@ contract AirnodeRrpRequester is IRequestOracle, RrpRequesterV0 {
     address public immutable SPONSOR;
     address payable public immutable SPONSOR_WALLET;
 
-    uint256 public constant FEE = 2 * 10e18;
+    uint256 public constant FEE = 2 * 1e18;
 
     constructor(
         address airnodeRrp,
