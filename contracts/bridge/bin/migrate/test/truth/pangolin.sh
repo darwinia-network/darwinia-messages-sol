@@ -11,17 +11,18 @@ export TARGET_CHAIN=${to:?"!to"}
 . $(dirname $0)/base.sh
 
 # arbitrum airnoderrp
-airnoderrp=$(load_conf ".Oracle.${TARGET_CHAIN}.airnoderrp")
-airnode=$(load_conf ".Oracle.${TARGET_CHAIN}.airnode")
-endpointId=$(load_conf ".Oracle.${TARGET_CHAIN}.endpointId")
-sponsor=$(load_conf ".Oracle.${TARGET_CHAIN}.sponsor")
-sponsorwallet=$(load_conf ".Oracle.${TARGET_CHAIN}.sponsorwallet")
-AirnodeRrpRequester=$(deploy AirnodeRrpRequester \
-  $airnoderrp \
-  $airnode \
-  $endpointId \
-  $sponsor \
-  $sponsorwallet)
+# airnoderrp=$(load_conf ".Oracle.${TARGET_CHAIN}.airnoderrp")
+# airnode=$(load_conf ".Oracle.${TARGET_CHAIN}.airnode")
+# endpointId=$(load_conf ".Oracle.${TARGET_CHAIN}.endpointId")
+# sponsor=$(load_conf ".Oracle.${TARGET_CHAIN}.sponsor")
+# sponsorwallet=$(load_conf ".Oracle.${TARGET_CHAIN}.sponsorwallet")
+# AirnodeRrpRequester=$(deploy AirnodeRrpRequester \
+#   $airnoderrp \
+#   $airnode \
+#   $endpointId \
+#   $sponsor \
+#   $sponsorwallet)
+AirnodeRrpRequester=$(load_saddr "AirnodeRrpRequester")
 
 ArbitrumRequestOracle=$(deploy ArbitrumRequestOracle $AirnodeRrpRequester)
 
