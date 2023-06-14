@@ -33,7 +33,7 @@ contract RequestOracle {
     uint256 internal latest_block_number;
     bytes32 internal latest_state_root;
 
-    uint64 constant internal TIMEOUT = 180;
+    uint64  internal immutable TIMEOUT;
 
     struct OracleRequest {
         uint64 id;
@@ -41,17 +41,18 @@ contract RequestOracle {
     }
 
     modifier canCompleteRequest() {
-        require(is_oracle_requested(), "!requested");
-        require(is_oracle_completed(), "!completed");
+        require(isOracleRequested(), "!requested");
+        require(isOracleCompleted(), "!completed");
         _;
     }
 
-    constructor(address oracle_) {
+    constructor(address oracle_, uint64 timeout_) {
         oracle = IRequestOracle(oracle_);
+        TIMEOUT = timeout_;
     }
 
-    function start_import() external returns (uint64 request_id) {
-        require(!is_oracle_requested(), "started");
+    function startImport() external returns (uint64 request_id) {
+        require(!isOracleRequested(), "started");
         address relayer = msg.sender;
         (address feeToken, uint256 requestFee) = oracle.getRequestFee();
         if (feeToken == address(0)) {
@@ -60,19 +61,19 @@ contract RequestOracle {
             feeToken.safeTransferFrom(relayer, address(oracle), requestFee);
             request_id = oracle.requestFinalizedHash();
         }
-        requestOf[relayer] = OracleRequest(request_id, _current_time());
+        requestOf[relayer] = OracleRequest(request_id, _currentTime());
         emit ImportStarted(request_id);
     }
 
-    function cancel_import() external {
-        require(is_oracle_timed_out(), "!time_out");
+    function cancelImport() external {
+        require(isOracleTimedOut(), "!time_out");
         address relayer = msg.sender;
         uint64 request_id = requestOf[relayer].id;
         delete requestOf[relayer];
         emit ImportCancelled(request_id);
     }
 
-    function complete_import() external canCompleteRequest {
+    function completeImport() external canCompleteRequest {
         address relayer = msg.sender;
         OracleRequest memory request = requestOf[relayer];
         uint64 request_id = request.id;
@@ -86,25 +87,25 @@ contract RequestOracle {
         emit ImportCompleted(request_id);
     }
 
-    function is_oracle_completed() public view returns (bool) {
+    function isOracleCompleted() public view returns (bool) {
         uint64 request_id = requestOf[msg.sender].id;
         return oracle.isRequestComplete(request_id);
     }
 
-    function is_oracle_requested() public view returns (bool) {
+    function isOracleRequested() public view returns (bool) {
         return requestOf[msg.sender].id != 0;
     }
 
-    function is_oracle_timed_out() public view returns (bool) {
+    function isOracleTimedOut() public view returns (bool) {
         OracleRequest memory request = requestOf[msg.sender];
         if (request.at == 0) {
             return false;
         } else {
-            return TIMEOUT + request.at < _current_time();
+            return TIMEOUT + request.at < _currentTime();
         }
     }
 
-    function _current_time() internal view returns (uint64) {
+    function _currentTime() internal view returns (uint64) {
         return uint64(block.timestamp);
     }
 }

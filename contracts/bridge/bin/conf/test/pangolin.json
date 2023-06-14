@@ -78,6 +78,12 @@
     "mandatory_reward": "30000000000000000000"
   },
   "Oracle":{
-    "arbitest": "0x0000000000000000000000000000000000000000"
+    "arbitest": {
+      "airnode": "0x458d6aC18FCD9a803b2885ea941F35bcBFF72d4c",
+      "endpointId": "0x6db9e3e3d073ad12b66d28dd85bcf49f58577270b1cc2d48a43c7025f5c27af6",
+      "sponsor": "0x3C3ed23927DE0FDD25d5980EEf9B49677B1498A7",
+      "sponsorwallet": "0xCB607777899EBb2874175688ffB6e9586FDc52F0",
+      "airnoderrp": "0x6084A81dB23169F8a7BB5fa67C8a78ff9abA9819"
+    }
   }
 }

@@ -27,3 +27,5 @@ hevm flatten --source-file src/truth/eth/BeaconLCMandatoryReward.sol            
 hevm flatten --source-file src/truth/arbitrum/ArbitrumFeedOracle.sol             --json-file out/dapp.sol.json > flat/ArbitrumFeedOracle.f.sol
 hevm flatten --source-file src/truth/arbitrum/ArbitrumRequestOracle.sol          --json-file out/dapp.sol.json > flat/ArbitrumRequestOracle.f.sol
 hevm flatten --source-file src/truth/arbitrum/ArbitrumSerialLaneVerifier.sol     --json-file out/dapp.sol.json > flat/ArbitrumSerialLaneVerifier.f.sol
+hevm flatten --source-file src/truth/arbitrum/ArbitrumRequestOracle.sol     --json-file out/dapp.sol.json > flat/ArbitrumRequestOracle.f.sol
+hevm flatten --source-file src/oracle/AirnodeRrpRequester.sol                    --json-file out/dapp.sol.json > flat/AirnodeRrpRequester.f.sol

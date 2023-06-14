@@ -2,5 +2,11 @@
 
 set -eo pipefail
 
-. $(dirname $0)/migrate/test/fee/goerli.sh
-. $(dirname $0)/migrate/test/fee/pangolin.sh
+export Chain0=pangolin
+export Chain1=goerli
+export Chain2=arbitest
+
+. $(dirname $0)/nonce.sh
+
+(from=$Chain0 to=$Chain2 \
+. $(dirname $0)/migrate/truth/pangolin.sh)
