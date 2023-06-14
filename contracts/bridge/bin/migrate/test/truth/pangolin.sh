@@ -11,8 +11,8 @@ export TARGET_CHAIN=${to:?"!to"}
 . $(dirname $0)/base.sh
 
 # arbitrum airnoderrp
-airnoderrp=$(load_conf ".Oracle.${TARGET_CHAIN}.arinoderrp")
-airnode=$(load_conf ".Oracle.${TARGET_CHAIN}.arinode")
+airnoderrp=$(load_conf ".Oracle.${TARGET_CHAIN}.airnoderrp")
+airnode=$(load_conf ".Oracle.${TARGET_CHAIN}.airnode")
 endpointId=$(load_conf ".Oracle.${TARGET_CHAIN}.endpointId")
 sponsor=$(load_conf ".Oracle.${TARGET_CHAIN}.sponsor")
 sponsorwallet=$(load_conf ".Oracle.${TARGET_CHAIN}.sponsorwallet")
@@ -26,4 +26,4 @@ AirnodeRrpRequester=$(deploy AirnodeRrpRequester \
 ArbitrumRequestOracle=$(deploy ArbitrumRequestOracle $AirnodeRrpRequester)
 
 ArbitrumSerialLaneVerifier=$(load_saddr "ArbitrumSerialLaneVerifier")
-SETH_CHAIN=$SOURCE_CHAIN seth send -F $ETH_FROM $ArbitrumSerialLaneVerifier "changeLightClient(address)" $ArbitrumRequestOracle --chain $SOURCE_CHAIN
+SETH_CHAIN=$SOURCE_CHAIN send -F $ETH_FROM $ArbitrumSerialLaneVerifier "changeLightClient(address)" $ArbitrumRequestOracle --chain $SOURCE_CHAIN

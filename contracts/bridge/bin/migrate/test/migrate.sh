@@ -9,4 +9,4 @@ export Chain2=arbitest
 . $(dirname $0)/nonce.sh
 
 (from=$Chain0 to=$Chain2 \
-. $(dirname $0)/migrate/truth/pangolin.sh)
+. $(dirname $0)/migrate/test/truth/pangolin.sh)

@@ -18,6 +18,8 @@
     "ArbitrumSerialLaneVerifier": "0x29d72Ea1004114bC43C1DC75e13FDD280125d2a5",
     "SerialOutboundLane": "0x6DD383148036C597BE39426CB27A9d8C9e5E555E",
     "SerialInboundLane": "0xEedEC732BD29A5dCEaC2A02A60B097B12051d4b3",
-    "LaneMessageCommitter": "0x0a90f05BDd04649d4D06BcDFEd4d3052738913D9"
+    "LaneMessageCommitter": "0x0a90f05BDd04649d4D06BcDFEd4d3052738913D9",
+    "AirnodeRrpRequester": "0xaB2B14939e7D59C8F103b7635B85d2ceDC8a4d63",
+    "ArbitrumRequestOracle": "0x377037541305A86EaE83d16c15E2e612BB01e650"
   }
 }
