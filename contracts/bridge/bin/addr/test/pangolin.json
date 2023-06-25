@@ -19,6 +19,6 @@
     "SerialInboundLane": "0xEedEC732BD29A5dCEaC2A02A60B097B12051d4b3",
     "LaneMessageCommitter": "0x0a90f05BDd04649d4D06BcDFEd4d3052738913D9",
     "AirnodeRrpRequester": "0x4E020d3c6a387f3116F9Cf40C71936c7A44378B4",
-    "ArbitrumRequestOracle": "0x34DEB5536EF66b4e4e82A1aa6c04855A3a8eC993"
+    "ArbitrumFeedOracle": "0xc401Ae4A083734B861539e5Cb3256502b3282482"
   }
 }

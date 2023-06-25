@@ -56,7 +56,6 @@ FeeMarketProxy=$(deploy FeeMarketProxy \
 
 # arbitrum oracle
 oracle=$(load_conf ".Oracle.${TARGET_CHAIN}")
-
 ArbitrumFeedOracle=$(deploy ArbitrumFeedOracle $oracle)
 
 ArbitrumSerialLaneVerifier=$(deploy ArbitrumSerialLaneVerifier $ArbitrumFeedOracle)
