@@ -28,11 +28,11 @@ struct Message {
     bytes encoded;
 }
 
-/// @title MulticastChannel
+/// @title MulticastChannelOut
 /// @notice Accepts messages to be dispatched to remote chains,
 /// constructs a Merkle tree of the messages.
 /// @dev TODO: doc
-contract MulticastChannel {
+contract MulticastChannelOut {
     using IncrementalMerkleTree for IncrementalMerkleTree.Tree;
     /// @dev slot 0, messages root
     bytes32 private root;
@@ -43,7 +43,7 @@ contract MulticastChannel {
     // toChainId => next available nonce
     mapping(uint32 => uint32) public nonceOf;
 
-    uint32 immutable public fromChainId;
+    uint32 immutable public localChainId;
 
     event MessageAccepted(uint64 indexed index, bytes32 root, Message encoded);
 
@@ -52,10 +52,10 @@ contract MulticastChannel {
         _;
     }
 
-    constructor(uint32 fromChainId_) {
+    constructor(uint32 localChainId_) {
         // init with empty tree
         root = 0x27ae5ba08d7291c96c8cbddcc148bf48a6d68c7974b94356f53754ef6171d757;
-        fromChainId = fromChainId_;
+        localChainId = localChainId_;
     }
 
     /// @dev Send message over lane.
@@ -68,7 +68,7 @@ contract MulticastChannel {
         uint32 _nonce = nonceOf[toChainId];
         nonceOf[toChainId] = _nonce + 1;
         Message memory message = Message({
-            fromChainId: fromChainId,
+            fromChainId: localChainId,
             from: msg.sender,
             nonce: _nonce,
             toChainId: toChainId,
