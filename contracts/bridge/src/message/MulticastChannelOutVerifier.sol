@@ -26,7 +26,6 @@ contract MulticastChannelOutVerifier is IMessageVerifier {
     event Registry(uint32 indexed fromChainId, address out);
 
     bytes32 public immutable IMT_ROOT_SLOT;
-    address public immutable LIGHT_CLIENT;
 
     // from chain id => multicast channel out
     mapping(uint32 => address) public channelOf;
@@ -41,9 +40,8 @@ contract MulticastChannelOutVerifier is IMessageVerifier {
         setter = _setter;
     }
 
-    constructor(bytes32 imtRootSlot, address oracle) {
+    constructor(bytes32 imtRootSlot) {
         IMT_ROOT_SLOT = imtRootSlot;
-        LIGHT_CLIENT = oracle;
         setter = msg.sender;
     }
 
@@ -53,18 +51,15 @@ contract MulticastChannelOutVerifier is IMessageVerifier {
         emit Registry(fromChainId, out);
     }
 
-    function state_root() public view returns (bytes32) {
-        return ILightClient(LIGHT_CLIENT).merkle_root();
-    }
-
     function verify_message_proof(
         uint32 fromChainId,
+        bytes32 state_root,
         bytes32 msg_root,
         Proof calldata proof
     ) external view returns (bool) {
         // extract imt root storage value from proof
         bytes32 imt_root_storage = toBytes32(StorageProof.verify_single_storage_proof(
-            state_root(),
+            state_root,
             channelOf[fromChainId],
             proof.accountProof,
             IMT_ROOT_SLOT,

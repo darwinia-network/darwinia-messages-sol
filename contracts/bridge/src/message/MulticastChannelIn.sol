@@ -18,6 +18,8 @@
 pragma solidity 0.8.17;
 
 import "../spec/LibMessage.sol";
+import "../interfaces/IUserConfig.sol";
+import "../interfaces/IFeedOracle.sol";
 import "../interfaces/IMessageVerifier.sol";
 import "../utils/call/ExcessivelySafeCall.sol";
 
@@ -27,7 +29,7 @@ import "../utils/call/ExcessivelySafeCall.sol";
 contract MulticastChannelIn is LibMessage {
     using ExcessivelySafeCall for address;
 
-    address public verifier;
+    address public config;
 
     /// nonce => is_message_dispathed
     mapping(uint32 => bool) public dones;
@@ -42,21 +44,22 @@ contract MulticastChannelIn is LibMessage {
     event RetryFailedMessage(uint32 indexed nonce , bool dispatch_result);
 
     /// @dev Deploys the ParallelInboundLane contract
-    constructor(uint32 localChainId_, address verifier_) {
-        verifier = verifier_;
+    constructor(uint32 localChainId_, address config_) {
         localChainId = localChainId_;
+        config = config_;
     }
 
     /// Receive messages proof from bridged chain.
     function recv_message(
-        uint32 fromChainId,
         Message memory message,
         Proof calldata proof
     ) external {
+        Config memory uaConfig = IUserConfig(config).getAppConfig(message.fromChainId, message.to);
+        (,bytes32 state_root) = IFeedOracle(uaConfig.oracle).latestAnswer();
         // check message is from the correct source chain position
-        require(fromChainId == message.fromChainId, "InvalidSourceChainId");
-        IMessageVerifier(verifier).verify_message_proof(
-            fromChainId,
+        IMessageVerifier(uaConfig.verifier).verify_message_proof(
+            message.fromChainId,
+            state_root,
             hash(message),
             proof
         );

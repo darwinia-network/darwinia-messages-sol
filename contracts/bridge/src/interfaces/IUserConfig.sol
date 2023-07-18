@@ -17,18 +17,18 @@
 
 pragma solidity 0.8.17;
 
-struct Proof {
-    bytes[] accountProof;
-    bytes[] imtRootProof;
-    uint256 messageIndex;
-    bytes32[32] messageProof;
+struct Config {
+    address relayer;
+    address oracle;
+    address verifier;
 }
 
-interface IMessageVerifier {
-    function verify_message_proof(
-        uint32 fromChainId,
-        bytes32 state_root,
-        bytes32 msg_root,
-        Proof calldata proof
-    ) external view returns (bool);
+interface IUserConfig {
+    function getAppConfig(uint32 chainId, address ua) external view returns (Config memory);
+    function setAppConfig(
+        uint32 chainId,
+        address relayer,
+        address oracle,
+        address verifier
+    ) external;
 }
