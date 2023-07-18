@@ -17,22 +17,14 @@
 
 pragma solidity 0.8.17;
 
+import "../spec/LibMessage.sol";
 import "../utils/imt/IncrementalMerkleTree.sol";
-
-struct Message {
-    uint32 fromChainId;
-    address from;
-    uint32 nonce;
-    uint32 toChainId;
-    address to;
-    bytes encoded;
-}
 
 /// @title MulticastChannelOut
 /// @notice Accepts messages to be dispatched to remote chains,
 /// constructs a Merkle tree of the messages.
 /// @dev TODO: doc
-contract MulticastChannelOut {
+contract MulticastChannelOut is LibMessage {
     using IncrementalMerkleTree for IncrementalMerkleTree.Tree;
     /// @dev slot 0, messages root
     bytes32 private root;
@@ -97,9 +89,5 @@ contract MulticastChannelOut {
 
     function imt_branch() public view returns (bytes32[32] memory) {
         return imt.branch;
-    }
-
-    function hash(Message memory message) internal pure returns (bytes32) {
-        return keccak256(abi.encode(message));
     }
 }

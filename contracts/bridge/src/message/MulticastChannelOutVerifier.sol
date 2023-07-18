@@ -17,20 +17,16 @@
 
 pragma solidity 0.8.17;
 
-import "../../spec/StorageProof.sol";
-import "../../utils/imt/IncrementalMerkleTree.sol";
+import "../interfaces/ILightClient.sol";
+import "../interfaces/IMessageVerifier.sol";
+import "../spec/StorageProof.sol";
+import "../utils/imt/IncrementalMerkleTree.sol";
 
-abstract contract MulticastChannelOutVerifier {
+contract MulticastChannelOutVerifier is IMessageVerifier {
     event Registry(uint32 indexed fromChainId, address out);
 
-    struct Proof {
-        bytes[] accountProof;
-        bytes[] imtRootProof;
-        uint256 messageIndex;
-        bytes32[32] messageProof;
-    }
-
     bytes32 public immutable IMT_ROOT_SLOT;
+    address public immutable LIGHT_CLIENT;
 
     // from chain id => multicast channel out
     mapping(uint32 => address) public channelOf;
@@ -45,8 +41,9 @@ abstract contract MulticastChannelOutVerifier {
         setter = _setter;
     }
 
-    constructor(bytes32 imtRootSlot) {
+    constructor(bytes32 imtRootSlot, address oracle) {
         IMT_ROOT_SLOT = imtRootSlot;
+        LIGHT_CLIENT = oracle;
         setter = msg.sender;
     }
 
@@ -56,7 +53,9 @@ abstract contract MulticastChannelOutVerifier {
         emit Registry(fromChainId, out);
     }
 
-    function state_root() public view virtual returns (bytes32);
+    function state_root() public view returns (bytes32) {
+        return ILightClient(LIGHT_CLIENT).merkle_root();
+    }
 
     function verify_message_proof(
         uint32 fromChainId,

@@ -17,54 +17,29 @@
 
 pragma solidity 0.8.17;
 
-import "../interfaces/ICrossChainFilter.sol";
-import "../utils/imt/IncrementalMerkleTree.sol";
+import "../spec/LibMessage.sol";
+import "../interfaces/IMessageVerifier.sol";
 import "../utils/call/ExcessivelySafeCall.sol";
-
-struct Message {
-    uint32 fromChainId;
-    address from;
-    uint32 nonce;
-    uint32 toChainId;
-    address to;
-    bytes encoded;
-}
-
-struct Proof {
-    bytes[] accountProof;
-    bytes[] imtRootProof;
-    uint256 messageIndex;
-    bytes32[32] messageProof;
-}
-
-interface IVerifier {
-    function verify_message_proof(
-        uint32 fromChainId,
-        bytes32 msg_root,
-        Proof calldata proof
-    ) external view returns (bool);
-}
 
 /// @title MulticastChannelIn
 /// @notice Everything about incoming messages receival
 /// @dev TODO
-contract MulticastChannelIn {
+contract MulticastChannelIn is LibMessage {
     using ExcessivelySafeCall for address;
 
     address public verifier;
 
     /// nonce => is_message_dispathed
-    mapping(uint64 => bool) public dones;
+    mapping(uint32 => bool) public dones;
     /// nonce => failed message
-    mapping(uint64 => bytes32) public fails;
+    mapping(uint32 => bytes32) public fails;
 
     uint32 immutable public localChainId;
 
     /// @dev Notifies an observer that the message has dispatched
-    /// @param nonce The message nonce
-    event MessageDispatched(uint64 indexed nonce, bool dispatch_result);
+    event MessageDispatched(uint32 indexed nonce, bool dispatch_result);
 
-    event RetryFailedMessage(uint64 indexed nonce , bool dispatch_result);
+    event RetryFailedMessage(uint32 indexed nonce , bool dispatch_result);
 
     /// @dev Deploys the ParallelInboundLane contract
     constructor(uint32 localChainId_, address verifier_) {
@@ -80,7 +55,7 @@ contract MulticastChannelIn {
     ) external {
         // check message is from the correct source chain position
         require(fromChainId == message.fromChainId, "InvalidSourceChainId");
-        IVerifier(verifier).verify_message_proof(
+        IMessageVerifier(verifier).verify_message_proof(
             fromChainId,
             hash(message),
             proof
@@ -122,9 +97,5 @@ contract MulticastChannelIn {
             0,
             abi.encodePacked(message.encoded, uint256(message.nonce), message.fromChainId, message.from)
         );
-    }
-
-    function hash(Message memory message) internal pure returns (bytes32) {
-        return keccak256(abi.encode(message));
     }
 }
