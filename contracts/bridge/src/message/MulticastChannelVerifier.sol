@@ -22,7 +22,7 @@ import "../interfaces/IMessageVerifier.sol";
 import "../spec/StorageProof.sol";
 import "../utils/imt/IncrementalMerkleTree.sol";
 
-contract MulticastChannelOutVerifier is IMessageVerifier {
+contract MulticastChannelVerifier is IMessageVerifier {
     event Registry(uint32 indexed fromChainId, address out);
 
     struct Proof {
