@@ -19,7 +19,7 @@ pragma solidity 0.8.17;
 
 import "../spec/LibMessage.sol";
 import "../interfaces/IUserConfig.sol";
-import "../interfaces/IFeedOracle.sol";
+import "../interfaces/IHashOracle.sol";
 import "../interfaces/IMessageVerifier.sol";
 import "../utils/call/ExcessivelySafeCall.sol";
 
@@ -51,15 +51,15 @@ contract MulticastChannelIn is LibMessage {
 
     /// Receive messages proof from bridged chain.
     function recv_message(
-        Message memory message,
-        Proof calldata proof
+        Message calldata message,
+        bytes calldata proof
     ) external {
         Config memory uaConfig = IUserConfig(config).getAppConfig(message.fromChainId, message.to);
-        (,bytes32 state_root) = IFeedOracle(uaConfig.oracle).latestAnswer();
+        bytes32 merkle_root = IHashOracle(uaConfig.oracle).merkle_root();
         // check message is from the correct source chain position
         IMessageVerifier(uaConfig.verifier).verify_message_proof(
             message.fromChainId,
-            state_root,
+            merkle_root,
             hash(message),
             proof
         );

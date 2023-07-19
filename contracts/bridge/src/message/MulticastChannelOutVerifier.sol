@@ -25,6 +25,13 @@ import "../utils/imt/IncrementalMerkleTree.sol";
 contract MulticastChannelOutVerifier is IMessageVerifier {
     event Registry(uint32 indexed fromChainId, address out);
 
+    struct Proof {
+        bytes[] accountProof;
+        bytes[] imtRootProof;
+        uint256 messageIndex;
+        bytes32[32] messageProof;
+    }
+
     bytes32 public immutable IMT_ROOT_SLOT;
 
     // from chain id => multicast channel out
@@ -55,22 +62,23 @@ contract MulticastChannelOutVerifier is IMessageVerifier {
         uint32 fromChainId,
         bytes32 state_root,
         bytes32 msg_root,
-        Proof calldata proof
+        bytes calldata proof
     ) external view returns (bool) {
+        Proof memory p = abi.decode(proof, (Proof));
         // extract imt root storage value from proof
         bytes32 imt_root_storage = toBytes32(StorageProof.verify_single_storage_proof(
             state_root,
             channelOf[fromChainId],
-            proof.accountProof,
+            p.accountProof,
             IMT_ROOT_SLOT,
-            proof.imtRootProof
+            p.imtRootProof
         ));
 
         // calculate the expected root based on the proof
         bytes32 imt_root_proof = IncrementalMerkleTree.branchRoot(
             msg_root,
-            proof.messageProof,
-            proof.messageIndex
+            p.messageProof,
+            p.messageIndex
         );
 
         return imt_root_storage == imt_root_proof;

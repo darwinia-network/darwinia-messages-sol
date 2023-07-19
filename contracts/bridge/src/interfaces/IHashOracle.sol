@@ -17,11 +17,13 @@
 
 pragma solidity 0.8.17;
 
-interface IMessageVerifier {
-    function verify_message_proof(
-        uint32 fromChainId,
-        bytes32 merkle_root,
-        bytes32 msg_root,
-        bytes calldata proof
-    ) external view returns (bool);
+/// @title IHashOracle
+/// @notice A interface for light client
+interface IHashOracle {
+    /// @notice Return the merkle root of light client
+    /// @return merkle root
+    function merkle_root() external view returns (bytes32);
+    /// @notice Return the block number of light client
+    /// @return block number
+    function block_number() external view returns (uint256);
 }
