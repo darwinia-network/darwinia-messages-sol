@@ -98,7 +98,7 @@ contract MulticastChannelIn is LibMessage {
         (dispatch_result,) = message.to.excessivelySafeCall(
             gasleft(),
             0,
-            abi.encodePacked(message.encoded, uint256(message.nonce), message.fromChainId, message.from)
+            abi.encodePacked(message.encoded, uint256(message.nonce), uint256(message.fromChainId), message.from)
         );
     }
 }
