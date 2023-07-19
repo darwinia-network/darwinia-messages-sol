@@ -47,8 +47,8 @@ contract MulticastChannel is LibMessage {
     address public immutable CONFIG;
     uint32  public immutable LOCAL_CHAINID;
 
-    event MessageAccepted(uint32 indexed index, bytes32 root, Message encoded);
-    event MessageDispatched(uint32 indexed fromChainId, uint32 indexed nonce, bool dispatch_result);
+    event MessageAccepted(uint32 indexed index, bytes32 messageId, bytes32 root, Message encoded);
+    event MessageDispatched(bytes32 indexed messageId, bool dispatch_result);
 
     modifier onlyEndpoint {
         require(msg.sender == ENDPOINT, "!endpoint");
@@ -86,6 +86,7 @@ contract MulticastChannel is LibMessage {
 
         emit MessageAccepted(
             message_size() - 1,
+            encodeMessageId(message.fromChainId, message.nonce),
             root,
             message
         );
@@ -112,7 +113,7 @@ contract MulticastChannel is LibMessage {
 
         // then, dispatch message
         bool dispatch_result = IEndpoint(ENDPOINT).recv(message);
-        emit MessageDispatched(message.fromChainId, message.nonce, dispatch_result);
+        emit MessageDispatched(encodeMessageId(message.fromChainId, message.nonce), dispatch_result);
     }
 
     /// Return the commitment of lane data.

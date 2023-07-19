@@ -30,4 +30,8 @@ contract LibMessage {
     function hash(Message memory message) internal pure returns (bytes32) {
         return keccak256(abi.encode(message));
     }
+
+    function encodeMessageId(uint32 chaindId, uint32 nonce) internal pure returns (bytes32) {
+        return bytes32(uint(chaindId) << 32 | uint(nonce));
+    }
 }

@@ -18,14 +18,14 @@
 pragma solidity 0.8.17;
 
 abstract contract Application {
-    address public immutable trustedChannel;
+    address public immutable TRUSTED_ENDPOINT;
 
-    constructor(address channel) {
-        trustedChannel = channel;
+    constructor(address endpoint) {
+        TRUSTED_ENDPOINT = endpoint;
     }
 
-    function isTrustedChannel(address channel) public view returns(bool) {
-        return trustedChannel == channel;
+    function isTrustedEndpoint(address endpoint) public view returns(bool) {
+        return TRUSTED_ENDPOINT == endpoint;
     }
 
     function _messageId() internal pure returns (bytes32 _msgDataMessageId) {
@@ -43,7 +43,7 @@ abstract contract Application {
     }
 
     function _xmsgSender() internal view returns (address payable _from) {
-      require(msg.data.length >= 20 && isTrustedChannel(msg.sender));
+      require(msg.data.length >= 20 && isTrustedEndpoint(msg.sender));
       assembly {
         _from := shr(96, calldataload(sub(calldatasize(), 20)))
       }
