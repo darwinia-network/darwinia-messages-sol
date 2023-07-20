@@ -23,6 +23,7 @@ import "../utils/call/ExcessivelySafeCall.sol";
 
 interface IChannel {
     function send_message(
+        address from,
         uint32 toChainId,
         address to,
         bytes calldata encoded
@@ -32,14 +33,14 @@ interface IChannel {
 contract Endpoint is LibMessage {
     using ExcessivelySafeCall for address;
 
-    event ClearFailedMessage(bytes32 indexed messageId);
-    event RetryFailedMessage(bytes32 indexed messageId, bool dispatch_result);
+    event ClearFailedMessage(bytes32 indexed msg_hash);
+    event RetryFailedMessage(bytes32 indexed msg_hash, bool dispatch_result);
 
     address public immutable CONFIG;
     address public immutable CHANNEL;
 
     /// messageId => failed message
-    mapping(bytes32 => bytes32) public fails;
+    mapping(bytes32 => bool) public fails;
 
     constructor(
         address config,
@@ -52,6 +53,7 @@ contract Endpoint is LibMessage {
     function send(uint32 toChainId, address to, bytes calldata encoded, bytes calldata params) external payable {
         Config memory uaConfig = IUserConfig(CONFIG).getAppConfig(toChainId, to);
         IChannel(CHANNEL).send_message(
+            msg.sender,
             toChainId,
             to,
             encoded
@@ -66,28 +68,28 @@ contract Endpoint is LibMessage {
         require(msg.sender == CHANNEL, "!auth");
         dispatch_result = _dispatch(message);
         if (!dispatch_result) {
-            bytes32 messageId = encodeMessageId(message.fromChainId, message.nonce);
-            fails[messageId] = hash(message);
+            bytes32 msg_hash = hash(message);
+            fails[msg_hash] = true;
         }
     }
 
     function clear_failed_message(Message calldata message) external {
-        bytes32 messageId = encodeMessageId(message.fromChainId, message.nonce);
-        require(fails[messageId] == hash(message), "InvalidFailedMessage");
+        bytes32 msg_hash = hash(message);
+        require(fails[msg_hash] == true, "InvalidFailedMessage");
         require(message.to == msg.sender, "!auth");
-        delete fails[messageId];
-        emit ClearFailedMessage(messageId);
+        delete fails[msg_hash];
+        emit ClearFailedMessage(msg_hash);
     }
 
     /// Retry failed message
     function retry_failed_message(Message calldata message) external returns (bool dispatch_result) {
-        bytes32 messageId = encodeMessageId(message.fromChainId, message.nonce);
-        require(fails[messageId] == hash(message), "InvalidFailedMessage");
+        bytes32 msg_hash = hash(message);
+        require(fails[msg_hash] == true, "InvalidFailedMessage");
         dispatch_result = _dispatch(message);
         if (dispatch_result) {
-            delete fails[messageId];
+            delete fails[msg_hash];
         }
-        emit RetryFailedMessage(messageId, dispatch_result);
+        emit RetryFailedMessage(msg_hash, dispatch_result);
     }
 
     /// @dev dispatch the cross chain message
@@ -96,7 +98,7 @@ contract Endpoint is LibMessage {
         (dispatch_result,) = message.to.excessivelySafeCall(
             gasleft(),
             0,
-            abi.encodePacked(message.encoded, encodeMessageId(message.fromChainId, message.nonce), uint256(message.fromChainId), message.from)
+            abi.encodePacked(message.encoded, hash(message), uint256(message.fromChainId), message.from)
         );
     }
 }

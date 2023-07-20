@@ -17,17 +17,9 @@
 
 pragma solidity 0.8.17;
 
-struct Message {
-    uint32 index;
-    uint32 fromChainId;
-    address from;
-    uint32 toChainId;
-    address to;
-    bytes encoded;
-}
-
-contract LibMessage {
-    function hash(Message memory message) internal pure returns (bytes32) {
-        return keccak256(abi.encode(message));
+contract Relayer {
+    struct Price {
+        uint64 baseGas;
+        uint64 gasPerByte;
     }
 }

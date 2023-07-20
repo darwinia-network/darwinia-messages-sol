@@ -38,17 +38,14 @@ contract MulticastChannel is LibMessage {
     /// @dev incremental merkle tree
     IncrementalMerkleTree.Tree private imt;
 
-    // toChainId => next available nonce
-    mapping(uint32 => uint32) public nonces;
-
-    mapping(uint32 => mapping(uint32 => bool)) public dones;
+    mapping(bytes32 => bool) public dones;
 
     address public immutable ENDPOINT;
     address public immutable CONFIG;
     uint32  public immutable LOCAL_CHAINID;
 
-    event MessageAccepted(uint32 indexed index, bytes32 messageId, bytes32 root, Message encoded);
-    event MessageDispatched(bytes32 indexed messageId, bool dispatch_result);
+    event MessageAccepted(uint32 indexed index, bytes32 root, Message message);
+    event MessageDispatched(bytes32 indexed msg_hash, bool dispatch_result);
 
     modifier onlyEndpoint {
         require(msg.sender == ENDPOINT, "!endpoint");
@@ -65,17 +62,16 @@ contract MulticastChannel is LibMessage {
 
     /// @dev Send message over lane.
     function send_message(
+        address from,
         uint32 toChainId,
         address to,
         bytes calldata encoded
     ) external onlyEndpoint {
-        // get the next nonce for the to chain, then increment it
-        uint32 _nonce = nonces[toChainId];
-        nonces[toChainId] = _nonce + 1;
+        uint32 index = message_size();
         Message memory message = Message({
+            index: index,
             fromChainId: LOCAL_CHAINID,
-            from: msg.sender,
-            nonce: _nonce,
+            from: from,
             toChainId: toChainId,
             to: to,
             encoded: encoded
@@ -85,8 +81,7 @@ contract MulticastChannel is LibMessage {
         root = imt.root();
 
         emit MessageAccepted(
-            message_size() - 1,
-            encodeMessageId(message.fromChainId, message.nonce),
+            index,
             root,
             message
         );
@@ -108,12 +103,13 @@ contract MulticastChannel is LibMessage {
         );
 
         require(LOCAL_CHAINID == message.toChainId, "InvalidTargetLaneId");
-        require(dones[message.fromChainId][message.nonce] == false, "done");
-        dones[message.fromChainId][message.nonce] = true;
+        bytes32 msg_hash = hash(message);
+        require(dones[msg_hash] == false, "done");
+        dones[msg_hash] = true;
 
         // then, dispatch message
         bool dispatch_result = IEndpoint(ENDPOINT).recv(message);
-        emit MessageDispatched(encodeMessageId(message.fromChainId, message.nonce), dispatch_result);
+        emit MessageDispatched(msg_hash, dispatch_result);
     }
 
     /// Return the commitment of lane data.
