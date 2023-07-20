@@ -44,7 +44,7 @@ contract MulticastChannel is LibMessage {
     address public immutable CONFIG;
     uint32  public immutable LOCAL_CHAINID;
 
-    event MessageAccepted(uint32 indexed index, bytes32 root, Message message);
+    event MessageAccepted(uint32 indexed index, bytes32 indexed msg_hash, bytes32 root, Message message);
     event MessageDispatched(bytes32 indexed msg_hash, bool dispatch_result);
 
     modifier onlyEndpoint {
@@ -66,7 +66,7 @@ contract MulticastChannel is LibMessage {
         uint32 toChainId,
         address to,
         bytes calldata encoded
-    ) external onlyEndpoint {
+    ) external onlyEndpoint returns (uint32) {
         uint32 index = message_size();
         Message memory message = Message({
             index: index,
@@ -82,9 +82,12 @@ contract MulticastChannel is LibMessage {
 
         emit MessageAccepted(
             index,
+            msg_hash,
             root,
             message
         );
+
+        return index;
     }
 
     /// Receive messages proof from bridged chain.
@@ -93,7 +96,7 @@ contract MulticastChannel is LibMessage {
         bytes calldata proof
     ) external {
         Config memory uaConfig = IUserConfig(CONFIG).getAppConfig(message.fromChainId, message.to);
-        bytes32 merkle_root = IHashOracle(uaConfig.oracle).merkle_root();
+        bytes32 merkle_root = IHashOracle(uaConfig.oracle).merkle_root(message.fromChainId);
         // check message is from the correct source chain position
         IMessageVerifier(uaConfig.verifier).verify_message_proof(
             message.fromChainId,

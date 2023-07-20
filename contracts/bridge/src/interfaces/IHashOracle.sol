@@ -22,8 +22,5 @@ pragma solidity 0.8.17;
 interface IHashOracle {
     /// @notice Return the merkle root of light client
     /// @return merkle root
-    function merkle_root() external view returns (bytes32);
-    /// @notice Return the block number of light client
-    /// @return block number
-    function block_number() external view returns (uint256);
+    function merkle_root(uint32 chainId) external view returns (bytes32);
 }

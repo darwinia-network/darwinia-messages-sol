@@ -17,20 +17,19 @@
 
 pragma solidity 0.8.17;
 
-contract Relayer {
-    event Assigned(uint32 indexed index, uint fee);
-    event SetPrice(uint32 indexed chainId, uint64 baseGas, uint64 gasPerByte);
+import "../interfaces/IFeedOracle.sol";
 
-    struct Price {
-        uint64 baseGas;
-        uint64 gasPerByte;
-    }
+contract Oracle {
+    event Assigned(uint32 indexed index);
+    event SetFee(uint32 indexed chainId, uint fee);
 
     address public immutable ENDPOINT;
     address public owner;
 
     // chainId => price
-    mapping(uint32 => Price) public priceOf;
+    mapping(uint32 => uint) public feeOf;
+    // chainId => dapi
+    mapping(uint32 => address) public dapiOf;
 
     modifier onlyOwner {
         require(msg.sender == owner, "!owner");
@@ -44,25 +43,30 @@ contract Relayer {
 
     receive() external payable {}
 
-    function setPrice(uint32 chainId, uint64 baseGas, uint64 gasPerByte) external onlyOwner {
-        priceOf[chainId] = Price(baseGas, gasPerByte);
-        emit SetPrice(chainId, baseGas, gasPerByte);
-    }
-
     function withdraw(uint amount) external onlyOwner {
         payable(owner).transfer(amount);
     }
 
-    function fee(uint32 toChainId, address ua, uint size, bytes calldata params) public view returns (uint) {
-        Price memory p = priceOf[toChainId];
-        return p.baseGas + p.gasPerByte * size;
+    function setFee(uint32 chainId, uint fee_) external onlyOwner {
+        feeOf[chainId] = fee_;
+        emit SetFee(chainId, fee_);
     }
 
-    function assign(uint32 index, uint32 toChainId, address ua, uint size, bytes calldata params) external payable returns (uint) {
+    function fee(uint32 toChainId, address ua) public view returns (uint) {
+        return feeOf[toChainId];
+    }
+
+    function assign(uint32 index, uint32 toChainId, address ua) external payable returns (uint) {
         require(msg.sender == ENDPOINT, "!enpoint");
-        uint totalFee = fee(toChainId, ua, size, params);
+        uint totalFee = feeOf[toChainId];
         require(msg.value == totalFee, "!fee");
-        emit Assigned(index, totalFee);
+        emit Assigned(index);
         return totalFee;
+    }
+
+    function merkle_root(uint32 chainId) external view returns (bytes32) {
+        address dapi = dapiOf[chainId];
+        (, bytes32 state_root) = IFeedOracle(dapi).latestAnswer();
+        return state_root;
     }
 }
