@@ -27,7 +27,17 @@ interface IChannel {
         uint32 toChainId,
         address to,
         bytes calldata encoded
-    ) external;
+    ) external returns (uint32);
+}
+
+interface IRelayer {
+    function fee(uint32 toChainId, address ua, uint size, bytes calldata params) external view returns (uint);
+    function assign(uint32 index, uint32 toChainId, address ua, uint size, bytes calldata params) external payable returns (uint);
+}
+
+interface IOracle {
+    function fee(uint32 toChainId, address ua) external view returns (uint);
+    function assign(uint32 index, uint32 toChainId, address ua) external payable returns (uint);
 }
 
 contract Endpoint is LibMessage {
@@ -51,17 +61,38 @@ contract Endpoint is LibMessage {
     }
 
     function send(uint32 toChainId, address to, bytes calldata encoded, bytes calldata params) external payable {
+        address ua = msg.sender;
         Config memory uaConfig = IUserConfig(CONFIG).getAppConfig(toChainId, to);
-        IChannel(CHANNEL).send_message(
-            msg.sender,
+        uint32 index = IChannel(CHANNEL).send_message(
+            ua,
             toChainId,
             to,
             encoded
         );
 
-        // uint relayerFee = _handleRelayer(toChainId, );
-        // uint oracleFee = _handleOracle(toChainId, );
-        // uint protocolFee = _handleProtocol();
+        uint relayerFee = _handleRelayer(uaConfig.relayer, index, toChainId, ua, encoded.length, params);
+        uint oracleFee = _handleOracle(uaConfig.oracle, index, toChainId, ua);
+        require(relayerFee + oracleFee == msg.value, "!fee");
+    }
+
+    function _handleRelayer(address relayer, uint32 index, uint32 toChainId, address ua, uint size, bytes calldata params) internal returns (uint) {
+        uint fee = IRelayer(relayer).fee(toChainId, ua, size, params);
+        return IRelayer(relayer).assign{value: fee}(
+            index,
+            toChainId,
+            ua,
+            size,
+            params
+        );
+    }
+
+    function _handleOracle(address oracle, uint32 index, uint32 toChainId, address ua) internal returns (uint) {
+        uint fee = IOracle(oracle).fee(toChainId, ua);
+        return IOracle(oracle).assign{value: fee}(
+            index,
+            toChainId,
+            ua
+        );
     }
 
     function recv(Message calldata message) external returns (bool dispatch_result) {
