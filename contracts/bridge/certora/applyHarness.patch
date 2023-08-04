@@ -1,0 +1,76 @@
+diff -ruN .gitignore .gitignore
+--- .gitignore	1970-01-01 08:00:00
++++ .gitignore	2022-11-15 10:21:37
+@@ -0,0 +1,2 @@
++*
++!.gitignore
+diff -ruN BeaconLightClient.f.sol BeaconLightClient.f.sol
+--- BeaconLightClient.f.sol	2022-10-31 15:23:14
++++ BeaconLightClient.f.sol	2022-11-15 10:25:07
+@@ -955,9 +955,9 @@
+ 
+     // follow beacon api: /beacon/light_client/updates/?start_period={period}&count={count}
+     function import_next_sync_committee(
+-        FinalizedHeaderUpdate calldata header_update,
+-        SyncCommitteePeriodUpdate calldata sc_update
+-    ) external {
++        FinalizedHeaderUpdate memory header_update,
++        SyncCommitteePeriodUpdate memory sc_update
++    ) internal {
+         require(is_supermajority(header_update.sync_aggregate.sync_committee_bits), "!supermajor");
+         require(header_update.signature_slot > header_update.attested_header.slot &&
+                 header_update.attested_header.slot >= header_update.finalized_header.slot,
+@@ -1004,7 +1004,7 @@
+     }
+ 
+     // follow beacon api: /eth/v1/beacon/light_client/finality_update/
+-    function import_finalized_header(FinalizedHeaderUpdate calldata update) external {
++    function import_finalized_header(FinalizedHeaderUpdate memory update) internal {
+         require(is_supermajority(update.sync_aggregate.sync_committee_bits), "!supermajor");
+         require(update.signature_slot > update.attested_header.slot &&
+                 update.attested_header.slot >= update.finalized_header.slot,
+@@ -1039,10 +1039,10 @@
+     }
+ 
+     function verify_signed_header(
+-        SyncAggregate calldata sync_aggregate,
+-        SyncCommittee calldata sync_committee,
++        SyncAggregate memory sync_aggregate,
++        SyncCommittee memory sync_committee,
+         bytes4 fork_version,
+-        BeaconBlockHeader calldata header
++        BeaconBlockHeader memory header
+     ) internal view returns (bool) {
+         // Verify sync committee aggregate signature
+         uint participants = sum(sync_aggregate.sync_committee_bits);
+@@ -1066,8 +1066,8 @@
+     }
+ 
+     function verify_finalized_header(
+-        BeaconBlockHeader calldata header,
+-        bytes32[] calldata finality_branch,
++        BeaconBlockHeader memory header,
++        bytes32[] memory finality_branch,
+         bytes32 attested_header_root
+     ) internal pure returns (bool) {
+         require(finality_branch.length == FINALIZED_CHECKPOINT_ROOT_DEPTH, "!finality_branch");
+@@ -1082,8 +1082,8 @@
+     }
+ 
+     function verify_next_sync_committee(
+-        SyncCommittee calldata next_sync_committee,
+-        bytes32[] calldata next_sync_committee_branch,
++        SyncCommittee memory next_sync_committee,
++        bytes32[] memory next_sync_committee_branch,
+         bytes32 header_state_root
+     ) internal pure returns (bool) {
+         require(next_sync_committee_branch.length == NEXT_SYNC_COMMITTEE_DEPTH, "!next_sync_committee_branch");
+@@ -1097,7 +1097,7 @@
+         );
+     }
+ 
+-    function is_supermajority(bytes32[2] calldata sync_committee_bits) internal pure returns (bool) {
++    function is_supermajority(bytes32[2] memory sync_committee_bits) internal pure returns (bool) {
+         return sum(sync_committee_bits) * 3 >= SYNC_COMMITTEE_SIZE * 2;
+     }
+ 
